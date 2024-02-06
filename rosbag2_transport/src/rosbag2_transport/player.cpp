@@ -17,6 +17,7 @@
 #include <algorithm>
 #include <chrono>
 #include <memory>
+#include <regex>
 #include <string>
 #include <unordered_map>
 #include <utility>
@@ -907,6 +908,85 @@ void PlayerImpl::play_messages_from_queue()
   }
 }
 
+namespace
+{
+bool allow_topic(
+  bool is_service,
+  const std::string topic_name,
+  const rosbag2_storage::StorageFilter & storage_filter)
+{
+  auto & include_topics = storage_filter.topics;
+  auto & exclude_topics = storage_filter.exclude_topics;
+  auto & include_services = storage_filter.services_events;
+  auto & exclude_services = storage_filter.exclude_service_events;
+  auto & regex = storage_filter.regex;
+  auto & regex_to_exclude = storage_filter.regex_to_exclude;
+
+  if (is_service) {
+    if (!exclude_services.empty()) {
+      auto it = std::find(exclude_services.begin(), exclude_services.end(), topic_name);
+      if (it != exclude_services.end()) {
+        return false;
+      }
+    }
+  } else {
+    if (!exclude_topics.empty()) {
+      auto it = std::find(exclude_topics.begin(), exclude_topics.end(), topic_name);
+      if (it != exclude_topics.end()) {
+        return false;
+      }
+    }
+  }
+
+  if (!regex_to_exclude.empty()) {
+    std::smatch m;
+    std::regex re(regex_to_exclude);
+
+    if (std::regex_match(topic_name, m, re)) {
+      return false;
+    }
+  }
+
+  bool set_include = is_service ? !include_services.empty() : !include_topics.empty();
+  bool set_regex = !regex.empty();
+
+  if (set_include || set_regex) {
+    if (is_service) {
+      auto iter = std::find(include_services.begin(), include_services.end(), topic_name);
+      if (iter == include_services.end()) {
+        // If include_service is set and regex isn't set, service must be in include_service.
+        if (!set_regex) {
+          return false;
+        }
+      } else {
+        return true;
+      }
+    } else {
+      auto iter = std::find(include_topics.begin(), include_topics.end(), topic_name);
+      if (iter == include_topics.end()) {
+        // If include_service is set and regex isn't set, service must be in include_service.
+        if (!set_regex) {
+          return false;
+        }
+      } else {
+        return true;
+      }
+    }
+
+    if (set_regex) {
+      std::smatch m;
+      std::regex re(regex);
+
+      if (!std::regex_match(topic_name, m, re)) {
+        return false;
+      }
+    }
+  }
+
+  return true;
+}
+}  // namespace
+
 void PlayerImpl::prepare_publishers()
 {
   rosbag2_storage::StorageFilter storage_filter;
@@ -956,22 +1036,17 @@ void PlayerImpl::prepare_publishers()
   auto topics = reader_->get_all_topics_and_types();
   std::string topic_without_support_acked;
   for (const auto & topic : topics) {
-    auto & filter_topics = storage_filter.topics;
-    auto & filter_services = storage_filter.services_events;
-
     if (rosbag2_cpp::is_service_event_topic(topic.name, topic.type)) {
       // Check if sender was created
       if (service_client_senders_.find(topic.name) != service_client_senders_.end()) {
         continue;
       }
 
-      // filter services to add clients if necessary
-      if (!filter_services.empty()) {
-        auto iter = std::find(filter_services.begin(), filter_services.end(), topic.name);
-        if (iter == filter_services.end()) {
-          continue;
-        }
+      // filter service event topic to add client if necessary
+      if (!allow_topic(true, topic.name, storage_filter)) {
+        continue;
       }
+
       auto service_name = rosbag2_cpp::service_event_topic_name_to_service_name(topic.name);
       auto service_type = rosbag2_cpp::service_event_topic_type_to_service_type(topic.type);
       try {
@@ -990,13 +1065,12 @@ void PlayerImpl::prepare_publishers()
       if (pub_senders_.find(topic.name) != pub_senders_.end()) {
         continue;
       }
+
       // filter topics to add publishers if necessary
-      if (!filter_topics.empty()) {
-        auto iter = std::find(filter_topics.begin(), filter_topics.end(), topic.name);
-        if (iter == filter_topics.end()) {
-          continue;
-        }
+      if (!allow_topic(false, topic.name, storage_filter)) {
+        continue;
       }
+
       auto topic_qos = publisher_qos_for_topic(
         topic, topic_qos_profile_overrides_,
         owner_->get_logger());
