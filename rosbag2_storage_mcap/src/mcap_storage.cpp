@@ -539,6 +539,26 @@ bool MCAPStorage::read_and_enqueue_message()
   return true;
 }
 
+namespace
+{
+bool is_service_event_topic_name(const std::string & topic_name)
+{
+  // The origin definition is RCL_SERVICE_INTROSPECTION_TOPIC_POSTFIX
+  const char * service_introspection_topic_postfix = "/_service_event";
+  if (topic_name.length() <= strlen(service_introspection_topic_postfix)) {
+    return false;
+  }
+
+  std::string end_topic_name =
+    topic_name.substr(topic_name.length() - strlen(service_introspection_topic_postfix));
+  if (end_topic_name != service_introspection_topic_postfix) {
+    return false;
+  }
+
+  return true;
+}
+}  // namespace
+
 void MCAPStorage::reset_iterator()
 {
   ensure_summary_read();
@@ -556,24 +576,28 @@ void MCAPStorage::reset_iterator()
   options.readOrder = read_order_;
 
   auto filter_topic = [this](std::string_view topic) {
-    if (!storage_filter_.exclude_topics.empty()) {
-      auto it = std::find(storage_filter_.exclude_topics.begin(),
-                          storage_filter_.exclude_topics.end(), topic);
-      if (it != storage_filter_.exclude_topics.end()) {
-        return false;
-      }
-    }
+    std::string topic_string(topic);
+    bool is_service_topic = is_service_event_topic_name(std::string(topic_string));
 
-    if (!storage_filter_.exclude_service_events.empty()) {
-      auto it = std::find(storage_filter_.exclude_service_events.begin(),
-                          storage_filter_.exclude_service_events.end(), topic);
-      if (it != storage_filter_.exclude_service_events.end()) {
-        return false;
+    if (is_service_topic) {
+      if (!storage_filter_.exclude_service_events.empty()) {
+        auto it = std::find(storage_filter_.exclude_service_events.begin(),
+                            storage_filter_.exclude_service_events.end(), topic_string);
+        if (it != storage_filter_.exclude_service_events.end()) {
+          return false;
+        }
+      }
+    } else {
+      if (!storage_filter_.exclude_topics.empty()) {
+        auto it = std::find(storage_filter_.exclude_topics.begin(),
+                            storage_filter_.exclude_topics.end(), topic_string);
+        if (it != storage_filter_.exclude_topics.end()) {
+          return false;
+        }
       }
     }
 
 #ifdef ROSBAG2_STORAGE_MCAP_HAS_STORAGE_FILTER_TOPIC_REGEX
-    std::string topic_string(topic);
     if (!storage_filter_.regex_to_exclude.empty()) {
       std::smatch m;
       std::regex re(storage_filter_.regex_to_exclude);
@@ -584,18 +608,39 @@ void MCAPStorage::reset_iterator()
     }
 #endif
 
-    if (!storage_filter_.topics.empty()) {
-      auto it = std::find(storage_filter_.topics.begin(), storage_filter_.topics.end(), topic);
-      if (it != storage_filter_.topics.end()) {
-        return true;
+    if (is_service_topic) {
+      if (!storage_filter_.services_events.empty()) {
+        auto it = std::find(storage_filter_.services_events.begin(),
+                            storage_filter_.services_events.end(), topic_string);
+        if (it != storage_filter_.services_events.end()) {
+          return true;
+        } else {
+#ifdef ROSBAG2_STORAGE_MCAP_HAS_STORAGE_FILTER_TOPIC_REGEX
+          // If regex isn't set, service name must be in service event topic list
+          if (storage_filter_.regex.empty()) {
+            return false;
+          }
+#else
+          return false;
+#endif
+        }
       }
-    }
-
-    if (!storage_filter_.services_events.empty()) {
-      auto it = std::find(storage_filter_.services_events.begin(),
-                          storage_filter_.services_events.end(), topic);
-      if (it != storage_filter_.services_events.end()) {
-        return true;
+    } else {
+      if (!storage_filter_.topics.empty()) {
+        auto it =
+          std::find(storage_filter_.topics.begin(), storage_filter_.topics.end(), topic_string);
+        if (it != storage_filter_.topics.end()) {
+          return true;
+        } else {
+#ifdef ROSBAG2_STORAGE_MCAP_HAS_STORAGE_FILTER_TOPIC_REGEX
+          // If regex isn't set, topic name must be in topic topic list
+          if (storage_filter_.regex.empty()) {
+            return false;
+          }
+#else
+          return false;
+#endif
+        }
       }
     }
 
@@ -605,44 +650,11 @@ void MCAPStorage::reset_iterator()
       std::smatch m;
       std::regex re(storage_filter_.regex);
 
-      if (std::regex_match(topic_string, m, re)) {
-        return true;
-      } else {
+      if (!std::regex_match(topic_string, m, re)) {
         return false;
       }
     }
 #endif
-
-    auto is_service_event_topic_name = [](const std::string & topic_name) {
-      // The origin definition is RCL_SERVICE_INTROSPECTION_TOPIC_POSTFIX
-      const char * service_introspection_topic_postfix = "/_service_event";
-      if (topic_name.length() <= strlen(service_introspection_topic_postfix)) {
-        return false;
-      }
-
-      std::string end_topic_name =
-        topic_name.substr(topic_name.length() - strlen(service_introspection_topic_postfix));
-
-      if (end_topic_name != service_introspection_topic_postfix) {
-        return false;
-      }
-
-      return true;
-    };
-
-    if (is_service_event_topic_name(topic_string)) {
-      // If topic name is service event topic name and allowed service list is set, it must be
-      // included service list.
-      if (!storage_filter_.services_events.empty()) {
-        return false;
-      }
-    } else {
-      // If topic name is normal topic name and allowed topic list is set, it must be included
-      // topic list.
-      if (!storage_filter_.topics.empty()) {
-        return false;
-      }
-    }
 
     return true;
   };
