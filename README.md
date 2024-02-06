@@ -38,7 +38,7 @@ These verbs are available for `ros2 bag`:
 
 For up-to-date information on the available options for each, use `ros2 bag <verb> --help`.
 
-Moreover, `Player` and `Recorder` components can be instantiated in `rclcpp` component containers, which makes possible to use intra-process communication for greater efficiency.
+Moreover, `rosbag2_transport::Player` and `rosbag2_transport::Recorder` components can be instantiated in `rclcpp` component containers, which makes possible to use intra-process communication for greater efficiency.
 See [composition](#using-with-composition) section for details.
 
 ### Recording data
