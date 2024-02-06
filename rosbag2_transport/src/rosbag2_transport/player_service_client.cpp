@@ -180,7 +180,7 @@ void PlayerServiceClient::async_send_request(const rclcpp::SerializedMessage & m
         auto request_addr = reinterpret_cast<size_t>(ros_message.get()) + request_offset;
         auto future_and_request_id = client_->async_send_request(
           reinterpret_cast<void *>(*reinterpret_cast<size_t *>(request_addr)));
-        player_service_client_manager_->register_request_future(future_and_request_id);
+        player_service_client_manager_->register_request_future(future_and_request_id, client_);
       } else {
         RCLCPP_ERROR(
           logger_, "Service request hasn't been sent. The '%s' service isn't ready !",
@@ -254,14 +254,16 @@ bool PlayerServiceClientManager::request_future_queue_is_full()
 }
 
 bool PlayerServiceClientManager::register_request_future(
-  rclcpp::GenericClient::FutureAndRequestId & request_future)
+  rclcpp::GenericClient::FutureAndRequestId & request_future,
+  std::weak_ptr<rclcpp::GenericClient> client)
 {
   auto future_and_request_id =
     std::make_unique<rclcpp::GenericClient::FutureAndRequestId>(std::move(request_future));
 
   if (!request_future_queue_is_full()) {
     std::lock_guard<std::mutex> lock(request_futures_list_lock_);
-    request_futures_list_[std::chrono::steady_clock::now()] = std::move(future_and_request_id);
+    request_futures_list_[std::chrono::steady_clock::now()] =
+    {std::move(future_and_request_id), client};
     return true;
   } else {
     ROSBAG2_TRANSPORT_LOG_WARN(
@@ -275,9 +277,15 @@ bool PlayerServiceClientManager::register_request_future(
 void PlayerServiceClientManager::remove_complete_request_future()
 {
   std::vector<time_point> remove_keys;
-  for (auto & request_future : request_futures_list_) {
-    if (request_future.second->wait_for(std::chrono::seconds(0)) == std::future_status::ready) {
-      remove_keys.emplace_back(request_future.first);
+  for (auto & [timestamp, request_id_and_client] : request_futures_list_) {
+    if (request_id_and_client.first->wait_for(std::chrono::seconds(0)) ==
+      std::future_status::ready)
+    {
+      auto client = request_id_and_client.second.lock();
+      if (client) {
+        client->remove_pending_request(request_id_and_client.first->request_id);
+      }
+      remove_keys.emplace_back(timestamp);
     }
   }
   for (auto & key : remove_keys) {
@@ -296,6 +304,12 @@ void PlayerServiceClientManager::remove_all_timeout_request_future()
   }
 
   auto last_iter_with_timeout = --first_iter_without_timeout;
+  for (auto iter = request_futures_list_.begin(); iter != last_iter_with_timeout; iter++) {
+    auto client = iter->second.second.lock();
+    if (client) {
+      client->remove_pending_request(iter->second.first->request_id);
+    }
+  }
   request_futures_list_.erase(request_futures_list_.begin(), last_iter_with_timeout);
   ROSBAG2_TRANSPORT_LOG_WARN(
     "Client requests are discarded since timeout. "

@@ -20,6 +20,7 @@
 #include <memory>
 #include <mutex>
 #include <unordered_map>
+#include <utility>
 #include <string>
 #include <tuple>
 
@@ -36,7 +37,8 @@ class PlayerServiceClientManager;
 class PlayerServiceClient final
 {
 public:
-  explicit PlayerServiceClient(
+  explicit
+  PlayerServiceClient(
     std::shared_ptr<rclcpp::GenericClient> cli,
     std::string service_name,
     const std::string & service_event_type,
@@ -44,15 +46,18 @@ public:
     std::shared_ptr<PlayerServiceClientManager> player_service_client_manager);
 
   // Can call this function if check_include_request_message() return true
-  void async_send_request(const rclcpp::SerializedMessage & message);
+  void
+  async_send_request(const rclcpp::SerializedMessage & message);
 
-  std::shared_ptr<rclcpp::GenericClient> generic_client()
+  std::shared_ptr<rclcpp::GenericClient>
+  generic_client()
   {
     return client_;
   }
 
   // Check if message can be unpacked to get request message
-  bool include_request_message(const rclcpp::SerializedMessage & message);
+  bool
+  include_request_message(const rclcpp::SerializedMessage & message);
 
 private:
   std::shared_ptr<rclcpp::GenericClient> client_;
@@ -88,14 +93,20 @@ public:
     std::chrono::seconds request_future_timeout, size_t maximum_request_future_queue = 30);
 
   // Timeout future will be discarded and check queue.
-  bool request_future_queue_is_full();
+  bool
+  request_future_queue_is_full();
 
-  bool register_request_future(rclcpp::GenericClient::FutureAndRequestId & request_future);
+  bool
+  register_request_future(
+    rclcpp::GenericClient::FutureAndRequestId & request_future,
+    std::weak_ptr<rclcpp::GenericClient> client);
 
 private:
   using time_point = std::chrono::steady_clock::time_point;
   using ptr_future_and_request_id = std::unique_ptr<rclcpp::GenericClient::FutureAndRequestId>;
-  std::map<time_point, ptr_future_and_request_id> request_futures_list_;
+  using request_id_and_client_t =
+    std::pair<ptr_future_and_request_id, std::weak_ptr<rclcpp::GenericClient>>;
+  std::map<time_point, request_id_and_client_t> request_futures_list_;
   std::mutex request_futures_list_lock_;
 
   std::chrono::seconds request_future_timeout_;
