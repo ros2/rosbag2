@@ -2,6 +2,9 @@
 Changelog for package rosbag2_performance_benchmarking_msgs
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+
 0.22.5 (2023-11-18)
 -------------------
 

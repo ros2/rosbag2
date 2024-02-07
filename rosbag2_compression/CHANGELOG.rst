@@ -2,6 +2,11 @@
 Changelog for package rosbag2_compression
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Add default initialization for CompressionOptions (`#1545 <https://github.com/ros2/rosbag2/issues/1545>`_)
+* Contributors: Arne Böckmann, Michael Orlov, Tomoya Fujita
+
 0.22.5 (2023-11-18)
 -------------------
 
