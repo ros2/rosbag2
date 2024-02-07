@@ -2,8 +2,8 @@
 Changelog for package rosbag2_py
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.22.6 (2024-02-07)
+-------------------
 * Install signal handlers in recorder only inside record method (`#1525 <https://github.com/ros2/rosbag2/issues/1525>`_)
 * Contributors: Michael Orlov
 

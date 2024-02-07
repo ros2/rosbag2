@@ -2,8 +2,8 @@
 Changelog for package rosbag2_transport
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.22.6 (2024-02-07)
+-------------------
 * Workaround for flaky test_play_services running with fastrtps (`#1562 <https://github.com/ros2/rosbag2/issues/1562>`_)
 * Add proper message for --start-paused (`#1540 <https://github.com/ros2/rosbag2/issues/1540>`_)
 * `Recording stopped` prints only once. (`#1534 <https://github.com/ros2/rosbag2/issues/1534>`_)

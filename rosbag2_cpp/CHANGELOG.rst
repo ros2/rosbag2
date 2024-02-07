@@ -2,8 +2,8 @@
 Changelog for package rosbag2_cpp
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.22.6 (2024-02-07)
+-------------------
 * Call cv.wait_until only if necessary. (`#1522 <https://github.com/ros2/rosbag2/issues/1522>`_)
 * Contributors: Tomoya Fujita
 

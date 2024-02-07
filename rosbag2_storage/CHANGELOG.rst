@@ -2,8 +2,8 @@
 Changelog for package rosbag2_storage
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.22.6 (2024-02-07)
+-------------------
 * Remove rcpputils::fs dependencies from rosbag2_storages (`#1564 <https://github.com/ros2/rosbag2/issues/1564>`_)
 * Contributors: Chris Lalancette, Kenta Yonekura, Michael Orlov, Roman
 
