@@ -2,6 +2,13 @@
 Changelog for package rosbag2_storage_mcap
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.22.6 (2024-02-07)
+-------------------
+* Use rw_lock to protect mcap metadata lists. (`#1566 <https://github.com/ros2/rosbag2/issues/1566>`_)
+* Remove rcpputils::fs dependencies from rosbag2_storages (`#1564 <https://github.com/ros2/rosbag2/issues/1564>`_)
+* Link and compile against rosbag2_storage_mcap: Fixed issue 1492 (`#1497 <https://github.com/ros2/rosbag2/issues/1497>`_)
+* Contributors: Alejandro Hernández Cordero, Chris Lalancette, Kenta Yonekura, Michael Orlov, Roman, Tomoya Fujita
+
 0.22.5 (2023-11-18)
 -------------------
 
