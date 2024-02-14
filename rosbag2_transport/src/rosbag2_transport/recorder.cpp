@@ -569,10 +569,12 @@ RecorderImpl::create_subscription(
       topic_name,
       topic_type,
       qos,
-      [this, topic_name, topic_type](std::shared_ptr<const rclcpp::SerializedMessage> message) {
+      [this, topic_name, topic_type](std::shared_ptr<const rclcpp::SerializedMessage> message,
+      const rclcpp::MessageInfo & mi) {
         if (!paused_.load()) {
           writer_->write(
-            message, topic_name, topic_type, node->now());
+            message, topic_name, topic_type, node->now().nanoseconds(),
+            mi.get_rmw_message_info().source_timestamp);
         }
       });
   }
@@ -586,8 +588,8 @@ RecorderImpl::create_subscription(
       if (!paused_.load()) {
         writer_->write(
           message, topic_name, topic_type,
-          rclcpp::Time(mi.get_rmw_message_info().received_timestamp),
-          rclcpp::Time(mi.get_rmw_message_info().source_timestamp));
+          mi.get_rmw_message_info().received_timestamp,
+          mi.get_rmw_message_info().source_timestamp);
       }
     });
 }

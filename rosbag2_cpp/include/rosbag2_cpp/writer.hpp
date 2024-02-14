@@ -216,9 +216,8 @@ public:
     std::shared_ptr<const rclcpp::SerializedMessage> message,
     const std::string & topic_name,
     const std::string & type_name,
-    const rclcpp::Time & recv_time,
-    const rclcpp::Time & send_time);
-
+    const rcutils_time_point_value_t & recv_timestamp,
+    const rcutils_time_point_value_t & send_timestamp);
   /**
    * Write a non-serialized message to a bagfile.
    * The topic will be created if it has not been created already.

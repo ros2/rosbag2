@@ -30,12 +30,12 @@ struct SerializedBagMessage
   /**
    * @brief Nanosecond timestamp when this message was received.
    */
-  rcutils_time_point_value_t receive_time_stamp;
+  rcutils_time_point_value_t recv_timestamp;
   /**
    * @brief Nanosecond timestamp when this message was initially published. If
-   * not available, this will be set to time_stamp.
+   * not available, this will be set to recv_timestamp.
    */
-  rcutils_time_point_value_t publish_time_stamp;
+  rcutils_time_point_value_t send_timestamp;
   std::string topic_name;
 };
 
