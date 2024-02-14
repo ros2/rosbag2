@@ -642,10 +642,10 @@ bool PlayerImpl::play_next()
 
   bool next_message_published = false;
   while (rclcpp::ok() && !next_message_published && !stop_playback_ &&
-    message_ptr != nullptr && !shall_stop_at_timestamp(message_ptr->receive_time_stamp))
+    message_ptr != nullptr && !shall_stop_at_timestamp(message_ptr->recv_timestamp))
   {
     next_message_published = publish_message(message_ptr);
-    clock_->jump(message_ptr->receive_time_stamp);
+    clock_->jump(message_ptr->recv_timestamp);
 
     message_queue_.pop();
     message_ptr = peek_next_message_from_queue();
@@ -847,11 +847,11 @@ void PlayerImpl::play_messages_from_queue()
     ready_to_play_from_queue_cv_.notify_all();
   }
   while (rclcpp::ok() && !stop_playback_ &&
-    message_ptr != nullptr && !shall_stop_at_timestamp(message_ptr->receive_time_stamp))
+    message_ptr != nullptr && !shall_stop_at_timestamp(message_ptr->recv_timestamp))
   {
     // Do not move on until sleep_until returns true
     // It will always sleep, so this is not a tight busy loop on pause
-    while (rclcpp::ok() && !clock_->sleep_until(message_ptr->receive_time_stamp)) {
+    while (rclcpp::ok() && !clock_->sleep_until(message_ptr->recv_timestamp)) {
       if (std::atomic_exchange(&cancel_wait_for_next_message_, false)) {
         break;
       }

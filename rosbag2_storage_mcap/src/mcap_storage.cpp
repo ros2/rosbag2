@@ -519,8 +519,8 @@ bool MCAPStorage::read_and_enqueue_message()
   const auto & messageView = *it;
   auto msg = std::make_shared<rosbag2_storage::SerializedBagMessage>();
   last_enqueued_message_offset_ = messageView.messageOffset;
-  msg->receive_time_stamp = rcutils_time_point_value_t(messageView.message.logTime);
-  msg->publish_time_stamp = rcutils_time_point_value_t(messageView.message.publishTime);
+  msg->recv_timestamp = rcutils_time_point_value_t(messageView.message.logTime);
+  msg->send_timestamp = rcutils_time_point_value_t(messageView.message.publishTime);
   msg->topic_name = messageView.channel->topic;
   msg->serialized_data = rosbag2_storage::make_serialized_message(messageView.message.data,
                                                                   messageView.message.dataSize);
@@ -591,7 +591,7 @@ bool MCAPStorage::enqueued_message_is_already_read()
   if (next_ == nullptr) {
     return false;
   }
-  if (last_read_time_point_ != next_->receive_time_stamp) {
+  if (last_read_time_point_ != next_->recv_timestamp) {
     return false;
   }
   if (read_order_ == mcap::ReadMessageOptions::ReadOrder::ReverseLogTimeOrder) {
@@ -678,7 +678,7 @@ std::shared_ptr<rosbag2_storage::SerializedBagMessage> MCAPStorage::read_next()
   if (!has_next()) {
     throw std::runtime_error{"No next message is available."};
   }
-  last_read_time_point_ = next_->receive_time_stamp;
+  last_read_time_point_ = next_->recv_timestamp;
   last_read_message_offset_ = last_enqueued_message_offset_;
   // Importantly, clear next_ via move so that a next message can be read.
   return std::move(next_);
@@ -773,11 +773,11 @@ void MCAPStorage::write_lock_free(std::shared_ptr<const rosbag2_storage::Seriali
   mcap::Message mcap_msg;
   mcap_msg.channelId = channel_it->second;
   mcap_msg.sequence = 0;
-  if (msg->receive_time_stamp < 0) {
-    RCUTILS_LOG_WARN_NAMED(LOG_NAME, "Invalid message timestamp %ld", msg->receive_time_stamp);
+  if (msg->recv_timestamp < 0) {
+    RCUTILS_LOG_WARN_NAMED(LOG_NAME, "Invalid message timestamp %ld", msg->recv_timestamp);
   }
-  mcap_msg.logTime = mcap::Timestamp(msg->receive_time_stamp);
-  mcap_msg.publishTime = mcap::Timestamp(msg->publish_time_stamp);
+  mcap_msg.logTime = mcap::Timestamp(msg->recv_timestamp);
+  mcap_msg.publishTime = mcap::Timestamp(msg->send_timestamp);
   mcap_msg.dataSize = msg->serialized_data->buffer_length;
   mcap_msg.data = reinterpret_cast<const std::byte *>(msg->serialized_data->buffer);
   const auto status = mcap_writer_->write(mcap_msg);
@@ -793,7 +793,7 @@ void MCAPStorage::write_lock_free(std::shared_ptr<const rosbag2_storage::Seriali
   // Increment global message count
   metadata_.message_count++;
   // Determine recording duration
-  const auto message_time = time_point(std::chrono::nanoseconds(msg->receive_time_stamp));
+  const auto message_time = time_point(std::chrono::nanoseconds(msg->recv_timestamp));
   metadata_.duration = std::max(metadata_.duration, message_time - metadata_.starting_time);
 }
 

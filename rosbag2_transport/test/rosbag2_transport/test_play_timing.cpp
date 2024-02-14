@@ -55,8 +55,8 @@ protected:
       serialize_test_message("topic1", 0, primitive_message2)
     };
 
-    messages[0]->receive_time_stamp = 100;
-    messages[1]->receive_time_stamp = messages[0]->receive_time_stamp +
+    messages[0]->recv_timestamp = 100;
+    messages[1]->recv_timestamp = messages[0]->recv_timestamp +
       message_time_difference.nanoseconds();
 
     prepared_mock_reader = std::make_unique<MockSequentialReader>();
