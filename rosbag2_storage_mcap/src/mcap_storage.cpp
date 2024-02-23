@@ -577,9 +577,9 @@ void MCAPStorage::reset_iterator()
 
   auto filter_topic = [this](std::string_view topic) {
     std::string topic_string(topic);
-    bool is_service_topic = is_service_event_topic_name(std::string(topic_string));
+    bool is_service_event_topic = is_service_event_topic_name(std::string(topic_string));
 
-    if (is_service_topic) {
+    if (is_service_event_topic) {
       if (!storage_filter_.exclude_service_events.empty()) {
         auto it = std::find(storage_filter_.exclude_service_events.begin(),
                             storage_filter_.exclude_service_events.end(), topic_string);
@@ -608,7 +608,7 @@ void MCAPStorage::reset_iterator()
     }
 #endif
 
-    if (is_service_topic) {
+    if (is_service_event_topic) {
       if (!storage_filter_.services_events.empty()) {
         auto it = std::find(storage_filter_.services_events.begin(),
                             storage_filter_.services_events.end(), topic_string);

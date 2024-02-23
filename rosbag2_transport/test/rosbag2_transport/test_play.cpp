@@ -319,17 +319,17 @@ TEST_F(RosBag2PlayTestFixture, recorded_messages_are_played_for_filtered_topics)
   complex_message1->bool_values = {{true, false, true}};
 
   auto topic_types = std::vector<rosbag2_storage::TopicMetadata>{
-    {1u, "topic1", "test_msgs/BasicTypes", "", {}, ""},
-    {2u, "topic2", "test_msgs/Arrays", "", {}, ""},
+    {1u, "/topic1", "test_msgs/BasicTypes", "", {}, ""},
+    {2u, "/topic2", "test_msgs/Arrays", "", {}, ""},
   };
 
   std::vector<std::shared_ptr<rosbag2_storage::SerializedBagMessage>> messages =
-  {serialize_test_message("topic1", 500, primitive_message1),
-    serialize_test_message("topic1", 700, primitive_message1),
-    serialize_test_message("topic1", 900, primitive_message1),
-    serialize_test_message("topic2", 550, complex_message1),
-    serialize_test_message("topic2", 750, complex_message1),
-    serialize_test_message("topic2", 950, complex_message1)};
+  {serialize_test_message("/topic1", 500, primitive_message1),
+    serialize_test_message("/topic1", 700, primitive_message1),
+    serialize_test_message("/topic1", 900, primitive_message1),
+    serialize_test_message("/topic2", 550, complex_message1),
+    serialize_test_message("/topic2", 750, complex_message1),
+    serialize_test_message("/topic2", 950, complex_message1)};
 
   // Filter allows /topic2, blocks /topic1
   {
@@ -431,19 +431,19 @@ TEST_F(RosBag2PlayTestFixture, recorded_messages_are_played_for_filtered_topics)
 TEST_F(RosBag2PlayTestFixture, recorded_messages_are_played_for_filtered_services)
 {
   auto services_types = std::vector<rosbag2_storage::TopicMetadata>{
-    {"test_service1/_service_event", "test_msgs/srv/BasicTypes_Event", "", {}, ""},
-    {"test_service2/_service_event", "test_msgs/srv/BasicTypes_Event", "", {}, ""},
+    {"/test_service1/_service_event", "test_msgs/srv/BasicTypes_Event", "", {}, ""},
+    {"/test_service2/_service_event", "test_msgs/srv/BasicTypes_Event", "", {}, ""},
   };
   std::vector<std::shared_ptr<rosbag2_storage::SerializedBagMessage>> messages =
   {
     serialize_test_message(
-      "test_service1/_service_event", 500, get_service_event_message_basic_types()[0]),
+      "/test_service1/_service_event", 500, get_service_event_message_basic_types()[0]),
     serialize_test_message(
-      "test_service2/_service_event", 600, get_service_event_message_basic_types()[0]),
+      "/test_service2/_service_event", 600, get_service_event_message_basic_types()[0]),
     serialize_test_message(
-      "test_service1/_service_event", 400, get_service_event_message_basic_types()[1]),
+      "/test_service1/_service_event", 400, get_service_event_message_basic_types()[1]),
     serialize_test_message(
-      "test_service2/_service_event", 500, get_service_event_message_basic_types()[1])
+      "/test_service2/_service_event", 500, get_service_event_message_basic_types()[1])
   };
 
   auto prepared_mock_reader = std::make_unique<MockSequentialReader>();
@@ -536,22 +536,22 @@ TEST_F(RosBag2PlayTestFixture, recorded_messages_are_played_for_filtered_service
 TEST_F(RosBag2PlayTestFixture, recorded_messages_are_played_for_filtered_topics_and_services)
 {
   auto all_types = std::vector<rosbag2_storage::TopicMetadata>{
-    {"topic1", "test_msgs/BasicTypes", "", {}, ""},
-    {"topic2", "test_msgs/BasicTypes", "", {}, ""},
-    {"test_service1/_service_event", "test_msgs/srv/BasicTypes_Event", "", {}, ""},
-    {"test_service2/_service_event", "test_msgs/srv/BasicTypes_Event", "", {}, ""},
+    {"/topic1", "test_msgs/BasicTypes", "", {}, ""},
+    {"/topic2", "test_msgs/BasicTypes", "", {}, ""},
+    {"/test_service1/_service_event", "test_msgs/srv/BasicTypes_Event", "", {}, ""},
+    {"/test_service2/_service_event", "test_msgs/srv/BasicTypes_Event", "", {}, ""},
   };
 
   std::vector<std::shared_ptr<rosbag2_storage::SerializedBagMessage>> messages =
   {
-    serialize_test_message("topic1", 500, get_messages_basic_types()[0]),
+    serialize_test_message("/topic1", 500, get_messages_basic_types()[0]),
     serialize_test_message(
-      "test_service1/_service_event",
+      "/test_service1/_service_event",
       520,
       get_service_event_message_basic_types()[0]),
-    serialize_test_message("topic2", 520, get_messages_basic_types()[0]),
+    serialize_test_message("/topic2", 520, get_messages_basic_types()[0]),
     serialize_test_message(
-      "test_service2/_service_event",
+      "/test_service2/_service_event",
       550,
       get_service_event_message_basic_types()[0]),
   };
@@ -701,19 +701,19 @@ TEST_F(RosBag2PlayTestFixture, recorded_messages_are_played_for_filtered_topics_
   unknown_message1->int32_value = 42;
 
   auto topic_types = std::vector<rosbag2_storage::TopicMetadata>{
-    {1u, "topic1", "test_msgs/BasicTypes", "", {}, ""},
-    {2u, "topic2", "test_msgs/Arrays", "", {}, ""},
-    {3u, "topic3", "unknown_msgs/UnknownType", "", {}, ""},
+    {1u, "/topic1", "test_msgs/BasicTypes", "", {}, ""},
+    {2u, "/topic2", "test_msgs/Arrays", "", {}, ""},
+    {3u, "/topic3", "unknown_msgs/UnknownType", "", {}, ""},
   };
 
   std::vector<std::shared_ptr<rosbag2_storage::SerializedBagMessage>> messages =
-  {serialize_test_message("topic1", 500, primitive_message1),
-    serialize_test_message("topic1", 700, primitive_message1),
-    serialize_test_message("topic1", 900, primitive_message1),
-    serialize_test_message("topic2", 550, complex_message1),
-    serialize_test_message("topic2", 750, complex_message1),
-    serialize_test_message("topic2", 950, complex_message1),
-    serialize_test_message("topic3", 900, unknown_message1)};
+  {serialize_test_message("/topic1", 500, primitive_message1),
+    serialize_test_message("/topic1", 700, primitive_message1),
+    serialize_test_message("/topic1", 900, primitive_message1),
+    serialize_test_message("/topic2", 550, complex_message1),
+    serialize_test_message("/topic2", 750, complex_message1),
+    serialize_test_message("/topic2", 950, complex_message1),
+    serialize_test_message("/topic3", 900, unknown_message1)};
 
   {
     play_options_.topics_to_filter = {"topic2"};

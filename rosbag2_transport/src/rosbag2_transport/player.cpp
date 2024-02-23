@@ -223,6 +223,9 @@ protected:
   std::forward_list<play_msg_callback_data> on_play_msg_pre_callbacks_;
   std::forward_list<play_msg_callback_data> on_play_msg_post_callbacks_;
 
+  void run_play_msg_pre_callbacks(rosbag2_storage::SerializedBagMessageSharedPtr message);
+  void run_play_msg_post_callbacks(rosbag2_storage::SerializedBagMessageSharedPtr message);
+
   class PlayerPublisher final
   {
 public:
@@ -350,6 +353,30 @@ PlayerImpl::PlayerImpl(
   player_service_client_manager_(
     std::make_shared<PlayerServiceClientManager>(std::chrono::seconds(5 * 60)))
 {
+  for (auto & topic : play_options_.topics_to_filter) {
+    topic = rclcpp::expand_topic_or_service_name(
+      topic, owner->get_name(),
+      owner->get_namespace(), false);
+  }
+
+  for (auto & exclude_topic : play_options_.exclude_topics_to_filter) {
+    exclude_topic = rclcpp::expand_topic_or_service_name(
+      exclude_topic, owner->get_name(),
+      owner->get_namespace(), false);
+  }
+
+  for (auto & service_event_topic : play_options_.services_to_filter) {
+    service_event_topic = rclcpp::expand_topic_or_service_name(
+      service_event_topic, owner->get_name(),
+      owner->get_namespace(), false);
+  }
+
+  for (auto & exclude_service_event_topic : play_options_.exclude_services_to_filter) {
+    exclude_service_event_topic = rclcpp::expand_topic_or_service_name(
+      exclude_service_event_topic, owner->get_name(),
+      owner->get_namespace(), false);
+  }
+
   {
     std::lock_guard<std::mutex> lk(reader_mutex_);
     reader_ = std::move(reader);
@@ -1122,32 +1149,36 @@ void PlayerImpl::prepare_publishers()
   reader_->add_event_callbacks(callbacks);
 }
 
+void PlayerImpl::run_play_msg_pre_callbacks(
+  rosbag2_storage::SerializedBagMessageSharedPtr message)
+{
+  std::lock_guard<std::mutex> lk(on_play_msg_callbacks_mutex_);
+  for (auto & pre_callback_data : on_play_msg_pre_callbacks_) {
+    if (pre_callback_data.callback != nullptr) {  // Sanity check
+      pre_callback_data.callback(message);
+    }
+  }
+}
+
+void PlayerImpl::run_play_msg_post_callbacks(
+  rosbag2_storage::SerializedBagMessageSharedPtr message)
+{
+  std::lock_guard<std::mutex> lk(on_play_msg_callbacks_mutex_);
+  for (auto & post_callback_data : on_play_msg_post_callbacks_) {
+    if (post_callback_data.callback != nullptr) {  // Sanity check
+      post_callback_data.callback(message);
+    }
+  }
+}
+
 bool PlayerImpl::publish_message(rosbag2_storage::SerializedBagMessageSharedPtr message)
 {
   bool message_published = false;
 
-  auto pre_callbacks = [&]() {
-      std::lock_guard<std::mutex> lk(on_play_msg_callbacks_mutex_);
-      for (auto & pre_callback_data : on_play_msg_pre_callbacks_) {
-        if (pre_callback_data.callback != nullptr) {  // Sanity check
-          pre_callback_data.callback(message);
-        }
-      }
-    };
-
-  auto post_callbacks = [&]() {
-      std::lock_guard<std::mutex> lk(on_play_msg_callbacks_mutex_);
-      for (auto & post_callback_data : on_play_msg_post_callbacks_) {
-        if (post_callback_data.callback != nullptr) {  // Sanity check
-          post_callback_data.callback(message);
-        }
-      }
-    };
-
   auto pub_iter = pub_senders_.find(message->topic_name);
   if (pub_iter != pub_senders_.end()) {
     // Calling on play message pre-callbacks
-    pre_callbacks();
+    run_play_msg_pre_callbacks(message);
 
     try {
       pub_iter->second->publish(rclcpp::SerializedMessage(*message->serialized_data));
@@ -1159,7 +1190,7 @@ bool PlayerImpl::publish_message(rosbag2_storage::SerializedBagMessageSharedPtr 
     }
 
     // Calling on play message post-callbacks
-    post_callbacks();
+    run_play_msg_post_callbacks(message);
     return message_published;
   }
 
@@ -1172,7 +1203,7 @@ bool PlayerImpl::publish_message(rosbag2_storage::SerializedBagMessageSharedPtr 
     }
 
     // Calling on play message pre-callbacks
-    pre_callbacks();
+    run_play_msg_pre_callbacks(message);
 
     try {
       client_iter->second->async_send_request(
@@ -1186,7 +1217,7 @@ bool PlayerImpl::publish_message(rosbag2_storage::SerializedBagMessageSharedPtr 
     }
 
     // Calling on play message post-callbacks
-    post_callbacks();
+    run_play_msg_post_callbacks(message);
     return message_published;
   }
 

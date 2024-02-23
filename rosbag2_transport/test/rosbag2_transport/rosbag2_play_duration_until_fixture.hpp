@@ -50,8 +50,8 @@ public:
   static constexpr bool kBool2Value{true};
   static constexpr bool kBool3Value{false};
 
-  static constexpr const char * kTopic1Name_{"topic1"};
-  static constexpr const char * kTopic2Name_{"topic2"};
+  static constexpr const char * kTopic1Name_{"/topic1"};
+  static constexpr const char * kTopic2Name_{"/topic2"};
   static constexpr const char * kTopic1_{"/topic1"};
   static constexpr const char * kTopic2_{"/topic2"};
 

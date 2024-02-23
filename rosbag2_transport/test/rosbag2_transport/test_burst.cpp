@@ -346,18 +346,18 @@ TEST_F(RosBag2PlayTestFixture, burst_bursting_only_filtered_topics) {
   complex_message1->bool_values = {{true, false, true}};
 
   auto topic_types = std::vector<rosbag2_storage::TopicMetadata>{
-    {1u, "topic1", "test_msgs/BasicTypes", "", {}, ""},
-    {2u, "topic2", "test_msgs/Arrays", "", {}, ""},
+    {1u, "/topic1", "test_msgs/BasicTypes", "", {}, ""},
+    {2u, "/topic2", "test_msgs/Arrays", "", {}, ""},
   };
 
   std::vector<std::shared_ptr<rosbag2_storage::SerializedBagMessage>> messages =
   {
-    serialize_test_message("topic1", 500, primitive_message1),
-    serialize_test_message("topic1", 700, primitive_message1),
-    serialize_test_message("topic1", 900, primitive_message1),
-    serialize_test_message("topic2", 550, complex_message1),
-    serialize_test_message("topic2", 750, complex_message1),
-    serialize_test_message("topic2", 950, complex_message1)
+    serialize_test_message("/topic1", 500, primitive_message1),
+    serialize_test_message("/topic1", 700, primitive_message1),
+    serialize_test_message("/topic1", 900, primitive_message1),
+    serialize_test_message("/topic2", 550, complex_message1),
+    serialize_test_message("/topic2", 750, complex_message1),
+    serialize_test_message("/topic2", 950, complex_message1)
   };
 
   // Filter allows /topic2, blocks /topic1
@@ -402,19 +402,19 @@ TEST_F(RosBag2PlayTestFixture, burst_bursting_only_filtered_topics) {
 
 TEST_F(RosBag2PlayTestFixture, burst_bursting_only_filtered_services) {
   auto services_types = std::vector<rosbag2_storage::TopicMetadata>{
-    {"test_service1/_service_event", "test_msgs/srv/BasicTypes_Event", "", {}, ""},
-    {"test_service2/_service_event", "test_msgs/srv/BasicTypes_Event", "", {}, ""},
+    {"/test_service1/_service_event", "test_msgs/srv/BasicTypes_Event", "", {}, ""},
+    {"/test_service2/_service_event", "test_msgs/srv/BasicTypes_Event", "", {}, ""},
   };
   std::vector<std::shared_ptr<rosbag2_storage::SerializedBagMessage>> messages =
   {
     serialize_test_message(
-      "test_service1/_service_event", 500, get_service_event_message_basic_types()[0]),
+      "/test_service1/_service_event", 500, get_service_event_message_basic_types()[0]),
     serialize_test_message(
-      "test_service2/_service_event", 600, get_service_event_message_basic_types()[0]),
+      "/test_service2/_service_event", 600, get_service_event_message_basic_types()[0]),
     serialize_test_message(
-      "test_service1/_service_event", 400, get_service_event_message_basic_types()[1]),
+      "/test_service1/_service_event", 400, get_service_event_message_basic_types()[1]),
     serialize_test_message(
-      "test_service2/_service_event", 500, get_service_event_message_basic_types()[1])
+      "/test_service2/_service_event", 500, get_service_event_message_basic_types()[1])
   };
 
   std::vector<std::shared_ptr<test_msgs::srv::BasicTypes::Request>> service1_receive_requests;
