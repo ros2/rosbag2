@@ -22,17 +22,9 @@
 
 import os
 from pathlib import Path
-import sys
 
-if os.environ.get('ROSBAG2_PY_TEST_WITH_RTLD_GLOBAL', None) is not None:
-    # This is needed on Linux when compiling with clang/libc++.
-    # TL;DR This makes class_loader work when using a python extension compiled with libc++.
-    #
-    # For the fun RTTI ABI details, see https://whatofhow.wordpress.com/2015/03/17/odr-rtti-dso/.
-    sys.setdlopenflags(os.RTLD_GLOBAL | os.RTLD_LAZY)
-
-from common import get_rosbag_options  # noqa
-import rosbag2_py  # noqa
+from common import get_rosbag_options
+import rosbag2_py
 
 RESOURCES_PATH = Path(os.environ['ROSBAG2_PY_TEST_RESOURCES_DIR'])
 

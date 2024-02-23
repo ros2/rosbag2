@@ -118,12 +118,13 @@ if(BUILD_TESTING)
     set(set_env_vars "${set_env_vars} ROSBAG2_PY_TEST_WITH_RTLD_GLOBAL=True")
   endif()
 
-  # message(FATAL_ERROR "HELP I AM THE PATH ${CMAKE_CURRENT_SOURCE_DIR}")
-  ament_add_pytest_test(test_sequential_reader_py "test/test_sequential_reader.py"
+  ament_add_pytest_test(test_sequential_reader_py
+    "test/test_sequential_reader.py"
     APPEND_ENV "${append_env_vars}"
     ENV "${set_env_vars}"
   )
-  ament_add_pytest_test(test_sequential_reader_multiple_files_py "test/test_sequential_reader_multiple_files.py"
+  ament_add_pytest_test(test_sequential_reader_multiple_files_py
+    "test/test_sequential_reader_multiple_files.py"
     APPEND_ENV "${append_env_vars}"
     ENV "${set_env_vars}"
   )
@@ -144,6 +145,12 @@ if(BUILD_TESTING)
   )
   ament_add_pytest_test(test_convert_py
     "test/test_convert.py"
+    APPEND_ENV "${append_env_vars}"
+    ENV "${set_env_vars}"
+  )
+
+  ament_add_pytest_test(test_storage_py
+    "test/test_storage.py"
     APPEND_ENV "${append_env_vars}"
     ENV "${set_env_vars}"
   )
