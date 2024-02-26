@@ -265,8 +265,8 @@ private:
   rclcpp::Publisher<rosgraph_msgs::msg::Clock>::SharedPtr clock_publisher_;
   using PlayerPublisherSharedPtr = std::shared_ptr<PlayerPublisher>;
   using PlayerServiceClientSharedPtr = std::shared_ptr<PlayerServiceClient>;
-  std::unordered_map<std::string, PlayerPublisherSharedPtr> pub_senders_;
-  std::unordered_map<std::string, PlayerServiceClientSharedPtr> service_client_senders_;
+  std::unordered_map<std::string, PlayerPublisherSharedPtr> publishers_;
+  std::unordered_map<std::string, PlayerServiceClientSharedPtr> service_clients_;
 
 private:
   rosbag2_storage::SerializedBagMessageSharedPtr peek_next_message_from_queue();
@@ -518,7 +518,7 @@ bool PlayerImpl::play()
         if (timeout == std::chrono::milliseconds(0)) {
           timeout = std::chrono::milliseconds(-1);
         }
-        for (auto & [topic, pub] : pub_senders_) {
+        for (auto & [topic, pub] : publishers_) {
           try {
             if (!pub->generic_publisher()->wait_for_all_acked(timeout)) {
               RCLCPP_ERROR(
@@ -796,7 +796,7 @@ std::unordered_map<std::string,
   std::shared_ptr<rclcpp::GenericPublisher>> PlayerImpl::get_publishers()
 {
   std::unordered_map<std::string, std::shared_ptr<rclcpp::GenericPublisher>> topic_to_publisher_map;
-  for (const auto & [topic, pub] : pub_senders_) {
+  for (const auto & [topic, pub] : publishers_) {
     topic_to_publisher_map[topic] = pub->generic_publisher();
   }
   return topic_to_publisher_map;
@@ -806,7 +806,7 @@ std::unordered_map<std::string,
   std::shared_ptr<rclcpp::GenericClient>> PlayerImpl::get_services_clients()
 {
   std::unordered_map<std::string, std::shared_ptr<rclcpp::GenericClient>> topic_to_client_map;
-  for (const auto & [service_name, client] : service_client_senders_) {
+  for (const auto & [service_name, client] : service_clients_) {
     topic_to_client_map[service_name] = client->generic_client();
   }
   return topic_to_client_map;
@@ -1065,7 +1065,7 @@ void PlayerImpl::prepare_publishers()
   for (const auto & topic : topics) {
     if (rosbag2_cpp::is_service_event_topic(topic.name, topic.type)) {
       // Check if sender was created
-      if (service_client_senders_.find(topic.name) != service_client_senders_.end()) {
+      if (service_clients_.find(topic.name) != service_clients_.end()) {
         continue;
       }
 
@@ -1081,7 +1081,7 @@ void PlayerImpl::prepare_publishers()
         auto player_cli = std::make_shared<PlayerServiceClient>(
           std::move(cli), service_name, topic.type, owner_->get_logger(),
           player_service_client_manager_);
-        service_client_senders_.insert(std::make_pair(topic.name, player_cli));
+        service_clients_.insert(std::make_pair(topic.name, player_cli));
       } catch (const std::runtime_error & e) {
         RCLCPP_WARN(
           owner_->get_logger(),
@@ -1089,7 +1089,7 @@ void PlayerImpl::prepare_publishers()
       }
     } else {
       // Check if sender was created
-      if (pub_senders_.find(topic.name) != pub_senders_.end()) {
+      if (publishers_.find(topic.name) != publishers_.end()) {
         continue;
       }
 
@@ -1106,7 +1106,7 @@ void PlayerImpl::prepare_publishers()
           owner_->create_generic_publisher(topic.name, topic.type, topic_qos);
         std::shared_ptr<PlayerPublisher> player_pub =
           std::make_shared<PlayerPublisher>(std::move(pub), play_options_.disable_loan_message);
-        pub_senders_.insert(std::make_pair(topic.name, player_pub));
+        publishers_.insert(std::make_pair(topic.name, player_pub));
         if (play_options_.wait_acked_timeout >= 0 &&
           topic_qos.reliability() == rclcpp::ReliabilityPolicy::BestEffort)
         {
@@ -1175,8 +1175,8 @@ bool PlayerImpl::publish_message(rosbag2_storage::SerializedBagMessageSharedPtr 
 {
   bool message_published = false;
 
-  auto pub_iter = pub_senders_.find(message->topic_name);
-  if (pub_iter != pub_senders_.end()) {
+  auto pub_iter = publishers_.find(message->topic_name);
+  if (pub_iter != publishers_.end()) {
     // Calling on play message pre-callbacks
     run_play_msg_pre_callbacks(message);
 
@@ -1194,8 +1194,8 @@ bool PlayerImpl::publish_message(rosbag2_storage::SerializedBagMessageSharedPtr 
     return message_published;
   }
 
-  auto client_iter = service_client_senders_.find(message->topic_name);
-  if (client_iter != service_client_senders_.end()) {
+  auto client_iter = service_clients_.find(message->topic_name);
+  if (client_iter != service_clients_.end()) {
     if (!client_iter->second->include_request_message(
         rclcpp::SerializedMessage(*message->serialized_data)))
     {
