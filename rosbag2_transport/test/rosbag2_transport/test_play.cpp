@@ -144,8 +144,8 @@ TEST_F(RosBag2PlayTestFixture, recorded_messages_are_played_for_all_topics)
 TEST_F(RosBag2PlayTestFixture, recorded_messages_are_played_for_all_services)
 {
   auto services_types = std::vector<rosbag2_storage::TopicMetadata>{
-    {"test_service1/_service_event", "test_msgs/srv/BasicTypes_Event", "", {}, ""},
-    {"test_service2/_service_event", "test_msgs/srv/BasicTypes_Event", "", {}, ""},
+    {1u, "test_service1/_service_event", "test_msgs/srv/BasicTypes_Event", "", {}, ""},
+    {2u, "test_service2/_service_event", "test_msgs/srv/BasicTypes_Event", "", {}, ""},
   };
   std::vector<std::shared_ptr<rosbag2_storage::SerializedBagMessage>> messages =
   {
@@ -187,8 +187,8 @@ TEST_F(RosBag2PlayTestFixture, recorded_messages_are_played_for_topics_and_servi
   topic_msg->int64_value = 1111;
 
   auto services_types = std::vector<rosbag2_storage::TopicMetadata>{
-    {"topic1", "test_msgs/BasicTypes", "", {}, ""},
-    {"test_service1/_service_event", "test_msgs/srv/BasicTypes_Event", "", {}, ""},
+    {1u, "topic1", "test_msgs/BasicTypes", "", {}, ""},
+    {2u, "test_service1/_service_event", "test_msgs/srv/BasicTypes_Event", "", {}, ""},
   };
   std::vector<std::shared_ptr<rosbag2_storage::SerializedBagMessage>> messages =
   {
@@ -431,8 +431,8 @@ TEST_F(RosBag2PlayTestFixture, recorded_messages_are_played_for_filtered_topics)
 TEST_F(RosBag2PlayTestFixture, recorded_messages_are_played_for_filtered_services)
 {
   auto services_types = std::vector<rosbag2_storage::TopicMetadata>{
-    {"/test_service1/_service_event", "test_msgs/srv/BasicTypes_Event", "", {}, ""},
-    {"/test_service2/_service_event", "test_msgs/srv/BasicTypes_Event", "", {}, ""},
+    {1u, "/test_service1/_service_event", "test_msgs/srv/BasicTypes_Event", "", {}, ""},
+    {2u, "/test_service2/_service_event", "test_msgs/srv/BasicTypes_Event", "", {}, ""},
   };
   std::vector<std::shared_ptr<rosbag2_storage::SerializedBagMessage>> messages =
   {
@@ -536,10 +536,10 @@ TEST_F(RosBag2PlayTestFixture, recorded_messages_are_played_for_filtered_service
 TEST_F(RosBag2PlayTestFixture, recorded_messages_are_played_for_filtered_topics_and_services)
 {
   auto all_types = std::vector<rosbag2_storage::TopicMetadata>{
-    {"/topic1", "test_msgs/BasicTypes", "", {}, ""},
-    {"/topic2", "test_msgs/BasicTypes", "", {}, ""},
-    {"/test_service1/_service_event", "test_msgs/srv/BasicTypes_Event", "", {}, ""},
-    {"/test_service2/_service_event", "test_msgs/srv/BasicTypes_Event", "", {}, ""},
+    {1u, "/topic1", "test_msgs/BasicTypes", "", {}, ""},
+    {2u, "/topic2", "test_msgs/BasicTypes", "", {}, ""},
+    {3u, "/test_service1/_service_event", "test_msgs/srv/BasicTypes_Event", "", {}, ""},
+    {4u, "/test_service2/_service_event", "test_msgs/srv/BasicTypes_Event", "", {}, ""},
   };
 
   std::vector<std::shared_ptr<rosbag2_storage::SerializedBagMessage>> messages =

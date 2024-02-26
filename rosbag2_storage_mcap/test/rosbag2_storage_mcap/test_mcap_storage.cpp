@@ -165,16 +165,16 @@ TEST_F(McapStorageTestFixture, read_next_returns_filtered_messages_complex_condi
   std::vector<std::string> topics = {"topic1", "service_topic1/_service_event", "topic2",
                                      "service_topic2/_service_event", "topic3"};
 
-  rosbag2_storage::TopicMetadata topic_metadata_1 = {
-    topics[0], "std_msgs/msg/String", "cdr", {rclcpp::QoS(1)}, "type_hash1"};
-  rosbag2_storage::TopicMetadata topic_metadata_2 = {
-    topics[1], "std_msgs/msg/String", "cdr", {rclcpp::QoS(2)}, "type_hash2"};
-  rosbag2_storage::TopicMetadata topic_metadata_3 = {
-    topics[2], "std_msgs/msg/String", "cdr", {rclcpp::QoS(3)}, "type_hash3"};
-  rosbag2_storage::TopicMetadata topic_metadata_4 = {
-    topics[3], "std_msgs/msg/String", "cdr", {rclcpp::QoS(4)}, "type_hash4"};
-  rosbag2_storage::TopicMetadata topic_metadata_5 = {
-    topics[4], "std_msgs/msg/String", "cdr", {rclcpp::QoS(5)}, "type_hash5"};
+  rosbag2_storage::TopicMetadata topic_metadata_1 = {1u,    topics[0],        "std_msgs/msg/String",
+                                                     "cdr", {rclcpp::QoS(1)}, "type_hash1"};
+  rosbag2_storage::TopicMetadata topic_metadata_2 = {2u,    topics[1],        "std_msgs/msg/String",
+                                                     "cdr", {rclcpp::QoS(2)}, "type_hash2"};
+  rosbag2_storage::TopicMetadata topic_metadata_3 = {3u,    topics[2],        "std_msgs/msg/String",
+                                                     "cdr", {rclcpp::QoS(3)}, "type_hash3"};
+  rosbag2_storage::TopicMetadata topic_metadata_4 = {4u,    topics[3],        "std_msgs/msg/String",
+                                                     "cdr", {rclcpp::QoS(4)}, "type_hash4"};
+  rosbag2_storage::TopicMetadata topic_metadata_5 = {5u,    topics[4],        "std_msgs/msg/String",
+                                                     "cdr", {rclcpp::QoS(5)}, "type_hash5"};
 
   const rosbag2_storage::MessageDefinition definition = {"std_msgs/msg/String", "ros2msg",
                                                          "string data", ""};

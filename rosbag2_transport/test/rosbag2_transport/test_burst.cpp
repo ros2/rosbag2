@@ -402,8 +402,8 @@ TEST_F(RosBag2PlayTestFixture, burst_bursting_only_filtered_topics) {
 
 TEST_F(RosBag2PlayTestFixture, burst_bursting_only_filtered_services) {
   auto services_types = std::vector<rosbag2_storage::TopicMetadata>{
-    {"/test_service1/_service_event", "test_msgs/srv/BasicTypes_Event", "", {}, ""},
-    {"/test_service2/_service_event", "test_msgs/srv/BasicTypes_Event", "", {}, ""},
+    {1u, "/test_service1/_service_event", "test_msgs/srv/BasicTypes_Event", "", {}, ""},
+    {2u, "/test_service2/_service_event", "test_msgs/srv/BasicTypes_Event", "", {}, ""},
   };
   std::vector<std::shared_ptr<rosbag2_storage::SerializedBagMessage>> messages =
   {
