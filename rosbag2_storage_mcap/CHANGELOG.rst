@@ -2,6 +2,11 @@
 Changelog for package rosbag2_storage_mcap
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.15.9 (2024-01-24)
+-------------------
+* Link and compile against rosbag2_storage_mcap: Fixed issue 1492 (`#1496 <https://github.com/ros2/rosbag2/issues/1496>`_) (`#1498 <https://github.com/ros2/rosbag2/issues/1498>`_)
+* Contributors: mergify[bot]
+
 0.15.8 (2023-09-19)
 -------------------
 

@@ -116,9 +116,11 @@ Recorder::~Recorder()
   stop();
 }
 
-
 void Recorder::stop()
 {
+  if (event_publisher_thread_should_exit_) {
+    return;  // We are not in recording and therefore shall not do stop operation.
+  }
   stop_discovery_ = true;
   if (discovery_future_.valid()) {
     auto status = discovery_future_.wait_for(2 * record_options_.topic_polling_interval);
@@ -146,6 +148,7 @@ void Recorder::stop()
 
 void Recorder::record()
 {
+  event_publisher_thread_should_exit_ = false;
   stop_discovery_ = record_options_.is_discovery_disabled;
   paused_ = record_options_.start_paused;
   topic_qos_profile_overrides_ = record_options_.topic_qos_profile_overrides;
@@ -207,7 +210,14 @@ void Recorder::record()
     discovery_future_ =
       std::async(std::launch::async, std::bind(&Recorder::topics_discovery, this));
   }
-  RCLCPP_INFO(get_logger(), "Recording...");
+
+  if (record_options_.start_paused) {
+    RCLCPP_INFO(
+      get_logger(), "Waiting for recording: Press %s to start.",
+      enum_key_code_to_str(Recorder::kPauseResumeToggleKey).c_str());
+  } else {
+    RCLCPP_INFO(get_logger(), "Recording...");
+  }
 }
 
 void Recorder::event_publisher_thread_main()
