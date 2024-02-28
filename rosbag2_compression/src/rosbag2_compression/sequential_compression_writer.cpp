@@ -118,13 +118,15 @@ void SequentialCompressionWriter::compression_thread_fn()
     std::string file;
     {
       std::unique_lock<std::mutex> lock(compressor_queue_mutex_);
+      // *INDENT-OFF*
       compressor_condition_.wait(
         lock,
         [&] {
           return !compression_is_running_ ||
-          !compressor_message_queue_.empty() ||
-          !compressor_file_queue_.empty();
+                 !compressor_message_queue_.empty() ||
+                 !compressor_file_queue_.empty();
         });
+      // *INDENT-ON*
 
       if (!compressor_message_queue_.empty()) {
         message = compressor_message_queue_.front();
@@ -388,12 +390,14 @@ void SequentialCompressionWriter::write(
     if (compression_options_.compression_queue_size == 0u &&
       compressor_message_queue_.size() > compression_options_.compression_threads)
     {
+      // *INDENT-OFF*
       compressor_condition_.wait(
         lock,
         [&] {
           return !compression_is_running_ ||
-          compressor_message_queue_.size() <= compression_options_.compression_threads;
+                 compressor_message_queue_.size() <= compression_options_.compression_threads;
         });
+      // *INDENT-ON*
     }
 
     compressor_message_queue_.push(message);
