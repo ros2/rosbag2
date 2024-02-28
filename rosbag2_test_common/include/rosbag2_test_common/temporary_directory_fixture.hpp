@@ -20,6 +20,8 @@
 #include <filesystem>
 #include <string>
 
+#include "rcpputils/filesystem_helper.hpp"
+
 using namespace ::testing;  // NOLINT
 
 namespace rosbag2_test_common
@@ -30,7 +32,7 @@ class TemporaryDirectoryFixture : public Test
 public:
   TemporaryDirectoryFixture()
   {
-    temporary_dir_path_ = std::filesystem::temp_directory_path().generic_string();
+    temporary_dir_path_ = rcpputils::fs::create_temp_directory("tmp_test_dir_").string();
   }
 
   ~TemporaryDirectoryFixture() override

@@ -33,6 +33,7 @@
 
 using namespace ::testing;  // NOLINT
 using rosbag2_test_common::ParametrizedTemporaryDirectoryFixture;
+namespace fs = std::filesystem;
 
 TEST_P(ParametrizedTemporaryDirectoryFixture, read_metadata_supports_version_2) {
   const auto expected_storage_id = GetParam();
@@ -61,7 +62,7 @@ TEST_P(ParametrizedTemporaryDirectoryFixture, read_metadata_supports_version_2) 
 
   {
     std::ofstream fout {
-      (std::filesystem::path(temporary_dir_path_) / rosbag2_storage::MetadataIo::metadata_filename)
+      (fs::path(temporary_dir_path_) / rosbag2_storage::MetadataIo::metadata_filename)
       .generic_string()};
     fout << bagfile;
   }
@@ -149,7 +150,7 @@ TEST_P(ParametrizedTemporaryDirectoryFixture, read_metadata_supports_version_6) 
 
   {
     std::ofstream fout {
-      (std::filesystem::path(temporary_dir_path_) / rosbag2_storage::MetadataIo::metadata_filename)
+      (fs::path(temporary_dir_path_) / rosbag2_storage::MetadataIo::metadata_filename)
       .generic_string()};
     fout << bagfile;
   }
@@ -239,7 +240,7 @@ TEST_P(
     "  compression_mode: \"FILE\"\n");
 
   std::ofstream fout {
-    (std::filesystem::path(temporary_dir_path_) / rosbag2_storage::MetadataIo::metadata_filename)
+    (fs::path(temporary_dir_path_) / rosbag2_storage::MetadataIo::metadata_filename)
     .generic_string()};
   fout << bagfile;
   fout.close();
@@ -292,7 +293,7 @@ TEST_P(
 
 TEST_P(ParametrizedTemporaryDirectoryFixture, info_for_standalone_bagfile) {
   const auto storage_id = GetParam();
-  const auto bag_path = std::filesystem::path(temporary_dir_path_) / "bag";
+  const auto bag_path = fs::path(temporary_dir_path_) / "bag";
   {
     // Create an empty bag with default storage
     rosbag2_cpp::Writer writer;

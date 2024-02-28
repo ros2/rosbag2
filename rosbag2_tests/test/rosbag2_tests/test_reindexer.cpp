@@ -49,6 +49,7 @@
 using namespace testing;  // NOLINT
 using namespace rosbag2_test_common;  // NOLINT
 
+namespace fs = std::filesystem;
 
 class ReindexTestFixture : public ParametrizedTemporaryDirectoryFixture
 {
@@ -56,12 +57,12 @@ public:
   void SetUp() override
   {
     auto bag_name = get_test_name() + "_" + GetParam();
-    root_bag_path_ = std::filesystem::path(temporary_dir_path_) / bag_name;
+    root_bag_path_ = fs::path(temporary_dir_path_) / bag_name;
   }
 
   void TearDown() override
   {
-    std::filesystem::remove_all(root_bag_path_);
+    fs::remove_all(root_bag_path_);
   }
 
   std::string get_test_name() const
@@ -105,10 +106,10 @@ public:
 
     rosbag2_storage::MetadataIo metadata_io;
     original_metadata_ = metadata_io.read_metadata(root_bag_path_.generic_string());
-    std::filesystem::remove(root_bag_path_ / "metadata.yaml");
+    fs::remove(root_bag_path_ / "metadata.yaml");
   }
 
-  std::filesystem::path root_bag_path_;
+  fs::path root_bag_path_;
   rosbag2_storage::BagMetadata original_metadata_;
 };
 

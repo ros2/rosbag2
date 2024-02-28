@@ -34,6 +34,8 @@
 #include "rosbag2_storage/default_storage_id.hpp"
 #include "rosbag2_storage/storage_options.hpp"
 
+namespace fs = std::filesystem;
+
 namespace rosbag2_cpp
 {
 namespace writers
@@ -43,7 +45,7 @@ namespace
 {
 std::string strip_parent_path(const std::string & relative_path)
 {
-  return std::filesystem::path(relative_path).filename().generic_string();
+  return fs::path(relative_path).filename().generic_string();
 }
 }  // namespace
 
@@ -107,15 +109,15 @@ void SequentialWriter::open(
     converter_ = std::make_unique<Converter>(converter_options, converter_factory_);
   }
 
-  std::filesystem::path storage_path(storage_options.uri);
-  if (std::filesystem::is_directory(storage_path)) {
+  fs::path storage_path(storage_options.uri);
+  if (fs::is_directory(storage_path)) {
     std::stringstream error;
     error << "Bag directory already exists (" << storage_path.string() <<
       "), can't overwrite existing bag";
     throw std::runtime_error{error.str()};
   }
 
-  bool dir_created = std::filesystem::create_directories(storage_path);
+  bool dir_created = fs::create_directories(storage_path);
   if (!dir_created) {
     std::stringstream error;
     error << "Failed to create bag directory (" << storage_path.string() << ").";
@@ -287,10 +289,10 @@ std::string SequentialWriter::format_storage_uri(
   // The name of the folder needs to be queried in case
   // SequentialWriter is opened with a relative path.
   std::stringstream storage_file_name;
-  storage_file_name << std::filesystem::path(base_folder).filename().generic_string() << "_" <<
+  storage_file_name << fs::path(base_folder).filename().generic_string() << "_" <<
     storage_count;
 
-  return (std::filesystem::path(base_folder) / storage_file_name.str()).generic_string();
+  return (fs::path(base_folder) / storage_file_name.str()).generic_string();
 }
 
 void SequentialWriter::switch_to_next_storage()
@@ -469,10 +471,10 @@ void SequentialWriter::finalize_metadata()
   metadata_.bag_size = 0;
 
   for (const auto & path : metadata_.relative_file_paths) {
-    const auto bag_path = std::filesystem::path{path};
+    const auto bag_path = fs::path{path};
 
-    if (std::filesystem::exists(bag_path)) {
-      metadata_.bag_size += std::filesystem::file_size(bag_path);
+    if (fs::exists(bag_path)) {
+      metadata_.bag_size += fs::file_size(bag_path);
     }
   }
 

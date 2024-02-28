@@ -17,16 +17,15 @@
 #include <algorithm>
 #include <chrono>
 #include <cstring>
+#include <filesystem>
 #include <functional>
 #include <memory>
 #include <stdexcept>
 #include <string>
+#include <system_error>
 #include <utility>
 
 #include "rcpputils/asserts.hpp"
-#include "rcpputils/filesystem_helper.hpp"
-
-#include "rcutils/filesystem.h"
 
 #include "rosbag2_cpp/info.hpp"
 
@@ -40,6 +39,8 @@
 #include <unistd.h>
 #include <sys/resource.h>
 #endif
+
+namespace fs = std::filesystem;
 
 namespace rosbag2_compression
 {
@@ -292,14 +293,14 @@ void SequentialCompressionWriter::compress_file(
   BaseCompressorInterface & compressor,
   const std::string & file_relative_to_bag)
 {
-  using rcpputils::fs::path;
-
-  const auto file_relative_to_pwd = path(base_folder_) / file_relative_to_bag;
+  const auto file_relative_to_pwd = fs::path(base_folder_) / file_relative_to_bag;
   ROSBAG2_COMPRESSION_LOG_INFO_STREAM("Compressing file: " << file_relative_to_pwd.string());
 
-  if (file_relative_to_pwd.exists() && file_relative_to_pwd.file_size() > 0u) {
+  if (fs::exists(file_relative_to_pwd) &&
+    fs::file_size(file_relative_to_pwd) > 0u)
+  {
     const auto compressed_uri = compressor.compress_uri(file_relative_to_pwd.string());
-    const auto relative_compressed_uri = path(compressed_uri).filename();
+    const auto relative_compressed_uri = fs::path(compressed_uri).filename();
     {
       // After we've compressed the file, replace the name in the file list with the new name.
       // Must search for the entry because other threads may have changed the order of the vector
@@ -318,10 +319,11 @@ void SequentialCompressionWriter::compress_file(
       }
     }
 
-    if (!rcpputils::fs::remove(file_relative_to_pwd)) {
+    if (std::error_code ec;!fs::remove(file_relative_to_pwd, ec)) {
       ROSBAG2_COMPRESSION_LOG_ERROR_STREAM(
         "Failed to remove original pre-compressed bag file: \"" <<
-          file_relative_to_pwd.string() << "\". This should never happen - but execution " <<
+          file_relative_to_pwd.string() << "\"." << ec.message() <<
+          "This should never happen - but execution " <<
           "will not be halted because the compressed output was successfully created.");
     }
   } else {

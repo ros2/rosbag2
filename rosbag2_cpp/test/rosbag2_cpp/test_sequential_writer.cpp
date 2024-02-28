@@ -40,6 +40,7 @@
 
 using namespace testing;  // NOLINT
 using rosbag2_test_common::ParametrizedTemporaryDirectoryFixture;
+namespace fs = std::filesystem;
 
 class SequentialWriterTest : public Test
 {
@@ -53,8 +54,8 @@ public:
     storage_options_ = rosbag2_storage::StorageOptions{};
     storage_options_.uri = "uri";
 
-    std::filesystem::path dir(storage_options_.uri);
-    std::filesystem::remove_all(dir);
+    fs::path dir(storage_options_.uri);
+    fs::remove_all(dir);
 
     ON_CALL(*storage_factory_, open_read_write(_)).WillByDefault(
       DoAll(
@@ -76,8 +77,8 @@ public:
 
   ~SequentialWriterTest() override
   {
-    std::filesystem::path dir(storage_options_.uri);
-    std::filesystem::remove_all(dir);
+    fs::path dir(storage_options_.uri);
+    fs::remove_all(dir);
   }
 
   std::unique_ptr<StrictMock<MockStorageFactory>> storage_factory_;
@@ -636,7 +637,7 @@ TEST_F(SequentialWriterTest, split_event_calls_callback)
   }
 
   ASSERT_TRUE(callback_called);
-  auto expected_closed = std::filesystem::path(storage_options_.uri) /
+  auto expected_closed = fs::path(storage_options_.uri) /
     (storage_options_.uri + "_0");
   EXPECT_EQ(closed_file, expected_closed.generic_string());
   EXPECT_EQ(opened_file, fake_storage_uri_);
@@ -697,7 +698,7 @@ TEST_F(SequentialWriterTest, split_event_calls_on_writer_close)
   writer_->close();
 
   ASSERT_TRUE(callback_called);
-  auto expected_closed = std::filesystem::path(storage_options_.uri) /
+  auto expected_closed = fs::path(storage_options_.uri) /
     (storage_options_.uri + "_0");
   EXPECT_EQ(closed_file, expected_closed.generic_string());
   EXPECT_TRUE(opened_file.empty());
@@ -714,7 +715,7 @@ TEST_P(ParametrizedTemporaryDirectoryFixture, split_bag_metadata_has_full_durati
   };
   rosbag2_storage::StorageOptions storage_options;
   storage_options.uri =
-    (std::filesystem::path(temporary_dir_path_) / "split_duration_bag").generic_string();
+    (fs::path(temporary_dir_path_) / "split_duration_bag").generic_string();
   storage_options.storage_id = GetParam();
   write_sample_split_bag(storage_options, fake_messages, 3);
 

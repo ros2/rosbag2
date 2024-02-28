@@ -24,6 +24,7 @@
 #include "rosbag2_cpp/logging.hpp"
 #include "rosbag2_cpp/readers/sequential_reader.hpp"
 
+namespace fs = std::filesystem;
 
 namespace rosbag2_cpp
 {
@@ -34,19 +35,19 @@ namespace details
 std::vector<std::string> resolve_relative_paths(
   const std::string & base_folder, std::vector<std::string> relative_files, const int version = 4)
 {
-  auto base_path = std::filesystem::path(base_folder);
+  auto base_path = fs::path(base_folder);
   if (version < 4) {
     // In older rosbags (version <=3) relative files are prefixed with the rosbag folder name
-    base_path = std::filesystem::path(base_folder).parent_path();
+    base_path = fs::path(base_folder).parent_path();
   }
 
   rcpputils::require_true(
-    std::filesystem::exists(base_path), "base folder does not exist: " + base_folder);
+    fs::exists(base_path), "base folder does not exist: " + base_folder);
   rcpputils::require_true(
-    std::filesystem::is_directory(base_path), "base folder has to be a directory: " + base_folder);
+    fs::is_directory(base_path), "base folder has to be a directory: " + base_folder);
 
   for (auto & file : relative_files) {
-    auto path = std::filesystem::path(file);
+    auto path = fs::path(file);
     if (path.is_absolute()) {
       continue;
     }
@@ -307,8 +308,8 @@ std::string SequentialReader::get_current_file() const
 std::string SequentialReader::get_current_uri() const
 {
   auto current_file = get_current_file();
-  auto current_uri = std::filesystem::path(current_file).stem();
-  return current_uri.string();
+  auto current_uri = fs::path(current_file).stem();
+  return current_uri.generic_string();
 }
 
 void SequentialReader::check_topics_serialization_formats(

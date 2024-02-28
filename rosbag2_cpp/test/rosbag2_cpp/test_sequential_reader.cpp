@@ -43,6 +43,7 @@
 
 using namespace testing;  // NOLINT
 using rosbag2_test_common::ParametrizedTemporaryDirectoryFixture;
+namespace fs = std::filesystem;
 
 class SequentialReaderTest : public Test
 {
@@ -51,7 +52,7 @@ public:
   : storage_(std::make_shared<NiceMock<MockStorage>>()),
     converter_factory_(std::make_shared<StrictMock<MockConverterFactory>>()),
     storage_serialization_format_("rmw1_format"),
-    storage_uri_(std::filesystem::temp_directory_path().generic_string()),
+    storage_uri_(fs::temp_directory_path().generic_string()),
     default_storage_options_({storage_uri_, "mock_storage"})
   {
     rosbag2_storage::TopicMetadata topic_with_type;
@@ -65,13 +66,15 @@ public:
     message->topic_name = topic_with_type.name;
 
     relative_file_path_ =
-      (std::filesystem::path(storage_uri_) / "some/folder").generic_string();
+      (fs::path(storage_uri_) / "some/folder").generic_string();
     auto storage_factory = std::make_unique<StrictMock<MockStorageFactory>>();
     auto metadata_io = std::make_unique<NiceMock<MockMetadataIo>>();
     bag_file_1_path_ = relative_file_path_ / "bag_file1";
     bag_file_2_path_ = relative_file_path_ / "bag_file2";
-    metadata_.relative_file_paths =
-    {bag_file_1_path_.generic_string(), bag_file_2_path_.generic_string()};
+    metadata_.relative_file_paths = {
+      bag_file_1_path_.generic_string(),
+      bag_file_2_path_.generic_string()
+    };
     metadata_.version = 4;
     metadata_.topics_with_message_count.push_back({{topic_with_type}, 6});
     metadata_.storage_identifier = "mock_storage";
@@ -121,9 +124,9 @@ public:
   std::string storage_serialization_format_;
   std::string storage_uri_;
   rosbag2_storage::BagMetadata metadata_;
-  std::filesystem::path relative_file_path_;
-  std::filesystem::path bag_file_1_path_;
-  std::filesystem::path bag_file_2_path_;
+  fs::path relative_file_path_;
+  fs::path bag_file_1_path_;
+  fs::path bag_file_2_path_;
   rosbag2_storage::StorageOptions default_storage_options_;
   size_t num_next_ = 0;
 };
@@ -223,7 +226,7 @@ TEST_F(SequentialReaderTest, next_file_calls_callback) {
 }
 
 TEST_P(ParametrizedTemporaryDirectoryFixture, reader_accepts_bare_file) {
-  const auto bag_path = std::filesystem::path(temporary_dir_path_) / "bag";
+  const auto bag_path = fs::path(temporary_dir_path_) / "bag";
   const auto storage_id = GetParam();
 
   {
@@ -259,7 +262,7 @@ public:
   ReadOrderTest()
   {
     storage_options.uri =
-      (std::filesystem::path(temporary_dir_path_) / "ordertest").generic_string();
+      (fs::path(temporary_dir_path_) / "ordertest").generic_string();
     storage_options.storage_id = GetParam();
     write_sample_split_bag(storage_options, fake_messages, split_every);
   }

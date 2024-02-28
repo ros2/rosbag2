@@ -39,6 +39,8 @@
 
 #include "rosbag2_storage/storage_options.hpp"
 
+namespace fs = std::filesystem;
+
 namespace rosbag2_cpp
 {
 Reindexer::Reindexer(
@@ -56,8 +58,8 @@ Reindexer::Reindexer(
  * don't guarantee a preserved order
  */
 bool Reindexer::compare_relative_file(
-  const std::filesystem::path & first_path,
-  const std::filesystem::path & second_path)
+  const fs::path & first_path,
+  const fs::path & second_path)
 {
   std::regex regex_rule(regex_bag_pattern_, std::regex_constants::ECMAScript);
 
@@ -97,22 +99,18 @@ bool Reindexer::compare_relative_file(
  *    The files will be `emplace_back`-ed on the passed vector
  */
 void Reindexer::get_bag_files(
-  const std::filesystem::path & base_folder,
-  std::vector<std::filesystem::path> & output)
+  const fs::path & base_folder,
+  std::vector<fs::path> & output)
 {
-  std::regex regex_rule(regex_bag_pattern_, std::regex_constants::ECMAScript);
-  auto dir_iter = std::filesystem::directory_iterator(base_folder);
-  auto first = std::filesystem::begin(dir_iter);
-  auto last = std::filesystem::end(dir_iter);
-
   // Make sure there are files in the directory
-  if (std::filesystem::is_empty(base_folder)) {
+  if (fs::is_empty(base_folder)) {
     throw std::runtime_error("Empty directory.");
   }
 
+  std::regex regex_rule(regex_bag_pattern_, std::regex_constants::ECMAScript);
   // Get all file names in directory
-  for (; first != last; ++first) {
-    auto found_file = first->path().filename();
+  for (const auto & entry : fs::directory_iterator(base_folder)) {
+    auto found_file = entry.path().filename();
     ROSBAG2_CPP_LOG_DEBUG_STREAM("Found file: " << found_file.generic_string());
 
     if (std::regex_match(found_file.generic_string(), regex_rule)) {
@@ -124,7 +122,7 @@ void Reindexer::get_bag_files(
   // Sort relative file path by number
   std::sort(
     output.begin(), output.end(),
-    [&, this](std::filesystem::path a, std::filesystem::path b) {
+    [&, this](fs::path a, fs::path b) {
       return compare_relative_file(a, b);
     });
 }
@@ -135,7 +133,7 @@ void Reindexer::get_bag_files(
  * Also fills in `starting_time` with a dummy default value. Important for later functions
  */
 void Reindexer::init_metadata(
-  const std::vector<std::filesystem::path> & files,
+  const std::vector<fs::path> & files,
   const rosbag2_storage::StorageOptions & storage_options)
 {
   metadata_ = rosbag2_storage::BagMetadata{};
@@ -159,7 +157,7 @@ void Reindexer::init_metadata(
  * @param: storage_options Used to construct the `Reader` needed to parse the bag files
  */
 void Reindexer::aggregate_metadata(
-  const std::vector<std::filesystem::path> & files,
+  const std::vector<fs::path> & files,
   const std::unique_ptr<rosbag2_cpp::readers::SequentialReader> & bag_reader,
   const rosbag2_storage::StorageOptions & storage_options)
 {
@@ -172,7 +170,7 @@ void Reindexer::aggregate_metadata(
   for (const auto & f_ : files) {
     ROSBAG2_CPP_LOG_DEBUG_STREAM("Extracting from file: " + f_.generic_string());
 
-    metadata_.bag_size += std::filesystem::file_size(f_);
+    metadata_.bag_size += fs::file_size(f_);
 
     // Set up reader
     rosbag2_storage::StorageOptions temp_so = {
@@ -246,7 +244,7 @@ void Reindexer::reindex(const rosbag2_storage::StorageOptions & storage_options)
     std::move(storage_factory_), converter_factory_, std::move(metadata_io_default));
 
   // Identify all bag files
-  std::vector<std::filesystem::path> files;
+  std::vector<fs::path> files;
   get_bag_files(base_folder_, files);
   if (files.empty()) {
     throw std::runtime_error("No storage files found for reindexing. Abort");

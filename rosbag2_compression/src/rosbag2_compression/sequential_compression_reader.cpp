@@ -14,6 +14,7 @@
 
 #include "rosbag2_compression/sequential_compression_reader.hpp"
 
+#include <filesystem>
 #include <memory>
 #include <stdexcept>
 #include <string>
@@ -21,11 +22,12 @@
 #include <vector>
 
 #include "rcpputils/asserts.hpp"
-#include "rcpputils/filesystem_helper.hpp"
 
 #include "rosbag2_compression/compression_options.hpp"
 
 #include "logging.hpp"
+
+namespace fs = std::filesystem;
 
 namespace rosbag2_compression
 {
@@ -67,17 +69,17 @@ void SequentialCompressionReader::preprocess_current_file()
      * Because we have no way to check whether the bag was written correctly,
      * check for the existence of the prefixed file as a fallback.
      */
-    const rcpputils::fs::path base{base_folder_};
-    const rcpputils::fs::path relative{get_current_file()};
+    const fs::path base{base_folder_};
+    const fs::path relative{get_current_file()};
     const auto resolved = base / relative;
-    if (!resolved.exists()) {
+    if (!fs::exists(resolved)) {
       const auto base_stripped = relative.filename();
       const auto resolved_stripped = base / base_stripped;
       ROSBAG2_COMPRESSION_LOG_DEBUG_STREAM(
         "Unable to find specified bagfile " << resolved.string() <<
           ". Falling back to checking for " << resolved_stripped.string());
       rcpputils::require_true(
-        resolved_stripped.exists(),
+        fs::exists(resolved_stripped),
         "Unable to resolve relative file path either as a V3 or V4 relative path");
       *current_file_iterator_ = resolved_stripped.string();
     }

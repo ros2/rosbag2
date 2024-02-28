@@ -24,13 +24,15 @@
 
 using namespace ::testing;  // NOLINT
 
+namespace fs = std::filesystem;
+
 class InfoEndToEndTestFixture : public Test, public WithParamInterface<std::string>
 {
 public:
   InfoEndToEndTestFixture()
   {
     // _SRC_RESOURCES_DIR_PATH defined in CMakeLists.txt
-    bags_path_ = (std::filesystem::path(_SRC_RESOURCES_DIR_PATH) / GetParam()).generic_string();
+    bags_path_ = (fs::path(_SRC_RESOURCES_DIR_PATH) / GetParam()).generic_string();
   }
 
   std::string bags_path_;

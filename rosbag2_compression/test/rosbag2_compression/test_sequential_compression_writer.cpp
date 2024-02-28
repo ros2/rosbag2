@@ -14,6 +14,7 @@
 
 #include <gmock/gmock.h>
 
+#include <filesystem>
 #include <fstream>
 #include <memory>
 #include <string>
@@ -21,7 +22,6 @@
 #include <vector>
 
 #include "rcpputils/asserts.hpp"
-#include "rcpputils/filesystem_helper.hpp"
 
 #include "rosbag2_compression/compression_options.hpp"
 #include "rosbag2_compression/sequential_compression_writer.hpp"
@@ -47,6 +47,8 @@
 
 using namespace testing;  // NOLINT
 
+namespace fs = std::filesystem;
+
 static constexpr const char * DefaultTestCompressor = "fake_comp";
 
 class SequentialCompressionWriterTest : public TestWithParam<uint64_t>
@@ -57,12 +59,12 @@ public:
     storage_{std::make_shared<NiceMock<MockStorage>>()},
     converter_factory_{std::make_shared<StrictMock<MockConverterFactory>>()},
     metadata_io_{std::make_unique<NiceMock<MockMetadataIo>>()},
-    tmp_dir_{rcpputils::fs::temp_directory_path() / "SequentialCompressionWriterTest"},
+    tmp_dir_{fs::temp_directory_path() / "SequentialCompressionWriterTest"},
     tmp_dir_storage_options_{},
     serialization_format_{"rmw_format"}
   {
     tmp_dir_storage_options_.uri = tmp_dir_.string();
-    rcpputils::fs::remove_all(tmp_dir_);
+    fs::remove_all(tmp_dir_);
     ON_CALL(*storage_factory_, open_read_write(_)).WillByDefault(Return(storage_));
     EXPECT_CALL(*storage_factory_, open_read_write(_)).Times(AtLeast(0));
     // intercept the metadata write so we can analyze it.
@@ -79,7 +81,7 @@ public:
 
   ~SequentialCompressionWriterTest() override
   {
-    rcpputils::fs::remove_all(tmp_dir_);
+    fs::remove_all(tmp_dir_);
   }
 
   void initializeFakeFileStorage()
@@ -139,7 +141,7 @@ public:
   std::shared_ptr<StrictMock<MockConverterFactory>> converter_factory_;
   std::unique_ptr<MockMetadataIo> metadata_io_;
 
-  rcpputils::fs::path tmp_dir_;
+  fs::path tmp_dir_;
   rosbag2_storage::StorageOptions tmp_dir_storage_options_;
   rosbag2_storage::BagMetadata intercepted_write_metadata_;
   std::vector<rosbag2_storage::BagMetadata> v_intercepted_update_metadata_;
@@ -212,7 +214,7 @@ TEST_F(SequentialCompressionWriterTest, open_succeeds_on_supported_compression_f
     kDefaultCompressionQueueThreadsPriority};
   initializeWriter(compression_options);
 
-  auto tmp_dir = rcpputils::fs::temp_directory_path() / "path_not_empty";
+  auto tmp_dir = fs::temp_directory_path() / "path_not_empty";
   auto storage_options = rosbag2_storage::StorageOptions();
   storage_options.uri = tmp_dir.string();
 

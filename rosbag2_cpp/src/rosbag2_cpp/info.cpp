@@ -22,12 +22,13 @@
 
 #include "rmw/rmw.h"
 #include "rosidl_typesupport_cpp/message_type_support.hpp"
-#include "rcpputils/filesystem_helper.hpp"
 #include "service_msgs/msg/service_event_info.hpp"
 
 #include "rosbag2_cpp/service_utils.hpp"
 #include "rosbag2_storage/metadata_io.hpp"
 #include "rosbag2_storage/storage_factory.hpp"
+
+namespace fs = std::filesystem;
 
 namespace rosbag2_cpp
 {
@@ -35,8 +36,8 @@ namespace rosbag2_cpp
 rosbag2_storage::BagMetadata Info::read_metadata(
   const std::string & uri, const std::string & storage_id)
 {
-  const std::filesystem::path bag_path{uri};
-  if (!std::filesystem::exists(bag_path)) {
+  const fs::path bag_path{uri};
+  if (!fs::exists(bag_path)) {
     throw std::runtime_error("Bag path " + uri + " does not exist.");
   }
 
@@ -45,7 +46,7 @@ rosbag2_storage::BagMetadata Info::read_metadata(
     return metadata_io.read_metadata(uri);
   }
 
-  if (std::filesystem::is_directory(bag_path)) {
+  if (fs::is_directory(bag_path)) {
     throw std::runtime_error("Could not find metadata in bag directory " + uri);
   }
 

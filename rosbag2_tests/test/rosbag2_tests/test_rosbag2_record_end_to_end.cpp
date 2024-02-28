@@ -29,6 +29,8 @@
 
 #include "record_fixture.hpp"
 
+namespace fs = std::filesystem;
+
 namespace
 {
 /**
@@ -95,7 +97,7 @@ TEST_P(RecordFixture, record_end_to_end_test_with_zstd_file_compression) {
 
   const auto compressed_bag_file_path = get_compressed_bag_file_path(0);
 
-  ASSERT_TRUE(std::filesystem::exists(compressed_bag_file_path)) <<
+  ASSERT_TRUE(fs::exists(compressed_bag_file_path)) <<
     "Expected compressed bag file path: \"" <<
     compressed_bag_file_path.generic_string() << "\" to exist!";
 
@@ -107,7 +109,7 @@ TEST_P(RecordFixture, record_end_to_end_test_with_zstd_file_compression) {
 
   ASSERT_EQ(decompressed_uri, bag_path) <<
     "Expected decompressed URI to be same as uncompressed bag file path!";
-  ASSERT_TRUE(std::filesystem::exists(bag_path)) <<
+  ASSERT_TRUE(fs::exists(bag_path)) <<
     "Expected decompressed first bag file to exist!";
 
   auto test_topic_messages = get_messages_for_topic<test_msgs::msg::Strings>(
@@ -320,11 +322,11 @@ TEST_P(RecordFixture, record_end_to_end_with_splitting_bagsize_split_is_at_least
 
   // Don't include the last bagfile since it won't be full
   for (int i = 0; i < actual_splits - 1; ++i) {
-    const auto bagfile_path = root_bag_path_ / std::filesystem::path{metadata.files[i].path};
-    ASSERT_TRUE(std::filesystem::exists(bagfile_path)) <<
+    const auto bagfile_path = root_bag_path_ / fs::path{metadata.files[i].path};
+    ASSERT_TRUE(fs::exists(bagfile_path)) <<
       "Expected bag file: \"" << bagfile_path.generic_string() << "\" to exist.";
 
-    const auto actual_split_size = static_cast<int>(std::filesystem::file_size(bagfile_path));
+    const auto actual_split_size = static_cast<int>(fs::file_size(bagfile_path));
     // Actual size is guaranteed to be >= bagfile_split size
     EXPECT_LT(bagfile_split_size, actual_split_size);
   }
@@ -369,13 +371,13 @@ TEST_P(RecordFixture, record_end_to_end_with_splitting_max_size_not_reached) {
 
   // Check that there's only 1 bagfile and that it exists.
   ASSERT_EQ(1u, metadata.files.size());
-  const auto bagfile_path = root_bag_path_ / std::filesystem::path{metadata.files[0].path};
-  ASSERT_TRUE(std::filesystem::exists(bagfile_path)) <<
+  const auto bagfile_path = root_bag_path_ / fs::path{metadata.files[0].path};
+  ASSERT_TRUE(fs::exists(bagfile_path)) <<
     "Expected bag file: \"" << bagfile_path.generic_string() << "\" to exist.";
 
   // Check that the next bagfile does not exist.
   const auto next_bag_file = get_bag_file_path(1);
-  EXPECT_FALSE(std::filesystem::exists(next_bag_file)) << "Expected next bag file: \"" <<
+  EXPECT_FALSE(fs::exists(next_bag_file)) << "Expected next bag file: \"" <<
     next_bag_file.generic_string() << "\" to not exist!";
 }
 
@@ -420,8 +422,8 @@ TEST_P(RecordFixture, record_end_to_end_with_splitting_splits_bagfile) {
   ASSERT_GE(metadata.relative_file_paths.size(), 1u) << "Bagfile never split!";
 
   for (const auto & file : metadata.files) {
-    auto path = root_bag_path_ / std::filesystem::path(file.path);
-    EXPECT_TRUE(std::filesystem::exists(path));
+    auto path = root_bag_path_ / fs::path(file.path);
+    EXPECT_TRUE(fs::exists(path));
   }
 }
 
@@ -465,8 +467,8 @@ TEST_P(RecordFixture, record_end_to_end_with_duration_splitting_splits_bagfile) 
   const auto metadata = metadata_io.read_metadata(root_bag_path_.generic_string());
 
   for (const auto & file : metadata.files) {
-    auto path = root_bag_path_ / std::filesystem::path(file.path);
-    EXPECT_TRUE(std::filesystem::exists(path));
+    auto path = root_bag_path_ / fs::path(file.path);
+    EXPECT_TRUE(fs::exists(path));
   }
 }
 
@@ -512,9 +514,9 @@ TEST_P(RecordFixture, record_end_to_end_test_with_zstd_file_compression_compress
   const auto metadata = metadata_io.read_metadata(root_bag_path_.generic_string());
 
   for (const auto & path : metadata.relative_file_paths) {
-    const auto file_path = root_bag_path_ / std::filesystem::path{path};
+    const auto file_path = root_bag_path_ / fs::path{path};
 
-    EXPECT_TRUE(std::filesystem::exists(file_path)) << "File: \"" <<
+    EXPECT_TRUE(fs::exists(file_path)) << "File: \"" <<
       file_path.generic_string() << "\" does not exist!";
     EXPECT_EQ(file_path.extension().generic_string(), ".zstd") << "File :\"" <<
       file_path.generic_string() << "\" does not have proper \".zstd\" extension!";

@@ -36,6 +36,8 @@
 
 using namespace ::testing;  // NOLINT
 
+namespace fs = std::filesystem;
+
 class TestRosbag2CPPAPI : public Test, public WithParamInterface<std::string>
 {};
 
@@ -49,9 +51,9 @@ TEST_P(TestRosbag2CPPAPI, minimal_writer_example)
   rclcpp::Serialization<TestMsgT> serialization;
   serialization.serialize_message(&test_msg, &serialized_msg);
 
-  auto rosbag_directory = std::filesystem::path("test_rosbag2_writer_api_bag");
+  auto rosbag_directory = fs::path("test_rosbag2_writer_api_bag");
   // in case the bag was previously not cleaned up
-  std::filesystem::remove_all(rosbag_directory);
+  fs::remove_all(rosbag_directory);
 
   {
     rosbag2_cpp::Writer writer;
@@ -137,7 +139,7 @@ TEST_P(TestRosbag2CPPAPI, minimal_writer_example)
   }
 
   // remove the rosbag again after the test
-  EXPECT_TRUE(std::filesystem::remove_all(rosbag_directory));
+  EXPECT_TRUE(fs::remove_all(rosbag_directory));
 }
 
 INSTANTIATE_TEST_SUITE_P(

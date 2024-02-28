@@ -32,6 +32,7 @@
 #include "mock_storage_factory.hpp"
 
 using namespace testing;  // NOLINT
+namespace fs = std::filesystem;
 
 class MultifileReaderTest : public Test
 {
@@ -40,10 +41,10 @@ public:
   : storage_(std::make_shared<NiceMock<MockStorage>>()),
     converter_factory_(std::make_shared<StrictMock<MockConverterFactory>>()),
     storage_serialization_format_("rmw1_format"),
-    storage_uri_(std::filesystem::temp_directory_path().generic_string()),
+    storage_uri_(fs::temp_directory_path().generic_string()),
     relative_path_1_("some_relative_path_1"),
     relative_path_2_("some_relative_path_2"),
-    absolute_path_1_((std::filesystem::path(storage_uri_) / "some/folder").generic_string()),
+    absolute_path_1_((fs::path(storage_uri_) / "some/folder").generic_string()),
     default_storage_options_({storage_uri_, ""})
   {}
 
@@ -107,7 +108,7 @@ public:
   {
     relative_path_1_ = "rosbag_name/some_relative_path_1";
     relative_path_2_ = "rosbag_name/some_relative_path_2";
-    absolute_path_1_ = (std::filesystem::path(storage_uri_) / "some/folder").generic_string();
+    absolute_path_1_ = (fs::path(storage_uri_) / "some/folder").generic_string();
   }
 
   rosbag2_storage::BagMetadata get_metadata() const override
@@ -137,11 +138,11 @@ TEST_F(MultifileReaderTest, has_next_reads_next_file)
     reader_->get_implementation_handle());
 
   auto resolved_relative_path_1 =
-    (std::filesystem::path(storage_uri_) / relative_path_1_).generic_string();
+    (fs::path(storage_uri_) / relative_path_1_).generic_string();
   auto resolved_relative_path_2 =
-    (std::filesystem::path(storage_uri_) / relative_path_2_).generic_string();
+    (fs::path(storage_uri_) / relative_path_2_).generic_string();
   auto resolved_absolute_path_1 =
-    std::filesystem::path(absolute_path_1_).generic_string();
+    fs::path(absolute_path_1_).generic_string();
   EXPECT_EQ(sr.get_current_file(), resolved_relative_path_1);
   reader_->read_next();  // calls has_next false then true
   EXPECT_EQ(sr.get_current_file(), resolved_relative_path_2);
@@ -169,11 +170,11 @@ TEST_F(MultifileReaderTestVersion3, has_next_reads_next_file_version3)
 
   // Legacy version <=3 have a parent_path() prefixed in the relative files
   auto resolved_relative_path_1 =
-    (std::filesystem::path(storage_uri_).parent_path() / relative_path_1_).generic_string();
+    (fs::path(storage_uri_).parent_path() / relative_path_1_).generic_string();
   auto resolved_relative_path_2 =
-    (std::filesystem::path(storage_uri_).parent_path() / relative_path_2_).generic_string();
+    (fs::path(storage_uri_).parent_path() / relative_path_2_).generic_string();
   auto resolved_absolute_path_1 =
-    std::filesystem::path(absolute_path_1_).generic_string();
+    fs::path(absolute_path_1_).generic_string();
   EXPECT_EQ(sr.get_current_file(), resolved_relative_path_1);
   reader_->read_next();  // calls has_next false then true
   EXPECT_EQ(sr.get_current_file(), resolved_relative_path_2);

@@ -15,7 +15,6 @@
   <buildtool_depend>ament_cmake</buildtool_depend>
 
   <depend>pluginlib</depend>
-  <depend>rcpputils</depend>
   <depend>rcutils</depend>
   <depend>rosbag2_compression</depend>
   <depend>zstd_vendor</depend>
