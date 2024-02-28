@@ -65,7 +65,7 @@ class RecordVerb(VerbExtension):
         parser.add_argument(
             'topics', nargs='*', default=None, help='List of topics to record.')
         parser.add_argument(
-            '--topic_types', nargs='+', default=None, help='List of topic types to record.')
+            '--topic_types', nargs='+', default=[], help='List of topic types to record.')
         parser.add_argument(
             '-a', '--all', action='store_true',
             help='Record all topics and services (Exclude hidden topic).')
