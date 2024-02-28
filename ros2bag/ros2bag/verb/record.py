@@ -65,6 +65,8 @@ class RecordVerb(VerbExtension):
         parser.add_argument(
             'topics', nargs='*', default=None, help='List of topics to record.')
         parser.add_argument(
+            '--topic_types', nargs='+', default=None, help='List of topic types to record.')
+        parser.add_argument(
             '-a', '--all', action='store_true',
             help='Record all topics and services (Exclude hidden topic).')
         parser.add_argument(
@@ -189,10 +191,11 @@ class RecordVerb(VerbExtension):
                  'Has no effect if no compression mode is chosen. Default: %(default)s.')
 
     def _check_necessary_argument(self, args):
-        # At least one options out of --all, --all-topics, --all-services, --services, --topics or
-        # --regex must be used
+        # At least one options out of --all, --all-topics, --all-services, --services, --topics,
+        # --topic_types or --regex must be used
         if not (args.all or args.all_topics or args.all_services or
-           args.services or (args.topics and len(args.topics) > 0) or args.regex):
+           args.services or (args.topics and len(args.topics) > 0) or
+           (args.topic_types and len(args.topic_types) > 0) or args.regex):
             return False
         return True
 
@@ -212,7 +215,7 @@ class RecordVerb(VerbExtension):
         # Only one option out of --all, --all-topics, topics or --regex can be used
         if (args.all and args.all_topics) or \
            ((args.all or args.all_topics) and args.regex) or \
-           ((args.all or args.all_topics or args.regex) and args.topics):
+           ((args.all or args.all_topics or args.regex) and (args.topics or args.topic_types)):
             return print_error('Must specify only one option out of --all, --all-topics, '
                                'topics or --regex')
 
@@ -282,6 +285,7 @@ class RecordVerb(VerbExtension):
         record_options.all_topics = args.all_topics or args.all
         record_options.is_discovery_disabled = args.no_discovery
         record_options.topics = args.topics
+        record_options.topic_types = args.topic_types
         record_options.rmw_serialization_format = args.serialization_format
         record_options.topic_polling_interval = datetime.timedelta(
             milliseconds=args.polling_interval)
