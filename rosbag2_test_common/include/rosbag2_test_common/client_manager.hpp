@@ -43,6 +43,7 @@ public:
     enable_service_event_contents_(service_event_contents),
     enable_client_event_contents_(client_event_contents)
   {
+    // *INDENT-OFF*
     auto do_nothing_srv_callback =
       [this](const std::shared_ptr<rmw_request_id_t> request_header,
         const std::shared_ptr<typename ServiceT::Request> request,
@@ -53,6 +54,7 @@ public:
         (void)request;
         (void)response;
       };
+    // *INDENT-ON*
 
     service_ = create_service<ServiceT>(service_name_, do_nothing_srv_callback);
 

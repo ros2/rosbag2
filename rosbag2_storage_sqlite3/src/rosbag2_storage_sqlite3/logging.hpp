@@ -22,44 +22,48 @@
 
 #define ROSBAG2_STORAGE_DEFAULT_PLUGINS_PACKAGE_NAME "rosbag2_storage"
 
+// *INDENT-OFF*
+
 #define ROSBAG2_STORAGE_DEFAULT_PLUGINS_LOG_INFO(...) \
   RCUTILS_LOG_INFO_NAMED(ROSBAG2_STORAGE_DEFAULT_PLUGINS_PACKAGE_NAME, __VA_ARGS__)
 
 #define ROSBAG2_STORAGE_DEFAULT_PLUGINS_LOG_INFO_STREAM(args) do { \
-    std::stringstream __ss; \
-    __ss << args; \
-    RCUTILS_LOG_INFO_NAMED( \
-      ROSBAG2_STORAGE_DEFAULT_PLUGINS_PACKAGE_NAME, "%s", __ss.str().c_str()); \
+  std::stringstream __ss; \
+  __ss << args; \
+  RCUTILS_LOG_INFO_NAMED( \
+    ROSBAG2_STORAGE_DEFAULT_PLUGINS_PACKAGE_NAME, "%s", __ss.str().c_str()); \
 } while (0)
 
 #define ROSBAG2_STORAGE_DEFAULT_PLUGINS_LOG_ERROR(...) \
   RCUTILS_LOG_ERROR_NAMED(ROSBAG2_STORAGE_DEFAULT_PLUGINS_PACKAGE_NAME, __VA_ARGS__)
 
 #define ROSBAG2_STORAGE_DEFAULT_PLUGINS_LOG_ERROR_STREAM(args) do { \
-    std::stringstream __ss; \
-    __ss << args; \
-    RCUTILS_LOG_ERROR_NAMED( \
-      ROSBAG2_STORAGE_DEFAULT_PLUGINS_PACKAGE_NAME, "%s", __ss.str().c_str()); \
+  std::stringstream __ss; \
+  __ss << args; \
+  RCUTILS_LOG_ERROR_NAMED( \
+    ROSBAG2_STORAGE_DEFAULT_PLUGINS_PACKAGE_NAME, "%s", __ss.str().c_str()); \
 } while (0)
 
 #define ROSBAG2_STORAGE_DEFAULT_PLUGINS_LOG_WARN(...) \
   RCUTILS_LOG_WARN_NAMED(ROSBAG2_STORAGE_DEFAULT_PLUGINS_PACKAGE_NAME, __VA_ARGS__)
 
 #define ROSBAG2_STORAGE_DEFAULT_PLUGINS_LOG_WARN_STREAM(args) do { \
-    std::stringstream __ss; \
-    __ss << args; \
-    RCUTILS_LOG_WARN_NAMED( \
-      ROSBAG2_STORAGE_DEFAULT_PLUGINS_PACKAGE_NAME, "%s", __ss.str().c_str()); \
+  std::stringstream __ss; \
+  __ss << args; \
+  RCUTILS_LOG_WARN_NAMED( \
+    ROSBAG2_STORAGE_DEFAULT_PLUGINS_PACKAGE_NAME, "%s", __ss.str().c_str()); \
 } while (0)
 
 #define ROSBAG2_STORAGE_DEFAULT_PLUGINS_LOG_DEBUG(...) \
   RCUTILS_LOG_DEBUG_NAMED(ROSBAG2_STORAGE_DEFAULT_PLUGINS_PACKAGE_NAME, __VA_ARGS__)
 
 #define ROSBAG2_STORAGE_DEFAULT_PLUGINS_LOG_DEBUG_STREAM(args) do { \
-    std::stringstream __ss; \
-    __ss << args; \
-    RCUTILS_LOG_DEBUG_NAMED( \
-      ROSBAG2_STORAGE_DEFAULT_PLUGINS_PACKAGE_NAME, "%s", __ss.str().c_str()); \
+  std::stringstream __ss; \
+  __ss << args; \
+  RCUTILS_LOG_DEBUG_NAMED( \
+    ROSBAG2_STORAGE_DEFAULT_PLUGINS_PACKAGE_NAME, "%s", __ss.str().c_str()); \
 } while (0)
+
+// *INDENT-ON*
 
 #endif  // ROSBAG2_STORAGE_SQLITE3__LOGGING_HPP_

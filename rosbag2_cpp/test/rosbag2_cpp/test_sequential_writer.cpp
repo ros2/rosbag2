@@ -369,12 +369,11 @@ TEST_F(
   fake_storage_size_ = 0;
   size_t written_messages = 0;
 
-  ON_CALL(
-    *storage_,
-    write(An<const std::vector<std::shared_ptr<const rosbag2_storage::SerializedBagMessage>> &>())).
-  WillByDefault(
-    [this, &written_messages]
-      (const std::vector<std::shared_ptr<const rosbag2_storage::SerializedBagMessage>> & msgs)
+  using VectorSharedBagMessages =
+    std::vector<std::shared_ptr<const rosbag2_storage::SerializedBagMessage>>;
+
+  ON_CALL(*storage_, write(An<const VectorSharedBagMessages &>())).WillByDefault(
+    [this, &written_messages](const VectorSharedBagMessages & msgs)
     {
       written_messages += msgs.size();
       fake_storage_size_.fetch_add(static_cast<uint32_t>(msgs.size()));
