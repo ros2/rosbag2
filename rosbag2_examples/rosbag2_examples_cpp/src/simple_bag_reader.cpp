@@ -32,7 +32,7 @@ class PlaybackNode : public rclcpp::Node
       while (reader_.has_next()) {
         rosbag2_storage::SerializedBagMessageSharedPtr msg = reader_.read_next();
 
-        if (msg->topic_name != "/chatter") {
+        if (msg->topic_name != "chatter") {
           continue;
         }
 
