@@ -62,7 +62,7 @@ Node convert<rosbag2_transport::PlayOptions>::encode(
 bool convert<rosbag2_transport::PlayOptions>::decode(
   const Node & node, rosbag2_transport::PlayOptions & play_options)
 {
-  optional_assign<uint64_t>(node, "read_ahead_queue_size", play_options.read_ahead_queue_size);
+  optional_assign<size_t>(node, "read_ahead_queue_size", play_options.read_ahead_queue_size);
   optional_assign<std::string>(node, "node_prefix", play_options.node_prefix);
   optional_assign<float>(node, "rate", play_options.rate);
   optional_assign<std::vector<std::string>>(
