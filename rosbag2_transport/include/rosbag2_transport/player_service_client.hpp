@@ -90,7 +90,8 @@ class PlayerServiceClientManager final
 {
 public:
   PlayerServiceClientManager(
-    std::chrono::seconds request_future_timeout, size_t maximum_request_future_queue = 30);
+    std::chrono::seconds request_future_timeout = std::chrono::minutes(30),
+    size_t maximum_request_future_queue = 100);
 
   // Timeout future will be discarded and check queue.
   bool

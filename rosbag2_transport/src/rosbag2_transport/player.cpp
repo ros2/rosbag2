@@ -350,8 +350,7 @@ PlayerImpl::PlayerImpl(
   storage_options_(storage_options),
   play_options_(play_options),
   keyboard_handler_(std::move(keyboard_handler)),
-  player_service_client_manager_(
-    std::make_shared<PlayerServiceClientManager>(std::chrono::seconds(5 * 60)))
+  player_service_client_manager_(std::make_shared<PlayerServiceClientManager>())
 {
   for (auto & topic : play_options_.topics_to_filter) {
     topic = rclcpp::expand_topic_or_service_name(
