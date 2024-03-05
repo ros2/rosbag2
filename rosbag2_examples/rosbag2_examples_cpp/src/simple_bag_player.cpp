@@ -11,10 +11,10 @@
 
 using namespace std::chrono_literals;
 
-class PlaybackNode : public rclcpp::Node
+class SimpleBagPlayer : public rclcpp::Node
 {
   public:
-    PlaybackNode(const std::string & bag_filename)
+    SimpleBagPlayer(const std::string & bag_filename)
     : Node("playback_node")
     {
       publisher_ = this->create_publisher<example_interfaces::msg::String>("chatter", 10);
@@ -63,7 +63,7 @@ int main(int argc, char ** argv)
   }
 
   rclcpp::init(argc, argv);
-  rclcpp::spin(std::make_shared<PlaybackNode>(argv[1]));
+  rclcpp::spin(std::make_shared<SimpleBagPlayer>(argv[1]));
   rclcpp::shutdown();
 
   return 0;
