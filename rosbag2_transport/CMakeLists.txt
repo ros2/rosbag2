@@ -464,8 +464,12 @@ if(BUILD_TESTING)
   call_for_each_rmw_implementation(test_record_services_for_rmw_implementation)
 
   ament_add_gmock_executable(test_record_topic_types test/rosbag2_transport/test_record_topic_types.cpp)
-  target_link_libraries(test_record_topic_types rosbag2_transport ${test_msgs_TARGETS} rosbag2_test_common::rosbag2_test_common)
-  function(test_record_services_for_rmw_implementation)
+  target_link_libraries(test_record_topic_types
+    rosbag2_transport
+    ${test_msgs_TARGETS}
+    rosbag2_test_common::rosbag2_test_common
+  )
+  function(test_record_topic_types_for_rmw_implementation)
     set(rmw_implementation_env_var RMW_IMPLEMENTATION=${rmw_implementation})
 
     ament_add_gmock_test(test_record_topic_types
@@ -473,7 +477,7 @@ if(BUILD_TESTING)
       ENV ${rmw_implementation_env_var}
     )
   endfunction()
-  call_for_each_rmw_implementation(test_record_services_for_rmw_implementation)
+  call_for_each_rmw_implementation(test_record_topic_types_for_rmw_implementation)
 
   ament_add_gmock_executable(test_composable_recorder test/rosbag2_transport/test_composable_recorder.cpp)
   target_link_libraries(test_composable_recorder

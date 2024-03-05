@@ -174,7 +174,8 @@ bool TopicFilter::take_topic(
       return false;
     }
 
-    if (!record_options_.topic_types.empty() &&
+    if (!record_options_.all_topics &&
+      !record_options_.topic_types.empty() &&
       !type_in_list(topic_type, record_options_.topic_types))
     {
       return false;
