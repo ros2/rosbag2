@@ -6,7 +6,6 @@
 
 #include "rclcpp/rclcpp.hpp"
 #include "rclcpp/serialization.hpp"
-#include "rosbag2_storage/qos.hpp"
 #include "rosbag2_cpp/reader.hpp"
 #include "example_interfaces/msg/string.hpp"
 
@@ -18,19 +17,13 @@ class PlaybackNode : public rclcpp::Node
     PlaybackNode(const std::string & bag_filename)
     : Node("playback_node")
     {
-      reader_.open(bag_filename);
-
-      auto topics = reader_.get_all_topics_and_types();
-
-      for (const auto & topic : topics) {
-        if (topic.name == TOPIC_NAME) {
-          publisher_ = create_generic_publisher(topic.name, topic.type, rosbag2_storage::Rosbag2QoS{});
-        }
-      }
+      publisher_ = this->create_publisher<example_interfaces::msg::String>("chatter", 10);
 
       timer_ = this->create_wall_timer(100ms,
           [this](){return this->timer_callback();}
       );
+
+      reader_.open(bag_filename);
     }
 
   private:
@@ -38,21 +31,28 @@ class PlaybackNode : public rclcpp::Node
     {
       while (reader_.has_next()) {
         rosbag2_storage::SerializedBagMessageSharedPtr msg = reader_.read_next();
-        if (msg->topic_name != TOPIC_NAME) {
+
+        if (msg->topic_name != "chatter") {
           continue;
         }
-        publisher_->publish(rclcpp::SerializedMessage(*msg->serialized_data));
+
+        rclcpp::SerializedMessage serialized_msg(*msg->serialized_data);
+        example_interfaces::msg::String::SharedPtr ros_msg = std::make_shared<example_interfaces::msg::String>();
+
+        serialization_.deserialize_message(&serialized_msg, ros_msg.get());
+
+        publisher_->publish(*ros_msg);
+        std::cout << ros_msg->data << "\n";
 
         break;
       }
     }
 
     rclcpp::TimerBase::SharedPtr timer_;
-    std::shared_ptr<rclcpp::GenericPublisher> publisher_;
+    rclcpp::Publisher<example_interfaces::msg::String>::SharedPtr publisher_;
 
+    rclcpp::Serialization<example_interfaces::msg::String> serialization_;
     rosbag2_cpp::Reader reader_;
-
-    const std::string TOPIC_NAME {"chatter"};
 };
 
 int main(int argc, char ** argv)

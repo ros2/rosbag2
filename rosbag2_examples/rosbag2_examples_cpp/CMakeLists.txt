@@ -58,15 +58,15 @@ install(TARGETS
   DESTINATION lib/${PROJECT_NAME}
 )
 
-add_executable(simple_bag_player src/simple_bag_player.cpp)
-target_link_libraries(simple_bag_player
+add_executable(simple_bag_reader src/simple_bag_reader.cpp)
+target_link_libraries(simple_bag_reader
   rclcpp::rclcpp
   rosbag2_cpp::rosbag2_cpp
   ${example_interfaces_TARGETS}
 )
 
 install(TARGETS
-  simple_bag_player
+  simple_bag_reader
   DESTINATION lib/${PROJECT_NAME}
 )
 
