@@ -25,7 +25,7 @@ class SimpleBagPlayer(Node):
         super().__init__('simple_bag_player')
         self.reader = rosbag2_py.SequentialReader()
         storage_options = rosbag2_py._storage.StorageOptions(
-            uri='my_bag',
+            uri=bag_filename,
             storage_id='sqlite3')
         converter_options = rosbag2_py._storage.ConverterOptions('', '')
         self.reader.open(storage_options, converter_options)
