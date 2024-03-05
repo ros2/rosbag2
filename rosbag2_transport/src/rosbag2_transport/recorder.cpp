@@ -139,6 +139,7 @@ private:
   rclcpp::Service<rosbag2_interfaces::srv::Resume>::SharedPtr srv_resume_;
   rclcpp::Service<rosbag2_interfaces::srv::Snapshot>::SharedPtr srv_snapshot_;
   rclcpp::Service<rosbag2_interfaces::srv::SplitBagfile>::SharedPtr srv_split_bagfile_;
+  bool rmw_has_time_stamping_support_ = true;
 
   std::mutex start_stop_transition_mutex_;
   std::mutex discovery_mutex_;
@@ -177,6 +178,15 @@ RecorderImpl::RecorderImpl(
             "use_sim_time and is_discovery_disabled both set, but are incompatible settings. "
             "The /clock topic needs to be discovered to record with sim time.");
   }
+
+#if defined _WIN32
+  // ConnvextDDS on Windows does currently not support time stamping, therefore we disable the feature
+  if (std::string(rmw_get_implementation_identifier()).find("rmw_connextdds") !=
+    std::string::npos)
+  {
+    rmw_has_time_stamping_support_ = false;
+  }
+#endif
 
   std::string key_str = enum_key_code_to_str(Recorder::kPauseResumeToggleKey);
   toggle_paused_key_callback_handle_ =
@@ -561,6 +571,23 @@ std::shared_ptr<rclcpp::GenericSubscription>
 RecorderImpl::create_subscription(
   const std::string & topic_name, const std::string & topic_type, const rclcpp::QoS & qos)
 {
+#ifdef _WIN32
+  if (!rmw_has_time_stamping_support_) {
+    return node->create_generic_subscription(
+      topic_name,
+      topic_type,
+      qos,
+      [this, topic_name, topic_type](std::shared_ptr<const rclcpp::SerializedMessage> message,
+      const rclcpp::MessageInfo &) {
+        if (!paused_.load()) {
+          writer_->write(
+            std::move(message), topic_name, topic_type, node->now().nanoseconds(),
+            0);
+        }
+      });
+  }
+#endif
+
   if (record_options_.use_sim_time) {
     return node->create_generic_subscription(
       topic_name,
