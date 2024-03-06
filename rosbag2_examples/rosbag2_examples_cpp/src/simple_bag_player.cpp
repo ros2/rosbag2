@@ -7,7 +7,7 @@
 #include "rclcpp/rclcpp.hpp"
 #include "rclcpp/serialization.hpp"
 #include "rosbag2_cpp/reader.hpp"
-#include "example_interfaces/msg/string.hpp"
+#include "std_msgs/msg/string.hpp"
 
 using namespace std::chrono_literals;
 
@@ -17,7 +17,7 @@ class SimpleBagPlayer : public rclcpp::Node
     SimpleBagPlayer(const std::string & bag_filename)
     : Node("playback_node")
     {
-      publisher_ = this->create_publisher<example_interfaces::msg::String>("chatter", 10);
+      publisher_ = this->create_publisher<std_msgs::msg::String>("chatter", 10);
 
       timer_ = this->create_wall_timer(100ms,
           [this](){return this->timer_callback();}
@@ -37,7 +37,7 @@ class SimpleBagPlayer : public rclcpp::Node
         }
 
         rclcpp::SerializedMessage serialized_msg(*msg->serialized_data);
-        example_interfaces::msg::String::SharedPtr ros_msg = std::make_shared<example_interfaces::msg::String>();
+        std_msgs::msg::String::SharedPtr ros_msg = std::make_shared<std_msgs::msg::String>();
 
         serialization_.deserialize_message(&serialized_msg, ros_msg.get());
 
@@ -49,9 +49,9 @@ class SimpleBagPlayer : public rclcpp::Node
     }
 
     rclcpp::TimerBase::SharedPtr timer_;
-    rclcpp::Publisher<example_interfaces::msg::String>::SharedPtr publisher_;
+    rclcpp::Publisher<std_msgs::msg::String>::SharedPtr publisher_;
 
-    rclcpp::Serialization<example_interfaces::msg::String> serialization_;
+    rclcpp::Serialization<std_msgs::msg::String> serialization_;
     rosbag2_cpp::Reader reader_;
 };
 

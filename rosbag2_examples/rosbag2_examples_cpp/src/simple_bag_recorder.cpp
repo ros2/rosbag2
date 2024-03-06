@@ -14,7 +14,7 @@
 
 #include <memory>
 
-#include "example_interfaces/msg/string.hpp"
+#include "std_msgs/msg/string.hpp"
 #include "rclcpp/rclcpp.hpp"
 
 #include "rosbag2_cpp/writer.hpp"
@@ -31,7 +31,7 @@ public:
 
     writer_->open("my_bag");
 
-    subscription_ = create_subscription<example_interfaces::msg::String>(
+    subscription_ = create_subscription<std_msgs::msg::String>(
       "chatter", 10, std::bind(&SimpleBagRecorder::topic_callback, this, _1));
   }
 
@@ -39,10 +39,10 @@ private:
   void topic_callback(std::shared_ptr<rclcpp::SerializedMessage> msg) const
   {
     rclcpp::Time time_stamp = this->now();
-    writer_->write(msg, "chatter", "example_interfaces/msg/String", time_stamp);
+    writer_->write(msg, "chatter", "std_msgs/msg/String", time_stamp);
   }
 
-  rclcpp::Subscription<example_interfaces::msg::String>::SharedPtr subscription_;
+  rclcpp::Subscription<std_msgs::msg::String>::SharedPtr subscription_;
   std::unique_ptr<rosbag2_cpp::Writer> writer_;
 };
 
