@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import sys
+
 import rclpy
 from rclpy.node import Node
 from rclpy.serialization import deserialize_message
@@ -41,7 +42,6 @@ class SimpleBagPlayer(Node):
             ros_msg = deserialize_message(msg[1], String)
             self.publisher.publish(ros_msg)
             self.get_logger().info(ros_msg.data)
-
 
 
 def main(args=None):
