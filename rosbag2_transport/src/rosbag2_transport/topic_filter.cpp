@@ -71,7 +71,7 @@ bool topic_in_list(const std::string & topic_name, const std::vector<std::string
   return it != topics.end();
 }
 
-bool type_in_list(const std::string & type_name, const std::vector<std::string> & topic_types)
+bool topic_type_in_list(const std::string & type_name, const std::vector<std::string> & topic_types)
 {
   auto it = std::find(topic_types.begin(), topic_types.end(), type_name);
   return it != topic_types.end();
@@ -176,7 +176,7 @@ bool TopicFilter::take_topic(
 
     if (!record_options_.all_topics &&
       !record_options_.topic_types.empty() &&
-      !type_in_list(topic_type, record_options_.topic_types))
+      !topic_type_in_list(topic_type, record_options_.topic_types))
     {
       return false;
     }
