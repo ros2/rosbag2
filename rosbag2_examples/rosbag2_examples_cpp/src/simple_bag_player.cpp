@@ -34,7 +34,7 @@ public:
 
     timer_ = this->create_wall_timer(
       100ms,
-      [this](){return this->timer_callback();}
+      [this]() {return this->timer_callback();}
     );
 
     reader_.open(bag_filename);
