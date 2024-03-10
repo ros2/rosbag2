@@ -1,4 +1,4 @@
-# Copyright 2023 Open Source Robotics Foundation, Inc.
+# Copyright 2024 Open Source Robotics Foundation, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -32,6 +32,7 @@ class SimpleBagPlayer(Node):
         self.reader.open(storage_options, converter_options)
 
         self.publisher = self.create_publisher(String, 'chatter', 10)
+        # ignore timestamp and publish at a fixed rate (10 Hz).
         self.timer = self.create_timer(0.1, self.timer_callback)
 
     def timer_callback(self):

@@ -28,10 +28,11 @@ class SimpleBagPlayer : public rclcpp::Node
 {
 public:
   explicit SimpleBagPlayer(const std::string & bag_filename)
-  : Node("playback_node")
+  : Node("simple_bag_player")
   {
     publisher_ = this->create_publisher<std_msgs::msg::String>("chatter", 10);
 
+    // ignore timestamp and publish at a fixed rate (10 Hz).
     timer_ = this->create_wall_timer(
       100ms,
       [this]() {return this->timer_callback();}
