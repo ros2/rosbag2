@@ -50,7 +50,7 @@ macro(build_mcap_vendor)
     "$<BUILD_INTERFACE:${_mcap_include_dir}>"
     "$<INSTALL_INTERFACE:include/${PROJECT_NAME}>"
   )
-  target_link_libraries(mcap lz4::lz4 zstd::zstd)
+  target_link_libraries(mcap LZ4::lz4 zstd::zstd)
 
   install(
     FILES ${_mcap_installed_headers}

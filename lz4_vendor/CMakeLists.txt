@@ -4,6 +4,8 @@ project(lz4_vendor)
 find_package(ament_cmake REQUIRED)
 find_package(ament_cmake_vendor_package REQUIRED)
 
+ament_add_default_options()
+
 list(INSERT CMAKE_MODULE_PATH 0 "${CMAKE_CURRENT_SOURCE_DIR}/cmake/Modules")
 find_package(lz4 QUIET)
 
@@ -14,7 +16,7 @@ ament_vendor(lz4_vendor
   SOURCE_SUBDIR build/cmake
   CMAKE_ARGS
     -DBUILD_STATIC_LIBS:BOOL=OFF
-    -DBUILD_SHARED_LIBS:BOOL=ON
+    -DBUILD_SHARED_LIBS:BOOL=${BUILD_SHARED_LIBS}
     -DLZ4_BUILD_LEGACY_LZ4C:BOOL=OFF
     -DLZ4_BUILD_CLI:BOOL=OFF
 )
