@@ -1,8 +1,10 @@
-cmake_minimum_required(VERSION 3.5)
-project(mcap_vendor LANGUAGES C CXX ASM)
+cmake_minimum_required(VERSION 3.14)
+project(mcap_vendor LANGUAGES C CXX)
 
 ## Dependencies
 find_package(ament_cmake REQUIRED)
+find_package(lz4_vendor REQUIRED)
+find_package(lz4 REQUIRED)
 find_package(zstd_vendor REQUIRED)
 find_package(zstd REQUIRED)
 
@@ -18,7 +20,7 @@ if(NOT CMAKE_CXX_STANDARD)
   set(CMAKE_CXX_EXTENSIONS OFF)
 endif()
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-  add_compile_options(-Wall -Wextra -Wpedantic -Werror)
+  add_compile_options(-Wall -Wextra -Wpedantic)
 endif()
 if (MSVC)
   add_compile_options(/W4 /WX
@@ -37,31 +39,18 @@ macro(build_mcap_vendor)
   )
   fetchcontent_makeavailable(mcap)
 
-  fetchcontent_declare(lz4
-    GIT_REPOSITORY https://github.com/lz4/lz4.git
-    GIT_TAG d44371841a2f1728a3f36839fd4b7e872d0927d3 # v1.9.3
-  )
-  fetchcontent_makeavailable(lz4)
-
-  file(GLOB _lz4_srcs
-    ${lz4_SOURCE_DIR}/lib/*.c)
-
   add_library(mcap SHARED
     src/main.cpp
-    ${_lz4_srcs}
   )
 
   set(_mcap_include_dir ${mcap_SOURCE_DIR}/cpp/mcap/include)
   file(GLOB _mcap_installed_headers ${_mcap_include_dir}/mcap/*.hpp)
 
-  target_include_directories(mcap PRIVATE
-    ${lz4_SOURCE_DIR}/lib
-  )
   target_include_directories(mcap PUBLIC
     "$<BUILD_INTERFACE:${_mcap_include_dir}>"
     "$<INSTALL_INTERFACE:include/${PROJECT_NAME}>"
   )
-  target_link_libraries(mcap zstd::zstd)
+  target_link_libraries(mcap lz4::lz4 zstd::zstd)
 
   install(
     FILES ${_mcap_installed_headers}
@@ -82,7 +71,7 @@ build_mcap_vendor()
 
 ament_export_include_directories(include/${PROJECT_NAME})
 ament_export_targets(mcap HAS_LIBRARY_TARGET)
-ament_export_dependencies(zstd_vendor zstd)
+ament_export_dependencies(lz4_vendor lz4 zstd_vendor zstd)
 
 ## Package
 ament_package()

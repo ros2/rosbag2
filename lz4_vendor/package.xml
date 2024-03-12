@@ -1,0 +1,24 @@
+<?xml version="1.0"?>
+<?xml-model href="http://download.ros.org/schema/package_format2.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
+<package format="2">
+  <name>lz4_vendor</name>
+  <version>0.24.0</version>
+  <description>LZ4 compression vendor package, providing a dependency for LZ4.</description>
+  <maintainer email="michael.orlov@apex.ai">Michael Orlov</maintainer>
+  <maintainer email="me@emersonknapp.com">Emerson Knapp</maintainer>
+  <maintainer email="ros-tooling@googlegroups.com">ROS Tooling Working Group</maintainer>
+  <license>Apache License 2.0</license>  <!-- the contents of this package are Apache 2.0 -->
+  <license>BSD</license>  <!-- LZ4 is BSD -->
+  <license>GPLv2</license>  <!-- LZ4 is GPLv2 -->
+
+  <url type="website">https://facebook.github.io/zstd/</url>
+
+  <buildtool_depend>ament_cmake</buildtool_depend>
+  <buildtool_depend>ament_cmake_vendor_package</buildtool_depend>
+
+  <depend>lz4</depend>
+
+  <export>
+    <build_type>ament_cmake</build_type>
+  </export>
+</package>
