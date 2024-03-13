@@ -92,7 +92,8 @@ TEST_F(RecordIntegrationTestFixture, all_overrides_topic_types)
   pub_manager.setup_publisher(string_topic_name, string_message, 2);
 
   rosbag2_transport::RecordOptions record_options =
-  {true, false, false, {}, {"test_msgs/msg/Arrays"}, {}, {}, {}, "rmw_format", 100ms};
+  {true, false, false, {}, {"test_msgs/msg/Arrays"}, {}, {"/rosout", "/events/write_split"}, {},
+    "rmw_format", 100ms};
 
   auto recorder = std::make_shared<rosbag2_transport::Recorder>(
     std::move(writer_), storage_options_, record_options);
@@ -108,7 +109,7 @@ TEST_F(RecordIntegrationTestFixture, all_overrides_topic_types)
   auto & writer = recorder->get_writer_handle();
   auto & mock_writer = dynamic_cast<MockSequentialWriter &>(writer.get_implementation_handle());
 
-  size_t expected_messages = 2;
+  size_t expected_messages = 4;
   auto ret = rosbag2_test_common::wait_until_shutdown(
     std::chrono::seconds(5),
     [&mock_writer, &expected_messages]() {
@@ -116,9 +117,9 @@ TEST_F(RecordIntegrationTestFixture, all_overrides_topic_types)
     });
   EXPECT_TRUE(ret) << "failed to capture expected messages in time";
   auto recorded_messages = mock_writer.get_messages();
-  EXPECT_NE(recorded_messages.size(), expected_messages);
+  EXPECT_EQ(recorded_messages.size(), expected_messages);
   auto recorded_topics = mock_writer.get_topics();
-  EXPECT_THAT(recorded_topics, SizeIs(4));
+  EXPECT_THAT(recorded_topics, SizeIs(2));
   EXPECT_TRUE(recorded_topics.find(array_topic_name) != recorded_topics.end());
   EXPECT_TRUE(recorded_topics.find(string_topic_name) != recorded_topics.end());
 }
