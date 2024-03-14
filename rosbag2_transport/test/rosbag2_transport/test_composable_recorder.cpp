@@ -212,6 +212,8 @@ TEST_P(ComposableRecorderTests, recorder_can_parse_parameters_from_file) {
   EXPECT_EQ(record_options.is_discovery_disabled, true);
   std::vector<std::string> topics {"/topic", "/other_topic"};
   EXPECT_EQ(record_options.topics, topics);
+  std::vector<std::string> topic_types {"std_msgs/msg/Header", "geometry_msgs/msg/Pose"};
+  EXPECT_EQ(record_options.topic_types, topic_types);
   std::vector<std::string> services {"/service/_service_event", "/other_service/_service_event"};
   EXPECT_EQ(record_options.services, services);
   EXPECT_EQ(record_options.rmw_serialization_format, "cdr");

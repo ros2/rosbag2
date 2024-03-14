@@ -214,6 +214,9 @@ RecordOptions get_record_options_from_node_params(rclcpp::Node & node)
   record_options.topics = node.declare_parameter<std::vector<std::string>>(
     "record.topics", std::vector<std::string>());
 
+  record_options.topic_types = node.declare_parameter<std::vector<std::string>>(
+    "record.topic_types", std::vector<std::string>());
+
   // Convert service name to service event topic name
   auto service_list = node.declare_parameter<std::vector<std::string>>(
     "record.services", std::vector<std::string>());

@@ -71,6 +71,12 @@ bool topic_in_list(const std::string & topic_name, const std::vector<std::string
   return it != topics.end();
 }
 
+bool topic_type_in_list(const std::string & type_name, const std::vector<std::string> & topic_types)
+{
+  auto it = std::find(topic_types.begin(), topic_types.end(), type_name);
+  return it != topic_types.end();
+}
+
 bool
 topic_is_unpublished(
   const std::string & topic_name, rclcpp::node_interfaces::NodeGraphInterface & node_graph)
@@ -140,13 +146,14 @@ bool TopicFilter::take_topic(
   if (!is_service_event_topic) {
     if (!record_options_.all_topics &&
       record_options_.topics.empty() &&
+      record_options_.topic_types.empty() &&
       record_options_.regex.empty() &&
       !record_options_.include_hidden_topics)
     {
       return false;
     }
 
-    if (!record_options_.all_topics) {
+    if (!record_options_.all_topics && record_options_.topic_types.empty()) {
       // Not in include topic list
       if (record_options_.topics.empty() || !topic_in_list(topic_name, record_options_.topics)) {
         // Not match include regex
@@ -163,6 +170,13 @@ bool TopicFilter::take_topic(
 
     if (!record_options_.exclude_topics.empty() &&
       topic_in_list(topic_name, record_options_.exclude_topics))
+    {
+      return false;
+    }
+
+    if (!record_options_.all_topics &&
+      !record_options_.topic_types.empty() &&
+      !topic_type_in_list(topic_type, record_options_.topic_types))
     {
       return false;
     }

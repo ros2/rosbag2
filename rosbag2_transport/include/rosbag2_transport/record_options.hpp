@@ -34,6 +34,7 @@ public:
   bool all_services = false;
   bool is_discovery_disabled = false;
   std::vector<std::string> topics;
+  std::vector<std::string> topic_types;
   std::vector<std::string> services;  // service event topic
   std::vector<std::string> exclude_topics;
   std::vector<std::string> exclude_service_events;  // service event topic
