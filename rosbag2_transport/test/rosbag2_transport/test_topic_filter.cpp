@@ -26,7 +26,7 @@
 
 using namespace ::testing;  // NOLINT
 
-class RegexFixture : public Test
+class TestTopicFilter : public Test
 {
 protected:
   std::map<std::string, std::vector<std::string>> topics_and_types_with_services_ = {
@@ -43,7 +43,7 @@ protected:
   };
 };
 
-TEST(TestTopicFilter, filter_hidden_topics) {
+TEST_F(TestTopicFilter, filter_hidden_topics) {
   std::map<std::string, std::vector<std::string>> topics_and_types {
     {"topic/a", {"type_a"}},
     {"topic/b", {"type_b"}},
@@ -71,7 +71,7 @@ TEST(TestTopicFilter, filter_hidden_topics) {
   }
 }
 
-TEST(TestTopicFilter, filter_topics_with_more_than_one_type) {
+TEST_F(TestTopicFilter, filter_topics_with_more_than_one_type) {
   std::map<std::string, std::vector<std::string>> topics_and_types {
     {"topic/a", {"type_a", "type_a", "type_a"}},
     {"topic/b", {"type_b"}},
@@ -90,7 +90,7 @@ TEST(TestTopicFilter, filter_topics_with_more_than_one_type) {
   }
 }
 
-TEST(TestTopicFilter, filter_topics_with_known_type_invalid) {
+TEST_F(TestTopicFilter, filter_topics_with_known_type_invalid) {
   std::map<std::string, std::vector<std::string>> topics_and_types {
     {"topic/a", {"type_a"}},
     {"topic/b", {"type_b"}},
@@ -103,7 +103,7 @@ TEST(TestTopicFilter, filter_topics_with_known_type_invalid) {
   ASSERT_EQ(0u, filtered_topics.size());
 }
 
-TEST(TestTopicFilter, filter_topics_with_known_type_valid) {
+TEST_F(TestTopicFilter, filter_topics_with_known_type_valid) {
   std::map<std::string, std::vector<std::string>> topics_and_types {
     {"topic/a", {"test_msgs/BasicTypes"}},
     {"topic/b", {"test_msgs/BasicTypes"}},
@@ -116,7 +116,7 @@ TEST(TestTopicFilter, filter_topics_with_known_type_valid) {
   ASSERT_EQ(3u, filtered_topics.size());
 }
 
-TEST(TestTopicFilter, filter_topics) {
+TEST_F(TestTopicFilter, filter_topics) {
   std::map<std::string, std::vector<std::string>> topics_and_types {
     {"topic/a", {"type_a"}},
     {"topic/b", {"type_b"}},
@@ -166,7 +166,7 @@ TEST(TestTopicFilter, filter_topics) {
   }
 }
 
-TEST(TestTopicFilter, filter_services) {
+TEST_F(TestTopicFilter, filter_services) {
   std::map<std::string, std::vector<std::string>> topics_and_types{
     {"topic/a", {"type_a"}},
     {"/service/a/_service_event", {"service/srv/type_a_Event"}},
@@ -201,7 +201,7 @@ TEST(TestTopicFilter, filter_services) {
   }
 }
 
-TEST_F(RegexFixture, all_topics_and_exclude_regex)
+TEST_F(TestTopicFilter, all_topics_and_exclude_regex)
 {
   rosbag2_transport::RecordOptions record_options;
   record_options.exclude_regex = "/inv.*";
@@ -215,7 +215,7 @@ TEST_F(RegexFixture, all_topics_and_exclude_regex)
   }
 }
 
-TEST_F(RegexFixture, all_topics_and_exclude_topics)
+TEST_F(TestTopicFilter, all_topics_and_exclude_topics)
 {
   rosbag2_transport::RecordOptions record_options;
   record_options.exclude_topics = {
@@ -232,7 +232,7 @@ TEST_F(RegexFixture, all_topics_and_exclude_topics)
   }
 }
 
-TEST_F(RegexFixture, all_services_and_exclude_regex)
+TEST_F(TestTopicFilter, all_services_and_exclude_regex)
 {
   rosbag2_transport::RecordOptions record_options;
   record_options.exclude_regex = "/inv.*";
@@ -244,7 +244,7 @@ TEST_F(RegexFixture, all_services_and_exclude_regex)
   EXPECT_EQ("/planning_service/_service_event", filtered_topics.begin()->first);
 }
 
-TEST_F(RegexFixture, all_services_and_exclude_service_events)
+TEST_F(TestTopicFilter, all_services_and_exclude_service_events)
 {
   rosbag2_transport::RecordOptions record_options;
   record_options.exclude_service_events = {
@@ -259,7 +259,7 @@ TEST_F(RegexFixture, all_services_and_exclude_service_events)
   EXPECT_EQ("/planning_service/_service_event", filtered_topics.begin()->first);
 }
 
-TEST_F(RegexFixture, all_topics_all_services_and_exclude_regex)
+TEST_F(TestTopicFilter, all_topics_all_services_and_exclude_regex)
 {
   rosbag2_transport::RecordOptions record_options;
   record_options.all_topics = true;
@@ -276,7 +276,7 @@ TEST_F(RegexFixture, all_topics_all_services_and_exclude_regex)
   }
 }
 
-TEST_F(RegexFixture, regex_and_exclude_regex)
+TEST_F(TestTopicFilter, regex_and_exclude_regex)
 {
   rosbag2_transport::RecordOptions record_options;
   record_options.regex = "/invalid.*";
@@ -289,7 +289,7 @@ TEST_F(RegexFixture, regex_and_exclude_regex)
   EXPECT_TRUE(filtered_topics.find("/invalid_service/_service_event") != filtered_topics.end());
 }
 
-TEST_F(RegexFixture, regex_and_exclude_topics)
+TEST_F(TestTopicFilter, regex_and_exclude_topics)
 {
   rosbag2_transport::RecordOptions record_options;
   record_options.regex = "/invalid.*";
@@ -303,7 +303,7 @@ TEST_F(RegexFixture, regex_and_exclude_topics)
   EXPECT_TRUE(filtered_topics.find("/invalidated_service/_service_event") != filtered_topics.end());
 }
 
-TEST_F(RegexFixture, regex_and_exclude_service_events)
+TEST_F(TestTopicFilter, regex_and_exclude_service_events)
 {
   rosbag2_transport::RecordOptions record_options;
   record_options.regex = "/invalid.*";
@@ -317,7 +317,7 @@ TEST_F(RegexFixture, regex_and_exclude_service_events)
   EXPECT_TRUE(filtered_topics.find("/invalid_service/_service_event") != filtered_topics.end());
 }
 
-TEST_F(RegexFixture, regex_filter)
+TEST_F(TestTopicFilter, regex_filter)
 {
   rosbag2_transport::RecordOptions record_options;
   record_options.regex = "^/inval";
@@ -333,7 +333,7 @@ TEST_F(RegexFixture, regex_filter)
   }
 }
 
-TEST_F(RegexFixture, all_topics_overrides_regex)
+TEST_F(TestTopicFilter, all_topics_overrides_regex)
 {
   rosbag2_transport::RecordOptions record_options;
   record_options.regex = "/status";
@@ -343,7 +343,7 @@ TEST_F(RegexFixture, all_topics_overrides_regex)
   EXPECT_THAT(filtered_topics, SizeIs(7));
 }
 
-TEST_F(RegexFixture, topic_types)
+TEST_F(TestTopicFilter, topic_types)
 {
   rosbag2_transport::RecordOptions record_options;
   record_options.topic_types = {{"planning_topic_type"}};
@@ -355,7 +355,7 @@ TEST_F(RegexFixture, topic_types)
   EXPECT_TRUE(filtered_topics.find("/planning2") != filtered_topics.end());
 }
 
-TEST_F(RegexFixture, topic_types_topic_names_and_regex)
+TEST_F(TestTopicFilter, topic_types_topic_names_and_regex)
 {
   rosbag2_transport::RecordOptions record_options;
   record_options.topic_types = {{"planning_topic_type"}};
@@ -371,7 +371,7 @@ TEST_F(RegexFixture, topic_types_topic_names_and_regex)
   EXPECT_TRUE(filtered_topics.find("/status") != filtered_topics.end());
 }
 
-TEST_F(RegexFixture, topic_types_do_not_overlap_with_services)
+TEST_F(TestTopicFilter, topic_types_do_not_overlap_with_services)
 {
   rosbag2_transport::RecordOptions record_options;
   record_options.topic_types = {{"planning_topic_type"}, {"service/srv/planning_service_Event"}};
@@ -386,7 +386,7 @@ TEST_F(RegexFixture, topic_types_do_not_overlap_with_services)
   EXPECT_TRUE(filtered_topics.find(record_options.services[0]) != filtered_topics.end());
 }
 
-TEST_F(RegexFixture, all_topics_overrides_topic_types)
+TEST_F(TestTopicFilter, all_topics_overrides_topic_types)
 {
   rosbag2_transport::RecordOptions record_options;
   record_options.topic_types = {{"planning_topic_type"}};
@@ -396,7 +396,7 @@ TEST_F(RegexFixture, all_topics_overrides_topic_types)
   EXPECT_THAT(filtered_topics, SizeIs(7));
 }
 
-TEST_F(RegexFixture, all_services_overrides_topic_types)
+TEST_F(TestTopicFilter, all_services_overrides_topic_types)
 {
   rosbag2_transport::RecordOptions record_options;
   record_options.topic_types = {{"planning_topic_type"}, {"service/srv/planning_service_Event"}};
@@ -410,7 +410,7 @@ TEST_F(RegexFixture, all_services_overrides_topic_types)
   EXPECT_TRUE(filtered_topics.find("/invalidated_service/_service_event") != filtered_topics.end());
 }
 
-TEST_F(RegexFixture, do_not_print_warning_about_unknown_types_if_topic_is_not_selected) {
+TEST_F(TestTopicFilter, do_not_print_warning_about_unknown_types_if_topic_is_not_selected) {
   {  // Check for topics explicitly selected via "topics" list
     rosbag2_transport::RecordOptions record_options;
     // Select only one topic with name "/planning1" via topic list
@@ -456,7 +456,7 @@ TEST_F(RegexFixture, do_not_print_warning_about_unknown_types_if_topic_is_not_se
   }
 }
 
-TEST_F(RegexFixture, all_services_overrides_regex)
+TEST_F(TestTopicFilter, all_services_overrides_regex)
 {
   rosbag2_transport::RecordOptions record_options;
   record_options.regex = "/no_exist_service";
@@ -467,7 +467,7 @@ TEST_F(RegexFixture, all_services_overrides_regex)
   EXPECT_THAT(filtered_topics, SizeIs(3));
 }
 
-TEST_F(RegexFixture, all_topics_and_all_services_overrides_regex)
+TEST_F(TestTopicFilter, all_topics_and_all_services_overrides_regex)
 {
   rosbag2_transport::RecordOptions record_options;
   record_options.regex = "/status";
