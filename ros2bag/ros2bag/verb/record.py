@@ -203,7 +203,7 @@ class RecordVerb(VerbExtension):
 
         if not self._check_necessary_argument(args):
             return print_error('Need to specify one option out of --all, --all-topics, '
-                               '--all-services, --services, topics and --regex')
+                               '--all-services, --services, --topics, --topic-types and --regex')
 
         # Only one option out of --all, --all-services --services or --regex can be used
         if (args.all and args.all_services) or \
