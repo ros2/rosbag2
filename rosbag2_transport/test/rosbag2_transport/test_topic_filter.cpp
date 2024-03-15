@@ -243,7 +243,9 @@ TEST_F(TestTopicFilter, all_topics_and_exclude_type_topics)
   auto filtered_topics = filter.filter_topics(topics_and_types_with_services_);
 
   EXPECT_THAT(filtered_topics, SizeIs(5));
-  for (const auto & topic : {"/planning1", "/planning2", "/invisible", "/invalidated_topic", "/invalid_topic"}) {
+  for (const auto & topic :
+    {"/planning1", "/planning2", "/invisible", "/invalidated_topic", "/invalid_topic"})
+  {
     EXPECT_TRUE(filtered_topics.find(topic) != filtered_topics.end()) << "Expected topic:" << topic;
   }
 }
