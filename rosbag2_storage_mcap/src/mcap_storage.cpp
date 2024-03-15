@@ -849,7 +849,7 @@ class ROSBAG2_STORAGE_MCAP_PUBLIC MCAPStorageSnapshot
 {
 public:
   MCAPStorageSnapshot();
-  ~MCAPStorageSnapshot() override;
+  ~MCAPStorageSnapshot() override = default;
   /** BaseIOInterface **/
   #ifdef ROSBAG2_STORAGE_MCAP_HAS_STORAGE_OPTIONS
     void open(const rosbag2_storage::StorageOptions & storage_options,
@@ -914,10 +914,6 @@ private:
 };
 
 MCAPStorageSnapshot::MCAPStorageSnapshot():storage_(nullptr),current_storage_size_(0)
-{
-}
-
-MCAPStorageSnapshot::~MCAPStorageSnapshot()
 {
 }
 
