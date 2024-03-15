@@ -6,4 +6,11 @@
   >
     <description>rosbag2 storage plugin using the MCAP file format</description>
   </class>
+  <class
+    name="mcap_snapshot"
+    type="rosbag2_storage_plugins::MCAPStorageImmediately"
+    base_class_type="rosbag2_storage::storage_interfaces::ReadWriteInterface"
+  >
+    <description>rosbag2 snapshot storage plugin using the MCAP file format</description>
+  </class>
 </library>
