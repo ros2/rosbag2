@@ -235,8 +235,8 @@ class RecordVerb(VerbExtension):
                                'or --regex')
 
         if args.exclude_topic_types and not (args.regex or args.all or args.all_topics):
-            return print_error('--exclude-topic-types argument requires either --all, --all-topics '
-                               'or --regex')
+            return print_error('--exclude-topic-types argument requires either --all, '
+                               '--all-topics or --regex')
 
         if args.exclude_services and not (args.regex or args.all or args.all_services):
             return print_error('--exclude-services argument requires either --all, --all-services '
