@@ -191,7 +191,7 @@ TEST_F(RecordIntegrationTestFixture, test_keyboard_controls)
   auto keyboard_handler = std::make_shared<MockKeyboardHandler>();
 
   rosbag2_transport::RecordOptions record_options =
-  {true, false, false, {}, {}, {}, {}, {}, "rmw_format", 100ms};
+  {true, false, false, {}, {}, {}, {}, {}, {}, "rmw_format", 100ms};
   record_options.start_paused = true;
 
   auto recorder = std::make_shared<Recorder>(

@@ -187,7 +187,7 @@ TEST_P(Rosbag2CPPGetServiceInfoTest, get_service_info_for_bag_with_services_only
   storage_options.storage_id = storage_id;
   storage_options.uri = bag_path_str;
   rosbag2_transport::RecordOptions record_options =
-  {false, true, false, {}, {}, {}, {"/rosout"}, {}, "cdr", 100ms};
+  {false, true, false, {}, {}, {}, {"/rosout"}, {}, {}, "cdr", 100ms};
   auto recorder = std::make_shared<rosbag2_transport::Recorder>(
     std::move(writer), storage_options, record_options);
   recorder->record();
@@ -265,7 +265,7 @@ TEST_P(Rosbag2CPPGetServiceInfoTest, get_service_info_for_bag_with_topics_and_se
   storage_options.storage_id = storage_id;
   storage_options.uri = bag_path_str;
   rosbag2_transport::RecordOptions record_options =
-  {true, true, false, {}, {}, {}, {"/rosout"}, {}, "cdr", 100ms};
+  {true, true, false, {}, {}, {}, {"/rosout"}, {}, {}, "cdr", 100ms};
   auto recorder = std::make_shared<rosbag2_transport::Recorder>(
     std::move(writer), storage_options, record_options);
   recorder->record();
