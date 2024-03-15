@@ -924,19 +924,16 @@ MCAPStorageSnapshot::~MCAPStorageSnapshot()
 /** BaseIOInterface **/
 #ifdef ROSBAG2_STORAGE_MCAP_HAS_STORAGE_OPTIONS
 void MCAPStorageSnapshot::open(const rosbag2_storage::StorageOptions & storage_options,
-                       rosbag2_storage::storage_interfaces::IOFlag io_flag)
+                       rosbag2_storage::storage_interfaces::IOFlag)
 {
-  (void)io_flag;
   storage_options_ = storage_options;
   uri_ = storage_options.uri;
 }
 #endif
 
-void MCAPStorageSnapshot::open(const std::string & uri, rosbag2_storage::storage_interfaces::IOFlag io_flag)
+void MCAPStorageSnapshot::open(const std::string & uri, rosbag2_storage::storage_interfaces::IOFlag)
 {
   uri_ = uri;
-  //this class is used only for READ_WRITE
-  (void)io_flag;
 }
 
 /** BaseInfoInterface **/
@@ -962,9 +959,8 @@ std::string MCAPStorageSnapshot::get_storage_identifier() const
 
 /** BaseReadInterface **/
 #ifdef ROSBAG2_STORAGE_MCAP_HAS_SET_READ_ORDER
-bool MCAPStorageSnapshot::set_read_order(const rosbag2_storage::ReadOrder & read_order)
+bool MCAPStorageSnapshot::set_read_order(const rosbag2_storage::ReadOrder &)
 {
-  (void)read_order;
   return false;
 }
 #endif
@@ -985,15 +981,13 @@ std::vector<rosbag2_storage::TopicMetadata> MCAPStorageSnapshot::get_all_topics_
 }
 
 void MCAPStorageSnapshot::get_all_message_definitions(
-        std::vector<rosbag2_storage::MessageDefinition> & definitions)
+        std::vector<rosbag2_storage::MessageDefinition> &)
 {
-  (void)definitions;
 }
 
 /** ReadOnlyInterface **/
-void MCAPStorageSnapshot::set_filter(const rosbag2_storage::StorageFilter & storage_filter)
+void MCAPStorageSnapshot::set_filter(const rosbag2_storage::StorageFilter &)
 {
-  (void)storage_filter;
 }
 
 void MCAPStorageSnapshot::reset_filter()
@@ -1001,15 +995,13 @@ void MCAPStorageSnapshot::reset_filter()
 }
 
 #ifdef ROSBAG2_STORAGE_MCAP_OVERRIDE_SEEK_METHOD
-void MCAPStorageSnapshot::seek(const rcutils_time_point_value_t & time_stamp)
+void MCAPStorageSnapshot::seek(const rcutils_time_point_value_t &)
 {
-  (void)time_stamp;
 }
 
 #else
-void MCAPStorageSnapshot::seek(const rcutils_time_point_value_t & time_stamp)
+void MCAPStorageSnapshot::seek(const rcutils_time_point_value_t &)
 {
-  (void)time_stamp;
 }
 #endif
 
@@ -1020,9 +1012,8 @@ uint64_t MCAPStorageSnapshot::get_minimum_split_file_size() const
 }
 
 /** BaseWriteInterface **/
-void MCAPStorageSnapshot::write(std::shared_ptr<const rosbag2_storage::SerializedBagMessage> msg)
+void MCAPStorageSnapshot::write(std::shared_ptr<const rosbag2_storage::SerializedBagMessage>)
 {
-  (void)msg;
 }
 
 void MCAPStorageSnapshot::write(const std::vector<std::shared_ptr<const rosbag2_storage::SerializedBagMessage>> & msgs)
