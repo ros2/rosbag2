@@ -79,6 +79,9 @@ public:
   /// Return the current paused state.
   bool is_paused();
 
+  /// Start discovery
+  void start_discovery();
+
   /// Stop discovery
   void stop_discovery();
 
@@ -137,7 +140,8 @@ private:
   rclcpp::Service<rosbag2_interfaces::srv::Snapshot>::SharedPtr srv_snapshot_;
   rclcpp::Service<rosbag2_interfaces::srv::SplitBagfile>::SharedPtr srv_split_bagfile_;
 
-  std::recursive_mutex state_transition_mutex_;
+  std::mutex state_transition_mutex_;
+  std::mutex discovery_mutex_;
   std::atomic<bool> stop_discovery_ = false;
   std::atomic<bool> paused_ = false;
   std::atomic<bool> in_recording_ = false;
@@ -165,7 +169,6 @@ RecorderImpl::RecorderImpl(
   storage_options_(storage_options),
   record_options_(record_options),
   node(owner),
-  stop_discovery_(record_options_.is_discovery_disabled),
   paused_(record_options.start_paused),
   keyboard_handler_(std::move(keyboard_handler))
 {
@@ -220,7 +223,7 @@ RecorderImpl::~RecorderImpl()
 
 void RecorderImpl::stop()
 {
-  std::lock_guard<std::recursive_mutex> state_lock(state_transition_mutex_);
+  std::lock_guard<std::mutex> state_lock(state_transition_mutex_);
   if (!in_recording_) {
     RCLCPP_DEBUG(node->get_logger(), "Recording has already been stopped or not running.");
     return;
@@ -245,7 +248,7 @@ void RecorderImpl::stop()
 
 void RecorderImpl::record()
 {
-  std::lock_guard<std::recursive_mutex> state_lock(state_transition_mutex_);
+  std::lock_guard<std::mutex> state_lock(state_transition_mutex_);
   if (in_recording_.exchange(true)) {
     RCLCPP_WARN_STREAM(
       node->get_logger(),
@@ -253,7 +256,6 @@ void RecorderImpl::record()
     return;
   }
   paused_ = record_options_.start_paused;
-  stop_discovery_ = record_options_.is_discovery_disabled;
   topic_qos_profile_overrides_ = record_options_.topic_qos_profile_overrides;
   if (record_options_.rmw_serialization_format.empty()) {
     throw std::runtime_error("No serialization format specified!");
@@ -340,8 +342,7 @@ void RecorderImpl::record()
     subscribe_topics(get_requested_or_available_topics());
   }
   if (!record_options_.is_discovery_disabled) {
-    discovery_future_ =
-      std::async(std::launch::async, std::bind(&RecorderImpl::topics_discovery, this));
+    start_discovery();
   }
   if (record_options_.start_paused) {
     RCLCPP_INFO(
@@ -395,7 +396,7 @@ const rosbag2_cpp::Writer & RecorderImpl::get_writer_handle()
 
 void RecorderImpl::pause()
 {
-  std::lock_guard<std::recursive_mutex> state_lock(state_transition_mutex_);
+  std::lock_guard<std::mutex> state_lock(state_transition_mutex_);
   if (paused_) {
     RCLCPP_DEBUG(node->get_logger(), "Recorder is alreadyin pause state.");
   } else {
@@ -406,7 +407,7 @@ void RecorderImpl::pause()
 
 void RecorderImpl::resume()
 {
-  std::lock_guard<std::recursive_mutex> state_lock(state_transition_mutex_);
+  std::lock_guard<std::mutex> state_lock(state_transition_mutex_);
   if (!paused_) {
     RCLCPP_DEBUG(node->get_logger(), "Already in the recording.");
   } else {
@@ -417,7 +418,7 @@ void RecorderImpl::resume()
 
 void RecorderImpl::toggle_paused()
 {
-  std::lock_guard<std::recursive_mutex> state_lock(state_transition_mutex_);
+  std::lock_guard<std::mutex> state_lock(state_transition_mutex_);
   if (paused_.load()) {
     this->resume();
   } else {
@@ -430,8 +431,20 @@ bool RecorderImpl::is_paused()
   return paused_.load();
 }
 
+void RecorderImpl::start_discovery()
+{
+  std::lock_guard<std::mutex> state_lock(discovery_mutex_);
+  if (stop_discovery_.exchange(false)) {
+    RCLCPP_DEBUG(node->get_logger(), "Recorder topic discovery is already running.");
+  } else {
+    discovery_future_ =
+      std::async(std::launch::async, std::bind(&RecorderImpl::topics_discovery, this));
+  }
+}
+
 void RecorderImpl::stop_discovery()
 {
+  std::lock_guard<std::mutex> state_lock(discovery_mutex_);
   if (stop_discovery_.exchange(true)) {
     RCLCPP_DEBUG(
       node->get_logger(),
@@ -829,8 +842,12 @@ Recorder::get_record_options()
   return pimpl_->record_options_;
 }
 
-void
-Recorder::stop_discovery()
+void Recorder::start_discovery()
+{
+  pimpl_->start_discovery();
+}
+
+void Recorder::stop_discovery()
 {
   pimpl_->stop_discovery();
 }

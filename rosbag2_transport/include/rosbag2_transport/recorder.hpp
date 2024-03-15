@@ -170,6 +170,9 @@ protected:
   rosbag2_transport::RecordOptions & get_record_options();
 
   ROSBAG2_TRANSPORT_PUBLIC
+  void start_discovery();
+
+  ROSBAG2_TRANSPORT_PUBLIC
   void stop_discovery();
 
 private:
