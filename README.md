@@ -91,6 +91,8 @@ Currently, the only `compression-format` available is `zstd`. Both the mode and 
 
 It is recommended to use this feature with the splitting options.
 
+**Note**: Some storage plugins may have their own compression methods, which are separate from the rosbag2 compression specified by the CLI options `--compression-mode` and `--compression-format`. Notably, the MCAP file format offered by the `rosbag2_storage_mcap` storage plugin supports compression in a way that produces files that are still indexable (whereas using the rosbag2 compression will not). To utilize storage plugin specific compression or other options, see [Recording with a storage configuration](#Recording-with-a-storage-configuration).
+
 #### Recording with a storage configuration
 
 Storage configuration can be specified in a YAML file passed through the `--storage-config-file` option.
