@@ -34,15 +34,21 @@ class SimpleBagPlayer(Node):
         self.publisher = self.create_publisher(String, 'chatter', 10)
         # ignore timestamp and publish at a fixed rate (10 Hz).
         self.timer = self.create_timer(0.1, self.timer_callback)
+        self.message_needs_to_be_edit_before_send_ = True
 
     def timer_callback(self):
         while self.reader.has_next():
             msg = self.reader.read_next()
             if msg[0] != 'chatter':
                 continue
-            ros_msg = deserialize_message(msg[1], String)
-            self.publisher.publish(ros_msg)
-            self.get_logger().info(ros_msg.data)
+
+            if self.message_needs_to_be_edit_before_send_:
+                ros_msg = deserialize_message(msg[1], String)
+                ros_msg.data += '[edited]'
+                self.publisher.publish(ros_msg)
+                self.get_logger().info(ros_msg.data)
+            else:
+                self.publisher.publish(msg[1])
 
 
 def main(args=None):

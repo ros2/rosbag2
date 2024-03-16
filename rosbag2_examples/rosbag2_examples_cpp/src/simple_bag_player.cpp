@@ -51,13 +51,20 @@ private:
         continue;
       }
 
-      rclcpp::SerializedMessage serialized_msg(*msg->serialized_data);
-      std_msgs::msg::String::SharedPtr ros_msg = std::make_shared<std_msgs::msg::String>();
+      if (message_needs_to_be_edit_before_send_)
+      {
+        rclcpp::SerializedMessage serialized_msg(*msg->serialized_data);
+        std_msgs::msg::String::SharedPtr ros_msg = std::make_shared<std_msgs::msg::String>();
 
-      serialization_.deserialize_message(&serialized_msg, ros_msg.get());
-
-      publisher_->publish(*ros_msg);
-      std::cout << ros_msg->data << "\n";
+        serialization_.deserialize_message(&serialized_msg, ros_msg.get());
+        ros_msg->data += "[edited]";
+        publisher_->publish(*ros_msg);
+        std::cout << ros_msg->data << "\n";
+      }
+      else
+      {
+        publisher_->publish(*msg->serialized_data);
+      }
 
       break;
     }
@@ -68,6 +75,8 @@ private:
 
   rclcpp::Serialization<std_msgs::msg::String> serialization_;
   rosbag2_cpp::Reader reader_;
+
+  bool message_needs_to_be_edit_before_send_ {true};
 };
 
 int main(int argc, char ** argv)
