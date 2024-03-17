@@ -62,8 +62,7 @@ SequentialWriter::SequentialWriter(
 SequentialWriter::~SequentialWriter()
 {
   // only close writer if bag is open to prevent overwrite
-  if(storage_)
-  {
+  if (storage_) {
     close();
   }
 }
