@@ -61,7 +61,10 @@ SequentialWriter::SequentialWriter(
 
 SequentialWriter::~SequentialWriter()
 {
-  close();
+  // only close writer if bag is open to prevent overwrite
+  if (storage_) {
+    close();
+  }
 }
 
 void SequentialWriter::init_metadata()
@@ -161,8 +164,9 @@ void SequentialWriter::close()
     metadata_io_->write_metadata(base_folder_, metadata_);
   }
 
-  storage_.reset();  // Necessary to ensure that the storage is destroyed before the factory
-  storage_factory_.reset();
+  // destroy current storage object and clear active track map for topic metadata
+  storage_.reset();
+  topics_names_to_info_.clear();
 }
 
 void SequentialWriter::create_topic(const rosbag2_storage::TopicMetadata & topic_with_type)
