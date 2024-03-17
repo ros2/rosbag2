@@ -92,11 +92,20 @@ TEST(TestRosbag2CPPAPI, minimal_writer_example)
     // close as prompted
     writer.close();
 
+    // open a new bag with the same writer
     writer.open(rosbag_directory_next.string());
-    writer.write(bag_message, "/my/other/topic", "test_msgs/msg/BasicTypes");
 
-    writer.close();
+    // another simple serialized message
+    std::shared_ptr<rclcpp::SerializedMessage> serialized_msg3 =
+      std::make_shared<rclcpp::SerializedMessage>();
+    serialization.serialize_message(&test_msg, serialized_msg3.get());
 
+    // write same topic to different bag
+    writer.write(
+      serialized_msg3, "/yet/another/topic", "test_msgs/msg/BasicTypes",
+      rclcpp::Clock().now());
+
+    // close by scope
   }
 
   {
@@ -121,6 +130,25 @@ TEST(TestRosbag2CPPAPI, minimal_writer_example)
     EXPECT_EQ("/a/ros2/message", topics[3]);
 
     // close on scope exit
+  }
+
+  // read the other written bag
+  {
+    rosbag2_cpp::Reader reader;
+    std::string topic;
+    reader.open(rosbag_directory_next.string());
+    ASSERT_TRUE(reader.has_next());
+
+    auto bag_message = reader.read_next();
+    topic = bag_message->topic_name;
+
+    TestMsgT extracted_test_msg;
+    rclcpp::SerializedMessage extracted_serialized_msg(*bag_message->serialized_data);
+    serialization.deserialize_message(
+      &extracted_serialized_msg, &extracted_test_msg);
+
+    EXPECT_EQ(test_msg, extracted_test_msg);
+    EXPECT_EQ("/yet/another/topic", topic);
   }
 
   // alternative reader
