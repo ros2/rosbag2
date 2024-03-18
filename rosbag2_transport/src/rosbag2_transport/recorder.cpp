@@ -143,7 +143,7 @@ private:
   std::mutex start_stop_transition_mutex_;
   std::mutex discovery_mutex_;
   std::atomic<bool> stop_discovery_ = false;
-  std::atomic<bool> paused_ = false;
+  std::atomic_uchar paused_ = 0;
   std::atomic<bool> in_recording_ = false;
   std::shared_ptr<KeyboardHandler> keyboard_handler_;
   KeyboardHandler::callback_handle_t toggle_paused_key_callback_handle_ =
@@ -414,7 +414,7 @@ void RecorderImpl::resume()
 
 void RecorderImpl::toggle_paused()
 {
-  if (atomic_fetch_xor((std::atomic_uchar *)&paused_, 1)) {
+  if (atomic_fetch_xor(&paused_, 1)) {
     RCLCPP_INFO_STREAM(node->get_logger(), "Resuming recording.");
   } else {
     RCLCPP_INFO_STREAM(node->get_logger(), "Pausing recording.");
