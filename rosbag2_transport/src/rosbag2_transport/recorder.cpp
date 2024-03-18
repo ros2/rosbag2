@@ -140,7 +140,7 @@ private:
   rclcpp::Service<rosbag2_interfaces::srv::Snapshot>::SharedPtr srv_snapshot_;
   rclcpp::Service<rosbag2_interfaces::srv::SplitBagfile>::SharedPtr srv_split_bagfile_;
 
-  std::mutex state_transition_mutex_;
+  std::mutex start_stop_transition_mutex_;
   std::mutex discovery_mutex_;
   std::atomic<bool> stop_discovery_ = false;
   std::atomic<bool> paused_ = false;
@@ -223,7 +223,7 @@ RecorderImpl::~RecorderImpl()
 
 void RecorderImpl::stop()
 {
-  std::lock_guard<std::mutex> state_lock(state_transition_mutex_);
+  std::lock_guard<std::mutex> state_lock(start_stop_transition_mutex_);
   if (!in_recording_) {
     RCLCPP_DEBUG(node->get_logger(), "Recording has already been stopped or not running.");
     return;
@@ -248,7 +248,7 @@ void RecorderImpl::stop()
 
 void RecorderImpl::record()
 {
-  std::lock_guard<std::mutex> state_lock(state_transition_mutex_);
+  std::lock_guard<std::mutex> state_lock(start_stop_transition_mutex_);
   if (in_recording_.exchange(true)) {
     RCLCPP_WARN_STREAM(
       node->get_logger(),
@@ -396,33 +396,28 @@ const rosbag2_cpp::Writer & RecorderImpl::get_writer_handle()
 
 void RecorderImpl::pause()
 {
-  std::lock_guard<std::mutex> state_lock(state_transition_mutex_);
-  if (paused_) {
-    RCLCPP_DEBUG(node->get_logger(), "Recorder is alreadyin pause state.");
+  if (paused_.exchange(true)) {
+    RCLCPP_DEBUG(node->get_logger(), "Recorder is already in pause state.");
   } else {
-    paused_.store(true);
     RCLCPP_INFO_STREAM(node->get_logger(), "Pausing recording.");
   }
 }
 
 void RecorderImpl::resume()
 {
-  std::lock_guard<std::mutex> state_lock(state_transition_mutex_);
-  if (!paused_) {
+  if (paused_.exchange(false)) {
     RCLCPP_DEBUG(node->get_logger(), "Already in the recording.");
   } else {
-    paused_.store(false);
     RCLCPP_INFO_STREAM(node->get_logger(), "Resuming recording.");
   }
 }
 
 void RecorderImpl::toggle_paused()
 {
-  std::lock_guard<std::mutex> state_lock(state_transition_mutex_);
-  if (paused_.load()) {
-    this->resume();
+  if (atomic_fetch_xor((std::atomic_uchar *)&paused_, 1)) {
+    RCLCPP_INFO_STREAM(node->get_logger(), "Resuming recording.");
   } else {
-    this->pause();
+    RCLCPP_INFO_STREAM(node->get_logger(), "Pausing recording.");
   }
 }
 
@@ -447,8 +442,7 @@ void RecorderImpl::stop_discovery()
   std::lock_guard<std::mutex> state_lock(discovery_mutex_);
   if (stop_discovery_.exchange(true)) {
     RCLCPP_DEBUG(
-      node->get_logger(),
-      "Recorder topic discovery has already been stopped or not running.");
+      node->get_logger(), "Recorder topic discovery has already been stopped or not running.");
   } else {
     if (discovery_future_.valid()) {
       auto status = discovery_future_.wait_for(2 * record_options_.topic_polling_interval);
