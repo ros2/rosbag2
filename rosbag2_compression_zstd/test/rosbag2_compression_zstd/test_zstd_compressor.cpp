@@ -136,7 +136,7 @@ protected:
 
 TEST_F(CompressionHelperFixture, zstd_compress_file_uri)
 {
-  const auto uri = (fs::path(temporary_dir_path_) / "file1.txt").string();
+  const auto uri = (fs::path(temporary_dir_path_) / "file1.txt").generic_string();
   create_garbage_file(uri);
 
   ASSERT_TRUE(fs::exists(uri)) <<
@@ -163,13 +163,13 @@ TEST_F(CompressionHelperFixture, zstd_compress_file_uri)
 
 TEST_F(CompressionHelperFixture, zstd_decompress_file_uri)
 {
-  const auto uri = (fs::path(temporary_dir_path_) / "file1.txt").string();
+  const auto uri = (fs::path(temporary_dir_path_) / "file1.txt").generic_string();
   create_garbage_file(uri);
 
   const auto initial_file_path = fs::path{uri};
 
   ASSERT_TRUE(fs::exists(initial_file_path)) <<
-    "Expected initial file: \"" << initial_file_path.string() <<
+    "Expected initial file: \"" << initial_file_path.generic_string() <<
     "\" to exist.";
 
   const auto initial_file_size = fs::file_size(initial_file_path);
@@ -179,9 +179,9 @@ TEST_F(CompressionHelperFixture, zstd_decompress_file_uri)
 
   // The test is invalid if the initial file is not deleted
   ASSERT_TRUE(fs::remove(initial_file_path)) <<
-    "Removal of \"" << initial_file_path.string() <<
+    "Removal of \"" << initial_file_path.generic_string() <<
     "\" failed! The remaining tests require \"" <<
-    initial_file_path.string() << "\" to be deleted!";
+    initial_file_path.generic_string() << "\" to be deleted!";
 
   auto zstd_decompressor = rosbag2_compression_zstd::ZstdDecompressor{};
   const auto decompressed_uri = zstd_decompressor.decompress_uri(compressed_uri);
@@ -189,7 +189,7 @@ TEST_F(CompressionHelperFixture, zstd_decompress_file_uri)
   const auto expected_decompressed_uri = uri;
 
   ASSERT_TRUE(fs::exists(decompressed_file_path)) <<
-    "Expected decompressed file: \"" << decompressed_file_path.string() <<
+    "Expected decompressed file: \"" << decompressed_file_path.generic_string() <<
     "\" to exist.";
 
   const auto decompressed_file_size = fs::file_size(decompressed_file_path);
@@ -202,7 +202,7 @@ TEST_F(CompressionHelperFixture, zstd_decompress_file_uri)
 
 TEST_F(CompressionHelperFixture, zstd_decompress_file_contents)
 {
-  const auto uri = (fs::path(temporary_dir_path_) / "file2.txt").string();
+  const auto uri = (fs::path(temporary_dir_path_) / "file2.txt").generic_string();
   create_garbage_file(uri);
 
   const auto initial_file_path = fs::path{uri};
@@ -231,7 +231,7 @@ TEST_F(CompressionHelperFixture, zstd_decompress_file_contents)
   const auto decompressed_file_path = fs::path{decompressed_uri};
 
   ASSERT_TRUE(fs::exists(decompressed_file_path)) <<
-    "Decompressed file: \"" << decompressed_file_path.string() << "\" must exist!";
+    "Decompressed file: \"" << decompressed_file_path.generic_string() << "\" must exist!";
 
   EXPECT_EQ(uri, decompressed_uri) <<
     "Expected decompressed file name to be same as initial!";
@@ -252,7 +252,7 @@ TEST_F(CompressionHelperFixture, zstd_decompress_file_contents)
 
 TEST_F(CompressionHelperFixture, zstd_decompress_fails_on_bad_file)
 {
-  const auto uri = (fs::path(temporary_dir_path_) / "file3.txt").string();
+  const auto uri = (fs::path(temporary_dir_path_) / "file3.txt").generic_string();
   create_garbage_file(uri);
 
   auto decompressor = rosbag2_compression_zstd::ZstdDecompressor{};
@@ -262,7 +262,7 @@ TEST_F(CompressionHelperFixture, zstd_decompress_fails_on_bad_file)
 
 TEST_F(CompressionHelperFixture, zstd_decompress_fails_on_bad_uri)
 {
-  const auto bad_uri = (fs::path(temporary_dir_path_) / "bad_uri.txt").string();
+  const auto bad_uri = (fs::path(temporary_dir_path_) / "bad_uri.txt").generic_string();
   auto decompressor = rosbag2_compression_zstd::ZstdDecompressor{};
 
   EXPECT_THROW(decompressor.decompress_uri(bad_uri), std::runtime_error) <<

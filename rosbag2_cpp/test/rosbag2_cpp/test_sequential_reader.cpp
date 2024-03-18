@@ -221,8 +221,8 @@ TEST_F(SequentialReaderTest, next_file_calls_callback) {
   reader_->read_next();
 
   ASSERT_TRUE(callback_called);
-  EXPECT_EQ(closed_file, bag_file_1_path_.string());
-  EXPECT_EQ(opened_file, bag_file_2_path_.string());
+  EXPECT_EQ(closed_file, bag_file_1_path_.generic_string());
+  EXPECT_EQ(opened_file, bag_file_2_path_.generic_string());
 }
 
 TEST_P(ParametrizedTemporaryDirectoryFixture, reader_accepts_bare_file) {
