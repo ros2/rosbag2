@@ -103,13 +103,17 @@ TEST_F(Rosbag2PlayerStopTestFixture, stop_playback_explicit) {
   auto calls = 0;
   std::mutex m;
   std::condition_variable cv;
+
+  /* *INDENT-OFF* */
   const auto callback = [&](std::shared_ptr<rosbag2_storage::SerializedBagMessage>) {
-      std::unique_lock<std::mutex> lk{m};
-      ++calls;
-      lk.unlock();
-      cv.notify_one();
-      std::this_thread::sleep_for(50ms);
-    };
+    std::unique_lock<std::mutex> lk{m};
+    ++calls;
+    lk.unlock();
+    cv.notify_one();
+    std::this_thread::sleep_for(50ms);
+  };
+  /* *INDENT-ON* */
+
   const auto pre_callback_handle =
     player.add_on_play_message_pre_callback(callback);
   ASSERT_NE(pre_callback_handle, Player::invalid_callback_handle);

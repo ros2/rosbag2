@@ -145,6 +145,7 @@ public:
     return result->paused;
   }
 
+/* *INDENT-OFF* */
 #define service_call_play_next() \
   successful_call<PlayNext>(cli_play_next_, __PRETTY_FUNCTION__, __LINE__)
 
@@ -165,6 +166,7 @@ public:
 
 #define service_call_pause() \
   successful_call<Pause>(cli_pause_, __PRETTY_FUNCTION__, __LINE__);
+/* *INDENT-ON* */
 
 #define service_call_is_paused() is_paused(__PRETTY_FUNCTION__, __LINE__)
 

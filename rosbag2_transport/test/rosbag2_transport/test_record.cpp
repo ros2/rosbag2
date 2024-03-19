@@ -333,9 +333,11 @@ TEST_F(RecordIntegrationTestFixture, duration_and_noncompatibility_policies_mixe
   const rmw_time_t liveliness_lease_duration{0, 5000000};
 
   auto publisher_node = std::make_shared<rclcpp::Node>("rosbag2_test_record_6");
+  /* *INDENT-OFF* */
   auto create_pub = [publisher_node, topic](auto qos) {
-      return publisher_node->create_publisher<test_msgs::msg::Strings>(topic, qos);
-    };
+    return publisher_node->create_publisher<test_msgs::msg::Strings>(topic, qos);
+  };
+  /* *INDENT-ON* */
 
   auto profile_history = rclcpp::QoS(different_history);
   auto publisher_history = create_pub(profile_history);
