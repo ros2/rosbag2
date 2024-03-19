@@ -17,7 +17,6 @@
 
 #include <gmock/gmock.h>
 
-#include <filesystem>
 #include <string>
 
 #include "rcpputils/filesystem_helper.hpp"
@@ -37,7 +36,7 @@ public:
 
   ~TemporaryDirectoryFixture() override
   {
-    std::filesystem::remove_all(std::filesystem::path(temporary_dir_path_));
+    rcpputils::fs::remove_all(rcpputils::fs::path(temporary_dir_path_));
   }
 
   std::string temporary_dir_path_;
