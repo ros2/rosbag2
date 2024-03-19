@@ -3,7 +3,7 @@ project(mcap_vendor LANGUAGES C CXX)
 
 ## Dependencies
 find_package(ament_cmake REQUIRED)
-find_package(lz4_vendor REQUIRED)
+find_package(liblz4_vendor REQUIRED)
 find_package(lz4 REQUIRED)
 find_package(zstd_vendor REQUIRED)
 find_package(zstd REQUIRED)
@@ -71,7 +71,7 @@ build_mcap_vendor()
 
 ament_export_include_directories(include/${PROJECT_NAME})
 ament_export_targets(mcap HAS_LIBRARY_TARGET)
-ament_export_dependencies(lz4_vendor lz4 zstd_vendor zstd)
+ament_export_dependencies(liblz4_vendor lz4 zstd_vendor zstd)
 
 ## Package
 ament_package()

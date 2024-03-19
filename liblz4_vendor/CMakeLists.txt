@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.10)
-project(lz4_vendor)
+project(liblz4_vendor)
 
 find_package(ament_cmake REQUIRED)
 find_package(ament_cmake_vendor_package REQUIRED)
@@ -9,7 +9,7 @@ ament_add_default_options()
 list(INSERT CMAKE_MODULE_PATH 0 "${CMAKE_CURRENT_SOURCE_DIR}/cmake/Modules")
 find_package(lz4 QUIET)
 
-ament_vendor(lz4_vendor
+ament_vendor(liblz4_vendor
   SATISFIED ${lz4_FOUND}
   VCS_URL https://github.com/lz4/lz4.git
   VCS_VERSION v1.9.4
@@ -23,4 +23,4 @@ ament_vendor(lz4_vendor
 
 install(DIRECTORY cmake DESTINATION share/${PROJECT_NAME})
 
-ament_package(CONFIG_EXTRAS lz4_vendor-extras.cmake)
+ament_package(CONFIG_EXTRAS liblz4_vendor-extras.cmake)
