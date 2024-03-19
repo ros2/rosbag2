@@ -11,6 +11,7 @@ colcon build --packages-up-to rosbag2
 
 Note: building Rosbag2 from source, overlaid on a debian installation of `ros-$ROS_DISTRO-rosbag2` has undefined behavior (but should work in most cases, just beware the build may find headers from the binaries instead of the local workspace.)
 
+Note: make sure to [regenerate stub files](rosbag2_py/README.md), when making changes to pybind11-related files in `rosbag2_py`.
 
 ## Executing tests
 
