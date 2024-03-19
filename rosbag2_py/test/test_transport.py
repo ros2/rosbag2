@@ -84,6 +84,6 @@ def test_record_cancel(tmp_path, storage_id):
 
     metadata = metadata_io.read_metadata(bag_path)
     assert len(metadata.relative_file_paths)
-    storage_path = Path(metadata.relative_file_paths[0])
+    storage_path = Path(bag_path + '/' + metadata.relative_file_paths[0])
     assert wait_for(lambda: storage_path.is_file(),
                     timeout=rclpy.duration.Duration(seconds=3))
