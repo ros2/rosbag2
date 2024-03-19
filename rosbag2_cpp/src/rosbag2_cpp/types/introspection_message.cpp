@@ -44,9 +44,11 @@ allocate_introspection_message(
   intro_ts_members->init_function(
     raw_ros2_message->message, rosidl_runtime_cpp::MessageInitialization::ALL);
 
+  // *INDENT-OFF*
   auto deleter = [introspection_ts](rosbag2_introspection_message_t * msg) {
-      deallocate_introspection_message(msg, introspection_ts);
-    };
+    deallocate_introspection_message(msg, introspection_ts);
+  };
+  // *INDENT-ON*
   return std::shared_ptr<rosbag2_introspection_message_t>(raw_ros2_message, deleter);
 }
 
