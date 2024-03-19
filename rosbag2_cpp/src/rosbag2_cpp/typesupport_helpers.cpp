@@ -138,7 +138,9 @@ get_typesupport_handle(
     }
 
     const rosidl_message_type_support_t * (* get_ts)() = nullptr;
-    get_ts = (decltype(get_ts))library->get_symbol(symbol_name);
+    /* *INDENT-OFF* */
+    get_ts = (decltype(get_ts)) library->get_symbol(symbol_name);
+    /* *INDENT-ON* */
 
     if (!get_ts) {
       throw std::runtime_error{
