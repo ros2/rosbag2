@@ -422,3 +422,24 @@ TEST_F(RecordIntegrationTestFixture, write_split_callback_is_called)
   EXPECT_EQ(closed_file, "BagFile0");
   EXPECT_EQ(opened_file, "BagFile1");
 }
+
+TEST_F(RecordIntegrationTestFixture, toggle_paused_do_pause_resume)
+{
+  rosbag2_transport::RecordOptions record_options{};
+  auto recorder = std::make_shared<rosbag2_transport::Recorder>(
+    std::move(writer_), storage_options_, record_options);
+  recorder->pause();
+  ASSERT_TRUE(recorder->is_paused());
+
+  testing::internal::CaptureStderr();
+  recorder->toggle_paused();
+  std::string test_output = testing::internal::GetCapturedStderr();
+  EXPECT_FALSE(recorder->is_paused());
+  EXPECT_TRUE(test_output.find("Resuming recording.") != std::string::npos);
+
+  testing::internal::CaptureStderr();
+  recorder->toggle_paused();
+  test_output = testing::internal::GetCapturedStderr();
+  EXPECT_TRUE(recorder->is_paused());
+  EXPECT_TRUE(test_output.find("Pausing recording.") != std::string::npos);
+}

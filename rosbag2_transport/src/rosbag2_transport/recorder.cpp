@@ -79,6 +79,12 @@ public:
   /// Return the current paused state.
   bool is_paused();
 
+  /// Start discovery
+  void start_discovery();
+
+  /// Stop discovery
+  void stop_discovery();
+
   std::unordered_map<std::string, std::string> get_requested_or_available_topics();
 
   /// Public members for access by wrapper
@@ -86,7 +92,6 @@ public:
   std::shared_ptr<rosbag2_cpp::Writer> writer_;
   rosbag2_storage::StorageOptions storage_options_;
   rosbag2_transport::RecordOptions record_options_;
-  std::atomic<bool> stop_discovery_ = false;
   std::unordered_map<std::string, std::shared_ptr<rclcpp::SubscriptionBase>> subscriptions_;
 
 private:
@@ -135,7 +140,10 @@ private:
   rclcpp::Service<rosbag2_interfaces::srv::Snapshot>::SharedPtr srv_snapshot_;
   rclcpp::Service<rosbag2_interfaces::srv::SplitBagfile>::SharedPtr srv_split_bagfile_;
 
-  std::atomic<bool> paused_ = false;
+  std::mutex start_stop_transition_mutex_;
+  std::mutex discovery_mutex_;
+  std::atomic<bool> stop_discovery_ = false;
+  std::atomic_uchar paused_ = 0;
   std::atomic<bool> in_recording_ = false;
   std::shared_ptr<KeyboardHandler> keyboard_handler_;
   KeyboardHandler::callback_handle_t toggle_paused_key_callback_handle_ =
@@ -160,7 +168,6 @@ RecorderImpl::RecorderImpl(
 : writer_(std::move(writer)),
   storage_options_(storage_options),
   record_options_(record_options),
-  stop_discovery_(record_options_.is_discovery_disabled),
   node(owner),
   paused_(record_options.start_paused),
   keyboard_handler_(std::move(keyboard_handler))
@@ -211,24 +218,19 @@ RecorderImpl::RecorderImpl(
 RecorderImpl::~RecorderImpl()
 {
   keyboard_handler_->delete_key_press_callback(toggle_paused_key_callback_handle_);
-  if (in_recording_) {
-    stop();
-  }
+  stop();
 }
 
 void RecorderImpl::stop()
 {
-  stop_discovery_ = true;
-  if (discovery_future_.valid()) {
-    auto status = discovery_future_.wait_for(2 * record_options_.topic_polling_interval);
-    if (status != std::future_status::ready) {
-      RCLCPP_ERROR_STREAM(
-        node->get_logger(),
-        "discovery_future_.wait_for(" << record_options_.topic_polling_interval.count() <<
-          ") return status: " << (status == std::future_status::timeout ? "timeout" : "deferred"));
-    }
+  std::lock_guard<std::mutex> state_lock(start_stop_transition_mutex_);
+  if (!in_recording_) {
+    RCLCPP_DEBUG(node->get_logger(), "Recording has already been stopped or not running.");
+    return;
   }
-  paused_ = true;
+
+  stop_discovery();
+  pause();
   subscriptions_.clear();
   writer_->close();  // Call writer->close() to finalize current bag file and write metadata
 
@@ -246,6 +248,7 @@ void RecorderImpl::stop()
 
 void RecorderImpl::record()
 {
+  std::lock_guard<std::mutex> state_lock(start_stop_transition_mutex_);
   if (in_recording_.exchange(true)) {
     RCLCPP_WARN_STREAM(
       node->get_logger(),
@@ -253,7 +256,6 @@ void RecorderImpl::record()
     return;
   }
   paused_ = record_options_.start_paused;
-  stop_discovery_ = record_options_.is_discovery_disabled;
   topic_qos_profile_overrides_ = record_options_.topic_qos_profile_overrides;
   if (record_options_.rmw_serialization_format.empty()) {
     throw std::runtime_error("No serialization format specified!");
@@ -340,8 +342,7 @@ void RecorderImpl::record()
     subscribe_topics(get_requested_or_available_topics());
   }
   if (!record_options_.is_discovery_disabled) {
-    discovery_future_ =
-      std::async(std::launch::async, std::bind(&RecorderImpl::topics_discovery, this));
+    start_discovery();
   }
   if (record_options_.start_paused) {
     RCLCPP_INFO(
@@ -395,28 +396,65 @@ const rosbag2_cpp::Writer & RecorderImpl::get_writer_handle()
 
 void RecorderImpl::pause()
 {
-  paused_.store(true);
-  RCLCPP_INFO_STREAM(node->get_logger(), "Pausing recording.");
+  if (paused_.exchange(true)) {
+    RCLCPP_DEBUG(node->get_logger(), "Recorder is already in pause state.");
+  } else {
+    RCLCPP_INFO_STREAM(node->get_logger(), "Pausing recording.");
+  }
 }
 
 void RecorderImpl::resume()
 {
-  paused_.store(false);
-  RCLCPP_INFO_STREAM(node->get_logger(), "Resuming recording.");
+  if (paused_.exchange(false)) {
+    RCLCPP_DEBUG(node->get_logger(), "Already in the recording.");
+  } else {
+    RCLCPP_INFO_STREAM(node->get_logger(), "Resuming recording.");
+  }
 }
 
 void RecorderImpl::toggle_paused()
 {
-  if (paused_.load()) {
-    this->resume();
+  if (atomic_fetch_xor(&paused_, 1)) {
+    RCLCPP_INFO_STREAM(node->get_logger(), "Resuming recording.");
   } else {
-    this->pause();
+    RCLCPP_INFO_STREAM(node->get_logger(), "Pausing recording.");
   }
 }
 
 bool RecorderImpl::is_paused()
 {
   return paused_.load();
+}
+
+void RecorderImpl::start_discovery()
+{
+  std::lock_guard<std::mutex> state_lock(discovery_mutex_);
+  if (stop_discovery_.exchange(false)) {
+    RCLCPP_DEBUG(node->get_logger(), "Recorder topic discovery is already running.");
+  } else {
+    discovery_future_ =
+      std::async(std::launch::async, std::bind(&RecorderImpl::topics_discovery, this));
+  }
+}
+
+void RecorderImpl::stop_discovery()
+{
+  std::lock_guard<std::mutex> state_lock(discovery_mutex_);
+  if (stop_discovery_.exchange(true)) {
+    RCLCPP_DEBUG(
+      node->get_logger(), "Recorder topic discovery has already been stopped or not running.");
+  } else {
+    if (discovery_future_.valid()) {
+      auto status = discovery_future_.wait_for(2 * record_options_.topic_polling_interval);
+      if (status != std::future_status::ready) {
+        RCLCPP_ERROR_STREAM(
+          node->get_logger(),
+          "discovery_future_.wait_for(" << record_options_.topic_polling_interval.count() <<
+            ") return status: " <<
+            (status == std::future_status::timeout ? "timeout" : "deferred"));
+      }
+    }
+  }
 }
 
 void RecorderImpl::topics_discovery()
@@ -798,10 +836,14 @@ Recorder::get_record_options()
   return pimpl_->record_options_;
 }
 
-void
-Recorder::stop_discovery()
+void Recorder::start_discovery()
 {
-  pimpl_->stop_discovery_ = true;
+  pimpl_->start_discovery();
+}
+
+void Recorder::stop_discovery()
+{
+  pimpl_->stop_discovery();
 }
 
 }  // namespace rosbag2_transport
