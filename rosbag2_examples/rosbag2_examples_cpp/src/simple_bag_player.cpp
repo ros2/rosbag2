@@ -51,8 +51,7 @@ private:
         continue;
       }
 
-      if (message_needs_to_be_edit_before_send_)
-      {
+      if (message_needs_to_be_edit_before_send_) {
         rclcpp::SerializedMessage serialized_msg(*msg->serialized_data);
         std_msgs::msg::String::SharedPtr ros_msg = std::make_shared<std_msgs::msg::String>();
 
@@ -60,9 +59,7 @@ private:
         ros_msg->data += "[edited]";
         publisher_->publish(*ros_msg);
         std::cout << ros_msg->data << "\n";
-      }
-      else
-      {
+      } else {
         publisher_->publish(*msg->serialized_data);
       }
 
