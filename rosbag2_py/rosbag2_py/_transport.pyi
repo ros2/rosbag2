@@ -52,6 +52,7 @@ class RecordOptions:
     start_paused: bool
     topic_polling_interval: datetime.timedelta
     topic_qos_profile_overrides: dict
+    topic_types: List[str]
     topics: List[str]
     use_sim_time: bool
     def __init__(self) -> None: ...
