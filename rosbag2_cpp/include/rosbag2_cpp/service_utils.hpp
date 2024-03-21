@@ -48,7 +48,7 @@ service_name_to_service_event_topic_name(const std::string & service_name);
 
 ROSBAG2_CPP_PUBLIC
 bool
-introspection_include_metadata_and_contents(size_t message_size);
+service_event_include_metadata_and_contents(size_t message_size);
 
 ROSBAG2_CPP_PUBLIC
 std::string

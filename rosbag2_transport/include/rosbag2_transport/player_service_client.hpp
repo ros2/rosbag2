@@ -24,6 +24,7 @@
 #include <string>
 #include <tuple>
 
+#include "rcl/types.h"
 #include "rclcpp/generic_client.hpp"
 #include "rclcpp/rclcpp.hpp"
 
@@ -45,9 +46,8 @@ public:
     const rclcpp::Logger logger,
     std::shared_ptr<PlayerServiceClientManager> player_service_client_manager);
 
-  // Can call this function if check_include_request_message() return true
-  void
-  async_send_request(const rclcpp::SerializedMessage & message);
+  // Note: Call this function only if is_include_request_message() return true
+  void async_send_request(const rcl_serialized_message_t & message);
 
   std::shared_ptr<rclcpp::GenericClient>
   generic_client()
@@ -56,8 +56,7 @@ public:
   }
 
   // Check if message can be unpacked to get request message
-  bool
-  include_request_message(const rclcpp::SerializedMessage & message);
+  bool is_include_request_message(const rcl_serialized_message_t & message);
 
 private:
   std::shared_ptr<rclcpp::GenericClient> client_;
@@ -83,7 +82,7 @@ private:
   rcutils_allocator_t allocator_ = rcutils_get_default_allocator();
 
   std::tuple<uint8_t, client_id, int64_t>
-  get_msg_event_type(const rclcpp::SerializedMessage & message);
+  get_msg_event_type(const rcl_serialized_message_t & message);
 };
 
 class PlayerServiceClientManager final

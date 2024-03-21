@@ -18,11 +18,16 @@
 #include <vector>
 
 #include "rosbag2_cpp/service_utils.hpp"
+#include "rosbag2_test_common/memory_management.hpp"
+#include "test_msgs/srv/basic_types.hpp"
 
 using namespace ::testing;  // NOLINT
+using namespace rosbag2_test_common; // NOLINT
 
 class ServiceUtilsTest : public Test
 {
+public:
+  MemoryManagement memory_management_;
 };
 
 TEST_F(ServiceUtilsTest, check_is_service_event_topic)
@@ -92,15 +97,19 @@ TEST_F(ServiceUtilsTest, check_service_name_to_service_event_topic_name)
   }
 }
 
-TEST_F(ServiceUtilsTest, check_introspection_include_metadata_and_contents)
+TEST_F(ServiceUtilsTest, check_service_event_include_metadata_and_contents)
 {
-  size_t service_metadata_event = rosbag2_cpp::get_serialization_size_for_service_metadata_event();
+  auto msg = std::make_shared<test_msgs::srv::BasicTypes_Event>();
+  msg->info.event_type = service_msgs::msg::ServiceEventInfo::REQUEST_SENT;
+  auto serialized_service_event = memory_management_.serialize_message(msg);
 
-  EXPECT_FALSE(
-    rosbag2_cpp::introspection_include_metadata_and_contents(service_metadata_event - 1));
-  EXPECT_FALSE(rosbag2_cpp::introspection_include_metadata_and_contents(service_metadata_event));
-  EXPECT_TRUE(
-    rosbag2_cpp::introspection_include_metadata_and_contents(service_metadata_event + 1));
+  size_t metadata_event_size = rosbag2_cpp::get_serialization_size_for_service_metadata_event();
+
+  EXPECT_EQ(serialized_service_event->buffer_length, metadata_event_size);
+
+  EXPECT_FALSE(rosbag2_cpp::service_event_include_metadata_and_contents(metadata_event_size - 1));
+  EXPECT_FALSE(rosbag2_cpp::service_event_include_metadata_and_contents(metadata_event_size));
+  EXPECT_TRUE(rosbag2_cpp::service_event_include_metadata_and_contents(metadata_event_size + 1));
 }
 
 TEST_F(ServiceUtilsTest, check_client_id_to_string)

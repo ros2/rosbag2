@@ -270,7 +270,11 @@ if(BUILD_TESTING)
   ament_add_gmock(test_service_utils
     test/rosbag2_cpp/test_service_utils.cpp)
   if(TARGET test_service_utils)
-    target_link_libraries(test_service_utils ${PROJECT_NAME})
+    target_link_libraries(test_service_utils
+      ${PROJECT_NAME}
+      rosbag2_test_common::rosbag2_test_common
+      ${test_msgs_TARGETS}
+    )
   endif()
 endif()
 

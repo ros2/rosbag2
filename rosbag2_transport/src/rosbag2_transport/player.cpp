@@ -1195,9 +1195,7 @@ bool PlayerImpl::publish_message(rosbag2_storage::SerializedBagMessageSharedPtr 
 
   auto client_iter = service_clients_.find(message->topic_name);
   if (client_iter != service_clients_.end()) {
-    if (!client_iter->second->include_request_message(
-        rclcpp::SerializedMessage(*message->serialized_data)))
-    {
+    if (!client_iter->second->is_include_request_message(*message->serialized_data)) {
       return message_published;
     }
 
@@ -1205,8 +1203,7 @@ bool PlayerImpl::publish_message(rosbag2_storage::SerializedBagMessageSharedPtr 
     run_play_msg_pre_callbacks(message);
 
     try {
-      client_iter->second->async_send_request(
-        rclcpp::SerializedMessage(*message->serialized_data));
+      client_iter->second->async_send_request(*message->serialized_data);
       message_published = true;
     } catch (const std::exception & e) {
       RCLCPP_ERROR_STREAM(

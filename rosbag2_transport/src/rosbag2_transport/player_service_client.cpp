@@ -13,6 +13,7 @@
 // limitations under the License.
 
 #include <memory>
+#include <utility>
 
 #include "rosbag2_transport/player_service_client.hpp"
 
@@ -54,8 +55,7 @@ PlayerServiceClient::PlayerServiceClient(
     service_event_ts_introspection->data);
 }
 
-bool PlayerServiceClient::include_request_message(
-  const rclcpp::SerializedMessage & message)
+bool PlayerServiceClient::is_include_request_message(const rcl_serialized_message_t & message)
 {
   auto [type, client_id, sequence_number] = get_msg_event_type(message);
 
@@ -75,7 +75,7 @@ bool PlayerServiceClient::include_request_message(
   auto iter = request_info_.find(client_id);
   if (type == service_msgs::msg::ServiceEventInfo::REQUEST_RECEIVED) {
     if (!service_set_introspection_content_) {
-      if (rosbag2_cpp::introspection_include_metadata_and_contents(message.size())) {
+      if (rosbag2_cpp::service_event_include_metadata_and_contents(message.buffer_length)) {
         service_set_introspection_content_ = true;
       }
     }
@@ -130,7 +130,7 @@ bool PlayerServiceClient::include_request_message(
         }
       case request_info_from::NO_CONTENT:
         {
-          if (rosbag2_cpp::introspection_include_metadata_and_contents(message.size())) {
+          if (rosbag2_cpp::service_event_include_metadata_and_contents(message.buffer_length)) {
             // introspection type is changed from metadata to metadata + contents
             request_info_[client_id] = request_info_from::CLIENT;
             ret = true;
@@ -150,7 +150,7 @@ bool PlayerServiceClient::include_request_message(
         }
     }
   } else {
-    if (rosbag2_cpp::introspection_include_metadata_and_contents(message.size())) {
+    if (rosbag2_cpp::service_event_include_metadata_and_contents(message.buffer_length)) {
       request_info_[client_id] = request_info_from::CLIENT;
       ret = true;
     } else {
@@ -161,7 +161,7 @@ bool PlayerServiceClient::include_request_message(
   return ret;
 }
 
-void PlayerServiceClient::async_send_request(const rclcpp::SerializedMessage & message)
+void PlayerServiceClient::async_send_request(const rcl_serialized_message_t & message)
 {
   int ret = RMW_RET_OK;
 
@@ -172,7 +172,7 @@ void PlayerServiceClient::async_send_request(const rclcpp::SerializedMessage & m
       ros_message.get(), rosidl_runtime_cpp::MessageInitialization::ZERO);
 
     ret = rmw_deserialize(
-      &message.get_rcl_serialized_message(), service_event_type_ts_, ros_message.get());
+      &message, service_event_type_ts_, ros_message.get());
     if (ret == RMW_RET_OK) {
       if (client_->service_is_ready()) {
         // members_[0]: info, members_[1]: request, members_[2]: response
@@ -198,8 +198,7 @@ void PlayerServiceClient::async_send_request(const rclcpp::SerializedMessage & m
 }
 
 std::tuple<uint8_t, PlayerServiceClient::client_id, int64_t>
-PlayerServiceClient::get_msg_event_type(
-  const rclcpp::SerializedMessage & message)
+PlayerServiceClient::get_msg_event_type(const rcl_serialized_message_t & message)
 {
   auto msg = service_msgs::msg::ServiceEventInfo();
 
@@ -212,7 +211,7 @@ PlayerServiceClient::get_msg_event_type(
   }
 
   auto ret = rmw_deserialize(
-    &message.get_rcl_serialized_message(),
+    &message,
     type_support_info,
     reinterpret_cast<void *>(&msg));
   if (ret != RMW_RET_OK) {
