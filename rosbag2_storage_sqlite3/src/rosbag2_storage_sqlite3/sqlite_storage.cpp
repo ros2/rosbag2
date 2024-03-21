@@ -545,82 +545,84 @@ void SqliteStorage::prepare_for_writing()
 
 namespace
 {
-void prepare_included_topics_filter_str(
+void prepare_included_topics_filter(
   const rosbag2_storage::StorageFilter & storage_filter,
   std::vector<std::string> & where_conditions)
 {
-  std::string topic_and_service_list;
-  // add topic name
+  std::string included_topic_names_str;
+  // Add topic names
   if (!storage_filter.topics.empty()) {
     for (auto & topic : storage_filter.topics) {
-      topic_and_service_list += "'" + topic + "'";
+      included_topic_names_str += "'" + topic + "'";
       if (&topic != &storage_filter.topics.back()) {
-        topic_and_service_list += ",";
+        included_topic_names_str += ",";
       }
     }
   }
 
-  // add service event topic name
+  // Add service event topic names
   if (!storage_filter.services_events.empty()) {
-    if (!topic_and_service_list.empty()) {
-      topic_and_service_list += ",";
+    if (!included_topic_names_str.empty()) {
+      included_topic_names_str += ",";
     }
     for (auto & service : storage_filter.services_events) {
-      topic_and_service_list += "'" + service + "'";
+      included_topic_names_str += "'" + service + "'";
       if (&service != &storage_filter.services_events.back()) {
-        topic_and_service_list += ",";
+        included_topic_names_str += ",";
       }
     }
   }
 
-  std::string topic_filter_str;
-  if (!topic_and_service_list.empty()) {
-    topic_filter_str.append("(topics.name IN (" + topic_and_service_list + "))");
+  std::string topics_filter_str;
+  if (!included_topic_names_str.empty()) {
+    topics_filter_str.append("(topics.name IN (" + included_topic_names_str + "))");
   }
 
   std::string regex_filter_str;
-  // add topic filter based on regular expression
+  // Add topics filter based on regular expression
   if (!storage_filter.regex.empty()) {
+    // Construct string for selected topics
     regex_filter_str = "(topics.name REGEXP '" + storage_filter.regex + "')";
   }
 
-  if (!topic_filter_str.empty() && !regex_filter_str.empty()) {
-    where_conditions.push_back("(" + topic_filter_str + " OR " + regex_filter_str + ")");
-  } else if (!topic_filter_str.empty()) {
-    where_conditions.push_back(topic_filter_str);
+  if (!topics_filter_str.empty() && !regex_filter_str.empty()) {
+    // Note: Inclusive filter conditions shall be joined with OR
+    where_conditions.push_back("(" + topics_filter_str + " OR " + regex_filter_str + ")");
+  } else if (!topics_filter_str.empty()) {
+    where_conditions.push_back(topics_filter_str);
   } else if (!regex_filter_str.empty()) {
     where_conditions.push_back(regex_filter_str);
   }
 }
 
-void prepare_excluded_topics_filter_str(
+void prepare_excluded_topics_filter(
   const rosbag2_storage::StorageFilter & storage_filter,
   std::vector<std::string> & where_conditions)
 {
-  std::string excluded_topic_and_service_list;
-  // add excluded topic name
+  std::string excluded_topic_names_str;
+  // Add excluded topic name
   if (!storage_filter.exclude_topics.empty()) {
     for (auto & topic : storage_filter.exclude_topics) {
-      excluded_topic_and_service_list += "'" + topic + "'";
+      excluded_topic_names_str += "'" + topic + "'";
       if (&topic != &storage_filter.exclude_topics.back()) {
-        excluded_topic_and_service_list += ",";
+        excluded_topic_names_str += ",";
       }
     }
   }
 
-  // add service event topic name
+  // Add service event topic name
   if (!storage_filter.exclude_service_events.empty()) {
-    excluded_topic_and_service_list += ",";
+    excluded_topic_names_str += ",";
     for (auto & service : storage_filter.exclude_service_events) {
-      excluded_topic_and_service_list += "'" + service + "'";
+      excluded_topic_names_str += "'" + service + "'";
       if (&service != &storage_filter.exclude_service_events.back()) {
-        excluded_topic_and_service_list += ",";
+        excluded_topic_names_str += ",";
       }
     }
   }
 
-  if (!excluded_topic_and_service_list.empty()) {
-    where_conditions.push_back("(topics.name NOT IN (" + excluded_topic_and_service_list + "))");
+  if (!excluded_topic_names_str.empty()) {
+    where_conditions.push_back("(topics.name NOT IN (" + excluded_topic_names_str + "))");
   }
 
   // exclude topics based on regular expressions
@@ -640,14 +642,13 @@ void SqliteStorage::prepare_for_reading()
     "FROM messages JOIN topics ON messages.topic_id = topics.id WHERE ";
   std::vector<std::string> where_conditions;
 
-  prepare_included_topics_filter_str(storage_filter_, where_conditions);
-
-  prepare_excluded_topics_filter_str(storage_filter_, where_conditions);
+  prepare_included_topics_filter(storage_filter_, where_conditions);
+  prepare_excluded_topics_filter(storage_filter_, where_conditions);
 
   const std::string direction_op = read_order_.reverse ? "<" : ">";
   const std::string order_direction = read_order_.reverse ? "DESC" : "ASC";
 
-  // add seek head filter
+  // Add seek head filter
   // When doing timestamp ordering, we need a secondary ordering on message_id
   // Timestamp is not required to be unique, but message_id is, so for messages with the same
   // timestamp we order by the id to have a consistent and deterministic order.
@@ -656,17 +657,14 @@ void SqliteStorage::prepare_for_reading()
     "AND (messages.id " + direction_op + "= " + std::to_string(seek_row_id_) + ")) "
     "OR (timestamp " + direction_op + " " + std::to_string(seek_time_) + ")) ");
 
-  for (
-    std::vector<std::string>::const_iterator it = where_conditions.begin();
-    it != where_conditions.end(); ++it)
-  {
+  for (auto it = where_conditions.begin(); it != where_conditions.end(); ++it) {
     statement_str += *it;
     if (it != where_conditions.end() - 1) {
       statement_str += " AND ";
     }
   }
 
-  // add order by time then id
+  // Add order by time then id
   statement_str += "ORDER BY messages.timestamp " + order_direction;
   statement_str += ", messages.id " + order_direction;
   statement_str += ";";
