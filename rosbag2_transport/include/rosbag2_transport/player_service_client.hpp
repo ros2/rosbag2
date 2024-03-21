@@ -40,17 +40,16 @@ class PlayerServiceClient final
 public:
   explicit
   PlayerServiceClient(
-    std::shared_ptr<rclcpp::GenericClient> cli,
+    std::shared_ptr<rclcpp::GenericClient> generic_client,
     std::string service_name,
     const std::string & service_event_type,
-    const rclcpp::Logger logger,
+    rclcpp::Logger logger,
     std::shared_ptr<PlayerServiceClientManager> player_service_client_manager);
 
   // Note: Call this function only if is_include_request_message() return true
   void async_send_request(const rcl_serialized_message_t & message);
 
-  std::shared_ptr<rclcpp::GenericClient>
-  generic_client()
+  std::shared_ptr<rclcpp::GenericClient> generic_client()
   {
     return client_;
   }
@@ -75,9 +74,8 @@ private:
   // Info on request data from service or client
   std::unordered_map<client_id, request_info_from, rosbag2_cpp::client_id_hash> request_info_;
 
-  std::shared_ptr<rcpputils::SharedLibrary> ts_lib_;
   const rosidl_message_type_support_t * service_event_type_ts_;
-  const rosidl_typesupport_introspection_cpp::MessageMembers * message_members_;
+  const rosidl_typesupport_introspection_cpp::MessageMembers * service_event_members_;
 
   rcutils_allocator_t allocator_ = rcutils_get_default_allocator();
 
@@ -88,16 +86,14 @@ private:
 class PlayerServiceClientManager final
 {
 public:
-  PlayerServiceClientManager(
+  explicit PlayerServiceClientManager(
     std::chrono::seconds request_future_timeout = std::chrono::minutes(30),
     size_t maximum_request_future_queue = 100);
 
   // Timeout future will be discarded and check queue.
-  bool
-  request_future_queue_is_full();
+  bool request_future_queue_is_full();
 
-  bool
-  register_request_future(
+  bool register_request_future(
     rclcpp::GenericClient::FutureAndRequestId & request_future,
     std::weak_ptr<rclcpp::GenericClient> client);
 
@@ -107,16 +103,14 @@ private:
   using request_id_and_client_t =
     std::pair<ptr_future_and_request_id, std::weak_ptr<rclcpp::GenericClient>>;
   std::map<time_point, request_id_and_client_t> request_futures_list_;
-  std::mutex request_futures_list_lock_;
+  std::mutex request_futures_list_mutex_;
 
   std::chrono::seconds request_future_timeout_;
   size_t maximum_request_future_queue_;
 
-  void
-  remove_complete_request_future();
+  void remove_complete_request_future();
 
-  void
-  remove_all_timeout_request_future();
+  void remove_all_timeout_request_future();
 };
 
 }  // namespace rosbag2_transport

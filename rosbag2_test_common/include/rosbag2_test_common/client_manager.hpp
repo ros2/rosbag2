@@ -115,8 +115,7 @@ public:
       if (rclcpp::executors::spin_node_until_future_complete(
           exec_, get_node_base_interface(), result, timeout) != rclcpp::FutureReturnCode::SUCCESS)
       {
-        RCLCPP_INFO(
-          this->get_logger(), "Failed to get response !");
+        RCLCPP_INFO(this->get_logger(), "Failed to get response !");
         return false;
       }
     }

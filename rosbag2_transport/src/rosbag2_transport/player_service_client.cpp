@@ -28,29 +28,26 @@ namespace rosbag2_transport
 {
 
 PlayerServiceClient::PlayerServiceClient(
-  std::shared_ptr<rclcpp::GenericClient> cli,
+  std::shared_ptr<rclcpp::GenericClient> generic_client,
   std::string service_name,
   const std::string & service_event_type,
-  const rclcpp::Logger logger,
+  rclcpp::Logger logger,
   std::shared_ptr<PlayerServiceClientManager> player_service_client_manager)
-: client_(std::move(cli)),
+: client_(std::move(generic_client)),
   service_name_(std::move(service_name)),
-  logger_(logger),
-  player_service_client_manager_(player_service_client_manager)
+  logger_(std::move(logger)),
+  player_service_client_manager_(std::move(player_service_client_manager))
 {
-  ts_lib_ = rclcpp::get_typesupport_library(
+  auto service_event_ts_lib = rclcpp::get_typesupport_library(
     service_event_type, "rosidl_typesupport_cpp");
 
   service_event_type_ts_ = rclcpp::get_message_typesupport_handle(
-    service_event_type,
-    "rosidl_typesupport_cpp",
-    *ts_lib_);
+    service_event_type, "rosidl_typesupport_cpp", *service_event_ts_lib);
 
   auto service_event_ts_introspection = get_message_typesupport_handle(
-    service_event_type_ts_,
-    rosidl_typesupport_introspection_cpp::typesupport_identifier);
+    service_event_type_ts_, rosidl_typesupport_introspection_cpp::typesupport_identifier);
 
-  message_members_ =
+  service_event_members_ =
     reinterpret_cast<const rosidl_typesupport_introspection_cpp::MessageMembers *>(
     service_event_ts_introspection->data);
 }
@@ -135,7 +132,7 @@ bool PlayerServiceClient::is_include_request_message(const rcl_serialized_messag
             request_info_[client_id] = request_info_from::CLIENT;
             ret = true;
           } else {
-            RCUTILS_LOG_WARN_NAMED(
+            RCUTILS_LOG_WARN_ONCE_NAMED(
               ROSBAG2_TRANSPORT_PACKAGE_NAME,
               "The configuration of introspection for '%s' client [ID: %s]` is metadata !",
               rosbag2_cpp::client_id_to_string(client_id).c_str(),
@@ -166,9 +163,9 @@ void PlayerServiceClient::async_send_request(const rcl_serialized_message_t & me
   int ret = RMW_RET_OK;
 
   {
-    auto ros_message = std::make_unique<uint8_t[]>(message_members_->size_of_);
+    auto ros_message = std::make_unique<uint8_t[]>(service_event_members_->size_of_);
 
-    message_members_->init_function(
+    service_event_members_->init_function(
       ros_message.get(), rosidl_runtime_cpp::MessageInitialization::ZERO);
 
     ret = rmw_deserialize(
@@ -176,7 +173,7 @@ void PlayerServiceClient::async_send_request(const rcl_serialized_message_t & me
     if (ret == RMW_RET_OK) {
       if (client_->service_is_ready()) {
         // members_[0]: info, members_[1]: request, members_[2]: response
-        auto request_offset = message_members_->members_[1].offset_;
+        auto request_offset = service_event_members_->members_[1].offset_;
         auto request_addr = reinterpret_cast<size_t>(ros_message.get()) + request_offset;
         auto future_and_request_id = client_->async_send_request(
           reinterpret_cast<void *>(*reinterpret_cast<size_t *>(request_addr)));
@@ -188,7 +185,7 @@ void PlayerServiceClient::async_send_request(const rcl_serialized_message_t & me
       }
     }
 
-    message_members_->fini_function(ros_message.get());
+    service_event_members_->fini_function(ros_message.get());
   }
 
   if (ret != RMW_RET_OK) {
@@ -231,7 +228,7 @@ PlayerServiceClientManager::PlayerServiceClientManager(
 
 bool PlayerServiceClientManager::request_future_queue_is_full()
 {
-  std::lock_guard<std::mutex> lock(request_futures_list_lock_);
+  std::lock_guard<std::mutex> lock(request_futures_list_mutex_);
 
   // To improve performance, it's not necessary to clean up completed requests and timeout requests
   // every time.
@@ -260,7 +257,7 @@ bool PlayerServiceClientManager::register_request_future(
     std::make_unique<rclcpp::GenericClient::FutureAndRequestId>(std::move(request_future));
 
   if (!request_future_queue_is_full()) {
-    std::lock_guard<std::mutex> lock(request_futures_list_lock_);
+    std::lock_guard<std::mutex> lock(request_futures_list_mutex_);
     request_futures_list_[std::chrono::steady_clock::now()] =
     {std::move(future_and_request_id), client};
     return true;

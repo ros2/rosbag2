@@ -51,10 +51,10 @@ struct StorageFilter
   // are returned.
   std::vector<std::string> exclude_service_events = {};
 
-  // Regular expression of topic names and service names to blacklist when
-  // playing a bag. Only messages unmatching these topics and services will
+  // Regular expression of topic names and service events names to blacklist when
+  // playing a bag. Only messages not matching these topics and service events will
   // be returned. If the string is empty, the filter is ignored and all messages
-  // of topics and services are returned.
+  // of topics and service events are returned.
   std::string regex_to_exclude = "";
 };
 
