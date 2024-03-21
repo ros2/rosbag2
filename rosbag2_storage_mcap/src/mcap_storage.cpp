@@ -40,6 +40,7 @@
 #include <mcap/mcap.hpp>
 
 #include <algorithm>
+#include <cstring>
 #include <memory>
 #include <mutex>
 #include <optional>
@@ -334,6 +335,9 @@ void MCAPStorage::open_impl(const std::string & uri, const std::string & preset_
     case rosbag2_storage::storage_interfaces::IOFlag::READ_ONLY: {
       relative_path_ = uri;
       input_ = std::make_unique<std::ifstream>(relative_path_, std::ios::binary);
+      if (!input_->is_open()) {
+        throw std::runtime_error(std::strerror(errno));
+      }
       data_source_ = std::make_unique<mcap::FileStreamReader>(*input_);
       mcap_reader_ = std::make_unique<mcap::McapReader>();
       auto status = mcap_reader_->open(*data_source_);
