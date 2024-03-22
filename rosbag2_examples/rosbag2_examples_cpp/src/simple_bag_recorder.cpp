@@ -31,8 +31,13 @@ public:
 
     writer_->open("my_bag");
 
-    subscription_ = create_subscription<std_msgs::msg::String>(
-      "chatter", 10, std::bind(&SimpleBagRecorder::topic_callback, this, _1));
+    if (message_needs_to_be_edit_before_write_) {
+      subscription_ = create_subscription<std_msgs::msg::String>(
+        "chatter", 10, std::bind(&SimpleBagRecorder::topic_edit_callback, this, _1));
+    } else {
+      subscription_ = create_subscription<std_msgs::msg::String>(
+        "chatter", 10, std::bind(&SimpleBagRecorder::topic_callback, this, _1));
+    }
   }
 
 private:
@@ -42,8 +47,21 @@ private:
     writer_->write(msg, "chatter", "std_msgs/msg/String", time_stamp);
   }
 
+  void topic_edit_callback(std_msgs::msg::String::UniquePtr msg) const
+  {
+    rclcpp::Time time_stamp = this->now();
+    msg->data += "[edited]";
+    rclcpp::SerializedMessage serialized_msg;
+    serialization_.serialize_message(msg.get(), &serialized_msg);
+    writer_->write(serialized_msg, "chatter", "std_msgs/msg/String", time_stamp);
+  }
+
+
   rclcpp::Subscription<std_msgs::msg::String>::SharedPtr subscription_;
+  rclcpp::Serialization<std_msgs::msg::String> serialization_;
   std::unique_ptr<rosbag2_cpp::Writer> writer_;
+
+  bool message_needs_to_be_edit_before_write_ {true};
 };
 
 int main(int argc, char * argv[])
