@@ -112,6 +112,15 @@ if(BUILD_TESTING)
   )
   target_compile_definitions(test_mcap_storage PRIVATE ${MCAP_COMPILE_DEFS})
 
+  ament_add_gmock(test_mcap_topic_filter test/rosbag2_storage_mcap/test_mcap_topic_filter.cpp)
+  target_link_libraries(test_mcap_topic_filter
+    ${PROJECT_NAME}
+    rosbag2_storage::rosbag2_storage
+    rosbag2_test_common::rosbag2_test_common
+    ${std_msgs_TARGETS}
+  )
+  target_compile_definitions(test_mcap_topic_filter PRIVATE ${MCAP_COMPILE_DEFS})
+
 endif()
 
 
