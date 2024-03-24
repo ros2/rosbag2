@@ -51,8 +51,8 @@ private:
   {
     rclcpp::Time time_stamp = this->now();
     msg->data += "[edited]";
-    rclcpp::SerializedMessage serialized_msg;
-    serialization_.serialize_message(msg.get(), &serialized_msg);
+    auto serialized_msg = std::make_shared<rclcpp::SerializedMessage>();
+    serialization_.serialize_message(msg.get(), serialized_msg.get());
     writer_->write(serialized_msg, "chatter", "std_msgs/msg/String", time_stamp);
   }
 
