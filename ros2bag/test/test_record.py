@@ -53,13 +53,10 @@ class TestRecord(unittest.TestCase):
 
     def test_output(self, record_all_process, proc_output):
         proc_output.assertWaitFor(
-            'Listening for topics...',
+            "Subscribed to topic '/events/write_split'",
             process=record_all_process
         )
-        proc_output.assertWaitFor(
-            "Subscribed to topic '/rosout'",
-            process=record_all_process
-        )
+        proc_output.assertWaitFor('Recording...', process=record_all_process)
 
 
 @launch_testing.post_shutdown_test()

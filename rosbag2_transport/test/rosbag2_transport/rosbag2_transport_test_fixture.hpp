@@ -26,11 +26,6 @@
 #include "rosbag2_cpp/types.hpp"
 #include "rosbag2_cpp/writer.hpp"
 
-#ifdef _WIN32
-# include <direct.h>
-# include <Windows.h>
-#endif
-
 #include "rosbag2_storage/storage_options.hpp"
 
 #include "rosbag2_transport/play_options.hpp"

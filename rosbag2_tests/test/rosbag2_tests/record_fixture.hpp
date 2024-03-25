@@ -126,7 +126,7 @@ public:
       std::this_thread::sleep_for(50ms);
     }
     ASSERT_EQ(metadata_io.metadata_file_exists(bag_path), true)
-      << "Could not find metadata file.";
+      << "Could not find " << bag_path << " metadata file.";
   }
 
   void wait_for_storage_file(std::chrono::duration<float> timeout = std::chrono::seconds(10))
@@ -179,44 +179,6 @@ public:
         return topic_name == tm.name;
       });
     return topic_it->serialization_format;
-  }
-
-  void finalize_metadata_kludge(
-    int expected_splits = 0,
-    const std::string & compression_format = "",
-    const std::string & compression_mode = "")
-  {
-    // TODO(ros-tooling): Find out how to correctly send a Ctrl-C signal on Windows
-    // This is necessary as the process is killed hard on Windows and doesn't write a metadata file
-  #ifdef _WIN32
-    rosbag2_storage::BagMetadata metadata{};
-    metadata.storage_identifier = rosbag2_storage::get_default_storage_id();
-    for (int i = 0; i <= expected_splits; i++) {
-      rcpputils::fs::path bag_file_path;
-      if (!compression_format.empty()) {
-        bag_file_path = get_bag_file_path(i);
-      } else {
-        bag_file_path = get_compressed_bag_file_path(i);
-      }
-
-      if (rcpputils::fs::exists(bag_file_path)) {
-        metadata.relative_file_paths.push_back(bag_file_path.string());
-      }
-    }
-    metadata.duration = std::chrono::nanoseconds(0);
-    metadata.starting_time =
-      std::chrono::time_point<std::chrono::high_resolution_clock>(std::chrono::nanoseconds(0));
-    metadata.message_count = 0;
-    metadata.compression_mode = compression_mode;
-    metadata.compression_format = compression_format;
-
-    rosbag2_storage::MetadataIo metadata_io;
-    metadata_io.write_metadata(root_bag_path_.string(), metadata);
-  #else
-    (void)expected_splits;
-    (void)compression_format;
-    (void)compression_mode;
-  #endif
   }
 
   // relative path to the root of the bag file.
