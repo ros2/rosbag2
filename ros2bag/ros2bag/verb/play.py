@@ -195,9 +195,9 @@ class PlayVerb(VerbExtension):
         play_options.services_to_filter = convert_service_to_service_event_topic(args.services)
 
         play_options.regex_to_filter = args.regex
-        
+
         play_options.exclude_regex_to_filter = args.exclude_regex
-        
+
         play_options.exclude_topics_to_filter = args.exclude_topics if args.exclude_topics else []
 
         play_options.exclude_service_events_to_filter = \
