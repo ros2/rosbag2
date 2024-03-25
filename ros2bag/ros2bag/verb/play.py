@@ -18,6 +18,7 @@ from rclpy.qos import InvalidQoSProfileException
 from ros2bag.api import add_standard_reader_args
 from ros2bag.api import check_not_negative_int
 from ros2bag.api import check_positive_float
+from ros2bag.api import convert_service_to_service_event_topic
 from ros2bag.api import convert_yaml_to_qos_profile
 from ros2bag.api import print_error
 from ros2bag.verb import VerbExtension
@@ -49,16 +50,23 @@ class PlayVerb(VerbExtension):
             '-r', '--rate', type=check_positive_float, default=1.0,
             help='rate at which to play back messages. Valid range > 0.0.')
         parser.add_argument(
-            '--topics', type=str, default=[], nargs='+',
+            '--topics', type=str, default=[], metavar='topic', nargs='+',
             help='Space-delimited list of topics to play.')
         parser.add_argument(
-            '-e', '--regex', default='',
-            help='filter topics by regular expression to replay, separated by space. If none '
-                 'specified, all topics will be replayed.')
+            '--services', type=str, default=[], metavar='service', nargs='+',
+            help='Space-delimited list of services to play.')
         parser.add_argument(
-            '-x', '--exclude', default='',
-            help='regular expressions to exclude topics from replay, separated by space. If none '
-                 'specified, all topics will be replayed.')
+            '-e', '--regex', default='',
+            help='Play only topics and services matches with regular expression.')
+        parser.add_argument(
+            '-x', '--exclude-regex', default='',
+            help='regular expressions to exclude topics and services from replay.')
+        parser.add_argument(
+            '--exclude-topics', type=str, default=[], metavar='topic', nargs='+',
+            help='Space-delimited list of topics not to play.')
+        parser.add_argument(
+            '--exclude-services', type=str, default=[], metavar='service', nargs='+',
+            help='Space-delimited list of services not to play.')
         parser.add_argument(
             '--qos-profile-overrides-path', type=FileType('r'),
             help='Path to a yaml file defining overrides of the QoS profile for specific topics.')
@@ -182,8 +190,19 @@ class PlayVerb(VerbExtension):
         play_options.node_prefix = NODE_NAME_PREFIX
         play_options.rate = args.rate
         play_options.topics_to_filter = args.topics
-        play_options.topics_regex_to_filter = args.regex
-        play_options.topics_regex_to_exclude = args.exclude
+
+        # Convert service name to service event topic name
+        play_options.services_to_filter = convert_service_to_service_event_topic(args.services)
+
+        play_options.regex_to_filter = args.regex
+        
+        play_options.exclude_regex_to_filter = args.exclude_regex
+        
+        play_options.exclude_topics_to_filter = args.exclude_topics if args.exclude_topics else []
+
+        play_options.exclude_service_events_to_filter = \
+            convert_service_to_service_event_topic(args.exclude_services)
+
         play_options.topic_qos_profile_overrides = qos_profile_overrides
         play_options.loop = args.loop
         play_options.topic_remapping_options = topic_remapping

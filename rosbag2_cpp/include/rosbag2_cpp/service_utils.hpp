@@ -15,9 +15,12 @@
 #ifndef ROSBAG2_CPP__SERVICE_UTILS_HPP_
 #define ROSBAG2_CPP__SERVICE_UTILS_HPP_
 
+#include <array>
 #include <string>
 
 #include "rosbag2_cpp/visibility_control.hpp"
+
+#include "service_msgs/msg/service_event_info.hpp"
 
 namespace rosbag2_cpp
 {
@@ -42,6 +45,22 @@ get_serialization_size_for_service_metadata_event();
 ROSBAG2_CPP_PUBLIC
 std::string
 service_name_to_service_event_topic_name(const std::string & service_name);
+
+ROSBAG2_CPP_PUBLIC
+bool
+introspection_include_metadata_and_contents(size_t message_size);
+
+ROSBAG2_CPP_PUBLIC
+std::string
+client_id_to_string(std::array<uint8_t, 16> & client_id);
+
+struct client_id_hash
+{
+  static_assert(
+    std::is_same<std::array<uint8_t, 16>,
+    service_msgs::msg::ServiceEventInfo::_client_gid_type>::value);
+  std::size_t operator()(const std::array<uint8_t, 16> & client_id) const;
+};
 }  // namespace rosbag2_cpp
 
 #endif  // ROSBAG2_CPP__SERVICE_UTILS_HPP_

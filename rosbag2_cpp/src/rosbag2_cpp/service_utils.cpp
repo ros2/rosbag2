@@ -156,4 +156,33 @@ std::string service_name_to_service_event_topic_name(const std::string & service
   return service_name + RCL_SERVICE_INTROSPECTION_TOPIC_POSTFIX;
 }
 
+bool introspection_include_metadata_and_contents(size_t message_size)
+{
+  if (message_size <= rosbag2_cpp::get_serialization_size_for_service_metadata_event()) {
+    return false;
+  }
+  return true;
+}
+
+std::string client_id_to_string(std::array<uint8_t, 16> & client_id)
+{
+  // output format:
+  // xx-xx-xx-xx-xx-xx-xx-xx-xx-xx-xx-xx-xx-xx-xx-xx
+  std::string client_id_string = std::to_string(client_id[0]);
+  for (int i = 1; i < 16; i++) {
+    client_id_string += "-" + std::to_string(client_id[i]);
+  }
+  return client_id_string;
+}
+
+std::size_t client_id_hash::operator()(const std::array<uint8_t, 16> & client_id) const
+{
+  std::hash<uint8_t> hasher;
+  std::size_t seed = 0;
+  for (const auto & value : client_id) {
+    // 0x9e3779b9 is from https://cryptography.fandom.com/wiki/Tiny_Encryption_Algorithm
+    seed ^= hasher(value) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
+  }
+  return seed;
+}
 }  // namespace rosbag2_cpp

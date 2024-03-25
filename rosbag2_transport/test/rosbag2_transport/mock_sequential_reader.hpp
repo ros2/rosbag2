@@ -43,14 +43,24 @@ public:
 
   bool has_next() override
   {
-    if (filter_.topics.empty()) {
+    if (filter_.topics.empty() && filter_.services_events.empty()) {
       return num_read_ < messages_.size();
     }
 
     while (num_read_ < messages_.size()) {
-      for (const auto & filter_topic : filter_.topics) {
-        if (!messages_[num_read_]->topic_name.compare(filter_topic)) {
-          return true;
+      if (!filter_.topics.empty()) {
+        for (const auto & filter_topic : filter_.topics) {
+          if (!messages_[num_read_]->topic_name.compare(filter_topic)) {
+            return true;
+          }
+        }
+      }
+
+      if (!filter_.services_events.empty()) {
+        for (const auto & filter_service : filter_.services_events) {
+          if (!messages_[num_read_]->topic_name.compare(filter_service)) {
+            return true;
+          }
         }
       }
       num_read_++;

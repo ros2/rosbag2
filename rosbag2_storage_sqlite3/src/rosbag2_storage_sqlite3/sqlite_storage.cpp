@@ -541,37 +541,106 @@ void SqliteStorage::prepare_for_writing()
     "INSERT INTO messages (timestamp, topic_id, data) VALUES (?, ?, ?);");
 }
 
+namespace
+{
+void prepare_included_topics_filter_str(
+  const rosbag2_storage::StorageFilter & storage_filter,
+  std::vector<std::string> & where_conditions)
+{
+  std::string topic_and_service_list;
+  // add topic name
+  if (!storage_filter.topics.empty()) {
+    for (auto & topic : storage_filter.topics) {
+      topic_and_service_list += "'" + topic + "'";
+      if (&topic != &storage_filter.topics.back()) {
+        topic_and_service_list += ",";
+      }
+    }
+  }
+
+  // add service event topic name
+  if (!storage_filter.services_events.empty()) {
+    if (!topic_and_service_list.empty()) {
+      topic_and_service_list += ",";
+    }
+    for (auto & service : storage_filter.services_events) {
+      topic_and_service_list += "'" + service + "'";
+      if (&service != &storage_filter.services_events.back()) {
+        topic_and_service_list += ",";
+      }
+    }
+  }
+
+  std::string topic_filter_str;
+  if (!topic_and_service_list.empty()) {
+    topic_filter_str.append("(topics.name IN (" + topic_and_service_list + "))");
+  }
+
+  std::string regex_filter_str;
+  // add topic filter based on regular expression
+  if (!storage_filter.regex.empty()) {
+    regex_filter_str = "(topics.name REGEXP '" + storage_filter.regex + "')";
+  }
+
+  if (!topic_filter_str.empty() && !regex_filter_str.empty()) {
+    where_conditions.push_back("(" + topic_filter_str + " OR " + regex_filter_str + ")");
+  } else if (!topic_filter_str.empty()) {
+    where_conditions.push_back(topic_filter_str);
+  } else if (!regex_filter_str.empty()) {
+    where_conditions.push_back(regex_filter_str);
+  }
+}
+
+void prepare_excluded_topics_filter_str(
+  const rosbag2_storage::StorageFilter & storage_filter,
+  std::vector<std::string> & where_conditions)
+{
+  std::string excluded_topic_and_service_list;
+  // add excluded topic name
+  if (!storage_filter.exclude_topics.empty()) {
+    for (auto & topic : storage_filter.exclude_topics) {
+      excluded_topic_and_service_list += "'" + topic + "'";
+      if (&topic != &storage_filter.exclude_topics.back()) {
+        excluded_topic_and_service_list += ",";
+      }
+    }
+  }
+
+  // add service event topic name
+  if (!storage_filter.exclude_service_events.empty()) {
+    excluded_topic_and_service_list += ",";
+    for (auto & service : storage_filter.exclude_service_events) {
+      excluded_topic_and_service_list += "'" + service + "'";
+      if (&service != &storage_filter.exclude_service_events.back()) {
+        excluded_topic_and_service_list += ",";
+      }
+    }
+  }
+
+  if (!excluded_topic_and_service_list.empty()) {
+    where_conditions.push_back("(topics.name NOT IN (" + excluded_topic_and_service_list + "))");
+  }
+
+  // exclude topics based on regular expressions
+  if (!storage_filter.regex_to_exclude.empty()) {
+    // Construct string for selected topics
+    where_conditions.push_back(
+      "(topics.name NOT IN "
+      "(SELECT topics.name FROM topics WHERE topics.name REGEXP '" +
+      storage_filter.regex_to_exclude + "'))");
+  }
+}
+}  // namespace
+
 void SqliteStorage::prepare_for_reading()
 {
   std::string statement_str = "SELECT data, timestamp, topics.name, messages.id "
     "FROM messages JOIN topics ON messages.topic_id = topics.id WHERE ";
   std::vector<std::string> where_conditions;
 
-  // add topic filter
-  if (!storage_filter_.topics.empty()) {
-    // Construct string for selected topics
-    std::string topic_list{""};
-    for (auto & topic : storage_filter_.topics) {
-      topic_list += "'" + topic + "'";
-      if (&topic != &storage_filter_.topics.back()) {
-        topic_list += ",";
-      }
-    }
-    where_conditions.push_back("(topics.name IN (" + topic_list + "))");
-  }
-  // add topic filter based on regular expression
-  if (!storage_filter_.topics_regex.empty()) {
-    // Construct string for selected topics
-    where_conditions.push_back("(topics.name REGEXP '" + storage_filter_.topics_regex + "')");
-  }
-  // exclude topics based on regular expressions
-  if (!storage_filter_.topics_regex_to_exclude.empty()) {
-    // Construct string for selected topics
-    where_conditions.push_back(
-      "(topics.name NOT IN "
-      "(SELECT topics.name FROM topics WHERE topics.name REGEXP '" +
-      storage_filter_.topics_regex_to_exclude + "'))");
-  }
+  prepare_included_topics_filter_str(storage_filter_, where_conditions);
+
+  prepare_excluded_topics_filter_str(storage_filter_, where_conditions);
 
   const std::string direction_op = read_order_.reverse ? "<" : ">";
   const std::string order_direction = read_order_.reverse ? "DESC" : "ASC";

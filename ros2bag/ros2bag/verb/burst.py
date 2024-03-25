@@ -18,6 +18,7 @@ from rclpy.qos import InvalidQoSProfileException
 from ros2bag.api import add_standard_reader_args
 from ros2bag.api import check_not_negative_int
 from ros2bag.api import check_positive_float
+from ros2bag.api import convert_service_to_service_event_topic
 from ros2bag.api import convert_yaml_to_qos_profile
 from ros2bag.api import print_error
 from ros2bag.verb import VerbExtension
@@ -41,8 +42,12 @@ class BurstVerb(VerbExtension):
                  'delay of message playback.')
         parser.add_argument(
             '--topics', type=str, default=[], nargs='+',
-            help='topics to replay, separated by space. If none specified, all topics will be '
-                 'replayed.')
+            help='topics to replay, separated by space. At least one topic needs to be '
+            "specified. If this parameter isn\'t specified, all topics will be replayed.")
+        parser.add_argument(
+            '--services', type=str, default=[], nargs='+',
+            help='services to replay, separated by space. At least one service needs to be '
+                 "specified. If this parameter isn\'t specified, all services will be replayed.")
         parser.add_argument(
             '--qos-profile-overrides-path', type=FileType('r'),
             help='Path to a yaml file defining overrides of the QoS profile for specific topics.')
@@ -90,6 +95,8 @@ class BurstVerb(VerbExtension):
         play_options.node_prefix = NODE_NAME_PREFIX
         play_options.rate = 1.0
         play_options.topics_to_filter = args.topics
+        # Convert service name to service event topic name
+        play_options.services_to_filter = convert_service_to_service_event_topic(args.services)
         play_options.topic_qos_profile_overrides = qos_profile_overrides
         play_options.loop = False
         play_options.topic_remapping_options = topic_remapping

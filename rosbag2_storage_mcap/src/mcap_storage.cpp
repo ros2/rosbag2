@@ -531,6 +531,26 @@ bool MCAPStorage::read_and_enqueue_message()
   return true;
 }
 
+namespace
+{
+bool is_service_event_topic_name(const std::string & topic_name)
+{
+  // The origin definition is RCL_SERVICE_INTROSPECTION_TOPIC_POSTFIX
+  const char * service_introspection_topic_postfix = "/_service_event";
+  if (topic_name.length() <= strlen(service_introspection_topic_postfix)) {
+    return false;
+  }
+
+  std::string end_topic_name =
+    topic_name.substr(topic_name.length() - strlen(service_introspection_topic_postfix));
+  if (end_topic_name != service_introspection_topic_postfix) {
+    return false;
+  }
+
+  return true;
+}
+}  // namespace
+
 void MCAPStorage::reset_iterator()
 {
   ensure_summary_read();
@@ -546,26 +566,92 @@ void MCAPStorage::reset_iterator()
     options.endTime = mcap::MaxTime;
   }
   options.readOrder = read_order_;
-  if (!storage_filter_.topics.empty()) {
-    options.topicFilter = [this](std::string_view topic) {
-      for (const auto & match_topic : storage_filter_.topics) {
-        if (match_topic == topic) {
-          return true;
+
+  auto filter_topic = [this](std::string_view topic) {
+    std::string topic_string(topic);
+    bool is_service_event_topic = is_service_event_topic_name(std::string(topic_string));
+
+    if (is_service_event_topic) {
+      if (!storage_filter_.exclude_service_events.empty()) {
+        auto it = std::find(storage_filter_.exclude_service_events.begin(),
+                            storage_filter_.exclude_service_events.end(), topic_string);
+        if (it != storage_filter_.exclude_service_events.end()) {
+          return false;
         }
       }
-      return false;
-    };
-  }
+    } else {
+      if (!storage_filter_.exclude_topics.empty()) {
+        auto it = std::find(storage_filter_.exclude_topics.begin(),
+                            storage_filter_.exclude_topics.end(), topic_string);
+        if (it != storage_filter_.exclude_topics.end()) {
+          return false;
+        }
+      }
+    }
+
 #ifdef ROSBAG2_STORAGE_MCAP_HAS_STORAGE_FILTER_TOPIC_REGEX
-  if (!storage_filter_.topics_regex.empty()) {
-    options.topicFilter = [this](std::string_view topic) {
+    if (!storage_filter_.regex_to_exclude.empty()) {
       std::smatch m;
-      std::string topic_string(topic);
-      std::regex re(storage_filter_.topics_regex);
-      return std::regex_match(topic_string, m, re);
-    };
-  }
+      std::regex re(storage_filter_.regex_to_exclude);
+
+      if (std::regex_match(topic_string, m, re)) {
+        return false;
+      }
+    }
 #endif
+
+    if (is_service_event_topic) {
+      if (!storage_filter_.services_events.empty()) {
+        auto it = std::find(storage_filter_.services_events.begin(),
+                            storage_filter_.services_events.end(), topic_string);
+        if (it != storage_filter_.services_events.end()) {
+          return true;
+        } else {
+#ifdef ROSBAG2_STORAGE_MCAP_HAS_STORAGE_FILTER_TOPIC_REGEX
+          // If regex isn't set, service name must be in service event topic list
+          if (storage_filter_.regex.empty()) {
+            return false;
+          }
+#else
+          return false;
+#endif
+        }
+      }
+    } else {
+      if (!storage_filter_.topics.empty()) {
+        auto it =
+          std::find(storage_filter_.topics.begin(), storage_filter_.topics.end(), topic_string);
+        if (it != storage_filter_.topics.end()) {
+          return true;
+        } else {
+#ifdef ROSBAG2_STORAGE_MCAP_HAS_STORAGE_FILTER_TOPIC_REGEX
+          // If regex isn't set, topic name must be in topic topic list
+          if (storage_filter_.regex.empty()) {
+            return false;
+          }
+#else
+          return false;
+#endif
+        }
+      }
+    }
+
+#ifdef ROSBAG2_STORAGE_MCAP_HAS_STORAGE_FILTER_TOPIC_REGEX
+    // If a regex is defined, the topic name or service event name must match the regex.
+    if (!storage_filter_.regex.empty()) {
+      std::smatch m;
+      std::regex re(storage_filter_.regex);
+
+      if (!std::regex_match(topic_string, m, re)) {
+        return false;
+      }
+    }
+#endif
+
+    return true;
+  };
+  options.topicFilter = filter_topic;
+
   linear_view_ =
     std::make_unique<mcap::LinearMessageView>(mcap_reader_->readMessages(OnProblem, options));
   linear_iterator_ = std::make_unique<mcap::LinearMessageView::Iterator>(linear_view_->begin());

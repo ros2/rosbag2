@@ -17,9 +17,11 @@
 #include <algorithm>
 #include <chrono>
 #include <memory>
+#include <regex>
 #include <string>
 #include <unordered_map>
 #include <utility>
+#include <variant>
 #include <vector>
 #include <thread>
 
@@ -33,9 +35,15 @@
 
 #include "rosbag2_cpp/clocks/time_controller_clock.hpp"
 #include "rosbag2_cpp/reader.hpp"
+#include "rosbag2_cpp/service_utils.hpp"
+#include "rosbag2_cpp/typesupport_helpers.hpp"
+
 #include "rosbag2_storage/storage_filter.hpp"
 #include "rosbag2_storage/qos.hpp"
 #include "rosbag2_transport/config_options_from_node_params.hpp"
+#include "rosbag2_transport/player_service_client.hpp"
+
+#include "logging.hpp"
 
 namespace
 {
@@ -169,6 +177,10 @@ public:
   /// \return Hashtable representing topic to publisher map excluding inner clock_publisher
   std::unordered_map<std::string, std::shared_ptr<rclcpp::GenericPublisher>> get_publishers();
 
+  /// \brief Getter for clients corresponding to services
+  /// \return Hashtable representing service name to client map
+  std::unordered_map<std::string, std::shared_ptr<rclcpp::GenericClient>> get_services_clients();
+
   /// \brief Getter for inner clock_publisher
   /// \return Shared pointer to the inner clock_publisher
   rclcpp::Publisher<rosgraph_msgs::msg::Clock>::SharedPtr get_clock_publisher();
@@ -211,6 +223,9 @@ protected:
   std::forward_list<play_msg_callback_data> on_play_msg_pre_callbacks_;
   std::forward_list<play_msg_callback_data> on_play_msg_post_callbacks_;
 
+  void run_play_msg_pre_callbacks(rosbag2_storage::SerializedBagMessageSharedPtr message);
+  void run_play_msg_post_callbacks(rosbag2_storage::SerializedBagMessageSharedPtr message);
+
   class PlayerPublisher final
   {
 public:
@@ -243,11 +258,15 @@ private:
     std::shared_ptr<rclcpp::GenericPublisher> publisher_;
     std::function<void(const rclcpp::SerializedMessage &)> publish_func_;
   };
+
   bool is_ready_to_play_from_queue_{false};
   std::mutex ready_to_play_from_queue_mutex_;
   std::condition_variable ready_to_play_from_queue_cv_;
   rclcpp::Publisher<rosgraph_msgs::msg::Clock>::SharedPtr clock_publisher_;
-  std::unordered_map<std::string, std::shared_ptr<PlayerImpl::PlayerPublisher>> publishers_;
+  using PlayerPublisherSharedPtr = std::shared_ptr<PlayerPublisher>;
+  using PlayerServiceClientSharedPtr = std::shared_ptr<PlayerServiceClient>;
+  std::unordered_map<std::string, PlayerPublisherSharedPtr> publishers_;
+  std::unordered_map<std::string, PlayerServiceClientSharedPtr> service_clients_;
 
 private:
   rosbag2_storage::SerializedBagMessageSharedPtr peek_next_message_from_queue();
@@ -317,6 +336,8 @@ private:
   // defaults
   std::shared_ptr<KeyboardHandler> keyboard_handler_;
   std::vector<KeyboardHandler::callback_handle_t> keyboard_callbacks_;
+
+  std::shared_ptr<PlayerServiceClientManager> player_service_client_manager_;
 };
 
 PlayerImpl::PlayerImpl(
@@ -328,8 +349,33 @@ PlayerImpl::PlayerImpl(
 : owner_(owner),
   storage_options_(storage_options),
   play_options_(play_options),
-  keyboard_handler_(std::move(keyboard_handler))
+  keyboard_handler_(std::move(keyboard_handler)),
+  player_service_client_manager_(std::make_shared<PlayerServiceClientManager>())
 {
+  for (auto & topic : play_options_.topics_to_filter) {
+    topic = rclcpp::expand_topic_or_service_name(
+      topic, owner->get_name(),
+      owner->get_namespace(), false);
+  }
+
+  for (auto & exclude_topic : play_options_.exclude_topics_to_filter) {
+    exclude_topic = rclcpp::expand_topic_or_service_name(
+      exclude_topic, owner->get_name(),
+      owner->get_namespace(), false);
+  }
+
+  for (auto & service_event_topic : play_options_.services_to_filter) {
+    service_event_topic = rclcpp::expand_topic_or_service_name(
+      service_event_topic, owner->get_name(),
+      owner->get_namespace(), false);
+  }
+
+  for (auto & exclude_service_event_topic : play_options_.exclude_services_to_filter) {
+    exclude_service_event_topic = rclcpp::expand_topic_or_service_name(
+      exclude_service_event_topic, owner->get_name(),
+      owner->get_namespace(), false);
+  }
+
   {
     std::lock_guard<std::mutex> lk(reader_mutex_);
     reader_ = std::move(reader);
@@ -471,19 +517,19 @@ bool PlayerImpl::play()
         if (timeout == std::chrono::milliseconds(0)) {
           timeout = std::chrono::milliseconds(-1);
         }
-        for (const auto & pub : publishers_) {
+        for (auto & [topic, pub] : publishers_) {
           try {
-            if (!pub.second->generic_publisher()->wait_for_all_acked(timeout)) {
+            if (!pub->generic_publisher()->wait_for_all_acked(timeout)) {
               RCLCPP_ERROR(
                 owner_->get_logger(),
-                "Timed out while waiting for all published messages to be acknowledged "
-                "for topic %s", pub.first.c_str());
+                "Timed out while waiting for all published messages to be acknowledged for topic "
+                "%s", topic.c_str());
             }
           } catch (std::exception & e) {
             RCLCPP_ERROR(
               owner_->get_logger(),
               "Exception occurred while waiting for all published messages to be acknowledged for "
-              "topic %s : %s", pub.first.c_str(), e.what());
+              "topic %s : %s", topic.c_str(), e.what());
           }
         }
       }
@@ -747,10 +793,20 @@ std::unordered_map<std::string,
   std::shared_ptr<rclcpp::GenericPublisher>> PlayerImpl::get_publishers()
 {
   std::unordered_map<std::string, std::shared_ptr<rclcpp::GenericPublisher>> topic_to_publisher_map;
-  for (const auto & [topic, publisher] : publishers_) {
-    topic_to_publisher_map[topic] = publisher->generic_publisher();
+  for (const auto & [topic, pub] : publishers_) {
+    topic_to_publisher_map[topic] = pub->generic_publisher();
   }
   return topic_to_publisher_map;
+}
+
+std::unordered_map<std::string,
+  std::shared_ptr<rclcpp::GenericClient>> PlayerImpl::get_services_clients()
+{
+  std::unordered_map<std::string, std::shared_ptr<rclcpp::GenericClient>> topic_to_client_map;
+  for (const auto & [service_name, client] : service_clients_) {
+    topic_to_client_map[service_name] = client->generic_client();
+  }
+  return topic_to_client_map;
 }
 
 rclcpp::Publisher<rosgraph_msgs::msg::Clock>::SharedPtr PlayerImpl::get_clock_publisher()
@@ -876,12 +932,94 @@ void PlayerImpl::play_messages_from_queue()
   }
 }
 
+namespace
+{
+bool allow_topic(
+  bool is_service,
+  const std::string topic_name,
+  const rosbag2_storage::StorageFilter & storage_filter)
+{
+  auto & include_topics = storage_filter.topics;
+  auto & exclude_topics = storage_filter.exclude_topics;
+  auto & include_services = storage_filter.services_events;
+  auto & exclude_services = storage_filter.exclude_service_events;
+  auto & regex = storage_filter.regex;
+  auto & regex_to_exclude = storage_filter.regex_to_exclude;
+
+  if (is_service) {
+    if (!exclude_services.empty()) {
+      auto it = std::find(exclude_services.begin(), exclude_services.end(), topic_name);
+      if (it != exclude_services.end()) {
+        return false;
+      }
+    }
+  } else {
+    if (!exclude_topics.empty()) {
+      auto it = std::find(exclude_topics.begin(), exclude_topics.end(), topic_name);
+      if (it != exclude_topics.end()) {
+        return false;
+      }
+    }
+  }
+
+  if (!regex_to_exclude.empty()) {
+    std::smatch m;
+    std::regex re(regex_to_exclude);
+
+    if (std::regex_match(topic_name, m, re)) {
+      return false;
+    }
+  }
+
+  bool set_include = is_service ? !include_services.empty() : !include_topics.empty();
+  bool set_regex = !regex.empty();
+
+  if (set_include || set_regex) {
+    if (is_service) {
+      auto iter = std::find(include_services.begin(), include_services.end(), topic_name);
+      if (iter == include_services.end()) {
+        // If include_service is set and regex isn't set, service must be in include_service.
+        if (!set_regex) {
+          return false;
+        }
+      } else {
+        return true;
+      }
+    } else {
+      auto iter = std::find(include_topics.begin(), include_topics.end(), topic_name);
+      if (iter == include_topics.end()) {
+        // If include_service is set and regex isn't set, service must be in include_service.
+        if (!set_regex) {
+          return false;
+        }
+      } else {
+        return true;
+      }
+    }
+
+    if (set_regex) {
+      std::smatch m;
+      std::regex re(regex);
+
+      if (!std::regex_match(topic_name, m, re)) {
+        return false;
+      }
+    }
+  }
+
+  return true;
+}
+}  // namespace
+
 void PlayerImpl::prepare_publishers()
 {
   rosbag2_storage::StorageFilter storage_filter;
   storage_filter.topics = play_options_.topics_to_filter;
-  storage_filter.topics_regex = play_options_.topics_regex_to_filter;
-  storage_filter.topics_regex_to_exclude = play_options_.topics_regex_to_exclude;
+  storage_filter.services_events = play_options_.services_to_filter;
+  storage_filter.regex = play_options_.regex_to_filter;
+  storage_filter.regex_to_exclude = play_options_.exclude_regex_to_filter;
+  storage_filter.exclude_topics = play_options_.exclude_topics_to_filter;
+  storage_filter.exclude_service_events = play_options_.exclude_services_to_filter;
   reader_->set_filter(storage_filter);
 
   // Create /clock publisher
@@ -922,39 +1060,62 @@ void PlayerImpl::prepare_publishers()
   auto topics = reader_->get_all_topics_and_types();
   std::string topic_without_support_acked;
   for (const auto & topic : topics) {
-    if (publishers_.find(topic.name) != publishers_.end()) {
-      continue;
-    }
-    // filter topics to add publishers if necessary
-    auto & filter_topics = storage_filter.topics;
-    if (!filter_topics.empty()) {
-      auto iter = std::find(filter_topics.begin(), filter_topics.end(), topic.name);
-      if (iter == filter_topics.end()) {
+    if (rosbag2_cpp::is_service_event_topic(topic.name, topic.type)) {
+      // Check if sender was created
+      if (service_clients_.find(topic.name) != service_clients_.end()) {
         continue;
       }
-    }
 
-    auto topic_qos = publisher_qos_for_topic(
-      topic, topic_qos_profile_overrides_,
-      owner_->get_logger());
-    try {
-      std::shared_ptr<rclcpp::GenericPublisher> pub =
-        owner_->create_generic_publisher(topic.name, topic.type, topic_qos);
-      std::shared_ptr<PlayerImpl::PlayerPublisher> player_pub =
-        std::make_shared<PlayerImpl::PlayerPublisher>(
-        std::move(pub), play_options_.disable_loan_message);
-      publishers_.insert(std::make_pair(topic.name, player_pub));
-      if (play_options_.wait_acked_timeout >= 0 &&
-        topic_qos.reliability() == rclcpp::ReliabilityPolicy::BestEffort)
-      {
-        topic_without_support_acked += topic.name + ", ";
+      // filter service event topic to add client if necessary
+      if (!allow_topic(true, topic.name, storage_filter)) {
+        continue;
       }
-    } catch (const std::runtime_error & e) {
-      // using a warning log seems better than adding a new option
-      // to ignore some unknown message type library
-      RCLCPP_WARN(
-        owner_->get_logger(),
-        "Ignoring a topic '%s', reason: %s.", topic.name.c_str(), e.what());
+
+      auto service_name = rosbag2_cpp::service_event_topic_name_to_service_name(topic.name);
+      auto service_type = rosbag2_cpp::service_event_topic_type_to_service_type(topic.type);
+      try {
+        auto cli = owner_->create_generic_client(service_name, service_type);
+        auto player_cli = std::make_shared<PlayerServiceClient>(
+          std::move(cli), service_name, topic.type, owner_->get_logger(),
+          player_service_client_manager_);
+        service_clients_.insert(std::make_pair(topic.name, player_cli));
+      } catch (const std::runtime_error & e) {
+        RCLCPP_WARN(
+          owner_->get_logger(),
+          "Ignoring a service '%s', reason: %s.", service_name.c_str(), e.what());
+      }
+    } else {
+      // Check if sender was created
+      if (publishers_.find(topic.name) != publishers_.end()) {
+        continue;
+      }
+
+      // filter topics to add publishers if necessary
+      if (!allow_topic(false, topic.name, storage_filter)) {
+        continue;
+      }
+
+      auto topic_qos = publisher_qos_for_topic(
+        topic, topic_qos_profile_overrides_,
+        owner_->get_logger());
+      try {
+        std::shared_ptr<rclcpp::GenericPublisher> pub =
+          owner_->create_generic_publisher(topic.name, topic.type, topic_qos);
+        std::shared_ptr<PlayerPublisher> player_pub =
+          std::make_shared<PlayerPublisher>(std::move(pub), play_options_.disable_loan_message);
+        publishers_.insert(std::make_pair(topic.name, player_pub));
+        if (play_options_.wait_acked_timeout >= 0 &&
+          topic_qos.reliability() == rclcpp::ReliabilityPolicy::BestEffort)
+        {
+          topic_without_support_acked += topic.name + ", ";
+        }
+      } catch (const std::runtime_error & e) {
+        // using a warning log seems better than adding a new option
+        // to ignore some unknown message type library
+        RCLCPP_WARN(
+          owner_->get_logger(),
+          "Ignoring a topic '%s', reason: %s.", topic.name.c_str(), e.what());
+      }
     }
   }
 
@@ -985,22 +1146,39 @@ void PlayerImpl::prepare_publishers()
   reader_->add_event_callbacks(callbacks);
 }
 
+void PlayerImpl::run_play_msg_pre_callbacks(
+  rosbag2_storage::SerializedBagMessageSharedPtr message)
+{
+  std::lock_guard<std::mutex> lk(on_play_msg_callbacks_mutex_);
+  for (auto & pre_callback_data : on_play_msg_pre_callbacks_) {
+    if (pre_callback_data.callback != nullptr) {  // Sanity check
+      pre_callback_data.callback(message);
+    }
+  }
+}
+
+void PlayerImpl::run_play_msg_post_callbacks(
+  rosbag2_storage::SerializedBagMessageSharedPtr message)
+{
+  std::lock_guard<std::mutex> lk(on_play_msg_callbacks_mutex_);
+  for (auto & post_callback_data : on_play_msg_post_callbacks_) {
+    if (post_callback_data.callback != nullptr) {  // Sanity check
+      post_callback_data.callback(message);
+    }
+  }
+}
+
 bool PlayerImpl::publish_message(rosbag2_storage::SerializedBagMessageSharedPtr message)
 {
   bool message_published = false;
-  auto publisher_iter = publishers_.find(message->topic_name);
-  if (publisher_iter != publishers_.end()) {
-    {  // Calling on play message pre-callbacks
-      std::lock_guard<std::mutex> lk(on_play_msg_callbacks_mutex_);
-      for (auto & pre_callback_data : on_play_msg_pre_callbacks_) {
-        if (pre_callback_data.callback != nullptr) {  // Sanity check
-          pre_callback_data.callback(message);
-        }
-      }
-    }
+
+  auto pub_iter = publishers_.find(message->topic_name);
+  if (pub_iter != publishers_.end()) {
+    // Calling on play message pre-callbacks
+    run_play_msg_pre_callbacks(message);
 
     try {
-      publisher_iter->second->publish(rclcpp::SerializedMessage(*message->serialized_data));
+      pub_iter->second->publish(rclcpp::SerializedMessage(*message->serialized_data));
       message_published = true;
     } catch (const std::exception & e) {
       RCLCPP_ERROR_STREAM(
@@ -1009,13 +1187,39 @@ bool PlayerImpl::publish_message(rosbag2_storage::SerializedBagMessageSharedPtr 
     }
 
     // Calling on play message post-callbacks
-    std::lock_guard<std::mutex> lk(on_play_msg_callbacks_mutex_);
-    for (auto & post_callback_data : on_play_msg_post_callbacks_) {
-      if (post_callback_data.callback != nullptr) {  // Sanity check
-        post_callback_data.callback(message);
-      }
-    }
+    run_play_msg_post_callbacks(message);
+    return message_published;
   }
+
+  auto client_iter = service_clients_.find(message->topic_name);
+  if (client_iter != service_clients_.end()) {
+    if (!client_iter->second->include_request_message(
+        rclcpp::SerializedMessage(*message->serialized_data)))
+    {
+      return message_published;
+    }
+
+    // Calling on play message pre-callbacks
+    run_play_msg_pre_callbacks(message);
+
+    try {
+      client_iter->second->async_send_request(
+        rclcpp::SerializedMessage(*message->serialized_data));
+      message_published = true;
+    } catch (const std::exception & e) {
+      RCLCPP_ERROR_STREAM(
+        owner_->get_logger(), "Failed to send request on '" <<
+          rosbag2_cpp::service_event_topic_name_to_service_name(message->topic_name) <<
+          "' service. \nError: " << e.what());
+    }
+
+    // Calling on play message post-callbacks
+    run_play_msg_post_callbacks(message);
+    return message_published;
+  }
+
+  RCLCPP_WARN_STREAM(
+    owner_->get_logger(), "Not find sender for topic '" << message->topic_name << "' topic.");
   return message_published;
 }
 
@@ -1378,6 +1582,12 @@ void Player::delete_on_play_message_callback(const Player::callback_handle_t & h
 std::unordered_map<std::string, std::shared_ptr<rclcpp::GenericPublisher>> Player::get_publishers()
 {
   return pimpl_->get_publishers();
+}
+
+std::unordered_map<std::string,
+  std::shared_ptr<rclcpp::GenericClient>> Player::get_services_clients()
+{
+  return pimpl_->get_services_clients();
 }
 
 rclcpp::Publisher<rosgraph_msgs::msg::Clock>::SharedPtr Player::get_clock_publisher()

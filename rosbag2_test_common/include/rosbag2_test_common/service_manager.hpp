@@ -31,7 +31,10 @@ public:
   ServiceManager()
   : pub_node_(std::make_shared<rclcpp::Node>(
         "service_manager_" + std::to_string(rclcpp::Clock().now().nanoseconds()),
-        rclcpp::NodeOptions().start_parameter_event_publisher(false).enable_rosout(false)))
+        rclcpp::NodeOptions()
+        .start_parameter_event_publisher(false)
+        .enable_rosout(false)
+        .start_parameter_services(false)))
   {
   }
 
@@ -80,7 +83,7 @@ public:
 private:
   std::shared_ptr<rclcpp::Node> pub_node_;
   std::unordered_map<std::string, typename rclcpp::ServiceBase::SharedPtr> services_;
-  bool exit_ = false;
+  std::atomic_bool exit_ = false;
   std::thread thread_;
 };
 
