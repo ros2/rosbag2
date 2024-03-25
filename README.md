@@ -419,6 +419,71 @@ def generate_launch_description():
 }
 ```
 
+Here's an example YAML configuration for both composable player and recorder:
+```yaml
+recorder:
+  ros__parameters:
+    use_sim_time: false
+    record:
+      all: true
+      is_discovery_disabled: false
+      rmw_serialization_format: "cdr"
+      topic_polling_interval:
+        sec: 0
+        nsec: 10000000
+      compression_mode: "file"
+      compression_format: "zstd"
+      compression_queue_size: 50
+      compression_threads: 4
+      include_hidden_topics: true
+      include_unpublished_topics: false
+      ignore_leaf_topics: false
+      start_paused: false
+
+    storage:
+      uri: "/path/to/destination/folder"
+      storage_id: "sqlite3"
+      max_cache_size: 20000000
+```
+and
+```yaml
+player:
+  ros__parameters:
+    play:
+      read_ahead_queue_size: 1000
+      node_prefix: ""
+      rate: 1.0
+      loop: false
+      clock_publish_frequency: 1.0
+      clock_publish_on_topic_publish: true
+      delay:
+        sec: 0
+        nsec: 0
+      # Negative timestamps will make the playback to not stop.  
+      playback_duration:
+        sec: -1
+        nsec: 00000000
+      # Negative timestamps will make the playback to not stop.
+      playback_until_timestamp:
+        sec: -1
+        nsec: 00000000
+      start_paused: false
+      start_offset: 
+        sec: 0
+        nsec: 00000000
+      disable_keyboard_controls: true
+      # Negative value means that published messages do not need to be acknowledged.
+      wait_acked_timeout:
+        sec: -1
+        nsec: 00000000
+      disable_loan_message: false
+
+    storage:
+      uri: "path/to/rosbag/file"
+      storage_id: "sqlite3"
+      storage_config_uri: ""
+```
+
 ## Storage format plugin architecture
 
 Looking at the output of the `ros2 bag info` command, we can see a field `Storage id:`.
