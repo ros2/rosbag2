@@ -14,14 +14,13 @@
 
 #include <gmock/gmock.h>
 
+#include <filesystem>
 #include <memory>
 #include <string>
 #include <unordered_set>
 
 #include "rclcpp/rclcpp.hpp"
-#include "rcpputils/filesystem_helper.hpp"
 #include "rcpputils/scope_exit.hpp"
-#include "rcutils/filesystem.h"
 #include "rosbag2_compression_zstd/zstd_decompressor.hpp"
 #include "rosbag2_storage/metadata_io.hpp"
 #include "rosbag2_test_common/publication_manager.hpp"
@@ -29,6 +28,8 @@
 #include "rosbag2_test_common/process_execution_helpers.hpp"
 
 #include "record_fixture.hpp"
+
+namespace fs = std::filesystem;
 
 namespace
 {
@@ -96,18 +97,19 @@ TEST_P(RecordFixture, record_end_to_end_test_with_zstd_file_compression) {
 
   const auto compressed_bag_file_path = get_compressed_bag_file_path(0);
 
-  ASSERT_TRUE(compressed_bag_file_path.exists()) <<
+  ASSERT_TRUE(fs::exists(compressed_bag_file_path)) <<
     "Expected compressed bag file path: \"" <<
-    compressed_bag_file_path.string() << "\" to exist!";
+    compressed_bag_file_path.generic_string() << "\" to exist!";
 
   rosbag2_compression_zstd::ZstdDecompressor decompressor;
 
-  const auto decompressed_uri = decompressor.decompress_uri(compressed_bag_file_path.string());
-  const auto bag_path = get_bag_file_path(0).string();
+  const auto decompressed_uri = decompressor.decompress_uri(
+    compressed_bag_file_path.generic_string());
+  const auto bag_path = get_bag_file_path(0).generic_string();
 
   ASSERT_EQ(decompressed_uri, bag_path) <<
     "Expected decompressed URI to be same as uncompressed bag file path!";
-  ASSERT_TRUE(rcpputils::fs::exists(bag_path)) <<
+  ASSERT_TRUE(fs::exists(bag_path)) <<
     "Expected decompressed first bag file to exist!";
 
   auto test_topic_messages = get_messages_for_topic<test_msgs::msg::Strings>(
@@ -258,7 +260,7 @@ TEST_P(RecordFixture, record_end_to_end_with_splitting_metadata_contains_all_top
 
   wait_for_metadata();
   rosbag2_storage::MetadataIo metadataIo;
-  const auto metadata = metadataIo.read_metadata(root_bag_path_.string());
+  const auto metadata = metadataIo.read_metadata(root_bag_path_.generic_string());
   // Verify at least 2 topics are in the metadata.
   // There may be more if the test system is noisy.
   EXPECT_GT(metadata.topics_with_message_count.size(), 1u);
@@ -310,7 +312,7 @@ TEST_P(RecordFixture, record_end_to_end_with_splitting_bagsize_split_is_at_least
   finalize_metadata_kludge(expected_splits);
   wait_for_metadata();
   rosbag2_storage::MetadataIo metadata_io;
-  const auto metadata = metadata_io.read_metadata(root_bag_path_.string());
+  const auto metadata = metadata_io.read_metadata(root_bag_path_.generic_string());
   const auto actual_splits = static_cast<int>(metadata.files.size());
 
   // TODO(zmichaels11): Support reliable sync-to-disk for more accurate splits.
@@ -320,11 +322,11 @@ TEST_P(RecordFixture, record_end_to_end_with_splitting_bagsize_split_is_at_least
 
   // Don't include the last bagfile since it won't be full
   for (int i = 0; i < actual_splits - 1; ++i) {
-    const auto bagfile_path = root_bag_path_ / rcpputils::fs::path{metadata.files[i].path};
-    ASSERT_TRUE(bagfile_path.exists()) <<
-      "Expected bag file: \"" << bagfile_path.string() << "\" to exist.";
+    const auto bagfile_path = root_bag_path_ / fs::path{metadata.files[i].path};
+    ASSERT_TRUE(fs::exists(bagfile_path)) <<
+      "Expected bag file: \"" << bagfile_path.generic_string() << "\" to exist.";
 
-    const auto actual_split_size = static_cast<int>(bagfile_path.file_size());
+    const auto actual_split_size = static_cast<int>(fs::file_size(bagfile_path));
     // Actual size is guaranteed to be >= bagfile_split size
     EXPECT_LT(bagfile_split_size, actual_split_size);
   }
@@ -365,18 +367,18 @@ TEST_P(RecordFixture, record_end_to_end_with_splitting_max_size_not_reached) {
   finalize_metadata_kludge();
   wait_for_metadata();
   rosbag2_storage::MetadataIo metadata_io;
-  const auto metadata = metadata_io.read_metadata(root_bag_path_.string());
+  const auto metadata = metadata_io.read_metadata(root_bag_path_.generic_string());
 
   // Check that there's only 1 bagfile and that it exists.
   ASSERT_EQ(1u, metadata.files.size());
-  const auto bagfile_path = root_bag_path_ / rcpputils::fs::path{metadata.files[0].path};
-  ASSERT_TRUE(bagfile_path.exists()) <<
-    "Expected bag file: \"" << bagfile_path.string() << "\" to exist.";
+  const auto bagfile_path = root_bag_path_ / fs::path{metadata.files[0].path};
+  ASSERT_TRUE(fs::exists(bagfile_path)) <<
+    "Expected bag file: \"" << bagfile_path.generic_string() << "\" to exist.";
 
   // Check that the next bagfile does not exist.
   const auto next_bag_file = get_bag_file_path(1);
-  EXPECT_FALSE(next_bag_file.exists()) << "Expected next bag file: \"" <<
-    next_bag_file.string() << "\" to not exist!";
+  EXPECT_FALSE(fs::exists(next_bag_file)) << "Expected next bag file: \"" <<
+    next_bag_file.generic_string() << "\" to not exist!";
 }
 
 TEST_P(RecordFixture, record_end_to_end_with_splitting_splits_bagfile) {
@@ -415,13 +417,13 @@ TEST_P(RecordFixture, record_end_to_end_with_splitting_splits_bagfile) {
   wait_for_metadata();
   finalize_metadata_kludge(expected_splits);
   rosbag2_storage::MetadataIo metadata_io;
-  const auto metadata = metadata_io.read_metadata(root_bag_path_.string());
+  const auto metadata = metadata_io.read_metadata(root_bag_path_.generic_string());
 
   ASSERT_GE(metadata.relative_file_paths.size(), 1u) << "Bagfile never split!";
 
   for (const auto & file : metadata.files) {
-    auto path = root_bag_path_ / rcpputils::fs::path(file.path);
-    EXPECT_TRUE(rcpputils::fs::exists(path));
+    auto path = root_bag_path_ / fs::path(file.path);
+    EXPECT_TRUE(fs::exists(path));
   }
 }
 
@@ -462,11 +464,11 @@ TEST_P(RecordFixture, record_end_to_end_with_duration_splitting_splits_bagfile) 
   finalize_metadata_kludge();
   wait_for_metadata();
   rosbag2_storage::MetadataIo metadata_io;
-  const auto metadata = metadata_io.read_metadata(root_bag_path_.string());
+  const auto metadata = metadata_io.read_metadata(root_bag_path_.generic_string());
 
   for (const auto & file : metadata.files) {
-    auto path = root_bag_path_ / rcpputils::fs::path(file.path);
-    EXPECT_TRUE(rcpputils::fs::exists(path));
+    auto path = root_bag_path_ / fs::path(file.path);
+    EXPECT_TRUE(fs::exists(path));
   }
 }
 
@@ -509,15 +511,15 @@ TEST_P(RecordFixture, record_end_to_end_test_with_zstd_file_compression_compress
   finalize_metadata_kludge(expected_splits);
   wait_for_metadata();
   rosbag2_storage::MetadataIo metadata_io;
-  const auto metadata = metadata_io.read_metadata(root_bag_path_.string());
+  const auto metadata = metadata_io.read_metadata(root_bag_path_.generic_string());
 
   for (const auto & path : metadata.relative_file_paths) {
-    const auto file_path = root_bag_path_ / rcpputils::fs::path{path};
+    const auto file_path = root_bag_path_ / fs::path{path};
 
-    EXPECT_TRUE(file_path.exists()) << "File: \"" <<
-      file_path.string() << "\" does not exist!";
-    EXPECT_EQ(file_path.extension().string(), ".zstd") << "File :\"" <<
-      file_path.string() << "\" does not have proper \".zstd\" extension!";
+    EXPECT_TRUE(fs::exists(file_path)) << "File: \"" <<
+      file_path.generic_string() << "\" does not exist!";
+    EXPECT_EQ(file_path.extension().generic_string(), ".zstd") << "File :\"" <<
+      file_path.generic_string() << "\" does not have proper \".zstd\" extension!";
   }
 }
 
@@ -645,7 +647,7 @@ TEST_P(RecordFixture, rosbag2_record_and_play_multiple_topics_with_filter) {
   auto sub_future = sub->spin_subscriptions();
 
   std::stringstream command_play;
-  command_play << "ros2 bag play " << root_bag_path_.string() << " --topics " <<
+  command_play << "ros2 bag play " << root_bag_path_.generic_string() << " --topics " <<
     second_topic_name;
 
   int exit_code = execute_and_wait_until_completion(command_play.str(), ".");

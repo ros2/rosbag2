@@ -30,6 +30,8 @@ using namespace std::chrono_literals;  // NOLINT
 using namespace ::testing;  // NOLINT
 using namespace rosbag2_test_common;  // NOLINT
 
+namespace fs = std::filesystem;
+
 class ComposableRecorderIntegrationTests : public CompositionManagerTestFixture
 {
 public:
@@ -41,15 +43,15 @@ public:
     return bag_file_name.str();
   }
 
-  std::filesystem::path get_bag_file_path(int split_index)
+  fs::path get_bag_file_path(int split_index)
   {
     return root_bag_path_ / get_relative_bag_file_path(split_index);
   }
 
-  std::filesystem::path get_relative_bag_file_path(int split_index) const
+  fs::path get_relative_bag_file_path(int split_index) const
   {
     const auto storage_id = GetParam();
-    return std::filesystem::path(
+    return fs::path(
       rosbag2_test_common::bag_filename_for_storage_id(get_bag_file_name(split_index), storage_id));
   }
 
@@ -74,12 +76,12 @@ public:
     const auto storage_path = get_bag_file_path(0);
     const auto start_time = std::chrono::steady_clock::now();
     while (std::chrono::steady_clock::now() - start_time < timeout && rclcpp::ok()) {
-      if (std::filesystem::exists(storage_path)) {
+      if (fs::exists(storage_path)) {
         return;
       }
       std::this_thread::sleep_for(50ms);  // wait a bit to not query constantly
     }
-    ASSERT_EQ(std::filesystem::exists(storage_path), true)
+    ASSERT_EQ(fs::exists(storage_path), true)
       << "Could not find storage file: \"" << storage_path.generic_string() << "\"";
   }
 
@@ -113,18 +115,18 @@ public:
   {
     rclcpp::init(0, nullptr);
     auto bag_name = get_test_name() + "_" + GetParam();
-    root_bag_path_ = std::filesystem::path(temporary_dir_path_) / bag_name;
+    root_bag_path_ = fs::path(temporary_dir_path_) / bag_name;
 
     // Clean up potentially leftover bag files.
     // There may be leftovers if the system reallocates a temp directory
     // used by a previous test execution and the test did not have a clean exit.
-    std::filesystem::remove_all(root_bag_path_);
+    fs::remove_all(root_bag_path_);
   }
 
   void TearDown() override
   {
     rclcpp::shutdown();
-    std::filesystem::remove_all(root_bag_path_);
+    fs::remove_all(root_bag_path_);
   }
 
   std::string get_test_name() const
@@ -136,7 +138,7 @@ public:
     return test_name;
   }
 
-  std::filesystem::path root_bag_path_;
+  fs::path root_bag_path_;
 };
 
 class MockComposableRecorder : public rosbag2_transport::Recorder

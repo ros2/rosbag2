@@ -15,14 +15,15 @@
 #include <algorithm>
 #include <chrono>
 #include <cstdio>
+#include <filesystem>
 #include <sstream>
 #include <string>
 #include <vector>
 
-#include "rcpputils/filesystem_helper.hpp"
-
 #include "compression_utils.hpp"
 #include "rosbag2_compression_zstd/zstd_decompressor.hpp"
+
+namespace fs = std::filesystem;
 
 namespace rosbag2_compression_zstd
 {
@@ -45,8 +46,8 @@ ZstdDecompressor::~ZstdDecompressor()
 std::string ZstdDecompressor::decompress_uri(const std::string & uri)
 {
   const auto start = std::chrono::high_resolution_clock::now();
-  const auto uri_path = rcpputils::fs::path{uri};
-  const auto decompressed_uri = rcpputils::fs::remove_extension(uri_path).string();
+  auto uri_path = fs::path{uri};
+  auto decompressed_uri = uri_path.replace_extension().generic_string();
 
   std::ifstream input(uri, std::ios::in | std::ios::binary);
   if (!input.is_open()) {

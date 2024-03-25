@@ -15,15 +15,16 @@
 #include <gmock/gmock.h>
 
 #include <cstdlib>
+#include <filesystem>
 #include <string>
 #include <thread>
-
-#include "rcpputils/filesystem_helper.hpp"
 
 #include "rosbag2_test_common/process_execution_helpers.hpp"
 #include "rosbag2_test_common/tested_storage_ids.hpp"
 
 using namespace ::testing;  // NOLINT
+
+namespace fs = std::filesystem;
 
 class InfoEndToEndTestFixture : public Test, public WithParamInterface<std::string>
 {
@@ -31,7 +32,7 @@ public:
   InfoEndToEndTestFixture()
   {
     // _SRC_RESOURCES_DIR_PATH defined in CMakeLists.txt
-    bags_path_ = (rcpputils::fs::path(_SRC_RESOURCES_DIR_PATH) / GetParam()).string();
+    bags_path_ = (fs::path(_SRC_RESOURCES_DIR_PATH) / GetParam()).generic_string();
   }
 
   std::string bags_path_;

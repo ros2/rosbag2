@@ -21,6 +21,7 @@
 // This notice must appear in all copies of this file and its derivatives.
 
 #include <algorithm>
+#include <filesystem>
 #include <iostream>
 #include <map>
 #include <memory>
@@ -31,15 +32,14 @@
 #include <vector>
 
 #include "rcpputils/asserts.hpp"
-#include "rcpputils/filesystem_helper.hpp"
-
-#include "rcutils/filesystem.h"
 
 #include "rosbag2_cpp/logging.hpp"
 #include "rosbag2_cpp/reader.hpp"
 #include "rosbag2_cpp/reindexer.hpp"
 
 #include "rosbag2_storage/storage_options.hpp"
+
+namespace fs = std::filesystem;
 
 namespace rosbag2_cpp
 {
@@ -58,29 +58,29 @@ Reindexer::Reindexer(
  * don't guarantee a preserved order
  */
 bool Reindexer::compare_relative_file(
-  const rcpputils::fs::path & first_path,
-  const rcpputils::fs::path & second_path)
+  const fs::path & first_path,
+  const fs::path & second_path)
 {
   std::regex regex_rule(regex_bag_pattern_, std::regex_constants::ECMAScript);
 
   std::smatch first_match;
   std::smatch second_match;
 
-  auto first_path_string = first_path.string();
-  auto second_path_string = second_path.string();
+  auto first_path_string = first_path.generic_string();
+  auto second_path_string = second_path.generic_string();
 
   auto first_regex_good = std::regex_match(first_path_string, first_match, regex_rule);
   auto second_regex_good = std::regex_match(second_path_string, second_match, regex_rule);
 
   if (!first_regex_good) {
     std::stringstream ss;
-    ss << "Path " << first_path.string() <<
+    ss << "Path " << first_path.generic_string() <<
       "didn't meet expected naming convention: " << regex_bag_pattern_;
     std::string error_text = ss.str();
     throw std::runtime_error(error_text.c_str());
   } else if (!second_regex_good) {
     std::stringstream ss;
-    ss << "Path " << second_path.string() <<
+    ss << "Path " << second_path.generic_string() <<
       "didn't meet expected naming convention: " << regex_bag_pattern_;
     std::string error_text = ss.str();
     throw std::runtime_error(error_text.c_str());
@@ -99,33 +99,30 @@ bool Reindexer::compare_relative_file(
  *    The files will be `emplace_back`-ed on the passed vector
  */
 void Reindexer::get_bag_files(
-  const rcpputils::fs::path & base_folder,
-  std::vector<rcpputils::fs::path> & output)
+  const fs::path & base_folder,
+  std::vector<fs::path> & output)
 {
-  std::regex regex_rule(regex_bag_pattern_, std::regex_constants::ECMAScript);
-  auto allocator = rcutils_get_default_allocator();
-  auto dir_iter = rcutils_dir_iter_start(base_folder.string().c_str(), allocator);
-
   // Make sure there are files in the directory
-  if (dir_iter == nullptr) {
+  if (fs::is_empty(base_folder)) {
     throw std::runtime_error("Empty directory.");
   }
 
+  std::regex regex_rule(regex_bag_pattern_, std::regex_constants::ECMAScript);
   // Get all file names in directory
-  do {
-    auto found_file = rcpputils::fs::path(dir_iter->entry_name);
-    ROSBAG2_CPP_LOG_DEBUG_STREAM("Found file: " << found_file.string());
+  for (const auto & entry : fs::directory_iterator(base_folder)) {
+    auto found_file = entry.path().filename();
+    ROSBAG2_CPP_LOG_DEBUG_STREAM("Found file: " << found_file.generic_string());
 
-    if (std::regex_match(found_file.string(), regex_rule)) {
+    if (std::regex_match(found_file.generic_string(), regex_rule)) {
       auto full_path = base_folder / found_file;
       output.emplace_back(full_path);
     }
-  } while (rcutils_dir_iter_next(dir_iter));
+  }
 
   // Sort relative file path by number
   std::sort(
     output.begin(), output.end(),
-    [&, this](rcpputils::fs::path a, rcpputils::fs::path b) {
+    [&, this](fs::path a, fs::path b) {
       return compare_relative_file(a, b);
     });
 }
@@ -136,7 +133,7 @@ void Reindexer::get_bag_files(
  * Also fills in `starting_time` with a dummy default value. Important for later functions
  */
 void Reindexer::init_metadata(
-  const std::vector<rcpputils::fs::path> & files,
+  const std::vector<fs::path> & files,
   const rosbag2_storage::StorageOptions & storage_options)
 {
   metadata_ = rosbag2_storage::BagMetadata{};
@@ -147,7 +144,7 @@ void Reindexer::init_metadata(
 
   // Record the relative paths to the metadata
   for (const auto & path : files) {
-    auto cleaned_path = path.filename().string();
+    auto cleaned_path = path.filename().generic_string();
     metadata_.relative_file_paths.push_back(cleaned_path);
   }
 }
@@ -160,7 +157,7 @@ void Reindexer::init_metadata(
  * @param: storage_options Used to construct the `Reader` needed to parse the bag files
  */
 void Reindexer::aggregate_metadata(
-  const std::vector<rcpputils::fs::path> & files,
+  const std::vector<fs::path> & files,
   const std::unique_ptr<rosbag2_cpp::readers::SequentialReader> & bag_reader,
   const rosbag2_storage::StorageOptions & storage_options)
 {
@@ -171,9 +168,9 @@ void Reindexer::aggregate_metadata(
   // open them, read the info, and write it into an aggregated metadata object.
   ROSBAG2_CPP_LOG_DEBUG_STREAM("Extracting metadata from bag file(s)");
   for (const auto & f_ : files) {
-    ROSBAG2_CPP_LOG_DEBUG_STREAM("Extracting from file: " + f_.string());
+    ROSBAG2_CPP_LOG_DEBUG_STREAM("Extracting from file: " + f_.generic_string());
 
-    metadata_.bag_size += f_.file_size();
+    metadata_.bag_size += fs::file_size(f_);
 
     // Set up reader
     rosbag2_storage::StorageOptions temp_so = {
@@ -247,7 +244,7 @@ void Reindexer::reindex(const rosbag2_storage::StorageOptions & storage_options)
     std::move(storage_factory_), converter_factory_, std::move(metadata_io_default));
 
   // Identify all bag files
-  std::vector<rcpputils::fs::path> files;
+  std::vector<fs::path> files;
   get_bag_files(base_folder_, files);
   if (files.empty()) {
     throw std::runtime_error("No storage files found for reindexing. Abort");
@@ -260,7 +257,7 @@ void Reindexer::reindex(const rosbag2_storage::StorageOptions & storage_options)
   aggregate_metadata(files, bag_reader, storage_options);
   ROSBAG2_CPP_LOG_DEBUG_STREAM("Completed aggregate_metadata");
 
-  metadata_io_->write_metadata(base_folder_.string(), metadata_);
+  metadata_io_->write_metadata(base_folder_.generic_string(), metadata_);
   ROSBAG2_CPP_LOG_INFO("Reindexing complete.");
 }
 }  // namespace rosbag2_cpp

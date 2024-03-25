@@ -24,6 +24,8 @@
 #include "rosbag2_storage/topic_metadata.hpp"
 #include "rosbag2_storage/yaml.hpp"
 
+namespace fs = std::filesystem;
+
 namespace rosbag2_storage
 {
 
@@ -55,14 +57,14 @@ BagMetadata MetadataIo::read_metadata(const std::string & uri)
 
 std::string MetadataIo::get_metadata_file_name(const std::string & uri)
 {
-  std::string metadata_file = (std::filesystem::path(uri) / metadata_filename).generic_string();
+  std::string metadata_file = (fs::path(uri) / metadata_filename).generic_string();
 
   return metadata_file;
 }
 
 bool MetadataIo::metadata_file_exists(const std::string & uri)
 {
-  return std::filesystem::exists(std::filesystem::path(get_metadata_file_name(uri)));
+  return fs::exists(fs::path(get_metadata_file_name(uri)));
 }
 
 std::string MetadataIo::serialize_metadata(const BagMetadata & metadata)

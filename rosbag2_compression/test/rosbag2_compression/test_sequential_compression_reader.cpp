@@ -14,6 +14,7 @@
 
 #include <gmock/gmock.h>
 
+#include <filesystem>
 #include <fstream>
 #include <memory>
 #include <string>
@@ -21,7 +22,6 @@
 #include <vector>
 
 #include "rcpputils/asserts.hpp"
-#include "rcpputils/filesystem_helper.hpp"
 
 #include "rosbag2_compression/sequential_compression_reader.hpp"
 
@@ -37,6 +37,8 @@
 
 using namespace testing;  // NOLINT
 
+namespace fs = std::filesystem;
+
 static constexpr const char * DefaultTestCompressor = "fake_comp";
 
 class SequentialCompressionReaderTest : public Test
@@ -48,10 +50,10 @@ public:
     converter_factory_{std::make_shared<StrictMock<MockConverterFactory>>()},
     metadata_io_{std::make_unique<NiceMock<MockMetadataIo>>()},
     storage_serialization_format_{"rmw1_format"},
-    tmp_dir_{rcpputils::fs::temp_directory_path() / bag_name_},
+    tmp_dir_{fs::temp_directory_path() / bag_name_},
     converter_options_{"", storage_serialization_format_}
   {
-    rcpputils::fs::remove_all(tmp_dir_);
+    fs::remove_all(tmp_dir_);
     storage_options_.uri = tmp_dir_.string();
     topic_with_type_ = rosbag2_storage::TopicMetadata{
       0U, "topic", "test_msgs/BasicTypes", storage_serialization_format_, {}, ""};
@@ -92,7 +94,7 @@ public:
   void initialize_dummy_storage_files()
   {
     // Initialize some dummy files so that they can be found
-    rcpputils::fs::create_directories(tmp_dir_);
+    fs::create_directories(tmp_dir_);
     for (auto relative : metadata_.relative_file_paths) {
       std::ofstream output((tmp_dir_ / relative).string());
       output << "Fake storage data" << std::endl;
@@ -104,9 +106,9 @@ public:
     auto decompressor = std::make_unique<NiceMock<MockDecompressor>>();
     ON_CALL(*decompressor, decompress_uri).WillByDefault(
       [](auto uri) {
-        auto path = rcpputils::fs::path(uri);
-        EXPECT_TRUE(path.exists());
-        return rcpputils::fs::remove_extension(path).string();
+        auto path = fs::path(uri);
+        EXPECT_TRUE(fs::exists(path));
+        return path.replace_extension().generic_string();
       });
     auto compression_factory = std::make_unique<NiceMock<MockCompressionFactory>>();
     ON_CALL(*compression_factory, create_decompressor(_))
@@ -126,7 +128,7 @@ public:
   std::string storage_serialization_format_;
   rosbag2_storage::TopicMetadata topic_with_type_;
   const std::string bag_name_ = "SequentialCompressionReaderTest";
-  rcpputils::fs::path tmp_dir_;
+  fs::path tmp_dir_;
   rosbag2_storage::StorageOptions storage_options_;
   rosbag2_storage::BagMetadata metadata_;
   rosbag2_cpp::ConverterOptions converter_options_;
@@ -254,7 +256,7 @@ TEST_F(SequentialCompressionReaderTest, throws_on_incorrect_filenames)
 {
   for (auto & relative_file_path : metadata_.relative_file_paths) {
     relative_file_path = (
-      rcpputils::fs::path(bag_name_) / (relative_file_path + ".something")).string();
+      fs::path(bag_name_) / (relative_file_path + ".something")).string();
   }
   auto reader = create_reader();
   EXPECT_THROW(reader->open(storage_options_, converter_options_), std::invalid_argument);
@@ -264,7 +266,7 @@ TEST_F(SequentialCompressionReaderTest, can_find_prefixed_filenames)
 {
   // By prefixing the bag name, this imitates the V3 filename logic
   for (auto & relative_file_path : metadata_.relative_file_paths) {
-    relative_file_path = (rcpputils::fs::path(bag_name_) / relative_file_path).string();
+    relative_file_path = (fs::path(bag_name_) / relative_file_path).string();
   }
   auto reader = create_reader();
 
@@ -278,7 +280,7 @@ TEST_F(SequentialCompressionReaderTest, can_find_prefixed_filenames_in_renamed_b
   // was recorded using V3 logic, then the directory was moved to be a new name - this is the
   // use case the V4 relative path logic was intended to fix
   for (auto & relative_file_path : metadata_.relative_file_paths) {
-    relative_file_path = (rcpputils::fs::path("OtherBagName") / relative_file_path).string();
+    relative_file_path = (fs::path("OtherBagName") / relative_file_path).string();
   }
   auto reader = create_reader();
 

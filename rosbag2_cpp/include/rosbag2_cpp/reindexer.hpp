@@ -23,12 +23,11 @@
 #ifndef ROSBAG2_CPP__REINDEXER_HPP_
 #define ROSBAG2_CPP__REINDEXER_HPP_
 
+#include <filesystem>
 #include <memory>
 #include <regex>
 #include <string>
 #include <vector>
-
-#include "rcpputils/filesystem_helper.hpp"
 
 #include "rosbag2_cpp/converter.hpp"
 #include "rosbag2_cpp/reader.hpp"
@@ -91,27 +90,27 @@ protected:
 
 private:
   std::string regex_bag_pattern_;
-  rcpputils::fs::path base_folder_;   // The folder that the bag files are in
+  std::filesystem::path base_folder_;   // The folder that the bag files are in
   std::shared_ptr<SerializationFormatConverterFactoryInterface> converter_factory_{};
   void get_bag_files(
-    const rcpputils::fs::path & base_folder,
-    std::vector<rcpputils::fs::path> & output);
+    const std::filesystem::path & base_folder,
+    std::vector<std::filesystem::path> & output);
 
   // Prepares the metadata by setting initial values.
   void init_metadata(
-    const std::vector<rcpputils::fs::path> & files,
+    const std::vector<std::filesystem::path> & files,
     const rosbag2_storage::StorageOptions & storage_options);
 
   // Attempts to harvest metadata from all bag files, and aggregates the result
   void aggregate_metadata(
-    const std::vector<rcpputils::fs::path> & files,
+    const std::vector<std::filesystem::path> & files,
     const std::unique_ptr<rosbag2_cpp::readers::SequentialReader> & bag_reader,
     const rosbag2_storage::StorageOptions & storage_options);
 
   // Comparison function for std::sort with our filepath convention
   bool compare_relative_file(
-    const rcpputils::fs::path & first_path,
-    const rcpputils::fs::path & second_path);
+    const std::filesystem::path & first_path,
+    const std::filesystem::path & second_path);
 };
 
 }  // namespace rosbag2_cpp

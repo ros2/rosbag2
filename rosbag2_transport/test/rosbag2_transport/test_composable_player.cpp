@@ -31,6 +31,8 @@
 using namespace std::chrono_literals;  // NOLINT
 using namespace ::testing;  // NOLINT
 
+namespace fs = std::filesystem;
+
 class ComposablePlayerTests
   : public ::testing::Test, public WithParamInterface<std::string>
 {
@@ -128,7 +130,7 @@ TEST_P(ComposablePlayerTests, player_can_parse_parameters_from_file) {
     "play.qos_profile_overrides_path",
     _SRC_RESOURCES_DIR_PATH "/qos_profile_overrides.yaml");
   opts.append_parameter_override("storage.storage_id", GetParam());
-  const std::string uri_str = (std::filesystem::path(
+  const std::string uri_str = (fs::path(
       _SRC_RESOURCES_DIR_PATH) / GetParam() / "test_bag_for_seek").generic_string();
   opts.append_parameter_override("storage.uri", uri_str);
 
@@ -181,7 +183,7 @@ TEST_P(ComposablePlayerIntegrationTests, player_can_automatically_play_file_afte
   load_node_request->package_name = "rosbag2_transport";
   load_node_request->plugin_name = "rosbag2_transport::Player";
 
-  const std::string uri_str = (std::filesystem::path(
+  const std::string uri_str = (fs::path(
       _SRC_RESOURCES_DIR_PATH) / GetParam() / "test_bag_for_seek").generic_string();
   rclcpp::Parameter uri("storage.uri", rclcpp::ParameterValue(uri_str));
   rclcpp::Parameter start_paused("play.start_paused", rclcpp::ParameterValue(true));

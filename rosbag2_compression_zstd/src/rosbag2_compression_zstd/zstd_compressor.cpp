@@ -19,8 +19,6 @@
 #include <string>
 #include <vector>
 
-#include "rcpputils/filesystem_helper.hpp"
-
 #include "compression_utils.hpp"
 #include "rosbag2_compression_zstd/zstd_compressor.hpp"
 #include "rosbag2_storage/ros_helper.hpp"
