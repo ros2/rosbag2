@@ -585,11 +585,32 @@ void prepare_included_topics_filter(
     regex_filter_str = "(topics.name REGEXP '" + storage_filter.regex + "')";
   }
 
+  static const char * regex_for_all_service_events_str = "(topics.name REGEXP '.*/_service_event')";
+
   if (!topics_filter_str.empty() && !regex_filter_str.empty()) {
     // Note: Inclusive filter conditions shall be joined with OR
-    where_conditions.push_back("(" + topics_filter_str + " OR " + regex_filter_str + ")");
+    if (!storage_filter.services_events.empty()) {
+      where_conditions.push_back("(" + topics_filter_str + " OR " + regex_filter_str + ")");
+    } else {  // if services_events.empty we shall include all service events
+      where_conditions.push_back(
+        "(" + topics_filter_str + " OR " + regex_filter_str + " OR " +
+        regex_for_all_service_events_str + ")");
+    }
   } else if (!topics_filter_str.empty()) {
-    where_conditions.push_back(topics_filter_str);
+    if (!storage_filter.services_events.empty()) {
+      if (!storage_filter.topics.empty()) {
+        where_conditions.push_back(topics_filter_str);
+      } else {  // if topics list empty and service_events not empty we shall include all topics
+        where_conditions.push_back(
+          "(" + topics_filter_str + " OR NOT " + regex_for_all_service_events_str + ")");
+      }
+    } else if (!storage_filter.topics.empty()) {
+      where_conditions.push_back(
+        "(" + topics_filter_str + " OR " + regex_for_all_service_events_str + ")");
+    } else {
+      // This shall never happen unless someone will make incorrect changes in logic
+      throw std::logic_error("Either service_events list or topics list shall be not empty!");
+    }
   } else if (!regex_filter_str.empty()) {
     where_conditions.push_back(regex_filter_str);
   }
