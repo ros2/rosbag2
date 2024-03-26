@@ -1,0 +1,20 @@
+# All settings not listed here will use the Doxygen default values.
+
+PROJECT_NAME           = "rosbag2_compression_zstd"
+PROJECT_NUMBER         = rolling
+PROJECT_BRIEF          = "Zstandard compression library implementation of rosbag2_compression"
+
+INPUT                  = ./include
+
+RECURSIVE              = YES
+OUTPUT_DIRECTORY       = doc_output
+
+EXTRACT_ALL            = YES
+SORT_MEMBER_DOCS       = NO
+
+GENERATE_LATEX         = NO
+
+ENABLE_PREPROCESSING   = YES
+MACRO_EXPANSION        = YES
+EXPAND_ONLY_PREDEF     = YES
+PREDEFINED             = ROSBAG2_TRANSPORT_PUBLIC=
