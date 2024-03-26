@@ -112,7 +112,7 @@ public:
       rw_storage.create_topic({0u, topic_name, type_name, rmw_format, {}, ""}, {});
       auto bag_message = std::make_shared<rosbag2_storage::SerializedBagMessage>();
       bag_message->serialized_data = make_serialized_message(std::get<0>(msg));
-      bag_message->time_stamp = std::get<1>(msg);
+      bag_message->recv_timestamp = std::get<1>(msg);
       bag_message->topic_name = topic_name;
       rw_storage.write(bag_message);
     }
@@ -188,14 +188,16 @@ public:
       // Prepare rosbag2 serialized message to write
       auto message = std::make_shared<rosbag2_storage::SerializedBagMessage>();
       message->serialized_data = make_serialized_message(std::get<0>(msg));
-      message->time_stamp = std::get<1>(msg);
+      message->recv_timestamp = std::get<1>(msg);
       message->topic_name = topic_name;
       // Write message to DB
       auto topic_entry = topics.find(topic_name);
       if (topic_entry == end(topics)) {
         throw SqliteException("Topic '" + topic_name + "' has not been created yet!");
       }
-      write_statement->bind(message->time_stamp, topic_entry->second, message->serialized_data);
+      write_statement->bind(
+        message->recv_timestamp, topic_entry->second,
+        message->serialized_data);
       write_statement->execute_and_reset();
     }
   }

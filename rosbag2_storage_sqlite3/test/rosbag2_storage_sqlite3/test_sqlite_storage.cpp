@@ -71,7 +71,7 @@ TEST_F(StorageTestFixture, string_messages_are_written_and_read_to_and_from_sqli
   ASSERT_THAT(read_messages, SizeIs(3));
   for (size_t i = 0; i < 3; i++) {
     EXPECT_THAT(deserialize_message(read_messages[i]->serialized_data), Eq(string_messages[i]));
-    EXPECT_THAT(read_messages[i]->time_stamp, Eq(std::get<1>(messages[i])));
+    EXPECT_THAT(read_messages[i]->recv_timestamp, Eq(std::get<1>(messages[i])));
     EXPECT_THAT(read_messages[i]->topic_name, Eq(topics[i]));
   }
 }
@@ -111,10 +111,10 @@ TEST_F(StorageTestFixture, get_next_returns_messages_in_timestamp_order) {
 
   EXPECT_TRUE(readable_storage->has_next());
   auto first_message = readable_storage->read_next();
-  EXPECT_THAT(first_message->time_stamp, Eq(2));
+  EXPECT_THAT(first_message->recv_timestamp, Eq(2));
   EXPECT_TRUE(readable_storage->has_next());
   auto second_message = readable_storage->read_next();
-  EXPECT_THAT(second_message->time_stamp, Eq(6));
+  EXPECT_THAT(second_message->recv_timestamp, Eq(6));
   EXPECT_FALSE(readable_storage->has_next());
 }
 
@@ -343,7 +343,7 @@ TEST_F(StorageTestFixture, messages_readable_for_prefoxy_db_schema) {
   ASSERT_THAT(read_messages, SizeIs(3));
   for (size_t i = 0; i < 3; i++) {
     EXPECT_THAT(deserialize_message(read_messages[i]->serialized_data), Eq(string_messages[i]));
-    EXPECT_THAT(read_messages[i]->time_stamp, Eq(std::get<1>(messages[i])));
+    EXPECT_THAT(read_messages[i]->recv_timestamp, Eq(std::get<1>(messages[i])));
     EXPECT_THAT(read_messages[i]->topic_name, Eq(topics[i]));
   }
 }

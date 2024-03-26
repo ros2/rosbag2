@@ -113,7 +113,7 @@ void WriterBenchmark::start_benchmark()
             get_logger(), "Error getting current time. Error:" <<
               rcutils_get_error_string().str);
         }
-        message->time_stamp = time_stamp;
+        message->recv_timestamp = time_stamp;
         message->topic_name = queue->topic_name();
 
         try {

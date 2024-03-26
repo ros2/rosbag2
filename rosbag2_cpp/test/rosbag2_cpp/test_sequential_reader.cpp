@@ -313,7 +313,7 @@ public:
       // Check both timestamp and value to uniquely identify messages in expected order
       ASSERT_TRUE(reader.has_next());
       auto next = reader.read_next();
-      EXPECT_EQ(next->time_stamp, expect_timestamp);
+      EXPECT_EQ(next->recv_timestamp, expect_timestamp);
 
       ASSERT_EQ(next->serialized_data->buffer_length, 4u);
       uint32_t value = *reinterpret_cast<uint32_t *>(next->serialized_data->buffer);

@@ -52,7 +52,7 @@ public:
     std::string serialized_data(rcutils_data.buffer,
       rcutils_data.buffer + rcutils_data.buffer_length);
     return pybind11::make_tuple(
-      next->topic_name, pybind11::bytes(serialized_data), next->time_stamp);
+      next->topic_name, pybind11::bytes(serialized_data), next->recv_timestamp);
   }
 };
 
