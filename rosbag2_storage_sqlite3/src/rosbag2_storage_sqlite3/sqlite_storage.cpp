@@ -83,18 +83,20 @@ inline std::unordered_map<std::string, std::string> parse_pragmas(
   }
   // poor developer's sqlinjection prevention ;-)
   std::string invalid_characters = {"';\""};
+  // *INDENT-OFF*
   auto throw_on_invalid_character = [](const auto & pragmas, const auto & invalid_characters) {
-      for (const auto & pragma_string : pragmas) {
-        auto pos = pragma_string.find_first_of(invalid_characters);
-        if (pos != std::string::npos) {
-          throw std::runtime_error(
-                  std::string("Invalid characters in sqlite3 config file: ") +
-                  pragma_string[pos] +
-                  ". Avoid following characters: " +
-                  invalid_characters);
-        }
+    for (const auto & pragma_string : pragmas) {
+      auto pos = pragma_string.find_first_of(invalid_characters);
+      if (pos != std::string::npos) {
+        throw std::runtime_error(
+                std::string("Invalid characters in sqlite3 config file: ") +
+                pragma_string[pos] +
+                ". Avoid following characters: " +
+                invalid_characters);
       }
-    };
+    }
+  };
+  // *INDENT-ON*
   throw_on_invalid_character(pragma_entries, invalid_characters);
 
   // Extract pragma name and map to full pragma statement

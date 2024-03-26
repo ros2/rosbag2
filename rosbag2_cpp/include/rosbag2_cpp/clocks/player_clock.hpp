@@ -41,7 +41,9 @@ public:
    * Type representing an arbitrary steady time, used to measure real-time durations
    * This type is never exposed by the PlayerClock - it is only used as input to the PlayerClock.
    */
-  typedef std::function<std::chrono::steady_clock::time_point()> NowFunction;
+  /* *INDENT-OFF* */
+  typedef std::function<std::chrono::steady_clock::time_point ()> NowFunction;
+  /* *INDENT-ON* */
 
   ROSBAG2_CPP_PUBLIC
   virtual ~PlayerClock() = default;

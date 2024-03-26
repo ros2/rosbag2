@@ -90,10 +90,12 @@ TEST_F(MessageCacheTest, message_cache_writes_full_producer_buffer) {
   auto total_actually_dropped = sum_up(mock_message_cache->messages_dropped());
   EXPECT_EQ(should_be_dropped_count, total_actually_dropped);
 
+  // *INDENT-OFF*
   auto cb = [&consumed_message_count](
     const std::vector<std::shared_ptr<const rosbag2_storage::SerializedBagMessage>> & msgs) {
-      consumed_message_count += msgs.size();
-    };
+    consumed_message_count += msgs.size();
+  };
+  // *INDENT-ON*
 
   auto mock_cache_consumer = std::make_unique<NiceMock<MockCacheConsumer>>(
     mock_message_cache,

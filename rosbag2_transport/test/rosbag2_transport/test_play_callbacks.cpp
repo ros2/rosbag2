@@ -82,9 +82,11 @@ TEST_F(Rosbag2PlayCallbacksTestFixture, nullptr_as_callback) {
 TEST_F(Rosbag2PlayCallbacksTestFixture, register_unregister_callbacks) {
   MockPlayer player(move(reader_), storage_options_, play_options_);
 
+  /* *INDENT-OFF* */
   auto lambda_as_callback = [](std::shared_ptr<rosbag2_storage::SerializedBagMessage>) {
-      ASSERT_FALSE(true) << "This code should not be called \n";
-    };
+    ASSERT_FALSE(true) << "This code should not be called \n";
+  };
+  /* *INDENT-ON* */
 
   auto pre_callback_handle = player.add_on_play_message_pre_callback(lambda_as_callback);
   ASSERT_NE(pre_callback_handle, Player::invalid_callback_handle);

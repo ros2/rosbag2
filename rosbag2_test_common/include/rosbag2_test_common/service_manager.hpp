@@ -48,14 +48,16 @@ public:
     std::string service_name,
     std::vector<std::shared_ptr<typename ServiceT::Request>> & requests)
   {
+    // *INDENT-OFF*
     auto callback = [&requests](
       const std::shared_ptr<rmw_request_id_t> request_header,
       const std::shared_ptr<typename ServiceT::Request> request,
       std::shared_ptr<typename ServiceT::Response> response) {
-        (void)request_header;
-        (void)response;
-        requests.emplace_back(request);
-      };
+      (void)request_header;
+      (void)response;
+      requests.emplace_back(request);
+    };
+    // *INDENT-ON*
 
     auto service = pub_node_->create_service<ServiceT>(
       service_name, std::forward<decltype(callback)>(callback));
@@ -64,16 +66,17 @@ public:
 
   void run_services()
   {
+    /* *INDENT-OFF* */
     auto spin = [this]() {
-        rclcpp::executors::SingleThreadedExecutor exec;
-        exec.add_node(pub_node_);
+      rclcpp::executors::SingleThreadedExecutor exec;
+      exec.add_node(pub_node_);
 
-        while (!exit_) {
-          exec.spin_some();
-          std::this_thread::sleep_for(std::chrono::milliseconds(50));
-        }
-      };
-
+      while (!exit_) {
+        exec.spin_some();
+        std::this_thread::sleep_for(std::chrono::milliseconds(50));
+      }
+    };
+    /* *INDENT-ON* */
     thread_ = std::thread(spin);
   }
 

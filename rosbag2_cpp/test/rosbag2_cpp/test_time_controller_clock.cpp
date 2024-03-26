@@ -30,9 +30,11 @@ public:
   TimeControllerClockTest()
   : return_time(std::chrono::nanoseconds(0))
   {
+    // *INDENT-OFF*
     now_fn = [this]() {
-        return return_time;
-      };
+      return return_time;
+    };
+    // *INDENT-ON*
   }
 
   rcutils_time_point_value_t as_nanos(const SteadyTimePoint & time)
