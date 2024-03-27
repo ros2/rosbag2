@@ -130,6 +130,8 @@ namespace rosbag2_py
 class Player
 {
 public:
+  using SignalHandlerType = void (*)(int);
+
   Player()
   {
     rclcpp::init(0, nullptr);
@@ -162,21 +164,56 @@ public:
   }
 
 protected:
+  static void signal_handler(int sig_num)
+  {
+    if (sig_num == SIGINT || sig_num == SIGTERM) {
+      deferred_sig_number_ = sig_num;
+      rosbag2_py::Player::cancel();
+    }
+  }
+
+  static void install_signal_handlers()
+  {
+    deferred_sig_number_ = -1;
+    old_sigterm_handler_ = std::signal(SIGTERM, &rosbag2_py::Player::signal_handler);
+    old_sigint_handler_ = std::signal(SIGINT, &rosbag2_py::Player::signal_handler);
+  }
+
+  static void uninstall_signal_handlers()
+  {
+    if (old_sigterm_handler_ != SIG_ERR) {
+      std::signal(SIGTERM, old_sigterm_handler_);
+      old_sigterm_handler_ = SIG_ERR;
+    }
+    if (old_sigint_handler_ != SIG_ERR) {
+      std::signal(SIGINT, old_sigint_handler_);
+      old_sigint_handler_ = SIG_ERR;
+    }
+    deferred_sig_number_ = -1;
+  }
+
+  static void process_deferred_signal()
+  {
+    auto call_signal_handler = [](const SignalHandlerType & signal_handler, int sig_num) {
+        if (signal_handler != SIG_ERR && signal_handler != SIG_IGN && signal_handler != SIG_DFL) {
+          signal_handler(sig_num);
+        }
+      };
+
+    if (deferred_sig_number_ == SIGINT) {
+      call_signal_handler(old_sigint_handler_, deferred_sig_number_);
+    } else if (deferred_sig_number_ == SIGTERM) {
+      call_signal_handler(old_sigterm_handler_, deferred_sig_number_);
+    }
+  }
+
   void play_impl(
     const rosbag2_storage::StorageOptions & storage_options,
     PlayOptions & play_options,
     bool burst = false,
     size_t burst_num_messages = 0)
   {
-    auto old_sigterm_handler = std::signal(
-      SIGTERM, [](int /* signal */) {
-        rosbag2_py::Player::cancel();
-      });
-    auto old_sigint_handler = std::signal(
-      SIGINT, [](int /* signal */) {
-        rosbag2_py::Player::cancel();
-      });
-
+    install_signal_handlers();
     try {
       auto reader = rosbag2_transport::ReaderWriterFactory::make_reader(storage_options);
       auto player = std::make_shared<rosbag2_transport::Player>(
@@ -217,35 +254,32 @@ protected:
       }
       exec.remove_node(player);
     } catch (...) {
-      // Return old signal handlers anyway
-      if (old_sigterm_handler != SIG_ERR) {
-        std::signal(SIGTERM, old_sigterm_handler);
-      }
-      if (old_sigint_handler != SIG_ERR) {
-        std::signal(SIGTERM, old_sigint_handler);
-      }
+      process_deferred_signal();
+      uninstall_signal_handlers();
       throw;
     }
-    // Return old signal handlers
-    if (old_sigterm_handler != SIG_ERR) {
-      std::signal(SIGTERM, old_sigterm_handler);
-    }
-    if (old_sigint_handler != SIG_ERR) {
-      std::signal(SIGTERM, old_sigint_handler);
-    }
+    process_deferred_signal();
+    uninstall_signal_handlers();
   }
 
   static std::atomic_bool exit_;
   static std::condition_variable wait_for_exit_cv_;
+  static SignalHandlerType old_sigint_handler_;
+  static SignalHandlerType old_sigterm_handler_;
+  static int deferred_sig_number_;
   std::mutex wait_for_exit_mutex_;
 };
 
+Player::SignalHandlerType Player::old_sigint_handler_ {SIG_ERR};
+Player::SignalHandlerType Player::old_sigterm_handler_ {SIG_ERR};
+int Player::deferred_sig_number_{-1};
 std::atomic_bool Player::exit_{false};
 std::condition_variable Player::wait_for_exit_cv_{};
 
 class Recorder
 {
 public:
+  using SignalHandlerType = void (*)(int);
   Recorder()
   {
     rclcpp::init(0, nullptr);
@@ -261,15 +295,7 @@ public:
     RecordOptions & record_options,
     std::string & node_name)
   {
-    auto old_sigterm_handler = std::signal(
-      SIGTERM, [](int /* signal */) {
-        rosbag2_py::Recorder::cancel();
-      });
-    auto old_sigint_handler = std::signal(
-      SIGINT, [](int /* signal */) {
-        rosbag2_py::Recorder::cancel();
-      });
-
+    install_signal_handlers();
     try {
       exit_ = false;
       auto exec = std::make_unique<rclcpp::executors::SingleThreadedExecutor>();
@@ -303,22 +329,12 @@ public:
       }
       exec->remove_node(recorder);
     } catch (...) {
-      // Return old signal handlers anyway
-      if (old_sigterm_handler != SIG_ERR) {
-        std::signal(SIGTERM, old_sigterm_handler);
-      }
-      if (old_sigint_handler != SIG_ERR) {
-        std::signal(SIGTERM, old_sigint_handler);
-      }
+      process_deferred_signal();
+      uninstall_signal_handlers();
       throw;
     }
-    // Return old signal handlers
-    if (old_sigterm_handler != SIG_ERR) {
-      std::signal(SIGTERM, old_sigterm_handler);
-    }
-    if (old_sigint_handler != SIG_ERR) {
-      std::signal(SIGTERM, old_sigint_handler);
-    }
+    process_deferred_signal();
+    uninstall_signal_handlers();
   }
 
   static void cancel()
@@ -328,11 +344,60 @@ public:
   }
 
 protected:
+  static void signal_handler(int sig_num)
+  {
+    if (sig_num == SIGINT || sig_num == SIGTERM) {
+      deferred_sig_number_ = sig_num;
+      rosbag2_py::Recorder::cancel();
+    }
+  }
+
+  static void install_signal_handlers()
+  {
+    deferred_sig_number_ = -1;
+    old_sigterm_handler_ = std::signal(SIGTERM, &rosbag2_py::Recorder::signal_handler);
+    old_sigint_handler_ = std::signal(SIGINT, &rosbag2_py::Recorder::signal_handler);
+  }
+
+  static void uninstall_signal_handlers()
+  {
+    if (old_sigterm_handler_ != SIG_ERR) {
+      std::signal(SIGTERM, old_sigterm_handler_);
+      old_sigterm_handler_ = SIG_ERR;
+    }
+    if (old_sigint_handler_ != SIG_ERR) {
+      std::signal(SIGINT, old_sigint_handler_);
+      old_sigint_handler_ = SIG_ERR;
+    }
+    deferred_sig_number_ = -1;
+  }
+
+  static void process_deferred_signal()
+  {
+    auto call_signal_handler = [](const SignalHandlerType & signal_handler, int sig_num) {
+        if (signal_handler != SIG_ERR && signal_handler != SIG_IGN && signal_handler != SIG_DFL) {
+          signal_handler(sig_num);
+        }
+      };
+
+    if (deferred_sig_number_ == SIGINT) {
+      call_signal_handler(old_sigint_handler_, deferred_sig_number_);
+    } else if (deferred_sig_number_ == SIGTERM) {
+      call_signal_handler(old_sigterm_handler_, deferred_sig_number_);
+    }
+  }
+
   static std::atomic_bool exit_;
   static std::condition_variable wait_for_exit_cv_;
+  static SignalHandlerType old_sigint_handler_;
+  static SignalHandlerType old_sigterm_handler_;
+  static int deferred_sig_number_;
   std::mutex wait_for_exit_mutex_;
 };
 
+Recorder::SignalHandlerType Recorder::old_sigint_handler_ {SIG_ERR};
+Recorder::SignalHandlerType Recorder::old_sigterm_handler_ {SIG_ERR};
+int Recorder::deferred_sig_number_{-1};
 std::atomic_bool Recorder::exit_{false};
 std::condition_variable Recorder::wait_for_exit_cv_{};
 
