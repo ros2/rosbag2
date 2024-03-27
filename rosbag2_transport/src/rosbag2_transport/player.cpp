@@ -620,7 +620,8 @@ bool PlayerImpl::play_next()
     return false;
   }
 
-  RCLCPP_INFO_STREAM(owner_->get_logger(), "Playing next message.");
+  // Use RCLCPP_DEBUG_STREAM to avoid delays in the burst mode
+  RCLCPP_DEBUG_STREAM(owner_->get_logger(), "Playing next message.");
 
   // Temporary take over playback from play_messages_from_queue()
   std::lock_guard<std::mutex> main_play_loop_lk(skip_message_in_main_play_loop_mutex_);
@@ -670,6 +671,7 @@ size_t PlayerImpl::burst(const size_t num_messages)
     }
   }
 
+  RCLCPP_INFO_STREAM(owner_->get_logger(), "Burst " << messages_played << " messages.");
   return messages_played;
 }
 
