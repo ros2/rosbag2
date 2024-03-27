@@ -14,17 +14,18 @@
 
 #include <gmock/gmock.h>
 
+#include <filesystem>
 #include <string>
 #include <vector>
 #include <utility>
 
-#include "rcpputils/filesystem_helper.hpp"
 #include "rosbag2_test_common/tested_storage_ids.hpp"
 #include "rosbag2_transport/bag_rewrite.hpp"
 #include "rosbag2_transport/reader_writer_factory.hpp"
 
 using namespace ::testing;  // NOLINT
 
+namespace fs = std::filesystem;
 
 /*
 Builtin knowledge about the bags under test:
@@ -51,10 +52,11 @@ class TestRewrite : public Test, public WithParamInterface<std::string>
 {
 public:
   TestRewrite()
-  : output_dir_(rcpputils::fs::create_temp_directory("test_bag_rewrite"))
   {
+    auto tmp_dir = rcpputils::fs::create_temp_directory("test_bag_rewrite");
+    output_dir_ = fs::path(tmp_dir.string());
     storage_id_ = GetParam();
-    bags_path_ = rcpputils::fs::path{_SRC_RESOURCES_DIR_PATH} / storage_id_;
+    bags_path_ = fs::path(_SRC_RESOURCES_DIR_PATH) / storage_id_;
   }
 
   void use_input_a()
@@ -75,11 +77,11 @@ public:
 
   ~TestRewrite()
   {
-    // rcpputils::fs::remove_all(output_dir_);
+    fs::remove_all(output_dir_);
   }
 
-  const rcpputils::fs::path output_dir_;
-  rcpputils::fs::path bags_path_{_SRC_RESOURCES_DIR_PATH};
+  fs::path output_dir_;
+  fs::path bags_path_{_SRC_RESOURCES_DIR_PATH};
   std::string storage_id_;
   std::vector<rosbag2_storage::StorageOptions> input_bags_;
   std::vector<std::pair<rosbag2_storage::StorageOptions, rosbag2_transport::RecordOptions>>
@@ -244,8 +246,8 @@ TEST_P(TestRewrite, test_compress) {
   auto first_storage = out_bag / metadata.relative_file_paths[0];
 
   EXPECT_EQ(first_storage.extension().string(), ".zstd");
-  EXPECT_TRUE(first_storage.exists());
-  EXPECT_TRUE(first_storage.is_regular_file());
+  EXPECT_TRUE(fs::exists(first_storage));
+  EXPECT_TRUE(fs::is_regular_file(first_storage));
 }
 
 INSTANTIATE_TEST_SUITE_P(

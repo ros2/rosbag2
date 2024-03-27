@@ -12,19 +12,20 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <filesystem>
 #include <string>
 
 #include "pluginlib/class_list_macros.hpp"
 
-#include "rcpputils/filesystem_helper.hpp"
-
 #include "fake_decompressor.hpp"
+
+namespace fs = std::filesystem;
 
 std::string FakeDecompressor::decompress_uri(const std::string & uri)
 {
-  auto uri_path = rcpputils::fs::path{uri};
-  const auto decompressed_path = rcpputils::fs::remove_extension(uri_path);
-  return decompressed_path.string();
+  auto uri_path = fs::path{uri};
+  const auto decompressed_path = uri_path.replace_extension();
+  return decompressed_path.generic_string();
 }
 
 void FakeDecompressor::decompress_serialized_bag_message(

@@ -23,7 +23,6 @@ endif()
 
 find_package(ament_cmake REQUIRED)
 find_package(pluginlib REQUIRED)
-find_package(rcpputils REQUIRED)
 find_package(rosbag2_compression REQUIRED)
 find_package(zstd_vendor REQUIRED)
 find_package(zstd REQUIRED)
@@ -37,7 +36,6 @@ target_include_directories(${PROJECT_NAME}
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
   $<INSTALL_INTERFACE:include/${PROJECT_NAME}>)
 target_link_libraries(${PROJECT_NAME}
-  rcpputils::rcpputils
   rosbag2_compression::rosbag2_compression
   zstd::zstd
 )
@@ -63,7 +61,7 @@ ament_export_libraries(${PROJECT_NAME})
 ament_export_targets(export_${PROJECT_NAME})
 
 # order matters here, first vendor, then zstd
-ament_export_dependencies(rcpputils rosbag2_compression zstd_vendor zstd)
+ament_export_dependencies(rosbag2_compression zstd_vendor zstd)
 
 
 if(BUILD_TESTING)

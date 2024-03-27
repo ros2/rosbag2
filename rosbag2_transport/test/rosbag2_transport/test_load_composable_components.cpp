@@ -19,6 +19,8 @@
 
 using namespace std::chrono_literals;  // NOLINT
 
+namespace fs = std::filesystem;
+
 TEST_P(CompositionManagerTestFixture, test_load_play_component)
 {
   std::string path{_SRC_RESOURCES_DIR_PATH "/player_node_params.yaml"};
@@ -34,7 +36,7 @@ TEST_P(CompositionManagerTestFixture, test_load_play_component)
   rclcpp::Parameter qos_profile_overrides_path("play.qos_profile_overrides_path",
     rclcpp::ParameterValue(_SRC_RESOURCES_DIR_PATH "/qos_profile_overrides.yaml"));
 
-  const std::string uri_str = (std::filesystem::path(
+  const std::string uri_str = (fs::path(
       _SRC_RESOURCES_DIR_PATH) / GetParam() / "test_bag_for_seek").generic_string();
   rclcpp::Parameter uri("storage.uri", rclcpp::ParameterValue(uri_str));
   rclcpp::Parameter storage_id("storage.storage_id", GetParam());

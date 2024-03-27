@@ -29,6 +29,8 @@ using namespace std::chrono_literals;  // NOLINT
 using namespace ::testing;  // NOLINT
 using namespace rosbag2_test_common;  // NOLINT
 
+namespace fs = std::filesystem;
+
 class Rosbag2StorageAPITests : public rosbag2_test_common::ParametrizedTemporaryDirectoryFixture
 {
 public:
@@ -40,17 +42,17 @@ public:
   void SetUp() override
   {
     auto bag_name = get_test_name() + "_" + GetParam();
-    root_bag_path_ = std::filesystem::path(temporary_dir_path_) / bag_name;
+    root_bag_path_ = fs::path(temporary_dir_path_) / bag_name;
 
     // Clean up potentially leftover bag files.
     // There may be leftovers if the system reallocates a temp directory
     // used by a previous test execution and the test did not have a clean exit.
-    std::filesystem::remove_all(root_bag_path_);
+    fs::remove_all(root_bag_path_);
   }
 
   void TearDown() override
   {
-    std::filesystem::remove_all(root_bag_path_);
+    fs::remove_all(root_bag_path_);
   }
 
   static std::string get_test_name()
@@ -111,14 +113,14 @@ public:
     }
   }
 
-  std::filesystem::path root_bag_path_;
+  fs::path root_bag_path_;
   std::unique_ptr<MemoryManagement> memory_management_;
 };
 
 TEST_P(Rosbag2StorageAPITests, get_bagfile_size_read_write_interface)
 {
   const std::string FILE_EXTENSION = (GetParam() == "mcap") ? ".mcap" : ".db3";
-  std::filesystem::path full_bagfile_path = root_bag_path_;
+  fs::path full_bagfile_path = root_bag_path_;
   full_bagfile_path.replace_extension(FILE_EXTENSION);
 
   rosbag2_storage::StorageFactory factory{};
@@ -136,7 +138,7 @@ TEST_P(Rosbag2StorageAPITests, get_bagfile_size_read_write_interface)
   rw_storage->write(serialized_messages);
   uint64_t storage_bagfile_size = rw_storage->get_bagfile_size();
 
-  size_t fs_bagfile_size = std::filesystem::file_size(full_bagfile_path);
+  size_t fs_bagfile_size = fs::file_size(full_bagfile_path);
   auto tolerance = static_cast<size_t>(fs_bagfile_size * 0.001);  // tolerance = 0.1%
 
   size_t filesize_difference =
@@ -150,7 +152,7 @@ TEST_P(Rosbag2StorageAPITests, get_bagfile_size_read_write_interface)
   rw_storage->write(serialized_messages);
   storage_bagfile_size = rw_storage->get_bagfile_size();
 
-  fs_bagfile_size = std::filesystem::file_size(full_bagfile_path);
+  fs_bagfile_size = fs::file_size(full_bagfile_path);
   tolerance = static_cast<size_t>(fs_bagfile_size * 0.001);  // tolerance = 0.1%
 
   filesize_difference =

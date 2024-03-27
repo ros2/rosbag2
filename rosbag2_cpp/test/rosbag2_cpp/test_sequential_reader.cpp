@@ -14,12 +14,11 @@
 
 #include <gmock/gmock.h>
 
+#include <filesystem>
 #include <memory>
 #include <string>
 #include <utility>
 #include <vector>
-
-#include "rcpputils/filesystem_helper.hpp"
 
 #include "rosbag2_cpp/readers/sequential_reader.hpp"
 #include "rosbag2_cpp/reader.hpp"
@@ -44,6 +43,7 @@
 
 using namespace testing;  // NOLINT
 using rosbag2_test_common::ParametrizedTemporaryDirectoryFixture;
+namespace fs = std::filesystem;
 
 class SequentialReaderTest : public Test
 {
@@ -52,7 +52,7 @@ public:
   : storage_(std::make_shared<NiceMock<MockStorage>>()),
     converter_factory_(std::make_shared<StrictMock<MockConverterFactory>>()),
     storage_serialization_format_("rmw1_format"),
-    storage_uri_(rcpputils::fs::temp_directory_path().string()),
+    storage_uri_(fs::temp_directory_path().generic_string()),
     default_storage_options_({storage_uri_, "mock_storage"})
   {
     rosbag2_storage::TopicMetadata topic_with_type;
@@ -66,12 +66,15 @@ public:
     message->topic_name = topic_with_type.name;
 
     relative_file_path_ =
-      (rcpputils::fs::path(storage_uri_) / "some/folder").string();
+      (fs::path(storage_uri_) / "some/folder").generic_string();
     auto storage_factory = std::make_unique<StrictMock<MockStorageFactory>>();
     auto metadata_io = std::make_unique<NiceMock<MockMetadataIo>>();
     bag_file_1_path_ = relative_file_path_ / "bag_file1";
     bag_file_2_path_ = relative_file_path_ / "bag_file2";
-    metadata_.relative_file_paths = {bag_file_1_path_.string(), bag_file_2_path_.string()};
+    metadata_.relative_file_paths = {
+      bag_file_1_path_.generic_string(),
+      bag_file_2_path_.generic_string()
+    };
     metadata_.version = 4;
     metadata_.topics_with_message_count.push_back({{topic_with_type}, 6});
     metadata_.storage_identifier = "mock_storage";
@@ -121,9 +124,9 @@ public:
   std::string storage_serialization_format_;
   std::string storage_uri_;
   rosbag2_storage::BagMetadata metadata_;
-  rcpputils::fs::path relative_file_path_;
-  rcpputils::fs::path bag_file_1_path_;
-  rcpputils::fs::path bag_file_2_path_;
+  fs::path relative_file_path_;
+  fs::path bag_file_1_path_;
+  fs::path bag_file_2_path_;
   rosbag2_storage::StorageOptions default_storage_options_;
   size_t num_next_ = 0;
 };
@@ -218,30 +221,30 @@ TEST_F(SequentialReaderTest, next_file_calls_callback) {
   reader_->read_next();
 
   ASSERT_TRUE(callback_called);
-  EXPECT_EQ(closed_file, bag_file_1_path_.string());
-  EXPECT_EQ(opened_file, bag_file_2_path_.string());
+  EXPECT_EQ(closed_file, bag_file_1_path_.generic_string());
+  EXPECT_EQ(opened_file, bag_file_2_path_.generic_string());
 }
 
 TEST_P(ParametrizedTemporaryDirectoryFixture, reader_accepts_bare_file) {
-  const auto bag_path = rcpputils::fs::path(temporary_dir_path_) / "bag";
+  const auto bag_path = fs::path(temporary_dir_path_) / "bag";
   const auto storage_id = GetParam();
 
   {
     // Create an empty bag with default storage
     rosbag2_cpp::Writer writer;
     rosbag2_storage::StorageOptions options;
-    options.uri = bag_path.string();
+    options.uri = bag_path.generic_string();
     options.storage_id = storage_id;
     writer.open(options);
     test_msgs::msg::BasicTypes msg;
     writer.write(msg, "testtopic", rclcpp::Time{});
   }
   rosbag2_storage::MetadataIo metadata_io;
-  auto metadata = metadata_io.read_metadata(bag_path.string());
+  auto metadata = metadata_io.read_metadata(bag_path.generic_string());
   auto first_storage = bag_path / metadata.relative_file_paths[0];
 
   rosbag2_cpp::Reader reader;
-  EXPECT_NO_THROW(reader.open(first_storage.string()));
+  EXPECT_NO_THROW(reader.open(first_storage.generic_string()));
   EXPECT_TRUE(reader.has_next());
   EXPECT_THAT(reader.get_metadata().topics_with_message_count, SizeIs(1));
 }
@@ -258,7 +261,8 @@ class ReadOrderTest : public ParametrizedTemporaryDirectoryFixture
 public:
   ReadOrderTest()
   {
-    storage_options.uri = (rcpputils::fs::path(temporary_dir_path_) / "ordertest").string();
+    storage_options.uri =
+      (fs::path(temporary_dir_path_) / "ordertest").generic_string();
     storage_options.storage_id = GetParam();
     write_sample_split_bag(storage_options, fake_messages, split_every);
   }
