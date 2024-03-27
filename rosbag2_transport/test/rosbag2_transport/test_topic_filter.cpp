@@ -248,6 +248,9 @@ TEST_F(TestTopicFilter, all_topics_and_exclude_type_topics)
   {
     EXPECT_TRUE(filtered_topics.find(topic) != filtered_topics.end()) << "Expected topic:" << topic;
   }
+
+  EXPECT_TRUE(filtered_topics.find("/localization") == filtered_topics.end());
+  EXPECT_TRUE(filtered_topics.find("/status") == filtered_topics.end());
 }
 
 TEST_F(TestTopicFilter, all_services_and_exclude_regex)
