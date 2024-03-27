@@ -2,6 +2,12 @@
 Changelog for package rosbag2_examples_cpp
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Add topic_id returned by storage to the TopicMetadata (`#1538 <https://github.com/ros2/rosbag2/issues/1538>`_)
+* Use enum values for offered_qos_profiles in code and string names in serialized metadata (`#1476 <https://github.com/ros2/rosbag2/issues/1476>`_)
+* Contributors: Michael Orlov, Patrick Roncagliolo
+
 0.24.0 (2023-07-11)
 -------------------
 
