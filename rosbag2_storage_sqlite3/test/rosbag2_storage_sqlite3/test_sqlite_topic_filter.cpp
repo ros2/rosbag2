@@ -324,6 +324,30 @@ TEST_F(SQLiteTopicFilterTestFixture, FilterTopicsAndServicesWithBlackListsAndExc
   EXPECT_FALSE(readable_storage->has_next());
 }
 
+TEST_F(SQLiteTopicFilterTestFixture, FilterTopicsAndServicesExcludeOverlapsWithIncludeLists)
+{
+  auto readable_storage = open_test_bag_for_read_only();
+  // Exclude from include lists
+  rosbag2_storage::StorageFilter storage_filter{};
+  storage_filter.topics = {"topic1", "topic2", "topic3"};
+  storage_filter.services_events = {"service_topic1/_service_event",
+    "service_topic2/_service_event"};
+  storage_filter.exclude_topics = {"topic1"};
+  storage_filter.exclude_service_events = {"service_topic2/_service_event"};
+  readable_storage->set_filter(storage_filter);
+
+  EXPECT_TRUE(readable_storage->has_next());
+  auto first_message = readable_storage->read_next();
+  EXPECT_THAT(first_message->topic_name, Eq("service_topic1/_service_event"));
+  EXPECT_TRUE(readable_storage->has_next());
+  auto second_message = readable_storage->read_next();
+  EXPECT_THAT(second_message->topic_name, Eq("topic2"));
+  EXPECT_TRUE(readable_storage->has_next());
+  auto third_message = readable_storage->read_next();
+  EXPECT_THAT(third_message->topic_name, Eq("topic3"));
+  EXPECT_FALSE(readable_storage->has_next());
+}
+
 TEST_F(SQLiteTopicFilterTestFixture, FilterWithRegexAndExcludeRegex)
 {
   auto readable_storage = open_test_bag_for_read_only();
