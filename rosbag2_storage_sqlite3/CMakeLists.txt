@@ -107,11 +107,11 @@ if(BUILD_TESTING)
     target_link_libraries(test_sqlite_storage ${TEST_LINK_LIBRARIES})
   endif()
 
-  ament_add_gmock(test_sqlite3_topic_filter
+  ament_add_gmock(test_sqlite_topic_filter
     test/rosbag2_storage_sqlite3/test_sqlite_topic_filter.cpp
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
-  if(TARGET test_sqlite3_topic_filter)
-    target_link_libraries(test_sqlite3_topic_filter ${TEST_LINK_LIBRARIES} ${std_msgs_TARGETS})
+  if(TARGET test_sqlite_topic_filter)
+    target_link_libraries(test_sqlite_topic_filter ${TEST_LINK_LIBRARIES} ${std_msgs_TARGETS})
   endif()
 endif()
 
