@@ -11,7 +11,7 @@ Changelog for package rosbag2_storage_mcap
 * Link and compile against rosbag2_storage_mcap: Fixed issue 1492 (`#1496 <https://github.com/ros2/rosbag2/issues/1496>`_)
 * Use enum values for offered_qos_profiles in code and string names in serialized metadata (`#1476 <https://github.com/ros2/rosbag2/issues/1476>`_)
 * Store serialized metadata in MCAP file (`#1423 <https://github.com/ros2/rosbag2/issues/1423>`_)
-* Contributors: Alejandro Hernández Cordero, Michael Orlov, Patrick Roncagliolo, Roman, Tomoya Fujita, uupks
+* Contributors: Alejandro Hernández Cordero, Michael Orlov, Patrick Roncagliolo, Roman Sokolkov, Tomoya Fujita, uupks
 
 0.24.0 (2023-07-11)
 -------------------

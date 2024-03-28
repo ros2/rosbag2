@@ -17,7 +17,7 @@ Changelog for package rosbag2_py
 * Use enum values for offered_qos_profiles in code and string names in serialized metadata (`#1476 <https://github.com/ros2/rosbag2/issues/1476>`_)
 * ros2 bag convert now excludes messages not in [start_time;end_time] (`#1455 <https://github.com/ros2/rosbag2/issues/1455>`_)
 * Add support for compression to python API (`#1425 <https://github.com/ros2/rosbag2/issues/1425>`_)
-* Contributors: Alejandro Hernández Cordero, Andrew Symington, Barry Xu, Chris Lalancette, Michael Orlov, Mikael Arguedas, Patrick Roncagliolo, Peter Favrholdt, Roman
+* Contributors: Alejandro Hernández Cordero, Andrew Symington, Barry Xu, Chris Lalancette, Michael Orlov, Mikael Arguedas, Patrick Roncagliolo, Peter Favrholdt, Roman Sokolkov
 
 0.24.0 (2023-07-11)
 -------------------

@@ -6,7 +6,7 @@ Changelog for package rosbag2_compression_zstd
 -------------------
 * Use std::filesystem instead of rcpputils::fs (`#1576 <https://github.com/ros2/rosbag2/issues/1576>`_)
 * Make some changes for newer versions of uncrustify. (`#1578 <https://github.com/ros2/rosbag2/issues/1578>`_)
-* Contributors: Chris Lalancette, Roman
+* Contributors: Chris Lalancette, Roman Sokolkov
 
 0.24.0 (2023-07-11)
 -------------------

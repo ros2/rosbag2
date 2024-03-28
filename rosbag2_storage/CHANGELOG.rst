@@ -12,7 +12,7 @@ Changelog for package rosbag2_storage
 * Make Player and Recorder Composable (`#902 <https://github.com/ros2/rosbag2/issues/902>`_) (`#1419 <https://github.com/ros2/rosbag2/issues/1419>`_)
 * Use enum values for offered_qos_profiles in code and string names in serialized metadata (`#1476 <https://github.com/ros2/rosbag2/issues/1476>`_)
 * ros2 bag convert now excludes messages not in [start_time;end_time] (`#1455 <https://github.com/ros2/rosbag2/issues/1455>`_)
-* Contributors: Chris Lalancette, Michael Orlov, Patrick Roncagliolo, Peter Favrholdt, Roman
+* Contributors: Chris Lalancette, Michael Orlov, Patrick Roncagliolo, Peter Favrholdt, Roman Sokolkov
 
 0.24.0 (2023-07-11)
 -------------------

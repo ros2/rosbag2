@@ -28,7 +28,7 @@ Changelog for package rosbag2_transport
 * Remove unused concurrentqueue implementation. (`#1465 <https://github.com/ros2/rosbag2/issues/1465>`_)
 * Fix uninitialized value pointed out by clang static analysis. (`#1440 <https://github.com/ros2/rosbag2/issues/1440>`_)
 * Fix the build with rmw_fastrtps_dynamic. (`#1416 <https://github.com/ros2/rosbag2/issues/1416>`_)
-* Contributors: Alejandro Hernández Cordero, Barry Xu, Chris Lalancette, Christoph Fröhlich, Daisuke Nishimatsu, Michael Orlov, Patrick Roncagliolo, Roman, Tomoya Fujita, jmachowinski
+* Contributors: Alejandro Hernández Cordero, Barry Xu, Chris Lalancette, Christoph Fröhlich, Daisuke Nishimatsu, Michael Orlov, Patrick Roncagliolo, Roman Sokolkov, Tomoya Fujita, jmachowinski
 
 0.24.0 (2023-07-11)
 -------------------

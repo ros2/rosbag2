@@ -14,7 +14,7 @@ Changelog for package rosbag2
 * ros2 bag convert now excludes messages not in [start_time;end_time] (`#1455 <https://github.com/ros2/rosbag2/issues/1455>`_)
 * Replace TSAUniqueLock implementation with rcpputils::unique_lock (`#1454 <https://github.com/ros2/rosbag2/issues/1454>`_)
 * Add BagSplitInfo service call on bag close (`#1422 <https://github.com/ros2/rosbag2/issues/1422>`_)
-* Contributors: Barry Xu, Chris Lalancette, Emerson Knapp, Michael Orlov, Patrick Roncagliolo, Peter Favrholdt, Roman, Tomoya Fujita
+* Contributors: Barry Xu, Chris Lalancette, Emerson Knapp, Michael Orlov, Patrick Roncagliolo, Peter Favrholdt, Roman Sokolkov, Tomoya Fujita
 
 0.24.0 (2023-07-11)
 -------------------

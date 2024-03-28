@@ -11,7 +11,7 @@ Changelog for package rosbag2_compression
 * Add option to set compression threads priority (`#1457 <https://github.com/ros2/rosbag2/issues/1457>`_)
 * Fixes pointed out by clang. (`#1493 <https://github.com/ros2/rosbag2/issues/1493>`_)
 * Use enum values for offered_qos_profiles in code and string names in serialized metadata (`#1476 <https://github.com/ros2/rosbag2/issues/1476>`_)
-* Contributors: Arne B, Chris Lalancette, Michael Orlov, Patrick Roncagliolo, Roman, jmachowinski
+* Contributors: Arne B, Chris Lalancette, Michael Orlov, Patrick Roncagliolo, Roman Sokolkov, jmachowinski
 
 0.24.0 (2023-07-11)
 -------------------

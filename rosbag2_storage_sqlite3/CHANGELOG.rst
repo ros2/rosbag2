@@ -12,7 +12,7 @@ Changelog for package rosbag2_storage_default_plugins
 * Update rosbag2_storage_sqlite3 to C++17. (`#1501 <https://github.com/ros2/rosbag2/issues/1501>`_)
 * Use enum values for offered_qos_profiles in code and string names in serialized metadata (`#1476 <https://github.com/ros2/rosbag2/issues/1476>`_)
 * Stop inheriting from std::iterator. (`#1424 <https://github.com/ros2/rosbag2/issues/1424>`_)
-* Contributors: Chris Lalancette, Michael Orlov, Patrick Roncagliolo, Roman
+* Contributors: Chris Lalancette, Michael Orlov, Patrick Roncagliolo, Roman Sokolkov
 
 0.24.0 (2023-07-11)
 -------------------
