@@ -2,6 +2,15 @@
 Changelog for package ros2bag
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.25.0 (2024-03-27)
+-------------------
+* Overhaul in the rosbag2_transport::TopicFilter class and relevant tests (`#1585 <https://github.com/ros2/rosbag2/issues/1585>`_)
+* Filter topic by type  (`#1577 <https://github.com/ros2/rosbag2/issues/1577>`_)
+* Implement service recording and display info about recorded services (`#1480 <https://github.com/ros2/rosbag2/issues/1480>`_)
+* Add python3-yaml as a dependency (`#1490 <https://github.com/ros2/rosbag2/issues/1490>`_)
+* Fix the description of paramter '--topics' for play (`#1426 <https://github.com/ros2/rosbag2/issues/1426>`_)
+* Contributors: Alejandro Hernández Cordero, Barry Xu, Michael Orlov, Michal Sojka
+
 0.24.0 (2023-07-11)
 -------------------
 * When using sim time, wait for /clock before beginning recording (`#1378 <https://github.com/ros2/rosbag2/issues/1378>`_)

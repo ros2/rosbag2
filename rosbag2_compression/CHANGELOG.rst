@@ -2,6 +2,17 @@
 Changelog for package rosbag2_compression
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.25.0 (2024-03-27)
+-------------------
+* Use std::filesystem instead of rcpputils::fs (`#1576 <https://github.com/ros2/rosbag2/issues/1576>`_)
+* Make some changes for newer versions of uncrustify. (`#1578 <https://github.com/ros2/rosbag2/issues/1578>`_)
+* Add topic_id returned by storage to the TopicMetadata (`#1538 <https://github.com/ros2/rosbag2/issues/1538>`_)
+* Add default initialization for CompressionOptions (`#1539 <https://github.com/ros2/rosbag2/issues/1539>`_)
+* Add option to set compression threads priority (`#1457 <https://github.com/ros2/rosbag2/issues/1457>`_)
+* Fixes pointed out by clang. (`#1493 <https://github.com/ros2/rosbag2/issues/1493>`_)
+* Use enum values for offered_qos_profiles in code and string names in serialized metadata (`#1476 <https://github.com/ros2/rosbag2/issues/1476>`_)
+* Contributors: Arne B, Chris Lalancette, Michael Orlov, Patrick Roncagliolo, Roman Sokolkov, jmachowinski
+
 0.24.0 (2023-07-11)
 -------------------
 * Add in a missing cstdint include. (`#1321 <https://github.com/ros2/rosbag2/issues/1321>`_)

@@ -2,6 +2,11 @@
 Changelog for package mcap_vendor
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.25.0 (2024-03-27)
+-------------------
+* Switch to target_link_libraries everywhere. (`#1504 <https://github.com/ros2/rosbag2/issues/1504>`_)
+* Contributors: Chris Lalancette
+
 0.24.0 (2023-07-11)
 -------------------
 * Update mcap to v1.1.0 (`#1361 <https://github.com/ros2/rosbag2/issues/1361>`_)

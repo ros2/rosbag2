@@ -2,6 +2,9 @@
 Changelog for package zstd_vendor
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.25.0 (2024-03-27)
+-------------------
+
 0.24.0 (2023-07-11)
 -------------------
 * Switch to ament_cmake_vendor_package (`#1400 <https://github.com/ros2/rosbag2/issues/1400>`_)

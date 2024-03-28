@@ -2,6 +2,23 @@
 Changelog for package rosbag2_py
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.25.0 (2024-03-27)
+-------------------
+* Fix for false negative tests in rosbag2_py (`#1592 <https://github.com/ros2/rosbag2/issues/1592>`_)
+* Update rosbag2_py stubs (`#1593 <https://github.com/ros2/rosbag2/issues/1593>`_)
+* Add Python stubs for rosbag2_py (`#1459 <https://github.com/ros2/rosbag2/issues/1459>`_) (`#1569 <https://github.com/ros2/rosbag2/issues/1569>`_)
+* Filter topic by type  (`#1577 <https://github.com/ros2/rosbag2/issues/1577>`_)
+* Add topic_id returned by storage to the TopicMetadata (`#1538 <https://github.com/ros2/rosbag2/issues/1538>`_)
+* Install signal handlers in recorder only inside record method (`#1464 <https://github.com/ros2/rosbag2/issues/1464>`_)
+* add missing import otherwise it doesnt compile (`#1524 <https://github.com/ros2/rosbag2/issues/1524>`_)
+* Implement service recording and display info about recorded services (`#1480 <https://github.com/ros2/rosbag2/issues/1480>`_)
+* Make `rosbag2_transport::Player::play()` run in a separate thread (`#1503 <https://github.com/ros2/rosbag2/issues/1503>`_)
+* Switch to target_link_libraries everywhere. (`#1504 <https://github.com/ros2/rosbag2/issues/1504>`_)
+* Use enum values for offered_qos_profiles in code and string names in serialized metadata (`#1476 <https://github.com/ros2/rosbag2/issues/1476>`_)
+* ros2 bag convert now excludes messages not in [start_time;end_time] (`#1455 <https://github.com/ros2/rosbag2/issues/1455>`_)
+* Add support for compression to python API (`#1425 <https://github.com/ros2/rosbag2/issues/1425>`_)
+* Contributors: Alejandro Hernández Cordero, Andrew Symington, Barry Xu, Chris Lalancette, Michael Orlov, Mikael Arguedas, Patrick Roncagliolo, Peter Favrholdt, Roman Sokolkov
+
 0.24.0 (2023-07-11)
 -------------------
 * Gracefully handle SIGINT and SIGTERM in rosbag2 recorder (`#1301 <https://github.com/ros2/rosbag2/issues/1301>`_)

@@ -2,6 +2,34 @@
 Changelog for package rosbag2_transport
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.25.0 (2024-03-27)
+-------------------
+* Use std::filesystem instead of rcpputils::fs (`#1576 <https://github.com/ros2/rosbag2/issues/1576>`_)
+* Add transactional state mutex for RecorderImpl class. (`#1547 <https://github.com/ros2/rosbag2/issues/1547>`_)
+* Overhaul in the rosbag2_transport::TopicFilter class and relevant tests (`#1585 <https://github.com/ros2/rosbag2/issues/1585>`_)
+* Filter topic by type  (`#1577 <https://github.com/ros2/rosbag2/issues/1577>`_)
+* fix: use size_t instead of uint64_t in play_options YAML converter (`#1575 <https://github.com/ros2/rosbag2/issues/1575>`_)
+* Make some changes for newer versions of uncrustify. (`#1578 <https://github.com/ros2/rosbag2/issues/1578>`_)
+* Add topic_id returned by storage to the TopicMetadata (`#1538 <https://github.com/ros2/rosbag2/issues/1538>`_)
+* Workaround for flaky test_play_services running with fastrtps (`#1556 <https://github.com/ros2/rosbag2/issues/1556>`_)
+* Add proper message for --start-paused (`#1537 <https://github.com/ros2/rosbag2/issues/1537>`_)
+* `Recording stopped` prints only once. (`#1530 <https://github.com/ros2/rosbag2/issues/1530>`_)
+* Cleanup the rosbag2_transport tests (`#1518 <https://github.com/ros2/rosbag2/issues/1518>`_)
+* Implement service recording and display info about recorded services (`#1480 <https://github.com/ros2/rosbag2/issues/1480>`_)
+* Add option to set compression threads priority (`#1457 <https://github.com/ros2/rosbag2/issues/1457>`_)
+* Bugfix for incorrect playback rate changes when pressing buttons (`#1513 <https://github.com/ros2/rosbag2/issues/1513>`_)
+* Make Player and Recorder Composable (`#902 <https://github.com/ros2/rosbag2/issues/902>`_) (`#1419 <https://github.com/ros2/rosbag2/issues/1419>`_)
+* Clang fixes for the latest PlayerImpl code. (`#1507 <https://github.com/ros2/rosbag2/issues/1507>`_)
+* Make `rosbag2_transport::Player::play()` run in a separate thread (`#1503 <https://github.com/ros2/rosbag2/issues/1503>`_)
+* Switch to target_link_libraries everywhere. (`#1504 <https://github.com/ros2/rosbag2/issues/1504>`_)
+* Use enum values for offered_qos_profiles in code and string names in serialized metadata (`#1476 <https://github.com/ros2/rosbag2/issues/1476>`_)
+* Redesign Player class with PIMPL idiom (`#1447 <https://github.com/ros2/rosbag2/issues/1447>`_)
+* Don't warn for unknown types if topics are not selected (`#1466 <https://github.com/ros2/rosbag2/issues/1466>`_)
+* Remove unused concurrentqueue implementation. (`#1465 <https://github.com/ros2/rosbag2/issues/1465>`_)
+* Fix uninitialized value pointed out by clang static analysis. (`#1440 <https://github.com/ros2/rosbag2/issues/1440>`_)
+* Fix the build with rmw_fastrtps_dynamic. (`#1416 <https://github.com/ros2/rosbag2/issues/1416>`_)
+* Contributors: Alejandro Hernández Cordero, Barry Xu, Chris Lalancette, Christoph Fröhlich, Daisuke Nishimatsu, Michael Orlov, Patrick Roncagliolo, Roman Sokolkov, Tomoya Fujita, jmachowinski
+
 0.24.0 (2023-07-11)
 -------------------
 * Fix for rosbag2_transport::Recorder failures due to the unhandled exceptions (`#1382 <https://github.com/ros2/rosbag2/issues/1382>`_)

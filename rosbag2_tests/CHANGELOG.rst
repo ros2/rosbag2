@@ -2,6 +2,17 @@
 Changelog for package rosbag2_tests
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.25.0 (2024-03-27)
+-------------------
+* Use std::filesystem instead of rcpputils::fs (`#1576 <https://github.com/ros2/rosbag2/issues/1576>`_)
+* Filter topic by type  (`#1577 <https://github.com/ros2/rosbag2/issues/1577>`_)
+* Make some changes for newer versions of uncrustify. (`#1578 <https://github.com/ros2/rosbag2/issues/1578>`_)
+* Add topic_id returned by storage to the TopicMetadata (`#1538 <https://github.com/ros2/rosbag2/issues/1538>`_)
+* Improve performance in SqliteStorage::get_bagfile_size() (`#1516 <https://github.com/ros2/rosbag2/issues/1516>`_)
+* Implement service recording and display info about recorded services (`#1480 <https://github.com/ros2/rosbag2/issues/1480>`_)
+* Mark play_end_to_end test as xfail in Windows (`#1452 <https://github.com/ros2/rosbag2/issues/1452>`_)
+* Contributors: Alejandro Hernández Cordero, Barry Xu, Chris Lalancette, Cristóbal Arroyo, Michael Orlov, Roman Sokolkov
+
 0.24.0 (2023-07-11)
 -------------------
 * Implement storing and loading ROS_DISTRO from metadata.yaml and mcap files (`#1241 <https://github.com/ros2/rosbag2/issues/1241>`_)

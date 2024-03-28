@@ -2,6 +2,17 @@
 Changelog for package rosbag2_storage_mcap
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.25.0 (2024-03-27)
+-------------------
+* Add topic_id returned by storage to the TopicMetadata (`#1538 <https://github.com/ros2/rosbag2/issues/1538>`_)
+* Use rw_lock to protect mcap metadata lists. (`#1561 <https://github.com/ros2/rosbag2/issues/1561>`_)
+* Remove rcpputils::fs dependencies from rosbag2_storages (`#1558 <https://github.com/ros2/rosbag2/issues/1558>`_)
+* remove unused headers (`#1544 <https://github.com/ros2/rosbag2/issues/1544>`_)
+* Link and compile against rosbag2_storage_mcap: Fixed issue 1492 (`#1496 <https://github.com/ros2/rosbag2/issues/1496>`_)
+* Use enum values for offered_qos_profiles in code and string names in serialized metadata (`#1476 <https://github.com/ros2/rosbag2/issues/1476>`_)
+* Store serialized metadata in MCAP file (`#1423 <https://github.com/ros2/rosbag2/issues/1423>`_)
+* Contributors: Alejandro Hernández Cordero, Michael Orlov, Patrick Roncagliolo, Roman Sokolkov, Tomoya Fujita, uupks
+
 0.24.0 (2023-07-11)
 -------------------
 * Implement storing and loading ROS_DISTRO from metadata.yaml and mcap files (`#1241 <https://github.com/ros2/rosbag2/issues/1241>`_)

@@ -2,6 +2,12 @@
 Changelog for package rosbag2_performance_benchmarking
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.25.0 (2024-03-27)
+-------------------
+* Add option to set compression threads priority (`#1457 <https://github.com/ros2/rosbag2/issues/1457>`_)
+* Add per group statistics for rosbag2_performance_benchmarking report (`#1306 <https://github.com/ros2/rosbag2/issues/1306>`_)
+* Contributors: Michael Orlov, jmachowinski
+
 0.24.0 (2023-07-11)
 -------------------
 * Set CPU affinity for producers and recorder from benchmark parameters (`#1305 <https://github.com/ros2/rosbag2/issues/1305>`_)

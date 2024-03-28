@@ -2,6 +2,18 @@
 Changelog for package rosbag2_storage_default_plugins
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.25.0 (2024-03-27)
+-------------------
+* Make some changes for newer versions of uncrustify. (`#1578 <https://github.com/ros2/rosbag2/issues/1578>`_)
+* Add topic_id returned by storage to the TopicMetadata (`#1538 <https://github.com/ros2/rosbag2/issues/1538>`_)
+* Remove rcpputils::fs dependencies from rosbag2_storages (`#1558 <https://github.com/ros2/rosbag2/issues/1558>`_)
+* Change an incorrect TSA annotation. (`#1552 <https://github.com/ros2/rosbag2/issues/1552>`_)
+* Improve performance in SqliteStorage::get_bagfile_size() (`#1516 <https://github.com/ros2/rosbag2/issues/1516>`_)
+* Update rosbag2_storage_sqlite3 to C++17. (`#1501 <https://github.com/ros2/rosbag2/issues/1501>`_)
+* Use enum values for offered_qos_profiles in code and string names in serialized metadata (`#1476 <https://github.com/ros2/rosbag2/issues/1476>`_)
+* Stop inheriting from std::iterator. (`#1424 <https://github.com/ros2/rosbag2/issues/1424>`_)
+* Contributors: Chris Lalancette, Michael Orlov, Patrick Roncagliolo, Roman Sokolkov
+
 0.24.0 (2023-07-11)
 -------------------
 * Implement storing and loading ROS_DISTRO from metadata.yaml and mcap files (`#1241 <https://github.com/ros2/rosbag2/issues/1241>`_)

@@ -2,6 +2,20 @@
 Changelog for package rosbag2
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.25.0 (2024-03-27)
+-------------------
+* Use std::filesystem instead of rcpputils::fs (`#1576 <https://github.com/ros2/rosbag2/issues/1576>`_)
+* Make some changes for newer versions of uncrustify. (`#1578 <https://github.com/ros2/rosbag2/issues/1578>`_)
+* Add topic_id returned by storage to the TopicMetadata (`#1538 <https://github.com/ros2/rosbag2/issues/1538>`_)
+* call cv.wait_until only if necessary. (`#1521 <https://github.com/ros2/rosbag2/issues/1521>`_)
+* Implement service recording and display info about recorded services (`#1480 <https://github.com/ros2/rosbag2/issues/1480>`_)
+* Switch to target_link_libraries everywhere. (`#1504 <https://github.com/ros2/rosbag2/issues/1504>`_)
+* Use enum values for offered_qos_profiles in code and string names in serialized metadata (`#1476 <https://github.com/ros2/rosbag2/issues/1476>`_)
+* ros2 bag convert now excludes messages not in [start_time;end_time] (`#1455 <https://github.com/ros2/rosbag2/issues/1455>`_)
+* Replace TSAUniqueLock implementation with rcpputils::unique_lock (`#1454 <https://github.com/ros2/rosbag2/issues/1454>`_)
+* Add BagSplitInfo service call on bag close (`#1422 <https://github.com/ros2/rosbag2/issues/1422>`_)
+* Contributors: Barry Xu, Chris Lalancette, Emerson Knapp, Michael Orlov, Patrick Roncagliolo, Peter Favrholdt, Roman Sokolkov, Tomoya Fujita
+
 0.24.0 (2023-07-11)
 -------------------
 * Rewrite TimeControllerClockTest.unpaused_sleep_returns_true to be correct (`#1384 <https://github.com/ros2/rosbag2/issues/1384>`_)
