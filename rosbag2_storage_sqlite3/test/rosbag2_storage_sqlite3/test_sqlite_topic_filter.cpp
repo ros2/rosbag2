@@ -304,6 +304,42 @@ TEST_F(SQLiteTopicFilterTestFixture, FilterTopicsAndServicesWithRegexOnly)
   EXPECT_FALSE(readable_storage->has_next());
 }
 
+TEST_F(SQLiteTopicFilterTestFixture, FilterTopicsAndServicesWithRegexAndNonexistentTopicsList)
+{
+  auto readable_storage = open_test_bag_for_read_only();
+  // Topics list with non-existent topic and regex with topic and service event
+  rosbag2_storage::StorageFilter storage_filter{};
+  storage_filter.topics = {"non-existent_topic"};
+  storage_filter.regex = ".*topic2.*";
+  readable_storage->set_filter(storage_filter);
+
+  EXPECT_TRUE(readable_storage->has_next());
+  auto first_message = readable_storage->read_next();
+  EXPECT_THAT(first_message->topic_name, Eq("topic2"));
+  EXPECT_TRUE(readable_storage->has_next());
+  auto second_message = readable_storage->read_next();
+  EXPECT_THAT(second_message->topic_name, Eq("service_topic2/_service_event"));
+  EXPECT_FALSE(readable_storage->has_next());
+}
+
+TEST_F(SQLiteTopicFilterTestFixture, FilterTopicsAndServicesWithRegexAndNonexistentServicesList)
+{
+  auto readable_storage = open_test_bag_for_read_only();
+  // Service events list with non-existent service and regex with topic and service event
+  rosbag2_storage::StorageFilter storage_filter{};
+  storage_filter.services_events = {"non-existent_service_topic/_service_event"};
+  storage_filter.regex = ".*topic2.*";
+  readable_storage->set_filter(storage_filter);
+
+  EXPECT_TRUE(readable_storage->has_next());
+  auto first_message = readable_storage->read_next();
+  EXPECT_THAT(first_message->topic_name, Eq("topic2"));
+  EXPECT_TRUE(readable_storage->has_next());
+  auto second_message = readable_storage->read_next();
+  EXPECT_THAT(second_message->topic_name, Eq("service_topic2/_service_event"));
+  EXPECT_FALSE(readable_storage->has_next());
+}
+
 TEST_F(SQLiteTopicFilterTestFixture, FilterTopicsAndServicesWithBlackListsAndExcludeRegexOnly)
 {
   auto readable_storage = open_test_bag_for_read_only();

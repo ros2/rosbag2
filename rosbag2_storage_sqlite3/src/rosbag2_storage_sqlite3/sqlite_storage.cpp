@@ -589,14 +589,11 @@ void prepare_included_topics_filter(
 
   if (!topics_filter_str.empty() && !regex_filter_str.empty()) {
     // Note: Inclusive filter conditions shall be joined with OR
-    if (!storage_filter.services_events.empty()) {
-      where_conditions.push_back("(" + topics_filter_str + " OR " + regex_filter_str + ")");
-    } else {  // if services_events.empty we shall include all service events
-      where_conditions.push_back(
-        "(" + topics_filter_str + " OR " + regex_filter_str + " OR " +
-        regex_for_all_service_events_str + ")");
-    }
-  } else if (!topics_filter_str.empty()) {
+    // Note: Even if services_events list or topics list is empty we shall not include regex for
+    // all service events or for all topics, because storage_filter.regex is not empty and shall
+    // dominate in this case.
+    where_conditions.push_back("(" + topics_filter_str + " OR " + regex_filter_str + ")");
+  } else if (!topics_filter_str.empty()) {  // Note: regex_filter_str is empty in this case
     if (!storage_filter.services_events.empty()) {
       if (!storage_filter.topics.empty()) {
         where_conditions.push_back(topics_filter_str);
