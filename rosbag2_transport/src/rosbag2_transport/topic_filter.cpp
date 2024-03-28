@@ -170,6 +170,10 @@ bool TopicFilter::take_topic(
       }
     }
 
+    if (topic_type_in_list(topic_type, record_options_.exclude_topic_types)) {
+      return false;
+    }
+
     if (topic_in_list(topic_name, record_options_.exclude_topics)) {
       return false;
     }

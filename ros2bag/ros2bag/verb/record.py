@@ -85,6 +85,10 @@ class RecordVerb(VerbExtension):
             help='Exclude topics and services containing provided regular expression. '
                  'Works on top of --all, --all-topics, or --regex.')
         parser.add_argument(
+            '--exclude-topic-types', type=str, default=[], metavar='ExcludeTypes', nargs='+',
+            help='List of topic types not being recorded. '
+                 'Works on top of --all, --all-topics, or --regex.')
+        parser.add_argument(
             '--exclude-topics', type=str, metavar='Topic', nargs='+',
             help='List of topics not being recorded. '
                  'Works on top of --all, --all-topics, or --regex.')
@@ -230,6 +234,10 @@ class RecordVerb(VerbExtension):
             return print_error('--exclude-topics argument requires either --all, --all-topics '
                                'or --regex')
 
+        if args.exclude_topic_types and not (args.regex or args.all or args.all_topics):
+            return print_error('--exclude-topic-types argument requires either --all, '
+                               '--all-topics or --regex')
+
         if args.exclude_services and not (args.regex or args.all or args.all_services):
             return print_error('--exclude-services argument requires either --all, --all-services '
                                'or --regex')
@@ -288,6 +296,7 @@ class RecordVerb(VerbExtension):
         record_options.is_discovery_disabled = args.no_discovery
         record_options.topics = args.topics
         record_options.topic_types = args.topic_types
+        record_options.exclude_topic_types = args.exclude_topic_types
         record_options.rmw_serialization_format = args.serialization_format
         record_options.topic_polling_interval = datetime.timedelta(
             milliseconds=args.polling_interval)

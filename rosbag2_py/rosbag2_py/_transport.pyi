@@ -40,6 +40,7 @@ class RecordOptions:
     compression_threads: int
     exclude_regex: str
     exclude_service_events: List[str]
+    exclude_topic_types: List[str]
     exclude_topics: List[str]
     ignore_leaf_topics: bool
     include_hidden_topics: bool

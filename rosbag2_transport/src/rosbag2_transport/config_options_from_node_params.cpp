@@ -228,6 +228,9 @@ RecordOptions get_record_options_from_node_params(rclcpp::Node & node)
   record_options.exclude_topics = node.declare_parameter<std::vector<std::string>>(
     "record.exclude_topics", std::vector<std::string>());
 
+  record_options.exclude_topic_types = node.declare_parameter<std::vector<std::string>>(
+    "record.exclude_topic_types", std::vector<std::string>());
+
   // Convert service name to service event topic name
   auto exclude_service_list = node.declare_parameter<std::vector<std::string>>(
     "record.exclude_services", std::vector<std::string>());

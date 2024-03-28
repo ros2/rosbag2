@@ -9,6 +9,7 @@ recorder_params_node:
       is_discovery_disabled: true
       topics: ["topic", "other_topic"]
       topic_types: ["std_msgs/msg/Header", "geometry_msgs/msg/Pose"]
+      exclude_topic_types: ["sensor_msgs/msg/Image"]
       services: ["service", "other_service"]
       rmw_serialization_format: "cdr"
       topic_polling_interval:

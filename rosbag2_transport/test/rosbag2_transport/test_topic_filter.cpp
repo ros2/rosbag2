@@ -232,6 +232,27 @@ TEST_F(TestTopicFilter, all_topics_and_exclude_topics)
   }
 }
 
+TEST_F(TestTopicFilter, all_topics_and_exclude_type_topics)
+{
+  rosbag2_transport::RecordOptions record_options;
+  record_options.exclude_topic_types = {
+    "localization_topic_type",
+    "status_topic_type"};
+  record_options.all_topics = true;
+  rosbag2_transport::TopicFilter filter{record_options, nullptr, true};
+  auto filtered_topics = filter.filter_topics(topics_and_types_with_services_);
+
+  EXPECT_THAT(filtered_topics, SizeIs(5));
+  for (const auto & topic :
+    {"/planning1", "/planning2", "/invisible", "/invalidated_topic", "/invalid_topic"})
+  {
+    EXPECT_TRUE(filtered_topics.find(topic) != filtered_topics.end()) << "Expected topic:" << topic;
+  }
+
+  EXPECT_TRUE(filtered_topics.find("/localization") == filtered_topics.end());
+  EXPECT_TRUE(filtered_topics.find("/status") == filtered_topics.end());
+}
+
 TEST_F(TestTopicFilter, all_services_and_exclude_regex)
 {
   rosbag2_transport::RecordOptions record_options;

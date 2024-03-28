@@ -371,6 +371,7 @@ PYBIND11_MODULE(_transport, m) {
   .def_readwrite("is_discovery_disabled", &RecordOptions::is_discovery_disabled)
   .def_readwrite("topics", &RecordOptions::topics)
   .def_readwrite("topic_types", &RecordOptions::topic_types)
+  .def_readwrite("exclude_topic_types", &RecordOptions::exclude_topic_types)
   .def_readwrite("rmw_serialization_format", &RecordOptions::rmw_serialization_format)
   .def_readwrite("topic_polling_interval", &RecordOptions::topic_polling_interval)
   .def_readwrite("regex", &RecordOptions::regex)
