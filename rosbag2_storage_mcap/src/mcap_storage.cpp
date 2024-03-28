@@ -593,9 +593,9 @@ bool MCAPStorage::is_topic_selected_by_white_list_or_regex(const std::string_vie
   }
 
   if (std::find(white_list.begin(), white_list.end(), topic_name) != white_list.end()) {
-      return true;
+    return true;
   }
-  
+
   if (!regex.empty()) {
     std::smatch m;
     std::string topic_string(topic_name);
@@ -651,18 +651,15 @@ void MCAPStorage::reset_iterator()
 
     const auto & exclude_list = topic_a_service_event ? storage_filter_.exclude_service_events
                                                       : storage_filter_.exclude_topics;
-    // if topic found in include list or regex
-    if (is_topic_selected_by_white_list_or_regex(topic, include_list, storage_filter_.regex)) {
-      // if topic found in exclude list or regex_to_exclude
-      if (is_topic_in_black_list_or_exclude_regex(topic, exclude_list,
-                                                  storage_filter_.regex_to_exclude)) {
-        return false;
-      } else {
+    // if topic not found in exclude list or regex_to_exclude
+    if (!is_topic_in_black_list_or_exclude_regex(topic, exclude_list,
+                                                 storage_filter_.regex_to_exclude)) {
+      // if topic selected by include list or regex
+      if (is_topic_selected_by_white_list_or_regex(topic, include_list, storage_filter_.regex)) {
         return true;
       }
-    } else {  // topic not found in include list or regex
-      return false;
     }
+    return false;
   };
   options.topicFilter = topic_filter;
 
