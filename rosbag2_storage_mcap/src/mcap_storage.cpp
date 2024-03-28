@@ -587,34 +587,24 @@ bool MCAPStorage::is_topic_selected_by_white_list_or_regex(const std::string_vie
                                                            const T & white_list,
                                                            const std::string & regex)
 {
-  if (!white_list.empty()) {
-    if (std::find(white_list.begin(), white_list.end(), topic_name) != white_list.end()) {
-      return true;
-    } else if (!regex.empty()) {  // Topic not found in non-empty white_list and regex not empty
-      std::smatch m;
-      std::string topic_string(topic_name);
-      std::regex re(regex);
-      if (std::regex_match(topic_string, m, re)) {
-        return true;
-      } else {
-        // Topic name not found in non-empty regex
-        return false;
-      }
-    }
-  } else if (regex.empty()) {
-    // Both white list and regex are empty. i.e. equivalent to include all
+  // Both white list and regex are empty. i.e. equivalent to include all
+  if (white_list.empty() && regex.empty()) {
     return true;
-  } else {  // if (white_list.empty() && !regex.empty())
+  }
+
+  if (std::find(white_list.begin(), white_list.end(), topic_name) != white_list.end()) {
+      return true;
+  }
+  
+  if (!regex.empty()) {
     std::smatch m;
     std::string topic_string(topic_name);
     std::regex re(regex);
     if (std::regex_match(topic_string, m, re)) {
       return true;
-    } else {
-      // Topic name not found in non-empty regex
-      return false;
     }
   }
+
   return false;
 }
 
