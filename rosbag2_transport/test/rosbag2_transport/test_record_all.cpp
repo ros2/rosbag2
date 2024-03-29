@@ -104,6 +104,9 @@ TEST_F(RecordIntegrationTestFixture, published_messages_from_multiple_services_a
 
   start_async_spin(recorder);
 
+  // Await the recorder to start spinning
+  std::this_thread::sleep_for(300ms);
+
   ASSERT_TRUE(client_manager_1->wait_for_srvice_to_be_ready());
   ASSERT_TRUE(client_manager_2->wait_for_srvice_to_be_ready());
 
