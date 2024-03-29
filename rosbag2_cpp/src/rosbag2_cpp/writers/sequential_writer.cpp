@@ -59,7 +59,8 @@ SequentialWriter::SequentialWriter(
   metadata_io_(std::move(metadata_io)),
   converter_(nullptr),
   topics_names_to_info_(),
-  message_definitions_(),
+  message_definitions_(nullptr),
+  topic_names_to_message_definitions_(),
   metadata_()
 {}
 
@@ -69,7 +70,9 @@ SequentialWriter::~SequentialWriter()
   // Callbacks likely was created after SequentialWriter object and may point to the already
   // destructed objects.
   callback_manager_.delete_all_callbacks();
-  close();
+  if (storage_) {
+    close();
+  }
 }
 
 void SequentialWriter::init_metadata()
@@ -99,6 +102,9 @@ void SequentialWriter::open(
 {
   base_folder_ = storage_options.uri;
   storage_options_ = storage_options;
+
+  message_definitions_ = std::make_unique<LocalMessageDefinitionSource>();
+
   if (storage_options_.storage_id.empty()) {
     storage_options_.storage_id = rosbag2_storage::get_default_storage_id();
   }
@@ -186,7 +192,12 @@ void SequentialWriter::close()
     // bag file was closed before callback call.
     callback_manager_.execute_callbacks(bag_events::BagEvent::WRITE_SPLIT, info);
   }
-  storage_factory_.reset();
+
+  topics_names_to_info_.clear();
+  topic_names_to_message_definitions_.clear();
+
+  converter_.reset();
+  message_definitions_.reset();
 }
 
 void SequentialWriter::create_topic(const rosbag2_storage::TopicMetadata & topic_with_type)
@@ -208,7 +219,7 @@ void SequentialWriter::create_topic(const rosbag2_storage::TopicMetadata & topic
   }
 
   try {
-    definition = message_definitions_.get_full_text(topic_type);
+    definition = message_definitions_->get_full_text(topic_type);
   } catch (DefinitionNotFoundError &) {
     definition = rosbag2_storage::MessageDefinition::empty_message_definition_for(topic_type);
   }

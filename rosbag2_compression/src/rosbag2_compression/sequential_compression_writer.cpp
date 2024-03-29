@@ -65,7 +65,9 @@ SequentialCompressionWriter::SequentialCompressionWriter(
 
 SequentialCompressionWriter::~SequentialCompressionWriter()
 {
-  close();
+  if (storage_) {
+    close();
+  }
 }
 
 void SequentialCompressionWriter::compression_thread_fn()
@@ -266,7 +268,6 @@ void SequentialCompressionWriter::close()
     message_cache_.reset();
   }
   storage_.reset();  // Necessary to ensure that the storage is destroyed before the factory
-  storage_factory_.reset();
 }
 
 void SequentialCompressionWriter::create_topic(

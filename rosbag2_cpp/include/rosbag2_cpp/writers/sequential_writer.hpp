@@ -164,7 +164,7 @@ protected:
   std::unordered_map<std::string, rosbag2_storage::TopicInformation> topics_names_to_info_;
   std::mutex topics_info_mutex_;
 
-  LocalMessageDefinitionSource message_definitions_;
+  std::unique_ptr<LocalMessageDefinitionSource> message_definitions_;
   // used to track message definitions written to the bag.
   std::unordered_map<std::string,
     rosbag2_storage::MessageDefinition> topic_names_to_message_definitions_;
