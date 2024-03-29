@@ -171,6 +171,8 @@ TEST_F(RosBag2PlayTestFixture, recorded_messages_are_played_for_all_services)
 
   srv_->run_services();
 
+  ASSERT_TRUE(srv_->all_services_ready());
+
   auto player = std::make_shared<rosbag2_transport::Player>(
     std::move(
       reader), storage_options_, play_options_);
@@ -209,6 +211,7 @@ TEST_F(RosBag2PlayTestFixture, recorded_messages_are_played_for_topics_and_servi
   std::vector<std::shared_ptr<test_msgs::srv::BasicTypes::Request>> service_receive_requests;
   srv_->setup_service<test_msgs::srv::BasicTypes>("test_service1", service_receive_requests);
   srv_->run_services();
+  ASSERT_TRUE(srv_->all_services_ready());
 
   sub_->add_subscription<test_msgs::msg::BasicTypes>("/topic1", 2);
   auto await_received_messages = sub_->spin_subscriptions();
@@ -463,6 +466,7 @@ TEST_F(RosBag2PlayTestFixture, recorded_messages_are_played_for_filtered_service
     srv_->setup_service<test_msgs::srv::BasicTypes>("test_service2", service2_receive_requests);
 
     srv_->run_services();
+    ASSERT_TRUE(srv_->all_services_ready());
 
     auto prepared_mock_reader = std::make_unique<MockSequentialReader>();
     prepared_mock_reader->prepare(messages, services_types);
@@ -490,6 +494,7 @@ TEST_F(RosBag2PlayTestFixture, recorded_messages_are_played_for_filtered_service
     srv_->setup_service<test_msgs::srv::BasicTypes>("test_service2", service2_receive_requests);
 
     srv_->run_services();
+    ASSERT_TRUE(srv_->all_services_ready());
 
     auto prepared_mock_reader = std::make_unique<MockSequentialReader>();
     prepared_mock_reader->prepare(messages, services_types);
@@ -517,6 +522,7 @@ TEST_F(RosBag2PlayTestFixture, recorded_messages_are_played_for_filtered_service
     srv_->setup_service<test_msgs::srv::BasicTypes>("test_service2", service2_receive_requests);
 
     srv_->run_services();
+    ASSERT_TRUE(srv_->all_services_ready());
 
     auto prepared_mock_reader = std::make_unique<MockSequentialReader>();
     prepared_mock_reader->prepare(messages, services_types);
@@ -573,6 +579,7 @@ TEST_F(RosBag2PlayTestFixture, recorded_messages_are_played_for_filtered_topics_
     srv_->setup_service<test_msgs::srv::BasicTypes>("test_service1", service1_receive_requests);
     srv_->setup_service<test_msgs::srv::BasicTypes>("test_service2", service2_receive_requests);
     srv_->run_services();
+    ASSERT_TRUE(srv_->all_services_ready());
 
     auto prepared_mock_reader = std::make_unique<MockSequentialReader>();
     prepared_mock_reader->prepare(messages, all_types);
@@ -617,6 +624,7 @@ TEST_F(RosBag2PlayTestFixture, recorded_messages_are_played_for_filtered_topics_
     srv_->setup_service<test_msgs::srv::BasicTypes>("test_service1", service1_receive_requests);
     srv_->setup_service<test_msgs::srv::BasicTypes>("test_service2", service2_receive_requests);
     srv_->run_services();
+    ASSERT_TRUE(srv_->all_services_ready());
 
     auto prepared_mock_reader = std::make_unique<MockSequentialReader>();
     prepared_mock_reader->prepare(messages, all_types);
@@ -661,6 +669,7 @@ TEST_F(RosBag2PlayTestFixture, recorded_messages_are_played_for_filtered_topics_
     srv_->setup_service<test_msgs::srv::BasicTypes>("test_service1", service1_receive_requests);
     srv_->setup_service<test_msgs::srv::BasicTypes>("test_service2", service2_receive_requests);
     srv_->run_services();
+    ASSERT_TRUE(srv_->all_services_ready());
 
     auto prepared_mock_reader = std::make_unique<MockSequentialReader>();
     prepared_mock_reader->prepare(messages, all_types);

@@ -435,6 +435,9 @@ TEST_F(RosBag2PlayTestFixture, burst_bursting_only_filtered_services) {
   player->pause();
   ASSERT_TRUE(player->is_paused());
 
+  // Check services are ready
+  ASSERT_TRUE(srv_->all_services_ready());
+
   auto player_future = std::async(std::launch::async, [&player]() -> void {player->play();});
   ASSERT_TRUE(player->is_paused());
 
