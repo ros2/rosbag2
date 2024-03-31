@@ -38,6 +38,9 @@ class PlayerServiceClientManager;
 class PlayerServiceClient final
 {
 public:
+  using ServiceEventType = service_msgs::msg::ServiceEventInfo::_event_type_type;
+  using ClientGidType = service_msgs::msg::ServiceEventInfo::_client_gid_type;
+
   explicit
   PlayerServiceClient(
     std::shared_ptr<rclcpp::GenericClient> generic_client,
@@ -46,7 +49,22 @@ public:
     rclcpp::Logger logger,
     std::shared_ptr<PlayerServiceClientManager> player_service_client_manager);
 
-  // Note: Call this function only if is_include_request_message() return true
+  const std::string & get_service_name();
+
+  /// \brief Deserialize message to the type erased service event
+  /// \param message - Serialized message
+  /// \return Shared pointer to the byte array with deserialized service event if success,
+  /// otherwise nullptr
+  std::shared_ptr<uint8_t[]> deserialize_service_event(const rcl_serialized_message_t & message);
+
+  std::tuple<PlayerServiceClient::ServiceEventType, PlayerServiceClient::ClientGidType>
+  get_service_event_type_and_client_gid(const std::shared_ptr<uint8_t[]> type_erased_service_event);
+
+  bool is_service_event_include_request_message(
+    const std::shared_ptr<uint8_t[]> type_erased_service_event);
+
+  void async_send_request(const std::shared_ptr<uint8_t[]> type_erased_service_event);
+
   void async_send_request(const rcl_serialized_message_t & message);
 
   std::shared_ptr<rclcpp::GenericClient> generic_client()
@@ -73,16 +91,15 @@ private:
   };
   bool service_set_introspection_content_ = false;
 
-  using client_id = service_msgs::msg::ServiceEventInfo::_client_gid_type;
   // Info on request data from service or client
-  std::unordered_map<client_id, request_info_from, rosbag2_cpp::client_id_hash> request_info_;
+  std::unordered_map<ClientGidType, request_info_from, rosbag2_cpp::client_id_hash> request_info_;
 
   const rosidl_message_type_support_t * service_event_type_ts_;
   const rosidl_typesupport_introspection_cpp::MessageMembers * service_event_members_;
 
   rcutils_allocator_t allocator_ = rcutils_get_default_allocator();
 
-  std::tuple<uint8_t, client_id, int64_t>
+  std::tuple<uint8_t, ClientGidType, int64_t>
   get_msg_event_type(const rcl_serialized_message_t & message);
 };
 

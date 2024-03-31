@@ -63,15 +63,21 @@ PlayerServiceClient::PlayerServiceClient(
     throw std::invalid_argument(ss.str());
   }
 
-  if (service_event_members_->members_[1].get_function == nullptr) {
+  if (!service_event_members_->members_[1].is_array_) {
     std::stringstream ss;
-    ss << "get_function() for service request '" << service_name_ << "' is not set.\n";
+    ss << "The service request for '" << service_name_ << "' is not array.\n";
     throw std::invalid_argument(ss.str());
   }
 
   if (service_event_members_->members_[1].size_function == nullptr) {
     std::stringstream ss;
     ss << "size_function() for service request '" << service_name_ << "' is not set.\n";
+    throw std::invalid_argument(ss.str());
+  }
+
+  if (service_event_members_->members_[1].get_function == nullptr) {
+    std::stringstream ss;
+    ss << "get_function() for service request '" << service_name_ << "' is not set.\n";
     throw std::invalid_argument(ss.str());
   }
 
@@ -194,6 +200,80 @@ bool PlayerServiceClient::is_include_request_message(const rcl_serialized_messag
   return ret;
 }
 
+const std::string & PlayerServiceClient::get_service_name()
+{
+  return service_name_;
+}
+
+std::shared_ptr<uint8_t[]>
+PlayerServiceClient::deserialize_service_event(const rcl_serialized_message_t & message)
+{
+  auto type_erased_service_event = std::shared_ptr<uint8_t[]>(
+    new uint8_t[service_event_members_->size_of_],
+    [fini_function = this->service_event_members_->fini_function](uint8_t * msg) {
+      fini_function(msg);
+      delete[] msg;
+    });
+
+  service_event_members_->init_function(
+    type_erased_service_event.get(), rosidl_runtime_cpp::MessageInitialization::ZERO);
+
+  rmw_ret_t ret =
+    rmw_deserialize(&message, service_event_type_ts_, type_erased_service_event.get());
+  if (ret != RMW_RET_OK) {  // Failed to deserialize service event message
+    type_erased_service_event.reset();
+  }
+  return type_erased_service_event;
+}
+
+std::tuple<PlayerServiceClient::ServiceEventType, PlayerServiceClient::ClientGidType>
+PlayerServiceClient::get_service_event_type_and_client_gid(
+  const std::shared_ptr<uint8_t[]> type_erased_service_event)
+{
+  if (type_erased_service_event) {
+    // members_[0]: service_info, members_[1]: request[<=1], members_[2]: response[<=1]
+    const auto & info_member = service_event_members_->members_[0];
+
+    auto service_event_info_ptr = reinterpret_cast<service_msgs::msg::ServiceEventInfo *>(
+      type_erased_service_event.get() + info_member.offset_);
+    if (service_event_info_ptr == nullptr) {
+      throw std::runtime_error("Error: The service_event_info_ptr is nullptr");
+    }
+    return {service_event_info_ptr->event_type, service_event_info_ptr->client_gid};
+  } else {
+    throw std::invalid_argument("Error: The type_erased_service_event is nullptr");
+  }
+}
+
+bool PlayerServiceClient::is_service_event_include_request_message(
+  const std::shared_ptr<uint8_t[]> type_erased_service_event)
+{
+  if (type_erased_service_event) {
+    // members_[0]: service_info, members_[1]: request[<=1], members_[2]: response[<=1]
+    const auto & request_member = service_event_members_->members_[1];
+    void * request_sequence_ptr = type_erased_service_event.get() + request_member.offset_;
+    if (request_member.size_function(request_sequence_ptr) > 0) {
+      return true;
+    }   // else { /* No service request */ }
+  } else {
+    throw std::invalid_argument("Error: The type_erased_service_event is nullptr");
+  }
+  return false;
+}
+
+void PlayerServiceClient::async_send_request(
+  const std::shared_ptr<uint8_t[]> type_erased_service_event)
+{
+  // members_[0]: service_info, members_[1]: request[<=1], members_[2]: response[<=1]
+  const auto & request_member = service_event_members_->members_[1];
+  void * request_sequence_ptr = type_erased_service_event.get() + request_member.offset_;
+  if (request_member.size_function(request_sequence_ptr) > 0) {
+    void * request_ptr = request_member.get_function(request_sequence_ptr, 0);
+    auto future_and_request_id = client_->async_send_request(request_ptr);
+    player_service_client_manager_->register_request_future(future_and_request_id, client_);
+  }  // else { /* No service request in the service event. Do nothing, just skip it. */ }
+}
+
 void PlayerServiceClient::async_send_request(const rcl_serialized_message_t & message)
 {
   if (!client_->service_is_ready()) {
@@ -203,52 +283,32 @@ void PlayerServiceClient::async_send_request(const rcl_serialized_message_t & me
     return;
   }
 
-  auto type_erased_ros_message = std::shared_ptr<uint8_t[]>(
-    new uint8_t[service_event_members_->size_of_],
-    [fini_function = this->service_event_members_->fini_function](uint8_t * msg) {
-      fini_function(msg);
-      delete[] msg;
-    });
+  auto type_erased_ros_message = deserialize_service_event(message);
 
-  service_event_members_->init_function(
-    type_erased_ros_message.get(), rosidl_runtime_cpp::MessageInitialization::ZERO);
-
-  rmw_ret_t ret = rmw_deserialize(&message, service_event_type_ts_, type_erased_ros_message.get());
-  if (ret == RMW_RET_OK) {
-    // members_[0]: service_info, members_[1]: request[<=1], members_[2]: response[<=1]
-    const auto & request_member = service_event_members_->members_[1];
-    void * request_sequence_ptr = type_erased_ros_message.get() + request_member.offset_;
-    if (request_member.is_array_ && request_member.size_function(request_sequence_ptr) > 0) {
-      void * request_ptr = request_member.get_function(request_sequence_ptr, 0);
-      auto future_and_request_id = client_->async_send_request(request_ptr);
-      player_service_client_manager_->register_request_future(future_and_request_id, client_);
-    }  // else { /* No request in the service event */  }
-  }
-
-  if (ret != RMW_RET_OK) {
+  if (type_erased_ros_message) {
+    async_send_request(type_erased_ros_message);
+  } else {
     throw std::runtime_error(
             "Failed to deserialize service event message for " + service_name_ + " !");
   }
 }
 
-std::tuple<uint8_t, PlayerServiceClient::client_id, int64_t>
+std::tuple<uint8_t, PlayerServiceClient::ClientGidType, int64_t>
 PlayerServiceClient::get_msg_event_type(const rcl_serialized_message_t & message)
 {
   auto msg = service_msgs::msg::ServiceEventInfo();
 
   const rosidl_message_type_support_t * type_support_info =
-    rosidl_typesupport_cpp::
-    get_message_type_support_handle<service_msgs::msg::ServiceEventInfo>();
+    rosidl_typesupport_cpp::get_message_type_support_handle<service_msgs::msg::ServiceEventInfo>();
   if (type_support_info == nullptr) {
-    throw std::runtime_error(
-            "Failed to get message type support handle of service event info !");
+    throw std::runtime_error("Failed to get message type support handle of service event info !");
   }
 
-  auto ret = rmw_deserialize(
-    &message,
-    type_support_info,
-    reinterpret_cast<void *>(&msg));
-  if (ret != RMW_RET_OK) {
+  // Partially deserialize service event message. Deserializing only first member ServiceEventInfo
+  // with assumption that it is going to be the first in serialized message.
+  // TODO(morlov): We can't rely on this assumption. It is up to the underlying RMW and
+  //  serialization format implementation!
+  if (rmw_deserialize(&message, type_support_info, reinterpret_cast<void *>(&msg)) != RMW_RET_OK) {
     throw std::runtime_error("Failed to deserialize message !");
   }
 
@@ -273,10 +333,7 @@ bool PlayerServiceClientManager::request_future_queue_is_full()
     return false;
   }
 
-  // Remove complete request future
   remove_complete_request_future();
-
-  // Remove all timeout request future
   remove_all_timeout_request_future();
 
   if (request_futures_list_.size() == maximum_request_future_queue_) {

@@ -132,6 +132,8 @@ size_t get_serialization_size_for_service_metadata_event()
     static_cast<const rosidl_typesupport_introspection_cpp::MessageMembers *>(
     type_support_handle->data);
 
+  // TODO(morlov): We shall not rely on this arithmetic!!! It is up to the serialization
+  //  implementation
   // endian type (4 size) + service event info size + empty request (4 bytes)
   // + emtpy response (4 bytes)
   size = 4 + service_event_info->size_of_ + 4 + 4;

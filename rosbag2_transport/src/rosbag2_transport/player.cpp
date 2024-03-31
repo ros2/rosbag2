@@ -21,7 +21,6 @@
 #include <string>
 #include <unordered_map>
 #include <utility>
-#include <variant>
 #include <vector>
 #include <thread>
 
@@ -36,7 +35,6 @@
 #include "rosbag2_cpp/clocks/time_controller_clock.hpp"
 #include "rosbag2_cpp/reader.hpp"
 #include "rosbag2_cpp/service_utils.hpp"
-#include "rosbag2_cpp/typesupport_helpers.hpp"
 
 #include "rosbag2_storage/storage_filter.hpp"
 #include "rosbag2_storage/qos.hpp"
@@ -1172,13 +1170,11 @@ void PlayerImpl::run_play_msg_post_callbacks(
 
 bool PlayerImpl::publish_message(rosbag2_storage::SerializedBagMessageSharedPtr message)
 {
-  bool message_published = false;
-
   auto pub_iter = publishers_.find(message->topic_name);
   if (pub_iter != publishers_.end()) {
     // Calling on play message pre-callbacks
     run_play_msg_pre_callbacks(message);
-
+    bool message_published = false;
     try {
       pub_iter->second->publish(rclcpp::SerializedMessage(*message->serialized_data));
       message_published = true;
@@ -1193,17 +1189,61 @@ bool PlayerImpl::publish_message(rosbag2_storage::SerializedBagMessageSharedPtr 
     return message_published;
   }
 
+  // Try to publish message as service request
   auto client_iter = service_clients_.find(message->topic_name);
   if (client_iter != service_clients_.end()) {
-    if (!client_iter->second->is_include_request_message(*message->serialized_data)) {
-      return message_published;
+    const auto & service_client = client_iter->second;
+    // TODO(morlov):
+    //  Wrap deserialize_service_event and get_service_event_type_and_client_gid in try-catch
+    auto service_event = service_client->deserialize_service_event(*message->serialized_data);
+    if (!service_event) {
+      RCLCPP_ERROR_STREAM(
+        owner_->get_logger(), "Failed to deserialize service event message for '" <<
+          service_client->get_service_name() << "' service!\n");
+      return false;
+    }
+
+    auto [service_event_type, client_gid] =
+      service_client->get_service_event_type_and_client_gid(service_event);
+    // Ignore response message
+    if (service_event_type == service_msgs::msg::ServiceEventInfo::RESPONSE_SENT ||
+      service_event_type == service_msgs::msg::ServiceEventInfo::RESPONSE_RECEIVED)
+    {
+      // TODO(morlov): Shall we ignore REQUEST_RECEIVED as well?
+      return false;
+    }
+
+    if (!service_client->generic_client()->service_is_ready()) {
+      RCLCPP_ERROR(
+        owner_->get_logger(), "Service request hasn't been sent. The '%s' service isn't ready !",
+        service_client->get_service_name().c_str());
+      return false;
+    }
+
+    if (!service_client->is_service_event_include_request_message(service_event)) {
+      if (service_event_type == service_msgs::msg::ServiceEventInfo::REQUEST_RECEIVED) {
+        RCUTILS_LOG_WARN_ONCE_NAMED(
+          ROSBAG2_TRANSPORT_PACKAGE_NAME,
+          "Can't send service request. "
+          "The configuration of introspection for '%s' was metadata only on service side!",
+          service_client->get_service_name().c_str());
+      } else if (service_event_type == service_msgs::msg::ServiceEventInfo::REQUEST_SENT) {
+        RCUTILS_LOG_WARN_ONCE_NAMED(
+          ROSBAG2_TRANSPORT_PACKAGE_NAME,
+          "Can't send service request. "
+          "The configuration of introspection for '%s' client [ID: %s]` was metadata only!",
+          service_client->get_service_name().c_str(),
+          rosbag2_cpp::client_id_to_string(client_gid).c_str());
+      }
+      return false;
     }
 
     // Calling on play message pre-callbacks
     run_play_msg_pre_callbacks(message);
 
+    bool message_published = false;
     try {
-      client_iter->second->async_send_request(*message->serialized_data);
+      client_iter->second->async_send_request(service_event);
       message_published = true;
     } catch (const std::exception & e) {
       RCLCPP_ERROR_STREAM(
@@ -1217,9 +1257,11 @@ bool PlayerImpl::publish_message(rosbag2_storage::SerializedBagMessageSharedPtr 
     return message_published;
   }
 
-  RCLCPP_WARN_STREAM(
-    owner_->get_logger(), "Not find sender for topic '" << message->topic_name << "' topic.");
-  return message_published;
+  RCUTILS_LOG_WARN_ONCE_NAMED(
+    ROSBAG2_TRANSPORT_PACKAGE_NAME,
+    "Publisher for topic '%s' not found", message->topic_name.c_str());
+
+  return false;
 }
 
 void PlayerImpl::add_key_callback(
