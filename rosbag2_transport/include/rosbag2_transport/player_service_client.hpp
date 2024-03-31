@@ -62,6 +62,9 @@ private:
   std::string service_name_;
   const rclcpp::Logger logger_;
   std::shared_ptr<PlayerServiceClientManager> player_service_client_manager_;
+  // Note: The service_event_ts_lib_ shall be a member variable to make sure that library loaded
+  // during the liveliness of the instance of this class, since we have raw pointers to its members.
+  std::shared_ptr<rcpputils::SharedLibrary> service_event_ts_lib_;
   enum class request_info_from
   {
     SERVICE = 0,

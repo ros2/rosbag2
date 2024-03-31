@@ -38,11 +38,11 @@ PlayerServiceClient::PlayerServiceClient(
   logger_(std::move(logger)),
   player_service_client_manager_(std::move(player_service_client_manager))
 {
-  auto service_event_ts_lib = rclcpp::get_typesupport_library(
-    service_event_type, "rosidl_typesupport_cpp");
+  service_event_ts_lib_ =
+    rclcpp::get_typesupport_library(service_event_type, "rosidl_typesupport_cpp");
 
   service_event_type_ts_ = rclcpp::get_message_typesupport_handle(
-    service_event_type, "rosidl_typesupport_cpp", *service_event_ts_lib);
+    service_event_type, "rosidl_typesupport_cpp", *service_event_ts_lib_);
 
   auto service_event_ts_introspection = get_message_typesupport_handle(
     service_event_type_ts_, rosidl_typesupport_introspection_cpp::typesupport_identifier);
