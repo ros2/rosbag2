@@ -50,6 +50,42 @@ PlayerServiceClient::PlayerServiceClient(
   service_event_members_ =
     reinterpret_cast<const rosidl_typesupport_introspection_cpp::MessageMembers *>(
     service_event_ts_introspection->data);
+
+  // Sanity checks for service_event_members_
+  if (service_event_members_ == nullptr) {
+    throw std::invalid_argument("service_event_members_ for `" + service_name_ + "` is nullptr");
+  }
+  if (service_event_members_->member_count_ != 3) {
+    // members_[0]: service_info, members_[1]: request[<=1], members_[2]: response[<=1]
+    std::stringstream ss;
+    ss << "Expected 3 fields in the service introspection message, but got " <<
+      service_event_members_->member_count_;
+    throw std::invalid_argument(ss.str());
+  }
+
+  if (service_event_members_->members_[1].get_function == nullptr) {
+    std::stringstream ss;
+    ss << "get_function() for service request '" << service_name_ << "' is not set.\n";
+    throw std::invalid_argument(ss.str());
+  }
+
+  if (service_event_members_->members_[1].size_function == nullptr) {
+    std::stringstream ss;
+    ss << "size_function() for service request '" << service_name_ << "' is not set.\n";
+    throw std::invalid_argument(ss.str());
+  }
+
+  if (service_event_members_->init_function == nullptr) {
+    std::stringstream ss;
+    ss << "service_event_members_->init_function for '" << service_name_ << "' is not set.\n";
+    throw std::invalid_argument(ss.str());
+  }
+
+  if (service_event_members_->fini_function == nullptr) {
+    std::stringstream ss;
+    ss << "service_event_members_->fini_function for '" << service_name_ << "' is not set.\n";
+    throw std::invalid_argument(ss.str());
+  }
 }
 
 bool PlayerServiceClient::is_include_request_message(const rcl_serialized_message_t & message)
@@ -160,32 +196,33 @@ bool PlayerServiceClient::is_include_request_message(const rcl_serialized_messag
 
 void PlayerServiceClient::async_send_request(const rcl_serialized_message_t & message)
 {
-  int ret = RMW_RET_OK;
+  if (!client_->service_is_ready()) {
+    RCLCPP_ERROR(
+      logger_, "Service request hasn't been sent. The '%s' service isn't ready !",
+      service_name_.c_str());
+    return;
+  }
 
-  {
-    auto ros_message = std::make_unique<uint8_t[]>(service_event_members_->size_of_);
+  auto type_erased_ros_message = std::shared_ptr<uint8_t[]>(
+    new uint8_t[service_event_members_->size_of_],
+    [fini_function = this->service_event_members_->fini_function](uint8_t * msg) {
+      fini_function(msg);
+      delete[] msg;
+    });
 
-    service_event_members_->init_function(
-      ros_message.get(), rosidl_runtime_cpp::MessageInitialization::ZERO);
+  service_event_members_->init_function(
+    type_erased_ros_message.get(), rosidl_runtime_cpp::MessageInitialization::ZERO);
 
-    ret = rmw_deserialize(
-      &message, service_event_type_ts_, ros_message.get());
-    if (ret == RMW_RET_OK) {
-      if (client_->service_is_ready()) {
-        // members_[0]: info, members_[1]: request, members_[2]: response
-        auto request_offset = service_event_members_->members_[1].offset_;
-        auto request_addr = reinterpret_cast<size_t>(ros_message.get()) + request_offset;
-        auto future_and_request_id = client_->async_send_request(
-          reinterpret_cast<void *>(*reinterpret_cast<size_t *>(request_addr)));
-        player_service_client_manager_->register_request_future(future_and_request_id, client_);
-      } else {
-        RCLCPP_ERROR(
-          logger_, "Service request hasn't been sent. The '%s' service isn't ready !",
-          service_name_.c_str());
-      }
-    }
-
-    service_event_members_->fini_function(ros_message.get());
+  rmw_ret_t ret = rmw_deserialize(&message, service_event_type_ts_, type_erased_ros_message.get());
+  if (ret == RMW_RET_OK) {
+    // members_[0]: service_info, members_[1]: request[<=1], members_[2]: response[<=1]
+    const auto & request_member = service_event_members_->members_[1];
+    void * request_sequence_ptr = type_erased_ros_message.get() + request_member.offset_;
+    if (request_member.is_array_ && request_member.size_function(request_sequence_ptr) > 0) {
+      void * request_ptr = request_member.get_function(request_sequence_ptr, 0);
+      auto future_and_request_id = client_->async_send_request(request_ptr);
+      player_service_client_manager_->register_request_future(future_and_request_id, client_);
+    }  // else { /* No request in the service event */  }
   }
 
   if (ret != RMW_RET_OK) {
