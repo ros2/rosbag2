@@ -34,7 +34,8 @@ class SimpleBagPlayer(Node):
         self.publisher = self.create_publisher(String, 'chatter', 10)
         # ignore timestamp and publish at a fixed rate (10 Hz).
         self.timer = self.create_timer(0.1, self.timer_callback)
-        self.message_needs_to_be_edit_before_send_ = True
+        self.declare_parameter("edit", False)
+        self.message_needs_to_be_edit_before_send_ = self.get_parameter("edit").get_parameter_value().bool_value
 
     def timer_callback(self):
         while self.reader.has_next():
