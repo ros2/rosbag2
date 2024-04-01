@@ -30,12 +30,15 @@ public:
   explicit SimpleBagPlayer(const std::string & bag_filename)
   : Node("simple_bag_player")
   {
+    declare_parameter("edit", false);
+    message_needs_to_be_edit_before_send_ = get_parameter("edit").as_bool();
+
     publisher_ = this->create_publisher<std_msgs::msg::String>("chatter", 10);
 
     // ignore timestamp and publish at a fixed rate (10 Hz).
     timer_ = this->create_wall_timer(
       100ms,
-      [this]() {return this->timer_callback();}
+      [this]() {this->timer_callback();}
     );
 
     reader_.open(bag_filename);
@@ -73,12 +76,12 @@ private:
   rclcpp::Serialization<std_msgs::msg::String> serialization_;
   rosbag2_cpp::Reader reader_;
 
-  bool message_needs_to_be_edit_before_send_ {true};
+  bool message_needs_to_be_edit_before_send_;
 };
 
 int main(int argc, char ** argv)
 {
-  if (argc != 2) {
+  if (argc < 2) {
     std::cerr << "Usage: " << argv[0] << " <bag>" << std::endl;
     return 1;
   }

@@ -27,6 +27,9 @@ public:
   SimpleBagRecorder()
   : Node("simple_bag_recorder")
   {
+    declare_parameter("edit", false);
+    message_needs_to_be_edit_before_write_ = get_parameter("edit").as_bool();
+
     writer_ = std::make_unique<rosbag2_cpp::Writer>();
 
     writer_->open("my_bag");
@@ -61,7 +64,7 @@ private:
   rclcpp::Serialization<std_msgs::msg::String> serialization_;
   std::unique_ptr<rosbag2_cpp::Writer> writer_;
 
-  bool message_needs_to_be_edit_before_write_ {true};
+  bool message_needs_to_be_edit_before_write_;
 };
 
 int main(int argc, char * argv[])
