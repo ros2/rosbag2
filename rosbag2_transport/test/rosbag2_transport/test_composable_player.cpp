@@ -70,7 +70,7 @@ public:
     EXPECT_TRUE(is_paused_client_->wait_for_service(std::chrono::seconds(10)));
     auto is_paused_request = std::make_shared<srvIsPaused::Request>();
     auto is_paused_future = is_paused_client_->async_send_request(is_paused_request);
-    auto ret = exec_->spin_until_future_complete(is_paused_future, 10s);  // Wait for the result.
+    auto ret = exec_->spin_until_complete(is_paused_future, 10s);  // Wait for the result.
     EXPECT_EQ(ret, rclcpp::FutureReturnCode::SUCCESS);
     auto result = std::make_shared<srvIsPaused::Response>();
     EXPECT_NO_THROW({result = is_paused_future.get();});
@@ -84,7 +84,7 @@ public:
     EXPECT_TRUE(resume_client_->wait_for_service(std::chrono::seconds(10)));
     auto resume_request = std::make_shared<srvResume::Request>();
     auto resume_future = resume_client_->async_send_request(resume_request);
-    auto ret = exec_->spin_until_future_complete(resume_future, 10s);  // Wait for the result.
+    auto ret = exec_->spin_until_complete(resume_future, 10s);  // Wait for the result.
     EXPECT_EQ(ret, rclcpp::FutureReturnCode::SUCCESS);
     auto result = std::make_shared<srvResume::Response>();
     EXPECT_NO_THROW({result = resume_future.get();});
@@ -100,7 +100,7 @@ public:
     play_request->playback_until_timestamp = rclcpp::Time(0, -1);
     play_request->playback_duration = rclcpp::Duration(-1, 0);
     auto play_future = play_client_->async_send_request(play_request);
-    auto ret = exec_->spin_until_future_complete(play_future, 10s);  // Wait for the result.
+    auto ret = exec_->spin_until_complete(play_future, 10s);  // Wait for the result.
     EXPECT_EQ(ret, rclcpp::FutureReturnCode::SUCCESS);
     auto result = std::make_shared<srvPlay::Response>();
     EXPECT_NO_THROW({result = play_future.get();});
@@ -192,7 +192,7 @@ TEST_P(ComposablePlayerIntegrationTests, player_can_automatically_play_file_afte
   load_node_request->parameters.push_back(start_paused.to_parameter_msg());
 
   auto load_node_future = load_node_client_->async_send_request(load_node_request);
-  auto ret = exec_->spin_until_future_complete(load_node_future, 10s);  // Wait for the result.
+  auto ret = exec_->spin_until_complete(load_node_future, 10s);  // Wait for the result.
   ASSERT_EQ(ret, rclcpp::FutureReturnCode::SUCCESS);
   auto result = load_node_future.get();
   EXPECT_EQ(result->success, true);

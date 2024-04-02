@@ -111,7 +111,7 @@ public:
       auto request = std::make_shared<typename ServiceT::Request>();
       auto result = client->async_send_request(request);
       // Wait for the result.
-      if (rclcpp::executors::spin_node_until_future_complete(
+      if (rclcpp::executors::spin_node_until_complete(
           exec_, get_node_base_interface(), result, timeout) != rclcpp::FutureReturnCode::SUCCESS)
       {
         RCLCPP_INFO(

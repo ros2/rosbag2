@@ -292,7 +292,7 @@ TEST_P(
 
   auto load_node_future = load_node_client_->async_send_request(load_node_request);
   // Wait for the response
-  auto load_node_ret = exec_->spin_until_future_complete(load_node_future, 10s);
+  auto load_node_ret = exec_->spin_until_complete(load_node_future, 10s);
   ASSERT_EQ(load_node_ret, rclcpp::FutureReturnCode::SUCCESS);
   auto load_node_response = load_node_future.get();
   EXPECT_EQ(load_node_response->success, true);

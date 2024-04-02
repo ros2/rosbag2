@@ -46,7 +46,7 @@ TEST_P(CompositionManagerTestFixture, test_load_play_component)
   request->parameters.push_back(storage_id.to_parameter_msg());
 
   auto future = load_node_client_->async_send_request(request);
-  auto ret = exec_->spin_until_future_complete(future, 10s);  // Wait for the result.
+  auto ret = exec_->spin_until_complete(future, 10s);  // Wait for the result.
   ASSERT_EQ(ret, rclcpp::FutureReturnCode::SUCCESS);
   auto result = future.get();
   EXPECT_EQ(result->success, true);
@@ -80,7 +80,7 @@ TEST_P(CompositionManagerTestFixture, test_load_record_component)
   request->parameters.push_back(storage_id.to_parameter_msg());
 
   auto future = load_node_client_->async_send_request(request);
-  auto ret = exec_->spin_until_future_complete(future, 10s);  // Wait for the result.
+  auto ret = exec_->spin_until_complete(future, 10s);  // Wait for the result.
   ASSERT_EQ(ret, rclcpp::FutureReturnCode::SUCCESS);
   auto result = future.get();
   EXPECT_EQ(result->success, true);

@@ -83,7 +83,7 @@ public:
     auto unload_node_future = unload_node_client_->async_send_request(unload_node_request);
     // Wait for the response
     auto unload_node_ret =
-      exec_->spin_until_future_complete(unload_node_future, std::chrono::seconds(10));
+      exec_->spin_until_complete(unload_node_future, std::chrono::seconds(10));
     auto unload_node_response = unload_node_future.get();
     EXPECT_EQ(unload_node_ret, rclcpp::FutureReturnCode::SUCCESS);
     EXPECT_EQ(unload_node_response->success, true);
