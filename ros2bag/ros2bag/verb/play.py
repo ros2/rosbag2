@@ -25,6 +25,7 @@ from ros2bag.verb import VerbExtension
 from ros2cli.node import NODE_NAME_PREFIX
 from rosbag2_py import Player
 from rosbag2_py import PlayOptions
+from rosbag2_py import ServiceRequestFrom
 from rosbag2_py import StorageOptions
 import yaml
 
@@ -152,6 +153,11 @@ class PlayVerb(VerbExtension):
                  'By default, if loaned message can be used, messages are published as loaned '
                  'message. It can help to reduce the number of data copies, so there is a greater '
                  'benefit for sending big data.')
+        parser.add_argument(
+            '--service-request-from', default='service_introspection',
+            choices=['service_introspection', 'client_introspection'],
+            help='Determine the source of the service request to be replayed. '
+                 'By default, the service request is from recorded service introspection message.')
 
     def get_playback_until_from_arg_group(self, playback_until_sec, playback_until_nsec) -> int:
         nano_scale = 1000 * 1000 * 1000
@@ -219,6 +225,10 @@ class PlayVerb(VerbExtension):
         play_options.start_offset = args.start_offset
         play_options.wait_acked_timeout = args.wait_for_all_acked
         play_options.disable_loan_message = args.disable_loan_message
+        if not args.service_request_from or args.service_request_from == 'service':
+            play_options.service_request_from = ServiceRequestFrom.SERVICE_INTROSPECTION
+        else:
+            play_options.service_request_from = ServiceRequestFrom.CLIENT_INTROSPECTION
 
         player = Player()
         try:

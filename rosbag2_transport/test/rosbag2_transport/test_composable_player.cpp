@@ -172,6 +172,9 @@ TEST_P(ComposablePlayerTests, player_can_parse_parameters_from_file) {
   EXPECT_EQ(play_options.start_offset, 999999999);
   EXPECT_EQ(play_options.wait_acked_timeout, -999999999);
   EXPECT_EQ(play_options.disable_loan_message, false);
+  EXPECT_EQ(
+    play_options.service_request_from,
+    rosbag2_transport::ServiceRequestFrom::CLIENT_INTROSPECTION);
 
   EXPECT_EQ(storage_options.uri, uri_str);
   EXPECT_EQ(storage_options.storage_id, GetParam());

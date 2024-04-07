@@ -1213,6 +1213,18 @@ bool PlayerImpl::publish_message(rosbag2_storage::SerializedBagMessageSharedPtr 
       return false;
     }
 
+    if (play_options_.service_request_from == ServiceRequestFrom::SERVICE_INTROSPECTION &&
+      service_event_type != service_msgs::msg::ServiceEventInfo::REQUEST_RECEIVED)
+    {
+      return false;
+    }
+
+    if (play_options_.service_request_from == ServiceRequestFrom::CLIENT_INTROSPECTION &&
+      service_event_type != service_msgs::msg::ServiceEventInfo::REQUEST_SENT)
+    {
+      return false;
+    }
+
     if (!service_client->generic_client()->service_is_ready()) {
       RCLCPP_ERROR(
         owner_->get_logger(), "Service request hasn't been sent. The '%s' service isn't ready !",

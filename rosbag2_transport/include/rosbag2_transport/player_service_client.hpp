@@ -19,7 +19,6 @@
 #include <map>
 #include <memory>
 #include <mutex>
-#include <unordered_map>
 #include <utility>
 #include <string>
 #include <tuple>
@@ -72,9 +71,6 @@ public:
     return client_;
   }
 
-  // Check if message can be unpacked to get request message
-  bool is_include_request_message(const rcl_serialized_message_t & message);
-
 private:
   std::shared_ptr<rclcpp::GenericClient> client_;
   std::string service_name_;
@@ -83,16 +79,6 @@ private:
   // Note: The service_event_ts_lib_ shall be a member variable to make sure that library loaded
   // during the liveliness of the instance of this class, since we have raw pointers to its members.
   std::shared_ptr<rcpputils::SharedLibrary> service_event_ts_lib_;
-  enum class request_info_from
-  {
-    SERVICE = 0,
-    CLIENT,
-    NO_CONTENT  // Only have META info. Not send request.
-  };
-  bool service_set_introspection_content_ = false;
-
-  // Info on request data from service or client
-  std::unordered_map<ClientGidType, request_info_from, rosbag2_cpp::client_id_hash> request_info_;
 
   const rosidl_message_type_support_t * service_event_type_ts_;
   const rosidl_typesupport_introspection_cpp::MessageMembers * service_event_members_;

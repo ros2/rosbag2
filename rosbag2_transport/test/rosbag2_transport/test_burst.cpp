@@ -41,7 +41,7 @@ get_service_event_message_basic_types()
 
   {
     auto msg = std::make_shared<test_msgs::srv::BasicTypes_Event>();
-    msg->info.event_type = service_msgs::msg::ServiceEventInfo::REQUEST_SENT;
+    msg->info.event_type = service_msgs::msg::ServiceEventInfo::REQUEST_RECEIVED;
     test_msgs::srv::BasicTypes_Request request;
     request.int32_value = 123;
     request.int64_value = 456;
@@ -51,7 +51,7 @@ get_service_event_message_basic_types()
 
   {
     auto msg = std::make_shared<test_msgs::srv::BasicTypes_Event>();
-    msg->info.event_type = service_msgs::msg::ServiceEventInfo::REQUEST_SENT;
+    msg->info.event_type = service_msgs::msg::ServiceEventInfo::REQUEST_RECEIVED;
     test_msgs::srv::BasicTypes_Request request;
     request.int32_value = 456;
     request.int64_value = 789;

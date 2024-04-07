@@ -28,6 +28,11 @@
 
 namespace rosbag2_transport
 {
+enum class ServiceRequestFrom : int
+{
+  SERVICE_INTROSPECTION = 0,
+  CLIENT_INTROSPECTION = 1
+};
 
 struct PlayOptions
 {
@@ -112,6 +117,9 @@ public:
 
   // Disable to publish as loaned message
   bool disable_loan_message = false;
+
+  // The source of the service request
+  ServiceRequestFrom service_request_from = ServiceRequestFrom::SERVICE_INTROSPECTION;
 };
 
 }  // namespace rosbag2_transport
