@@ -118,6 +118,9 @@ public:
   // Disable to publish as loaned message
   bool disable_loan_message = false;
 
+  // Publish service requests instead of service events
+  bool publish_service_requests = false;
+
   // The source of the service request
   ServiceRequestsSource service_requests_source = ServiceRequestsSource::SERVICE_INTROSPECTION;
 };

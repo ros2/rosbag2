@@ -37,6 +37,7 @@ player_params_node:
         sec: 0
         nsec: -999999999
       disable_loan_message: false
+      publish_service_requests: false
       service_requests_source: "CLIENT_INTROSPECTION" # SERVICE_INTROSPECTION or CLIENT_INTROSPECTION
 
     storage:

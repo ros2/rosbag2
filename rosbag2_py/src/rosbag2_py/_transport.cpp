@@ -490,6 +490,7 @@ PYBIND11_MODULE(_transport, m) {
     &PlayOptions::setPlaybackUntilTimestamp)
   .def_readwrite("wait_acked_timeout", &PlayOptions::wait_acked_timeout)
   .def_readwrite("disable_loan_message", &PlayOptions::disable_loan_message)
+  .def_readwrite("publish_service_requests", &PlayOptions::publish_service_requests)
   .def_readwrite("service_requests_source", &PlayOptions::service_requests_source)
   ;
 

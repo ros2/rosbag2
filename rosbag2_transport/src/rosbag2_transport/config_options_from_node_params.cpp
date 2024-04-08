@@ -234,6 +234,9 @@ PlayOptions get_play_options_from_node_params(rclcpp::Node & node)
       service_requests_source.c_str());
   }
 
+  play_options.publish_service_requests =
+    node.declare_parameter<bool>("play.publish_service_request", false);
+
   return play_options;
 }
 

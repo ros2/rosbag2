@@ -427,6 +427,7 @@ TEST_F(RosBag2PlayTestFixture, burst_bursting_only_filtered_services) {
 
   // Filter allows test_service2, blocks test_service1
   play_options_.services_to_filter = {"test_service2/_service_event"};
+  play_options_.publish_service_requests = true;
   auto prepared_mock_reader = std::make_unique<MockSequentialReader>();
   prepared_mock_reader->prepare(messages, services_types);
   auto reader = std::make_unique<rosbag2_cpp::Reader>(std::move(prepared_mock_reader));
