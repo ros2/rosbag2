@@ -460,6 +460,8 @@ player:
       storage_config_uri: ""
 ```
 
+For a full list of available parameters, you can refer to [`player`](rosbag2_transport/test/resources/player_node_params.yaml) and [`recorder`](rosbag2_transport/test/resources/recorder_node_params.yaml) configurations from the `test` folder of `rosbag2_transport`.
+
 ## Storage format plugin architecture
 
 Looking at the output of the `ros2 bag info` command, we can see a field `Storage id:`.
