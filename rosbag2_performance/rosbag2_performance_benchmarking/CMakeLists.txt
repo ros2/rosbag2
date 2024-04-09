@@ -28,12 +28,13 @@ find_package(rmw REQUIRED)
 find_package(rosbag2_performance_benchmarking_msgs REQUIRED)
 find_package(sensor_msgs REQUIRED)
 find_package(yaml_cpp_vendor REQUIRED)
+find_package(yaml-cpp REQUIRED)
 
-  add_executable(writer_benchmark
-    src/config_utils.cpp
-    src/result_utils.cpp
-    src/writer_benchmark.cpp
-    src/msg_utils/helpers.cpp)
+add_executable(writer_benchmark
+  src/config_utils.cpp
+  src/result_utils.cpp
+  src/writer_benchmark.cpp
+  src/msg_utils/helpers.cpp)
 
 add_executable(benchmark_publishers
   src/benchmark_publishers.cpp
@@ -52,7 +53,7 @@ target_link_libraries(writer_benchmark
   rosbag2_compression::rosbag2_compression
   rosbag2_cpp::rosbag2_cpp
   rosbag2_storage::rosbag2_storage
-  yaml-cpp
+  yaml-cpp::yaml-cpp
 )
 
 target_link_libraries(benchmark_publishers

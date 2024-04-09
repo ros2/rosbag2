@@ -30,6 +30,7 @@ find_package(rosbag2_storage REQUIRED)
 find_package(sqlite3_vendor REQUIRED)
 find_package(SQLite3 REQUIRED)  # provided by sqlite3_vendor
 find_package(yaml_cpp_vendor REQUIRED)
+find_package(yaml-cpp REQUIRED)
 
 ament_python_install_package(ros2bag_sqlite3_cli)
 
@@ -38,13 +39,15 @@ add_library(${PROJECT_NAME} SHARED
   src/rosbag2_storage_sqlite3/sqlite_storage.cpp
   src/rosbag2_storage_sqlite3/sqlite_statement_wrapper.cpp)
 
-target_link_libraries(${PROJECT_NAME}
-  pluginlib::pluginlib
+target_link_libraries(${PROJECT_NAME} PUBLIC
   rosbag2_storage::rosbag2_storage
   rcpputils::rcpputils
   rcutils::rcutils
   SQLite::SQLite3
-  yaml-cpp
+)
+target_link_libraries(${PROJECT_NAME} PRIVATE
+  pluginlib::pluginlib
+  yaml-cpp::yaml-cpp
 )
 
 target_include_directories(${PROJECT_NAME}
@@ -87,8 +90,6 @@ if(BUILD_TESTING)
     rosbag2_storage::rosbag2_storage
     rosbag2_test_common::rosbag2_test_common
     rcutils::rcutils
-    SQLite::SQLite3
-    pluginlib::pluginlib
   )
 
   ament_add_gmock(test_sqlite_wrapper
