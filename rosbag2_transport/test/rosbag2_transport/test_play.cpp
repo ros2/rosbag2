@@ -849,7 +849,8 @@ TEST_F(RosBag2PlayTestFixture, player_gracefully_exit_by_rclcpp_shutdown_in_paus
   player->wait_for_playback_to_finish();
 }
 
-TEST_F(RosBag2PlayTestFixture,
+TEST_F(
+  RosBag2PlayTestFixture,
   player_with_service_request_from_recorded_service_introspection_message)
 {
   auto services_types = std::vector<rosbag2_storage::TopicMetadata>{
@@ -891,7 +892,8 @@ TEST_F(RosBag2PlayTestFixture,
   EXPECT_EQ(service1_receive_requests.size(), 2);
 }
 
-TEST_F(RosBag2PlayTestFixture,
+TEST_F(
+  RosBag2PlayTestFixture,
   player_with_service_request_from_recorded_client_introspection_message)
 {
   auto services_types = std::vector<rosbag2_storage::TopicMetadata>{
