@@ -28,7 +28,7 @@
 
 namespace rosbag2_transport
 {
-enum class ServiceRequestFrom : int
+enum class ServiceRequestsSource : int8_t
 {
   SERVICE_INTROSPECTION = 0,
   CLIENT_INTROSPECTION = 1
@@ -119,7 +119,7 @@ public:
   bool disable_loan_message = false;
 
   // The source of the service request
-  ServiceRequestFrom service_request_from = ServiceRequestFrom::SERVICE_INTROSPECTION;
+  ServiceRequestsSource service_requests_source = ServiceRequestsSource::SERVICE_INTROSPECTION;
 };
 
 }  // namespace rosbag2_transport

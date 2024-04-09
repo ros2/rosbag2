@@ -219,18 +219,18 @@ PlayOptions get_play_options_from_node_params(rclcpp::Node & node)
     node.declare_parameter<bool>("play.disable_loan_message", false);
 
   // "SERVICE_INTROSPECTION" or "CLIENT_INTROSPECTION"
-  auto service_request_from =
-    node.declare_parameter<std::string>("play.service_request_from", "SERVICE_INTROSPECTION");
-  if (service_request_from == "SERVICE_INTROSPECTION") {
-    play_options.service_request_from = ServiceRequestFrom::SERVICE_INTROSPECTION;
-  } else if (service_request_from == "CLIENT_INTROSPECTION") {
-    play_options.service_request_from = ServiceRequestFrom::CLIENT_INTROSPECTION;
+  auto service_requests_source =
+    node.declare_parameter<std::string>("play.service_requests_source", "SERVICE_INTROSPECTION");
+  if (service_requests_source == "SERVICE_INTROSPECTION") {
+    play_options.service_requests_source = ServiceRequestsSource::SERVICE_INTROSPECTION;
+  } else if (service_requests_source == "CLIENT_INTROSPECTION") {
+    play_options.service_requests_source = ServiceRequestsSource::CLIENT_INTROSPECTION;
   } else {
     RCLCPP_ERROR(
       node.get_logger(),
-      "play.service_request_from doesn't support %s. It must be one of SERVICE_INTROSPECTION"
+      "play.service_requests_source doesn't support %s. It must be one of SERVICE_INTROSPECTION"
       " and CLIENT_INTROSPECTION. Change it by default value SERVICE_INTROSPECTION.",
-      service_request_from.c_str());
+      service_requests_source.c_str());
   }
 
   return play_options;

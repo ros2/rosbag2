@@ -56,7 +56,7 @@ with add_dll_directories_from_env('PATH'):
     from rosbag2_py._transport import (
         Player,
         PlayOptions,
-        ServiceRequestFrom,
+        ServiceRequestsSource,
         Recorder,
         RecordOptions,
         bag_rewrite,
@@ -95,7 +95,7 @@ __all__ = [
     'Info',
     'Player',
     'PlayOptions',
-    'ServiceRequestFrom',
+    'ServiceRequestsSource',
     'Recorder',
     'RecordOptions',
 ]

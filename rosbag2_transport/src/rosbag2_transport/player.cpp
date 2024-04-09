@@ -1213,13 +1213,13 @@ bool PlayerImpl::publish_message(rosbag2_storage::SerializedBagMessageSharedPtr 
       return false;
     }
 
-    if (play_options_.service_request_from == ServiceRequestFrom::SERVICE_INTROSPECTION &&
+    if (play_options_.service_requests_source == ServiceRequestsSource::SERVICE_INTROSPECTION &&
       service_event_type != service_msgs::msg::ServiceEventInfo::REQUEST_RECEIVED)
     {
       return false;
     }
 
-    if (play_options_.service_request_from == ServiceRequestFrom::CLIENT_INTROSPECTION &&
+    if (play_options_.service_requests_source == ServiceRequestsSource::CLIENT_INTROSPECTION &&
       service_event_type != service_msgs::msg::ServiceEventInfo::REQUEST_SENT)
     {
       return false;

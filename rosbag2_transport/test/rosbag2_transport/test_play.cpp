@@ -881,7 +881,7 @@ TEST_F(
 
   ASSERT_TRUE(srv_->all_services_ready());
 
-  play_options_.service_request_from = ServiceRequestFrom::SERVICE_INTROSPECTION;
+  play_options_.service_requests_source = ServiceRequestsSource::SERVICE_INTROSPECTION;
 
   auto player = std::make_shared<rosbag2_transport::Player>(
     std::move(
@@ -924,7 +924,7 @@ TEST_F(
 
   ASSERT_TRUE(srv_->all_services_ready());
 
-  play_options_.service_request_from = ServiceRequestFrom::CLIENT_INTROSPECTION;
+  play_options_.service_requests_source = ServiceRequestsSource::CLIENT_INTROSPECTION;
 
   auto player = std::make_shared<rosbag2_transport::Player>(
     std::move(
