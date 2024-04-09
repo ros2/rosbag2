@@ -454,29 +454,11 @@ player:
       node_prefix: ""
       rate: 1.0
       loop: false
-      clock_publish_frequency: 1.0
-      clock_publish_on_topic_publish: true
-      delay:
-        sec: 0
-        nsec: 0
       # Negative timestamps will make the playback to not stop.  
       playback_duration:
         sec: -1
         nsec: 00000000
-      # Negative timestamps will make the playback to not stop.
-      playback_until_timestamp:
-        sec: -1
-        nsec: 00000000
       start_paused: false
-      start_offset: 
-        sec: 0
-        nsec: 00000000
-      disable_keyboard_controls: true
-      # Negative value means that published messages do not need to be acknowledged.
-      wait_acked_timeout:
-        sec: -1
-        nsec: 00000000
-      disable_loan_message: false
 
     storage:
       uri: "path/to/rosbag/file"
