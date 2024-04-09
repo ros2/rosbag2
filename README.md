@@ -480,7 +480,7 @@ player:
 
     storage:
       uri: "path/to/rosbag/file"
-      storage_id: "sqlite3"
+      storage_id: "mcap"
       storage_config_uri: ""
 ```
 
