@@ -427,16 +427,10 @@ recorder:
     record:
       all: true
       is_discovery_disabled: false
-      rmw_serialization_format: "cdr"
       topic_polling_interval:
         sec: 0
         nsec: 10000000
-      compression_mode: "file"
-      compression_format: "zstd"
-      compression_queue_size: 50
-      compression_threads: 4
       include_hidden_topics: true
-      include_unpublished_topics: false
       ignore_leaf_topics: false
       start_paused: false
 
