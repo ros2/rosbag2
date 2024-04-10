@@ -58,6 +58,7 @@ get_service_event_message_basic_types()
     test_msgs::srv::BasicTypes_Request request;
     request.int32_value = 123;
     request.int64_value = 456;
+    request.string_value = "event_type=REQUEST_RECEIVED";
     msg->request.emplace_back(request);
     messages.push_back(msg);
   }
@@ -68,6 +69,7 @@ get_service_event_message_basic_types()
     test_msgs::srv::BasicTypes_Request request;
     request.int32_value = 456;
     request.int64_value = 789;
+    request.string_value = "event_type=REQUEST_RECEIVED";
     msg->request.emplace_back(request);
     messages.push_back(msg);
   }
@@ -78,6 +80,7 @@ get_service_event_message_basic_types()
     test_msgs::srv::BasicTypes_Request request;
     request.int32_value = 789;
     request.int64_value = 123;
+    request.string_value = "event_type=REQUEST_SENT";
     msg->request.emplace_back(request);
     messages.push_back(msg);
   }
@@ -849,90 +852,117 @@ TEST_F(RosBag2PlayTestFixture, player_gracefully_exit_by_rclcpp_shutdown_in_paus
   player->wait_for_playback_to_finish();
 }
 
-TEST_F(
-  RosBag2PlayTestFixture,
-  player_with_service_request_from_recorded_service_introspection_message)
+TEST_F(RosBag2PlayTestFixture, play_service_requests_from_service_introspection_messages)
 {
+  const std::string service_name = "test_service1";
+  const std::string service_event_name = service_name + "/_service_event";
   auto services_types = std::vector<rosbag2_storage::TopicMetadata>{
-    {1u, "test_service1/_service_event", "test_msgs/srv/BasicTypes_Event", "", {}, ""},
+    {1u, service_event_name, "test_msgs/srv/BasicTypes_Event", "", {}, ""},
   };
   std::vector<std::shared_ptr<rosbag2_storage::SerializedBagMessage>> messages =
   {
-    serialize_test_message(
-      "test_service1/_service_event", 400, get_service_event_message_basic_types()[2]),
-    serialize_test_message(
-      "test_service1/_service_event", 300, get_service_event_message_basic_types()[0]),
-    serialize_test_message(
-      "test_service1/_service_event", 400, get_service_event_message_basic_types()[2]),
-    serialize_test_message(
-      "test_service1/_service_event", 400, get_service_event_message_basic_types()[1]),
-    serialize_test_message(
-      "test_service1/_service_event", 300, get_service_event_message_basic_types()[2]),
+    serialize_test_message(service_event_name, 5, get_service_event_message_basic_types()[2]),
+    serialize_test_message(service_event_name, 10, get_service_event_message_basic_types()[0]),
+    serialize_test_message(service_event_name, 20, get_service_event_message_basic_types()[2]),
+    serialize_test_message(service_event_name, 25, get_service_event_message_basic_types()[0]),
+    serialize_test_message(service_event_name, 30, get_service_event_message_basic_types()[2]),
   };
 
   auto prepared_mock_reader = std::make_unique<MockSequentialReader>();
   prepared_mock_reader->prepare(messages, services_types);
   auto reader = std::make_unique<rosbag2_cpp::Reader>(std::move(prepared_mock_reader));
 
-  std::vector<std::shared_ptr<test_msgs::srv::BasicTypes::Request>> service1_receive_requests;
+  std::vector<std::shared_ptr<test_msgs::srv::BasicTypes::Request>> received_service_requests;
 
-  srv_->setup_service<test_msgs::srv::BasicTypes>("test_service1", service1_receive_requests);
+  srv_->setup_service<test_msgs::srv::BasicTypes>(service_name, received_service_requests);
   srv_->run_services();
-
   ASSERT_TRUE(srv_->all_services_ready());
 
   play_options_.service_requests_source = ServiceRequestsSource::SERVICE_INTROSPECTION;
 
-  auto player = std::make_shared<rosbag2_transport::Player>(
-    std::move(
-      reader), storage_options_, play_options_);
-  player->play();
+  auto player =
+    std::make_shared<rosbag2_transport::Player>(std::move(reader), storage_options_, play_options_);
 
-  std::this_thread::sleep_for(300ms);
-  EXPECT_EQ(service1_receive_requests.size(), 2);
+  rclcpp::executors::SingleThreadedExecutor exec;
+  exec.add_node(player);
+  // We need to spin Player to get responses from services and able to wait for requests to finish
+  auto spin_thread = std::thread(
+    [&exec]() {
+      exec.spin();
+    });
+
+  player->play();
+  player->wait_for_playback_to_finish();
+
+  EXPECT_TRUE(player->wait_for_sent_service_requests_to_finish(service_name));
+  exec.cancel();
+  spin_thread.join();
+  EXPECT_EQ(received_service_requests.size(), 2);
+  // expected_request is ServiceEventInfo::REQUEST_RECEIVED
+  const auto expected_request = get_service_event_message_basic_types()[0]->request[0];
+  for (const auto & service_request : received_service_requests) {
+    EXPECT_EQ(service_request->int32_value, expected_request.int32_value) <<
+      service_request->string_value;
+    EXPECT_EQ(service_request->int64_value, expected_request.int64_value) <<
+      service_request->string_value;
+  }
 }
 
-TEST_F(
-  RosBag2PlayTestFixture,
-  player_with_service_request_from_recorded_client_introspection_message)
+TEST_F(RosBag2PlayTestFixture, play_service_requests_from_client_introspection_messages)
 {
+  const std::string service_name = "test_service1";
+  const std::string service_event_name = service_name + "/_service_event";
   auto services_types = std::vector<rosbag2_storage::TopicMetadata>{
-    {1u, "test_service1/_service_event", "test_msgs/srv/BasicTypes_Event", "", {}, ""},
+    {1u, service_event_name, "test_msgs/srv/BasicTypes_Event", "", {}, ""},
   };
   std::vector<std::shared_ptr<rosbag2_storage::SerializedBagMessage>> messages =
   {
-    serialize_test_message(
-      "test_service1/_service_event", 300, get_service_event_message_basic_types()[0]),
-    serialize_test_message(
-      "test_service1/_service_event", 400, get_service_event_message_basic_types()[1]),
-    serialize_test_message(
-      "test_service1/_service_event", 400, get_service_event_message_basic_types()[2]),
-    serialize_test_message(
-      "test_service1/_service_event", 300, get_service_event_message_basic_types()[2]),
-    serialize_test_message(
-      "test_service1/_service_event", 400, get_service_event_message_basic_types()[1]),
+    serialize_test_message(service_event_name, 5, get_service_event_message_basic_types()[0]),
+    serialize_test_message(service_event_name, 10, get_service_event_message_basic_types()[1]),
+    serialize_test_message(service_event_name, 20, get_service_event_message_basic_types()[2]),
+    serialize_test_message(service_event_name, 25, get_service_event_message_basic_types()[2]),
+    serialize_test_message(service_event_name, 30, get_service_event_message_basic_types()[1]),
   };
 
   auto prepared_mock_reader = std::make_unique<MockSequentialReader>();
   prepared_mock_reader->prepare(messages, services_types);
   auto reader = std::make_unique<rosbag2_cpp::Reader>(std::move(prepared_mock_reader));
 
-  std::vector<std::shared_ptr<test_msgs::srv::BasicTypes::Request>> service1_receive_requests;
+  std::vector<std::shared_ptr<test_msgs::srv::BasicTypes::Request>> received_service_requests;
 
-  srv_->setup_service<test_msgs::srv::BasicTypes>("test_service1", service1_receive_requests);
+  srv_->setup_service<test_msgs::srv::BasicTypes>(service_name, received_service_requests);
   srv_->run_services();
-
   ASSERT_TRUE(srv_->all_services_ready());
 
   play_options_.service_requests_source = ServiceRequestsSource::CLIENT_INTROSPECTION;
 
-  auto player = std::make_shared<rosbag2_transport::Player>(
-    std::move(
-      reader), storage_options_, play_options_);
-  player->play();
+  auto player =
+    std::make_shared<rosbag2_transport::Player>(std::move(reader), storage_options_, play_options_);
 
-  std::this_thread::sleep_for(300ms);
-  EXPECT_EQ(service1_receive_requests.size(), 2);
+  rclcpp::executors::SingleThreadedExecutor exec;
+  exec.add_node(player);
+  // We need to spin Player to get responses from services and able to wait for requests to finish
+  auto spin_thread = std::thread(
+    [&exec]() {
+      exec.spin();
+    });
+
+  player->play();
+  player->wait_for_playback_to_finish();
+
+  EXPECT_TRUE(player->wait_for_sent_service_requests_to_finish(service_name));
+  exec.cancel();
+  spin_thread.join();
+
+  EXPECT_EQ(received_service_requests.size(), 2);
+  // expected_request is ServiceEventInfo::REQUEST_SENT
+  const auto expected_request = get_service_event_message_basic_types()[2]->request[0];
+  for (const auto & service_request : received_service_requests) {
+    EXPECT_EQ(service_request->int32_value, expected_request.int32_value) <<
+      service_request->string_value;
+    EXPECT_EQ(service_request->int64_value, expected_request.int64_value) <<
+      service_request->string_value;
+  }
 }
 
 class RosBag2PlayQosOverrideTestFixture : public RosBag2PlayTestFixture
