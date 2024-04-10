@@ -166,7 +166,11 @@ if(BUILD_TESTING)
     test/rosbag2_cpp/test_typesupport_helpers.cpp
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
   if(TARGET test_typesupport_helpers)
-    target_link_libraries(test_typesupport_helpers ${PROJECT_NAME} ament_index_cpp::ament_index_cpp rosidl_typesupport_cpp::rosidl_typesupport_cpp)
+    target_link_libraries(test_typesupport_helpers
+      ${PROJECT_NAME}
+      ament_index_cpp::ament_index_cpp
+      rosidl_typesupport_cpp::rosidl_typesupport_cpp
+    )
   endif()
 
   ament_add_gmock(test_info
