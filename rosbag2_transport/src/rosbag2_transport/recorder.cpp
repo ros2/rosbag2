@@ -177,18 +177,19 @@ RecorderImpl::RecorderImpl(
             "use_sim_time and is_discovery_disabled both set, but are incompatible settings. "
             "The /clock topic needs to be discovered to record with sim time.");
   }
-
-  std::string key_str = enum_key_code_to_str(Recorder::kPauseResumeToggleKey);
-  toggle_paused_key_callback_handle_ =
-    keyboard_handler_->add_key_press_callback(
-    [this](KeyboardHandler::KeyCode /*key_code*/,
-    KeyboardHandler::KeyModifiers /*key_modifiers*/) {this->toggle_paused();},
-    Recorder::kPauseResumeToggleKey);
+  if (!record_options.disable_keyboard_controls) {
+    std::string key_str = enum_key_code_to_str(Recorder::kPauseResumeToggleKey);
+    toggle_paused_key_callback_handle_ =
+      keyboard_handler_->add_key_press_callback(
+      [this](KeyboardHandler::KeyCode /*key_code*/,
+      KeyboardHandler::KeyModifiers /*key_modifiers*/) {this->toggle_paused();},
+      Recorder::kPauseResumeToggleKey);
+    // show instructions
+    RCLCPP_INFO_STREAM(
+      node->get_logger(),
+      "Press " << key_str << " for pausing/resuming");
+  }
   topic_filter_ = std::make_unique<TopicFilter>(record_options, node->get_node_graph_interface());
-  // show instructions
-  RCLCPP_INFO_STREAM(
-    node->get_logger(),
-    "Press " << key_str << " for pausing/resuming");
 
   for (auto & topic : record_options_.topics) {
     topic = rclcpp::expand_topic_or_service_name(
@@ -217,7 +218,11 @@ RecorderImpl::RecorderImpl(
 
 RecorderImpl::~RecorderImpl()
 {
-  keyboard_handler_->delete_key_press_callback(toggle_paused_key_callback_handle_);
+  if (keyboard_handler_ &&
+    (toggle_paused_key_callback_handle_ != KeyboardHandler::invalid_handle))
+  {
+    keyboard_handler_->delete_key_press_callback(toggle_paused_key_callback_handle_);
+  }
   stop();
 }
 
@@ -745,12 +750,15 @@ Recorder::Recorder(
 
   RecordOptions record_options = get_record_options_from_node_params(*this);
 
+  std::shared_ptr<KeyboardHandler> keyboard_handler;
+  if (!record_options.disable_keyboard_controls) {
   #ifndef _WIN32
-  auto keyboard_handler = std::make_shared<KeyboardHandler>(false);
+    keyboard_handler = std::make_shared<KeyboardHandler>(false);
   #else
-  // We don't have signal handler option in constructor for windows version
-  auto keyboard_handler = std::shared_ptr<KeyboardHandler>(new KeyboardHandler());
+    // We don't have signal handler option in constructor for windows version
+    keyboard_handler = std::shared_ptr<KeyboardHandler>(new KeyboardHandler());
   #endif
+  }
 
   auto writer = std::make_unique<rosbag2_cpp::Writer>();
 
