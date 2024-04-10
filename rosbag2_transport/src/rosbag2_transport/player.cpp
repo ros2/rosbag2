@@ -1091,9 +1091,8 @@ void PlayerImpl::prepare_publishers()
   auto topics = reader_->get_all_topics_and_types();
   std::string topic_without_support_acked;
   for (const auto & topic : topics) {
-    if (play_options_.publish_service_requests &&
-      rosbag2_cpp::is_service_event_topic(topic.name, topic.type))
-    {
+    const bool is_service_event_topic = rosbag2_cpp::is_service_event_topic(topic.name, topic.type);
+    if (play_options_.publish_service_requests && is_service_event_topic) {
       // Check if sender was created
       if (service_clients_.find(topic.name) != service_clients_.end()) {
         continue;
@@ -1124,14 +1123,7 @@ void PlayerImpl::prepare_publishers()
       }
 
       // filter topics to add publishers if necessary
-      if (!allow_topic(false, topic.name, storage_filter)) {
-        continue;
-      }
-
-      // if not set publish_service_requests, filter service event topic
-      if (rosbag2_cpp::is_service_event_topic(topic.name, topic.type) &&
-        !allow_topic(true, topic.name, storage_filter))
-      {
+      if (!allow_topic(is_service_event_topic, topic.name, storage_filter)) {
         continue;
       }
 
