@@ -971,61 +971,62 @@ TEST_F(RosBag2PlayTestFixture, play_service_requests_from_client_introspection_m
   }
 }
 
-TEST_F(RosBag2PlayTestFixture, play_without_publish_service_requests)
+TEST_F(RosBag2PlayTestFixture, play_service_events_and_topics)
 {
+  const std::string topic_1_name = "/topic1";
+  const std::string topic_2_name = "/topic2";
+  const std::string service_event_1_name = "/test_service1/_service_event";
+  const std::string service_event_2_name = "/test_service2/_service_event";
+
   auto all_types = std::vector<rosbag2_storage::TopicMetadata>{
-    {1u, "/topic1", "test_msgs/BasicTypes", "", {}, ""},
-    {2u, "/topic2", "test_msgs/BasicTypes", "", {}, ""},
-    {3u, "/test_service1/_service_event", "test_msgs/srv/BasicTypes_Event", "", {}, ""},
-    {4u, "/test_service2/_service_event", "test_msgs/srv/BasicTypes_Event", "", {}, ""},
+    {1u, topic_1_name, "test_msgs/BasicTypes", "", {}, ""},
+    {2u, topic_2_name, "test_msgs/BasicTypes", "", {}, ""},
+    {3u, service_event_1_name, "test_msgs/srv/BasicTypes_Event", "", {}, ""},
+    {4u, service_event_2_name, "test_msgs/srv/BasicTypes_Event", "", {}, ""},
   };
 
+  auto request_received_service_event = get_service_event_message_basic_types()[0];
   std::vector<std::shared_ptr<rosbag2_storage::SerializedBagMessage>> messages =
   {
-    serialize_test_message("/topic1", 500, get_messages_basic_types()[0]),
-    serialize_test_message(
-      "/test_service1/_service_event",
-      520,
-      get_service_event_message_basic_types()[0]),
-    serialize_test_message("/topic2", 520, get_messages_basic_types()[0]),
-    serialize_test_message(
-      "/test_service2/_service_event",
-      550,
-      get_service_event_message_basic_types()[0]),
+    serialize_test_message(topic_1_name, 10, get_messages_basic_types()[0]),
+    serialize_test_message(service_event_1_name, 20, request_received_service_event),
+    serialize_test_message(topic_2_name, 30, get_messages_basic_types()[0]),
+    serialize_test_message(service_event_2_name, 40, request_received_service_event),
   };
 
   play_options_.publish_service_requests = false;
 
   sub_ = std::make_shared<SubscriptionManager>();
-  sub_->add_subscription<test_msgs::msg::BasicTypes>("/topic1", 1);
-  sub_->add_subscription<test_msgs::msg::BasicTypes>("/topic2", 1);
-  sub_->add_subscription<test_msgs::srv::BasicTypes_Event>("/test_service1/_service_event", 1);
-  sub_->add_subscription<test_msgs::srv::BasicTypes_Event>("/test_service2/_service_event", 1);
-
+  sub_->add_subscription<test_msgs::msg::BasicTypes>(topic_1_name, 1);
+  sub_->add_subscription<test_msgs::msg::BasicTypes>(topic_2_name, 1);
+  sub_->add_subscription<test_msgs::srv::BasicTypes_Event>(service_event_1_name, 1);
+  sub_->add_subscription<test_msgs::srv::BasicTypes_Event>(service_event_2_name, 1);
 
   auto prepared_mock_reader = std::make_unique<MockSequentialReader>();
   prepared_mock_reader->prepare(messages, all_types);
   auto reader = std::make_unique<rosbag2_cpp::Reader>(std::move(prepared_mock_reader));
+  auto player = std::make_shared<MockPlayer>(std::move(reader), storage_options_, play_options_);
+
+  // Wait for discovery to match publishers with subscribers
+  ASSERT_TRUE(
+    sub_->spin_and_wait_for_matched(player->get_list_of_publishers(), std::chrono::seconds(30)));
 
   auto await_received_messages = sub_->spin_subscriptions();
 
-  auto player = std::make_shared<rosbag2_transport::Player>(
-    std::move(
-      reader), storage_options_, play_options_);
   player->play();
+  player->wait_for_playback_to_finish();
 
   await_received_messages.get();
-  std::this_thread::sleep_for(200ms);
 
-  auto replayed_topic1 = sub_->get_received_messages<test_msgs::msg::BasicTypes>("/topic1");
+  auto replayed_topic1 = sub_->get_received_messages<test_msgs::msg::BasicTypes>(topic_1_name);
   EXPECT_THAT(replayed_topic1, SizeIs(1u));
-  auto replayed_topic2 = sub_->get_received_messages<test_msgs::msg::BasicTypes>("/topic2");
+  auto replayed_topic2 = sub_->get_received_messages<test_msgs::msg::BasicTypes>(topic_2_name);
   EXPECT_THAT(replayed_topic2, SizeIs(1u));
   auto replayed_service_event_1 =
-    sub_->get_received_messages<test_msgs::srv::BasicTypes_Event>("/test_service1/_service_event");
+    sub_->get_received_messages<test_msgs::srv::BasicTypes_Event>(service_event_1_name);
   EXPECT_THAT(replayed_service_event_1, SizeIs(1u));
   auto replayed_service_event_2 =
-    sub_->get_received_messages<test_msgs::srv::BasicTypes_Event>("/test_service2/_service_event");
+    sub_->get_received_messages<test_msgs::srv::BasicTypes_Event>(service_event_2_name);
   EXPECT_THAT(replayed_service_event_2, SizeIs(1u));
 }
 
