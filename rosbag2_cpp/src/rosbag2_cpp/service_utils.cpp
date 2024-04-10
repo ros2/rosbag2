@@ -33,33 +33,33 @@ bool is_service_event_topic(const std::string & topic, const std::string & topic
 {
   if (topic.length() <= strlen(RCL_SERVICE_INTROSPECTION_TOPIC_POSTFIX)) {
     return false;
-  }
+  } else {
+    std::string end_topic_name = topic.substr(
+      topic.length() - strlen(RCL_SERVICE_INTROSPECTION_TOPIC_POSTFIX));
 
-  std::string end_topic_name = topic.substr(
-    topic.length() - strlen(RCL_SERVICE_INTROSPECTION_TOPIC_POSTFIX));
-
-  // Should be "/_service_event"
-  if (end_topic_name != RCL_SERVICE_INTROSPECTION_TOPIC_POSTFIX) {
-    return false;
-  }
-
-  if (topic_type.length() <= std::strlen(service_event_topic_type_postfix)) {
-    return false;
-  }
-
-  // Should include '/srv/' in type
-  if (topic_type.find(service_event_topic_type_middle) == std::string::npos) {
-    return false;
+    // Should be "/_service_event"
+    if (end_topic_name != RCL_SERVICE_INTROSPECTION_TOPIC_POSTFIX) {
+      return false;
+    }
   }
 
   if (topic_type.length() <= std::strlen(service_event_topic_type_postfix)) {
     return false;
-  }
+  } else {
+    // Should include '/srv/' in type
+    if (topic_type.find(service_event_topic_type_middle) == std::string::npos) {
+      return false;
+    }
 
-  return topic_type.compare(
-    topic_type.length() - std::strlen(service_event_topic_type_postfix),
-    std::strlen(service_event_topic_type_postfix),
-    service_event_topic_type_postfix) == 0;
+    if (topic_type.length() <= std::strlen(service_event_topic_type_postfix)) {
+      return false;
+    }
+
+    return topic_type.compare(
+      topic_type.length() - std::strlen(service_event_topic_type_postfix),
+      std::strlen(service_event_topic_type_postfix),
+      service_event_topic_type_postfix) == 0;
+  }
 }
 
 std::string service_event_topic_name_to_service_name(const std::string & topic_name)
@@ -67,20 +67,20 @@ std::string service_event_topic_name_to_service_name(const std::string & topic_n
   std::string service_name;
   if (topic_name.length() <= strlen(RCL_SERVICE_INTROSPECTION_TOPIC_POSTFIX)) {
     return service_name;
-  }
+  } else {
+    if (topic_name.substr(
+        topic_name.length() -
+        strlen(RCL_SERVICE_INTROSPECTION_TOPIC_POSTFIX)) !=
+      RCL_SERVICE_INTROSPECTION_TOPIC_POSTFIX)
+    {
+      return service_name;
+    }
 
-  if (topic_name.substr(
-      topic_name.length() -
-      strlen(RCL_SERVICE_INTROSPECTION_TOPIC_POSTFIX)) !=
-    RCL_SERVICE_INTROSPECTION_TOPIC_POSTFIX)
-  {
+    service_name = topic_name.substr(
+      0, topic_name.length() - strlen(RCL_SERVICE_INTROSPECTION_TOPIC_POSTFIX));
+
     return service_name;
   }
-
-  service_name = topic_name.substr(
-    0, topic_name.length() - strlen(RCL_SERVICE_INTROSPECTION_TOPIC_POSTFIX));
-
-  return service_name;
 }
 
 std::string service_event_topic_type_to_service_type(const std::string & topic_type)
