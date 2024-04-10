@@ -254,6 +254,17 @@ public:
   ROSBAG2_TRANSPORT_PUBLIC
   void delete_on_play_message_callback(const callback_handle_t & handle);
 
+  /// Wait until sent service requests will receive responses from service servers.
+  /// \param service_name - Name of the service or service event from what to wait responses.
+  /// \note is service_name is empty the function will wait until all service requests sent to all
+  /// service servers will finish. Timeout in this cases will be used for each service name.
+  /// \param timeout - Timeout in fraction of seconds to wait for.
+  /// \return true if service requests successfully finished, otherwise false.
+  ROSBAG2_TRANSPORT_PUBLIC
+  bool wait_for_sent_service_requests_to_finish(
+    const std::string & service_name,
+    std::chrono::duration<double> timeout = std::chrono::seconds(5));
+
 protected:
   /// \brief Getter for publishers corresponding to each topic
   /// \return Hashtable representing topic to publisher map excluding inner clock_publisher

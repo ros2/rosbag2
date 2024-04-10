@@ -171,6 +171,14 @@ public:
   /// #add_on_play_message_post_callback
   void delete_on_play_message_callback(const callback_handle_t & handle);
 
+  /// TBD
+  /// \param service_name
+  /// \param timeout
+  /// \return
+  bool wait_for_sent_service_requests_to_finish(
+    const std::string & service_name,
+    std::chrono::duration<double> timeout = std::chrono::seconds(5));
+
   /// \brief Getter for publishers corresponding to each topic
   /// \return Hashtable representing topic to publisher map excluding inner clock_publisher
   std::unordered_map<std::string, std::shared_ptr<rclcpp::GenericPublisher>> get_publishers();
@@ -787,6 +795,29 @@ void PlayerImpl::delete_on_play_message_callback(const callback_handle_t & handl
     [handle](const play_msg_callback_data & data) {
       return data.handle == handle;
     });
+}
+
+bool PlayerImpl::wait_for_sent_service_requests_to_finish(
+  const std::string & service_name,
+  std::chrono::duration<double> timeout)
+{
+  bool is_requests_complete = true;
+  if (!service_name.empty()) {
+    auto service_event_name = rosbag2_cpp::service_name_to_service_event_topic_name(service_name);
+    auto client_iter = service_clients_.find(service_event_name);
+    if (client_iter != service_clients_.end()) {
+      is_requests_complete = client_iter->second->wait_for_sent_requests_to_finish(timeout);
+    } else {
+      is_requests_complete = false;
+    }
+  } else {
+    for (const auto & [service_event_name, client] : service_clients_) {
+      if (!client->wait_for_sent_requests_to_finish(timeout)) {
+        return false;
+      }
+    }
+  }
+  return is_requests_complete;
 }
 
 std::unordered_map<std::string,
@@ -1630,6 +1661,12 @@ Player::callback_handle_t Player::add_on_play_message_post_callback(
 void Player::delete_on_play_message_callback(const Player::callback_handle_t & handle)
 {
   pimpl_->delete_on_play_message_callback(handle);
+}
+
+bool Player::wait_for_sent_service_requests_to_finish(
+  const std::string & service_name, std::chrono::duration<double> timeout)
+{
+  return pimpl_->wait_for_sent_service_requests_to_finish(service_name, timeout);
 }
 
 std::unordered_map<std::string, std::shared_ptr<rclcpp::GenericPublisher>> Player::get_publishers()

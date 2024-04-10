@@ -64,6 +64,13 @@ public:
 
   void async_send_request(const std::shared_ptr<uint8_t[]> type_erased_service_event);
 
+  /// Wait until sent service requests will receive responses from service servers.
+  /// \param service_name - Name of the service or service event from what to wait responses.
+  /// \param timeout - Timeout in fraction of seconds to wait for.
+  /// \return true if service requests successfully finished, otherwise false.
+  bool wait_for_sent_requests_to_finish(
+    std::chrono::duration<double> timeout = std::chrono::seconds(5));
+
   void async_send_request(const rcl_serialized_message_t & message);
 
   std::shared_ptr<rclcpp::GenericClient> generic_client()
@@ -102,6 +109,8 @@ public:
   bool register_request_future(
     rclcpp::GenericClient::FutureAndRequestId & request_future,
     std::weak_ptr<rclcpp::GenericClient> client);
+
+  bool wait_for_all_futures(std::chrono::duration<double> timeout = std::chrono::seconds(5));
 
 private:
   using time_point = std::chrono::steady_clock::time_point;

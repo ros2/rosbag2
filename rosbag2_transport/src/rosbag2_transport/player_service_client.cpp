@@ -24,6 +24,8 @@
 
 #include "logging.hpp"
 
+using namespace std::chrono_literals;
+
 namespace rosbag2_transport
 {
 
@@ -168,6 +170,11 @@ void PlayerServiceClient::async_send_request(
   }  // else { /* No service request in the service event. Do nothing, just skip it. */ }
 }
 
+bool PlayerServiceClient::wait_for_sent_requests_to_finish(std::chrono::duration<double> timeout)
+{
+  return player_service_client_manager_->wait_for_all_futures(timeout);
+}
+
 void PlayerServiceClient::async_send_request(const rcl_serialized_message_t & message)
 {
   if (!client_->service_is_ready()) {
@@ -256,6 +263,39 @@ bool PlayerServiceClientManager::register_request_future(
   }
 
   return false;
+}
+
+bool PlayerServiceClientManager::wait_for_all_futures(std::chrono::duration<double> timeout)
+{
+  auto is_all_futures_ready = [&]() {
+      bool is_ready = true;
+      for (auto & [timestamp, future_request_id_and_client] : request_futures_list_) {
+        if (!future_request_id_and_client.first->future.valid()) {
+          std::stringstream ss;
+          ss << "request's " << future_request_id_and_client.first->request_id <<
+            " future is not valid!\n";
+          throw std::runtime_error(ss.str());
+        }
+        if (future_request_id_and_client.first->wait_for(0s) != std::future_status::ready) {
+          return false;
+        }
+      }
+      return is_ready;
+    };
+
+  auto sleep_time = std::chrono::milliseconds(10);
+  if (timeout < std::chrono::seconds(1)) {
+    sleep_time = std::chrono::duration_cast<std::chrono::milliseconds>(timeout);
+  }
+  using clock = std::chrono::system_clock;
+  auto start = clock::now();
+
+  std::lock_guard<std::mutex> lock(request_futures_list_mutex_);
+  while (!is_all_futures_ready() && (clock::now() - start) < timeout) {
+    std::this_thread::sleep_for(sleep_time);
+  }
+
+  return is_all_futures_ready();
 }
 
 void PlayerServiceClientManager::remove_complete_request_future()
