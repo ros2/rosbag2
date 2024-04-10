@@ -14,6 +14,7 @@
 
 #include "rcpputils/thread_safety_annotations.hpp"
 #include "rcutils/logging_macros.h"
+#include "rcutils/strerror.h"
 #include "rosbag2_storage/metadata_io.hpp"
 #include "rosbag2_storage/ros_helper.hpp"
 #include "rosbag2_storage/storage_interfaces/read_write_interface.hpp"
@@ -40,6 +41,7 @@
 #include <mcap/mcap.hpp>
 
 #include <algorithm>
+#include <cstring>
 #include <memory>
 #include <mutex>
 #include <optional>
@@ -334,6 +336,11 @@ void MCAPStorage::open_impl(const std::string & uri, const std::string & preset_
     case rosbag2_storage::storage_interfaces::IOFlag::READ_ONLY: {
       relative_path_ = uri;
       input_ = std::make_unique<std::ifstream>(relative_path_, std::ios::binary);
+      if (!input_->is_open()) {
+        char error_string[1024] = {};
+        rcutils_strerror(error_string, sizeof(error_string));
+        throw std::runtime_error(error_string);
+      }
       data_source_ = std::make_unique<mcap::FileStreamReader>(*input_);
       mcap_reader_ = std::make_unique<mcap::McapReader>();
       auto status = mcap_reader_->open(*data_source_);
