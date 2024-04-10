@@ -967,7 +967,7 @@ namespace
 {
 bool allow_topic(
   bool is_service,
-  const std::string topic_name,
+  const std::string & topic_name,
   const rosbag2_storage::StorageFilter & storage_filter)
 {
   auto & include_topics = storage_filter.topics;
@@ -1105,11 +1105,11 @@ void PlayerImpl::prepare_publishers()
       auto service_name = rosbag2_cpp::service_event_topic_name_to_service_name(topic.name);
       auto service_type = rosbag2_cpp::service_event_topic_type_to_service_type(topic.type);
       try {
-        auto cli = owner_->create_generic_client(service_name, service_type);
-        auto player_cli = std::make_shared<PlayerServiceClient>(
-          std::move(cli), service_name, topic.type, owner_->get_logger(),
+        auto generic_client = owner_->create_generic_client(service_name, service_type);
+        auto player_client = std::make_shared<PlayerServiceClient>(
+          std::move(generic_client), service_name, topic.type, owner_->get_logger(),
           player_service_client_manager_);
-        service_clients_.insert(std::make_pair(topic.name, player_cli));
+        service_clients_.insert(std::make_pair(topic.name, player_client));
       } catch (const std::runtime_error & e) {
         RCLCPP_WARN(
           owner_->get_logger(),
@@ -1240,7 +1240,6 @@ bool PlayerImpl::publish_message(rosbag2_storage::SerializedBagMessageSharedPtr 
     if (service_event_type == service_msgs::msg::ServiceEventInfo::RESPONSE_SENT ||
       service_event_type == service_msgs::msg::ServiceEventInfo::RESPONSE_RECEIVED)
     {
-      // TODO(morlov): Shall we ignore REQUEST_RECEIVED as well?
       return false;
     }
 
@@ -1286,7 +1285,7 @@ bool PlayerImpl::publish_message(rosbag2_storage::SerializedBagMessageSharedPtr 
 
     bool message_published = false;
     try {
-      client_iter->second->async_send_request(service_event);
+      service_client->async_send_request(service_event);
       message_published = true;
     } catch (const std::exception & e) {
       RCLCPP_ERROR_STREAM(

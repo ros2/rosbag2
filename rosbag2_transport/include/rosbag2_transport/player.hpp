@@ -255,6 +255,8 @@ public:
   void delete_on_play_message_callback(const callback_handle_t & handle);
 
   /// Wait until sent service requests will receive responses from service servers.
+  /// \note The player node shall be spun in the executor in a parallel thread to be able to wait
+  /// for responses.
   /// \param service_name - Name of the service or service event from what to wait responses.
   /// \note is service_name is empty the function will wait until all service requests sent to all
   /// service servers will finish. Timeout in this cases will be used for each service name.

@@ -226,10 +226,11 @@ PlayOptions get_play_options_from_node_params(rclcpp::Node & node)
   } else if (service_requests_source == "CLIENT_INTROSPECTION") {
     play_options.service_requests_source = ServiceRequestsSource::CLIENT_INTROSPECTION;
   } else {
+    play_options.service_requests_source = ServiceRequestsSource::SERVICE_INTROSPECTION;
     RCLCPP_ERROR(
       node.get_logger(),
       "play.service_requests_source doesn't support %s. It must be one of SERVICE_INTROSPECTION"
-      " and CLIENT_INTROSPECTION. Change it by default value SERVICE_INTROSPECTION.",
+      " and CLIENT_INTROSPECTION. Changed it to default value SERVICE_INTROSPECTION.",
       service_requests_source.c_str());
   }
 

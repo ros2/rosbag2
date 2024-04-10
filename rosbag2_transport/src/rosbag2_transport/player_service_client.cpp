@@ -166,7 +166,8 @@ void PlayerServiceClient::async_send_request(
   if (request_member.size_function(request_sequence_ptr) > 0) {
     void * request_ptr = request_member.get_function(request_sequence_ptr, 0);
     auto future_and_request_id = client_->async_send_request(request_ptr);
-    player_service_client_manager_->register_request_future(future_and_request_id, client_);
+    player_service_client_manager_->register_request_future(
+      std::move(future_and_request_id), client_);
   }  // else { /* No service request in the service event. Do nothing, just skip it. */ }
 }
 
@@ -245,7 +246,7 @@ bool PlayerServiceClientManager::request_future_queue_is_full()
 }
 
 bool PlayerServiceClientManager::register_request_future(
-  rclcpp::GenericClient::FutureAndRequestId & request_future,
+  rclcpp::GenericClient::FutureAndRequestId && request_future,
   std::weak_ptr<rclcpp::GenericClient> client)
 {
   auto future_and_request_id =
@@ -253,15 +254,14 @@ bool PlayerServiceClientManager::register_request_future(
 
   if (!request_future_queue_is_full()) {
     std::lock_guard<std::mutex> lock(request_futures_list_mutex_);
-    request_futures_list_[std::chrono::steady_clock::now()] =
-    {std::move(future_and_request_id), client};
-    return true;
+    auto emplace_result = request_futures_list_.emplace(
+      std::chrono::steady_clock::now(), std::make_pair(std::move(future_and_request_id), client));
+    return emplace_result.second;
   } else {
     ROSBAG2_TRANSPORT_LOG_WARN(
       "Client request queue is full. "
       "Please consider increasing the length of the queue.");
   }
-
   return false;
 }
 
@@ -301,13 +301,12 @@ bool PlayerServiceClientManager::wait_for_all_futures(std::chrono::duration<doub
 void PlayerServiceClientManager::remove_complete_request_future()
 {
   std::vector<time_point> remove_keys;
-  for (auto & [timestamp, request_id_and_client] : request_futures_list_) {
-    if (request_id_and_client.first->wait_for(std::chrono::seconds(0)) ==
-      std::future_status::ready)
-    {
-      auto client = request_id_and_client.second.lock();
+  std::lock_guard<std::mutex> lock(request_futures_list_mutex_);
+  for (auto & [timestamp, future_request_id_and_client] : request_futures_list_) {
+    if (future_request_id_and_client.first->wait_for(0s) == std::future_status::ready) {
+      auto client = future_request_id_and_client.second.lock();
       if (client) {
-        client->remove_pending_request(request_id_and_client.first->request_id);
+        client->remove_pending_request(future_request_id_and_client.first->request_id);
       }
       remove_keys.emplace_back(timestamp);
     }
@@ -319,6 +318,7 @@ void PlayerServiceClientManager::remove_complete_request_future()
 
 void PlayerServiceClientManager::remove_all_timeout_request_future()
 {
+  std::lock_guard<std::mutex> lock(request_futures_list_mutex_);
   auto current_time = std::chrono::steady_clock::now();
   auto first_iter_without_timeout =
     request_futures_list_.lower_bound(current_time - request_future_timeout_);

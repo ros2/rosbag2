@@ -107,7 +107,7 @@ public:
   bool request_future_queue_is_full();
 
   bool register_request_future(
-    rclcpp::GenericClient::FutureAndRequestId & request_future,
+    rclcpp::GenericClient::FutureAndRequestId && request_future,
     std::weak_ptr<rclcpp::GenericClient> client);
 
   bool wait_for_all_futures(std::chrono::duration<double> timeout = std::chrono::seconds(5));
@@ -115,9 +115,9 @@ public:
 private:
   using time_point = std::chrono::steady_clock::time_point;
   using ptr_future_and_request_id = std::unique_ptr<rclcpp::GenericClient::FutureAndRequestId>;
-  using request_id_and_client_t =
+  using future_request_id_and_client_t =
     std::pair<ptr_future_and_request_id, std::weak_ptr<rclcpp::GenericClient>>;
-  std::map<time_point, request_id_and_client_t> request_futures_list_;
+  std::map<time_point, future_request_id_and_client_t> request_futures_list_;
   std::mutex request_futures_list_mutex_;
 
   std::chrono::seconds request_future_timeout_;
