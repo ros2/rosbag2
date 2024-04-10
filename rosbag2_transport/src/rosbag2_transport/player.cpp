@@ -185,7 +185,7 @@ public:
 
   /// \brief Getter for clients corresponding to services
   /// \return Hashtable representing service name to client map
-  std::unordered_map<std::string, std::shared_ptr<rclcpp::GenericClient>> get_services_clients();
+  std::unordered_map<std::string, std::shared_ptr<rclcpp::GenericClient>> get_service_clients();
 
   /// \brief Getter for inner clock_publisher
   /// \return Shared pointer to the inner clock_publisher
@@ -831,7 +831,7 @@ std::unordered_map<std::string,
 }
 
 std::unordered_map<std::string,
-  std::shared_ptr<rclcpp::GenericClient>> PlayerImpl::get_services_clients()
+  std::shared_ptr<rclcpp::GenericClient>> PlayerImpl::get_service_clients()
 {
   std::unordered_map<std::string, std::shared_ptr<rclcpp::GenericClient>> topic_to_client_map;
   for (const auto & [service_name, client] : service_clients_) {
@@ -1674,9 +1674,9 @@ std::unordered_map<std::string, std::shared_ptr<rclcpp::GenericPublisher>> Playe
 }
 
 std::unordered_map<std::string,
-  std::shared_ptr<rclcpp::GenericClient>> Player::get_services_clients()
+  std::shared_ptr<rclcpp::GenericClient>> Player::get_service_clients()
 {
-  return pimpl_->get_services_clients();
+  return pimpl_->get_service_clients();
 }
 
 rclcpp::Publisher<rosgraph_msgs::msg::Clock>::SharedPtr Player::get_clock_publisher()
