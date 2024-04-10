@@ -38,6 +38,9 @@ These verbs are available for `ros2 bag`:
 
 For up-to-date information on the available options for each, use `ros2 bag <verb> --help`.
 
+Moreover, `rosbag2_transport::Player` and `rosbag2_transport::Recorder` components can be instantiated in `rclcpp` component containers, which makes possible to use intra-process communication for greater efficiency.
+See [composition](#using-with-composition) section for details.
+
 ### Recording data
 
 In order to record all topics currently available in the system:
@@ -344,6 +347,122 @@ For example, if we named the above XML launch script, `record_all.launch.xml`:
 ```sh
 $ ros2 launch record_all.launch.xml
 ```
+
+You can also invoke the `play` and `record` functionalities provided by `rosbag2_transport` package as nodes.
+The advantage to use this invocation strategy is that the Python layer handling the `ros2 bag` CLI is completely skipped.
+
+```python
+import launch
+
+def generate_launch_description():
+    return launch.LaunchDescription([
+        launch.actions.Node(
+            package='rosbag2_transport',
+            executable='player',
+            name='player',
+            output="screen",
+            parameters=["/path/to/params.yaml"],
+        )
+    ])
+```
+
+## Using with composition
+
+Play and record are fundamental tasks of `rosbag2`. However, playing or recording data at high rates may have limitations (e.g. spurious packet drops) due to one of the following:
+- low network bandwith
+- high CPU load
+- slow mass memory
+- ROS 2 middleware serialization/deserialization delays & overhead
+
+ROS 2 C++ nodes can benefit from intra-process communication to partially or completely bypass network transport of messages between two nodes.
+
+Multiple _components_ can be _composed_, either [statically](https://docs.ros.org/en/rolling/Tutorials/Intermediate/Composition.html#compile-time-composition-using-ros-services) or [dynamically](https://docs.ros.org/en/rolling/Tutorials/Intermediate/Composition.html#run-time-composition-using-ros-services-with-a-publisher-and-subscriber): all the composed component will share the same address space because they will be loaded in a single process.
+
+A prerequirement is for each C++ node to be [_composable_](https://docs.ros.org/en/rolling/Concepts/Intermediate/About-Composition.html?highlight=composition) and to follow the [guidelines](https://docs.ros.org/en/rolling/Tutorials/Demos/Intra-Process-Communication.html?highlight=intra) for efficient publishing & subscription.
+
+With the above requirements met, the user can:
+- compose multiple nodes together
+- explicitly enable intra-process communication
+
+Whenever a publisher and a subscriber on the same topic belong to the same _composed_ process, and intra-process is enabled for both, `rclcpp` completely bypasses RMW layer and below transport layer (i.e. DDS). Instead, messages are shared via process memory and *potentially* never copied. Some exception hold, so please have a look to the [IPC guidelines](https://docs.ros.org/en/rolling/Tutorials/Demos/Intra-Process-Communication.html?highlight=intra).
+
+Here is an example of Python launchfile composition. Notice that composable container components do not expect YAML files to be directly passed to them: parameters have to be "dumped" out from the YAML file (if you have one). A suggestion of possible implementation is offered as a starting point.
+
+```python
+import launch
+import launch_ros
+import yaml
+
+'''
+Used to load parameters for composable nodes from a standard param file
+'''
+def dump_params(param_file_path, node_name):
+    with open(param_file_path, 'r') as file:
+        return [yaml.safe_load(file)[node_name]['ros__parameters']]
+
+def generate_launch_description():
+    return launch.LaunchDescription([
+        launch.actions.ComposableNodeContainer(
+            name='composable_container',
+            package='rclcpp_components',
+            executable='component_container',
+            composable_node_descriptions=[
+                launch_ros.descriptions.ComposableNode(
+                    package='rosbag2_transport',
+                    plugin='rosbag2_transport::Player',
+                    name='player',
+                    parameters=dump_params("/path/to/params.yaml", "player"),
+                    extra_arguments=[{'use_intra_process_comms': True}]
+                ),
+                # your other components here
+            ]
+        )
+    ])
+}
+```
+
+Here's an example YAML configuration for both composable player and recorder:
+```yaml
+recorder:
+  ros__parameters:
+    use_sim_time: false
+    record:
+      all: true
+      is_discovery_disabled: false
+      topic_polling_interval:
+        sec: 0
+        nsec: 10000000
+      include_hidden_topics: true
+      ignore_leaf_topics: false
+      start_paused: false
+
+    storage:
+      uri: "/path/to/destination/folder"
+      storage_id: "sqlite3"
+      max_cache_size: 20000000
+```
+and
+```yaml
+player:
+  ros__parameters:
+    play:
+      read_ahead_queue_size: 1000
+      node_prefix: ""
+      rate: 1.0
+      loop: false
+      # Negative timestamps will make the playback to not stop.  
+      playback_duration:
+        sec: -1
+        nsec: 00000000
+      start_paused: false
+
+    storage:
+      uri: "path/to/rosbag/file"
+      storage_id: "mcap"
+      storage_config_uri: ""
+```
+
+For a full list of available parameters, you can refer to [`player`](rosbag2_transport/test/resources/player_node_params.yaml) and [`recorder`](rosbag2_transport/test/resources/recorder_node_params.yaml) configurations from the `test` folder of `rosbag2_transport`.
 
 ## Storage format plugin architecture
 
