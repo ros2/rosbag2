@@ -24,13 +24,13 @@
   <depend>rosbag2_storage</depend>
   <depend>rosbag2_transport</depend>
 
+  <exec_depend>rclpy</exec_depend>
   <exec_depend>rpyutils</exec_depend>
 
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>ament_lint_common</test_depend>
   <test_depend>python3-pytest</test_depend>
   <test_depend>rcl_interfaces</test_depend>
-  <test_depend>rclpy</test_depend>
   <test_depend>rosbag2_compression_zstd</test_depend>
   <test_depend>rosbag2_storage_default_plugins</test_depend>
   <test_depend>rosbag2_test_common</test_depend>
