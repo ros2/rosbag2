@@ -176,47 +176,6 @@ bool PlayerServiceClient::wait_for_sent_requests_to_finish(std::chrono::duration
   return player_service_client_manager_->wait_for_all_futures(timeout);
 }
 
-void PlayerServiceClient::async_send_request(const rcl_serialized_message_t & message)
-{
-  if (!client_->service_is_ready()) {
-    RCLCPP_ERROR(
-      logger_, "Service request hasn't been sent. The '%s' service isn't ready !",
-      service_name_.c_str());
-    return;
-  }
-
-  auto type_erased_ros_message = deserialize_service_event(message);
-
-  if (type_erased_ros_message) {
-    async_send_request(type_erased_ros_message);
-  } else {
-    throw std::runtime_error(
-            "Failed to deserialize service event message for " + service_name_ + " !");
-  }
-}
-
-std::tuple<uint8_t, PlayerServiceClient::ClientGidType, int64_t>
-PlayerServiceClient::get_msg_event_type(const rcl_serialized_message_t & message)
-{
-  auto msg = service_msgs::msg::ServiceEventInfo();
-
-  const rosidl_message_type_support_t * type_support_info =
-    rosidl_typesupport_cpp::get_message_type_support_handle<service_msgs::msg::ServiceEventInfo>();
-  if (type_support_info == nullptr) {
-    throw std::runtime_error("Failed to get message type support handle of service event info !");
-  }
-
-  // Partially deserialize service event message. Deserializing only first member ServiceEventInfo
-  // with assumption that it is going to be the first in serialized message.
-  // TODO(morlov): We can't rely on this assumption. It is up to the underlying RMW and
-  //  serialization format implementation!
-  if (rmw_deserialize(&message, type_support_info, reinterpret_cast<void *>(&msg)) != RMW_RET_OK) {
-    throw std::runtime_error("Failed to deserialize message !");
-  }
-
-  return {msg.event_type, msg.client_gid, msg.sequence_number};
-}
-
 PlayerServiceClientManager::PlayerServiceClientManager(
   std::chrono::seconds requst_future_timeout,
   size_t maximum_request_future_queue)

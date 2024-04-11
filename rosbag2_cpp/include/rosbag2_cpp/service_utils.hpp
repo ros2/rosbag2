@@ -26,7 +26,7 @@ namespace rosbag2_cpp
 {
 ROSBAG2_CPP_PUBLIC
 bool
-is_service_event_topic(const std::string & topic, const std::string & topic_type);
+is_service_event_topic(const std::string & topic_name, const std::string & topic_type);
 
 // Call this function after is_service_event_topic() return true
 ROSBAG2_CPP_PUBLIC
@@ -39,16 +39,8 @@ std::string
 service_event_topic_type_to_service_type(const std::string & topic_type);
 
 ROSBAG2_CPP_PUBLIC
-size_t
-get_serialization_size_for_service_metadata_event();
-
-ROSBAG2_CPP_PUBLIC
 std::string
 service_name_to_service_event_topic_name(const std::string & service_name);
-
-ROSBAG2_CPP_PUBLIC
-bool
-service_event_include_metadata_and_contents(size_t message_size);
 
 ROSBAG2_CPP_PUBLIC
 std::string

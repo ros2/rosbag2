@@ -71,8 +71,6 @@ public:
   bool wait_for_sent_requests_to_finish(
     std::chrono::duration<double> timeout = std::chrono::seconds(5));
 
-  void async_send_request(const rcl_serialized_message_t & message);
-
   std::shared_ptr<rclcpp::GenericClient> generic_client()
   {
     return client_;
@@ -91,9 +89,6 @@ private:
   const rosidl_typesupport_introspection_cpp::MessageMembers * service_event_members_;
 
   rcutils_allocator_t allocator_ = rcutils_get_default_allocator();
-
-  std::tuple<uint8_t, ClientGidType, int64_t>
-  get_msg_event_type(const rcl_serialized_message_t & message);
 };
 
 class PlayerServiceClientManager final

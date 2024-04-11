@@ -97,21 +97,6 @@ TEST_F(ServiceUtilsTest, check_service_name_to_service_event_topic_name)
   }
 }
 
-TEST_F(ServiceUtilsTest, check_service_event_include_metadata_and_contents)
-{
-  auto msg = std::make_shared<test_msgs::srv::BasicTypes_Event>();
-  msg->info.event_type = service_msgs::msg::ServiceEventInfo::REQUEST_SENT;
-  auto serialized_service_event = memory_management_.serialize_message(msg);
-
-  size_t metadata_event_size = rosbag2_cpp::get_serialization_size_for_service_metadata_event();
-
-  EXPECT_EQ(serialized_service_event->buffer_length, metadata_event_size);
-
-  EXPECT_FALSE(rosbag2_cpp::service_event_include_metadata_and_contents(metadata_event_size - 1));
-  EXPECT_FALSE(rosbag2_cpp::service_event_include_metadata_and_contents(metadata_event_size));
-  EXPECT_TRUE(rosbag2_cpp::service_event_include_metadata_and_contents(metadata_event_size + 1));
-}
-
 TEST_F(ServiceUtilsTest, check_client_id_to_string)
 {
   service_msgs::msg::ServiceEventInfo::_client_gid_type client_id = {
