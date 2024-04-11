@@ -1223,10 +1223,8 @@ bool PlayerImpl::publish_message(rosbag2_storage::SerializedBagMessageSharedPtr 
 
   // Try to publish message as service request
   auto client_iter = service_clients_.find(message->topic_name);
-  if (client_iter != service_clients_.end()) {
+  if (play_options_.publish_service_requests && client_iter != service_clients_.end()) {
     const auto & service_client = client_iter->second;
-    // TODO(morlov):
-    //  Wrap deserialize_service_event and get_service_event_type_and_client_gid in try-catch
     auto service_event = service_client->deserialize_service_event(*message->serialized_data);
     if (!service_event) {
       RCLCPP_ERROR_STREAM(
@@ -1235,49 +1233,57 @@ bool PlayerImpl::publish_message(rosbag2_storage::SerializedBagMessageSharedPtr 
       return false;
     }
 
-    auto [service_event_type, client_gid] =
-      service_client->get_service_event_type_and_client_gid(service_event);
-    // Ignore response message
-    if (service_event_type == service_msgs::msg::ServiceEventInfo::RESPONSE_SENT ||
-      service_event_type == service_msgs::msg::ServiceEventInfo::RESPONSE_RECEIVED)
-    {
-      return false;
-    }
-
-    if (play_options_.service_requests_source == ServiceRequestsSource::SERVICE_INTROSPECTION &&
-      service_event_type != service_msgs::msg::ServiceEventInfo::REQUEST_RECEIVED)
-    {
-      return false;
-    }
-
-    if (play_options_.service_requests_source == ServiceRequestsSource::CLIENT_INTROSPECTION &&
-      service_event_type != service_msgs::msg::ServiceEventInfo::REQUEST_SENT)
-    {
-      return false;
-    }
-
-    if (!service_client->generic_client()->service_is_ready()) {
-      RCLCPP_ERROR(
-        owner_->get_logger(), "Service request hasn't been sent. The '%s' service isn't ready !",
-        service_client->get_service_name().c_str());
-      return false;
-    }
-
-    if (!service_client->is_service_event_include_request_message(service_event)) {
-      if (service_event_type == service_msgs::msg::ServiceEventInfo::REQUEST_RECEIVED) {
-        RCUTILS_LOG_WARN_ONCE_NAMED(
-          ROSBAG2_TRANSPORT_PACKAGE_NAME,
-          "Can't send service request. "
-          "The configuration of introspection for '%s' was metadata only on service side!",
-          service_client->get_service_name().c_str());
-      } else if (service_event_type == service_msgs::msg::ServiceEventInfo::REQUEST_SENT) {
-        RCUTILS_LOG_WARN_ONCE_NAMED(
-          ROSBAG2_TRANSPORT_PACKAGE_NAME,
-          "Can't send service request. "
-          "The configuration of introspection for '%s' client [ID: %s]` was metadata only!",
-          service_client->get_service_name().c_str(),
-          rosbag2_cpp::client_id_to_string(client_gid).c_str());
+    try {
+      auto [service_event_type, client_gid] =
+        service_client->get_service_event_type_and_client_gid(service_event);
+      // Ignore response message
+      if (service_event_type == service_msgs::msg::ServiceEventInfo::RESPONSE_SENT ||
+        service_event_type == service_msgs::msg::ServiceEventInfo::RESPONSE_RECEIVED)
+      {
+        return false;
       }
+
+      if (play_options_.service_requests_source == ServiceRequestsSource::SERVICE_INTROSPECTION &&
+        service_event_type != service_msgs::msg::ServiceEventInfo::REQUEST_RECEIVED)
+      {
+        return false;
+      }
+
+      if (play_options_.service_requests_source == ServiceRequestsSource::CLIENT_INTROSPECTION &&
+        service_event_type != service_msgs::msg::ServiceEventInfo::REQUEST_SENT)
+      {
+        return false;
+      }
+
+      if (!service_client->generic_client()->service_is_ready()) {
+        RCLCPP_ERROR(
+          owner_->get_logger(), "Service request hasn't been sent. The '%s' service isn't ready !",
+          service_client->get_service_name().c_str());
+        return false;
+      }
+
+      if (!service_client->is_service_event_include_request_message(service_event)) {
+        if (service_event_type == service_msgs::msg::ServiceEventInfo::REQUEST_RECEIVED) {
+          RCUTILS_LOG_WARN_ONCE_NAMED(
+            ROSBAG2_TRANSPORT_PACKAGE_NAME,
+            "Can't send service request. "
+            "The configuration of introspection for '%s' was metadata only on service side!",
+            service_client->get_service_name().c_str());
+        } else if (service_event_type == service_msgs::msg::ServiceEventInfo::REQUEST_SENT) {
+          RCUTILS_LOG_WARN_ONCE_NAMED(
+            ROSBAG2_TRANSPORT_PACKAGE_NAME,
+            "Can't send service request. "
+            "The configuration of introspection for '%s' client [ID: %s]` was metadata only!",
+            service_client->get_service_name().c_str(),
+            rosbag2_cpp::client_id_to_string(client_gid).c_str());
+        }
+        return false;
+      }
+    } catch (const std::exception & e) {
+      RCLCPP_ERROR_STREAM(
+        owner_->get_logger(), "Failed to send request on '" <<
+          rosbag2_cpp::service_event_topic_name_to_service_name(message->topic_name) <<
+          "' service. \nError: " << e.what());
       return false;
     }
 
