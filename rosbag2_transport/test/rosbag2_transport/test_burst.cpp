@@ -401,32 +401,37 @@ TEST_F(RosBag2PlayTestFixture, burst_bursting_only_filtered_topics) {
 }
 
 TEST_F(RosBag2PlayTestFixture, burst_bursting_only_filtered_services) {
+  const std::string service_name1 = "/test_service1";
+  const std::string service_name2 = "/test_service2";
+  const std::string service_event_name1 = service_name1 + "/_service_event";
+  const std::string service_event_name2 = service_name2 + "/_service_event";
+
   auto services_types = std::vector<rosbag2_storage::TopicMetadata>{
-    {1u, "/test_service1/_service_event", "test_msgs/srv/BasicTypes_Event", "", {}, ""},
-    {2u, "/test_service2/_service_event", "test_msgs/srv/BasicTypes_Event", "", {}, ""},
+    {1u, service_event_name1, "test_msgs/srv/BasicTypes_Event", "", {}, ""},
+    {2u, service_event_name2, "test_msgs/srv/BasicTypes_Event", "", {}, ""},
   };
   std::vector<std::shared_ptr<rosbag2_storage::SerializedBagMessage>> messages =
   {
     serialize_test_message(
-      "/test_service1/_service_event", 500, get_service_event_message_basic_types()[0]),
+      service_event_name1, 500, get_service_event_message_basic_types()[0]),
     serialize_test_message(
-      "/test_service2/_service_event", 600, get_service_event_message_basic_types()[0]),
+      service_event_name2, 600, get_service_event_message_basic_types()[0]),
     serialize_test_message(
-      "/test_service1/_service_event", 400, get_service_event_message_basic_types()[1]),
+      service_event_name1, 400, get_service_event_message_basic_types()[1]),
     serialize_test_message(
-      "/test_service2/_service_event", 500, get_service_event_message_basic_types()[1])
+      service_event_name2, 500, get_service_event_message_basic_types()[1])
   };
 
   std::vector<std::shared_ptr<test_msgs::srv::BasicTypes::Request>> service1_receive_requests;
   std::vector<std::shared_ptr<test_msgs::srv::BasicTypes::Request>> service2_receive_requests;
 
-  srv_->setup_service<test_msgs::srv::BasicTypes>("test_service1", service1_receive_requests);
-  srv_->setup_service<test_msgs::srv::BasicTypes>("test_service2", service2_receive_requests);
+  srv_->setup_service<test_msgs::srv::BasicTypes>(service_name1, service1_receive_requests);
+  srv_->setup_service<test_msgs::srv::BasicTypes>(service_name2, service2_receive_requests);
 
   srv_->run_services();
 
   // Filter allows test_service2, blocks test_service1
-  play_options_.services_to_filter = {"test_service2/_service_event"};
+  play_options_.services_to_filter = {service_event_name2};
   play_options_.publish_service_requests = true;
   auto prepared_mock_reader = std::make_unique<MockSequentialReader>();
   prepared_mock_reader->prepare(messages, services_types);
@@ -449,7 +454,7 @@ TEST_F(RosBag2PlayTestFixture, burst_bursting_only_filtered_services) {
   player->resume();
   player_future.get();
 
-  std::this_thread::sleep_for(200ms);
+  player->wait_for_playback_to_finish();
 
   EXPECT_EQ(service1_receive_requests.size(), 0);
   EXPECT_EQ(service2_receive_requests.size(), 2);

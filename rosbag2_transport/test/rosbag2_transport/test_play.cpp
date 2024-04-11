@@ -87,6 +87,26 @@ get_service_event_message_basic_types()
 
   return messages;
 }
+
+void spin_thread_and_wait_for_sent_service_requests_to_finish(
+  std::shared_ptr<rosbag2_transport::Player> player,
+  std::vector<std::string> service_name_list)
+{
+  rclcpp::executors::SingleThreadedExecutor exec;
+  exec.add_node(player);
+  auto spin_thread = std::thread(
+    [&exec]() {
+      exec.spin();
+    });
+  player->play();
+  player->wait_for_playback_to_finish(200ms);
+
+  for (auto & service_name : service_name_list) {
+    EXPECT_TRUE(player->wait_for_sent_service_requests_to_finish(service_name, 100ms));
+  }
+  exec.cancel();
+  spin_thread.join();
+}
 }  // namespace
 
 TEST_F(RosBag2PlayTestFixture, recorded_messages_are_played_for_all_topics)
@@ -156,20 +176,25 @@ TEST_F(RosBag2PlayTestFixture, recorded_messages_are_played_for_all_topics)
 
 TEST_F(RosBag2PlayTestFixture, recorded_messages_are_played_for_all_services)
 {
+  const std::string service_name1 = "/test_service1";
+  const std::string service_event_name1 = service_name1 + "/_service_event";
+  const std::string service_name2 = "/test_service2";
+  const std::string service_event_name2 = service_name2 + "/_service_event";
+
   auto services_types = std::vector<rosbag2_storage::TopicMetadata>{
-    {1u, "test_service1/_service_event", "test_msgs/srv/BasicTypes_Event", "", {}, ""},
-    {2u, "test_service2/_service_event", "test_msgs/srv/BasicTypes_Event", "", {}, ""},
+    {1u, service_event_name1, "test_msgs/srv/BasicTypes_Event", "", {}, ""},
+    {2u, service_event_name2, "test_msgs/srv/BasicTypes_Event", "", {}, ""},
   };
   std::vector<std::shared_ptr<rosbag2_storage::SerializedBagMessage>> messages =
   {
     serialize_test_message(
-      "test_service1/_service_event", 500, get_service_event_message_basic_types()[0]),
+      service_event_name1, 500, get_service_event_message_basic_types()[0]),
     serialize_test_message(
-      "test_service2/_service_event", 600, get_service_event_message_basic_types()[0]),
+      service_event_name2, 600, get_service_event_message_basic_types()[0]),
     serialize_test_message(
-      "test_service1/_service_event", 400, get_service_event_message_basic_types()[1]),
+      service_event_name1, 400, get_service_event_message_basic_types()[1]),
     serialize_test_message(
-      "test_service2/_service_event", 500, get_service_event_message_basic_types()[1])
+      service_event_name2, 500, get_service_event_message_basic_types()[1])
   };
 
   auto prepared_mock_reader = std::make_unique<MockSequentialReader>();
@@ -179,8 +204,8 @@ TEST_F(RosBag2PlayTestFixture, recorded_messages_are_played_for_all_services)
   std::vector<std::shared_ptr<test_msgs::srv::BasicTypes::Request>> service1_receive_requests;
   std::vector<std::shared_ptr<test_msgs::srv::BasicTypes::Request>> service2_receive_requests;
 
-  srv_->setup_service<test_msgs::srv::BasicTypes>("test_service1", service1_receive_requests);
-  srv_->setup_service<test_msgs::srv::BasicTypes>("test_service2", service2_receive_requests);
+  srv_->setup_service<test_msgs::srv::BasicTypes>(service_name1, service1_receive_requests);
+  srv_->setup_service<test_msgs::srv::BasicTypes>(service_name2, service2_receive_requests);
 
   srv_->run_services();
 
@@ -190,9 +215,9 @@ TEST_F(RosBag2PlayTestFixture, recorded_messages_are_played_for_all_services)
   auto player = std::make_shared<rosbag2_transport::Player>(
     std::move(
       reader), storage_options_, play_options_);
-  player->play();
 
-  std::this_thread::sleep_for(300ms);
+  spin_thread_and_wait_for_sent_service_requests_to_finish(player, {service_name1, service_name2});
+
   EXPECT_EQ(service1_receive_requests.size(), 2);
   EXPECT_EQ(service2_receive_requests.size(), 2);
 }
@@ -202,20 +227,24 @@ TEST_F(RosBag2PlayTestFixture, recorded_messages_are_played_for_topics_and_servi
   auto topic_msg = get_messages_basic_types()[0];
   topic_msg->int64_value = 1111;
 
+  const std::string topic_name = "/topic1";
+  const std::string service_name = "/test_service1";
+  const std::string service_event_name = service_name + "/_service_event";
+
   auto services_types = std::vector<rosbag2_storage::TopicMetadata>{
-    {1u, "topic1", "test_msgs/BasicTypes", "", {}, ""},
-    {2u, "test_service1/_service_event", "test_msgs/srv/BasicTypes_Event", "", {}, ""},
+    {1u, topic_name, "test_msgs/BasicTypes", "", {}, ""},
+    {2u, service_event_name, "test_msgs/srv/BasicTypes_Event", "", {}, ""},
   };
   std::vector<std::shared_ptr<rosbag2_storage::SerializedBagMessage>> messages =
   {
     serialize_test_message(
-      "test_service1/_service_event", 500, get_service_event_message_basic_types()[0]),
+      service_event_name, 500, get_service_event_message_basic_types()[0]),
     serialize_test_message(
-      "topic1", 600, topic_msg),
+      topic_name, 600, topic_msg),
     serialize_test_message(
-      "test_service1/_service_event", 550, get_service_event_message_basic_types()[1]),
+      service_event_name, 550, get_service_event_message_basic_types()[1]),
     serialize_test_message(
-      "topic1", 400, topic_msg),
+      topic_name, 400, topic_msg),
   };
 
   auto prepared_mock_reader = std::make_unique<MockSequentialReader>();
@@ -223,29 +252,40 @@ TEST_F(RosBag2PlayTestFixture, recorded_messages_are_played_for_topics_and_servi
   auto reader = std::make_unique<rosbag2_cpp::Reader>(std::move(prepared_mock_reader));
 
   std::vector<std::shared_ptr<test_msgs::srv::BasicTypes::Request>> service_receive_requests;
-  srv_->setup_service<test_msgs::srv::BasicTypes>("test_service1", service_receive_requests);
+  srv_->setup_service<test_msgs::srv::BasicTypes>(service_name, service_receive_requests);
   srv_->run_services();
   ASSERT_TRUE(srv_->all_services_ready());
 
-  sub_->add_subscription<test_msgs::msg::BasicTypes>("/topic1", 2);
+  sub_->add_subscription<test_msgs::msg::BasicTypes>(topic_name, 2);
   auto await_received_messages = sub_->spin_subscriptions();
 
   play_options_.publish_service_requests = true;
   auto player = std::make_shared<rosbag2_transport::Player>(
     std::move(
       reader), storage_options_, play_options_);
+
+  rclcpp::executors::SingleThreadedExecutor exec;
+  exec.add_node(player);
+  auto spin_thread = std::thread(
+    [&exec]() {
+      exec.spin();
+    });
+
   player->play();
 
   await_received_messages.get();
 
   auto replayed_topic_msg = sub_->get_received_messages<test_msgs::msg::BasicTypes>(
-    "/topic1");
+    topic_name);
   EXPECT_THAT(replayed_topic_msg, SizeIs(Ge(2u)));
   EXPECT_THAT(
     replayed_topic_msg,
     Each(Pointee(Field(&test_msgs::msg::BasicTypes::int64_value, 1111))));
 
-  std::this_thread::sleep_for(200ms);
+  player->wait_for_playback_to_finish(200ms);
+  EXPECT_TRUE(player->wait_for_sent_service_requests_to_finish(service_name, 100ms));
+  exec.cancel();
+  spin_thread.join();
   ASSERT_EQ(service_receive_requests.size(), 2);
   for (size_t i = 0; i < 2; i++) {
     EXPECT_EQ(
@@ -448,20 +488,25 @@ TEST_F(RosBag2PlayTestFixture, recorded_messages_are_played_for_filtered_topics)
 
 TEST_F(RosBag2PlayTestFixture, recorded_messages_are_played_for_filtered_services)
 {
+  const std::string service_name1 = "/test_service1";
+  const std::string service_event_name1 = service_name1 + "/_service_event";
+  const std::string service_name2 = "/test_service2";
+  const std::string service_event_name2 = service_name2 + "/_service_event";
+
   auto services_types = std::vector<rosbag2_storage::TopicMetadata>{
-    {1u, "/test_service1/_service_event", "test_msgs/srv/BasicTypes_Event", "", {}, ""},
-    {2u, "/test_service2/_service_event", "test_msgs/srv/BasicTypes_Event", "", {}, ""},
+    {1u, service_event_name1, "test_msgs/srv/BasicTypes_Event", "", {}, ""},
+    {2u, service_event_name2, "test_msgs/srv/BasicTypes_Event", "", {}, ""},
   };
   std::vector<std::shared_ptr<rosbag2_storage::SerializedBagMessage>> messages =
   {
     serialize_test_message(
-      "/test_service1/_service_event", 500, get_service_event_message_basic_types()[0]),
+      service_event_name1, 500, get_service_event_message_basic_types()[0]),
     serialize_test_message(
-      "/test_service2/_service_event", 600, get_service_event_message_basic_types()[0]),
+      service_event_name2, 600, get_service_event_message_basic_types()[0]),
     serialize_test_message(
-      "/test_service1/_service_event", 400, get_service_event_message_basic_types()[1]),
+      service_event_name1, 400, get_service_event_message_basic_types()[1]),
     serialize_test_message(
-      "/test_service2/_service_event", 500, get_service_event_message_basic_types()[1])
+      service_event_name2, 500, get_service_event_message_basic_types()[1])
   };
 
   auto prepared_mock_reader = std::make_unique<MockSequentialReader>();
@@ -469,17 +514,18 @@ TEST_F(RosBag2PlayTestFixture, recorded_messages_are_played_for_filtered_service
   auto reader = std::make_unique<rosbag2_cpp::Reader>(std::move(prepared_mock_reader));
 
   play_options_.publish_service_requests = true;
+
   // Filter allows /test_service2, blocks /test_service1
   {
-    play_options_.services_to_filter = {"test_service2/_service_event"};
+    play_options_.services_to_filter = {service_event_name2};
 
     srv_.reset();
     srv_ = std::make_shared<ServiceManager>();
 
     std::vector<std::shared_ptr<test_msgs::srv::BasicTypes::Request>> service1_receive_requests;
     std::vector<std::shared_ptr<test_msgs::srv::BasicTypes::Request>> service2_receive_requests;
-    srv_->setup_service<test_msgs::srv::BasicTypes>("test_service1", service1_receive_requests);
-    srv_->setup_service<test_msgs::srv::BasicTypes>("test_service2", service2_receive_requests);
+    srv_->setup_service<test_msgs::srv::BasicTypes>(service_name1, service1_receive_requests);
+    srv_->setup_service<test_msgs::srv::BasicTypes>(service_name2, service2_receive_requests);
 
     srv_->run_services();
     ASSERT_TRUE(srv_->all_services_ready());
@@ -491,23 +537,25 @@ TEST_F(RosBag2PlayTestFixture, recorded_messages_are_played_for_filtered_service
     auto player = std::make_shared<rosbag2_transport::Player>(
       std::move(
         reader), storage_options_, play_options_);
-    player->play();
 
-    std::this_thread::sleep_for(250ms);
+    // Only need to wait for sent service 2 request to finish
+    spin_thread_and_wait_for_sent_service_requests_to_finish(
+      player, {service_name2});
+
     EXPECT_EQ(service1_receive_requests.size(), 0);
     EXPECT_EQ(service2_receive_requests.size(), 2);
   }
 
   // Filter allows /test_service1, blocks /test_service2
   {
-    play_options_.services_to_filter = {"test_service1/_service_event"};
+    play_options_.services_to_filter = {service_event_name1};
 
     srv_.reset();
     srv_ = std::make_shared<ServiceManager>();
     std::vector<std::shared_ptr<test_msgs::srv::BasicTypes::Request>> service1_receive_requests;
     std::vector<std::shared_ptr<test_msgs::srv::BasicTypes::Request>> service2_receive_requests;
-    srv_->setup_service<test_msgs::srv::BasicTypes>("test_service1", service1_receive_requests);
-    srv_->setup_service<test_msgs::srv::BasicTypes>("test_service2", service2_receive_requests);
+    srv_->setup_service<test_msgs::srv::BasicTypes>(service_name1, service1_receive_requests);
+    srv_->setup_service<test_msgs::srv::BasicTypes>(service_name2, service2_receive_requests);
 
     srv_->run_services();
     ASSERT_TRUE(srv_->all_services_ready());
@@ -519,9 +567,10 @@ TEST_F(RosBag2PlayTestFixture, recorded_messages_are_played_for_filtered_service
     auto player = std::make_shared<rosbag2_transport::Player>(
       std::move(
         reader), storage_options_, play_options_);
-    player->play();
+    // Only need to wait for sent service 1 request to finish
+    spin_thread_and_wait_for_sent_service_requests_to_finish(
+      player, {service_name1});
 
-    std::this_thread::sleep_for(250ms);
     EXPECT_EQ(service1_receive_requests.size(), 2);
     EXPECT_EQ(service2_receive_requests.size(), 0);
   }
@@ -534,8 +583,8 @@ TEST_F(RosBag2PlayTestFixture, recorded_messages_are_played_for_filtered_service
     srv_ = std::make_shared<ServiceManager>();
     std::vector<std::shared_ptr<test_msgs::srv::BasicTypes::Request>> service1_receive_requests;
     std::vector<std::shared_ptr<test_msgs::srv::BasicTypes::Request>> service2_receive_requests;
-    srv_->setup_service<test_msgs::srv::BasicTypes>("test_service1", service1_receive_requests);
-    srv_->setup_service<test_msgs::srv::BasicTypes>("test_service2", service2_receive_requests);
+    srv_->setup_service<test_msgs::srv::BasicTypes>(service_name1, service1_receive_requests);
+    srv_->setup_service<test_msgs::srv::BasicTypes>(service_name2, service2_receive_requests);
 
     srv_->run_services();
     ASSERT_TRUE(srv_->all_services_ready());
@@ -547,9 +596,9 @@ TEST_F(RosBag2PlayTestFixture, recorded_messages_are_played_for_filtered_service
     auto player = std::make_shared<rosbag2_transport::Player>(
       std::move(
         reader), storage_options_, play_options_);
-    player->play();
+    spin_thread_and_wait_for_sent_service_requests_to_finish(
+      player, {service_name1, service_name2});
 
-    std::this_thread::sleep_for(250ms);
     EXPECT_EQ(service1_receive_requests.size(), 2);
     EXPECT_EQ(service2_receive_requests.size(), 2);
   }
@@ -557,44 +606,45 @@ TEST_F(RosBag2PlayTestFixture, recorded_messages_are_played_for_filtered_service
 
 TEST_F(RosBag2PlayTestFixture, recorded_messages_are_played_for_filtered_topics_and_services)
 {
+  const std::string topic_name1 = "/topic1";
+  const std::string topic_name2 = "/topic2";
+  const std::string service_name1 = "/test_service1";
+  const std::string service_event_name1 = service_name1 + "/_service_event";
+  const std::string service_name2 = "/test_service2";
+  const std::string service_event_name2 = service_name2 + "/_service_event";
+
   auto all_types = std::vector<rosbag2_storage::TopicMetadata>{
-    {1u, "/topic1", "test_msgs/BasicTypes", "", {}, ""},
-    {2u, "/topic2", "test_msgs/BasicTypes", "", {}, ""},
-    {3u, "/test_service1/_service_event", "test_msgs/srv/BasicTypes_Event", "", {}, ""},
-    {4u, "/test_service2/_service_event", "test_msgs/srv/BasicTypes_Event", "", {}, ""},
+    {1u, topic_name1, "test_msgs/BasicTypes", "", {}, ""},
+    {2u, topic_name2, "test_msgs/BasicTypes", "", {}, ""},
+    {3u, service_event_name1, "test_msgs/srv/BasicTypes_Event", "", {}, ""},
+    {4u, service_event_name2, "test_msgs/srv/BasicTypes_Event", "", {}, ""},
   };
 
   std::vector<std::shared_ptr<rosbag2_storage::SerializedBagMessage>> messages =
   {
-    serialize_test_message("/topic1", 500, get_messages_basic_types()[0]),
-    serialize_test_message(
-      "/test_service1/_service_event",
-      520,
-      get_service_event_message_basic_types()[0]),
-    serialize_test_message("/topic2", 520, get_messages_basic_types()[0]),
-    serialize_test_message(
-      "/test_service2/_service_event",
-      550,
-      get_service_event_message_basic_types()[0]),
+    serialize_test_message(topic_name1, 500, get_messages_basic_types()[0]),
+    serialize_test_message(service_event_name1, 520, get_service_event_message_basic_types()[0]),
+    serialize_test_message(topic_name2, 520, get_messages_basic_types()[0]),
+    serialize_test_message(service_event_name2, 550, get_service_event_message_basic_types()[0]),
   };
 
   play_options_.publish_service_requests = true;
   // Filter allows all topics, blocks service test_service2
   {
-    play_options_.topics_to_filter = {"topic1", "topic2"};
-    play_options_.services_to_filter = {"test_service1/_service_event"};
+    play_options_.topics_to_filter = {topic_name1, topic_name2};
+    play_options_.services_to_filter = {service_event_name1};
 
     sub_.reset();
     sub_ = std::make_shared<SubscriptionManager>();
-    sub_->add_subscription<test_msgs::msg::BasicTypes>("/topic1", 1);
-    sub_->add_subscription<test_msgs::msg::BasicTypes>("/topic2", 1);
+    sub_->add_subscription<test_msgs::msg::BasicTypes>(topic_name1, 1);
+    sub_->add_subscription<test_msgs::msg::BasicTypes>(topic_name2, 1);
 
     srv_.reset();
     srv_ = std::make_shared<ServiceManager>();
     std::vector<std::shared_ptr<test_msgs::srv::BasicTypes::Request>> service1_receive_requests;
     std::vector<std::shared_ptr<test_msgs::srv::BasicTypes::Request>> service2_receive_requests;
-    srv_->setup_service<test_msgs::srv::BasicTypes>("test_service1", service1_receive_requests);
-    srv_->setup_service<test_msgs::srv::BasicTypes>("test_service2", service2_receive_requests);
+    srv_->setup_service<test_msgs::srv::BasicTypes>(service_name1, service1_receive_requests);
+    srv_->setup_service<test_msgs::srv::BasicTypes>(service_name2, service2_receive_requests);
     srv_->run_services();
     ASSERT_TRUE(srv_->all_services_ready());
 
@@ -607,15 +657,26 @@ TEST_F(RosBag2PlayTestFixture, recorded_messages_are_played_for_filtered_topics_
     auto player = std::make_shared<rosbag2_transport::Player>(
       std::move(
         reader), storage_options_, play_options_);
-    player->play();
 
+    rclcpp::executors::SingleThreadedExecutor exec;
+    exec.add_node(player);
+    auto spin_thread = std::thread(
+      [&exec]() {
+        exec.spin();
+      });
+
+    player->play();
     await_received_messages.get();
-    std::this_thread::sleep_for(300ms);
+    player->wait_for_playback_to_finish(200ms);
+
+    EXPECT_TRUE(player->wait_for_sent_service_requests_to_finish(service_name1, 100ms));
+    exec.cancel();
+    spin_thread.join();
 
     // Filter allow all topics
-    auto replayed_topic1 = sub_->get_received_messages<test_msgs::msg::BasicTypes>("/topic1");
+    auto replayed_topic1 = sub_->get_received_messages<test_msgs::msg::BasicTypes>(topic_name1);
     EXPECT_THAT(replayed_topic1, SizeIs(1u));
-    auto replayed_topic2 = sub_->get_received_messages<test_msgs::msg::BasicTypes>("/topic2");
+    auto replayed_topic2 = sub_->get_received_messages<test_msgs::msg::BasicTypes>(topic_name2);
     EXPECT_THAT(replayed_topic2, SizeIs(1u));
 
     // Filter allow test_service1, block test_service2
@@ -625,21 +686,21 @@ TEST_F(RosBag2PlayTestFixture, recorded_messages_are_played_for_filtered_topics_
 
   // Filter allows all services, blocks topic2
   {
-    play_options_.topics_to_filter = {"topic1"};
+    play_options_.topics_to_filter = {topic_name1};
     play_options_.services_to_filter = {
-      "test_service1/_service_event", "test_service2/_service_event"};
+      service_event_name1, service_event_name2};
 
     sub_.reset();
     sub_ = std::make_shared<SubscriptionManager>();
-    sub_->add_subscription<test_msgs::msg::BasicTypes>("/topic1", 1);
-    sub_->add_subscription<test_msgs::msg::BasicTypes>("/topic2", 0);
+    sub_->add_subscription<test_msgs::msg::BasicTypes>(topic_name1, 1);
+    sub_->add_subscription<test_msgs::msg::BasicTypes>(topic_name2, 0);
 
     srv_.reset();
     srv_ = std::make_shared<ServiceManager>();
     std::vector<std::shared_ptr<test_msgs::srv::BasicTypes::Request>> service1_receive_requests;
     std::vector<std::shared_ptr<test_msgs::srv::BasicTypes::Request>> service2_receive_requests;
-    srv_->setup_service<test_msgs::srv::BasicTypes>("test_service1", service1_receive_requests);
-    srv_->setup_service<test_msgs::srv::BasicTypes>("test_service2", service2_receive_requests);
+    srv_->setup_service<test_msgs::srv::BasicTypes>(service_name1, service1_receive_requests);
+    srv_->setup_service<test_msgs::srv::BasicTypes>(service_name2, service2_receive_requests);
     srv_->run_services();
     ASSERT_TRUE(srv_->all_services_ready());
 
@@ -652,15 +713,27 @@ TEST_F(RosBag2PlayTestFixture, recorded_messages_are_played_for_filtered_topics_
     auto player = std::make_shared<rosbag2_transport::Player>(
       std::move(
         reader), storage_options_, play_options_);
-    player->play();
 
+    rclcpp::executors::SingleThreadedExecutor exec;
+    exec.add_node(player);
+    auto spin_thread = std::thread(
+      [&exec]() {
+        exec.spin();
+      });
+
+    player->play();
     await_received_messages.get();
-    std::this_thread::sleep_for(200ms);
+    player->wait_for_playback_to_finish(200ms);
+
+    EXPECT_TRUE(player->wait_for_sent_service_requests_to_finish(service_name1, 100ms));
+    EXPECT_TRUE(player->wait_for_sent_service_requests_to_finish(service_name2, 100ms));
+    exec.cancel();
+    spin_thread.join();
 
     // Filter allow topic2, block topic1
-    auto replayed_topic1 = sub_->get_received_messages<test_msgs::msg::BasicTypes>("/topic1");
+    auto replayed_topic1 = sub_->get_received_messages<test_msgs::msg::BasicTypes>(topic_name1);
     EXPECT_THAT(replayed_topic1, SizeIs(1u));
-    auto replayed_topic2 = sub_->get_received_messages<test_msgs::msg::BasicTypes>("/topic2");
+    auto replayed_topic2 = sub_->get_received_messages<test_msgs::msg::BasicTypes>(topic_name2);
     EXPECT_THAT(replayed_topic2, SizeIs(0u));
 
     // Filter allow all services
@@ -670,21 +743,21 @@ TEST_F(RosBag2PlayTestFixture, recorded_messages_are_played_for_filtered_topics_
 
   // Filter allows all services and topics
   {
-    play_options_.topics_to_filter = {"topic1", "topic2"};
+    play_options_.topics_to_filter = {topic_name1, topic_name2};
     play_options_.services_to_filter = {
-      "test_service1/_service_event", "test_service2/_service_event"};
+      service_event_name1, service_event_name2};
 
     sub_.reset();
     sub_ = std::make_shared<SubscriptionManager>();
-    sub_->add_subscription<test_msgs::msg::BasicTypes>("/topic1", 1);
-    sub_->add_subscription<test_msgs::msg::BasicTypes>("/topic2", 1);
+    sub_->add_subscription<test_msgs::msg::BasicTypes>(topic_name1, 1);
+    sub_->add_subscription<test_msgs::msg::BasicTypes>(topic_name2, 1);
 
     srv_.reset();
     srv_ = std::make_shared<ServiceManager>();
     std::vector<std::shared_ptr<test_msgs::srv::BasicTypes::Request>> service1_receive_requests;
     std::vector<std::shared_ptr<test_msgs::srv::BasicTypes::Request>> service2_receive_requests;
-    srv_->setup_service<test_msgs::srv::BasicTypes>("test_service1", service1_receive_requests);
-    srv_->setup_service<test_msgs::srv::BasicTypes>("test_service2", service2_receive_requests);
+    srv_->setup_service<test_msgs::srv::BasicTypes>(service_name1, service1_receive_requests);
+    srv_->setup_service<test_msgs::srv::BasicTypes>(service_name2, service2_receive_requests);
     srv_->run_services();
     ASSERT_TRUE(srv_->all_services_ready());
 
@@ -697,10 +770,22 @@ TEST_F(RosBag2PlayTestFixture, recorded_messages_are_played_for_filtered_topics_
     auto player = std::make_shared<rosbag2_transport::Player>(
       std::move(
         reader), storage_options_, play_options_);
-    player->play();
 
+    rclcpp::executors::SingleThreadedExecutor exec;
+    exec.add_node(player);
+    auto spin_thread = std::thread(
+      [&exec]() {
+        exec.spin();
+      });
+
+    player->play();
     await_received_messages.get();
-    std::this_thread::sleep_for(200ms);
+    player->wait_for_playback_to_finish(200ms);
+
+    EXPECT_TRUE(player->wait_for_sent_service_requests_to_finish(service_name1, 100ms));
+    EXPECT_TRUE(player->wait_for_sent_service_requests_to_finish(service_name2, 100ms));
+    exec.cancel();
+    spin_thread.join();
 
     // Filter allow all topics
     auto replayed_topic1 = sub_->get_received_messages<test_msgs::msg::BasicTypes>("/topic1");
@@ -858,7 +943,7 @@ TEST_F(RosBag2PlayTestFixture, player_gracefully_exit_by_rclcpp_shutdown_in_paus
 
 TEST_F(RosBag2PlayTestFixture, play_service_requests_from_service_introspection_messages)
 {
-  const std::string service_name = "test_service1";
+  const std::string service_name = "/test_service1";
   const std::string service_event_name = service_name + "/_service_event";
   auto services_types = std::vector<rosbag2_storage::TopicMetadata>{
     {1u, service_event_name, "test_msgs/srv/BasicTypes_Event", "", {}, ""},
@@ -888,20 +973,8 @@ TEST_F(RosBag2PlayTestFixture, play_service_requests_from_service_introspection_
   auto player =
     std::make_shared<rosbag2_transport::Player>(std::move(reader), storage_options_, play_options_);
 
-  rclcpp::executors::SingleThreadedExecutor exec;
-  exec.add_node(player);
-  // We need to spin Player to get responses from services and able to wait for requests to finish
-  auto spin_thread = std::thread(
-    [&exec]() {
-      exec.spin();
-    });
+  spin_thread_and_wait_for_sent_service_requests_to_finish(player, {service_name});
 
-  player->play();
-  player->wait_for_playback_to_finish();
-
-  EXPECT_TRUE(player->wait_for_sent_service_requests_to_finish(service_name));
-  exec.cancel();
-  spin_thread.join();
   EXPECT_EQ(received_service_requests.size(), 2);
   // expected_request is ServiceEventInfo::REQUEST_RECEIVED
   const auto expected_request = get_service_event_message_basic_types()[0]->request[0];
@@ -915,7 +988,7 @@ TEST_F(RosBag2PlayTestFixture, play_service_requests_from_service_introspection_
 
 TEST_F(RosBag2PlayTestFixture, play_service_requests_from_client_introspection_messages)
 {
-  const std::string service_name = "test_service1";
+  const std::string service_name = "/test_service1";
   const std::string service_event_name = service_name + "/_service_event";
   auto services_types = std::vector<rosbag2_storage::TopicMetadata>{
     {1u, service_event_name, "test_msgs/srv/BasicTypes_Event", "", {}, ""},
@@ -945,20 +1018,7 @@ TEST_F(RosBag2PlayTestFixture, play_service_requests_from_client_introspection_m
   auto player =
     std::make_shared<rosbag2_transport::Player>(std::move(reader), storage_options_, play_options_);
 
-  rclcpp::executors::SingleThreadedExecutor exec;
-  exec.add_node(player);
-  // We need to spin Player to get responses from services and able to wait for requests to finish
-  auto spin_thread = std::thread(
-    [&exec]() {
-      exec.spin();
-    });
-
-  player->play();
-  player->wait_for_playback_to_finish();
-
-  EXPECT_TRUE(player->wait_for_sent_service_requests_to_finish(service_name));
-  exec.cancel();
-  spin_thread.join();
+  spin_thread_and_wait_for_sent_service_requests_to_finish(player, {service_name});
 
   EXPECT_EQ(received_service_requests.size(), 2);
   // expected_request is ServiceEventInfo::REQUEST_SENT
