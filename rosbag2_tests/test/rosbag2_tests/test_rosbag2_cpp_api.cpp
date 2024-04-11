@@ -63,7 +63,7 @@ TEST_P(TestRosbag2CPPAPI, minimal_writer_example)
     writer.open(storage_options);
 
     auto bag_message = std::make_shared<rosbag2_storage::SerializedBagMessage>();
-    auto ret = rcutils_system_time_now(&bag_message->time_stamp);
+    auto ret = rcutils_system_time_now(&bag_message->recv_timestamp);
     if (ret != RCL_RET_OK) {
       FAIL() << "couldn't assign time rosbag message";
     }

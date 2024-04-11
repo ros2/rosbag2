@@ -66,7 +66,8 @@ void write_sample_split_bag(
 
     auto msg = std::make_shared<rosbag2_storage::SerializedBagMessage>();
     msg->serialized_data = rosbag2_storage::make_serialized_message(&value, sizeof(value));
-    msg->time_stamp = time_stamp;
+    msg->recv_timestamp = time_stamp;
+    msg->send_timestamp = time_stamp;
     msg->topic_name = topic_name;
     writer.write(msg);
   }

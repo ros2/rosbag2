@@ -135,5 +135,24 @@ TEST_F(RecordIntegrationTestFixture, record_all_with_sim_time)
     }
   }
   // check that the timestamp is same as the clock message
-  EXPECT_THAT(string_messages[0]->time_stamp, time_value);
+  EXPECT_THAT(string_messages[0]->recv_timestamp, time_value);
+
+  bool rwm_has_timestamp_support = true;
+
+#ifdef _WIN32
+  if (std::string(rmw_get_implementation_identifier()).find("rmw_connextdds") !=
+    std::string::npos)
+  {
+    rwm_has_timestamp_support = false;
+  }
+#endif
+
+  if (rwm_has_timestamp_support) {
+    // Check that the send_timestamp is not the same as the clock message
+    EXPECT_NE(string_messages[0]->send_timestamp, time_value);
+    EXPECT_NE(string_messages[0]->send_timestamp, 0);
+  } else {
+    // if rwm has not timestamp support, send_timestamp must be zero
+    EXPECT_EQ(string_messages[0]->send_timestamp, 0);
+  }
 }

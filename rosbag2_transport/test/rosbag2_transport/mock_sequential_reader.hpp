@@ -121,7 +121,7 @@ public:
     metadata_.message_count = messages.size();
     if (!messages.empty()) {
       const auto message_timestamp = std::chrono::time_point<std::chrono::high_resolution_clock>(
-        std::chrono::nanoseconds(messages[0]->time_stamp));
+        std::chrono::nanoseconds(messages[0]->recv_timestamp));
       metadata_.starting_time = message_timestamp;
     }
     messages_ = std::move(messages);

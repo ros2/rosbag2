@@ -69,7 +69,7 @@ public:
       rw_storage->create_topic(topic_metadata, std::get<3>(msg));
       auto bag_message = std::make_shared<rosbag2_storage::SerializedBagMessage>();
       bag_message->serialized_data = make_serialized_message(std::get<0>(msg));
-      bag_message->time_stamp = std::get<1>(msg);
+      bag_message->recv_timestamp = std::get<1>(msg);
       bag_message->topic_name = topic_metadata.name;
       rw_storage->write(bag_message);
     }
@@ -208,7 +208,7 @@ TEST_F(TemporaryDirectoryFixture, can_write_and_read_basic_mcap_file)
     serialized_bag_msg->serialized_data = std::shared_ptr<rcutils_uint8_array_t>(
       const_cast<rcutils_uint8_array_t *>(&serialized_msg->get_rcl_serialized_message()),
       [](rcutils_uint8_array_t * /* data */) {});
-    serialized_bag_msg->time_stamp = time_stamp;
+    serialized_bag_msg->recv_timestamp = time_stamp;
     serialized_bag_msg->topic_name = topic_name;
     writer->write(serialized_bag_msg);
   }
@@ -295,7 +295,7 @@ TEST_F(TemporaryDirectoryFixture, can_write_mcap_with_zstd_configured_from_yaml)
     serialized_bag_msg->serialized_data = std::shared_ptr<rcutils_uint8_array_t>(
       const_cast<rcutils_uint8_array_t *>(&serialized_msg->get_rcl_serialized_message()),
       [](rcutils_uint8_array_t * /* data */) {});
-    serialized_bag_msg->time_stamp = time_stamp;
+    serialized_bag_msg->recv_timestamp = time_stamp;
     serialized_bag_msg->topic_name = topic_name;
     writer->write(serialized_bag_msg);
     writer->write(serialized_bag_msg);

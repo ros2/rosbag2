@@ -82,8 +82,9 @@ public:
 
         auto bag_message = std::make_shared<rosbag2_storage::SerializedBagMessage>();
         bag_message->serialized_data = memory_management_->serialize_message(std_string_msg);
-        bag_message->time_stamp =
+        bag_message->recv_timestamp =
           std::chrono::duration_cast<std::chrono::nanoseconds>(timestamp).count();
+        bag_message->send_timestamp = bag_message->recv_timestamp;
         bag_message->topic_name = topic;
         timestamp += dt;
         serialized_messages.push_back(bag_message);

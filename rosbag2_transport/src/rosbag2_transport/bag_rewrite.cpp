@@ -53,7 +53,7 @@ std::shared_ptr<rosbag2_storage::SerializedBagMessage> get_next(
     if (msg == nullptr) {
       continue;
     }
-    if (earliest_msg == nullptr || msg->time_stamp < earliest_msg->time_stamp) {
+    if (earliest_msg == nullptr || msg->recv_timestamp < earliest_msg->recv_timestamp) {
       earliest_msg = msg;
       earliest_msg_index = i;
     }

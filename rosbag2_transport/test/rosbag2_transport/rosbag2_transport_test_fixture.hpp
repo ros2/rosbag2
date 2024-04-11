@@ -60,7 +60,7 @@ public:
   {
     auto bag_msg = std::make_shared<rosbag2_storage::SerializedBagMessage>();
     bag_msg->serialized_data = memory_management_.serialize_message(message);
-    bag_msg->time_stamp = milliseconds * 1000000;
+    bag_msg->recv_timestamp = milliseconds * 1000000;
     bag_msg->topic_name = topic;
 
     return bag_msg;

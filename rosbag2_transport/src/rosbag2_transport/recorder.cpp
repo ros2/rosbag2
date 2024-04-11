@@ -561,16 +561,53 @@ std::shared_ptr<rclcpp::GenericSubscription>
 RecorderImpl::create_subscription(
   const std::string & topic_name, const std::string & topic_type, const rclcpp::QoS & qos)
 {
-  auto subscription = node->create_generic_subscription(
-    topic_name,
-    topic_type,
-    qos,
-    [this, topic_name, topic_type](std::shared_ptr<const rclcpp::SerializedMessage> message) {
-      if (!paused_.load()) {
-        writer_->write(message, topic_name, topic_type, node->get_clock()->now());
-      }
-    });
-  return subscription;
+#ifdef _WIN32
+  if (std::string(rmw_get_implementation_identifier()).find("rmw_connextdds") !=
+    std::string::npos)
+  {
+    return node->create_generic_subscription(
+      topic_name,
+      topic_type,
+      qos,
+      [this, topic_name, topic_type](std::shared_ptr<const rclcpp::SerializedMessage> message,
+      const rclcpp::MessageInfo &) {
+        if (!paused_.load()) {
+          writer_->write(
+            std::move(message), topic_name, topic_type, node->now().nanoseconds(),
+            0);
+        }
+      });
+  }
+#endif
+
+  if (record_options_.use_sim_time) {
+    return node->create_generic_subscription(
+      topic_name,
+      topic_type,
+      qos,
+      [this, topic_name, topic_type](std::shared_ptr<const rclcpp::SerializedMessage> message,
+      const rclcpp::MessageInfo & mi) {
+        if (!paused_.load()) {
+          writer_->write(
+            std::move(message), topic_name, topic_type, node->now().nanoseconds(),
+            mi.get_rmw_message_info().source_timestamp);
+        }
+      });
+  } else {
+    return node->create_generic_subscription(
+      topic_name,
+      topic_type,
+      qos,
+      [this, topic_name, topic_type](std::shared_ptr<const rclcpp::SerializedMessage> message,
+      const rclcpp::MessageInfo & mi) {
+        if (!paused_.load()) {
+          writer_->write(
+            std::move(message), topic_name, topic_type,
+            mi.get_rmw_message_info().received_timestamp,
+            mi.get_rmw_message_info().source_timestamp);
+        }
+      });
+  }
 }
 
 std::vector<rclcpp::QoS> RecorderImpl::offered_qos_profiles_for_topic(
