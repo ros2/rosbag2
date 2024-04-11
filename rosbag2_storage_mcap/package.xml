@@ -17,6 +17,7 @@
   <depend>pluginlib</depend>
   <depend>rcutils</depend>
   <depend>rosbag2_storage</depend>
+  <depend>yaml_cpp_vendor</depend>
 
   <test_depend>ament_cmake_clang_format</test_depend>
   <test_depend>ament_cmake_gmock</test_depend>
