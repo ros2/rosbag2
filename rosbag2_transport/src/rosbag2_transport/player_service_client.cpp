@@ -173,7 +173,7 @@ void PlayerServiceClient::async_send_request(
 
 bool PlayerServiceClient::wait_for_sent_requests_to_finish(std::chrono::duration<double> timeout)
 {
-  return player_service_client_manager_->wait_for_all_futures(timeout);
+  return player_service_client_manager_->wait_for_one_client_all_futures(client_, timeout);
 }
 
 PlayerServiceClientManager::PlayerServiceClientManager(
@@ -226,9 +226,27 @@ bool PlayerServiceClientManager::register_request_future(
 
 bool PlayerServiceClientManager::wait_for_all_futures(std::chrono::duration<double> timeout)
 {
+  return wait_for_one_client_all_futures(nullptr, timeout);
+}
+
+bool PlayerServiceClientManager::wait_for_one_client_all_futures(
+  std::shared_ptr<rclcpp::GenericClient> specified_client,
+  std::chrono::duration<double> timeout)
+{
   auto is_all_futures_ready = [&]() {
       bool is_ready = true;
       for (auto & [timestamp, future_request_id_and_client] : request_futures_list_) {
+        // If service client is specified, find it
+        if (specified_client != nullptr) {
+          auto client = future_request_id_and_client.second.lock();
+          if (client == nullptr) {
+            throw std::runtime_error("request's client is not valid\n");
+          }
+          if (specified_client != client) {
+            continue;
+          }
+        }
+
         if (!future_request_id_and_client.first->future.valid()) {
           std::stringstream ss;
           ss << "request's " << future_request_id_and_client.first->request_id <<

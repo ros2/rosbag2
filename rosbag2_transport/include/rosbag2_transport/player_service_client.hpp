@@ -107,6 +107,10 @@ public:
 
   bool wait_for_all_futures(std::chrono::duration<double> timeout = std::chrono::seconds(5));
 
+  bool wait_for_one_client_all_futures(
+    std::shared_ptr<rclcpp::GenericClient> client,
+    std::chrono::duration<double> timeout = std::chrono::seconds(5));
+
 private:
   using time_point = std::chrono::steady_clock::time_point;
   using ptr_future_and_request_id = std::unique_ptr<rclcpp::GenericClient::FutureAndRequestId>;
