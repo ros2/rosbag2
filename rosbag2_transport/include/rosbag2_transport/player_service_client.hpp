@@ -65,7 +65,6 @@ public:
   void async_send_request(const std::shared_ptr<uint8_t[]> type_erased_service_event);
 
   /// Wait until sent service requests will receive responses from service servers.
-  /// \param service_name - Name of the service or service event from what to wait responses.
   /// \param timeout - Timeout in fraction of seconds to wait for.
   /// \return true if service requests successfully finished, otherwise false.
   bool wait_for_sent_requests_to_finish(
@@ -102,21 +101,25 @@ public:
   bool request_future_queue_is_full();
 
   bool register_request_future(
-    rclcpp::GenericClient::FutureAndRequestId && request_future,
+    rclcpp::GenericClient::FutureAndRequestId && future_and_request_id,
     std::weak_ptr<rclcpp::GenericClient> client);
 
-  bool wait_for_all_futures(std::chrono::duration<double> timeout = std::chrono::seconds(5));
-
-  bool wait_for_one_client_all_futures(
+  /// Wait until sent service requests will receive responses from service servers.
+  /// \param client - Generic service client from which requests was sent.
+  /// \note If client is a nullptr it will be taken into account all requests from all clients
+  /// and timeout will be due per each client.
+  /// \param timeout - Timeout in fraction of seconds to wait for.
+  /// \return true if service requests successfully finished, otherwise false.
+  bool wait_for_sent_requests_to_finish(
     std::shared_ptr<rclcpp::GenericClient> client,
     std::chrono::duration<double> timeout = std::chrono::seconds(5));
 
 private:
   using time_point = std::chrono::steady_clock::time_point;
-  using ptr_future_and_request_id = std::unique_ptr<rclcpp::GenericClient::FutureAndRequestId>;
-  using future_request_id_and_client_t =
-    std::pair<ptr_future_and_request_id, std::weak_ptr<rclcpp::GenericClient>>;
-  std::map<time_point, future_request_id_and_client_t> request_futures_list_;
+  using FutureAndRequestIdSharedPtr = std::shared_ptr<rclcpp::GenericClient::FutureAndRequestId>;
+  using FutureAndRequestIdAndClient =
+    std::pair<FutureAndRequestIdSharedPtr, std::weak_ptr<rclcpp::GenericClient>>;
+  std::map<time_point, FutureAndRequestIdAndClient> request_futures_list_;
   std::mutex request_futures_list_mutex_;
 
   std::chrono::seconds request_future_timeout_;

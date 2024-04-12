@@ -171,11 +171,14 @@ public:
   /// #add_on_play_message_post_callback
   void delete_on_play_message_callback(const callback_handle_t & handle);
 
-  /// \brief Wait for sent service requests to finish
-  /// \param service_name Service name which service requests are sent to
-  /// If service_name is empty, wait for all sent service requests to finish.
-  /// \param timeout Maximum time to wait for sent service requests to finish.
-  /// \return true if sent service requests finished during timeout, otherwise false.
+  /// Wait until sent service requests will receive responses from service servers.
+  /// \note The player node shall be spun in the executor in a parallel thread to be able to wait
+  /// for responses.
+  /// \param service_name - Name of the service or service event from what to wait responses.
+  /// \note if service_name is empty the function will wait until all service requests sent to all
+  /// service servers will finish. Timeout in this cases will be used for each service name.
+  /// \param timeout - Timeout in fraction of seconds to wait for.
+  /// \return true if service requests successfully finished, otherwise false.
   bool wait_for_sent_service_requests_to_finish(
     const std::string & service_name,
     std::chrono::duration<double> timeout = std::chrono::seconds(5));
@@ -812,7 +815,7 @@ bool PlayerImpl::wait_for_sent_service_requests_to_finish(
       is_requests_complete = false;
     }
   } else {
-    player_service_client_manager_->wait_for_all_futures(timeout);
+    player_service_client_manager_->wait_for_sent_requests_to_finish(nullptr, timeout);
   }
   return is_requests_complete;
 }

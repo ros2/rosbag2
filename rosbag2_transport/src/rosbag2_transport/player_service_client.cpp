@@ -173,7 +173,7 @@ void PlayerServiceClient::async_send_request(
 
 bool PlayerServiceClient::wait_for_sent_requests_to_finish(std::chrono::duration<double> timeout)
 {
-  return player_service_client_manager_->wait_for_one_client_all_futures(client_, timeout);
+  return player_service_client_manager_->wait_for_sent_requests_to_finish(client_, timeout);
 }
 
 PlayerServiceClientManager::PlayerServiceClientManager(
@@ -205,16 +205,17 @@ bool PlayerServiceClientManager::request_future_queue_is_full()
 }
 
 bool PlayerServiceClientManager::register_request_future(
-  rclcpp::GenericClient::FutureAndRequestId && request_future,
+  rclcpp::GenericClient::FutureAndRequestId && future_and_request_id,
   std::weak_ptr<rclcpp::GenericClient> client)
 {
-  auto future_and_request_id =
-    std::make_unique<rclcpp::GenericClient::FutureAndRequestId>(std::move(request_future));
+  auto future_and_request_id_shared_ptr =
+    std::make_shared<rclcpp::GenericClient::FutureAndRequestId>(std::move(future_and_request_id));
 
   if (!request_future_queue_is_full()) {
     std::lock_guard<std::mutex> lock(request_futures_list_mutex_);
     auto emplace_result = request_futures_list_.emplace(
-      std::chrono::steady_clock::now(), std::make_pair(std::move(future_and_request_id), client));
+      std::chrono::steady_clock::now(),
+      std::make_pair(std::move(future_and_request_id_shared_ptr), client));
     return emplace_result.second;
   } else {
     ROSBAG2_TRANSPORT_LOG_WARN(
@@ -224,40 +225,34 @@ bool PlayerServiceClientManager::register_request_future(
   return false;
 }
 
-bool PlayerServiceClientManager::wait_for_all_futures(std::chrono::duration<double> timeout)
-{
-  return wait_for_one_client_all_futures(nullptr, timeout);
-}
-
-bool PlayerServiceClientManager::wait_for_one_client_all_futures(
-  std::shared_ptr<rclcpp::GenericClient> specified_client,
+bool PlayerServiceClientManager::wait_for_sent_requests_to_finish(
+  std::shared_ptr<rclcpp::GenericClient> client,
   std::chrono::duration<double> timeout)
 {
   auto is_all_futures_ready = [&]() {
-      bool is_ready = true;
       for (auto & [timestamp, future_request_id_and_client] : request_futures_list_) {
-        // If service client is specified, find it
-        if (specified_client != nullptr) {
-          auto client = future_request_id_and_client.second.lock();
-          if (client == nullptr) {
+        if (client) {
+          auto current_client = future_request_id_and_client.second.lock();
+          if (current_client == nullptr) {
             throw std::runtime_error("request's client is not valid\n");
           }
-          if (specified_client != client) {
+          // Wait for futures only from specified client
+          if (client != current_client) {
             continue;
           }
-        }
+        }  // else { /* if the client is not specified, wait for futures from all clients */ }
 
-        if (!future_request_id_and_client.first->future.valid()) {
+        const auto & future_and_request_id = future_request_id_and_client.first;
+        if (!future_and_request_id->future.valid()) {
           std::stringstream ss;
-          ss << "request's " << future_request_id_and_client.first->request_id <<
-            " future is not valid!\n";
+          ss << "request's " << future_and_request_id->request_id << " future is not valid!\n";
           throw std::runtime_error(ss.str());
         }
-        if (future_request_id_and_client.first->wait_for(0s) != std::future_status::ready) {
+        if (future_and_request_id->wait_for(0s) != std::future_status::ready) {
           return false;
         }
       }
-      return is_ready;
+      return true;
     };
 
   auto sleep_time = std::chrono::milliseconds(10);
