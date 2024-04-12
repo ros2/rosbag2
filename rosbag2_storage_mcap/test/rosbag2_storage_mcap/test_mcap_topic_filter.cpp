@@ -98,7 +98,8 @@ protected:
       auto std_string_msg = std::make_shared<std_msgs::msg::String>();
       std_string_msg->data = string_message;
       bag_message->serialized_data = memory_management->serialize_message(std_string_msg);
-      bag_message->time_stamp = time_stamp;
+      bag_message->recv_timestamp = time_stamp;
+      bag_message->send_timestamp = time_stamp;
       bag_message->topic_name = topic_metadata.name;
       rw_storage->write(bag_message);
     }
