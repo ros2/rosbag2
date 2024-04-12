@@ -86,7 +86,7 @@ public:
   bool all_services_ready()
   {
     for (auto client : clients_) {
-      if (!client->wait_for_service(std::chrono::milliseconds(500))) {
+      if (!client->wait_for_service(std::chrono::seconds(2))) {
         return false;
       }
     }
