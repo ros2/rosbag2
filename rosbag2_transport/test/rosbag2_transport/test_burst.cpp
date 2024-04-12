@@ -412,14 +412,10 @@ TEST_F(RosBag2PlayTestFixture, burst_bursting_only_filtered_services) {
   };
   std::vector<std::shared_ptr<rosbag2_storage::SerializedBagMessage>> messages =
   {
-    serialize_test_message(
-      service_event_name1, 500, get_service_event_message_basic_types()[0]),
-    serialize_test_message(
-      service_event_name2, 600, get_service_event_message_basic_types()[0]),
-    serialize_test_message(
-      service_event_name1, 400, get_service_event_message_basic_types()[1]),
-    serialize_test_message(
-      service_event_name2, 500, get_service_event_message_basic_types()[1])
+    serialize_test_message(service_event_name1, 500, get_service_event_message_basic_types()[0]),
+    serialize_test_message(service_event_name2, 600, get_service_event_message_basic_types()[0]),
+    serialize_test_message(service_event_name1, 400, get_service_event_message_basic_types()[1]),
+    serialize_test_message(service_event_name2, 500, get_service_event_message_basic_types()[1])
   };
 
   std::vector<std::shared_ptr<test_msgs::srv::BasicTypes::Request>> service1_receive_requests;
@@ -444,17 +440,22 @@ TEST_F(RosBag2PlayTestFixture, burst_bursting_only_filtered_services) {
   // Check services are ready
   ASSERT_TRUE(srv_->all_services_ready());
 
-  auto player_future = std::async(std::launch::async, [&player]() -> void {player->play();});
-  ASSERT_TRUE(player->is_paused());
+  rclcpp::executors::SingleThreadedExecutor exec;
+  exec.add_node(player);
+  auto spin_thread = std::thread([&exec]() {exec.spin();});
+  player->play();
 
   const size_t EXPECTED_BURST_COUNT = 2;
   ASSERT_EQ(player->burst(EXPECTED_BURST_COUNT), EXPECTED_BURST_COUNT);
 
   ASSERT_TRUE(player->is_paused());
   player->resume();
-  player_future.get();
 
   player->wait_for_playback_to_finish();
+  EXPECT_TRUE(player->wait_for_sent_service_requests_to_finish("", 100ms));
+
+  exec.cancel();
+  spin_thread.join();
 
   EXPECT_EQ(service1_receive_requests.size(), 0);
   EXPECT_EQ(service2_receive_requests.size(), 2);

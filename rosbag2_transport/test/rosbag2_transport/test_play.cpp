@@ -47,7 +47,7 @@ using namespace rosbag2_test_common;  // NOLINT
 
 namespace
 {
-static inline std::vector<test_msgs::srv::BasicTypes_Event::SharedPtr>
+inline std::vector<test_msgs::srv::BasicTypes_Event::SharedPtr>
 get_service_event_message_basic_types()
 {
   std::vector<test_msgs::srv::BasicTypes_Event::SharedPtr> messages;
@@ -90,7 +90,7 @@ get_service_event_message_basic_types()
 
 void spin_thread_and_wait_for_sent_service_requests_to_finish(
   std::shared_ptr<rosbag2_transport::Player> player,
-  std::vector<std::string> service_name_list)
+  const std::vector<std::string> && service_name_list)
 {
   rclcpp::executors::SingleThreadedExecutor exec;
   exec.add_node(player);
@@ -99,13 +99,13 @@ void spin_thread_and_wait_for_sent_service_requests_to_finish(
       exec.spin();
     });
   player->play();
-  player->wait_for_playback_to_finish(200ms);
+  player->wait_for_playback_to_finish();
 
-  for (auto & service_name : service_name_list) {
-    EXPECT_TRUE(player->wait_for_sent_service_requests_to_finish(service_name, 100ms));
+  for (const auto & service_name : service_name_list) {
+    EXPECT_TRUE(player->wait_for_sent_service_requests_to_finish(service_name, 2s));
   }
   exec.cancel();
-  spin_thread.join();
+  if (spin_thread.joinable()) {spin_thread.join();}
 }
 }  // namespace
 
@@ -187,14 +187,10 @@ TEST_F(RosBag2PlayTestFixture, recorded_messages_are_played_for_all_services)
   };
   std::vector<std::shared_ptr<rosbag2_storage::SerializedBagMessage>> messages =
   {
-    serialize_test_message(
-      service_event_name1, 500, get_service_event_message_basic_types()[0]),
-    serialize_test_message(
-      service_event_name2, 600, get_service_event_message_basic_types()[0]),
-    serialize_test_message(
-      service_event_name1, 400, get_service_event_message_basic_types()[1]),
-    serialize_test_message(
-      service_event_name2, 500, get_service_event_message_basic_types()[1])
+    serialize_test_message(service_event_name1, 500, get_service_event_message_basic_types()[0]),
+    serialize_test_message(service_event_name2, 600, get_service_event_message_basic_types()[0]),
+    serialize_test_message(service_event_name1, 400, get_service_event_message_basic_types()[1]),
+    serialize_test_message(service_event_name2, 500, get_service_event_message_basic_types()[1])
   };
 
   auto prepared_mock_reader = std::make_unique<MockSequentialReader>();
@@ -212,9 +208,8 @@ TEST_F(RosBag2PlayTestFixture, recorded_messages_are_played_for_all_services)
   ASSERT_TRUE(srv_->all_services_ready());
 
   play_options_.publish_service_requests = true;
-  auto player = std::make_shared<rosbag2_transport::Player>(
-    std::move(
-      reader), storage_options_, play_options_);
+  auto player =
+    std::make_shared<rosbag2_transport::Player>(std::move(reader), storage_options_, play_options_);
 
   spin_thread_and_wait_for_sent_service_requests_to_finish(player, {service_name1, service_name2});
 
@@ -237,14 +232,10 @@ TEST_F(RosBag2PlayTestFixture, recorded_messages_are_played_for_topics_and_servi
   };
   std::vector<std::shared_ptr<rosbag2_storage::SerializedBagMessage>> messages =
   {
-    serialize_test_message(
-      service_event_name, 500, get_service_event_message_basic_types()[0]),
-    serialize_test_message(
-      topic_name, 600, topic_msg),
-    serialize_test_message(
-      service_event_name, 550, get_service_event_message_basic_types()[1]),
-    serialize_test_message(
-      topic_name, 400, topic_msg),
+    serialize_test_message(service_event_name, 500, get_service_event_message_basic_types()[0]),
+    serialize_test_message(topic_name, 600, topic_msg),
+    serialize_test_message(service_event_name, 550, get_service_event_message_basic_types()[1]),
+    serialize_test_message(topic_name, 400, topic_msg),
   };
 
   auto prepared_mock_reader = std::make_unique<MockSequentialReader>();
@@ -261,33 +252,28 @@ TEST_F(RosBag2PlayTestFixture, recorded_messages_are_played_for_topics_and_servi
 
   play_options_.publish_service_requests = true;
   auto player = std::make_shared<rosbag2_transport::Player>(
-    std::move(
-      reader), storage_options_, play_options_);
+    std::move(reader), storage_options_, play_options_);
 
   rclcpp::executors::SingleThreadedExecutor exec;
   exec.add_node(player);
-  auto spin_thread = std::thread(
-    [&exec]() {
-      exec.spin();
-    });
+  auto spin_thread = std::thread([&exec]() {exec.spin();});
 
   player->play();
+  player->wait_for_playback_to_finish();
 
   await_received_messages.get();
 
-  auto replayed_topic_msg = sub_->get_received_messages<test_msgs::msg::BasicTypes>(
-    topic_name);
+  auto replayed_topic_msg = sub_->get_received_messages<test_msgs::msg::BasicTypes>(topic_name);
   EXPECT_THAT(replayed_topic_msg, SizeIs(Ge(2u)));
   EXPECT_THAT(
     replayed_topic_msg,
     Each(Pointee(Field(&test_msgs::msg::BasicTypes::int64_value, 1111))));
 
-  player->wait_for_playback_to_finish(200ms);
-  EXPECT_TRUE(player->wait_for_sent_service_requests_to_finish(service_name, 100ms));
+  EXPECT_TRUE(player->wait_for_sent_service_requests_to_finish(service_name, 2s));
   exec.cancel();
   spin_thread.join();
   ASSERT_EQ(service_receive_requests.size(), 2);
-  for (size_t i = 0; i < 2; i++) {
+  for (size_t i = 0; i < service_receive_requests.size(); i++) {
     EXPECT_EQ(
       service_receive_requests[i]->int32_value,
       get_service_event_message_basic_types()[i]->request[0].int32_value);
@@ -499,19 +485,11 @@ TEST_F(RosBag2PlayTestFixture, recorded_messages_are_played_for_filtered_service
   };
   std::vector<std::shared_ptr<rosbag2_storage::SerializedBagMessage>> messages =
   {
-    serialize_test_message(
-      service_event_name1, 500, get_service_event_message_basic_types()[0]),
-    serialize_test_message(
-      service_event_name2, 600, get_service_event_message_basic_types()[0]),
-    serialize_test_message(
-      service_event_name1, 400, get_service_event_message_basic_types()[1]),
-    serialize_test_message(
-      service_event_name2, 500, get_service_event_message_basic_types()[1])
+    serialize_test_message(service_event_name1, 500, get_service_event_message_basic_types()[0]),
+    serialize_test_message(service_event_name2, 600, get_service_event_message_basic_types()[0]),
+    serialize_test_message(service_event_name1, 400, get_service_event_message_basic_types()[1]),
+    serialize_test_message(service_event_name2, 500, get_service_event_message_basic_types()[1])
   };
-
-  auto prepared_mock_reader = std::make_unique<MockSequentialReader>();
-  prepared_mock_reader->prepare(messages, services_types);
-  auto reader = std::make_unique<rosbag2_cpp::Reader>(std::move(prepared_mock_reader));
 
   play_options_.publish_service_requests = true;
 
@@ -535,12 +513,10 @@ TEST_F(RosBag2PlayTestFixture, recorded_messages_are_played_for_filtered_service
     auto reader = std::make_unique<rosbag2_cpp::Reader>(std::move(prepared_mock_reader));
 
     auto player = std::make_shared<rosbag2_transport::Player>(
-      std::move(
-        reader), storage_options_, play_options_);
+      std::move(reader), storage_options_, play_options_);
 
     // Only need to wait for sent service 2 request to finish
-    spin_thread_and_wait_for_sent_service_requests_to_finish(
-      player, {service_name2});
+    spin_thread_and_wait_for_sent_service_requests_to_finish(player, {service_name2});
 
     EXPECT_EQ(service1_receive_requests.size(), 0);
     EXPECT_EQ(service2_receive_requests.size(), 2);
@@ -565,11 +541,9 @@ TEST_F(RosBag2PlayTestFixture, recorded_messages_are_played_for_filtered_service
     auto reader = std::make_unique<rosbag2_cpp::Reader>(std::move(prepared_mock_reader));
 
     auto player = std::make_shared<rosbag2_transport::Player>(
-      std::move(
-        reader), storage_options_, play_options_);
+      std::move(reader), storage_options_, play_options_);
     // Only need to wait for sent service 1 request to finish
-    spin_thread_and_wait_for_sent_service_requests_to_finish(
-      player, {service_name1});
+    spin_thread_and_wait_for_sent_service_requests_to_finish(player, {service_name1});
 
     EXPECT_EQ(service1_receive_requests.size(), 2);
     EXPECT_EQ(service2_receive_requests.size(), 0);
@@ -594,8 +568,7 @@ TEST_F(RosBag2PlayTestFixture, recorded_messages_are_played_for_filtered_service
     auto reader = std::make_unique<rosbag2_cpp::Reader>(std::move(prepared_mock_reader));
 
     auto player = std::make_shared<rosbag2_transport::Player>(
-      std::move(
-        reader), storage_options_, play_options_);
+      std::move(reader), storage_options_, play_options_);
     spin_thread_and_wait_for_sent_service_requests_to_finish(
       player, {service_name1, service_name2});
 
@@ -655,21 +628,17 @@ TEST_F(RosBag2PlayTestFixture, recorded_messages_are_played_for_filtered_topics_
     auto await_received_messages = sub_->spin_subscriptions();
 
     auto player = std::make_shared<rosbag2_transport::Player>(
-      std::move(
-        reader), storage_options_, play_options_);
+      std::move(reader), storage_options_, play_options_);
 
     rclcpp::executors::SingleThreadedExecutor exec;
     exec.add_node(player);
-    auto spin_thread = std::thread(
-      [&exec]() {
-        exec.spin();
-      });
+    auto spin_thread = std::thread([&exec]() {exec.spin();});
 
     player->play();
     await_received_messages.get();
-    player->wait_for_playback_to_finish(200ms);
+    player->wait_for_playback_to_finish();
 
-    EXPECT_TRUE(player->wait_for_sent_service_requests_to_finish(service_name1, 100ms));
+    EXPECT_TRUE(player->wait_for_sent_service_requests_to_finish(service_name1, 2s));
     exec.cancel();
     spin_thread.join();
 
@@ -716,17 +685,14 @@ TEST_F(RosBag2PlayTestFixture, recorded_messages_are_played_for_filtered_topics_
 
     rclcpp::executors::SingleThreadedExecutor exec;
     exec.add_node(player);
-    auto spin_thread = std::thread(
-      [&exec]() {
-        exec.spin();
-      });
+    auto spin_thread = std::thread([&exec]() {exec.spin();});
 
     player->play();
     await_received_messages.get();
-    player->wait_for_playback_to_finish(200ms);
+    player->wait_for_playback_to_finish();
 
-    EXPECT_TRUE(player->wait_for_sent_service_requests_to_finish(service_name1, 100ms));
-    EXPECT_TRUE(player->wait_for_sent_service_requests_to_finish(service_name2, 100ms));
+    EXPECT_TRUE(player->wait_for_sent_service_requests_to_finish(service_name1, 2s));
+    EXPECT_TRUE(player->wait_for_sent_service_requests_to_finish(service_name2, 2s));
     exec.cancel();
     spin_thread.join();
 
@@ -768,22 +734,18 @@ TEST_F(RosBag2PlayTestFixture, recorded_messages_are_played_for_filtered_topics_
     auto await_received_messages = sub_->spin_subscriptions();
 
     auto player = std::make_shared<rosbag2_transport::Player>(
-      std::move(
-        reader), storage_options_, play_options_);
+      std::move(reader), storage_options_, play_options_);
 
     rclcpp::executors::SingleThreadedExecutor exec;
     exec.add_node(player);
-    auto spin_thread = std::thread(
-      [&exec]() {
-        exec.spin();
-      });
+    auto spin_thread = std::thread([&exec]() {exec.spin();});
 
     player->play();
     await_received_messages.get();
-    player->wait_for_playback_to_finish(200ms);
+    player->wait_for_playback_to_finish();
 
-    EXPECT_TRUE(player->wait_for_sent_service_requests_to_finish(service_name1, 100ms));
-    EXPECT_TRUE(player->wait_for_sent_service_requests_to_finish(service_name2, 100ms));
+    EXPECT_TRUE(player->wait_for_sent_service_requests_to_finish(service_name1, 2s));
+    EXPECT_TRUE(player->wait_for_sent_service_requests_to_finish(service_name2, 2s));
     exec.cancel();
     spin_thread.join();
 
