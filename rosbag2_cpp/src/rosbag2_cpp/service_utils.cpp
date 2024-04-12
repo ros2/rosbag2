@@ -47,10 +47,6 @@ bool is_service_event_topic(const std::string & topic_name, const std::string & 
       return false;
     }
 
-    if (topic_type.length() <= kServiceEventTypePostfixLen) {
-      return false;
-    }
-
     return topic_type.compare(
       topic_type.length() - kServiceEventTypePostfixLen,
       kServiceEventTypePostfixLen,
@@ -65,12 +61,11 @@ std::string service_event_topic_name_to_service_name(const std::string & topic_n
     return service_name;
   } else {
     // The end of the topic name should be "/_service_event"
-    if (topic_name.substr(topic_name.length() - kServiceEventTopicPostfixLen) !=
+    if (topic_name.substr(topic_name.length() - kServiceEventTopicPostfixLen) ==
       RCL_SERVICE_INTROSPECTION_TOPIC_POSTFIX)
     {
-      return service_name;
+      service_name = topic_name.substr(0, topic_name.length() - kServiceEventTopicPostfixLen);
     }
-    service_name = topic_name.substr(0, topic_name.length() - kServiceEventTopicPostfixLen);
     return service_name;
   }
 }
