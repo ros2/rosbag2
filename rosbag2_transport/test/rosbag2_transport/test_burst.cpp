@@ -401,6 +401,11 @@ TEST_F(RosBag2PlayTestFixture, burst_bursting_only_filtered_topics) {
 }
 
 TEST_F(RosBag2PlayTestFixture, burst_bursting_only_filtered_services) {
+  if (std::string(rmw_get_implementation_identifier()).find("rmw_connextdds") !=
+    std::string::npos)
+  {
+    GTEST_SKIP() << "Skipping. The test is know to be flaky on the rmw_connextdds.";
+  }
   const std::string service_name1 = "/test_service1";
   const std::string service_name2 = "/test_service2";
   const std::string service_event_name1 = service_name1 + "/_service_event";
