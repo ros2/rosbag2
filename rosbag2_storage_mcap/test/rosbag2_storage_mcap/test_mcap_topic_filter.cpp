@@ -44,7 +44,7 @@ protected:
   // Called before the first test in this test suite.
   static void SetUpTestSuite()
   {
-    fs::path tmp_dir_path{fs::temp_directory_path() / "tmp_sqlite_test_dir_"};
+    fs::path tmp_dir_path{fs::temp_directory_path() / "tmp_mcap_test_dir_"};
     temporary_dir_path_str_ = tmp_dir_path.generic_string();
     fs::remove_all(tmp_dir_path);
     fs::create_directories(tmp_dir_path);
