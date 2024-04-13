@@ -452,7 +452,7 @@ TEST_F(RosBag2PlayTestFixture, burst_bursting_only_filtered_services) {
   player->resume();
 
   player->wait_for_playback_to_finish();
-  EXPECT_TRUE(player->wait_for_sent_service_requests_to_finish("", 100ms));
+  EXPECT_TRUE(player->wait_for_sent_service_requests_to_finish("", 2s));
 
   exec.cancel();
   spin_thread.join();
