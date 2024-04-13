@@ -18,11 +18,16 @@
 #include <vector>
 
 #include "rosbag2_cpp/service_utils.hpp"
+#include "rosbag2_test_common/memory_management.hpp"
+#include "test_msgs/srv/basic_types.hpp"
 
 using namespace ::testing;  // NOLINT
+using namespace rosbag2_test_common; // NOLINT
 
 class ServiceUtilsTest : public Test
 {
+public:
+  MemoryManagement memory_management_;
 };
 
 TEST_F(ServiceUtilsTest, check_is_service_event_topic)
@@ -90,4 +95,14 @@ TEST_F(ServiceUtilsTest, check_service_name_to_service_event_topic_name)
       test_data.second
     );
   }
+}
+
+TEST_F(ServiceUtilsTest, check_client_id_to_string)
+{
+  service_msgs::msg::ServiceEventInfo::_client_gid_type client_id = {
+    1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16
+  };
+  std::string expected_string = "1-2-3-4-5-6-7-8-9-10-11-12-13-14-15-16";
+
+  EXPECT_EQ(rosbag2_cpp::client_id_to_string(client_id), expected_string);
 }

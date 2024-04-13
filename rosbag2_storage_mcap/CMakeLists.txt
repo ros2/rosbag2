@@ -64,10 +64,6 @@ endif()
 if(${rosbag2_storage_VERSION} VERSION_GREATER_EQUAL 0.15.0)
   list(APPEND MCAP_COMPILE_DEFS ROSBAG2_STORAGE_MCAP_HAS_YAML_HPP)
 endif()
-# COMPATIBILITY(foxy, galactic, humble, rolling:0.17.x)
-if(${rosbag2_storage_VERSION} VERSION_GREATER_EQUAL 0.17.0)
-  list(APPEND MCAP_COMPILE_DEFS ROSBAG2_STORAGE_MCAP_HAS_STORAGE_FILTER_TOPIC_REGEX)
-endif()
 # COMPATIBILITY(foxy, galactic, humble, rolling:0.17.x, rolling:0.18.x)
 if(${rosbag2_storage_VERSION} VERSION_GREATER_EQUAL 0.18.0)
   list(APPEND MCAP_COMPILE_DEFS ROSBAG2_STORAGE_MCAP_HAS_SET_READ_ORDER)
@@ -115,6 +111,15 @@ if(BUILD_TESTING)
     yaml-cpp::yaml-cpp
   )
   target_compile_definitions(test_mcap_storage PRIVATE ${MCAP_COMPILE_DEFS})
+
+  ament_add_gmock(test_mcap_topic_filter test/rosbag2_storage_mcap/test_mcap_topic_filter.cpp)
+  target_link_libraries(test_mcap_topic_filter
+    ${PROJECT_NAME}
+    rosbag2_storage::rosbag2_storage
+    rosbag2_test_common::rosbag2_test_common
+    ${std_msgs_TARGETS}
+  )
+  target_compile_definitions(test_mcap_topic_filter PRIVATE ${MCAP_COMPILE_DEFS})
 
 endif()
 

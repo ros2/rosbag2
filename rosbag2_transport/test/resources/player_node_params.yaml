@@ -5,8 +5,11 @@ player_params_node:
       node_prefix: "test"
       rate: 13.0
       topics_to_filter: ["/foo", "/bar"]
-      topics_regex_to_filter: "[xyz]/topic"
-      topics_regex_to_exclude: "[abc]/topic"
+      services_to_filter: ["/service1", "/service2"]
+      regex_to_filter: "[xyz]/topic_service"
+      exclude_topics_to_filter: ["/exclude_foo", "/exclude_bar"]
+      exclude_services_to_filter: ["/exclude_service1", "/exclude_service2"]
+      exclude_regex_to_filter: "[abc]/topic_service"
       loop: false
       clock_publish_frequency: 19.0
       clock_publish_on_topic_publish: true
@@ -34,6 +37,8 @@ player_params_node:
         sec: 0
         nsec: -999999999
       disable_loan_message: false
+      publish_service_requests: false
+      service_requests_source: "CLIENT_INTROSPECTION" # SERVICE_INTROSPECTION or CLIENT_INTROSPECTION
 
     storage:
       uri: "path/to/some_bag"

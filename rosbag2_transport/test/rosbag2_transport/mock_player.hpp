@@ -56,6 +56,18 @@ public:
     return pub_list;
   }
 
+  std::vector<rclcpp::ClientBase *> get_list_of_clients()
+  {
+    std::vector<rclcpp::ClientBase *> cli_list;
+    for (const auto & client : this->get_service_clients()) {
+      cli_list.push_back(
+        static_cast<rclcpp::ClientBase *>(
+          client.second.get()));
+    }
+
+    return cli_list;
+  }
+
   size_t get_number_of_registered_pre_callbacks()
   {
     return get_number_of_registered_on_play_msg_pre_callbacks();

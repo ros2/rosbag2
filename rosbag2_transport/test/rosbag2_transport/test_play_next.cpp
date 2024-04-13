@@ -266,18 +266,18 @@ TEST_F(RosBag2PlayTestFixture, play_next_playing_only_filtered_topics) {
   complex_message1->bool_values = {{true, false, true}};
 
   auto topic_types = std::vector<rosbag2_storage::TopicMetadata>{
-    {1u, "topic1", "test_msgs/BasicTypes", "", {}, ""},
-    {2u, "topic2", "test_msgs/Arrays", "", {}, ""},
+    {1u, "/topic1", "test_msgs/BasicTypes", "", {}, ""},
+    {2u, "/topic2", "test_msgs/Arrays", "", {}, ""},
   };
 
   std::vector<std::shared_ptr<rosbag2_storage::SerializedBagMessage>> messages =
   {
-    serialize_test_message("topic1", 500, primitive_message1),
-    serialize_test_message("topic1", 700, primitive_message1),
-    serialize_test_message("topic1", 900, primitive_message1),
-    serialize_test_message("topic2", 550, complex_message1),
-    serialize_test_message("topic2", 750, complex_message1),
-    serialize_test_message("topic2", 950, complex_message1)
+    serialize_test_message("/topic1", 500, primitive_message1),
+    serialize_test_message("/topic1", 700, primitive_message1),
+    serialize_test_message("/topic1", 900, primitive_message1),
+    serialize_test_message("/topic2", 550, complex_message1),
+    serialize_test_message("/topic2", 750, complex_message1),
+    serialize_test_message("/topic2", 950, complex_message1)
   };
 
   // Filter allows /topic2, blocks /topic1

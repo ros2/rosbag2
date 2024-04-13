@@ -17,126 +17,78 @@
 #include "rcl/service_introspection.h"
 
 #include "rosbag2_cpp/service_utils.hpp"
-#include "rosidl_typesupport_cpp/message_type_support.hpp"
-#include "rosidl_typesupport_cpp/message_type_support_dispatch.hpp"
-#include "rosidl_typesupport_introspection_cpp/identifier.hpp"
-#include "rosidl_typesupport_introspection_cpp/message_introspection.hpp"
-
 #include "service_msgs/msg/service_event_info.hpp"
 
 namespace rosbag2_cpp
 {
-const char * service_event_topic_type_postfix = "_Event";
-const char * service_event_topic_type_middle = "/srv/";
+const char * kServiceEventTopicTypePostfix = "_Event";
+const char * kServiceEventTopicTypeMiddle = "/srv/";
+const size_t kServiceEventTopicPostfixLen = strlen(RCL_SERVICE_INTROSPECTION_TOPIC_POSTFIX);
+const size_t kServiceEventTypePostfixLen = strlen(kServiceEventTopicTypePostfix);
 
-bool is_service_event_topic(const std::string & topic, const std::string & topic_type)
+bool is_service_event_topic(const std::string & topic_name, const std::string & topic_type)
 {
-  if (topic.length() <= strlen(RCL_SERVICE_INTROSPECTION_TOPIC_POSTFIX)) {
+  if (topic_name.length() <= kServiceEventTopicPostfixLen) {
     return false;
+  } else {
+    // The end of the topic name should be "/_service_event"
+    if (topic_name.substr(topic_name.length() - kServiceEventTopicPostfixLen) !=
+      RCL_SERVICE_INTROSPECTION_TOPIC_POSTFIX)
+    {
+      return false;
+    }
   }
 
-  std::string end_topic_name = topic.substr(
-    topic.length() - strlen(RCL_SERVICE_INTROSPECTION_TOPIC_POSTFIX));
-
-  // Should be "/_service_event"
-  if (end_topic_name != RCL_SERVICE_INTROSPECTION_TOPIC_POSTFIX) {
+  if (topic_type.length() <= kServiceEventTypePostfixLen) {
     return false;
-  }
+  } else {
+    // Should include '/srv/' in type
+    if (topic_type.find(kServiceEventTopicTypeMiddle) == std::string::npos) {
+      return false;
+    }
 
-  if (topic_type.length() <= std::strlen(service_event_topic_type_postfix)) {
-    return false;
+    return topic_type.compare(
+      topic_type.length() - kServiceEventTypePostfixLen,
+      kServiceEventTypePostfixLen,
+      kServiceEventTopicTypePostfix) == 0;
   }
-
-  // Should include '/srv/' in type
-  if (topic_type.find(service_event_topic_type_middle) == std::string::npos) {
-    return false;
-  }
-
-  if (topic_type.length() <= std::strlen(service_event_topic_type_postfix)) {
-    return false;
-  }
-
-  return topic_type.compare(
-    topic_type.length() - std::strlen(service_event_topic_type_postfix),
-    std::strlen(service_event_topic_type_postfix),
-    service_event_topic_type_postfix) == 0;
 }
 
 std::string service_event_topic_name_to_service_name(const std::string & topic_name)
 {
   std::string service_name;
-  if (topic_name.length() <= strlen(RCL_SERVICE_INTROSPECTION_TOPIC_POSTFIX)) {
+  if (topic_name.length() <= kServiceEventTopicPostfixLen) {
+    return service_name;
+  } else {
+    // The end of the topic name should be "/_service_event"
+    if (topic_name.substr(topic_name.length() - kServiceEventTopicPostfixLen) ==
+      RCL_SERVICE_INTROSPECTION_TOPIC_POSTFIX)
+    {
+      service_name = topic_name.substr(0, topic_name.length() - kServiceEventTopicPostfixLen);
+    }
     return service_name;
   }
-
-  if (topic_name.substr(
-      topic_name.length() -
-      strlen(RCL_SERVICE_INTROSPECTION_TOPIC_POSTFIX)) !=
-    RCL_SERVICE_INTROSPECTION_TOPIC_POSTFIX)
-  {
-    return service_name;
-  }
-
-  service_name = topic_name.substr(
-    0, topic_name.length() - strlen(RCL_SERVICE_INTROSPECTION_TOPIC_POSTFIX));
-
-  return service_name;
 }
 
 std::string service_event_topic_type_to_service_type(const std::string & topic_type)
 {
   std::string service_type;
-  if (topic_type.length() <= std::strlen(service_event_topic_type_postfix)) {
+  if (topic_type.length() <= kServiceEventTypePostfixLen) {
     return service_type;
   }
-
   // Should include '/srv/' in type
-  if (topic_type.find(service_event_topic_type_middle) == std::string::npos) {
+  if (topic_type.find(kServiceEventTopicTypeMiddle) == std::string::npos) {
     return service_type;
   }
 
-  if (topic_type.substr(topic_type.length() - std::strlen(service_event_topic_type_postfix)) !=
-    service_event_topic_type_postfix)
+  if (topic_type.substr(topic_type.length() - kServiceEventTypePostfixLen) !=
+    kServiceEventTopicTypePostfix)
   {
     return service_type;
   }
-
-  service_type = topic_type.substr(
-    0, topic_type.length() - strlen(service_event_topic_type_postfix));
+  service_type = topic_type.substr(0, topic_type.length() - kServiceEventTypePostfixLen);
 
   return service_type;
-}
-
-size_t get_serialization_size_for_service_metadata_event()
-{
-  // Since the size is fixed, it only needs to be calculated once.
-  static size_t size = 0;
-
-  if (size != 0) {
-    return size;
-  }
-
-  const rosidl_message_type_support_t * type_support_info =
-    rosidl_typesupport_cpp::get_message_type_support_handle<service_msgs::msg::ServiceEventInfo>();
-
-  // Get the serialized size of service event info
-  const rosidl_message_type_support_t * type_support_handle =
-    rosidl_typesupport_cpp::get_message_typesupport_handle_function(
-    type_support_info,
-    rosidl_typesupport_introspection_cpp::typesupport_identifier);
-  if (type_support_handle == nullptr) {
-    throw std::runtime_error("Cannot get ServiceEventInfo typesupport handle !");
-  }
-
-  auto service_event_info =
-    static_cast<const rosidl_typesupport_introspection_cpp::MessageMembers *>(
-    type_support_handle->data);
-
-  // endian type (4 size) + service event info size + empty request (4 bytes)
-  // + emtpy response (4 bytes)
-  size = 4 + service_event_info->size_of_ + 4 + 4;
-
-  return size;
 }
 
 std::string service_name_to_service_event_topic_name(const std::string & service_name)
@@ -146,14 +98,34 @@ std::string service_name_to_service_event_topic_name(const std::string & service
   }
 
   // If the end of string is RCL_SERVICE_INTROSPECTION_TOPIC_POSTFIX, do nothing
-  if ((service_name.length() > strlen(RCL_SERVICE_INTROSPECTION_TOPIC_POSTFIX)) &&
-    (service_name.substr(service_name.length() - strlen(RCL_SERVICE_INTROSPECTION_TOPIC_POSTFIX)) ==
+  if ((service_name.length() > kServiceEventTopicPostfixLen) &&
+    (service_name.substr(service_name.length() - kServiceEventTopicPostfixLen) ==
     RCL_SERVICE_INTROSPECTION_TOPIC_POSTFIX))
   {
     return service_name;
   }
-
   return service_name + RCL_SERVICE_INTROSPECTION_TOPIC_POSTFIX;
 }
 
+std::string client_id_to_string(std::array<uint8_t, 16> & client_id)
+{
+  // output format:
+  // xx-xx-xx-xx-xx-xx-xx-xx-xx-xx-xx-xx-xx-xx-xx-xx
+  std::string client_id_string = std::to_string(client_id[0]);
+  for (int i = 1; i < 16; i++) {
+    client_id_string += "-" + std::to_string(client_id[i]);
+  }
+  return client_id_string;
+}
+
+std::size_t client_id_hash::operator()(const std::array<uint8_t, 16> & client_id) const
+{
+  std::hash<uint8_t> hasher;
+  std::size_t seed = 0;
+  for (const auto & value : client_id) {
+    // 0x9e3779b9 is from https://cryptography.fandom.com/wiki/Tiny_Encryption_Algorithm
+    seed ^= hasher(value) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
+  }
+  return seed;
+}
 }  // namespace rosbag2_cpp

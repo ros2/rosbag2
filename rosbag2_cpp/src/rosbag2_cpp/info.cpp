@@ -60,23 +60,6 @@ rosbag2_storage::BagMetadata Info::read_metadata(
 
 namespace
 {
-struct client_id_hash
-{
-  static_assert(
-    std::is_same<std::array<uint8_t, 16>,
-    service_msgs::msg::ServiceEventInfo::_client_gid_type>::value);
-  std::size_t operator()(const std::array<uint8_t, 16> & client_id) const
-  {
-    std::hash<uint8_t> hasher;
-    std::size_t seed = 0;
-    for (const auto & value : client_id) {
-      // 0x9e3779b9 is from https://cryptography.fandom.com/wiki/Tiny_Encryption_Algorithm
-      seed ^= hasher(value) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
-    }
-    return seed;
-  }
-};
-
 using client_id = service_msgs::msg::ServiceEventInfo::_client_gid_type;
 using sequence_set = std::unordered_set<int64_t>;
 struct service_req_resp_info

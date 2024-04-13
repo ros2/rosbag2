@@ -320,4 +320,5 @@ TEST_F(TemporaryDirectoryFixture, can_write_mcap_with_zstd_configured_from_yaml)
     EXPECT_THAT(definitions, ElementsAreArray({definition}));
   }
 }
+
 #endif  // #ifdef ROSBAG2_STORAGE_MCAP_HAS_STORAGE_OPTIONS

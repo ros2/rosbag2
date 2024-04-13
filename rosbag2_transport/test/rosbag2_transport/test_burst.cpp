@@ -25,10 +25,43 @@
 #include "test_msgs/message_fixtures.hpp"
 #include "test_msgs/msg/arrays.hpp"
 #include "test_msgs/msg/basic_types.hpp"
+#include "test_msgs/srv/basic_types.hpp"
 
 using namespace ::testing;  // NOLINT
 using namespace rosbag2_transport;  // NOLINT
 using namespace rosbag2_test_common;  // NOLINT
+using namespace std::chrono_literals;  // NOLINT
+
+namespace
+{
+static inline std::vector<test_msgs::srv::BasicTypes_Event::SharedPtr>
+get_service_event_message_basic_types()
+{
+  std::vector<test_msgs::srv::BasicTypes_Event::SharedPtr> messages;
+
+  {
+    auto msg = std::make_shared<test_msgs::srv::BasicTypes_Event>();
+    msg->info.event_type = service_msgs::msg::ServiceEventInfo::REQUEST_RECEIVED;
+    test_msgs::srv::BasicTypes_Request request;
+    request.int32_value = 123;
+    request.int64_value = 456;
+    msg->request.emplace_back(request);
+    messages.push_back(msg);
+  }
+
+  {
+    auto msg = std::make_shared<test_msgs::srv::BasicTypes_Event>();
+    msg->info.event_type = service_msgs::msg::ServiceEventInfo::REQUEST_RECEIVED;
+    test_msgs::srv::BasicTypes_Request request;
+    request.int32_value = 456;
+    request.int64_value = 789;
+    msg->request.emplace_back(request);
+    messages.push_back(msg);
+  }
+
+  return messages;
+}
+}  // namespace
 
 TEST_F(RosBag2PlayTestFixture, burst_with_false_preconditions) {
   auto primitive_message = get_messages_basic_types()[0];
@@ -313,18 +346,18 @@ TEST_F(RosBag2PlayTestFixture, burst_bursting_only_filtered_topics) {
   complex_message1->bool_values = {{true, false, true}};
 
   auto topic_types = std::vector<rosbag2_storage::TopicMetadata>{
-    {1u, "topic1", "test_msgs/BasicTypes", "", {}, ""},
-    {2u, "topic2", "test_msgs/Arrays", "", {}, ""},
+    {1u, "/topic1", "test_msgs/BasicTypes", "", {}, ""},
+    {2u, "/topic2", "test_msgs/Arrays", "", {}, ""},
   };
 
   std::vector<std::shared_ptr<rosbag2_storage::SerializedBagMessage>> messages =
   {
-    serialize_test_message("topic1", 500, primitive_message1),
-    serialize_test_message("topic1", 700, primitive_message1),
-    serialize_test_message("topic1", 900, primitive_message1),
-    serialize_test_message("topic2", 550, complex_message1),
-    serialize_test_message("topic2", 750, complex_message1),
-    serialize_test_message("topic2", 950, complex_message1)
+    serialize_test_message("/topic1", 500, primitive_message1),
+    serialize_test_message("/topic1", 700, primitive_message1),
+    serialize_test_message("/topic1", 900, primitive_message1),
+    serialize_test_message("/topic2", 550, complex_message1),
+    serialize_test_message("/topic2", 750, complex_message1),
+    serialize_test_message("/topic2", 950, complex_message1)
   };
 
   // Filter allows /topic2, blocks /topic1
@@ -365,4 +398,70 @@ TEST_F(RosBag2PlayTestFixture, burst_bursting_only_filtered_topics) {
   auto replayed_topic2 = sub_->get_received_messages<test_msgs::msg::Arrays>("/topic2");
   // All we care is that any messages arrived
   EXPECT_THAT(replayed_topic2, SizeIs(Eq(EXPECTED_BURST_COUNT)));
+}
+
+TEST_F(RosBag2PlayTestFixture, burst_bursting_only_filtered_services) {
+  if (std::string(rmw_get_implementation_identifier()).find("rmw_connextdds") !=
+    std::string::npos)
+  {
+    GTEST_SKIP() << "Skipping. The test is know to be flaky on the rmw_connextdds.";
+  }
+  const std::string service_name1 = "/test_service1";
+  const std::string service_name2 = "/test_service2";
+  const std::string service_event_name1 = service_name1 + "/_service_event";
+  const std::string service_event_name2 = service_name2 + "/_service_event";
+
+  auto services_types = std::vector<rosbag2_storage::TopicMetadata>{
+    {1u, service_event_name1, "test_msgs/srv/BasicTypes_Event", "", {}, ""},
+    {2u, service_event_name2, "test_msgs/srv/BasicTypes_Event", "", {}, ""},
+  };
+  std::vector<std::shared_ptr<rosbag2_storage::SerializedBagMessage>> messages =
+  {
+    serialize_test_message(service_event_name1, 500, get_service_event_message_basic_types()[0]),
+    serialize_test_message(service_event_name2, 600, get_service_event_message_basic_types()[0]),
+    serialize_test_message(service_event_name1, 400, get_service_event_message_basic_types()[1]),
+    serialize_test_message(service_event_name2, 500, get_service_event_message_basic_types()[1])
+  };
+
+  std::vector<std::shared_ptr<test_msgs::srv::BasicTypes::Request>> service1_receive_requests;
+  std::vector<std::shared_ptr<test_msgs::srv::BasicTypes::Request>> service2_receive_requests;
+
+  srv_->setup_service<test_msgs::srv::BasicTypes>(service_name1, service1_receive_requests);
+  srv_->setup_service<test_msgs::srv::BasicTypes>(service_name2, service2_receive_requests);
+
+  srv_->run_services();
+
+  // Filter allows test_service2, blocks test_service1
+  play_options_.services_to_filter = {service_event_name2};
+  play_options_.publish_service_requests = true;
+  auto prepared_mock_reader = std::make_unique<MockSequentialReader>();
+  prepared_mock_reader->prepare(messages, services_types);
+  auto reader = std::make_unique<rosbag2_cpp::Reader>(std::move(prepared_mock_reader));
+  auto player = std::make_shared<MockPlayer>(std::move(reader), storage_options_, play_options_);
+
+  player->pause();
+  ASSERT_TRUE(player->is_paused());
+
+  // Check services are ready
+  ASSERT_TRUE(srv_->all_services_ready());
+
+  rclcpp::executors::SingleThreadedExecutor exec;
+  exec.add_node(player);
+  auto spin_thread = std::thread([&exec]() {exec.spin();});
+  player->play();
+
+  const size_t EXPECTED_BURST_COUNT = 2;
+  ASSERT_EQ(player->burst(EXPECTED_BURST_COUNT), EXPECTED_BURST_COUNT);
+
+  ASSERT_TRUE(player->is_paused());
+  player->resume();
+
+  player->wait_for_playback_to_finish();
+  EXPECT_TRUE(player->wait_for_sent_service_requests_to_finish("", 2s));
+
+  exec.cancel();
+  spin_thread.join();
+
+  EXPECT_EQ(service1_receive_requests.size(), 0);
+  EXPECT_EQ(service2_receive_requests.size(), 2);
 }
