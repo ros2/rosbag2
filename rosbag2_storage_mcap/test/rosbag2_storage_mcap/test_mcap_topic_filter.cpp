@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "rcpputils/filesystem_helper.hpp"
 #include "rosbag2_storage/storage_factory.hpp"
 #include "rosbag2_storage/storage_options.hpp"
 #include "rosbag2_test_common/memory_management.hpp"
@@ -31,14 +30,13 @@ namespace fs = std::filesystem;
 class McapTopicFilterTestFixture : public testing::Test
 {
 public:
-  static std::shared_ptr<rosbag2_storage::storage_interfaces::ReadOnlyInterface>
+  std::shared_ptr<rosbag2_storage::storage_interfaces::ReadOnlyInterface>
   open_test_bag_for_read_only()
   {
-    rosbag2_storage::StorageFactory storage_factory;
     rosbag2_storage::StorageOptions storage_options{};
     storage_options.storage_id = storage_id_;
-    storage_options.uri = (fs::path(temporary_dir_path_) / "rosbag.mcap").generic_string();
-    return storage_factory.open_read_only(storage_options);
+    storage_options.uri = (fs::path(temporary_dir_path_str_) / "rosbag.mcap").generic_string();
+    return storage_factory_.open_read_only(storage_options);
   }
 
 protected:
@@ -46,7 +44,10 @@ protected:
   // Called before the first test in this test suite.
   static void SetUpTestSuite()
   {
-    temporary_dir_path_ = rcpputils::fs::create_temp_directory("tmp_mcap_test_dir_").string();
+    fs::path tmp_dir_path{fs::temp_directory_path() / "tmp_sqlite_test_dir_"};
+    temporary_dir_path_str_ = tmp_dir_path.generic_string();
+    fs::remove_all(tmp_dir_path);
+    fs::create_directories(tmp_dir_path);
 
     std::vector<std::string> topics = {"topic1", "service_topic1/_service_event", "topic2",
                                        "service_topic2/_service_event", "topic3"};
@@ -77,7 +78,7 @@ protected:
     rosbag2_storage::StorageFactory factory;
     rosbag2_storage::StorageOptions options;
     options.storage_id = storage_id_;
-    options.uri = (fs::path(temporary_dir_path_) / "rosbag").generic_string();
+    options.uri = (fs::path(temporary_dir_path_str_) / "rosbag").generic_string();
 
     // Write test data
     {
@@ -109,13 +110,15 @@ protected:
   // Called after the last test in this test suite.
   static void TearDownTestSuite()
   {
-    if (fs::remove_all(temporary_dir_path_) == 0) {
+    if (fs::remove_all(fs::path(temporary_dir_path_str_)) == 0) {
       std::cerr << "Failed to remove temporary directory\n";
     }
   }
 
+  // The storage factory shall persist while returned storage object persist
+  rosbag2_storage::StorageFactory storage_factory_;
   static const char storage_id_[];
-  static std::string temporary_dir_path_;
+  static std::string temporary_dir_path_str_;
 };
 
 const char McapTopicFilterTestFixture::storage_id_[] = "mcap";
@@ -124,7 +127,7 @@ const char McapTopicFilterTestFixture::storage_id_[] = "mcap";
 // other static variables or constants initialization or in other translation units.
 // Note: The temporary_dir_path_ shall not be used in the McapTopicFilterTestFixture ctor since its
 // initialization deferred to the SetUpTestSuite()
-std::string McapTopicFilterTestFixture::temporary_dir_path_;  // NOLINT
+std::string McapTopicFilterTestFixture::temporary_dir_path_str_;  // NOLINT
 
 TEST_F(McapTopicFilterTestFixture, CanSelectTopicsAndServicesWithEmptyFilters)
 {
