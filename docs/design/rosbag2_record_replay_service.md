@@ -125,6 +125,15 @@ Service information: Service: /xxx/xxx | Type: xxx/xxx/xxx | Request Count: XX |
 ### Expand the 'play' command
 
 Added or changed parameters:
+- `--publish-service-requests`
+
+    Send service requests based on recorded service introspection messages. By default, recorded service introspection messages will be published by service event topic.
+
+- `--service-requests-source {service_introspection, client_introspection}`
+
+    Determine the source of the service request to be replayed. By default, the service request is from recorded service introspection message.
+    This option only makes sense if the `--publish-service-requests` option is set.
+
 - `--services ServiceName1 [ServiceName2 ...]`
 
     Determine which service's requests are played.
