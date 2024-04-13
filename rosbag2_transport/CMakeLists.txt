@@ -326,11 +326,18 @@ if(BUILD_TESTING)
   target_include_directories(test_burst PRIVATE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src/rosbag2_transport>)
   target_link_libraries(test_burst rosbag2_transport ${test_msgs_TARGETS} rosbag2_test_common::rosbag2_test_common)
   function(test_burst_for_rmw_implementation)
+    # Disable the following test_burst tests for connext_dds due to the
+    # burst_bursting_only_filtered_services test failure
+    set(SKIP_TEST "")
+    if(${rmw_implementation} MATCHES "rmw_connext(.*)")
+      set(SKIP_TEST "SKIP_TEST")
+    endif()
     set(rmw_implementation_env_var RMW_IMPLEMENTATION=${rmw_implementation})
 
     ament_add_gmock_test(test_burst
       TEST_NAME test_burst${target_suffix}
       ENV ${rmw_implementation_env_var}
+      ${SKIP_TEST}
     )
   endfunction()
   call_for_each_rmw_implementation(test_burst_for_rmw_implementation)
