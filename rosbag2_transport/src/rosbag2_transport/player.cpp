@@ -815,7 +815,8 @@ bool PlayerImpl::wait_for_sent_service_requests_to_finish(
       is_requests_complete = false;
     }
   } else {
-    player_service_client_manager_->wait_for_sent_requests_to_finish(nullptr, timeout);
+    is_requests_complete =
+      player_service_client_manager_->wait_for_sent_requests_to_finish(nullptr, timeout);
   }
   return is_requests_complete;
 }
