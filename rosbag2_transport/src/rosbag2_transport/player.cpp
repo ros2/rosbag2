@@ -425,8 +425,10 @@ PlayerImpl::~PlayerImpl()
 
   // remove callbacks on key_codes to prevent race conditions
   // Note: keyboard_handler handles locks between removing & executing callbacks
-  for (auto cb_handle : keyboard_callbacks_) {
-    keyboard_handler_->delete_key_press_callback(cb_handle);
+  if (keyboard_handler_) {
+    for (auto cb_handle : keyboard_callbacks_) {
+      keyboard_handler_->delete_key_press_callback(cb_handle);
+    }
   }
   // closes reader
   std::lock_guard<std::mutex> lk(reader_mutex_);
@@ -1319,22 +1321,22 @@ void PlayerImpl::add_key_callback(
   const std::function<void()> & cb,
   const std::string & op_name)
 {
-  std::string key_str = enum_key_code_to_str(key);
-  if (key == KeyboardHandler::KeyCode::UNKNOWN) {
-    RCLCPP_ERROR_STREAM(
-      owner_->get_logger(),
-      "Invalid key binding " << key_str << " for " << op_name);
-    throw std::invalid_argument("Invalid key binding.");
+  if (keyboard_handler_) {
+    std::string key_str = enum_key_code_to_str(key);
+    if (key == KeyboardHandler::KeyCode::UNKNOWN) {
+      RCLCPP_ERROR_STREAM(
+        owner_->get_logger(),
+        "Invalid key binding " << key_str << " for " << op_name);
+      throw std::invalid_argument("Invalid key binding.");
+    }
+    keyboard_callbacks_.push_back(
+      keyboard_handler_->add_key_press_callback(
+        [cb](KeyboardHandler::KeyCode /*key_code*/,
+        KeyboardHandler::KeyModifiers /*key_modifiers*/) {cb();},
+        key));
+    // show instructions
+    RCLCPP_INFO_STREAM(owner_->get_logger(), "Press " << key_str << " for " << op_name);
   }
-  keyboard_callbacks_.push_back(
-    keyboard_handler_->add_key_press_callback(
-      [cb](KeyboardHandler::KeyCode /*key_code*/,
-      KeyboardHandler::KeyModifiers /*key_modifiers*/) {cb();},
-      key));
-  // show instructions
-  RCLCPP_INFO_STREAM(
-    owner_->get_logger(),
-    "Press " << key_str << " for " << op_name);
 }
 
 void PlayerImpl::add_keyboard_callbacks()
@@ -1535,12 +1537,10 @@ Player::Player(const std::string & node_name, const rclcpp::NodeOptions & node_o
   rosbag2_storage::StorageOptions storage_options = get_storage_options_from_node_params(*this);
   PlayOptions play_options = get_play_options_from_node_params(*this);
 
-  #ifndef _WIN32
-  auto keyboard_handler = std::make_shared<KeyboardHandler>(false);
-  #else
-  // We don't have signal handler option in constructor for windows version
-  auto keyboard_handler = std::shared_ptr<KeyboardHandler>(new KeyboardHandler());
-  #endif
+  std::shared_ptr<KeyboardHandler> keyboard_handler;
+  if (!play_options.disable_keyboard_controls) {
+    keyboard_handler = std::make_shared<KeyboardHandler>();
+  }
 
   auto reader = std::make_unique<rosbag2_cpp::Reader>();
 
@@ -1565,13 +1565,7 @@ Player::Player(
   const std::string & node_name,
   const rclcpp::NodeOptions & node_options)
 : Player(std::move(reader),
-    // only call KeyboardHandler when using default keyboard handler implementation
-#ifndef _WIN32
-    std::make_shared<KeyboardHandler>(false),
-#else
-    // We don't have signal handler option in constructor for windows version
-    std::shared_ptr<KeyboardHandler>(new KeyboardHandler()),
-#endif
+    play_options.disable_keyboard_controls ? nullptr : std::make_shared<KeyboardHandler>(),
     storage_options, play_options, node_name, node_options)
 {}
 
@@ -1586,7 +1580,7 @@ Player::Player(
     node_name,
     rclcpp::NodeOptions(node_options).arguments(play_options.topic_remapping_options)),
   pimpl_(std::make_unique<PlayerImpl>(
-      this, std::move(reader), keyboard_handler,
+      this, std::move(reader), std::move(keyboard_handler),
       storage_options, play_options))
 {}
 

@@ -30,6 +30,7 @@ recorder_params_node:
       include_unpublished_topics: true
       ignore_leaf_topics: false
       start_paused: false
+      disable_keyboard_controls: true
 
     storage:
       uri: "path/to/some_bag"

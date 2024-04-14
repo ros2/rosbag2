@@ -216,8 +216,19 @@ protected:
     install_signal_handlers();
     try {
       auto reader = rosbag2_transport::ReaderWriterFactory::make_reader(storage_options);
+      std::shared_ptr<KeyboardHandler> keyboard_handler;
+      if (!play_options.disable_keyboard_controls) {
+#ifndef _WIN32
+        // Instantiate KeyboardHandler explicitly with disabled signal handler inside,
+        // since we have already installed our own signal handler
+        keyboard_handler = std::make_shared<KeyboardHandler>(false);
+#else
+        // We don't have signal handler option in constructor for windows version
+        keyboard_handler = std::shared_ptr<KeyboardHandler>(new KeyboardHandler());
+#endif
+      }
       auto player = std::make_shared<rosbag2_transport::Player>(
-        std::move(reader), storage_options, play_options);
+        std::move(reader), std::move(keyboard_handler), storage_options, play_options);
 
       rclcpp::executors::SingleThreadedExecutor exec;
       exec.add_node(player);
@@ -304,8 +315,20 @@ public:
       }
 
       auto writer = rosbag2_transport::ReaderWriterFactory::make_writer(record_options);
+      std::shared_ptr<KeyboardHandler> keyboard_handler;
+      if (!record_options.disable_keyboard_controls) {
+#ifndef _WIN32
+        // Instantiate KeyboardHandler explicitly with disabled signal handler inside,
+        // since we have already installed our own signal handler
+        keyboard_handler = std::make_shared<KeyboardHandler>(false);
+#else
+        // We don't have signal handler option in constructor for windows version
+        keyboard_handler = std::shared_ptr<KeyboardHandler>(new KeyboardHandler());
+#endif
+      }
+
       auto recorder = std::make_shared<rosbag2_transport::Recorder>(
-        std::move(writer), storage_options, record_options, node_name);
+        std::move(writer), std::move(keyboard_handler), storage_options, record_options, node_name);
       recorder->record();
 
       exec->add_node(recorder);
@@ -528,6 +551,7 @@ PYBIND11_MODULE(_transport, m) {
   .def_readwrite("use_sim_time", &RecordOptions::use_sim_time)
   .def_readwrite("services", &RecordOptions::services)
   .def_readwrite("all_services", &RecordOptions::all_services)
+  .def_readwrite("disable_keyboard_controls", &RecordOptions::disable_keyboard_controls)
   ;
 
   py::class_<rosbag2_py::Player>(m, "Player")

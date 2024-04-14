@@ -333,6 +333,9 @@ RecordOptions get_record_options_from_node_params(rclcpp::Node & node)
 
   record_options.start_paused = node.declare_parameter<bool>("record.start_paused", false);
 
+  record_options.disable_keyboard_controls =
+    node.declare_parameter<bool>("record.disable_keyboard_controls", false);
+
   record_options.use_sim_time = node.get_parameter("use_sim_time").get_value<bool>();
 
   if (record_options.use_sim_time && record_options.is_discovery_disabled) {

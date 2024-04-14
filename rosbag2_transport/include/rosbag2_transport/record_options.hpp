@@ -55,6 +55,7 @@ public:
   bool ignore_leaf_topics = false;
   bool start_paused = false;
   bool use_sim_time = false;
+  bool disable_keyboard_controls = false;
 };
 
 }  // namespace rosbag2_transport
