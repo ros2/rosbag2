@@ -752,12 +752,7 @@ Recorder::Recorder(
 
   std::shared_ptr<KeyboardHandler> keyboard_handler;
   if (!record_options.disable_keyboard_controls) {
-  #ifndef _WIN32
-    keyboard_handler = std::make_shared<KeyboardHandler>(false);
-  #else
-    // We don't have signal handler option in constructor for windows version
-    keyboard_handler = std::shared_ptr<KeyboardHandler>(new KeyboardHandler());
-  #endif
+    keyboard_handler = std::make_shared<KeyboardHandler>();
   }
 
   auto writer = std::make_unique<rosbag2_cpp::Writer>();
@@ -776,12 +771,7 @@ Recorder::Recorder(
   const rclcpp::NodeOptions & node_options)
 : Recorder(
     std::move(writer),
-#ifndef _WIN32
-    std::make_shared<KeyboardHandler>(false),
-#else
-    // We don't have signal handler option in constructor for windows version
-    std::shared_ptr<KeyboardHandler>(new KeyboardHandler()),
-#endif
+    record_options.disable_keyboard_controls ? nullptr : std::make_shared<KeyboardHandler>(),
     storage_options,
     record_options,
     node_name,
@@ -799,7 +789,7 @@ Recorder::Recorder(
     .start_parameter_event_publisher(false)
     .append_parameter_override("use_sim_time", record_options.use_sim_time)),
   pimpl_(std::make_unique<RecorderImpl>(
-      this, std::move(writer), keyboard_handler,
+      this, std::move(writer), std::move(keyboard_handler),
       storage_options, record_options))
 {}
 
