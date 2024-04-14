@@ -373,6 +373,7 @@ void RecorderImpl::event_publisher_thread_main()
       auto message = rosbag2_interfaces::msg::WriteSplitEvent();
       message.closed_file = bag_split_info_.closed_file;
       message.opened_file = bag_split_info_.opened_file;
+      message.node_name = node->get_fully_qualified_name();
       try {
         split_event_pub_->publish(message);
       } catch (const std::exception & e) {
