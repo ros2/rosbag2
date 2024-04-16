@@ -2,6 +2,9 @@
 Changelog for package rosbag2_test_msgdefs
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+
 0.25.0 (2024-03-27)
 -------------------
 * Implement service recording and display info about recorded services (`#1480 <https://github.com/ros2/rosbag2/issues/1480>`_)

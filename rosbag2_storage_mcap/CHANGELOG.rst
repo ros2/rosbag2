@@ -2,6 +2,14 @@
 Changelog for package rosbag2_storage_mcap
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Support service 2/2 --- rosbag2 service play (`#1481 <https://github.com/ros2/rosbag2/issues/1481>`_)
+* Use middleware send and receive timestamps from message_info during recording (`#1531 <https://github.com/ros2/rosbag2/issues/1531>`_)
+* Update to use yaml-cpp version 0.8.0. (`#1605 <https://github.com/ros2/rosbag2/issues/1605>`_)
+* Check existence of a file before passing it to the mcap reader (`#1594 <https://github.com/ros2/rosbag2/issues/1594>`_)
+* Contributors: Barry Xu, Chris Lalancette, Christopher Wecht, jmachowinski, Michael Orlov
+
 0.25.0 (2024-03-27)
 -------------------
 * Add topic_id returned by storage to the TopicMetadata (`#1538 <https://github.com/ros2/rosbag2/issues/1538>`_)
