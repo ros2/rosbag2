@@ -7,7 +7,7 @@ Forthcoming
 * Add option to disable recorder keyboard controls (`#1607 <https://github.com/ros2/rosbag2/issues/1607>`_)
 * Support service 2/2 --- rosbag2 service play (`#1481 <https://github.com/ros2/rosbag2/issues/1481>`_)
 * Added exclude-topic-types to record (`#1582 <https://github.com/ros2/rosbag2/issues/1582>`_)
-* Contributors: Alejandro Hernández Cordero, Barry Xu, Bernd Pfrommer
+* Contributors: Alejandro Hernández Cordero, Barry Xu, Bernd Pfrommer, Michael Orlov
 
 0.25.0 (2024-03-27)
 -------------------
