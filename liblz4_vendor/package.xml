@@ -17,6 +17,9 @@
   <buildtool_depend>ament_cmake_vendor_package</buildtool_depend>
 
   <build_depend>liblz4-dev</build_depend>
+
+  <build_export_depend>liblz4-dev</build_export_depend>
+
   <exec_depend>liblz4</exec_depend>
 
   <export>
