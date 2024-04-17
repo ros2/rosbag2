@@ -2,6 +2,11 @@
 Changelog for package liblz4_vendor
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.26.1 (2024-04-17)
+-------------------
+* Make sure to build_export_depend liblz4-dev. (`#1614 <https://github.com/ros2/rosbag2/issues/1614>`_)
+* Contributors: Chris Lalancette
+
 0.26.0 (2024-04-16)
 -------------------
 * Switch to using ament_vendor_package for lz4. (`#1583 <https://github.com/ros2/rosbag2/issues/1583>`_)

@@ -2,6 +2,9 @@
 Changelog for package rosbag2_py
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.26.1 (2024-04-17)
+-------------------
+
 0.26.0 (2024-04-16)
 -------------------
 * Add option to disable recorder keyboard controls (`#1607 <https://github.com/ros2/rosbag2/issues/1607>`_)

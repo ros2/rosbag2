@@ -2,6 +2,9 @@
 Changelog for package mcap_vendor
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.26.1 (2024-04-17)
+-------------------
+
 0.26.0 (2024-04-16)
 -------------------
 * Switch to using ament_vendor_package for lz4. (`#1583 <https://github.com/ros2/rosbag2/issues/1583>`_)

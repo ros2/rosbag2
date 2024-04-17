@@ -2,6 +2,9 @@
 Changelog for package rosbag2_interfaces
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.26.1 (2024-04-17)
+-------------------
+
 0.26.0 (2024-04-16)
 -------------------
 * Add node name to the Read(Write)SplitEvent message (`#1609 <https://github.com/ros2/rosbag2/issues/1609>`_)
