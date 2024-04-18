@@ -1,0 +1,12 @@
+diff --git a/lib/compress/zstd_compress_superblock.c b/lib/compress/zstd_compress_superblock.c
+index e23e619e..4a244f5c 100644
+--- a/lib/compress/zstd_compress_superblock.c
++++ b/lib/compress/zstd_compress_superblock.c
+@@ -410,6 +410,7 @@ static size_t ZSTD_seqDecompressedSize(seqStore_t const* seqStore, const seqDef*
+     const seqDef* sp = sstart;
+     size_t matchLengthSum = 0;
+     size_t litLengthSum = 0;
++    (void) litLengthSum;
+     while (send-sp > 0) {
+         ZSTD_sequenceLength const seqLen = ZSTD_getSequenceLength(seqStore, sp);
+         litLengthSum += seqLen.litLength;

@@ -17,6 +17,7 @@ ament_vendor(zstd_vendor
     -DZSTD_BUILD_STATIC:BOOL=OFF
     -DZSTD_BUILD_SHARED:BOOL=ON
     -DZSTD_BUILD_PROGRAMS:BOOL=OFF
+    PATCHES patches
 )
 
 install(DIRECTORY cmake DESTINATION share/${PROJECT_NAME})
