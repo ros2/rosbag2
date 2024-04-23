@@ -71,7 +71,7 @@ public:
 };
 
 TEST_F(Rosbag2PlayCallbacksTestFixture, nullptr_as_callback) {
-  MockPlayer player(move(reader_), storage_options_, play_options_);
+  MockPlayer player(std::move(reader_), storage_options_, play_options_);
   EXPECT_EQ(player.add_on_play_message_pre_callback(nullptr), Player::invalid_callback_handle);
   EXPECT_EQ(player.add_on_play_message_post_callback(nullptr), Player::invalid_callback_handle);
 
@@ -80,7 +80,7 @@ TEST_F(Rosbag2PlayCallbacksTestFixture, nullptr_as_callback) {
 }
 
 TEST_F(Rosbag2PlayCallbacksTestFixture, register_unregister_callbacks) {
-  MockPlayer player(move(reader_), storage_options_, play_options_);
+  MockPlayer player(std::move(reader_), storage_options_, play_options_);
 
   auto lambda_as_callback = [](std::shared_ptr<rosbag2_storage::SerializedBagMessage>) {
       ASSERT_FALSE(true) << "This code should not be called \n";
@@ -124,7 +124,7 @@ TEST_F(Rosbag2PlayCallbacksTestFixture, register_unregister_callbacks) {
 
 TEST_F(Rosbag2PlayCallbacksTestFixture, call_callbacks) {
   using SerializedBagMessage = rosbag2_storage::SerializedBagMessage;
-  MockPlayer player(move(reader_), storage_options_, play_options_);
+  MockPlayer player(std::move(reader_), storage_options_, play_options_);
 
   testing::MockFunction<void(std::shared_ptr<SerializedBagMessage>)> mock_pre_callback;
   EXPECT_CALL(mock_pre_callback, Call(_)).Times(Exactly(static_cast<int>(num_test_messages_)));

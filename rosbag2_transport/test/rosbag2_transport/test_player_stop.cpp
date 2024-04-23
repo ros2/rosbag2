@@ -73,7 +73,7 @@ public:
 };
 
 TEST_F(Rosbag2PlayerStopTestFixture, stop_playback_in_pause_mode_explicit) {
-  rosbag2_transport::Player player(move(reader_), storage_options_, play_options_);
+  rosbag2_transport::Player player(std::move(reader_), storage_options_, play_options_);
   player.pause();
   ASSERT_TRUE(player.is_paused());
 
@@ -86,7 +86,7 @@ TEST_F(Rosbag2PlayerStopTestFixture, stop_playback_in_pause_mode_explicit) {
 TEST_F(Rosbag2PlayerStopTestFixture, stop_playback_in_pause_mode_implicit) {
   std::future<void> play_future_result;
   {
-    rosbag2_transport::Player player(move(reader_), storage_options_, play_options_);
+    rosbag2_transport::Player player(std::move(reader_), storage_options_, play_options_);
     player.pause();
     ASSERT_TRUE(player.is_paused());
 
@@ -99,7 +99,7 @@ TEST_F(Rosbag2PlayerStopTestFixture, stop_playback_in_pause_mode_implicit) {
 }
 
 TEST_F(Rosbag2PlayerStopTestFixture, stop_playback_explicit) {
-  MockPlayer player(move(reader_), storage_options_, play_options_);
+  MockPlayer player(std::move(reader_), storage_options_, play_options_);
   auto calls = 0;
   std::mutex m;
   std::condition_variable cv;
@@ -138,7 +138,7 @@ TEST_F(Rosbag2PlayerStopTestFixture, stop_playback_implict) {
   std::condition_variable cv;
   std::future<void> play_future_result;
   {
-    MockPlayer player(move(reader_), storage_options_, play_options_);
+    MockPlayer player(std::move(reader_), storage_options_, play_options_);
     const auto callback = [&](std::shared_ptr<rosbag2_storage::SerializedBagMessage>) {
         std::unique_lock<std::mutex> lk{m};
         ++calls;
@@ -171,12 +171,12 @@ TEST_F(Rosbag2PlayerStopTestFixture, stop_playback_implict) {
 }
 
 TEST_F(Rosbag2PlayerStopTestFixture, stop_playback_before_play_explicit) {
-  rosbag2_transport::Player player(move(reader_), storage_options_, play_options_);
+  rosbag2_transport::Player player(std::move(reader_), storage_options_, play_options_);
   player.stop();    // test for not being stuck in stop
   SUCCEED();  // test for not being stuck in dtor
 }
 
 TEST_F(Rosbag2PlayerStopTestFixture, stop_playback_before_play_implict) {
-  rosbag2_transport::Player player(move(reader_), storage_options_, play_options_);
+  rosbag2_transport::Player player(std::move(reader_), storage_options_, play_options_);
   SUCCEED();  // test for not being stuck in dtor
 }
