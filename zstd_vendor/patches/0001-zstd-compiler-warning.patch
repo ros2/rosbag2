@@ -5,11 +5,11 @@ index 57be832b..94efc253 100644
 @@ -3545,8 +3545,8 @@ static size_t ZBUFF_decompressContinue(ZBUFF_DCtx* zbc, void* dst, size_t* maxDs
  unsigned ZBUFFv04_isError(size_t errorCode) { return ERR_isError(errorCode); }
  const char* ZBUFFv04_getErrorName(size_t errorCode) { return ERR_getErrorName(errorCode); }
- 
+
 -size_t ZBUFFv04_recommendedDInSize()  { return BLOCKSIZE + 3; }
 -size_t ZBUFFv04_recommendedDOutSize() { return BLOCKSIZE; }
 +size_t ZBUFFv04_recommendedDInSize(void)  { return BLOCKSIZE + 3; }
 +size_t ZBUFFv04_recommendedDOutSize(void) { return BLOCKSIZE; }
- 
- 
- 
+
+
+
