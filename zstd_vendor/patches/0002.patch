@@ -1,0 +1,44 @@
+diff --git a/lib/legacy/zstd_v01.c b/lib/legacy/zstd_v01.c
+index 1a3aad07..10071134 100644
+--- a/lib/legacy/zstd_v01.c
++++ b/lib/legacy/zstd_v01.c
+@@ -1487,6 +1487,7 @@ static size_t ZSTDv01_decodeLiteralsBlock(void* ctx,
+     BYTE* const oend = ostart + maxDstSize;
+     blockProperties_t litbp;
+
++    memset(&litbp, 0, sizeof(litbp));
+     size_t litcSize = ZSTDv01_getcBlockSize(src, srcSize, &litbp);
+     if (ZSTDv01_isError(litcSize)) return litcSize;
+     if (litcSize > srcSize - ZSTD_blockHeaderSize) return ERROR(srcSize_wrong);
+@@ -1822,11 +1823,11 @@ static size_t ZSTD_decompressSequences(
+     BYTE* const ostart = (BYTE* const)dst;
+     BYTE* op = ostart;
+     BYTE* const oend = ostart + maxDstSize;
+-    size_t errorCode, dumpsLength;
++    size_t errorCode, dumpsLength = 0;
+     const BYTE* litPtr = litStart;
+     const BYTE* const litEnd = litStart + litSize;
+-    int nbSeq;
+-    const BYTE* dumps;
++    int nbSeq = 0;
++    const BYTE* dumps = NULL;
+     U32* DTableLL = dctx->LLTable;
+     U32* DTableML = dctx->MLTable;
+     U32* DTableOffb = dctx->OffTable;
+@@ -1845,6 +1846,7 @@ static size_t ZSTD_decompressSequences(
+         seqState_t seqState;
+
+         memset(&sequence, 0, sizeof(sequence));
++        memset(&seqState, 0, sizeof(seqState));
+         seqState.dumps = dumps;
+         seqState.dumpsEnd = dumps + dumpsLength;
+         seqState.prevOffset = 1;
+@@ -1916,6 +1918,8 @@ size_t ZSTDv01_decompressDCtx(void* ctx, void* dst, size_t maxDstSize, const voi
+     size_t errorCode=0;
+     blockProperties_t blockProperties;
+
++    memset(&blockProperties, 0, sizeof(blockProperties));
++
+     /* Frame Header */
+     if (srcSize < ZSTD_frameHeaderSize+ZSTD_blockHeaderSize) return ERROR(srcSize_wrong);
+     magicNumber = ZSTD_readBE32(src);
