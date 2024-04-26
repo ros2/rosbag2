@@ -1176,6 +1176,7 @@ void PlayerImpl::prepare_publishers()
       auto message = rosbag2_interfaces::msg::ReadSplitEvent();
       message.closed_file = info.closed_file;
       message.opened_file = info.opened_file;
+      message.node_name = owner_->get_fully_qualified_name();
       split_event_pub_->publish(message);
     };
   reader_->add_event_callbacks(callbacks);
