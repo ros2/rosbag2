@@ -1,0 +1,23 @@
+diff --git a/lib/legacy/zstd_v04.c b/lib/legacy/zstd_v04.c
+index 57be832b..cc4d3c2b 100644
+--- a/lib/legacy/zstd_v04.c
++++ b/lib/legacy/zstd_v04.c
+@@ -3545,10 +3545,15 @@ static size_t ZBUFF_decompressContinue(ZBUFF_DCtx* zbc, void* dst, size_t* maxDs
+ unsigned ZBUFFv04_isError(size_t errorCode) { return ERR_isError(errorCode); }
+ const char* ZBUFFv04_getErrorName(size_t errorCode) { return ERR_getErrorName(errorCode); }
+
+-size_t ZBUFFv04_recommendedDInSize()  { return BLOCKSIZE + 3; }
+-size_t ZBUFFv04_recommendedDOutSize() { return BLOCKSIZE; }
+-
++size_t ZBUFFv04_recommendedDInSize(void)
++{
++    return BLOCKSIZE + 3;
++}
+
++size_t ZBUFFv04_recommendedDOutSize(void)
++{
++    return BLOCKSIZE;
++}
+
+ /*- ========================================================================= -*/
+
