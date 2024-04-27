@@ -51,10 +51,10 @@ class PlayVerb(VerbExtension):
             '-r', '--rate', type=check_positive_float, default=1.0,
             help='rate at which to play back messages. Valid range > 0.0.')
         parser.add_argument(
-            '--topics', type=str, default=[], metavar='topic', nargs='+',
+            '--topics', type=lambda s: list(s.split(' ')), default=[], metavar='topic',
             help='Space-delimited list of topics to play.')
         parser.add_argument(
-            '--services', type=str, default=[], metavar='service', nargs='+',
+            '--services', type=lambda s: list(s.split(' ')), default=[], metavar='service',
             help='Space-delimited list of services to play.')
         parser.add_argument(
             '-e', '--regex', default='',
@@ -63,10 +63,10 @@ class PlayVerb(VerbExtension):
             '-x', '--exclude-regex', default='',
             help='regular expressions to exclude topics and services from replay.')
         parser.add_argument(
-            '--exclude-topics', type=str, default=[], metavar='topic', nargs='+',
+            '--exclude-topics', type=lambda s: list(s.split(' ')), default=[], metavar='topic',
             help='Space-delimited list of topics not to play.')
         parser.add_argument(
-            '--exclude-services', type=str, default=[], metavar='service', nargs='+',
+            '--exclude-services', type=lambda s: list(s.split(' ')), default=[], metavar='service',
             help='Space-delimited list of services not to play.')
         parser.add_argument(
             '--qos-profile-overrides-path', type=FileType('r'),
@@ -89,7 +89,7 @@ class PlayVerb(VerbExtension):
             help='Publish to /clock at a specific frequency in Hz, to act as a ROS Time Source. '
                  'Value must be positive. Defaults to not publishing.')
         clock_args_group.add_argument(
-            '--clock-topics', type=str, default=[], nargs='+',
+            '--clock-topics', type=lambda s: list(s.split(' ')), default=[],
             help='List of topics separated by spaces that will trigger a /clock update '
                  'when a message is published on them'
         )
