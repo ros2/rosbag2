@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from argparse import FileType
+from argparse import ArgumentParser, FileType
 
 from rclpy.qos import InvalidQoSProfileException
 from ros2bag.api import add_standard_reader_args
@@ -37,131 +37,135 @@ def positive_float(arg: str) -> float:
     return value
 
 
+def add_player_arguments(parser: ArgumentParser) -> None:
+    add_standard_reader_args(parser)
+    parser.add_argument(
+        '--read-ahead-queue-size', type=int, default=1000,
+        help='size of message queue rosbag tries to hold in memory to help deterministic '
+             'playback. Larger size will result in larger memory needs but might prevent '
+             'delay of message playback.')
+    parser.add_argument(
+        '-r', '--rate', type=check_positive_float, default=1.0,
+        help='rate at which to play back messages. Valid range > 0.0.')
+    parser.add_argument(
+        '--topics', type=lambda s: list(s.split(' ')), default=[], metavar='topic',
+        help='Space-delimited list of topics to play.')
+    parser.add_argument(
+        '--services', type=lambda s: list(s.split(' ')), default=[], metavar='service',
+        help='Space-delimited list of services to play.')
+    parser.add_argument(
+        '-e', '--regex', default='',
+        help='Play only topics and services matches with regular expression.')
+    parser.add_argument(
+        '-x', '--exclude-regex', default='',
+        help='regular expressions to exclude topics and services from replay.')
+    parser.add_argument(
+        '--exclude-topics', type=lambda s: list(s.split(' ')), default=[], metavar='topic',
+        help='Space-delimited list of topics not to play.')
+    parser.add_argument(
+        '--exclude-services', type=lambda s: list(s.split(' ')), default=[], metavar='service',
+        help='Space-delimited list of services not to play.')
+    parser.add_argument(
+        '--qos-profile-overrides-path', type=FileType('r'),
+        help='Path to a yaml file defining overrides of the QoS profile for specific topics.')
+    parser.add_argument(
+        '-l', '--loop', action='store_true',
+        help='enables loop playback when playing a bagfile: it starts back at the beginning '
+             'on reaching the end and plays indefinitely.')
+    parser.add_argument(
+        '--remap', '-m', default='', nargs='+',
+        help='list of topics to be remapped: in the form '
+             '"old_topic1:=new_topic1 old_topic2:=new_topic2 etc." ')
+    parser.add_argument(
+        '--storage-config-file', type=FileType('r'),
+        help='Path to a yaml file defining storage specific configurations. '
+             'See storage plugin documentation for the format of this file.')
+    clock_args_group = parser.add_mutually_exclusive_group()
+    clock_args_group.add_argument(
+        '--clock', type=positive_float, nargs='?', const=40, default=0,
+        help='Publish to /clock at a specific frequency in Hz, to act as a ROS Time Source. '
+             'Value must be positive. Defaults to not publishing.')
+    clock_args_group.add_argument(
+        '--clock-topics', type=lambda s: list(s.split(' ')), default=[],
+        help='List of topics separated by spaces that will trigger a /clock update '
+             'when a message is published on them'
+    )
+    clock_args_group.add_argument(
+        '--clock-topics-all', default=False, action='store_true',
+        help='Publishes an update on /clock immediately before each replayed message'
+    )
+    parser.add_argument(
+        '-d', '--delay', type=positive_float, default=0.0,
+        help='Sleep duration before play (each loop), in seconds. Negative durations invalid.')
+    parser.add_argument(
+        '--playback-duration', type=float, default=-1.0,
+        help='Playback duration, in seconds. Negative durations mark an infinite playback. '
+             'Default is %(default)d. '
+             'When positive, the maximum effective time between `playback-until-*` '
+             'and this argument will determine when playback stops.')
+
+    playback_until_arg_group = parser.add_mutually_exclusive_group()
+    playback_until_arg_group.add_argument(
+        '--playback-until-sec', type=float, default=-1.,
+        help='Playback until timestamp, expressed in seconds since epoch. '
+             'Mutually exclusive argument with `--playback-until-nsec`. '
+             'Use when floating point to integer conversion error is not a concern. '
+             'A negative value disables this feature. '
+             'Default is %(default)f. '
+             'When positive, the maximum effective time between `--playback-duration` '
+             'and this argument will determine when playback stops.')
+    playback_until_arg_group.add_argument(
+        '--playback-until-nsec', type=int, default=-1,
+        help='Playback until timestamp, expressed in nanoseconds since epoch.  '
+             'Mutually exclusive argument with `--playback-until-sec`. '
+             'Use when floating point to integer conversion error matters for your use case. '
+             'A negative value disables this feature. '
+             'Default is %(default)s. '
+             'When positive, the maximum effective time between `--playback-duration` '
+             'and this argument will determine when playback stops.')
+
+    parser.add_argument(
+        '--disable-keyboard-controls', action='store_true',
+        help='disables keyboard controls for playback')
+    parser.add_argument(
+        '-p', '--start-paused', action='store_true', default=False,
+        help='Start the playback player in a paused state.')
+    parser.add_argument(
+        '--start-offset', type=check_positive_float, default=0.0,
+        help='Start the playback player this many seconds into the bag file.')
+    parser.add_argument(
+        '--wait-for-all-acked', type=check_not_negative_int, default=-1,
+        help='Wait until all published messages are acknowledged by all subscribers or until '
+             'the timeout elapses in millisecond before play is terminated. '
+             'Especially for the case of sending message with big size in a short time. '
+             'Negative timeout is invalid. '
+             '0 means wait forever until all published messages are acknowledged by all '
+             'subscribers. '
+             "Note that this option is valid only if the publisher\'s QOS profile is "
+             'RELIABLE.',
+        metavar='TIMEOUT')
+    parser.add_argument(
+        '--disable-loan-message', action='store_true', default=False,
+        help='Disable to publish as loaned message. '
+             'By default, if loaned message can be used, messages are published as loaned '
+             'message. It can help to reduce the number of data copies, so there is a greater '
+             'benefit for sending big data.')
+    parser.add_argument(
+        '--publish-service-requests', action='store_true', default=False,
+        help='Publish recorded service requests instead of recorded service events')
+    parser.add_argument(
+        '--service-requests-source', default='service_introspection',
+        choices=['service_introspection', 'client_introspection'],
+        help='Determine the source of the service requests to be replayed. This option only '
+             'makes sense if the "--publish-service-requests" option is set. By default,'
+             ' the service requests replaying from recorded service introspection message.')
+
+
 class PlayVerb(VerbExtension):
     """Play back ROS data from a bag."""
 
     def add_arguments(self, parser, cli_name):  # noqa: D102
-        add_standard_reader_args(parser)
-        parser.add_argument(
-            '--read-ahead-queue-size', type=int, default=1000,
-            help='size of message queue rosbag tries to hold in memory to help deterministic '
-                 'playback. Larger size will result in larger memory needs but might prevent '
-                 'delay of message playback.')
-        parser.add_argument(
-            '-r', '--rate', type=check_positive_float, default=1.0,
-            help='rate at which to play back messages. Valid range > 0.0.')
-        parser.add_argument(
-            '--topics', type=lambda s: list(s.split(' ')), default=[], metavar='topic',
-            help='Space-delimited list of topics to play.')
-        parser.add_argument(
-            '--services', type=lambda s: list(s.split(' ')), default=[], metavar='service',
-            help='Space-delimited list of services to play.')
-        parser.add_argument(
-            '-e', '--regex', default='',
-            help='Play only topics and services matches with regular expression.')
-        parser.add_argument(
-            '-x', '--exclude-regex', default='',
-            help='regular expressions to exclude topics and services from replay.')
-        parser.add_argument(
-            '--exclude-topics', type=lambda s: list(s.split(' ')), default=[], metavar='topic',
-            help='Space-delimited list of topics not to play.')
-        parser.add_argument(
-            '--exclude-services', type=lambda s: list(s.split(' ')), default=[], metavar='service',
-            help='Space-delimited list of services not to play.')
-        parser.add_argument(
-            '--qos-profile-overrides-path', type=FileType('r'),
-            help='Path to a yaml file defining overrides of the QoS profile for specific topics.')
-        parser.add_argument(
-            '-l', '--loop', action='store_true',
-            help='enables loop playback when playing a bagfile: it starts back at the beginning '
-                 'on reaching the end and plays indefinitely.')
-        parser.add_argument(
-            '--remap', '-m', default='', nargs='+',
-            help='list of topics to be remapped: in the form '
-                 '"old_topic1:=new_topic1 old_topic2:=new_topic2 etc." ')
-        parser.add_argument(
-            '--storage-config-file', type=FileType('r'),
-            help='Path to a yaml file defining storage specific configurations. '
-                 'See storage plugin documentation for the format of this file.')
-        clock_args_group = parser.add_mutually_exclusive_group()
-        clock_args_group.add_argument(
-            '--clock', type=positive_float, nargs='?', const=40, default=0,
-            help='Publish to /clock at a specific frequency in Hz, to act as a ROS Time Source. '
-                 'Value must be positive. Defaults to not publishing.')
-        clock_args_group.add_argument(
-            '--clock-topics', type=lambda s: list(s.split(' ')), default=[],
-            help='List of topics separated by spaces that will trigger a /clock update '
-                 'when a message is published on them'
-        )
-        clock_args_group.add_argument(
-            '--clock-topics-all', default=False, action='store_true',
-            help='Publishes an update on /clock immediately before each replayed message'
-        )
-        parser.add_argument(
-            '-d', '--delay', type=positive_float, default=0.0,
-            help='Sleep duration before play (each loop), in seconds. Negative durations invalid.')
-        parser.add_argument(
-            '--playback-duration', type=float, default=-1.0,
-            help='Playback duration, in seconds. Negative durations mark an infinite playback. '
-                 'Default is %(default)d. '
-                 'When positive, the maximum effective time between `playback-until-*` '
-                 'and this argument will determine when playback stops.')
-
-        playback_until_arg_group = parser.add_mutually_exclusive_group()
-        playback_until_arg_group.add_argument(
-            '--playback-until-sec', type=float, default=-1.,
-            help='Playback until timestamp, expressed in seconds since epoch. '
-                 'Mutually exclusive argument with `--playback-until-nsec`. '
-                 'Use when floating point to integer conversion error is not a concern. '
-                 'A negative value disables this feature. '
-                 'Default is %(default)f. '
-                 'When positive, the maximum effective time between `--playback-duration` '
-                 'and this argument will determine when playback stops.')
-        playback_until_arg_group.add_argument(
-            '--playback-until-nsec', type=int, default=-1,
-            help='Playback until timestamp, expressed in nanoseconds since epoch.  '
-                 'Mutually exclusive argument with `--playback-until-sec`. '
-                 'Use when floating point to integer conversion error matters for your use case. '
-                 'A negative value disables this feature. '
-                 'Default is %(default)s. '
-                 'When positive, the maximum effective time between `--playback-duration` '
-                 'and this argument will determine when playback stops.')
-
-        parser.add_argument(
-            '--disable-keyboard-controls', action='store_true',
-            help='disables keyboard controls for playback')
-        parser.add_argument(
-            '-p', '--start-paused', action='store_true', default=False,
-            help='Start the playback player in a paused state.')
-        parser.add_argument(
-            '--start-offset', type=check_positive_float, default=0.0,
-            help='Start the playback player this many seconds into the bag file.')
-        parser.add_argument(
-            '--wait-for-all-acked', type=check_not_negative_int, default=-1,
-            help='Wait until all published messages are acknowledged by all subscribers or until '
-                 'the timeout elapses in millisecond before play is terminated. '
-                 'Especially for the case of sending message with big size in a short time. '
-                 'Negative timeout is invalid. '
-                 '0 means wait forever until all published messages are acknowledged by all '
-                 'subscribers. '
-                 "Note that this option is valid only if the publisher\'s QOS profile is "
-                 'RELIABLE.',
-            metavar='TIMEOUT')
-        parser.add_argument(
-            '--disable-loan-message', action='store_true', default=False,
-            help='Disable to publish as loaned message. '
-                 'By default, if loaned message can be used, messages are published as loaned '
-                 'message. It can help to reduce the number of data copies, so there is a greater '
-                 'benefit for sending big data.')
-        parser.add_argument(
-            '--publish-service-requests', action='store_true', default=False,
-            help='Publish recorded service requests instead of recorded service events')
-        parser.add_argument(
-            '--service-requests-source', default='service_introspection',
-            choices=['service_introspection', 'client_introspection'],
-            help='Determine the source of the service requests to be replayed. This option only '
-                 'makes sense if the "--publish-service-requests" option is set. By default,'
-                 ' the service requests replaying from recorded service introspection message.')
+        add_player_arguments(parser)
 
     def get_playback_until_from_arg_group(self, playback_until_sec, playback_until_nsec) -> int:
         nano_scale = 1000 * 1000 * 1000
