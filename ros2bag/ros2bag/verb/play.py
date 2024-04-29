@@ -48,11 +48,11 @@ def add_player_arguments(parser: ArgumentParser) -> None:
         '-r', '--rate', type=check_positive_float, default=1.0,
         help='rate at which to play back messages. Valid range > 0.0.')
     parser.add_argument(
-        '--topics', type=lambda s: list(s.split(' ')), default=[], metavar='topic',
-        help='Space-delimited list of topics to play.')
+        '--topics', type=lambda s: list(s.split(' ')), default=[], metavar='"topic1 topic2"',
+        help='Space-delimited and surrounded by double quote marks list of topics to play.')
     parser.add_argument(
-        '--services', type=lambda s: list(s.split(' ')), default=[], metavar='service',
-        help='Space-delimited list of services to play.')
+        '--services', type=lambda s: list(s.split(' ')), default=[], metavar='"service1 service2"',
+        help='Space-delimited and surrounded by double quote marks list of services to play.')
     parser.add_argument(
         '-e', '--regex', default='',
         help='Play only topics and services matches with regular expression.')
@@ -61,12 +61,12 @@ def add_player_arguments(parser: ArgumentParser) -> None:
         help='regular expressions to exclude topics and services from replay.')
     parser.add_argument(
         '--exclude-topics', type=lambda s: list(s.split(' ')),
-        default=[], metavar='exclude_topics',
-        help='Space-delimited list of topics not to play.')
+        default=[], metavar='"topic1 topic2"',
+        help='Space-delimited and surrounded by double quote marks list of topics not to play.')
     parser.add_argument(
         '--exclude-services', type=lambda s: list(s.split(' ')),
-        default=[], metavar='exclude_services',
-        help='Space-delimited list of services not to play.')
+        default=[], metavar='"service1 service2"',
+        help='Space-delimited and surrounded by double quote marks list of services not to play.')
     parser.add_argument(
         '--qos-profile-overrides-path', type=FileType('r'),
         help='Path to a yaml file defining overrides of the QoS profile for specific topics.')
@@ -88,9 +88,10 @@ def add_player_arguments(parser: ArgumentParser) -> None:
         help='Publish to /clock at a specific frequency in Hz, to act as a ROS Time Source. '
              'Value must be positive. Defaults to not publishing.')
     clock_args_group.add_argument(
-        '--clock-topics', type=lambda s: list(s.split(' ')), default=[], metavar='clock_topics',
-        help='List of topics separated by spaces that will trigger a /clock update '
-             'when a message is published on them'
+        '--clock-topics', type=lambda s: list(s.split(' ')),
+        default=[], metavar='"topic1 topic2"',
+        help='Space-delimited and surrounded by double quote marks list of topics that will'
+             ' trigger a /clock update when a message is published on them.'
     )
     clock_args_group.add_argument(
         '--clock-topics-all', default=False, action='store_true',
