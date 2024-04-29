@@ -30,16 +30,48 @@ def test_arguments_parser():
 
 
 def test_topics_list_arguments(test_arguments_parser):
-    """Test player topic list arguments parser."""
+    """Test player --topics list arguments parser."""
     bag_path = RESOURCES_PATH / 'empty_bag'
     args = test_arguments_parser.parse_args(['--topics', 'topic1 topic2', bag_path.as_posix()])
     assert ['topic1', 'topic2'] == args.topics
+    assert args.bag_path is not None
 
 
 def test_services_list_arguments(test_arguments_parser):
-    """Test player services list arguments parser."""
+    """Test player --services list arguments parser."""
     bag_path = RESOURCES_PATH / 'empty_bag'
     args = test_arguments_parser.parse_args(
         ['--services', 'service1 service2', bag_path.as_posix()]
     )
     assert ['service1', 'service2'] == args.services
+    assert args.bag_path is not None
+
+
+def test_exclude_topics_list_arguments(test_arguments_parser):
+    """Test player --exclude-topics list arguments parser."""
+    bag_path = RESOURCES_PATH / 'empty_bag'
+    args = test_arguments_parser.parse_args(
+        ['--exclude-topics', 'topic1 topic2', bag_path.as_posix()]
+    )
+    assert ['topic1', 'topic2'] == args.exclude_topics
+    assert args.bag_path is not None
+
+
+def test_exclude_services_list_arguments(test_arguments_parser):
+    """Test player --exclude-services list arguments parser."""
+    bag_path = RESOURCES_PATH / 'empty_bag'
+    args = test_arguments_parser.parse_args(
+        ['--exclude-services', 'service1 service2', bag_path.as_posix()]
+    )
+    assert ['service1', 'service2'] == args.exclude_services
+    assert args.bag_path is not None
+
+
+def test_clock_topics_list_arguments(test_arguments_parser):
+    """Test player --clock-topics list arguments parser."""
+    bag_path = RESOURCES_PATH / 'empty_bag'
+    args = test_arguments_parser.parse_args(
+        ['--clock-topics', 'topic1 topic2', bag_path.as_posix()]
+    )
+    assert ['topic1', 'topic2'] == args.clock_topics
+    assert args.bag_path is not None

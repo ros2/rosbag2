@@ -60,10 +60,12 @@ def add_player_arguments(parser: ArgumentParser) -> None:
         '-x', '--exclude-regex', default='',
         help='regular expressions to exclude topics and services from replay.')
     parser.add_argument(
-        '--exclude-topics', type=lambda s: list(s.split(' ')), default=[], metavar='topic',
+        '--exclude-topics', type=lambda s: list(s.split(' ')),
+        default=[], metavar='exclude_topics',
         help='Space-delimited list of topics not to play.')
     parser.add_argument(
-        '--exclude-services', type=lambda s: list(s.split(' ')), default=[], metavar='service',
+        '--exclude-services', type=lambda s: list(s.split(' ')),
+        default=[], metavar='exclude_services',
         help='Space-delimited list of services not to play.')
     parser.add_argument(
         '--qos-profile-overrides-path', type=FileType('r'),
@@ -86,7 +88,7 @@ def add_player_arguments(parser: ArgumentParser) -> None:
         help='Publish to /clock at a specific frequency in Hz, to act as a ROS Time Source. '
              'Value must be positive. Defaults to not publishing.')
     clock_args_group.add_argument(
-        '--clock-topics', type=lambda s: list(s.split(' ')), default=[],
+        '--clock-topics', type=lambda s: list(s.split(' ')), default=[], metavar='clock_topics',
         help='List of topics separated by spaces that will trigger a /clock update '
              'when a message is published on them'
     )
