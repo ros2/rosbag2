@@ -183,7 +183,7 @@ TEST_P(PlayEndToEndTestFixture, play_filters_by_topic) {
 
     // Start ros2 bag play in pause mode
     auto process_id =
-      start_execution("ros2 bag play -p " + bags_path_ + "/cdr_test --topics /test_topic");
+      start_execution("ros2 bag play -p --topics /test_topic " + bags_path_ + "/cdr_test");
     auto cleanup_process_handle = rcpputils::make_scope_exit(
       [process_id]() {
         stop_execution(process_id);
@@ -214,8 +214,9 @@ TEST_P(PlayEndToEndTestFixture, play_filters_by_topic) {
     sub_->add_subscription<test_msgs::msg::Arrays>("/array_topic", num_array_msgs, sub_qos_);
 
     // Start ros2 bag play in pause mode
-    auto process_id = start_execution(
-      "ros2 bag play -p " + bags_path_ + "/cdr_test --topics /test_topic /array_topic");
+    const std::string command =
+      "ros2 bag play -p --topics \"/test_topic /array_topic\" " + bags_path_ + "/cdr_test";
+    auto process_id = start_execution(command);
     auto cleanup_process_handle = rcpputils::make_scope_exit(
       [process_id]() {
         stop_execution(process_id);
@@ -247,7 +248,7 @@ TEST_P(PlayEndToEndTestFixture, play_filters_by_topic) {
 
     // Start ros2 bag play in pause mode
     auto process_id = start_execution(
-      "ros2 bag play -p " + bags_path_ + "/cdr_test --topics /nonexistent_topic");
+      "ros2 bag play -p --topics /nonexistent_topic " + bags_path_ + "/cdr_test");
     auto cleanup_process_handle = rcpputils::make_scope_exit(
       [process_id]() {
         stop_execution(process_id);

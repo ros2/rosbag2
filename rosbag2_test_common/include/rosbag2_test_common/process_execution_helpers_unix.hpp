@@ -41,7 +41,23 @@ std::vector<char *> command_string_to_arguments(const std::string & command)
   while (std::getline(ss, token, ' ')) {
     // dup strings to get non-const, should be free'd after execvp
     if (!token.empty()) {  // Skipping extra spaces between arguments
-      arguments.push_back(strdup(token.c_str()));
+      if (token.front() == '"') {  // Start of the list surrounded with double quote marks
+        std::string list_argument;
+        // We need to exclude quote marks when adding a space separated list to the arguments
+        list_argument.append(token.begin() + 1, token.end());
+
+        while (!token.empty() && token.back() != '"' && std::getline(ss, token, ' ')) {
+          if (token.back() != '"') {
+            list_argument.append(" " + token);
+          } else {
+            list_argument.append(" ");
+            list_argument.append(token.begin(), token.end() - 1);
+          }
+        }
+        arguments.push_back(strdup(list_argument.c_str()));
+      } else {
+        arguments.push_back(strdup(token.c_str()));
+      }
     }
   }
   arguments.push_back(nullptr);  // explicit nullptr to tell execvp where to stop
