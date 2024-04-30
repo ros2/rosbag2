@@ -75,9 +75,10 @@ def add_player_arguments(parser: ArgumentParser) -> None:
         help='enables loop playback when playing a bagfile: it starts back at the beginning '
              'on reaching the end and plays indefinitely.')
     parser.add_argument(
-        '--remap', '-m', default='', nargs='+',
-        help='list of topics to be remapped: in the form '
-             '"old_topic1:=new_topic1 old_topic2:=new_topic2 etc." ')
+        '--remap', '-m', type=lambda s: list(s.split(' ')),
+        default=[], metavar='"old_topic1:=new_topic1 old_topic2:=new_topic2"',
+        help='Space-delimited and surrounded by double quote marks list of topics to be remapped: '
+             'in the form "old_topic1:=new_topic1 old_topic2:=new_topic2" etc.')
     parser.add_argument(
         '--storage-config-file', type=FileType('r'),
         help='Path to a yaml file defining storage specific configurations. '

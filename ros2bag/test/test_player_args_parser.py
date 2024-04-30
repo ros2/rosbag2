@@ -29,16 +29,16 @@ def test_arguments_parser():
     return parser
 
 
-def test_topics_list_arguments(test_arguments_parser):
-    """Test player --topics list arguments parser."""
+def test_player_topics_list_argument(test_arguments_parser):
+    """Test player --topics list argument parser."""
     bag_path = RESOURCES_PATH / 'empty_bag'
     args = test_arguments_parser.parse_args(['--topics', 'topic1 topic2', bag_path.as_posix()])
     assert ['topic1', 'topic2'] == args.topics
     assert args.bag_path is not None
 
 
-def test_services_list_arguments(test_arguments_parser):
-    """Test player --services list arguments parser."""
+def test_player_services_list_argument(test_arguments_parser):
+    """Test player --services list argument parser."""
     bag_path = RESOURCES_PATH / 'empty_bag'
     args = test_arguments_parser.parse_args(
         ['--services', 'service1 service2', bag_path.as_posix()]
@@ -47,8 +47,8 @@ def test_services_list_arguments(test_arguments_parser):
     assert args.bag_path is not None
 
 
-def test_exclude_topics_list_arguments(test_arguments_parser):
-    """Test player --exclude-topics list arguments parser."""
+def test_player_exclude_topics_list_argument(test_arguments_parser):
+    """Test player --exclude-topics list argument parser."""
     bag_path = RESOURCES_PATH / 'empty_bag'
     args = test_arguments_parser.parse_args(
         ['--exclude-topics', 'topic1 topic2', bag_path.as_posix()]
@@ -57,8 +57,8 @@ def test_exclude_topics_list_arguments(test_arguments_parser):
     assert args.bag_path is not None
 
 
-def test_exclude_services_list_arguments(test_arguments_parser):
-    """Test player --exclude-services list arguments parser."""
+def test_player_exclude_services_list_argument(test_arguments_parser):
+    """Test player --exclude-services list argument parser."""
     bag_path = RESOURCES_PATH / 'empty_bag'
     args = test_arguments_parser.parse_args(
         ['--exclude-services', 'service1 service2', bag_path.as_posix()]
@@ -67,11 +67,21 @@ def test_exclude_services_list_arguments(test_arguments_parser):
     assert args.bag_path is not None
 
 
-def test_clock_topics_list_arguments(test_arguments_parser):
-    """Test player --clock-topics list arguments parser."""
+def test_player_clock_topics_list_argument(test_arguments_parser):
+    """Test player --clock-topics list argument parser."""
     bag_path = RESOURCES_PATH / 'empty_bag'
     args = test_arguments_parser.parse_args(
         ['--clock-topics', 'topic1 topic2', bag_path.as_posix()]
     )
     assert ['topic1', 'topic2'] == args.clock_topics
+    assert args.bag_path is not None
+
+
+def test_player_remap_list_argument(test_arguments_parser):
+    """Test player --remap list argument parser."""
+    bag_path = RESOURCES_PATH / 'empty_bag'
+    args = test_arguments_parser.parse_args(
+        ['--remap', 'old_topic1:=new_topic1 old_topic2:=new_topic2', bag_path.as_posix()]
+    )
+    assert ['old_topic1:=new_topic1', 'old_topic2:=new_topic2'] == args.remap
     assert args.bag_path is not None
