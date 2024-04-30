@@ -2,6 +2,9 @@
 Changelog for package rosbag2_examples_cpp
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+
 0.26.1 (2024-04-17)
 -------------------
 

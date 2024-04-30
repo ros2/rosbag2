@@ -2,6 +2,9 @@
 Changelog for package liblz4_vendor
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+
 0.26.1 (2024-04-17)
 -------------------
 * Make sure to build_export_depend liblz4-dev. (`#1614 <https://github.com/ros2/rosbag2/issues/1614>`_)
