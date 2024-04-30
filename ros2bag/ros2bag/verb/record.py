@@ -63,9 +63,18 @@ class RecordVerb(VerbExtension):
 
         # Topic filter arguments
         parser.add_argument(
-            'topics', nargs='*', default=None, help='List of topics to record.')
+            '--topics', type=lambda s: list(s.split(' ')), default=[], metavar='"topic1 topic2"',
+            help='Space-delimited and surrounded by double quote marks list of topics to record.')
         parser.add_argument(
-            '--topic-types', nargs='+', default=[], help='List of topic types to record.')
+            '--services', type=lambda s: list(s.split(' ')),
+            default=[], metavar='"service1 service2"',
+            help='Space-delimited and surrounded by double quote marks list of services to '
+                 'record.')
+        parser.add_argument(
+            '--topic-types', type=lambda s: list(s.split(' ')),
+            default=[], metavar='"topic_type1 topic_type2"',
+            help='Space-delimited and surrounded by double quote marks list of topic types '
+                 'to record.')
         parser.add_argument(
             '-a', '--all', action='store_true',
             help='Record all topics and services (Exclude hidden topic).')
@@ -85,22 +94,20 @@ class RecordVerb(VerbExtension):
             help='Exclude topics and services containing provided regular expression. '
                  'Works on top of --all, --all-topics, or --regex.')
         parser.add_argument(
-            '--exclude-topic-types', type=str, default=[], metavar='ExcludeTypes', nargs='+',
-            help='List of topic types not being recorded. '
-                 'Works on top of --all, --all-topics, or --regex.')
+            '--exclude-topic-types', type=lambda s: list(s.split(' ')),
+            default=[], metavar='"topic_type1 topic_type2"',
+            help='Space-delimited and surrounded by double quote marks list of topic types '
+                 'not being recorded. Works on top of --all, --all-topics, or --regex.')
         parser.add_argument(
-            '--exclude-topics', type=str, metavar='Topic', nargs='+',
-            help='List of topics not being recorded. '
-                 'Works on top of --all, --all-topics, or --regex.')
+            '--exclude-topics', type=lambda s: list(s.split(' ')),
+            default=[], metavar='"topic1 topic2"',
+            help='Space-delimited and surrounded by double quote marks list of topics '
+                 'not being recorded. Works on top of --all, --all-topics, or --regex.')
         parser.add_argument(
-            '--exclude-services', type=str, metavar='ServiceName', nargs='+',
-            help='List of services not being recorded. '
-                 'Works on top of --all, --all-services, or --regex.')
-
-        # Enable to record service
-        parser.add_argument(
-            '--services', type=str, metavar='ServiceName', nargs='+',
-            help='List of services to record.')
+            '--exclude-services', type=lambda s: list(s.split(' ')),
+            default=[], metavar='"service1 service2"',
+            help='Space-delimited and surrounded by double quote marks list of services '
+                 'not being recorded. Works on top of --all, --all-topics, or --regex.')
 
         # Discovery behavior
         parser.add_argument(
@@ -165,9 +172,11 @@ class RecordVerb(VerbExtension):
             '--node-name', type=str, default='rosbag2_recorder',
             help='Specify the recorder node name. Default is %(default)s.')
         parser.add_argument(
-            '--custom-data', type=str, metavar='KEY=VALUE', nargs='*',
-            help='Store the custom data in metadata.yaml '
-                 'under "rosbag2_bagfile_information/custom_data". The key=value pair can '
+            '--custom-data', type=lambda s: list(s.split(' ')),
+            default=[], metavar='"KEY1=VALUE1 KEY2=VALUE2"',
+            help='Space-delimited and surrounded by double quote marks list of key=value pairs. '
+                 'Store the custom data in metadata under the '
+                 '"rosbag2_bagfile_information/custom_data". The key=value pair can '
                  'appear more than once. The last value will override the former ones.')
         parser.add_argument(
             '--snapshot-mode', action='store_true',
