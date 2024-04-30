@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from argparse import FileType
+from argparse import ArgumentParser, FileType
 
 from rclpy.qos import InvalidQoSProfileException
 from ros2bag.api import add_standard_reader_args
@@ -29,42 +29,49 @@ from rosbag2_py import StorageOptions
 import yaml
 
 
+def add_burst_arguments(parser: ArgumentParser) -> None:
+    add_standard_reader_args(parser)
+
+    parser.add_argument(
+        '--read-ahead-queue-size', type=int, default=1000,
+        help='size of message queue rosbag tries to hold in memory to help deterministic '
+             'playback. Larger size will result in larger memory needs but might prevent '
+             'delay of message playback.')
+    parser.add_argument(
+        '--topics', type=lambda s: list(s.split(' ')), default=[], metavar='"topic1 topic2"',
+        help='Space-delimited and surrounded by double quote marks list of topics to play. '
+             "At least one topic needs to be specified. If this parameter isn\'t specified, "
+             'all topics will be replayed.')
+    parser.add_argument(
+        '--services', type=lambda s: list(s.split(' ')), default=[], metavar='"service1 service2"',
+        help='Space-delimited and surrounded by double quote marks list of services to play. '
+             "At least one service needs to be specified. If this parameter isn\'t specified, "
+             'all services will be replayed.')
+    parser.add_argument(
+        '--qos-profile-overrides-path', type=FileType('r'),
+        help='Path to a yaml file defining overrides of the QoS profile for specific topics.')
+    parser.add_argument(
+        '--remap', '-m', type=lambda s: list(s.split(' ')),
+        default=[], metavar='"old_topic1:=new_topic1 old_topic2:=new_topic2"',
+        help='Space-delimited and surrounded by double quote marks list of topics to be remapped: '
+             'in the form "old_topic1:=new_topic1 old_topic2:=new_topic2" etc.')
+    parser.add_argument(
+        '--storage-config-file', type=FileType('r'),
+        help='Path to a yaml file defining storage specific configurations. '
+             'See storage plugin documentation for the format of this file.')
+    parser.add_argument(
+        '--start-offset', type=check_positive_float, default=0.0,
+        help='Start the playback player this many seconds into the bag file.')
+    parser.add_argument(
+        '-n', '--num-messages', type=check_not_negative_int, default=0,
+        help='Burst the specified number of messages, then pause.')
+
+
 class BurstVerb(VerbExtension):
     """Burst data from a bag."""
 
     def add_arguments(self, parser, cli_name):  # noqa: D102
-        add_standard_reader_args(parser)
-
-        parser.add_argument(
-            '--read-ahead-queue-size', type=int, default=1000,
-            help='size of message queue rosbag tries to hold in memory to help deterministic '
-                 'playback. Larger size will result in larger memory needs but might prevent '
-                 'delay of message playback.')
-        parser.add_argument(
-            '--topics', type=str, default=[], nargs='+',
-            help='topics to replay, separated by space. At least one topic needs to be '
-            "specified. If this parameter isn\'t specified, all topics will be replayed.")
-        parser.add_argument(
-            '--services', type=str, default=[], nargs='+',
-            help='services to replay, separated by space. At least one service needs to be '
-                 "specified. If this parameter isn\'t specified, all services will be replayed.")
-        parser.add_argument(
-            '--qos-profile-overrides-path', type=FileType('r'),
-            help='Path to a yaml file defining overrides of the QoS profile for specific topics.')
-        parser.add_argument(
-            '--remap', '-m', default='', nargs='+',
-            help='list of topics to be remapped: in the form '
-                 '"old_topic1:=new_topic1 old_topic2:=new_topic2 etc." ')
-        parser.add_argument(
-            '--storage-config-file', type=FileType('r'),
-            help='Path to a yaml file defining storage specific configurations. '
-                 'See storage plugin documentation for the format of this file.')
-        parser.add_argument(
-            '--start-offset', type=check_positive_float, default=0.0,
-            help='Start the playback player this many seconds into the bag file.')
-        parser.add_argument(
-            '-n', '--num-messages', type=check_not_negative_int, default=0,
-            help='Burst the specified number of messages, then pause.')
+        add_burst_arguments(parser)
 
     def main(self, *, args):  # noqa: D102
         qos_profile_overrides = {}  # Specify a valid default
