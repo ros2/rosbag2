@@ -67,7 +67,11 @@ def add_recorder_arguments(parser: ArgumentParser) -> None:
         '--topics', type=str, default=[], metavar='Topic', nargs='+',
         help='Space-delimited list of topics to record.')
     parser.add_argument(
-        '--topic-types', nargs='+', default=[], help='List of topic types to record.')
+        '--services', type=str, metavar='ServiceName', nargs='+',
+        help='Space-delimited list of services to record.')
+    parser.add_argument(
+        '--topic-types', nargs='+', default=[], metavar='TopicType',
+        help='Space-delimited list of topic types to record.')
     parser.add_argument(
         '-a', '--all', action='store_true',
         help='Record all topics and services (Exclude hidden topic).')
@@ -85,24 +89,20 @@ def add_recorder_arguments(parser: ArgumentParser) -> None:
     parser.add_argument(
         '--exclude-regex', default='',
         help='Exclude topics and services containing provided regular expression. '
-             'Works on top of --all, --all-topics, or --regex.')
+             'Works on top of '
+             '--all, --all-topics, --all-services, --topics, --services or --regex.')
     parser.add_argument(
-        '--exclude-topic-types', type=str, default=[], metavar='ExcludeTypes', nargs='+',
-        help='List of topic types not being recorded. '
-             'Works on top of --all, --all-topics, or --regex.')
+        '--exclude-topic-types', type=str, default=[], metavar='ExcludeTopicTypes', nargs='+',
+        help='Space-delimited list of topic types not being recorded. '
+             'Works on top of --all, --all-topics, --topics or --regex.')
     parser.add_argument(
         '--exclude-topics', type=str, metavar='Topic', nargs='+',
-        help='List of topics not being recorded. '
+        help='Space-delimited list of topics not being recorded. '
              'Works on top of --all, --all-topics, or --regex.')
     parser.add_argument(
         '--exclude-services', type=str, metavar='ServiceName', nargs='+',
-        help='List of services not being recorded. '
+        help='Space-delimited list of services not being recorded. '
              'Works on top of --all, --all-services, or --regex.')
-
-    # Enable to record service
-    parser.add_argument(
-        '--services', type=str, metavar='ServiceName', nargs='+',
-        help='List of services to record.')
 
     # Discovery behavior
     parser.add_argument(
@@ -168,13 +168,14 @@ def add_recorder_arguments(parser: ArgumentParser) -> None:
         help='Specify the recorder node name. Default is %(default)s.')
     parser.add_argument(
         '--custom-data', type=str, metavar='KEY=VALUE', nargs='*',
-        help='Store the custom data in metadata.yaml '
-             'under "rosbag2_bagfile_information/custom_data". The key=value pair can '
+        help='Space-delimited list of key=value pairs. Store the custom data in metadata '
+             'under the "rosbag2_bagfile_information/custom_data". The key=value pair can '
              'appear more than once. The last value will override the former ones.')
     parser.add_argument(
         '--snapshot-mode', action='store_true',
         help='Enable snapshot mode. Messages will not be written to the bagfile until '
-             'the "/rosbag2_recorder/snapshot" service is called.')
+             'the "/rosbag2_recorder/snapshot" service is called. e.g. \n '
+             'ros2 service call /rosbag2_recorder/snapshot rosbag2_interfaces/Snapshot')
 
     # Storage configuration
     add_writer_storage_plugin_extensions(parser)
