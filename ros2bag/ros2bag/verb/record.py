@@ -84,8 +84,7 @@ def add_recorder_arguments(parser: ArgumentParser) -> None:
     parser.add_argument(
         '-e', '--regex', default='',
         help='Record only topics and services containing provided regular expression. '
-             'Overrides --all, --all-topics and --all-services, applies on top of '
-             'topics list and service list.')
+             'Note:  --all, --all-topics or --all-services will override --regex.')
     parser.add_argument(
         '--exclude-regex', default='',
         help='Exclude topics and services containing provided regular expression. '
@@ -98,11 +97,11 @@ def add_recorder_arguments(parser: ArgumentParser) -> None:
     parser.add_argument(
         '--exclude-topics', type=str, metavar='Topic', nargs='+',
         help='Space-delimited list of topics not being recorded. '
-             'Works on top of --all, --all-topics, or --regex.')
+             'Works on top of --all, --all-topics, --topics or --regex.')
     parser.add_argument(
         '--exclude-services', type=str, metavar='ServiceName', nargs='+',
         help='Space-delimited list of services not being recorded. '
-             'Works on top of --all, --all-services, or --regex.')
+             'Works on top of --all, --all-services, --services or --regex.')
 
     # Discovery behavior
     parser.add_argument(
