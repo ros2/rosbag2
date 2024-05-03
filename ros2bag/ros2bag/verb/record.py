@@ -216,18 +216,15 @@ class RecordVerb(VerbExtension):
             return False
         return True
 
-    def main(self, *, args):  # noqa: D102
-
+    def validate_parsed_arguments(self, args, uri) -> str:
         if args.topics_positional:
-            print('Warning! Positional "topics" argument deprecated. '
-                  'Please use optional "--topics" argument instead.')
+            print(print_error('Warning! Positional "topics" argument deprecated. '
+                              'Please use optional "--topics" argument instead.'))
             args.topics = args.topics_positional
 
         if not self._check_necessary_argument(args):
             return print_error('Need to specify at least one option out of --all, --all-topics, '
                                '--all-services, --services, --topics, --topic-types or --regex')
-
-        uri = args.output or datetime.datetime.now().strftime('rosbag2_%Y_%m_%d-%H_%M_%S')
 
         if os.path.isdir(uri):
             return print_error("Output folder '{}' already exists.".format(uri))
@@ -243,6 +240,14 @@ class RecordVerb(VerbExtension):
 
         if args.compression_queue_size < 0:
             return print_error('Compression queue size must be at least 0.')
+
+    def main(self, *, args):  # noqa: D102
+
+        uri = args.output or datetime.datetime.now().strftime('rosbag2_%Y_%m_%d-%H_%M_%S')
+
+        error_str = self.validate_parsed_arguments(args, uri)
+        if error_str and len(error_str) > 0:
+            return error_str
 
         args.compression_mode = args.compression_mode.upper()
 
