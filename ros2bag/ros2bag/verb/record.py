@@ -62,7 +62,7 @@ def add_recorder_arguments(parser: ArgumentParser) -> None:
     topics_args_group = parser.add_mutually_exclusive_group()
     topics_args_group.add_argument(
         'topics_positional', type=str, default=[], metavar='[Topic ...]', nargs='*',
-        help='Space-delimited list of topics to record.')
+        help='Space-delimited list of topics to record. (deprecated)')
     topics_args_group.add_argument(
         '--topics', type=str, default=[], metavar='Topic', nargs='+',
         help='Space-delimited list of topics to record.')
