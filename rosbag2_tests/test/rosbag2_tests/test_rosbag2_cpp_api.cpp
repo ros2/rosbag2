@@ -169,6 +169,7 @@ TEST_P(TestRosbag2CPPAPI, minimal_writer_example)
 
   // remove the rosbag again after the test
   EXPECT_TRUE(rcpputils::fs::remove_all(rosbag_directory));
+  EXPECT_TRUE(rcpputils::fs::remove_all(rosbag_directory_next));
 }
 
 INSTANTIATE_TEST_SUITE_P(
