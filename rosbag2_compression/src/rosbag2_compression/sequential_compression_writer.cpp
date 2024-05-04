@@ -194,7 +194,18 @@ void SequentialCompressionWriter::close()
       std::lock_guard<std::recursive_mutex> lock(storage_mutex_);
       std::lock_guard<std::mutex> compressor_lock(compressor_queue_mutex_);
       try {
-        storage_.reset();  // Storage must be closed before it can be compressed.
+        // Storage must be closed before file can be compressed.
+        if (use_cache_) {
+          // destructor will flush message cache
+          cache_consumer_.reset();
+          message_cache_.reset();
+        }
+        finalize_metadata();
+        if (storage_) {
+          storage_->update_metadata(metadata_);
+          storage_.reset();  // Storage will be closed in storage_ destructor
+        }
+
         if (!metadata_.relative_file_paths.empty()) {
           std::string file = metadata_.relative_file_paths.back();
           compressor_file_queue_.push(file);
