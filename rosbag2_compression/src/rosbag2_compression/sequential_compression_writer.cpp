@@ -58,7 +58,7 @@ SequentialCompressionWriter::SequentialCompressionWriter(
 SequentialCompressionWriter::~SequentialCompressionWriter()
 {
   if (storage_) {
-    close();
+    SequentialCompressionWriter::close();
   }
 }
 
