@@ -62,11 +62,13 @@ void Writer::open(
   const rosbag2_storage::StorageOptions & storage_options,
   const ConverterOptions & converter_options)
 {
+  std::lock_guard<std::mutex> writer_lock(writer_mutex_);
   writer_impl_->open(storage_options, converter_options);
 }
 
 void Writer::close()
 {
+  std::lock_guard<std::mutex> writer_lock(writer_mutex_);
   writer_impl_->close();
 }
 
