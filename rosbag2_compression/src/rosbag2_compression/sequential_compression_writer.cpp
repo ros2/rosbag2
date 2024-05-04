@@ -204,10 +204,9 @@ void SequentialCompressionWriter::close()
         ROSBAG2_COMPRESSION_LOG_WARN_STREAM("Could not compress the last bag file.\n" << e.what());
       }
     }
-
-    stop_compressor_threads();
   }
-
+  stop_compressor_threads();  // Note: The metadata_.relative_file_paths will be updated with
+  // compressed filename when compressor threads will finish.
   SequentialWriter::close();
 }
 

@@ -174,10 +174,15 @@ void SequentialWriter::close()
   }
 
   if (storage_) {
-    auto info = std::make_shared<bag_events::BagSplitInfo>();
-    info->closed_file = storage_->get_relative_file_path();
     storage_.reset();  // Destroy storage before calling WRITE_SPLIT callback to make sure that
     // bag file was closed before callback call.
+  }
+  if (!metadata_.relative_file_paths.empty()) {
+    auto info = std::make_shared<bag_events::BagSplitInfo>();
+    // Take the latest file name from metadata in case if it was updated after compression in
+    // derived class
+    info->closed_file =
+      (fs::path(base_folder_) / metadata_.relative_file_paths.back()).generic_string();
     callback_manager_.execute_callbacks(bag_events::BagEvent::WRITE_SPLIT, info);
   }
 
@@ -297,14 +302,13 @@ void SequentialWriter::switch_to_next_storage()
     base_folder_,
     metadata_.relative_file_paths.size());
   storage_ = storage_factory_->open_read_write(storage_options_);
-  storage_->update_metadata(metadata_);
-
   if (!storage_) {
     std::stringstream errmsg;
     errmsg << "Failed to rollover bagfile to new file: \"" << storage_options_.uri << "\"!";
 
     throw std::runtime_error(errmsg.str());
   }
+  storage_->update_metadata(metadata_);
   // Re-register all topics since we rolled-over to a new bagfile.
   for (const auto & topic : topics_names_to_info_) {
     auto const & md = topic_names_to_message_definitions_[topic.first];
