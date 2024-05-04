@@ -55,7 +55,6 @@ SequentialWriter::SequentialWriter(
   metadata_io_(std::move(metadata_io)),
   converter_(nullptr),
   topics_names_to_info_(),
-  message_definitions_(nullptr),
   topic_names_to_message_definitions_(),
   metadata_()
 {}
@@ -93,8 +92,6 @@ void SequentialWriter::open(
 {
   base_folder_ = storage_options.uri;
   storage_options_ = storage_options;
-
-  message_definitions_ = std::make_unique<LocalMessageDefinitionSource>();
 
   if (storage_options_.storage_id.empty()) {
     storage_options_.storage_id = rosbag2_storage::get_default_storage_id();
@@ -188,7 +185,6 @@ void SequentialWriter::close()
   topic_names_to_message_definitions_.clear();
 
   converter_.reset();
-  message_definitions_.reset();
 }
 
 void SequentialWriter::create_topic(const rosbag2_storage::TopicMetadata & topic_with_type)
@@ -202,7 +198,7 @@ void SequentialWriter::create_topic(const rosbag2_storage::TopicMetadata & topic
   rosbag2_storage::MessageDefinition definition;
   const std::string & topic_type = topic_with_type.type;
   try {
-    definition = message_definitions_->get_full_text(topic_type);
+    definition = message_definitions_.get_full_text(topic_type);
   } catch (DefinitionNotFoundError &) {
     definition = rosbag2_storage::MessageDefinition::empty_message_definition_for(topic_type);
   }

@@ -182,6 +182,7 @@ protected:
 
 private:
   std::unique_ptr<rosbag2_compression::CompressionFactory> compression_factory_{};
+  std::shared_ptr<rosbag2_compression::BaseCompressorInterface> compressor_{};
   std::mutex compressor_queue_mutex_;
   std::queue<std::shared_ptr<const rosbag2_storage::SerializedBagMessage>>
   compressor_message_queue_ RCPPUTILS_TSA_GUARDED_BY(compressor_queue_mutex_);
