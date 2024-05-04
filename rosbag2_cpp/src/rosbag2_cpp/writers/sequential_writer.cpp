@@ -70,7 +70,7 @@ SequentialWriter::~SequentialWriter()
   // destructed objects.
   callback_manager_.delete_all_callbacks();
   if (storage_) {
-    close();
+    SequentialWriter::close();
   }
 }
 
