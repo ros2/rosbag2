@@ -222,6 +222,31 @@ TEST_F(SequentialCompressionWriterTest, open_succeeds_on_supported_compression_f
     writer_->open(tmp_dir_storage_options_, {serialization_format_, serialization_format_}));
 }
 
+TEST_F(SequentialCompressionWriterTest, open_succeeds_twice)
+{
+  rosbag2_compression::CompressionOptions compression_options{
+    DefaultTestCompressor, rosbag2_compression::CompressionMode::FILE,
+    kDefaultCompressionQueueSize, kDefaultCompressionQueueThreads,
+    kDefaultCompressionQueueThreadsPriority};
+  initializeWriter(compression_options);
+
+  auto tmp_dir = fs::temp_directory_path() / "path_not_empty";
+  auto tmp_dir_next = fs::temp_directory_path() / "path_not_empty_next";
+
+  auto storage_options = rosbag2_storage::StorageOptions();
+  auto storage_options_next = rosbag2_storage::StorageOptions();
+
+  storage_options.uri = tmp_dir.string();
+  storage_options_next.uri = tmp_dir_next.string();
+
+  EXPECT_NO_THROW(
+    writer_->open(storage_options, {serialization_format_, serialization_format_}));
+
+  writer_->close();
+  EXPECT_NO_THROW(
+    writer_->open(storage_options_next, {serialization_format_, serialization_format_}));
+}
+
 TEST_F(SequentialCompressionWriterTest, writer_calls_create_compressor)
 {
   rosbag2_compression::CompressionOptions compression_options{
