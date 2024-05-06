@@ -197,6 +197,7 @@ private:
   rosbag2_compression::CompressionOptions compression_options_{};
 
   bool should_compress_last_file_{true};
+  std::atomic_bool is_open_{false};
 
   // Runs a while loop that pulls data from the compression queue until
   // compression_is_running_ is false; should be run in a separate thread

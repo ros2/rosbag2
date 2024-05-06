@@ -65,9 +65,7 @@ SequentialCompressionWriter::SequentialCompressionWriter(
 
 SequentialCompressionWriter::~SequentialCompressionWriter()
 {
-  if (storage_) {
-    SequentialCompressionWriter::close();
-  }
+  SequentialCompressionWriter::close();
 }
 
 void SequentialCompressionWriter::compression_thread_fn()
@@ -227,13 +225,22 @@ void SequentialCompressionWriter::open(
   const rosbag2_storage::StorageOptions & storage_options,
   const rosbag2_cpp::ConverterOptions & converter_options)
 {
+  // Note. close and open methods protected with mutex on upper rosbag2_cpp::writer level.
+  if (this->is_open_) {
+    return;  // The writer already opened.
+  }
   std::lock_guard<std::recursive_mutex> lock(storage_mutex_);
   SequentialWriter::open(storage_options, converter_options);
   setup_compression();
+  this->is_open_ = true;
 }
 
 void SequentialCompressionWriter::close()
 {
+  // Note. close and open methods protected with mutex on upper rosbag2_cpp::writer level.
+  if (!this->is_open_.exchange(false)) {
+    return;  // The writer is not open
+  }
   if (!base_folder_.empty()) {
     // Reset may be called before initializing the compressor (ex. bad options).
     // We compress the last file only if it hasn't been compressed earlier (ex. in split_bagfile()).

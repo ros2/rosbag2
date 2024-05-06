@@ -200,6 +200,7 @@ private:
   void write_messages(
     const std::vector<std::shared_ptr<const rosbag2_storage::SerializedBagMessage>> & messages);
   bool is_first_message_ {true};
+  std::atomic_bool is_open_{false};
 
   bag_events::EventCallbackManager callback_manager_;
 };

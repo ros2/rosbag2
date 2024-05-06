@@ -69,9 +69,7 @@ SequentialWriter::~SequentialWriter()
   // Callbacks likely was created after SequentialWriter object and may point to the already
   // destructed objects.
   callback_manager_.delete_all_callbacks();
-  if (storage_) {
-    SequentialWriter::close();
-  }
+  SequentialWriter::close();
 }
 
 void SequentialWriter::init_metadata()
@@ -99,6 +97,10 @@ void SequentialWriter::open(
   const rosbag2_storage::StorageOptions & storage_options,
   const ConverterOptions & converter_options)
 {
+  // Note. close and open methods protected with mutex on upper rosbag2_cpp::writer level.
+  if (is_open_) {
+    return;  // The writer already opened
+  }
   base_folder_ = storage_options.uri;
   storage_options_ = storage_options;
 
@@ -164,10 +166,15 @@ void SequentialWriter::open(
 
   init_metadata();
   storage_->update_metadata(metadata_);
+  is_open_ = true;
 }
 
 void SequentialWriter::close()
 {
+  // Note. close and open methods protected with mutex on upper rosbag2_cpp::writer level.
+  if (!is_open_.exchange(false)) {
+    return;  // The writer is not open
+  }
   if (use_cache_) {
     // destructor will flush message cache
     cache_consumer_.reset();
@@ -238,7 +245,7 @@ void SequentialWriter::create_topic(
     return;
   }
 
-  if (!storage_) {
+  if (!is_open_) {
     throw std::runtime_error("Bag is not open. Call open() before writing.");
   }
 
@@ -272,7 +279,7 @@ void SequentialWriter::create_topic(
 
 void SequentialWriter::remove_topic(const rosbag2_storage::TopicMetadata & topic_with_type)
 {
-  if (!storage_) {
+  if (!is_open_) {
     throw std::runtime_error("Bag is not open. Call open() before removing.");
   }
 
@@ -359,7 +366,7 @@ void SequentialWriter::split_bagfile()
 
 void SequentialWriter::write(std::shared_ptr<const rosbag2_storage::SerializedBagMessage> message)
 {
-  if (!storage_) {
+  if (!is_open_) {
     throw std::runtime_error("Bag is not open. Call open() before writing.");
   }
 
