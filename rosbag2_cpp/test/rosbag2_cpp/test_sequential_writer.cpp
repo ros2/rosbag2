@@ -642,6 +642,66 @@ TEST_F(SequentialWriterTest, split_event_calls_callback)
   EXPECT_EQ(opened_file, fake_storage_uri_);
 }
 
+TEST_F(SequentialWriterTest, split_event_calls_on_writer_close)
+{
+  const int message_count = 7;
+
+  ON_CALL(
+    *storage_,
+    write(An<std::shared_ptr<const rosbag2_storage::SerializedBagMessage>>())).WillByDefault(
+    [this](std::shared_ptr<const rosbag2_storage::SerializedBagMessage>) {
+      fake_storage_size_ += 1;
+    });
+
+  ON_CALL(*storage_, get_bagfile_size).WillByDefault(
+    [this]() {
+      return fake_storage_size_.load();
+    });
+
+  ON_CALL(*metadata_io_, write_metadata).WillByDefault(
+    [this](const std::string &, const rosbag2_storage::BagMetadata & metadata) {
+      fake_metadata_ = metadata;
+    });
+
+  ON_CALL(*storage_, get_relative_file_path).WillByDefault(
+    [this]() {
+      return fake_storage_uri_;
+    });
+
+  auto sequential_writer = std::make_unique<rosbag2_cpp::writers::SequentialWriter>(
+    std::move(storage_factory_), converter_factory_, std::move(metadata_io_));
+  writer_ = std::make_unique<rosbag2_cpp::Writer>(std::move(sequential_writer));
+
+  auto message = std::make_shared<rosbag2_storage::SerializedBagMessage>();
+  message->topic_name = "test_topic";
+
+  storage_options_.max_bagfile_size = 0;
+
+  bool callback_called = false;
+  std::string closed_file, opened_file;
+  rosbag2_cpp::bag_events::WriterEventCallbacks callbacks;
+  callbacks.write_split_callback =
+    [&callback_called, &closed_file, &opened_file](rosbag2_cpp::bag_events::BagSplitInfo & info) {
+      closed_file = info.closed_file;
+      opened_file = info.opened_file;
+      callback_called = true;
+    };
+  writer_->add_event_callbacks(callbacks);
+
+  writer_->open(storage_options_, {"rmw_format", "rmw_format"});
+  writer_->create_topic({"test_topic", "test_msgs/BasicTypes", "", "", ""});
+
+  for (auto i = 0; i < message_count; ++i) {
+    writer_->write(message);
+  }
+  writer_->close();
+
+  ASSERT_TRUE(callback_called);
+  auto expected_closed = rcpputils::fs::path(storage_options_.uri) / (storage_options_.uri + "_0");
+  EXPECT_EQ(closed_file, expected_closed.string());
+  EXPECT_TRUE(opened_file.empty());
+}
+
 TEST_P(ParametrizedTemporaryDirectoryFixture, split_bag_metadata_has_full_duration) {
   const std::vector<std::pair<rcutils_time_point_value_t, uint32_t>> fake_messages {
     {100, 1},
