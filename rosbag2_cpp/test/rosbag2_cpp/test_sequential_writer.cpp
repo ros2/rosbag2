@@ -78,11 +78,13 @@ public:
   std::shared_ptr<NiceMock<MockStorage>> storage_;
   std::shared_ptr<StrictMock<MockConverterFactory>> converter_factory_;
   std::unique_ptr<MockMetadataIo> metadata_io_;
-  std::unique_ptr<rosbag2_cpp::Writer> writer_;
+
   rosbag2_storage::StorageOptions storage_options_;
   std::atomic<uint32_t> fake_storage_size_{0};  // Need to be atomic for cache update since it
   // uses in callback from cache_consumer thread
   rosbag2_storage::BagMetadata fake_metadata_;
+  //  Ensure writer_ is destructed before intercepted fake_metadata_
+  std::unique_ptr<rosbag2_cpp::Writer> writer_;
   std::string fake_storage_uri_;
 };
 
@@ -566,29 +568,6 @@ TEST_F(SequentialWriterTest, split_event_calls_callback)
   EXPECT_EQ(opened_file, fake_storage_uri_);
 }
 
-<<<<<<< HEAD
-
-class ManualSplitWriter : public rosbag2_cpp::writers::SequentialWriter
-{
-public:
-  // makes the method public for manual splitting
-  void split()
-  {
-    split_bagfile();
-  }
-};
-
-void write_sample_split_bag(
-  const std::string & uri,
-  const std::vector<std::vector<rcutils_time_point_value_t>> & message_timestamps_by_file)
-{
-  std::string msg_content = "Hello";
-  auto msg_length = msg_content.length();
-  std::shared_ptr<rcutils_uint8_array_t> fake_data = rosbag2_storage::make_serialized_message(
-    msg_content.c_str(), msg_length);
-  std::string topic_name = "testtopic";
-
-=======
 TEST_F(SequentialWriterTest, split_event_calls_on_writer_close)
 {
   const int message_count = 7;
@@ -636,7 +615,7 @@ TEST_F(SequentialWriterTest, split_event_calls_on_writer_close)
   writer_->add_event_callbacks(callbacks);
 
   writer_->open(storage_options_, {"rmw_format", "rmw_format"});
-  writer_->create_topic({"test_topic", "test_msgs/BasicTypes", "", "", ""});
+  writer_->create_topic({"test_topic", "test_msgs/BasicTypes", "", ""});
 
   for (auto i = 0; i < message_count; ++i) {
     writer_->write(message);
@@ -649,16 +628,26 @@ TEST_F(SequentialWriterTest, split_event_calls_on_writer_close)
   EXPECT_TRUE(opened_file.empty());
 }
 
-TEST_P(ParametrizedTemporaryDirectoryFixture, split_bag_metadata_has_full_duration) {
-  const std::vector<std::pair<rcutils_time_point_value_t, uint32_t>> fake_messages {
-    {100, 1},
-    {300, 2},
-    {200, 3},
-    {500, 4},
-    {400, 5},
-    {600, 6}
-  };
->>>>>>> ba199d0 (Add BagSplitInfo service call on bag close (#1422))
+class ManualSplitWriter : public rosbag2_cpp::writers::SequentialWriter
+{
+public:
+  // makes the method public for manual splitting
+  void split()
+  {
+    split_bagfile();
+  }
+};
+
+void write_sample_split_bag(
+  const std::string & uri,
+  const std::vector<std::vector<rcutils_time_point_value_t>> & message_timestamps_by_file)
+{
+  std::string msg_content = "Hello";
+  auto msg_length = msg_content.length();
+  std::shared_ptr<rcutils_uint8_array_t> fake_data = rosbag2_storage::make_serialized_message(
+    msg_content.c_str(), msg_length);
+  std::string topic_name = "testtopic";
+
   rosbag2_storage::StorageOptions storage_options;
   storage_options.uri = uri;
   storage_options.storage_id = "sqlite3";
