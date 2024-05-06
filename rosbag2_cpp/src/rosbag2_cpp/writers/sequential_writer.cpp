@@ -182,7 +182,7 @@ void SequentialWriter::close()
     // Take the latest file name from metadata in case if it was updated after compression in
     // derived class
     info->closed_file =
-      (fs::path(base_folder_) / metadata_.relative_file_paths.back()).generic_string();
+      (rcpputils::fs::path(base_folder_) / metadata_.relative_file_paths.back()).string();
     callback_manager_.execute_callbacks(bag_events::BagEvent::WRITE_SPLIT, info);
   }
 
