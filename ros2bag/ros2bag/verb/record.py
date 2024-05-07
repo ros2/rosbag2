@@ -21,6 +21,7 @@ from ros2bag.api import add_writer_storage_plugin_extensions
 from ros2bag.api import convert_service_to_service_event_topic
 from ros2bag.api import convert_yaml_to_qos_profile
 from ros2bag.api import print_error
+from ros2bag.api import print_warn
 from ros2bag.api import SplitLineFormatter
 from ros2bag.verb import VerbExtension
 from ros2cli.node import NODE_NAME_PREFIX
@@ -210,20 +211,29 @@ class RecordVerb(VerbExtension):
         # At least one options out of --all, --all-topics, --all-services, --services, --topics,
         # --topic-types or --regex must be used
         if not (args.all or args.all_topics or args.all_services or
-           args.services or (args.topics and len(args.topics) > 0) or
-           (args.topic_types and len(args.topic_types) > 0) or args.regex):
+                args.services or (args.topics and len(args.topics) > 0) or
+                (args.topic_types and len(args.topic_types) > 0) or args.regex):
             return False
         return True
 
     def validate_parsed_arguments(self, args, uri) -> str:
         if args.topics_positional:
-            print(print_error('Warning! Positional "topics" argument deprecated. '
-                              'Please use optional "--topics" argument instead.'))
+            print(print_warn('Positional "topics" argument deprecated. '
+                             'Please use optional "--topics" argument instead.'))
             args.topics = args.topics_positional
 
         if not self._check_necessary_argument(args):
             return print_error('Need to specify at least one option out of --all, --all-topics, '
                                '--all-services, --services, --topics, --topic-types or --regex')
+
+        if (args.all or args.all_services) and args.services:
+            print(print_warn('--all or --all-services will override --services'))
+
+        if (args.all or args.all_topics) and args.topics:
+            print(print_warn('--all or --all-topics will override --topics'))
+
+        if (args.all or args.all_topics or args.all_services) and args.regex:
+            print(print_warn('--all, --all-topics or --all-services will override --regex'))
 
         if os.path.isdir(uri):
             return print_error("Output folder '{}' already exists.".format(uri))
