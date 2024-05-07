@@ -586,10 +586,10 @@ RecorderImpl::create_subscription(
   }
 #endif
 
-  static bool rwm_has_received_timestamp_support =
+  static bool rmw_has_received_timestamp_support =
     std::string(rmw_get_implementation_identifier()).find("rmw_cyclonedds") == std::string::npos;
 
-  if (record_options_.use_sim_time || !rwm_has_received_timestamp_support) {
+  if (record_options_.use_sim_time || !rmw_has_received_timestamp_support) {
     return node->create_generic_subscription(
       topic_name,
       topic_type,
