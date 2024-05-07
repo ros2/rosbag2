@@ -211,7 +211,8 @@ class RecordVerb(VerbExtension):
         # At least one options out of --all, --all-topics, --all-services, --services, --topics,
         # --topic-types or --regex must be used
         if not (args.all or args.all_topics or args.all_services or
-                args.services or (args.topics and len(args.topics) > 0) or
+                (args.services and len(args.services) > 0) or
+                (args.topics and len(args.topics) > 0) or
                 (args.topic_types and len(args.topic_types) > 0) or args.regex):
             return False
         return True
