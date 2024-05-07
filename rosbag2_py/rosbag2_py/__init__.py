@@ -42,6 +42,7 @@ with add_dll_directories_from_env('PATH'):
         TopicMetadata,
         TopicInformation,
         get_default_storage_id,
+        to_rclcpp_qos_vector,
     )
     from rosbag2_py._writer import (
         SequentialCompressionWriter,
@@ -78,6 +79,7 @@ __all__ = [
     'get_registered_writers',
     'get_registered_compressors',
     'get_registered_serializers',
+    'to_rclcpp_qos_vector',
     'ReadOrder',
     'ReadOrderSortBy',
     'Reindexer',
