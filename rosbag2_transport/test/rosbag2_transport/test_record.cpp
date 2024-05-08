@@ -91,19 +91,20 @@ TEST_F(RecordIntegrationTestFixture, published_messages_from_multiple_topics_are
   EXPECT_THAT(array_messages[0]->float32_values, Eq(array_message->float32_values));
 
   // Check for send and received timestamps
-  bool rwm_has_send_timestamp_support = true;
+  bool rmw_has_send_timestamp_support = true;
 #ifdef _WIN32
   if (std::string(rmw_get_implementation_identifier()).find("rmw_connextdds") !=
     std::string::npos)
   {
-    rwm_has_send_timestamp_support = false;
+    rmw_has_send_timestamp_support = false;
   }
 #endif
   for (const auto & message : recorded_messages) {
     EXPECT_NE(message->recv_timestamp, 0) << "topic : " << message->topic_name;
-    if (rwm_has_send_timestamp_support) {
+    if (rmw_has_send_timestamp_support) {
       // Check that the send_timestamp is not the same as the clock message
       EXPECT_NE(message->send_timestamp, 0);
+      EXPECT_THAT(message->recv_timestamp, Ge(message->send_timestamp));
     } else {
       // if rwm has not sent timestamp support, send_timestamp must be zero
       EXPECT_EQ(message->send_timestamp, 0);
