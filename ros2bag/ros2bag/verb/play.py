@@ -208,8 +208,6 @@ class PlayVerb(VerbExtension):
 
         play_options.exclude_regex_to_filter = args.exclude_regex
 
-        play_options.exclude_topics_to_filter = args.exclude_topics if args.exclude_topics else []
-
         play_options.exclude_service_events_to_filter = \
             convert_service_to_service_event_topic(args.exclude_services)
 
@@ -217,6 +215,10 @@ class PlayVerb(VerbExtension):
         play_options.loop = args.loop
         play_options.topic_remapping_options = topic_remapping
         play_options.clock_publish_frequency = args.clock
+        exclude_topics = args.exclude_topics if args.exclude_topics else []
+        if play_options.clock_publish_frequency > 0:
+            exclude_topics.append('/clock')
+        play_options.exclude_topics_to_filter = exclude_topics
         if args.clock_topics_all or len(args.clock_topics) > 0:
             play_options.clock_publish_on_topic_publish = True
         play_options.clock_topics = args.clock_topics
