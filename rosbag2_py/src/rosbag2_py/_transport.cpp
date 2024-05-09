@@ -50,7 +50,7 @@ public:
         pointers_.push_back(const_cast<char *>(arg.c_str()));
       }
     );
-    pointers_.push_back(NULL);
+    pointers_.push_back(nullptr);
   }
 
   char ** argv()
@@ -58,9 +58,9 @@ public:
     return arguments_.empty() ? nullptr : pointers_.data();
   }
 
-  int argc() const
+  [[nodiscard]] int argc() const
   {
-    return arguments_.size();
+    return static_cast<int>(arguments_.size());
   }
 
 private:

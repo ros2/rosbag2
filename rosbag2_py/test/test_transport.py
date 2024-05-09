@@ -48,6 +48,7 @@ def test_options_qos_conversion():
 
 
 def test_player_log_level():
+    rosbag2_py.Player()  # Test for default constructor
     valid_log_level = 'debug'
     rosbag2_py.Player(valid_log_level)
 
@@ -57,6 +58,7 @@ def test_player_log_level():
 
 
 def test_recoder_log_level():
+    rosbag2_py.Recorder()  # Test for default constructor
     valid_log_level = 'debug'
     rosbag2_py.Recorder(valid_log_level)
 
