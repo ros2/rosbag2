@@ -70,8 +70,10 @@ TEST_F(RecordIntegrationTestFixture, published_messages_from_multiple_topics_are
       return mock_writer.get_messages().size() >= expected_messages;
     });
   auto recorded_messages = mock_writer.get_messages();
-  EXPECT_TRUE(ret) << "failed to capture expected messages in time";
+  EXPECT_TRUE(ret) << "failed to capture expected messages in time" <<
+    "recorded messages = " << recorded_messages.size();
   EXPECT_THAT(recorded_messages, SizeIs(expected_messages));
+  stop_spinning();
 
   auto recorded_topics = mock_writer.get_topics();
   ASSERT_THAT(recorded_topics, SizeIs(2));
@@ -87,6 +89,27 @@ TEST_F(RecordIntegrationTestFixture, published_messages_from_multiple_topics_are
   EXPECT_THAT(string_messages[0]->string_value, Eq(string_message->string_value));
   EXPECT_THAT(array_messages[0]->bool_values, Eq(array_message->bool_values));
   EXPECT_THAT(array_messages[0]->float32_values, Eq(array_message->float32_values));
+
+  // Check for send and received timestamps
+  bool rmw_has_send_timestamp_support = true;
+#ifdef _WIN32
+  if (std::string(rmw_get_implementation_identifier()).find("rmw_connextdds") !=
+    std::string::npos)
+  {
+    rmw_has_send_timestamp_support = false;
+  }
+#endif
+  for (const auto & message : recorded_messages) {
+    EXPECT_NE(message->recv_timestamp, 0) << "topic : " << message->topic_name;
+    if (rmw_has_send_timestamp_support) {
+      // Check that the send_timestamp is not the same as the clock message
+      EXPECT_NE(message->send_timestamp, 0);
+      EXPECT_THAT(message->recv_timestamp, Ge(message->send_timestamp));
+    } else {
+      // if rwm has not sent timestamp support, send_timestamp must be zero
+      EXPECT_EQ(message->send_timestamp, 0);
+    }
+  }
 }
 
 TEST_F(RecordIntegrationTestFixture, can_record_again_after_stop)
