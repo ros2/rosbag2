@@ -201,61 +201,83 @@ def add_recorder_arguments(parser: ArgumentParser) -> None:
              'Has no effect if no compression mode is chosen. Default: %(default)s.')
 
 
+def check_necessary_argument(args):
+    # At least one options out of --all, --all-topics, --all-services, --services, --topics,
+    # --topic-types or --regex must be used
+    if not (args.all or args.all_topics or args.all_services or
+            (args.services and len(args.services) > 0) or
+            (args.topics and len(args.topics) > 0) or
+            (args.topic_types and len(args.topic_types) > 0) or args.regex):
+        return False
+    return True
+
+
+def validate_parsed_arguments(args, uri) -> str:
+    if args.topics_positional:
+        print(print_warn('Positional "topics" argument deprecated. '
+                         'Please use optional "--topics" argument instead.'))
+        args.topics = args.topics_positional
+
+    if not check_necessary_argument(args):
+        return print_error('Need to specify at least one option out of --all, --all-topics, '
+                           '--all-services, --services, --topics, --topic-types or --regex')
+
+    if args.exclude_regex and not \
+            (args.all or args.all_topics or args.topic_types or args.all_services or
+             args.regex):
+        return print_error('--exclude-regex argument requires either --all, '
+                           '--all-topics, --topic-types, --all-services or --regex')
+
+    if args.exclude_topics and not \
+            (args.all or args.all_topics or args.topic_types or args.regex):
+        return print_error('--exclude-topics argument requires either --all, --all-topics, '
+                           '--topic-types or --regex')
+
+    if args.exclude_topic_types and not \
+            (args.all or args.all_topics or args.topic_types or args.regex):
+        return print_error('--exclude-topic-types argument requires either --all, '
+                           '--all-topics or --regex')
+
+    if args.exclude_services and not (args.all or args.all_services or args.regex):
+        return print_error('--exclude-services argument requires either --all, --all-services '
+                           'or --regex')
+
+    if (args.all or args.all_services) and args.services:
+        print(print_warn('--all or --all-services will override --services'))
+
+    if (args.all or args.all_topics) and args.topics:
+        print(print_warn('--all or --all-topics will override --topics'))
+
+    if (args.all or args.all_topics or args.all_services) and args.regex:
+        print(print_warn('--all, --all-topics or --all-services will override --regex'))
+
+    if os.path.isdir(uri):
+        return print_error("Output folder '{}' already exists.".format(uri))
+
+    if args.use_sim_time and args.no_discovery:
+        return print_error(
+            '--use-sim-time and --no-discovery both set, but are incompatible settings. '
+            'The /clock topic needs to be discovered to record with sim time.')
+
+    if args.compression_format and args.compression_mode == 'none':
+        return print_error('Invalid choice: Cannot specify compression format '
+                           'without a compression mode.')
+
+    if args.compression_queue_size < 0:
+        return print_error('Compression queue size must be at least 0.')
+
+
 class RecordVerb(VerbExtension):
     """Record ROS data to a bag."""
 
     def add_arguments(self, parser, cli_name):  # noqa: D102
         add_recorder_arguments(parser)
 
-    def _check_necessary_argument(self, args):
-        # At least one options out of --all, --all-topics, --all-services, --services, --topics,
-        # --topic-types or --regex must be used
-        if not (args.all or args.all_topics or args.all_services or
-                (args.services and len(args.services) > 0) or
-                (args.topics and len(args.topics) > 0) or
-                (args.topic_types and len(args.topic_types) > 0) or args.regex):
-            return False
-        return True
-
-    def validate_parsed_arguments(self, args, uri) -> str:
-        if args.topics_positional:
-            print(print_warn('Positional "topics" argument deprecated. '
-                             'Please use optional "--topics" argument instead.'))
-            args.topics = args.topics_positional
-
-        if not self._check_necessary_argument(args):
-            return print_error('Need to specify at least one option out of --all, --all-topics, '
-                               '--all-services, --services, --topics, --topic-types or --regex')
-
-        if (args.all or args.all_services) and args.services:
-            print(print_warn('--all or --all-services will override --services'))
-
-        if (args.all or args.all_topics) and args.topics:
-            print(print_warn('--all or --all-topics will override --topics'))
-
-        if (args.all or args.all_topics or args.all_services) and args.regex:
-            print(print_warn('--all, --all-topics or --all-services will override --regex'))
-
-        if os.path.isdir(uri):
-            return print_error("Output folder '{}' already exists.".format(uri))
-
-        if args.use_sim_time and args.no_discovery:
-            return print_error(
-                '--use-sim-time and --no-discovery both set, but are incompatible settings. '
-                'The /clock topic needs to be discovered to record with sim time.')
-
-        if args.compression_format and args.compression_mode == 'none':
-            return print_error('Invalid choice: Cannot specify compression format '
-                               'without a compression mode.')
-
-        if args.compression_queue_size < 0:
-            return print_error('Compression queue size must be at least 0.')
-
     def main(self, *, args):  # noqa: D102
 
         uri = args.output or datetime.datetime.now().strftime('rosbag2_%Y_%m_%d-%H_%M_%S')
 
-        error_str = self.validate_parsed_arguments(args, uri)
+        error_str = validate_parsed_arguments(args, uri)
         if error_str and len(error_str) > 0:
             return error_str
 
