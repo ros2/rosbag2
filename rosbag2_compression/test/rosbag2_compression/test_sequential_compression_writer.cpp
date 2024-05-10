@@ -211,12 +211,11 @@ TEST_F(SequentialCompressionWriterTest, open_succeeds_twice)
 {
   rosbag2_compression::CompressionOptions compression_options{
     DefaultTestCompressor, rosbag2_compression::CompressionMode::FILE,
-    kDefaultCompressionQueueSize, kDefaultCompressionQueueThreads,
-    kDefaultCompressionQueueThreadsPriority};
+    kDefaultCompressionQueueSize, kDefaultCompressionQueueThreads};
   initializeWriter(compression_options);
 
-  auto tmp_dir = fs::temp_directory_path() / "path_not_empty";
-  auto tmp_dir_next = fs::temp_directory_path() / "path_not_empty_next";
+  auto tmp_dir = rcpputils::fs::temp_directory_path() / "path_not_empty";
+  auto tmp_dir_next = rcpputils::fs::temp_directory_path() / "path_not_empty_next";
 
   auto storage_options = rosbag2_storage::StorageOptions();
   auto storage_options_next = rosbag2_storage::StorageOptions();
