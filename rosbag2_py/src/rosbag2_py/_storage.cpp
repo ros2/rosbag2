@@ -386,6 +386,11 @@ PYBIND11_MODULE(_storage, m) {
     &rosbag2_storage::get_default_storage_id,
     "Returns the default storage ID used when unspecified in StorageOptions");
 
+  m.def(
+    "to_rclcpp_qos_vector",
+    &rosbag2_storage::to_rclcpp_qos_vector,
+    "Convert QoS in YAML to std::vector<QoS>");
+
   pybind11::class_<rosbag2_storage::MetadataIo>(m, "MetadataIo")
   .def(pybind11::init<>())
   .def("write_metadata", &rosbag2_storage::MetadataIo::write_metadata)
