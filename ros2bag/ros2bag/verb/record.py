@@ -55,7 +55,7 @@ class RecordVerb(VerbExtension):
         parser.add_argument(
             '-e', '--regex', default='',
             help='Record only topics containing provided regular expression. '
-            'Overridden by --all, applies on top of topics list.')
+            'Applies on top of topics list.')
         parser.add_argument(
             '-x', '--exclude', default='',
             help='Exclude topics containing provided regular expression. '
@@ -192,6 +192,9 @@ class RecordVerb(VerbExtension):
 
         if args.compression_queue_size < 1:
             return print_error('Compression queue size must be at least 1.')
+
+        if args.all and args.regex:
+            print('[WARN] [ros2bag]: --all will override --regex.')
 
         args.compression_mode = args.compression_mode.upper()
 
