@@ -69,7 +69,7 @@ class RecordVerb(VerbExtension):
         parser.add_argument(
             '-e', '--regex', default='',
             help='Record only topics containing provided regular expression. '
-                 'Overrides --all, applies on top of topics list.')
+                 'Applies on top of topics list.')
         parser.add_argument(
             '-x', '--exclude', default='',
             help='Exclude topics containing provided regular expression. '
@@ -169,11 +169,14 @@ class RecordVerb(VerbExtension):
 
     def main(self, *, args):  # noqa: D102
         # both all and topics cannot be true
-        if (args.all and (args.topics or args.regex)) or (args.topics and args.regex):
-            return print_error('Must specify only one option out of topics, --regex or --all')
+        if (args.all and args.topics):
+            return print_error('Specify either --all or topics, but not both simultaneously.')
         # one out of "all", "topics" and "regex" must be true
         if not(args.all or (args.topics and len(args.topics) > 0) or (args.regex)):
             return print_error('Invalid choice: Must specify topic(s), --regex or --all')
+
+        if args.all and args.regex:
+            print('[WARN] [ros2bag]: --all will override --regex.')
 
         if args.topics and args.exclude:
             return print_error('--exclude argument cannot be used when specifying a list '
