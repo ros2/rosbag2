@@ -162,6 +162,10 @@ class PlayVerb(VerbExtension):
             help='Determine the source of the service requests to be replayed. This option only '
                  'makes sense if the "--publish-service-requests" option is set. By default,'
                  ' the service requests replaying from recorded service introspection message.')
+        parser.add_argument(
+            '--log-level', type=str, default='info',
+            choices=['debug', 'info', 'warn', 'error', 'fatal'],
+            help='Logging level.')
 
     def get_playback_until_from_arg_group(self, playback_until_sec, playback_until_nsec) -> int:
         nano_scale = 1000 * 1000 * 1000
@@ -236,7 +240,7 @@ class PlayVerb(VerbExtension):
         else:
             play_options.service_requests_source = ServiceRequestsSource.CLIENT_INTROSPECTION
 
-        player = Player()
+        player = Player(args.log_level)
         try:
             player.play(storage_options, play_options)
         except KeyboardInterrupt:
