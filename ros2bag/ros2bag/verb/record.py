@@ -164,6 +164,10 @@ class RecordVerb(VerbExtension):
             '--use-sim-time', action='store_true', default=False,
             help='Use simulation time for message timestamps by subscribing to the /clock topic. '
                  'Until first /clock message is received, no messages will be written to bag.')
+        parser.add_argument(
+            '--log-level', type=str, default='info',
+            choices=['debug', 'info', 'warn', 'error', 'fatal'],
+            help='Logging level.')
         self._subparser = parser
 
     def main(self, *, args):  # noqa: D102
@@ -247,7 +251,7 @@ class RecordVerb(VerbExtension):
         record_options.ignore_leaf_topics = args.ignore_leaf_topics
         record_options.use_sim_time = args.use_sim_time
 
-        recorder = Recorder()
+        recorder = Recorder(args.log_level)
 
         try:
             recorder.record(storage_options, record_options)
