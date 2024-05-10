@@ -143,6 +143,10 @@ class RecordVerb(VerbExtension):
             '--snapshot-mode', action='store_true',
             help='Enable snapshot mode. Messages will not be written to the bagfile until '
                  'the "/rosbag2_recorder/snapshot" service is called.')
+        parser.add_argument(
+            '--log-level', type=str, default='info',
+            choices=['debug', 'info', 'warn', 'error', 'fatal'],
+            help='Logging level.')
 
         # Storage configuration
         add_writer_storage_plugin_extensions(parser)
@@ -255,7 +259,7 @@ class RecordVerb(VerbExtension):
         record_options.ignore_leaf_topics = args.ignore_leaf_topics
         record_options.use_sim_time = args.use_sim_time
 
-        recorder = Recorder()
+        recorder = Recorder(args.log_level)
 
         try:
             recorder.record(storage_options, record_options, args.node_name)
