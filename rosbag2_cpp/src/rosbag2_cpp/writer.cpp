@@ -60,9 +60,19 @@ void Writer::open(
   const rosbag2_storage::StorageOptions & storage_options,
   const ConverterOptions & converter_options)
 {
+  std::lock_guard<std::mutex> writer_lock(writer_mutex_);
   writer_impl_->open(storage_options, converter_options);
 }
 
+<<<<<<< HEAD
+=======
+void Writer::close()
+{
+  std::lock_guard<std::mutex> writer_lock(writer_mutex_);
+  writer_impl_->close();
+}
+
+>>>>>>> a360d9b ([iron] Bugfix for writer not being able to open again after closing (backport #1599) (#1635))
 void Writer::create_topic(const rosbag2_storage::TopicMetadata & topic_with_type)
 {
   std::lock_guard<std::mutex> writer_lock(writer_mutex_);
