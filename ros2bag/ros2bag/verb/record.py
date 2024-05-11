@@ -55,11 +55,7 @@ class RecordVerb(VerbExtension):
         parser.add_argument(
             '-e', '--regex', default='',
             help='Record only topics containing provided regular expression. '
-<<<<<<< HEAD
-            'Overrides --all, applies on top of topics list.')
-=======
                  'Applies on top of topics list.')
->>>>>>> 4914ab3 (Resolve recording option problem (#1649))
         parser.add_argument(
             '-x', '--exclude', default='',
             help='Exclude topics containing provided regular expression. '
