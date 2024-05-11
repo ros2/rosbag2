@@ -179,6 +179,10 @@ void SequentialCompressionWriter::open(
   const rosbag2_cpp::ConverterOptions & converter_options)
 {
   std::lock_guard<std::recursive_mutex> lock(storage_mutex_);
+  // Note. Close and open methods protected with mutex on upper rosbag2_cpp::writer level.
+  if (storage_) {
+    return;  // The writer already opened.
+  }
   SequentialWriter::open(storage_options, converter_options);
   setup_compression();
 }

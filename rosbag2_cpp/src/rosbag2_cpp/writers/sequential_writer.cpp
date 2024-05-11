@@ -90,6 +90,10 @@ void SequentialWriter::open(
   const rosbag2_storage::StorageOptions & storage_options,
   const ConverterOptions & converter_options)
 {
+  // Note. Close and open methods protected with mutex on upper rosbag2_cpp::writer level.
+  if (storage_) {
+    return;  // The writer already opened.
+  }
   base_folder_ = storage_options.uri;
   storage_options_ = storage_options;
 
