@@ -104,6 +104,10 @@ class PlayVerb(VerbExtension):
                  'By default, if loaned message can be used, messages are published as loaned '
                  'message. It can help to reduce the number of data copies, so there is a greater '
                  'benefit for sending big data.')
+        parser.add_argument(
+            '--log-level', type=str, default='info',
+            choices=['debug', 'info', 'warn', 'error', 'fatal'],
+            help='Logging level.')
 
     def main(self, *, args):  # noqa: D102
         qos_profile_overrides = {}  # Specify a valid default
@@ -145,7 +149,7 @@ class PlayVerb(VerbExtension):
         play_options.wait_acked_timeout = args.wait_for_all_acked
         play_options.disable_loan_message = args.disable_loan_message
 
-        player = Player()
+        player = Player(args.log_level)
         try:
             player.play(storage_options, play_options)
         except KeyboardInterrupt:

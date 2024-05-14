@@ -20,6 +20,7 @@ import threading
 
 
 from common import get_rosbag_options, wait_for
+import pytest
 import rclpy
 from rclpy.qos import QoSProfile
 import rosbag2_py
@@ -46,6 +47,26 @@ def test_options_qos_conversion():
     record_options = rosbag2_py.RecordOptions()
     record_options.topic_qos_profile_overrides = simple_overrides
     assert record_options.topic_qos_profile_overrides == simple_overrides
+
+
+def test_player_log_level():
+    rosbag2_py.Player()  # Test for default constructor
+    valid_log_level = 'debug'
+    rosbag2_py.Player(valid_log_level)
+
+    invalid_log_level = 'xxx'
+    with pytest.raises(RuntimeError):
+        rosbag2_py.Player(invalid_log_level)
+
+
+def test_recoder_log_level():
+    rosbag2_py.Recorder()  # Test for default constructor
+    valid_log_level = 'debug'
+    rosbag2_py.Recorder(valid_log_level)
+
+    invalid_log_level = 'xxx'
+    with pytest.raises(RuntimeError):
+        rosbag2_py.Recorder(invalid_log_level)
 
 
 def test_record_cancel(tmp_path):
