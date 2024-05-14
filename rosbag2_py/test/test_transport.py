@@ -20,6 +20,7 @@ import threading
 
 
 from common import get_rosbag_options, wait_for
+import pytest
 import rclpy
 from rclpy.qos import QoSProfile
 import rosbag2_py
