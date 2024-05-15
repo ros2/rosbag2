@@ -5,8 +5,6 @@ Changelog for package zstd_vendor
 0.26.3 (2024-05-15)
 -------------------
 * Fixed warnings on RHEL (`#1627 <https://github.com/ros2/rosbag2/issues/1627>`_) (`#1630 <https://github.com/ros2/rosbag2/issues/1630>`_)
-  * reduce minimal requeriments
-  (cherry picked from commit 088a605ed7a97cc9df6c98cf582e6d4faddd9a21)
   Co-authored-by: Alejandro Hernández Cordero <ahcorde@gmail.com>
 * Contributors: mergify[bot]
 
