@@ -2,8 +2,8 @@
 Changelog for package mcap_vendor
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.26.3 (2024-05-15)
+-------------------
 * Update mcap-releases-cpp- into CMakeLists.txt (`#1612 <https://github.com/ros2/rosbag2/issues/1612>`_) (`#1631 <https://github.com/ros2/rosbag2/issues/1631>`_)
   Update mcap-releases-cpp- i
   (cherry picked from commit 3cc08f37c90af70569185e4935e46af14825dd34)
