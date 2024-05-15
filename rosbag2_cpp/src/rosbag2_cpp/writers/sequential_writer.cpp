@@ -56,10 +56,6 @@ SequentialWriter::SequentialWriter(
   metadata_io_(std::move(metadata_io)),
   converter_(nullptr),
   topics_names_to_info_(),
-<<<<<<< HEAD
-=======
-  topic_names_to_message_definitions_(),
->>>>>>> a360d9b ([iron] Bugfix for writer not being able to open again after closing (backport #1599) (#1635))
   metadata_()
 {}
 
@@ -190,8 +186,6 @@ void SequentialWriter::close()
   }
 
   topics_names_to_info_.clear();
-  topic_names_to_message_definitions_.clear();
-
   converter_.reset();
 }
 
@@ -280,21 +274,14 @@ void SequentialWriter::switch_to_next_storage()
     base_folder_,
     metadata_.relative_file_paths.size());
   storage_ = storage_factory_->open_read_write(storage_options_);
-<<<<<<< HEAD
 
-=======
->>>>>>> a360d9b ([iron] Bugfix for writer not being able to open again after closing (backport #1599) (#1635))
   if (!storage_) {
     std::stringstream errmsg;
     errmsg << "Failed to rollover bagfile to new file: \"" << storage_options_.uri << "\"!";
 
     throw std::runtime_error(errmsg.str());
   }
-<<<<<<< HEAD
 
-=======
-  storage_->update_metadata(metadata_);
->>>>>>> a360d9b ([iron] Bugfix for writer not being able to open again after closing (backport #1599) (#1635))
   // Re-register all topics since we rolled-over to a new bagfile.
   for (const auto & topic : topics_names_to_info_) {
     storage_->create_topic(topic.second.topic_metadata);

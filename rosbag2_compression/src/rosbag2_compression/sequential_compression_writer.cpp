@@ -57,18 +57,14 @@ SequentialCompressionWriter::SequentialCompressionWriter(
 
 SequentialCompressionWriter::~SequentialCompressionWriter()
 {
-<<<<<<< HEAD
-  close();
+  if (storage_) {
+    SequentialCompressionWriter::close();
+  }
   // Fix for https://github.com/ros2/rosbag2/issues/1278
   // Explicitly deconstruct in the correct order to avoid severe warning message.
   // Humble ABI stability does not allow changing the class declaration order.
   compressor_.reset();
   compression_factory_.reset();
-=======
-  if (storage_) {
-    SequentialCompressionWriter::close();
-  }
->>>>>>> a360d9b ([iron] Bugfix for writer not being able to open again after closing (backport #1599) (#1635))
 }
 
 void SequentialCompressionWriter::compression_thread_fn()
@@ -214,7 +210,6 @@ void SequentialCompressionWriter::close()
         }
         finalize_metadata();
         if (storage_) {
-          storage_->update_metadata(metadata_);
           storage_.reset();  // Storage will be closed in storage_ destructor
         }
 
@@ -227,14 +222,6 @@ void SequentialCompressionWriter::close()
         ROSBAG2_COMPRESSION_LOG_WARN_STREAM("Could not compress the last bag file.\n" << e.what());
       }
     }
-<<<<<<< HEAD
-
-    stop_compressor_threads();
-
-    finalize_metadata();
-    metadata_io_->write_metadata(base_folder_, metadata_);
-=======
->>>>>>> a360d9b ([iron] Bugfix for writer not being able to open again after closing (backport #1599) (#1635))
   }
   stop_compressor_threads();  // Note: The metadata_.relative_file_paths will be updated with
   // compressed filename when compressor threads will finish.
