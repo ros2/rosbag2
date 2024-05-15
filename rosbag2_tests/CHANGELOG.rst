@@ -2,6 +2,29 @@
 Changelog for package rosbag2_tests
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Bugfix for writer not being able to open again after closing (`#1599 <https://github.com/ros2/rosbag2/issues/1599>`_) (`#1639 <https://github.com/ros2/rosbag2/issues/1639>`_)
+  * re-applies fixes from `#1590 <https://github.com/ros2/rosbag2/issues/1590>`_ to rolling. Also removes new message definition in sequential writer test for multiple open operations. Also clears topic_names_to_message_definitions\_ and handles message_definitions_s underlying container similarly. Lastly, also avoids reset of factory in the compression writer, adds unit test there too.
+  * removes unused compressor\_ member from compresser writer class. Also delegates rest of the closing behavior to the base class in close method, as it is handled in the open and write methods of the compression writer
+  * Remove unrelated delta
+  - message_definitions\_ was intentionally allocated on the stack and
+  should persist between writer close() and open() because it represents
+  cache for message definitions which is not changes.
+  * Don't call virtual methods from destructors
+  * Cleanup 'rosbag2_directory_next' after the test run
+  * Protect Writer::open(..) and Writer::close() with mutex on upper level
+  - Rationale: To avoid race conditions if open(..) and close() could be
+  ever be called from different threads.
+  * Bugfix for WRITE_SPLIT callback not called for the last compressed file
+  * Bugfix for lost messages from cache when closing compression writer
+  * Use dedicated is_open\_ flag instead of relying on storage\_
+  ---------
+  Co-authored-by: Michael Orlov <michael.orlov@apex.ai>
+  (cherry picked from commit 20cfc02ede90151a4f7e8859972d4637f8c696c5)
+  Co-authored-by: yschulz <yschulz854@gmail.com>
+* Contributors: mergify[bot]
+
 0.26.2 (2024-04-24)
 -------------------
 
