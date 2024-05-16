@@ -96,9 +96,7 @@ TEST(TestRosbag2CPPAPI, minimal_writer_example)
     writer.open(rosbag_directory_next.string());
 
     // write same topic to different bag
-    writer.write(
-      serialized_msg2, "/yet/another/topic", "test_msgs/msg/BasicTypes",
-      rclcpp::Clock().now());
+    writer.write(bag_message, "/my/other/topic", "test_msgs/msg/BasicTypes");
 
     // close by scope
   }
@@ -142,7 +140,7 @@ TEST(TestRosbag2CPPAPI, minimal_writer_example)
       &extracted_serialized_msg, &extracted_test_msg);
 
     EXPECT_EQ(test_msg, extracted_test_msg);
-    EXPECT_EQ("/yet/another/topic", topic);
+    EXPECT_EQ("/my/other/topic", topic);
   }
 
   // alternative reader
