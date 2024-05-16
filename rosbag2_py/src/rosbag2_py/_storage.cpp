@@ -420,9 +420,9 @@ PYBIND11_MODULE(_storage, m) {
         "deadline"_a = duration_deadline,
         "liveliness"_a = static_cast<int>(qos_input.liveliness()),
         "liveliness_lease_duration"_a = duration_liveliness_lease_duration,
-        "avoid_ros_namespace_conventions"_a =
+        "avoid_ros_namespace_conventions"_a =  // cppcheck-suppress assignBoolToPointer
         static_cast<bool>(
-          qos_input.avoid_ros_namespace_conventions()));  // cppcheck-suppress assignBoolToPointer
+          qos_input.avoid_ros_namespace_conventions()));
 
       return qos_profile;
     },
