@@ -411,7 +411,6 @@ PYBIND11_MODULE(_storage, m) {
         history = qos_input.history();
       }
 
-      using namespace pybind11::literals;
       pybind11::object qos_profile = rclcpy_qos.attr("QoSProfile")(
         "depth"_a = qos_input.depth(),
         "history"_a = static_cast<int>(history),
@@ -422,7 +421,8 @@ PYBIND11_MODULE(_storage, m) {
         "liveliness"_a = static_cast<int>(qos_input.liveliness()),
         "liveliness_lease_duration"_a = duration_liveliness_lease_duration,
         "avoid_ros_namespace_conventions"_a =
-        static_cast<bool>(qos_input.avoid_ros_namespace_conventions()));
+        static_cast<bool>(
+          qos_input.avoid_ros_namespace_conventions()));  // cppcheck-suppress assignBoolToPointer
 
       return qos_profile;
     },
