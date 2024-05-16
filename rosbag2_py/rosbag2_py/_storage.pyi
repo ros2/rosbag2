@@ -1,6 +1,7 @@
 from typing import ClassVar, Dict, List
 
 import datetime
+from rclpy import QoSProfile
 
 class BagMetadata:
     bag_size: int
@@ -214,3 +215,4 @@ class rmw_qos_reliability_policy_t:
 
 def get_default_storage_id() -> str: ...
 def to_rclcpp_qos_vector(arg0: str, arg1: int) -> List[QoS]: ...
+def convert_rosbag_qos_to_rlcpy_qos(arg0: QoS) -> List[QoSProfile]: ...
