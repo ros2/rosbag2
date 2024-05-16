@@ -142,6 +142,9 @@ protected:
 
   // Used to track topic -> message count. If cache is present, it is updated by CacheConsumer
   std::unordered_map<std::string, rosbag2_storage::TopicInformation> topics_names_to_info_;
+  // Note: topics_names_to_info_ needs to be protected with mutex only when we are explicitly
+  // adding or deleting items (create_topic(..)/remove_topic(..)) and when we access it from
+  // CacheConsumer callback i.e., write_messages(..)
   std::mutex topics_info_mutex_;
 
   rosbag2_storage::BagMetadata metadata_;

@@ -57,7 +57,9 @@ SequentialCompressionWriter::SequentialCompressionWriter(
 
 SequentialCompressionWriter::~SequentialCompressionWriter()
 {
-  close();
+  if (storage_) {
+    SequentialCompressionWriter::close();
+  }
   // Fix for https://github.com/ros2/rosbag2/issues/1278
   // Explicitly deconstruct in the correct order to avoid severe warning message.
   // Humble ABI stability does not allow changing the class declaration order.
@@ -181,6 +183,10 @@ void SequentialCompressionWriter::open(
   const rosbag2_cpp::ConverterOptions & converter_options)
 {
   std::lock_guard<std::recursive_mutex> lock(storage_mutex_);
+  // Note. Close and open methods protected with mutex on upper rosbag2_cpp::writer level.
+  if (storage_) {
+    return;  // The writer already opened.
+  }
   SequentialWriter::open(storage_options, converter_options);
   setup_compression();
 }
@@ -196,7 +202,17 @@ void SequentialCompressionWriter::close()
       std::lock_guard<std::recursive_mutex> lock(storage_mutex_);
       std::lock_guard<std::mutex> compressor_lock(compressor_queue_mutex_);
       try {
-        storage_.reset();  // Storage must be closed before it can be compressed.
+        // Storage must be closed before file can be compressed.
+        if (use_cache_) {
+          // destructor will flush message cache
+          cache_consumer_.reset();
+          message_cache_.reset();
+        }
+        finalize_metadata();
+        if (storage_) {
+          storage_.reset();  // Storage will be closed in storage_ destructor
+        }
+
         if (!metadata_.relative_file_paths.empty()) {
           std::string file = metadata_.relative_file_paths.back();
           compressor_file_queue_.push(file);
@@ -206,19 +222,10 @@ void SequentialCompressionWriter::close()
         ROSBAG2_COMPRESSION_LOG_WARN_STREAM("Could not compress the last bag file.\n" << e.what());
       }
     }
-
-    stop_compressor_threads();
-
-    finalize_metadata();
-    metadata_io_->write_metadata(base_folder_, metadata_);
   }
-
-  if (use_cache_) {
-    cache_consumer_.reset();
-    message_cache_.reset();
-  }
-  storage_.reset();  // Necessary to ensure that the storage is destroyed before the factory
-  storage_factory_.reset();
+  stop_compressor_threads();  // Note: The metadata_.relative_file_paths will be updated with
+  // compressed filename when compressor threads will finish.
+  SequentialWriter::close();
 }
 
 void SequentialCompressionWriter::create_topic(

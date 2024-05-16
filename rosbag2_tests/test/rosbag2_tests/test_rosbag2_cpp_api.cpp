@@ -43,8 +43,10 @@ TEST(TestRosbag2CPPAPI, minimal_writer_example)
   serialization.serialize_message(&test_msg, &serialized_msg);
 
   auto rosbag_directory = rcpputils::fs::path("test_rosbag2_writer_api_bag");
+  auto rosbag_directory_next = rcpputils::fs::path("test_rosbag2_writer_api_bag_next");
   // in case the bag was previously not cleaned up
   rcpputils::fs::remove_all(rosbag_directory);
+  rcpputils::fs::remove_all(rosbag_directory_next);
 
   {
     rosbag2_cpp::Writer writer;
@@ -87,7 +89,16 @@ TEST(TestRosbag2CPPAPI, minimal_writer_example)
     // writing a non-serialized message
     writer.write(test_msg, "/a/ros2/message", rclcpp::Clock().now());
 
-    // close on scope exit
+    // close as prompted
+    writer.close();
+
+    // open a new bag with the same writer
+    writer.open(rosbag_directory_next.string());
+
+    // write same topic to different bag
+    writer.write(bag_message, "/my/other/topic", "test_msgs/msg/BasicTypes");
+
+    // close by scope
   }
 
   {
@@ -114,6 +125,24 @@ TEST(TestRosbag2CPPAPI, minimal_writer_example)
     // close on scope exit
   }
 
+  {
+    rosbag2_cpp::Reader reader;
+    std::string topic;
+    reader.open(rosbag_directory_next.string());
+    ASSERT_TRUE(reader.has_next());
+
+    auto bag_message = reader.read_next();
+    topic = bag_message->topic_name;
+
+    TestMsgT extracted_test_msg;
+    rclcpp::SerializedMessage extracted_serialized_msg(*bag_message->serialized_data);
+    serialization.deserialize_message(
+      &extracted_serialized_msg, &extracted_test_msg);
+
+    EXPECT_EQ(test_msg, extracted_test_msg);
+    EXPECT_EQ("/my/other/topic", topic);
+  }
+
   // alternative reader
   {
     rosbag2_cpp::Reader reader;
@@ -128,4 +157,5 @@ TEST(TestRosbag2CPPAPI, minimal_writer_example)
 
   // remove the rosbag again after the test
   EXPECT_TRUE(rcpputils::fs::remove_all(rosbag_directory));
+  EXPECT_TRUE(rcpputils::fs::remove_all(rosbag_directory_next));
 }
