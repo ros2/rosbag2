@@ -2,6 +2,11 @@
 Changelog for package rosbag2_transport
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.15.10 (2024-05-17)
+--------------------
+* Add /bigobj to MSVC compiles. (`#1571 <https://github.com/ros2/rosbag2/issues/1571>`_)
+* Contributors: Chris Lalancette
+
 0.15.9 (2024-01-24)
 -------------------
 * [humble] Give proper log message for `--start-paused` (backport `#1537 <https://github.com/ros2/rosbag2/issues/1537>`_) (`#1541 <https://github.com/ros2/rosbag2/issues/1541>`_)

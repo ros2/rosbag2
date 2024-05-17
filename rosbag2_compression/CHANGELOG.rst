@@ -2,6 +2,12 @@
 Changelog for package rosbag2_compression
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.15.10 (2024-05-17)
+--------------------
+* [humble] Bugfix for writer not being able to open again after closing (backport `#1599 <https://github.com/ros2/rosbag2/issues/1599>`_) (`#1653 <https://github.com/ros2/rosbag2/issues/1653>`_)
+* [humble] Add default initialization for CompressionOptions (backport `#1539 <https://github.com/ros2/rosbag2/issues/1539>`_) (`#1546 <https://github.com/ros2/rosbag2/issues/1546>`_)
+* Contributors: mergify[bot]
+
 0.15.9 (2024-01-24)
 -------------------
 
