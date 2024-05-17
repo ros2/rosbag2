@@ -2,6 +2,13 @@
 Changelog for package rosbag2
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.15.10 (2024-05-17)
+--------------------
+* [humble] Bugfix for writer not being able to open again after closing (backport `#1599 <https://github.com/ros2/rosbag2/issues/1599>`_) (`#1653 <https://github.com/ros2/rosbag2/issues/1653>`_)
+* [humble] Add BagSplitInfo service call on bag close (backport `#1422 <https://github.com/ros2/rosbag2/issues/1422>`_) (`#1637 <https://github.com/ros2/rosbag2/issues/1637>`_)
+* Fix split by time. (backport `#1022 <https://github.com/ros2/rosbag2/issues/1022>`_) (`#1616 <https://github.com/ros2/rosbag2/issues/1616>`_)
+* Contributors: Tomoya Fujita, mergify[bot]
+
 0.15.9 (2024-01-24)
 -------------------
 * call cv.wait_until only if necessary. (`#1521 <https://github.com/ros2/rosbag2/issues/1521>`_) (`#1523 <https://github.com/ros2/rosbag2/issues/1523>`_)
