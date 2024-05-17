@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <algorithm>
 #include <csignal>
 #include <chrono>
 #include <memory>
@@ -36,6 +37,36 @@ typedef std::unordered_map<std::string, rclcpp::QoS> QoSMap;
 
 namespace
 {
+
+class Arguments
+{
+public:
+  explicit Arguments(const std::vector<std::string> & args)
+  : arguments_(args)
+  {
+    std::for_each(
+      arguments_.begin(), arguments_.end(),
+      [this](const std::string & arg) {
+        pointers_.push_back(const_cast<char *>(arg.c_str()));
+      }
+    );
+    pointers_.push_back(nullptr);
+  }
+
+  char ** argv()
+  {
+    return arguments_.empty() ? nullptr : pointers_.data();
+  }
+
+  [[nodiscard]] int argc() const
+  {
+    return static_cast<int>(arguments_.size());
+  }
+
+private:
+  std::vector<std::string> arguments_;
+  std::vector<char *> pointers_;
+};
 
 rclcpp::QoS qos_from_handle(const py::handle source)
 {
@@ -108,9 +139,10 @@ namespace rosbag2_py
 class Player
 {
 public:
-  Player()
+  explicit Player(const std::string & log_level = "info")
   {
-    rclcpp::init(0, nullptr);
+    Arguments arguments({"--ros-args", "--log-level", log_level});
+    rclcpp::init(arguments.argc(), arguments.argv());
   }
 
   virtual ~Player()
@@ -142,26 +174,14 @@ public:
 class Recorder
 {
 public:
-  Recorder()
+  explicit Recorder(const std::string & log_level = "info")
   {
-    auto init_options = rclcpp::InitOptions();
-    init_options.shutdown_on_signal = false;
-    rclcpp::init(0, nullptr, init_options, rclcpp::SignalHandlerOptions::SigInt);
-    rclcpp::uninstall_signal_handlers();
-
-    std::signal(
-      SIGTERM, [](int /* signal */) {
-        rosbag2_py::Recorder::cancel();
-      });
-    std::signal(
-      SIGINT, [](int /* signal */) {
-        rosbag2_py::Recorder::cancel();
-      });
+    Arguments arguments({"--ros-args", "--log-level", log_level});
+    rclcpp::init(arguments.argc(), arguments.argv());
   }
 
   virtual ~Recorder()
   {
-//    rclcpp::install_signal_handlers(rclcpp::SignalHandlerOptions::SigTerm);
     rclcpp::shutdown();
   }
 
@@ -169,36 +189,64 @@ public:
     const rosbag2_storage::StorageOptions & storage_options,
     RecordOptions & record_options)
   {
-    exit_ = false;
-    auto exec = std::make_unique<rclcpp::executors::SingleThreadedExecutor>();
-    if (record_options.rmw_serialization_format.empty()) {
-      record_options.rmw_serialization_format = std::string(rmw_get_serialization_format());
-    }
-
-    auto writer = rosbag2_transport::ReaderWriterFactory::make_writer(record_options);
-    auto recorder = std::make_shared<rosbag2_transport::Recorder>(
-      std::move(writer), storage_options, record_options);
-    recorder->record();
-
-    exec->add_node(recorder);
-    // Run exec->spin() in a separate thread, because we need to call exec->cancel() after
-    // recorder->stop() to be able to send notifications about bag split and close.
-    auto spin_thread = std::thread(
-      [&exec]() {
-        exec->spin();
+    auto old_sigterm_handler = std::signal(
+      SIGTERM, [](int /* signal */) {
+        rosbag2_py::Recorder::cancel();
       });
-    {
-      // Release the GIL for long-running record, so that calling Python code can use other threads
-      py::gil_scoped_release release;
-      std::unique_lock<std::mutex> lock(wait_for_exit_mutex_);
-      wait_for_exit_cv_.wait(lock, [] {return rosbag2_py::Recorder::exit_.load();});
-      recorder->stop();
+    auto old_sigint_handler = std::signal(
+      SIGINT, [](int /* signal */) {
+        rosbag2_py::Recorder::cancel();
+      });
+
+    try {
+      exit_ = false;
+      auto exec = std::make_unique<rclcpp::executors::SingleThreadedExecutor>();
+      if (record_options.rmw_serialization_format.empty()) {
+        record_options.rmw_serialization_format = std::string(rmw_get_serialization_format());
+      }
+
+      auto writer = rosbag2_transport::ReaderWriterFactory::make_writer(record_options);
+      auto recorder = std::make_shared<rosbag2_transport::Recorder>(
+        std::move(writer), storage_options, record_options);
+      recorder->record();
+
+      exec->add_node(recorder);
+      // Run exec->spin() in a separate thread, because we need to call exec->cancel() after
+      // recorder->stop() to be able to send notifications about bag split and close.
+      auto spin_thread = std::thread(
+        [&exec]() {
+          exec->spin();
+        });
+      {
+        // Release the GIL for long-running record, so that calling Python code
+        // can use other threads
+        py::gil_scoped_release release;
+        std::unique_lock<std::mutex> lock(wait_for_exit_mutex_);
+        wait_for_exit_cv_.wait(lock, [] {return rosbag2_py::Recorder::exit_.load();});
+        recorder->stop();
+      }
+      exec->cancel();
+      if (spin_thread.joinable()) {
+        spin_thread.join();
+      }
+      exec->remove_node(recorder);
+    } catch (...) {
+      // Return old signal handlers anyway
+      if (old_sigterm_handler != SIG_ERR) {
+        std::signal(SIGTERM, old_sigterm_handler);
+      }
+      if (old_sigint_handler != SIG_ERR) {
+        std::signal(SIGTERM, old_sigint_handler);
+      }
+      throw;
     }
-    exec->cancel();
-    if (spin_thread.joinable()) {
-      spin_thread.join();
+    // Return old signal handlers
+    if (old_sigterm_handler != SIG_ERR) {
+      std::signal(SIGTERM, old_sigterm_handler);
     }
-    exec->remove_node(recorder);
+    if (old_sigint_handler != SIG_ERR) {
+      std::signal(SIGTERM, old_sigint_handler);
+    }
   }
 
   static void cancel()
@@ -332,11 +380,13 @@ PYBIND11_MODULE(_transport, m) {
 
   py::class_<rosbag2_py::Player>(m, "Player")
   .def(py::init())
+  .def(py::init<const std::string &>())
   .def("play", &rosbag2_py::Player::play)
   ;
 
   py::class_<rosbag2_py::Recorder>(m, "Recorder")
-  .def(py::init())
+  .def(py::init<>())
+  .def(py::init<const std::string &>())
   .def(
     "record", &rosbag2_py::Recorder::record, py::arg("storage_options"), py::arg("record_options"))
   .def_static("cancel", &rosbag2_py::Recorder::cancel)

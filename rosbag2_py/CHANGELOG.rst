@@ -2,6 +2,11 @@
 Changelog for package rosbag2_py
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.15.9 (2024-01-24)
+-------------------
+* [humble] Install signal handlers in recorder only inside record method (backport `#1464 <https://github.com/ros2/rosbag2/issues/1464>`_) (`#1526 <https://github.com/ros2/rosbag2/issues/1526>`_)
+* Contributors: mergify[bot]
+
 0.15.8 (2023-09-19)
 -------------------
 

@@ -78,7 +78,13 @@ SequentialWriter::SequentialWriter(
 
 SequentialWriter::~SequentialWriter()
 {
-  close();
+  // Deleting all callbacks before calling close(). Calling callbacks from destructor is not safe.
+  // Callbacks likely was created after SequentialWriter object and may point to the already
+  // destructed objects.
+  callback_manager_.delete_all_callbacks();
+  if (storage_) {
+    SequentialWriter::close();
+  }
 }
 
 std::optional<rosbag2_storage::BagMetadata> SequentialWriter::preinit_metadata(
@@ -157,8 +163,13 @@ void SequentialWriter::open(
   const rosbag2_storage::StorageOptions & storage_options,
   const ConverterOptions & converter_options)
 {
+  // Note. Close and open methods protected with mutex on upper rosbag2_cpp::writer level.
+  if (storage_) {
+    return;  // The writer already opened.
+  }
   base_folder_ = storage_options.uri;
   storage_options_ = storage_options;
+
   if (storage_options_.storage_id.empty()) {
     storage_options_.storage_id = kDefaultStorageID;
   }
@@ -247,8 +258,21 @@ void SequentialWriter::close()
     metadata_io_->write_metadata(base_folder_, metadata_);
   }
 
-  storage_.reset();  // Necessary to ensure that the storage is destroyed before the factory
-  storage_factory_.reset();
+  if (storage_) {
+    storage_.reset();  // Destroy storage before calling WRITE_SPLIT callback to make sure that
+    // bag file was closed before callback call.
+  }
+  if (!metadata_.relative_file_paths.empty()) {
+    auto info = std::make_shared<bag_events::BagSplitInfo>();
+    // Take the latest file name from metadata in case if it was updated after compression in
+    // derived class
+    info->closed_file =
+      (rcpputils::fs::path(base_folder_) / metadata_.relative_file_paths.back()).string();
+    callback_manager_.execute_callbacks(bag_events::BagEvent::WRITE_SPLIT, info);
+  }
+
+  topics_names_to_info_.clear();
+  converter_.reset();
 }
 
 void SequentialWriter::create_topic(const rosbag2_storage::TopicMetadata & topic_with_type)
