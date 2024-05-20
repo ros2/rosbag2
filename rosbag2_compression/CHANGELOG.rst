@@ -2,6 +2,12 @@
 Changelog for package rosbag2_compression
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.15.11 (2024-05-20)
+--------------------
+* [humble] Rollback to rcpputils::fs and workaround failure in "open_succeds_twice" on second run. (`#1666 <https://github.com/ros2/rosbag2/issues/1666>`_)
+* Add in a missing cstdint include. (`#1321 <https://github.com/ros2/rosbag2/issues/1321>`_) (`#1663 <https://github.com/ros2/rosbag2/issues/1663>`_)
+* Contributors: Michael Orlov, mergify[bot]
+
 0.15.10 (2024-05-17)
 --------------------
 * [humble] Bugfix for writer not being able to open again after closing (backport `#1599 <https://github.com/ros2/rosbag2/issues/1599>`_) (`#1653 <https://github.com/ros2/rosbag2/issues/1653>`_)
