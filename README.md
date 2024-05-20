@@ -228,9 +228,15 @@ output_bags:
   storage_config_uri: ""
   all_topics: false
   topics: []
+  topic_types: []
+  all_services: false
+  services: []
   rmw_serialization_format: ""  # defaults to using the format of the input topic
   regex: ""
-  exclude: ""
+  exclude_regex: ""
+  exclude_topics: []
+  exclude_topic_types: []
+  exclude_services: []
   compression_mode: ""
   compression_format: ""
   compression_queue_size: 1
