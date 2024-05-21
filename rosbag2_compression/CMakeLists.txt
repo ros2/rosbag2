@@ -45,6 +45,12 @@ ament_target_dependencies(${PROJECT_NAME}
   rosbag2_storage)
 target_compile_definitions(${PROJECT_NAME} PRIVATE ROSBAG2_COMPRESSION_BUILDING_DLL)
 
+if(CMAKE_COMPILER_IS_GNUCXX)
+  target_link_libraries(${PROJECT_NAME}
+    rcpputils::filesystem
+  )
+endif()
+
 install(
   DIRECTORY include/
   DESTINATION include/${PROJECT_NAME})
