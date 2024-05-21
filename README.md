@@ -254,6 +254,7 @@ $ ros2 bag convert -i bag1 -i bag2 -o out.yaml
 output_bags:
 - uri: merged_bag
   all_topics: true
+  all_services: true
 ```
 
 Example split:
