@@ -279,6 +279,7 @@ $ ros2 bag convert -i bag1 -o out.yaml
 output_bags:
 - uri: compressed
   all_topics: true
+  all_services: true
   compression_mode: file
   compression_format: zstd
 ```
