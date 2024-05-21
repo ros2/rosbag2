@@ -226,11 +226,17 @@ output_bags:
   max_bagfile_duration: 0
   storage_preset_profile: ""
   storage_config_uri: ""
-  all: false
+  all_topics: false
   topics: []
+  topic_types: []
+  all_services: false
+  services: []
   rmw_serialization_format: ""  # defaults to using the format of the input topic
   regex: ""
-  exclude: ""
+  exclude_regex: ""
+  exclude_topics: []
+  exclude_topic_types: []
+  exclude_services: []
   compression_mode: ""
   compression_format: ""
   compression_queue_size: 1
@@ -247,7 +253,8 @@ $ ros2 bag convert -i bag1 -i bag2 -o out.yaml
 # out.yaml
 output_bags:
 - uri: merged_bag
-  all: true
+  all_topics: true
+  all_services: true
 ```
 
 Example split:
@@ -271,7 +278,8 @@ $ ros2 bag convert -i bag1 -o out.yaml
 # out.yaml
 output_bags:
 - uri: compressed
-  all: true
+  all_topics: true
+  all_services: true
   compression_mode: file
   compression_format: zstd
 ```
