@@ -191,12 +191,15 @@ TEST_F(SequentialCompressionWriterTest, open_succeeds_on_supported_compression_f
     kDefaultCompressionQueueSize, kDefaultCompressionQueueThreads};
   initializeWriter(compression_options);
 
-  auto tmp_dir = rcpputils::fs::temp_directory_path() / "path_not_empty";
+  auto tmp_dir = tmp_dir_ / "path_not_empty";
+  // Cleanup leftovers from previous run if any
+  rcpputils::fs::remove_all(tmp_dir);
   auto storage_options = rosbag2_storage::StorageOptions();
   storage_options.uri = tmp_dir.string();
 
   EXPECT_NO_THROW(
     writer_->open(tmp_dir_storage_options_, {serialization_format_, serialization_format_}));
+  rcpputils::fs::remove_all(tmp_dir);
 }
 
 TEST_F(SequentialCompressionWriterTest, open_succeeds_twice)
@@ -206,8 +209,8 @@ TEST_F(SequentialCompressionWriterTest, open_succeeds_twice)
     kDefaultCompressionQueueSize, kDefaultCompressionQueueThreads};
   initializeWriter(compression_options);
 
-  auto tmp_dir = rcpputils::fs::temp_directory_path() / "path_not_empty";
-  auto tmp_dir_next = rcpputils::fs::temp_directory_path() / "path_not_empty_next";
+  auto tmp_dir = tmp_dir_ / "path_not_empty";
+  auto tmp_dir_next = tmp_dir_ / "path_not_empty_next";
 
   // Cleanup leftovers from previous run if any
   rcpputils::fs::remove_all(tmp_dir);
