@@ -219,8 +219,6 @@ class RecordVerb(VerbExtension):
     def main(self, *, args):  # noqa: D102
 
         if args.topics_positional:
-            print('Warning! Positional "topics" argument deprecated. '
-                  'Please use optional "--topics" argument instead.')
             args.topics = args.topics_positional
 
         if not self._check_necessary_argument(args):
