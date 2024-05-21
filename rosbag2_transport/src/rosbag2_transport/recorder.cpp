@@ -306,6 +306,18 @@ void Recorder::event_publisher_thread_main()
           get_logger(),
           "Failed to publish message on '/events/write_split' topic.");
       }
+      if (!bag_split_info_.opened_file.empty()) {
+        for (const auto & topic_message_pair : latched_messages_) {
+          const std::string & topic_name = topic_message_pair.first;
+          const auto & latched_message = topic_message_pair.second;
+          if (latched_message->serialized_data != nullptr) {
+            latched_message->time_stamp = this->get_clock()->now().nanoseconds();
+            RCLCPP_INFO(
+              get_logger(), "Write non-null latched message into split %s", topic_name.c_str());
+            writer_->write(latched_message);
+          }
+        }
+      }
     }
   }
   RCLCPP_INFO(get_logger(), "Event publisher thread: Exiting");
@@ -435,6 +447,17 @@ void Recorder::subscribe_topic(const rosbag2_storage::TopicMetadata & topic)
   writer_->create_topic(topic);
 
   Rosbag2QoS subscription_qos{subscription_qos_for_topic(topic.name)};
+
+  // Initialize a place in the map for latched messages
+  if (subscription_qos.durability() == rclcpp::DurabilityPolicy::TransientLocal) {
+    RCLCPP_INFO(
+      get_logger(), "Tracking latched topic %s (%s)", topic.name.c_str(), topic.type.c_str());
+    auto bag_msg = std::make_shared<rosbag2_storage::SerializedBagMessage>();
+    bag_msg->topic_name = topic.name;
+    bag_msg->serialized_data = nullptr;
+    latched_messages_[topic.name] = bag_msg;
+  }
+
   auto subscription = create_subscription(topic.name, topic.type, subscription_qos);
   if (subscription) {
     subscriptions_.insert({topic.name, subscription});
@@ -447,15 +470,68 @@ void Recorder::subscribe_topic(const rosbag2_storage::TopicMetadata & topic)
   }
 }
 
+int
+copy_rclcpp_serialized_message_to(
+  const rclcpp::SerializedMessage & src,
+  rosbag2_storage::SerializedBagMessage & dest)
+{
+  // Since the rclcpp::SerializedMessage data ownership is actually consumed by the Writer,
+  // we need to make ourselves a copy of the received message to own that data's lifetime.
+  // Only happens when receiving new latched message (typically low freq) so not much overhead
+  dest.serialized_data.reset();
+  dest.serialized_data = std::shared_ptr<rcutils_uint8_array_t>(
+    new rcutils_uint8_array_t,
+    [](rcutils_uint8_array_t * msg) {
+      auto fini_return = rcutils_uint8_array_fini(msg);
+      delete msg;
+      if (fini_return != RCUTILS_RET_OK) {
+        RCLCPP_ERROR_STREAM(
+          rclcpp::get_logger("rosbag2_cpp"),
+          "Failed to destroy serialized message: " << rcutils_get_error_string().str);
+      }
+    });
+  rcutils_allocator_t allocator = rcutils_get_default_allocator();
+  rcutils_ret_t ret = rcutils_uint8_array_init(
+    dest.serialized_data.get(),
+    src.get_rcl_serialized_message().buffer_capacity,
+    &allocator);
+  if (ret != RCUTILS_RET_OK) {
+    auto err = std::string("Failed to call rcutils_uint8_array_init(): return ");
+    err += ret;
+    throw std::runtime_error(err);
+  }
+
+  std::memcpy(
+    dest.serialized_data->buffer,
+    src.get_rcl_serialized_message().buffer,
+    src.get_rcl_serialized_message().buffer_length);
+  dest.serialized_data->buffer_length = src.get_rcl_serialized_message().buffer_length;
+
+  return RCL_RET_OK;
+}
+
 std::shared_ptr<rclcpp::GenericSubscription>
 Recorder::create_subscription(
   const std::string & topic_name, const std::string & topic_type, const rclcpp::QoS & qos)
 {
+  // Cache lookup result so that lookup not done for every message for every subscription
+  bool is_latched = latched_messages_.find(topic_name) != latched_messages_.end();
   auto subscription = this->create_generic_subscription(
     topic_name,
     topic_type,
     qos,
-    [this, topic_name, topic_type](std::shared_ptr<rclcpp::SerializedMessage> message) {
+    [this, topic_name, topic_type, is_latched](std::shared_ptr<rclcpp::SerializedMessage> message) {
+      // If this is a latched topic, update the saved message
+      if (is_latched) {
+        auto it = latched_messages_.find(topic_name);
+        if (it == latched_messages_.end()) {
+          RCLCPP_ERROR(
+            get_logger(),
+            "Somehow a latched topic's cached message was deleted. Shouldn't happen.");
+        } else if (RCL_RET_OK != copy_rclcpp_serialized_message_to(*message, *it->second)) {
+          RCLCPP_ERROR(get_logger(), "Failed to copy serialized latched message for reuse.");
+        }
+      }
       if (!paused_.load()) {
         writer_->write(message, topic_name, topic_type, this->get_clock()->now());
       }
