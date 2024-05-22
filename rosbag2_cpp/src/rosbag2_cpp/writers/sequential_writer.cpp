@@ -296,7 +296,7 @@ void SequentialWriter::switch_to_next_storage()
     base_folder_,
     metadata_.relative_file_paths.size());
   
-  // when the storage_ is closed, rename the file to remove ".inactive" suffix
+  // when the storage_ is closed, rename the file to remove ".active" suffix
   std::string active_path = storage_->get_relative_file_path();
   std::string final_path = remove_active_from_filename(active_path);
 
