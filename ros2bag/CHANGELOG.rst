@@ -2,6 +2,9 @@
 Changelog for package ros2bag
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.15.11 (2024-05-20)
+--------------------
+
 0.15.10 (2024-05-17)
 --------------------
 * [humble] Add --log-level to ros2 bag play and record (`#1655 <https://github.com/ros2/rosbag2/issues/1655>`_)

@@ -2,6 +2,9 @@
 Changelog for package zstd_vendor
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.15.11 (2024-05-20)
+--------------------
+
 0.15.10 (2024-05-17)
 --------------------
 * Fix/zstd vendor does not find system zstd (`#1111 <https://github.com/ros2/rosbag2/issues/1111>`_) (`#1560 <https://github.com/ros2/rosbag2/issues/1560>`_)
