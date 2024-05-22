@@ -392,7 +392,7 @@ PYBIND11_MODULE(_storage, m) {
     "Convert QoS in YAML to std::vector<QoS>");
 
   m.def(
-    "convert_rosbag_qos_to_rlcpy_qos",
+    "convert_rclcpp_qos_to_rclpy_qos",
     [](rclcpp::QoS qos_input) {
       pybind11::object rclcpy_qos = pybind11::module_::import("rclpy.qos");
       pybind11::object rclcpy_duration = pybind11::module_::import("rclpy.duration");
@@ -424,7 +424,7 @@ PYBIND11_MODULE(_storage, m) {
 
       return qos_profile;
     },
-    "Convert QoS in YAML to std::vector<QoS>");
+    "Converts rclcpp::QoS to rclpy.qos");
 
   pybind11::class_<rosbag2_storage::MetadataIo>(m, "MetadataIo")
   .def(pybind11::init<>())

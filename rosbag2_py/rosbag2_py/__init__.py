@@ -41,7 +41,7 @@ with add_dll_directories_from_env('PATH'):
         StorageOptions,
         TopicMetadata,
         TopicInformation,
-        convert_rosbag_qos_to_rlcpy_qos,
+        convert_rclcpp_qos_to_rclpy_qos,
         get_default_storage_id,
         to_rclcpp_qos_vector,
     )
@@ -69,7 +69,7 @@ with add_dll_directories_from_env('PATH'):
 
 __all__ = [
     'bag_rewrite',
-    'convert_rosbag_qos_to_rlcpy_qos',
+    'convert_rclcpp_qos_to_rclpy_qos',
     'CompressionMode',
     'CompressionOptions',
     'compression_mode_from_string',
