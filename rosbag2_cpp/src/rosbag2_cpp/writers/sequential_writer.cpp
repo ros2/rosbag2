@@ -16,6 +16,7 @@
 
 #include <algorithm>
 #include <chrono>
+#include <filesystem>
 #include <memory>
 #include <stdexcept>
 #include <string>
@@ -44,6 +45,19 @@ std::string strip_parent_path(const std::string & relative_path)
 {
   return rcpputils::fs::path(relative_path).filename().string();
 }
+
+std::string remove_active_from_filename(const std::string& relative_path)
+{
+  rcpputils::fs::path path(relative_path);
+  auto filename = path.filename().string();
+  auto active_pos = filename.find(".active");
+  if(active_pos != std::string::npos) {
+    filename.replace(active_pos, 7, "");
+  }
+  auto new_path = path.parent_path() / filename;
+  return new_path.string();
+}
+
 }  // namespace
 
 SequentialWriter::SequentialWriter(
@@ -173,7 +187,11 @@ void SequentialWriter::close()
   }
 
   if (storage_) {
+    // when the storage_ is closed, rename the file to remove ".active" suffix
+    std::string active_path = storage_->get_relative_file_path();
+    std::string final_path = remove_active_from_filename(active_path);
     storage_.reset();  // Destroy storage before calling WRITE_SPLIT callback to make sure that
+    std::filesystem::rename(active_path, final_path);
     // bag file was closed before callback call.
   }
   if (!metadata_.relative_file_paths.empty()) {
@@ -257,7 +275,7 @@ std::string SequentialWriter::format_storage_uri(
   // The name of the folder needs to be queried in case
   // SequentialWriter is opened with a relative path.
   std::stringstream storage_file_name;
-  storage_file_name << rcpputils::fs::path(base_folder).filename().string() << "_" << storage_count;
+  storage_file_name << rcpputils::fs::path(base_folder).filename().string() << "_" << storage_count << ".active";
 
   return (rcpputils::fs::path(base_folder) / storage_file_name.str()).string();
 }
@@ -269,11 +287,22 @@ void SequentialWriter::switch_to_next_storage()
     cache_consumer_->stop();
     message_cache_->log_dropped();
   }
+  // Write the metadata before splitting. This will be replaced by an updated file later.
+  // In this way, if the process crashes, the metadata for the previous parts will still be available.
+  finalize_metadata();
+  metadata_io_->write_metadata(base_folder_, metadata_);
 
   storage_options_.uri = format_storage_uri(
     base_folder_,
     metadata_.relative_file_paths.size());
+  
+  // when the storage_ is closed, rename the file to remove ".inactive" suffix
+  std::string active_path = storage_->get_relative_file_path();
+  std::string final_path = remove_active_from_filename(active_path);
+
   storage_ = storage_factory_->open_read_write(storage_options_);
+  
+  std::filesystem::rename(active_path, final_path);
 
   if (!storage_) {
     std::stringstream errmsg;
