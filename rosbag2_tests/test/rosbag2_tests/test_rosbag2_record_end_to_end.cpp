@@ -76,7 +76,7 @@ TEST_P(RecordFixture, record_end_to_end_test_with_zstd_file_compression) {
     " --compression-mode file" <<
     " --compression-format " << compression_format <<
     " --max-cache-size 0" <<
-    " " << topic_name;
+    " --topics " << topic_name;
 
   auto process_handle = start_execution(cmd.str());
   auto cleanup_process_handle = rcpputils::make_scope_exit(
@@ -135,7 +135,7 @@ TEST_P(RecordFixture, record_end_to_end_test) {
   pub_manager.setup_publisher("/unrecorded_topic", unrecorded_message, 3);
 
   auto process_handle = start_execution(
-    get_base_record_command() + " --max-cache-size 0 /test_topic");
+    get_base_record_command() + " --max-cache-size 0 --topics /test_topic");
   auto cleanup_process_handle = rcpputils::make_scope_exit(
     [process_handle]() {
       stop_execution(process_handle);
@@ -177,7 +177,7 @@ TEST_P(RecordFixture, record_end_to_end_test_start_paused) {
   pub_manager.setup_publisher("/test_topic", message, 10);
 
   auto process_handle = start_execution(
-    get_base_record_command() + " --max-cache-size 0 --start-paused /test_topic");
+    get_base_record_command() + " --max-cache-size 0 --start-paused --topics /test_topic");
   auto cleanup_process_handle = rcpputils::make_scope_exit(
     [process_handle]() {
       stop_execution(process_handle);
@@ -206,7 +206,7 @@ TEST_P(RecordFixture, record_end_to_end_exits_gracefully_on_sigterm) {
   rosbag2_test_common::PublicationManager pub_manager;
   pub_manager.setup_publisher(topic_name, message, 10);
   auto process_handle = start_execution(
-    get_base_record_command() + " " + topic_name);
+    get_base_record_command() + " --topics " + topic_name);
 
   ASSERT_TRUE(pub_manager.wait_for_matched(topic_name.c_str())) <<
     "Expected find rosbag subscription";
@@ -292,7 +292,7 @@ TEST_P(RecordFixture, record_end_to_end_with_splitting_bagsize_split_is_at_least
   std::stringstream command;
   command << get_base_record_command() <<
     " --max-bag-size " << bagfile_split_size <<
-    " " << topic_name;
+    " --topics " << topic_name;
   auto process_handle = start_execution(command.str());
   auto cleanup_process_handle = rcpputils::make_scope_exit(
     [process_handle]() {
@@ -347,7 +347,7 @@ TEST_P(RecordFixture, record_end_to_end_with_splitting_max_size_not_reached) {
   std::stringstream command;
   command << get_base_record_command() <<
     " --max-bag-size " << bagfile_split_size <<
-    " " << topic_name;
+    " --topics " << topic_name;
   auto process_handle = start_execution(command.str());
   auto cleanup_process_handle = rcpputils::make_scope_exit(
     [process_handle]() {
@@ -397,7 +397,7 @@ TEST_P(RecordFixture, record_end_to_end_with_splitting_splits_bagfile) {
   std::stringstream command;
   command << get_base_record_command() <<
     " --max-bag-size " << bagfile_split_size <<
-    " " << topic_name;
+    " --topics " << topic_name;
   auto process_handle = start_execution(command.str());
   auto cleanup_process_handle = rcpputils::make_scope_exit(
     [process_handle]() {
@@ -444,7 +444,7 @@ TEST_P(RecordFixture, record_end_to_end_with_duration_splitting_splits_bagfile) 
   std::stringstream command;
   command << get_base_record_command() <<
     " -d " << bagfile_split_duration <<
-    " " << topic_name;
+    " --topics " << topic_name;
   auto process_handle = start_execution(command.str());
   auto cleanup_process_handle = rcpputils::make_scope_exit(
     [process_handle]() {
@@ -490,7 +490,7 @@ TEST_P(RecordFixture, record_end_to_end_test_with_zstd_file_compression_compress
     " --max-bag-size " << bagfile_split_size <<
     " --compression-mode file" <<
     " --compression-format zstd"
-    " " << topic_name;
+    " --topics " << topic_name;
 
   auto process_handle = start_execution(command.str());
   auto cleanup_process_handle = rcpputils::make_scope_exit(
@@ -538,7 +538,7 @@ TEST_P(RecordFixture, record_fails_gracefully_if_bag_already_exists) {
 TEST_P(RecordFixture, record_fails_if_both_all_and_topic_list_is_specified) {
   internal::CaptureStderr();
   auto exit_code = execute_and_wait_until_completion(
-    get_base_record_command() + " -a /some_topic", temporary_dir_path_);
+    get_base_record_command() + " -a --topics /some_topic", temporary_dir_path_);
   auto error_output = internal::GetCapturedStderr();
 
   EXPECT_THAT(exit_code, Eq(EXIT_FAILURE));
@@ -579,8 +579,8 @@ TEST_P(RecordFixture, record_end_to_end_test_with_cache) {
 
   auto process_handle = start_execution(
     get_base_record_command() +
-    " " + topic_name + " " +
-    "--max-cache-size " + std::to_string(max_cache_size));
+    " --topics " + topic_name +
+    " --max-cache-size " + std::to_string(max_cache_size));
   auto cleanup_process_handle = rcpputils::make_scope_exit(
     [process_handle]() {
       stop_execution(process_handle);
