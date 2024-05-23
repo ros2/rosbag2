@@ -47,6 +47,19 @@ std::string strip_parent_path(const std::string & relative_path)
 {
   return fs::path(relative_path).filename().generic_string();
 }
+
+std::string remove_active_from_filename(const std::string& relative_path)
+{
+  fs::path path(relative_path);
+  auto filename = path.filename().string();
+  auto active_pos = filename.find(".active");
+  if(active_pos != std::string::npos) {
+    filename.replace(active_pos, 7, "");
+  }
+  auto new_path = path.parent_path() / filename;
+  return new_path.string();
+}
+
 }  // namespace
 
 SequentialWriter::SequentialWriter(
@@ -190,7 +203,11 @@ void SequentialWriter::close()
   }
 
   if (storage_) {
+    // when the storage_ is closed, rename the file to remove ".active" suffix
+    std::string active_path = storage_->get_relative_file_path();
+    std::string final_path = remove_active_from_filename(active_path);
     storage_.reset();  // Destroy storage before calling WRITE_SPLIT callback to make sure that
+    fs::rename(active_path, final_path);
     // bag file was closed before callback call.
   }
   if (!metadata_.relative_file_paths.empty()) {
@@ -309,7 +326,7 @@ std::string SequentialWriter::format_storage_uri(
   // SequentialWriter is opened with a relative path.
   std::stringstream storage_file_name;
   storage_file_name << fs::path(base_folder).filename().generic_string() << "_" <<
-    storage_count;
+    storage_count << ".active";
 
   return (fs::path(base_folder) / storage_file_name.str()).generic_string();
 }
@@ -326,7 +343,15 @@ void SequentialWriter::switch_to_next_storage()
   storage_options_.uri = format_storage_uri(
     base_folder_,
     metadata_.relative_file_paths.size());
+  
+  // when the storage_ is closed, rename the file to remove ".inactive" suffix
+  std::string active_path = storage_->get_relative_file_path();
+  std::string final_path = remove_active_from_filename(active_path);
+
   storage_ = storage_factory_->open_read_write(storage_options_);
+  
+  std::filesystem::rename(active_path, final_path);
+
   if (!storage_) {
     std::stringstream errmsg;
     errmsg << "Failed to rollover bagfile to new file: \"" << storage_options_.uri << "\"!";
