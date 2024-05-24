@@ -59,3 +59,21 @@ TEST(record_options, test_yaml_serialization)
   CHECK(rmw_serialization_format);
   #undef CHECK
 }
+
+TEST(record_options, test_yaml_decode_for_all_and_exclude)
+{
+  std::string serialized_record_options =
+    "  all: true\n"
+    "  all_topics: false\n"
+    "  topics: []\n"
+    "  rmw_serialization_format: \"\"  # defaults to using the format of the input topic\n"
+    "  regex: \"[xyz]/topic\"\n"
+    "  exclude: \"[x]/topic\"\n";
+
+  YAML::Node loaded_node = YAML::Load(serialized_record_options);
+  auto record_options = loaded_node.as<rosbag2_transport::RecordOptions>();
+  ASSERT_EQ(record_options.all_topics, true);
+  ASSERT_EQ(record_options.all_services, true);
+  ASSERT_EQ(record_options.regex, "[xyz]/topic");
+  ASSERT_EQ(record_options.exclude_regex, "[x]/topic");
+}
