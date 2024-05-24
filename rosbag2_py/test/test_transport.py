@@ -47,6 +47,26 @@ def test_options_qos_conversion():
     assert record_options.topic_qos_profile_overrides == simple_overrides
 
 
+def test_player_log_level():
+    rosbag2_py.Player()  # Test for default constructor
+    valid_log_level = 'debug'
+    rosbag2_py.Player(valid_log_level)
+
+    invalid_log_level = 'xxx'
+    with pytest.raises(RuntimeError):
+        rosbag2_py.Player(invalid_log_level)
+
+
+def test_recoder_log_level():
+    rosbag2_py.Recorder()  # Test for default constructor
+    valid_log_level = 'debug'
+    rosbag2_py.Recorder(valid_log_level)
+
+    invalid_log_level = 'xxx'
+    with pytest.raises(RuntimeError):
+        rosbag2_py.Recorder(invalid_log_level)
+
+
 @pytest.mark.parametrize('storage_id', TESTED_STORAGE_IDS)
 def test_record_cancel(tmp_path, storage_id):
     bag_path = tmp_path / 'test_record_cancel'
