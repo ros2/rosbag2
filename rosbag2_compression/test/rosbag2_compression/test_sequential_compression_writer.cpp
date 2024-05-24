@@ -214,7 +214,7 @@ TEST_F(SequentialCompressionWriterTest, open_succeeds_on_supported_compression_f
     kDefaultCompressionQueueThreadsPriority};
   initializeWriter(compression_options);
 
-  auto tmp_dir = fs::temp_directory_path() / "path_not_empty";
+  auto tmp_dir = tmp_dir_ / "path_not_empty";
   auto storage_options = rosbag2_storage::StorageOptions();
   storage_options.uri = tmp_dir.string();
 
@@ -230,8 +230,8 @@ TEST_F(SequentialCompressionWriterTest, open_succeeds_twice)
     kDefaultCompressionQueueThreadsPriority};
   initializeWriter(compression_options);
 
-  auto tmp_dir = fs::temp_directory_path() / "path_not_empty";
-  auto tmp_dir_next = fs::temp_directory_path() / "path_not_empty_next";
+  auto tmp_dir = tmp_dir_ / "path_not_empty";
+  auto tmp_dir_next = tmp_dir_ / "path_not_empty_next";
 
   auto storage_options = rosbag2_storage::StorageOptions();
   auto storage_options_next = rosbag2_storage::StorageOptions();
