@@ -535,14 +535,30 @@ TEST_P(RecordFixture, record_fails_gracefully_if_bag_already_exists) {
   EXPECT_THAT(error_output, HasSubstr("Output folder 'empty_dir' already exists"));
 }
 
-TEST_P(RecordFixture, record_fails_if_both_all_and_topic_list_is_specified) {
-  internal::CaptureStderr();
-  auto exit_code = execute_and_wait_until_completion(
-    get_base_record_command() + " -a --topics /some_topic", temporary_dir_path_);
-  auto error_output = internal::GetCapturedStderr();
+TEST_P(RecordFixture, record_if_topic_list_service_list_and_all_are_specified) {
+  auto message = get_messages_strings()[0];
+  message->string_value = "test";
 
-  EXPECT_THAT(exit_code, Eq(EXIT_FAILURE));
-  EXPECT_FALSE(error_output.empty());
+  rosbag2_test_common::PublicationManager pub_manager;
+  pub_manager.setup_publisher("/test_topic", message, 10);
+
+  internal::CaptureStdout();
+  auto process_handle = start_execution(
+    get_base_record_command() +
+    " -a --all-topics --all-services --topics /test_topic --services /service1");
+  auto cleanup_process_handle = rcpputils::make_scope_exit(
+    [process_handle]() {
+      stop_execution(process_handle);
+    });
+
+  ASSERT_TRUE(pub_manager.wait_for_matched("/test_topic")) <<
+    "Expected find rosbag subscription";
+  auto output = internal::GetCapturedStdout();
+  stop_execution(process_handle);
+  cleanup_process_handle.cancel();
+
+  EXPECT_THAT(output, HasSubstr("--all or --all-topics will override --topics"));
+  EXPECT_THAT(output, HasSubstr("--all or --all-services will override --services"));
 }
 
 TEST_P(RecordFixture, record_fails_if_neither_all_nor_topic_list_are_specified) {
