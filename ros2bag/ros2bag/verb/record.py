@@ -218,8 +218,6 @@ def check_necessary_argument(args):
 
 def validate_parsed_arguments(args, uri) -> str:
     if args.topics_positional:
-        print(print_warn('Positional "topics" argument deprecated. '
-                         'Please use optional "--topics" argument instead.'))
         args.topics = args.topics_positional
 
     if not check_necessary_argument(args):
@@ -279,49 +277,6 @@ class RecordVerb(VerbExtension):
 
     def main(self, *, args):  # noqa: D102
 
-<<<<<<< HEAD
-        if args.topics_positional:
-            args.topics = args.topics_positional
-
-        if not self._check_necessary_argument(args):
-            return print_error('Need to specify one option out of --all, --all-topics, '
-                               '--all-services, --services, --topics, --topic-types and --regex')
-
-        # Only one option out of --all, --all-services --services or --regex can be used
-        if (args.all and args.all_services) or \
-           ((args.all or args.all_services) and args.regex) or \
-           ((args.all or args.all_services or args.regex) and args.services):
-            return print_error('Must specify only one option out of --all, --all-services, '
-                               '--services or --regex')
-
-        # Only one option out of --all, --all-topics, --topics, --topic-types or --regex can
-        # be used
-        if (args.all and args.all_topics) or \
-           ((args.all or args.all_topics) and args.regex) or \
-           ((args.all or args.all_topics or args.regex) and args.topics) or \
-           ((args.all or args.all_topics or args.regex or args.topics) and args.topic_types):
-            return print_error('Must specify only one option out of --all, --all-topics, '
-                               '--topics, --topic-types or --regex')
-
-        if (args.exclude_regex and
-           not (args.regex or args.all or args.all_topics or args.all_services)):
-            return print_error('--exclude-regex argument requires either --all, '
-                               '--all-topics, --all-services or --regex')
-
-        if args.exclude_topics and not (args.regex or args.all or args.all_topics):
-            return print_error('--exclude-topics argument requires either --all, --all-topics '
-                               'or --regex')
-
-        if args.exclude_topic_types and not (args.regex or args.all or args.all_topics):
-            return print_error('--exclude-topic-types argument requires either --all, '
-                               '--all-topics or --regex')
-
-        if args.exclude_services and not (args.regex or args.all or args.all_services):
-            return print_error('--exclude-services argument requires either --all, --all-services '
-                               'or --regex')
-
-=======
->>>>>>> ef66ee14 (Sweep cleanup in rosbag2 recorder CLI args verification code (#1633))
         uri = args.output or datetime.datetime.now().strftime('rosbag2_%Y_%m_%d-%H_%M_%S')
 
         error_str = validate_parsed_arguments(args, uri)
