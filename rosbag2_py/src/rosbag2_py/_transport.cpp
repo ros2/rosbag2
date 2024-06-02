@@ -203,7 +203,7 @@ public:
         std::signal(SIGTERM, old_sigterm_handler);
       }
       if (old_sigint_handler != SIG_ERR) {
-        std::signal(SIGTERM, old_sigint_handler);
+        std::signal(SIGINT, old_sigint_handler);
       }
       throw;
     }
@@ -212,7 +212,7 @@ public:
       std::signal(SIGTERM, old_sigterm_handler);
     }
     if (old_sigint_handler != SIG_ERR) {
-      std::signal(SIGTERM, old_sigint_handler);
+      std::signal(SIGINT, old_sigint_handler);
     }
   }
 
