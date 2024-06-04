@@ -101,14 +101,8 @@ def test_record_cancel(tmp_path, storage_id):
                     timeout=rclpy.duration.Duration(seconds=3))
     record_thread.join()
 
-<<<<<<< HEAD
-    metadata = metadata_io.read_metadata(bag_path)
-    assert(len(metadata.relative_file_paths))
-    storage_path = Path(metadata.relative_file_paths[0])
-=======
     metadata = metadata_io.read_metadata(str(bag_path))
-    assert len(metadata.relative_file_paths)
+    assert(len(metadata.relative_file_paths))
     storage_path = bag_path / metadata.relative_file_paths[0]
->>>>>>> 66af3999 (Fix for false negative tests in rosbag2_py (#1592))
     assert wait_for(lambda: storage_path.is_file(),
                     timeout=rclpy.duration.Duration(seconds=3))
