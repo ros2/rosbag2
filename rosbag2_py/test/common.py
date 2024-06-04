@@ -41,4 +41,4 @@ def wait_for(
         if clock.now() - start > timeout:
             return False
         time.sleep(sleep_time)
-        return True
+    return True
