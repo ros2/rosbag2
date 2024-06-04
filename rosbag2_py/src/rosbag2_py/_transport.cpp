@@ -161,13 +161,9 @@ namespace rosbag2_py
 class Player
 {
 public:
-<<<<<<< HEAD
-  explicit Player(const std::string & log_level = "info")
-=======
   using SignalHandlerType = void (*)(int);
 
-  Player()
->>>>>>> 32bd5c3a (Gracefully handle SIGINT and SIGTERM signals for play and burst CLI (#1557))
+  explicit Player(const std::string & log_level = "info")
   {
     Arguments arguments({"--ros-args", "--log-level", log_level});
     rclcpp::init(arguments.argc(), arguments.argv());
@@ -188,24 +184,7 @@ public:
     const rosbag2_storage::StorageOptions & storage_options,
     PlayOptions & play_options)
   {
-<<<<<<< HEAD
-    auto reader = rosbag2_transport::ReaderWriterFactory::make_reader(storage_options);
-    auto player = std::make_shared<rosbag2_transport::Player>(
-      std::move(reader), storage_options, play_options);
-
-    rclcpp::executors::SingleThreadedExecutor exec;
-    exec.add_node(player);
-    auto spin_thread = std::thread(
-      [&exec]() {
-        exec.spin();
-      });
-    player->play();
-
-    exec.cancel();
-    spin_thread.join();
-=======
     play_impl(storage_options, play_options, false);
->>>>>>> 32bd5c3a (Gracefully handle SIGINT and SIGTERM signals for play and burst CLI (#1557))
   }
 
   void burst(
@@ -213,29 +192,7 @@ public:
     PlayOptions & play_options,
     size_t num_messages)
   {
-<<<<<<< HEAD
-    auto reader = rosbag2_transport::ReaderWriterFactory::make_reader(storage_options);
-    auto player = std::make_shared<rosbag2_transport::Player>(
-      std::move(reader), storage_options, play_options);
-
-    rclcpp::executors::SingleThreadedExecutor exec;
-    exec.add_node(player);
-    auto spin_thread = std::thread(
-      [&exec]() {
-        exec.spin();
-      });
-    auto play_thread = std::thread(
-      [&player]() {
-        player->play();
-      });
-    player->burst(num_messages);
-
-    exec.cancel();
-    spin_thread.join();
-    play_thread.join();
-=======
     play_impl(storage_options, play_options, true, num_messages);
->>>>>>> 32bd5c3a (Gracefully handle SIGINT and SIGTERM signals for play and burst CLI (#1557))
   }
 
 protected:
@@ -288,6 +245,7 @@ protected:
     bool burst = false,
     size_t burst_num_messages = 0)
   {
+    exit_ = false;
     install_signal_handlers();
     try {
       auto reader = rosbag2_transport::ReaderWriterFactory::make_reader(storage_options);
@@ -300,7 +258,6 @@ protected:
         [&exec]() {
           exec.spin();
         });
-      player->play();
 
       auto wait_for_exit_thread = std::thread(
         [&]() {
@@ -313,12 +270,19 @@ protected:
         // can use other threads
         py::gil_scoped_release release;
         if (burst) {
+          auto play_thread = std::thread(
+            [&player]() {
+              player->play();
+            });
           player->burst(burst_num_messages);
+          rosbag2_py::Player::cancel();  // Need to trigger exit from wait_for_exit_thread
+          play_thread.join();
+        } else {
+          player->play();
+          rosbag2_py::Player::cancel();  // Need to trigger exit from wait_for_exit_thread
         }
-        player->wait_for_playback_to_finish();
       }
 
-      rosbag2_py::Player::cancel();  // Need to trigger exit from wait_for_exit_thread
       if (wait_for_exit_thread.joinable()) {
         wait_for_exit_thread.join();
       }
@@ -354,12 +318,9 @@ std::condition_variable Player::wait_for_exit_cv_{};
 class Recorder
 {
 public:
-<<<<<<< HEAD
-  explicit Recorder(const std::string & log_level = "info")
-=======
   using SignalHandlerType = void (*)(int);
-  Recorder()
->>>>>>> 32bd5c3a (Gracefully handle SIGINT and SIGTERM signals for play and burst CLI (#1557))
+
+  explicit Recorder(const std::string & log_level = "info")
   {
     Arguments arguments({"--ros-args", "--log-level", log_level});
     rclcpp::init(arguments.argc(), arguments.argv());
