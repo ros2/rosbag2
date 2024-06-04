@@ -13,12 +13,8 @@
 # limitations under the License.
 
 import datetime
-<<<<<<< HEAD
 import os
-from pathlib import Path
 import sys
-=======
->>>>>>> 66af3999 (Fix for false negative tests in rosbag2_py (#1592))
 import threading
 
 
@@ -52,7 +48,6 @@ def test_options_qos_conversion():
     assert record_options.topic_qos_profile_overrides == simple_overrides
 
 
-<<<<<<< HEAD
 def test_player_log_level():
     rosbag2_py.Player()  # Test for default constructor
     valid_log_level = 'debug'
@@ -74,14 +69,8 @@ def test_recoder_log_level():
 
 
 def test_record_cancel(tmp_path):
-    bag_path = str(tmp_path / 'test_record_cancel')
-    storage_options, converter_options = get_rosbag_options(bag_path)
-=======
-@pytest.mark.parametrize('storage_id', TESTED_STORAGE_IDS)
-def test_record_cancel(tmp_path, storage_id):
     bag_path = tmp_path / 'test_record_cancel'
-    storage_options, converter_options = get_rosbag_options(str(bag_path), storage_id)
->>>>>>> 66af3999 (Fix for false negative tests in rosbag2_py (#1592))
+    storage_options, converter_options = get_rosbag_options(str(bag_path))
 
     recorder = rosbag2_py.Recorder()
 
@@ -112,21 +101,8 @@ def test_record_cancel(tmp_path, storage_id):
 
     recorder.cancel()
 
-<<<<<<< HEAD
-    metadata_path = Path(bag_path) / 'metadata.yaml'
-    db3_path = Path(bag_path) / 'test_record_cancel_0.db3'
+    metadata_path = bag_path / 'metadata.yaml'
+    db3_path = bag_path / 'test_record_cancel_0.db3'
     assert wait_for(lambda: metadata_path.is_file() and db3_path.is_file(),
                     timeout=rclpy.duration.Duration(seconds=3))
     record_thread.join()
-=======
-    metadata_io = rosbag2_py.MetadataIo()
-    assert wait_for(lambda: metadata_io.metadata_file_exists(str(bag_path)),
-                    timeout=rclpy.duration.Duration(seconds=3))
-    record_thread.join()
-
-    metadata = metadata_io.read_metadata(str(bag_path))
-    assert len(metadata.relative_file_paths)
-    storage_path = bag_path / metadata.relative_file_paths[0]
-    assert wait_for(lambda: storage_path.is_file(),
-                    timeout=rclpy.duration.Duration(seconds=3))
->>>>>>> 66af3999 (Fix for false negative tests in rosbag2_py (#1592))
