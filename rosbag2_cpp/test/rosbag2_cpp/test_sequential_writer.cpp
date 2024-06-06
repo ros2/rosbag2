@@ -583,8 +583,9 @@ TEST_F(SequentialWriterTest, snapshot_mode_zero_cache_size_throws_exception)
 
 TEST_F(SequentialWriterTest, split_event_calls_callback)
 {
-  const int message_count = 7;
-  const int max_bagfile_size = 5;
+  const uint64_t max_bagfile_size = 3;
+  const size_t num_splits = 2;
+  const int message_count = max_bagfile_size * num_splits + max_bagfile_size - 1;  // 8
 
   ON_CALL(
     *storage_,
@@ -617,14 +618,13 @@ TEST_F(SequentialWriterTest, split_event_calls_callback)
 
   storage_options_.max_bagfile_size = max_bagfile_size;
 
-  bool callback_called = false;
-  std::string closed_file, opened_file;
+  std::vector<std::string> closed_files;
+  std::vector<std::string> opened_files;
   rosbag2_cpp::bag_events::WriterEventCallbacks callbacks;
   callbacks.write_split_callback =
-    [&callback_called, &closed_file, &opened_file](rosbag2_cpp::bag_events::BagSplitInfo & info) {
-      closed_file = info.closed_file;
-      opened_file = info.opened_file;
-      callback_called = true;
+    [&closed_files, &opened_files](rosbag2_cpp::bag_events::BagSplitInfo & info) {
+      closed_files.emplace_back(info.closed_file);
+      opened_files.emplace_back(info.opened_file);
     };
   writer_->add_event_callbacks(callbacks);
 
@@ -634,12 +634,30 @@ TEST_F(SequentialWriterTest, split_event_calls_callback)
   for (auto i = 0; i < message_count; ++i) {
     writer_->write(message);
   }
+  writer_->close();
 
-  ASSERT_TRUE(callback_called);
-  auto expected_closed = fs::path(storage_options_.uri) /
-    (storage_options_.uri + "_0");
-  EXPECT_EQ(closed_file, expected_closed.generic_string());
-  EXPECT_EQ(opened_file, fake_storage_uri_);
+  EXPECT_THAT(closed_files.size(), num_splits + 1);
+  EXPECT_THAT(opened_files.size(), num_splits + 1);
+
+  if (!((closed_files.size() == opened_files.size()) && (opened_files.size() == num_splits + 1))) {
+    // Output debug info
+    for (size_t i = 0; i < opened_files.size(); i++) {
+      std::cout << "opened_file[" << i << "] = '" << opened_files[i] <<
+        "'; closed_file[" << i << "] = '" << closed_files[i] << "';" << std::endl;
+    }
+  }
+
+  ASSERT_GE(opened_files.size(), num_splits + 1);
+  ASSERT_GE(closed_files.size(), num_splits + 1);
+  for (size_t i = 0; i < num_splits + 1; i++) {
+    auto expected_closed =
+      fs::path(storage_options_.uri) / (storage_options_.uri + "_" + std::to_string(i));
+    auto expected_opened = (i == num_splits) ?
+      // The last opened file shall be empty string when we do "writer->close();"
+      "" : fs::path(storage_options_.uri) / (storage_options_.uri + "_" + std::to_string(i + 1));
+    EXPECT_EQ(closed_files[i], expected_closed.generic_string());
+    EXPECT_EQ(opened_files[i], expected_opened.generic_string());
+  }
 }
 
 TEST_F(SequentialWriterTest, split_event_calls_on_writer_close)
