@@ -51,11 +51,11 @@ public:
     storage_ = std::make_shared<NiceMock<MockStorage>>();
     converter_factory_ = std::make_shared<StrictMock<MockConverterFactory>>();
     metadata_io_ = std::make_unique<NiceMock<MockMetadataIo>>();
+    tmp_dir_ = fs::temp_directory_path() / "SequentialWriterTest";
     storage_options_ = rosbag2_storage::StorageOptions{};
-    storage_options_.uri = "uri";
+    storage_options_.uri = (tmp_dir_ / bag_base_dir_).string();
 
-    fs::path dir(storage_options_.uri);
-    fs::remove_all(dir);
+    fs::remove_all(tmp_dir_);
 
     ON_CALL(*storage_factory_, open_read_write(_)).WillByDefault(
       DoAll(
@@ -77,8 +77,7 @@ public:
 
   ~SequentialWriterTest() override
   {
-    fs::path dir(storage_options_.uri);
-    fs::remove_all(dir);
+    fs::remove_all(tmp_dir_);
   }
 
   std::unique_ptr<StrictMock<MockStorageFactory>> storage_factory_;
@@ -86,6 +85,7 @@ public:
   std::shared_ptr<StrictMock<MockConverterFactory>> converter_factory_;
   std::unique_ptr<MockMetadataIo> metadata_io_;
 
+  fs::path tmp_dir_;
   rosbag2_storage::StorageOptions storage_options_;
   std::atomic<uint32_t> fake_storage_size_{0};  // Need to be atomic for cache update since it
   // uses in callback from cache_consumer thread
@@ -93,6 +93,7 @@ public:
   std::vector<rosbag2_storage::BagMetadata> v_intercepted_update_metadata_;
   std::unique_ptr<rosbag2_cpp::Writer> writer_;
   std::string fake_storage_uri_;
+  const std::string bag_base_dir_ = "test_bag";
 };
 
 std::shared_ptr<rosbag2_storage::SerializedBagMessage> make_test_msg()
@@ -347,11 +348,10 @@ TEST_F(SequentialWriterTest, writer_splits_when_storage_bagfile_size_gt_max_bagf
     static_cast<unsigned int>(expected_splits)) <<
     "Storage should have split bagfile " << (expected_splits - 1);
 
-  const auto base_path = storage_options_.uri;
   int counter = 0;
   for (const auto & path : fake_metadata_.relative_file_paths) {
     std::stringstream ss;
-    ss << base_path << "_" << counter;
+    ss << bag_base_dir_ << "_" << counter;
 
     const auto expected_path = ss.str();
     counter++;
@@ -448,11 +448,10 @@ TEST_F(
     static_cast<unsigned int>(expected_splits)) <<
     "Storage should have split bagfile " << (expected_splits - 1);
 
-  const auto base_path = storage_options_.uri;
   int counter = 0;
   for (const auto & path : fake_metadata_.relative_file_paths) {
     std::stringstream ss;
-    ss << base_path << "_" << counter;
+    ss << bag_base_dir_ << "_" << counter;
 
     const auto expected_path = ss.str();
     counter++;
@@ -651,10 +650,10 @@ TEST_F(SequentialWriterTest, split_event_calls_callback)
   ASSERT_GE(closed_files.size(), num_splits + 1);
   for (size_t i = 0; i < num_splits + 1; i++) {
     auto expected_closed =
-      fs::path(storage_options_.uri) / (storage_options_.uri + "_" + std::to_string(i));
+      fs::path(storage_options_.uri) / (bag_base_dir_ + "_" + std::to_string(i));
     auto expected_opened = (i == num_splits) ?
       // The last opened file shall be empty string when we do "writer->close();"
-      "" : fs::path(storage_options_.uri) / (storage_options_.uri + "_" + std::to_string(i + 1));
+      "" : fs::path(storage_options_.uri) / (bag_base_dir_ + "_" + std::to_string(i + 1));
     EXPECT_EQ(closed_files[i], expected_closed.generic_string());
     EXPECT_EQ(opened_files[i], expected_opened.generic_string());
   }
@@ -715,8 +714,7 @@ TEST_F(SequentialWriterTest, split_event_calls_on_writer_close)
   writer_->close();
 
   ASSERT_TRUE(callback_called);
-  auto expected_closed = fs::path(storage_options_.uri) /
-    (storage_options_.uri + "_0");
+  auto expected_closed = fs::path(storage_options_.uri) / (bag_base_dir_ + "_0");
   EXPECT_EQ(closed_file, expected_closed.generic_string());
   EXPECT_TRUE(opened_file.empty());
 }
