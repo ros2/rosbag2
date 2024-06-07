@@ -24,6 +24,9 @@ with add_dll_directories_from_env('PATH'):
         compression_mode_from_string,
         compression_mode_to_string
     )
+    from rosbag2_py._message_definitions import (
+        LocalMessageDefinitionSource,
+    )
     from rosbag2_py._reader import (
         SequentialCompressionReader,
         SequentialReader,
@@ -100,4 +103,5 @@ __all__ = [
     'ServiceRequestsSource',
     'Recorder',
     'RecordOptions',
+    'LocalMessageDefinitionSource',
 ]
