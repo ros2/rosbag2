@@ -191,7 +191,7 @@ void Reindexer::aggregate_metadata(
     metadata_.storage_identifier = temp_metadata.storage_identifier;
 
     // try to find the last log for the most complete custom data section
-    if(latest_log_start < temp_metadata.starting_time){
+    if (latest_log_start < temp_metadata.starting_time) {
       latest_log_start = temp_metadata.starting_time;
       metadata_.custom_data = temp_metadata.custom_data;
       metadata_.ros_distro = temp_metadata.ros_distro;
