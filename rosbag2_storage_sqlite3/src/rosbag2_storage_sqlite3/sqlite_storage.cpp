@@ -158,8 +158,7 @@ SqliteStorage::~SqliteStorage()
     commit_transaction();
   }
   if (is_read_write(storage_mode_) && database_) {
-    std::filesystem::rename(
-      relative_path_ + ".active", relative_path_);
+    std::filesystem::rename(relative_path_ + ".active", relative_path_);
   }
 }
 
@@ -215,7 +214,7 @@ void SqliteStorage::open(
     }
   }
   std::string path = is_read_write(io_flag) ? (relative_path_ + ".active") : relative_path_;
-    
+
   try {
     database_ = std::make_unique<SqliteWrapper>(path, io_flag, std::move(pragmas));
   } catch (const SqliteException & e) {
