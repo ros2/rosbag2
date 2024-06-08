@@ -261,7 +261,7 @@ TEST_F(StorageTestFixture, get_metadata_returns_correct_struct) {
 
   const auto readable_storage = std::make_unique<rosbag2_storage_plugins::SqliteStorage>();
   const auto db_filename =
-    (std::filesystem::path(temporary_dir_path_) / "rosbag.db3").generic_string();
+    (std::filesystem::path(temporary_dir_path_) / "rosbag.db3.active").generic_string();
 
   readable_storage->open(
     {db_filename, kPluginID},
@@ -447,26 +447,32 @@ TEST_F(StorageTestFixture, get_relative_file_path_returns_db_name_with_ext) {
   const auto read_write_filename =
     (std::filesystem::path(temporary_dir_path_) / "rosbag").generic_string();
   const auto storage_filename = read_write_filename + ".db3";
-  const auto read_write_storage = std::make_unique<rosbag2_storage_plugins::SqliteStorage>();
-  read_write_storage->open(
-    {read_write_filename, kPluginID},
-    rosbag2_storage::storage_interfaces::IOFlag::READ_WRITE);
-  EXPECT_EQ(read_write_storage->get_relative_file_path(), storage_filename);
+  {
+    const auto read_write_storage = std::make_unique<rosbag2_storage_plugins::SqliteStorage>();
+    read_write_storage->open(
+      {read_write_filename, kPluginID},
+      rosbag2_storage::storage_interfaces::IOFlag::READ_WRITE);
+    EXPECT_EQ(read_write_storage->get_relative_file_path(), storage_filename);
+  }
 
-  // READ_ONLY expects uri to be the relative file path to the sqlite3 db.
-  const auto & read_only_filename = storage_filename;
-  const auto read_only_storage = std::make_unique<rosbag2_storage_plugins::SqliteStorage>();
-  read_only_storage->open(
-    {read_only_filename, kPluginID},
-    rosbag2_storage::storage_interfaces::IOFlag::READ_ONLY);
-  EXPECT_EQ(read_only_storage->get_relative_file_path(), storage_filename);
+  {
+    // READ_ONLY expects uri to be the relative file path to the sqlite3 db.
+    const auto & read_only_filename = storage_filename;
+    const auto read_only_storage = std::make_unique<rosbag2_storage_plugins::SqliteStorage>();
+    read_only_storage->open(
+      {read_only_filename, kPluginID},
+      rosbag2_storage::storage_interfaces::IOFlag::READ_ONLY);
+    EXPECT_EQ(read_only_storage->get_relative_file_path(), storage_filename);
+  }
 
-  const auto & append_filename = storage_filename;
-  const auto append_storage = std::make_unique<rosbag2_storage_plugins::SqliteStorage>();
-  append_storage->open(
-    {append_filename, kPluginID},
-    rosbag2_storage::storage_interfaces::IOFlag::APPEND);
-  EXPECT_EQ(append_storage->get_relative_file_path(), storage_filename);
+  {
+    const auto & append_filename = storage_filename;
+    const auto append_storage = std::make_unique<rosbag2_storage_plugins::SqliteStorage>();
+    append_storage->open(
+      {append_filename, kPluginID},
+      rosbag2_storage::storage_interfaces::IOFlag::APPEND);
+    EXPECT_EQ(append_storage->get_relative_file_path(), storage_filename);
+  }
 }
 
 TEST_F(StorageTestFixture, loads_config_file) {

@@ -257,7 +257,6 @@ TEST_F(TemporaryDirectoryFixture, can_write_and_read_basic_mcap_file)
 TEST_F(TemporaryDirectoryFixture, can_write_mcap_with_zstd_configured_from_yaml)
 {
   auto uri = std::filesystem::path(temporary_dir_path_) / "bag";
-  auto expected_bag = std::filesystem::path(temporary_dir_path_) / "bag.mcap";
   const int64_t timestamp_nanos = 100;  // arbitrary value
   rcutils_time_point_value_t time_stamp{timestamp_nanos};
   const std::string topic_name = "test_topic";
@@ -269,6 +268,7 @@ TEST_F(TemporaryDirectoryFixture, can_write_mcap_with_zstd_configured_from_yaml)
   rclcpp::Serialization<std_msgs::msg::String> serialization;
 
   {
+    auto expected_bag = std::filesystem::path(temporary_dir_path_) / "bag.mcap.active";
     rosbag2_storage::StorageOptions options;
     options.uri = uri.generic_string();
     options.storage_id = storage_id;
@@ -302,6 +302,7 @@ TEST_F(TemporaryDirectoryFixture, can_write_mcap_with_zstd_configured_from_yaml)
     EXPECT_TRUE(std::filesystem::is_regular_file(expected_bag));
   }
   {
+    auto expected_bag = std::filesystem::path(temporary_dir_path_) / "bag.mcap";
     rosbag2_storage::StorageOptions options;
     options.uri = expected_bag.generic_string();
     options.storage_id = storage_id;
