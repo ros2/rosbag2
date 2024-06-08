@@ -1,5 +1,6 @@
 from rosbag2_py._compression_options import CompressionMode as CompressionMode, CompressionOptions as CompressionOptions, compression_mode_from_string as compression_mode_from_string, compression_mode_to_string as compression_mode_to_string
 from rosbag2_py._info import Info as Info
+from rosbag2_py._message_definitions import LocalMessageDefinitionSource as LocalMessageDefinitionSource
 from rosbag2_py._reader import SequentialCompressionReader as SequentialCompressionReader, SequentialReader as SequentialReader, get_registered_readers as get_registered_readers
 from rosbag2_py._reindexer import Reindexer as Reindexer
 from rosbag2_py._storage import BagMetadata as BagMetadata, ConverterOptions as ConverterOptions, FileInformation as FileInformation, MessageDefinition as MessageDefinition, MetadataIo as MetadataIo, ReadOrder as ReadOrder, ReadOrderSortBy as ReadOrderSortBy, StorageFilter as StorageFilter, StorageOptions as StorageOptions, TopicInformation as TopicInformation, TopicMetadata as TopicMetadata, get_default_storage_id as get_default_storage_id, to_rclcpp_qos_vector as to_rclcpp_qos_vector
