@@ -134,7 +134,6 @@ protected:
   std::shared_ptr<rosbag2_storage::storage_interfaces::ReadWriteInterface> storage_;
   std::unique_ptr<rosbag2_storage::MetadataIo> metadata_io_;
   std::unique_ptr<Converter> converter_;
-  uint64_t bag_idx_ = 0;
 
   bool use_cache_ {false};
   std::shared_ptr<rosbag2_cpp::cache::MessageCacheInterface> message_cache_;
@@ -155,6 +154,9 @@ protected:
   std::mutex topics_info_mutex_;
 
   rosbag2_storage::BagMetadata metadata_;
+
+  // Closes the current backed storage and opens the next bagfile.
+  virtual void split_bagfile();
 
   // Checks if the current recording bagfile needs to be split and rolled over to a new file.
   bool should_split_bagfile(
@@ -187,6 +189,7 @@ private:
   void write_messages(
     const std::vector<std::shared_ptr<const rosbag2_storage::SerializedBagMessage>> & messages);
   bool is_first_message_ {true};
+
   bag_events::EventCallbackManager callback_manager_;
 };
 

@@ -25,7 +25,6 @@ from rosbag2_py import FileSuffixStyle
 from rosbag2_py import get_registered_compressors
 from rosbag2_py import get_registered_serializers
 from rosbag2_py import get_registered_writers
-from rosbag2_py import MAX_ALLOWED_FILE_SPLITS
 from rosbag2_py import Recorder
 from rosbag2_py import RecordOptions
 from rosbag2_py import StorageOptions
@@ -105,10 +104,6 @@ class RecordVerb(VerbExtension):
                   'is disabled. If both splitting by size and duration are enabled, '
                   'the bag will split at whichever threshold is reached first.'
         )
-        parser.add_argument(
-            '--max-bag-splits', type=int, default=0,
-            help='Maximum number of files to keep when splitting. Once `--max-bag-splits` '
-                 ' are writted the oldest file will be removed as each new split made.')
         parser.add_argument(
             '--max-cache-size', type=int, default=100*1024*1024,
             help='maximum size (in bytes) of messages to hold in each buffer of cache.'
@@ -222,16 +217,6 @@ class RecordVerb(VerbExtension):
 
         args.compression_mode = args.compression_mode.upper()
 
-        splitting_requested = args.max_bag_duration > 0 or args.max_bag_size > 0
-        if args.max_bag_splits > 0 and not splitting_requested:
-            return print_error('Invalid choice: --max-bag-splits specified without '
-                               '--max-bag-size or --max-bag-duration. '
-                               'Splitting must be enabled to have a maximum number of splits.')
-        elif splitting_requested and args.max_bag_splits > MAX_ALLOWED_FILE_SPLITS:
-            return print_error('Invalid choice: --max-bag-splits is too large. '
-                               f'You specified {args.max_bag_splits}, but the maximum allowed '
-                               f' value is {MAX_ALLOWED_FILE_SPLITS}.')
-
         qos_profile_overrides = {}  # Specify a valid default
         if args.qos_profile_overrides_path:
             qos_profile_dict = yaml.safe_load(args.qos_profile_overrides_path)
@@ -255,7 +240,6 @@ class RecordVerb(VerbExtension):
             storage_id=args.storage,
             max_bagfile_size=args.max_bag_size,
             max_bagfile_duration=args.max_bag_duration,
-            max_bagfile_splits=args.max_bag_splits,
             max_cache_size=args.max_cache_size,
             storage_preset_profile=args.storage_preset_profile,
             storage_config_uri=storage_config_file,

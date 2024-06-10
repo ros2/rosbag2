@@ -199,7 +199,7 @@ void SequentialWriter::open(
     throw std::runtime_error{error.str()};
   }
 
-  storage_options_.uri = format_storage_uri(base_folder_, bag_idx_);
+  storage_options_.uri = format_storage_uri(base_folder_, 0);
   storage_ = storage_factory_->open_read_write(storage_options_);
   if (!storage_) {
     throw std::runtime_error("No storage could be initialized. Abort");
@@ -212,14 +212,6 @@ void SequentialWriter::open(
     error << "Invalid bag splitting size given. Please provide a value greater than " <<
       storage_->get_minimum_split_file_size() << ". Specified value of " <<
       storage_options.max_bagfile_size;
-    throw std::runtime_error{error.str()};
-  }
-
-  if (storage_options_.max_bagfile_splits > rosbag2_storage::max_allowed_file_splits) {
-    std::stringstream error;
-    error << "Invalid value for max_bagfile_splits given. The maximum allowed value of "
-      "is: " << rosbag2_storage::max_allowed_file_splits <<
-      ". Specified value: " << storage_options_.max_bagfile_splits;
     throw std::runtime_error{error.str()};
   }
 
@@ -385,7 +377,7 @@ void SequentialWriter::switch_to_next_storage()
 
   storage_options_.uri = format_storage_uri(
     base_folder_,
-    ++bag_idx_);
+    metadata_.relative_file_paths.size());
   storage_ = storage_factory_->open_read_write(storage_options_);
 
   if (!storage_) {
@@ -425,8 +417,6 @@ void SequentialWriter::split_bagfile()
   metadata_.relative_file_paths.push_back(strip_parent_path(storage_->get_relative_file_path()));
 
   rosbag2_storage::FileInformation file_info{};
-  file_info.starting_time = std::chrono::time_point<std::chrono::high_resolution_clock>(
-    std::chrono::nanoseconds::max());
   file_info.path = strip_parent_path(storage_->get_relative_file_path());
   metadata_.files.push_back(file_info);
 
@@ -455,14 +445,10 @@ void SequentialWriter::write(std::shared_ptr<rosbag2_storage::SerializedBagMessa
   const auto message_timestamp = std::chrono::time_point<std::chrono::high_resolution_clock>(
     std::chrono::nanoseconds(message->time_stamp));
 
-  if (is_first_message_) {
-    // Update bagfile starting time
-    metadata_.starting_time = message_timestamp;
-    is_first_message_ = false;
-  }
-
   if (should_split_bagfile(message_timestamp)) {
     split_bagfile();
+    // Update bagfile starting time
+    metadata_.starting_time = message_timestamp;
     metadata_.files.back().starting_time = message_timestamp;
   }
 
@@ -470,7 +456,6 @@ void SequentialWriter::write(std::shared_ptr<rosbag2_storage::SerializedBagMessa
 
   metadata_.files.back().starting_time =
     std::min(metadata_.files.back().starting_time, message_timestamp);
-
   const auto duration = message_timestamp - metadata_.starting_time;
   metadata_.duration = std::max(metadata_.duration, duration);
 
@@ -528,7 +513,7 @@ bool SequentialWriter::should_split_bagfile(
     auto max_duration_ns = std::chrono::duration_cast<std::chrono::nanoseconds>(
       std::chrono::seconds(storage_options_.max_bagfile_duration));
     should_split = should_split ||
-      ((current_time - metadata_.files.back().starting_time) > max_duration_ns);
+      ((current_time - metadata_.starting_time) > max_duration_ns);
   }
 
   return should_split;
