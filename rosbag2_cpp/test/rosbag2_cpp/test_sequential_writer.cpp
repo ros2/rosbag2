@@ -767,12 +767,7 @@ public:
     writer->split_bagfile();
     writer->split_bagfile();
     size_t expected_splits = 3;
-    size_t max_splits = storage_options_.max_bagfile_splits;
     size_t first_index_offset = 0;
-    if (max_splits > 0 && max_splits < expected_splits) {
-      first_index_offset = expected_splits - max_splits;
-      expected_splits = max_splits;
-    }
 
     auto meta = writer_ptr->get_metadata();
     EXPECT_THAT(meta.relative_file_paths, SizeIs(expected_splits));
@@ -802,13 +797,11 @@ public:
 
 TEST_F(AppendWriteTest, append_nonexistent)
 {
-  storage_options_.max_bagfile_splits = 0;
   basic_append_check();
 }
 
 TEST_F(AppendWriteTest, append_index_on_existing_index)
 {
-  storage_options_.max_bagfile_splits = 2;
   basic_append_check();
 
   // Open new writer in append mode
@@ -851,7 +844,6 @@ TEST_F(AppendWriteTest, append_index_on_existing_datetime)
 TEST_F(AppendWriteTest, append_index_on_existing_with_missing_metadata)
 {
   storage_options_.suffix_style = rosbag2_storage::FileSuffixStyle::Index;
-  storage_options_.max_bagfile_splits = 3;
   basic_append_check();
   auto metadata_path = std::filesystem::path(storage_options_.uri) / "metadata.yaml";
   ASSERT_TRUE(std::filesystem::remove(metadata_path));

@@ -155,9 +155,6 @@ protected:
 
   rosbag2_storage::BagMetadata metadata_;
 
-  // Closes the current backed storage and opens the next bagfile.
-  virtual void split_bagfile();
-
   // Checks if the current recording bagfile needs to be split and rolled over to a new file.
   bool should_split_bagfile(
     const std::chrono::time_point<std::chrono::high_resolution_clock> & current_time) const;
@@ -178,11 +175,6 @@ protected:
   virtual std::shared_ptr<rosbag2_storage::SerializedBagMessage>
   get_writeable_message(
     std::shared_ptr<rosbag2_storage::SerializedBagMessage> message);
-
-  // Helper method tries to delete the first file in relative_file_paths.
-  // Always removes it from relative_file_paths, so that it is not tried again.
-  // Note: call this before pushing a new empty file to metadata
-  void remove_first_file();
 
 private:
   /// Helper method to write messages while also updating tracked metadata.
