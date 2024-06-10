@@ -187,7 +187,7 @@ void SequentialCompressionWriter::open(
   if (storage_) {
     return;  // The writer already opened.
   }
-  // Note: a better solution was implemente in rosbag2-storage version 0.18+
+  // Note: a better solution was implemented in rosbag2-storage version 0.18+
   // See MCAPStorage::update_metadata() for details.
   if(storage_options.storage_id == "mcap" && compression_options_.compression_mode == CompressionMode::MESSAGE)
   {
