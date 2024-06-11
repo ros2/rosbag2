@@ -81,6 +81,7 @@ public:
       rosbag2_storage::StorageOptions storage_options;
       storage_options.storage_id = GetParam();
       storage_options.uri = root_bag_path_.string();
+      storage_options.custom_data["name"] = "value";
       writer.open(storage_options);
       rosbag2_storage::TopicMetadata topic;
       topic.name = "/test_topic";
@@ -132,6 +133,8 @@ TEST_P(ReindexTestFixture, test_multiple_files) {
 
   EXPECT_EQ(generated_metadata.storage_identifier, GetParam());
   EXPECT_EQ(generated_metadata.version, target_metadata.version);
+  EXPECT_EQ(generated_metadata.ros_distro, target_metadata.ros_distro);
+  EXPECT_EQ(generated_metadata.custom_data, target_metadata.custom_data);
 
   for (const auto & gen_rel_path : generated_metadata.relative_file_paths) {
     EXPECT_TRUE(
