@@ -49,8 +49,63 @@ public:
     target_dir = database_path / "target_metadata";
   }
 
+<<<<<<< HEAD
   rcpputils::fs::path database_path;
   rcpputils::fs::path target_dir;
+=======
+  void TearDown() override
+  {
+    fs::remove_all(root_bag_path_);
+  }
+
+  std::string get_test_name() const
+  {
+    const auto * test_info = UnitTest::GetInstance()->current_test_info();
+    std::string test_name = test_info->name();
+    // Replace any slashes in the test name, since it is used in paths
+    std::replace(test_name.begin(), test_name.end(), '/', '_');
+    return test_name;
+  }
+
+  void create_test_bag(int messages_per_file, int num_files)
+  {
+    {
+      rosbag2_cpp::Writer writer;
+      rosbag2_storage::StorageOptions storage_options;
+      storage_options.storage_id = GetParam();
+      storage_options.uri = root_bag_path_.string();
+      storage_options.custom_data["name"] = "value";
+      writer.open(storage_options);
+      rosbag2_storage::TopicMetadata topic;
+      topic.name = "/test_topic";
+      topic.type = "std_msgs/msg/String";
+      topic.type_description_hash = "type_hash_msg_string";
+      writer.create_topic(topic);
+
+      std_msgs::msg::String msg;
+      rclcpp::Time stamp;
+      auto dt = rclcpp::Duration::from_nanoseconds(10 * 1000 * 1000);
+
+      for (int file_i = 0; file_i < num_files; file_i++) {
+        for (int msg_i = 0; msg_i < messages_per_file; msg_i++) {
+          std::stringstream ss;
+          ss << "file" << file_i << "msg" << msg_i;
+          msg.data = ss.str();
+          writer.write(msg, topic.name, stamp);
+          stamp += dt;
+        }
+        writer.split_bagfile();
+      }
+    }
+
+    rosbag2_storage::MetadataIo metadata_io;
+    original_metadata_ = metadata_io.read_metadata(root_bag_path_.generic_string());
+    fs::remove(root_bag_path_ / "metadata.yaml");
+  }
+
+  fs::path root_bag_path_;
+  rosbag2_storage::BagMetadata original_metadata_;
+>>>>>>> 804432c9 (Propagate "custom_data" and "ros_distro" in to the metadata.yaml file during re-indexing (#1700))
 };
 
 TEST_F(ReindexTestFixture, test_multiple_files) {
@@ -72,6 +127,8 @@ TEST_F(ReindexTestFixture, test_multiple_files) {
   auto target_metadata = metadata_io->read_metadata((target_dir / "multiple_files").string());
 
   EXPECT_EQ(generated_metadata.version, target_metadata.version);
+  EXPECT_EQ(generated_metadata.ros_distro, target_metadata.ros_distro);
+  EXPECT_EQ(generated_metadata.custom_data, target_metadata.custom_data);
 
   for (const auto & gen_rel_path : generated_metadata.relative_file_paths) {
     EXPECT_TRUE(
