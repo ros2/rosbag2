@@ -79,7 +79,8 @@ class PlayVerb(VerbExtension):
         clock_args_group.add_argument(
             '--clock', type=positive_float, nargs='?', const=40, default=0,
             help='Publish to /clock at a specific frequency in Hz, to act as a ROS Time Source. '
-                 'Value must be positive. Defaults to not publishing.')
+                 'Value must be positive. Defaults to not publishing.'
+                 'If specified, /clock topic in the bag file is excluded to publish.')
         clock_args_group.add_argument(
             '--clock-topics', type=str, default=[], nargs='+',
             help='List of topics separated by spaces that will trigger a /clock update '
@@ -187,12 +188,30 @@ class PlayVerb(VerbExtension):
         play_options.node_prefix = NODE_NAME_PREFIX
         play_options.rate = args.rate
         play_options.topics_to_filter = args.topics
+<<<<<<< HEAD
         play_options.topics_regex_to_filter = args.regex
         play_options.topics_regex_to_exclude = args.exclude
+=======
+
+        # Convert service name to service event topic name
+        play_options.services_to_filter = convert_service_to_service_event_topic(args.services)
+
+        play_options.regex_to_filter = args.regex
+
+        play_options.exclude_regex_to_filter = args.exclude_regex
+
+        play_options.exclude_service_events_to_filter = \
+            convert_service_to_service_event_topic(args.exclude_services)
+
+>>>>>>> e7e60057 (Exclude recorded /clock topic when --clock option is specified (#1646))
         play_options.topic_qos_profile_overrides = qos_profile_overrides
         play_options.loop = args.loop
         play_options.topic_remapping_options = topic_remapping
         play_options.clock_publish_frequency = args.clock
+        exclude_topics = args.exclude_topics if args.exclude_topics else []
+        if play_options.clock_publish_frequency > 0:
+            exclude_topics.append('/clock')
+        play_options.exclude_topics_to_filter = exclude_topics
         if args.clock_topics_all or len(args.clock_topics) > 0:
             play_options.clock_publish_on_topic_publish = True
         play_options.clock_topics = args.clock_topics
