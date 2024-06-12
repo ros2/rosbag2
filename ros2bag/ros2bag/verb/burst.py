@@ -16,8 +16,8 @@ from argparse import FileType
 
 from rclpy.qos import InvalidQoSProfileException
 from ros2bag.api import add_standard_reader_args
+from ros2bag.api import check_not_negative_float
 from ros2bag.api import check_not_negative_int
-from ros2bag.api import check_positive_float
 from ros2bag.api import convert_service_to_service_event_topic
 from ros2bag.api import convert_yaml_to_qos_profile
 from ros2bag.api import print_error
@@ -60,7 +60,7 @@ class BurstVerb(VerbExtension):
             help='Path to a yaml file defining storage specific configurations. '
                  'See storage plugin documentation for the format of this file.')
         parser.add_argument(
-            '--start-offset', type=check_positive_float, default=0.0,
+            '--start-offset', type=check_not_negative_float, default=0.0,
             help='Start the playback player this many seconds into the bag file.')
         parser.add_argument(
             '-n', '--num-messages', type=check_not_negative_int, default=0,
