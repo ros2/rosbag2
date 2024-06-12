@@ -14,8 +14,8 @@ jobs:
       matrix:
           linter: [copyright, xmllint]
     steps:
-    - uses: actions/checkout@v2
-    - uses: ros-tooling/action-ros-lint@v0.1
+    - uses: actions/checkout@v4
+    - uses: ros-tooling/action-ros-lint@0.1.3
       with:
         linter: ${{ matrix.linter }}
         distribution: rolling
@@ -45,8 +45,8 @@ jobs:
       matrix:
           linter: [cppcheck, cpplint, uncrustify]
     steps:
-    - uses: actions/checkout@v2
-    - uses: ros-tooling/action-ros-lint@v0.1
+    - uses: actions/checkout@v4
+    - uses: ros-tooling/action-ros-lint@0.1.3
       with:
         linter: ${{ matrix.linter }}
         distribution: rolling
@@ -76,8 +76,8 @@ jobs:
           - linter: clang_format
             arguments: "--config rosbag2_storage_mcap/.clang-format"
     steps:
-    - uses: actions/checkout@v2
-    - uses: ros-tooling/action-ros-lint@v0.1
+    - uses: actions/checkout@v4
+    - uses: ros-tooling/action-ros-lint@0.1.3
       with:
         linter: ${{ matrix.linter }}
         arguments: ${{ matrix.arguments }}
@@ -94,8 +94,8 @@ jobs:
       matrix:
           linter: [pep257, flake8]
     steps:
-    - uses: actions/checkout@v2
-    - uses: ros-tooling/action-ros-lint@v0.1
+    - uses: actions/checkout@v4
+    - uses: ros-tooling/action-ros-lint@0.1.3
       with:
         linter: ${{ matrix.linter }}
         distribution: rolling
