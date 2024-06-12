@@ -43,7 +43,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-          linter: [cppcheck, cpplint, uncrustify]
+          # We exclude cppcheck due to https://github.com/ament/ament_lint/pull/345
+          linter: [cpplint, uncrustify]
     steps:
     - uses: actions/checkout@v4
     - uses: ros-tooling/action-ros-lint@0.1.3
@@ -71,7 +72,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-          linter: [cppcheck, cpplint, clang_format]
+          # We exclude cppcheck due to https://github.com/ament/ament_lint/pull/345
+          linter: [cpplint, clang_format]
           include:
           - linter: clang_format
             arguments: "--config rosbag2_storage_mcap/.clang-format"
