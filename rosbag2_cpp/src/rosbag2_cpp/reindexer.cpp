@@ -162,6 +162,8 @@ void Reindexer::aggregate_metadata(
   const rosbag2_storage::StorageOptions & storage_options)
 {
   std::map<std::string, rosbag2_storage::TopicInformation> temp_topic_info;
+  std::chrono::time_point<std::chrono::high_resolution_clock> latest_log_start =
+    std::chrono::time_point<std::chrono::high_resolution_clock>::min();
 
   // In order to most accurately reconstruct the metadata, we need to
   // visit each of the contained relative files files in the bag,
@@ -187,6 +189,17 @@ void Reindexer::aggregate_metadata(
     bag_reader->open(temp_so, blank_converter_options);
     auto temp_metadata = bag_reader->get_metadata();
     metadata_.storage_identifier = temp_metadata.storage_identifier;
+
+    // try to find the last log for the most complete custom data section
+    if (latest_log_start < temp_metadata.starting_time) {
+      latest_log_start = temp_metadata.starting_time;
+      if (!temp_metadata.custom_data.empty()) {
+        metadata_.custom_data = temp_metadata.custom_data;
+      }
+      if (!temp_metadata.ros_distro.empty()) {
+        metadata_.ros_distro = temp_metadata.ros_distro;
+      }
+    }
 
     if (temp_metadata.starting_time < metadata_.starting_time) {
       metadata_.starting_time = temp_metadata.starting_time;
