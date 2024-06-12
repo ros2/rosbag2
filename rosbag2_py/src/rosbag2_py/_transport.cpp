@@ -627,21 +627,26 @@ PYBIND11_MODULE(_transport, m) {
   .def(py::init<>())
   .def(py::init<const std::string &>())
   .def("play", &rosbag2_py::Player::play, py::arg("storage_options"), py::arg("play_options"))
-  .def("play", &rosbag2_py::Player::play_with_signal_option, py::arg("storage_options"),
-       py::arg("play_options"), py::arg("enable_signal_handling"))
-  .def("burst", &rosbag2_py::Player::burst, py::arg("storage_options"), py::arg("play_options"),
+  .def(
+    "play", &rosbag2_py::Player::play_with_signal_option, py::arg("storage_options"),
+    py::arg("play_options"), py::arg("enable_signal_handling"))
+  .def(
+    "burst", &rosbag2_py::Player::burst, py::arg("storage_options"), py::arg("play_options"),
     py::arg("num_messages"))
-  .def("burst", &rosbag2_py::Player::burst_with_signal_option, py::arg("storage_options"),
-       py::arg("play_options"), py::arg("num_messages"), py::arg("enable_signal_handling"))
+  .def(
+    "burst", &rosbag2_py::Player::burst_with_signal_option, py::arg("storage_options"),
+    py::arg("play_options"), py::arg("num_messages"), py::arg("enable_signal_handling"))
   .def_static("cancel", &rosbag2_py::Player::cancel)
   ;
 
   py::class_<rosbag2_py::Recorder>(m, "Recorder")
   .def(py::init<>())
   .def(py::init<const std::string &>())
-  .def("record", &rosbag2_py::Recorder::record, py::arg("storage_options"),
+  .def(
+    "record", &rosbag2_py::Recorder::record, py::arg("storage_options"),
     py::arg("record_options"), py::arg("node_name") = "rosbag2_recorder")
-  .def("record", &rosbag2_py::Recorder::record_with_signal_option, py::arg("storage_options"),
+  .def(
+    "record", &rosbag2_py::Recorder::record_with_signal_option, py::arg("storage_options"),
     py::arg("record_options"), py::arg("node_name"), py::arg("enable_signal_handling"))
   .def_static("cancel", &rosbag2_py::Recorder::cancel)
   ;
