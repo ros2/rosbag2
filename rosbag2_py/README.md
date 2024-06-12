@@ -14,7 +14,7 @@ source install/setup.sh
 # Make sure rosbag2_py can be imported
 python3 -c 'import rosbag2_py'
 
-sudo apt update && sudo apt install mypy=0.942-1ubuntu1
+sudo apt update && sudo apt install mypy=1.9.0-4ubuntu1
 cd <rosbag2 git repo>
 stubgen -p rosbag2_py -o rosbag2_py
 ```
