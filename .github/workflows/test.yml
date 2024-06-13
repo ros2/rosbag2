@@ -91,7 +91,6 @@ jobs:
     - name: Is regeneration of Python stubs required?
       run: |
         rosbag2_path=$(colcon list -p --packages-select rosbag2)/..
-        sudo pip uninstall -y mypy --break-system-packages
         sudo apt update && sudo apt -y install mypy=1.9.0-4ubuntu1
         source install/setup.sh
         stubgen -p rosbag2_py -o ${rosbag2_path}/rosbag2_py
