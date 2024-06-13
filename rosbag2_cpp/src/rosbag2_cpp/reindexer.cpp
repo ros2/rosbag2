@@ -199,9 +199,6 @@ void Reindexer::aggregate_metadata(
       if (!temp_metadata.custom_data.empty()) {
         metadata_.custom_data = temp_metadata.custom_data;
       }
-      if (!temp_metadata.ros_distro.empty()) {
-        metadata_.ros_distro = temp_metadata.ros_distro;
-      }
     }
 
     if (temp_metadata.starting_time < metadata_.starting_time) {

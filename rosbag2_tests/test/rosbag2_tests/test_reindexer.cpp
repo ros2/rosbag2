@@ -132,7 +132,6 @@ TEST_P(ReindexTestFixture, test_multiple_files) {
 
   EXPECT_EQ(generated_metadata.storage_identifier, GetParam());
   EXPECT_EQ(generated_metadata.version, target_metadata.version);
-  EXPECT_EQ(generated_metadata.ros_distro, target_metadata.ros_distro);
   EXPECT_EQ(generated_metadata.custom_data, target_metadata.custom_data);
 
   for (const auto & gen_rel_path : generated_metadata.relative_file_paths) {
