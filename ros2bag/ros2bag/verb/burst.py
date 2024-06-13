@@ -18,11 +18,6 @@ from rclpy.qos import InvalidQoSProfileException
 from ros2bag.api import add_standard_reader_args
 from ros2bag.api import check_not_negative_float
 from ros2bag.api import check_not_negative_int
-<<<<<<< HEAD
-from ros2bag.api import check_positive_float
-=======
-from ros2bag.api import convert_service_to_service_event_topic
->>>>>>> 8297cb01 (fix(start-offset): allow specifying a start offset of 0 (#1682))
 from ros2bag.api import convert_yaml_to_qos_profile
 from ros2bag.api import print_error
 from ros2bag.verb import VerbExtension
