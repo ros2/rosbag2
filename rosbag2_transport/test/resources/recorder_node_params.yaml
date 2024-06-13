@@ -20,8 +20,8 @@ recorder_params_node:
       exclude_topics: ["exclude_topic", "other_exclude_topic"]
       exclude_services: ["exclude_service", "other_exclude_service"]
       node_prefix: "prefix"
-      compression_mode: "stream"
-      compression_format: "h264"
+      compression_mode: "file"
+      compression_format: "zstd"
       compression_queue_size: 10
       compression_threads: 2
       compression_threads_priority: -1
