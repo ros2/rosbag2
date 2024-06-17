@@ -2,8 +2,8 @@
 Changelog for package rosbag2_storage_mcap
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.28.0 (2024-06-17)
+-------------------
 * Add vscode gitignore rule and remove vscode folder (`#1698 <https://github.com/ros2/rosbag2/issues/1698>`_)
 * Contributors: methylDragon
 
