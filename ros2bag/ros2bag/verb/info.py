@@ -30,6 +30,10 @@ class InfoVerb(VerbExtension):
             '-v', '--verbose', action='store_true',
             help='Display request/response information for services'
         )
+        parser.add_argument(
+            '--size-contribution', action='store_true',
+            help='Display size contribution information for topics.'
+        )
 
     def _is_service_event_topic(self, topic_name, topic_type) -> bool:
 
@@ -50,8 +54,11 @@ class InfoVerb(VerbExtension):
         if args.topic_name and args.verbose:
             print("Warning! You have set both the '-t' and '-v' parameters. The '-t' parameter "
                   'will be ignored.')
+        if not args.verbose and args.size_contribution:
+            print("Warning! You have set the '--size-contribution' parameter without the '-v' parameter. "
+                  "The '--size-contribution' parameter will be ignored.")
         if args.verbose:
-            Info().read_metadata_and_output_service_verbose(args.bag_path, args.storage)
+            Info().read_metadata_and_output_service_verbose(args.bag_path, args.storage, args.size_contribution)
         else:
             m = Info().read_metadata(args.bag_path, args.storage)
             if args.topic_name:

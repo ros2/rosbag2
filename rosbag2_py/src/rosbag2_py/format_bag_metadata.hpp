@@ -23,7 +23,9 @@ namespace rosbag2_py
 {
 
 std::string format_bag_meta_data(
-  const rosbag2_storage::BagMetadata & metadata, bool only_topic = false);
+  const rosbag2_storage::BagMetadata & metadata,
+  const std::unordered_map<std::string, uint64_t> & topics_size = {},
+  bool only_topic = false);
 
 }  // namespace rosbag2_py
 

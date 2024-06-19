@@ -43,7 +43,8 @@ public:
 
   void read_metadata_and_output_service_verbose(
     const std::string & uri,
-    const std::string & storage_id)
+    const std::string & storage_id,
+    const bool show_size_contribution = false)
   {
     auto metadata_info = read_metadata(uri, storage_id);
 
@@ -60,9 +61,19 @@ public:
       }
     }
 
+    std::unordered_map<std::string, uint64_t> topics_size = {};
+    if (show_size_contribution) {
+      for (auto & file_info : metadata_info.files) {
+        topics_size = info_->compute_topics_size_contribution(
+          uri + "/" + file_info.path,
+          metadata_info.storage_identifier);
+      }
+    }
+
     // Output formatted metadata and service info
-    std::cout << format_bag_meta_data(metadata_info, true);
+    std::cout << format_bag_meta_data(metadata_info, topics_size, true);
     std::cout << format_service_info(all_services_info) << std::endl;
+
   }
 
 protected:

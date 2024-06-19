@@ -45,6 +45,9 @@ public:
 
   virtual std::vector<std::shared_ptr<rosbag2_service_info_t>> read_service_info(
     const std::string & uri, const std::string & storage_id = "");
+
+  virtual std::unordered_map<std::string, uint64_t> compute_topics_size_contribution(
+    const std::string & uri, const std::string & storage_id = "");
 };
 
 }  // namespace rosbag2_cpp
