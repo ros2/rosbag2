@@ -522,22 +522,25 @@ rosbag2_storage::BagMetadata SqliteStorage::get_metadata()
       max_time = std::get<5>(result) > max_time ? std::get<5>(result) : max_time;
     }
 
-    //\==https://github.com/ros2/rosbag2/issues/1719 patch: Add a dedicated case for topics that are declared but have no message inside messges table
+    // \==https://github.com/ros2/rosbag2/issues/1719 patch: Add a dedicated case for topics that
+    // are declared but have no message inside messges table
     std::string query2 =
       "SELECT name, type, serialization_format, offered_qos_profiles "
-      "FROM topics " 
+      "FROM topics "
       "WHERE NOT EXISTS (SELECT * FROM messages WHERE topics.id = messages.topic_id) "
       "GROUP BY topics.name;";
     auto statement2 = database_->prepare_statement(query2);
-    auto query_results2 = statement2->execute_query<std::string, std::string, std::string, std::string>();    
+    auto query_results2 = statement2->execute_query<
+      std::string, std::string, std::string, std::string>();
 
     for (auto result2 : query_results2) {
       metadata.topics_with_message_count.push_back(
         {
-          {std::get<0>(result2), std::get<1>(result2), std::get<2>(result2), std::get<3>(result2)}, 0
+          {std::get<0>(result2), std::get<1>(result2), std::get<2>(result2), std::get<3>(result2)},
+          0
         });
-    }   
-    //==/ 
+    }
+    // ==/
 
 
   } else {
@@ -563,23 +566,23 @@ rosbag2_storage::BagMetadata SqliteStorage::get_metadata()
       max_time = std::get<5>(result) > max_time ? std::get<5>(result) : max_time;
     }
 
-    //\==https://github.com/ros2/rosbag2/issues/1719 patch: Add a dedicated case for topics that are declared but have no message inside messges table
+    // \==https://github.com/ros2/rosbag2/issues/1719 patch: Add a dedicated case for topics that
+    // are declared but have no message inside messges table
     std::string query2 =
-      "SELECT name, type, serialization_format"
-      "FROM topics " 
+      "SELECT name, type, serialization_format "
+      "FROM topics "
       "WHERE NOT EXISTS (SELECT * FROM messages WHERE topics.id = messages.topic_id) "
       "GROUP BY topics.name;";
     auto statement2 = database_->prepare_statement(query2);
-    auto query_results2 = statement2->execute_query<std::string, std::string, std::string>();    
+    auto query_results2 = statement2->execute_query<std::string, std::string, std::string>();
 
     for (auto result : query_results2) {
       metadata.topics_with_message_count.push_back(
         {
-          {std::get<0>(result), std::get<1>(result), std::get<2>(result), ""},0
+          {std::get<0>(result), std::get<1>(result), std::get<2>(result), ""}, 0
         });
-    } 
-    //==/
-
+    }
+    // ==/
   }
 
   if (metadata.message_count == 0) {
