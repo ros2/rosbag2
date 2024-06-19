@@ -7,4 +7,5 @@ venv/
 **/.pytest_cache/
 __pycache__/
 *.db3-*
-
+log/
+install/
