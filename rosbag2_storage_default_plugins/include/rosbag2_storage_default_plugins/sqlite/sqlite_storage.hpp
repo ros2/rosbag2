@@ -72,6 +72,8 @@ public:
 
   rosbag2_storage::BagMetadata get_metadata() override;
 
+  void setMetadataAllow0MessageCount(bool enable) override;
+
   std::string get_relative_file_path() const override;
 
   uint64_t get_bagfile_size() const override;
@@ -115,6 +117,7 @@ private:
   void write_locked(std::shared_ptr<const rosbag2_storage::SerializedBagMessage> message)
   RCPPUTILS_TSA_REQUIRES(database_write_mutex_);
   int read_db_schema_version();
+  bool allow_metadata0MessageCount = false;
 
   using ReadQueryResult = SqliteStatementWrapper::QueryResult<
     std::shared_ptr<rcutils_uint8_array_t>, rcutils_time_point_value_t, std::string, int>;

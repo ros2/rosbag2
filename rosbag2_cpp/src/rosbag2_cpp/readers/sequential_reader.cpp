@@ -79,6 +79,11 @@ void SequentialReader::close()
   }
 }
 
+void SequentialReader::setMetadataAllow0MessageCount(bool enable)
+{
+  allow_metadata0MessageCount = enable;
+}
+
 void SequentialReader::open(
   const rosbag2_storage::StorageOptions & storage_options,
   const ConverterOptions & converter_options)
@@ -106,6 +111,7 @@ void SequentialReader::open(
     if (!storage_) {
       throw std::runtime_error{"No storage could be initialized from the inputs."};
     }
+    storage_->setMetadataAllow0MessageCount(allow_metadata0MessageCount);
     metadata_ = storage_->get_metadata();
     if (metadata_.relative_file_paths.empty()) {
       ROSBAG2_CPP_LOG_WARN("No file paths were found in metadata.");

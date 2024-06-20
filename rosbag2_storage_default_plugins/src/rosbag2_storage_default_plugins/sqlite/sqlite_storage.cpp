@@ -487,6 +487,11 @@ uint64_t SqliteStorage::get_minimum_split_file_size() const
   return MIN_SPLIT_FILE_SIZE;
 }
 
+void SqliteStorage::setMetadataAllow0MessageCount(bool enable)
+{
+  allow_metadata0MessageCount = enable;
+}
+
 rosbag2_storage::BagMetadata SqliteStorage::get_metadata()
 {
   rosbag2_storage::BagMetadata metadata;
@@ -524,21 +529,23 @@ rosbag2_storage::BagMetadata SqliteStorage::get_metadata()
 
     // \==https://github.com/ros2/rosbag2/issues/1719 patch: Add a dedicated case for topics that
     // are declared but have no message inside messges table
-    std::string query2 =
-      "SELECT name, type, serialization_format, offered_qos_profiles "
-      "FROM topics "
-      "WHERE NOT EXISTS (SELECT * FROM messages WHERE topics.id = messages.topic_id) "
-      "GROUP BY topics.name;";
-    auto statement2 = database_->prepare_statement(query2);
-    auto query_results2 = statement2->execute_query<
-      std::string, std::string, std::string, std::string>();
+    if (allow_metadata0MessageCount) {
+      std::string query2 =
+        "SELECT name, type, serialization_format, offered_qos_profiles "
+        "FROM topics "
+        "WHERE NOT EXISTS (SELECT * FROM messages WHERE topics.id = messages.topic_id) "
+        "GROUP BY topics.name;";
+      auto statement2 = database_->prepare_statement(query2);
+      auto query_results2 = statement2->execute_query<
+        std::string, std::string, std::string, std::string>();
 
-    for (auto result2 : query_results2) {
-      metadata.topics_with_message_count.push_back(
-        {
-          {std::get<0>(result2), std::get<1>(result2), std::get<2>(result2), std::get<3>(result2)},
-          0
-        });
+      for (auto result2 : query_results2) {
+        metadata.topics_with_message_count.push_back(
+          {
+            {std::get<0>(result2), std::get<1>(result2), std::get<2>(result2),
+              std::get<3>(result2)}, 0
+          });
+      }
     }
     // ==/
 
@@ -568,19 +575,21 @@ rosbag2_storage::BagMetadata SqliteStorage::get_metadata()
 
     // \==https://github.com/ros2/rosbag2/issues/1719 patch: Add a dedicated case for topics that
     // are declared but have no message inside messges table
-    std::string query2 =
-      "SELECT name, type, serialization_format "
-      "FROM topics "
-      "WHERE NOT EXISTS (SELECT * FROM messages WHERE topics.id = messages.topic_id) "
-      "GROUP BY topics.name;";
-    auto statement2 = database_->prepare_statement(query2);
-    auto query_results2 = statement2->execute_query<std::string, std::string, std::string>();
+    if (allow_metadata0MessageCount) {
+      std::string query2 =
+        "SELECT name, type, serialization_format "
+        "FROM topics "
+        "WHERE NOT EXISTS (SELECT * FROM messages WHERE topics.id = messages.topic_id) "
+        "GROUP BY topics.name;";
+      auto statement2 = database_->prepare_statement(query2);
+      auto query_results2 = statement2->execute_query<std::string, std::string, std::string>();
 
-    for (auto result : query_results2) {
-      metadata.topics_with_message_count.push_back(
-        {
-          {std::get<0>(result), std::get<1>(result), std::get<2>(result), ""}, 0
-        });
+      for (auto result : query_results2) {
+        metadata.topics_with_message_count.push_back(
+          {
+            {std::get<0>(result), std::get<1>(result), std::get<2>(result), ""}, 0
+          });
+      }
     }
     // ==/
   }

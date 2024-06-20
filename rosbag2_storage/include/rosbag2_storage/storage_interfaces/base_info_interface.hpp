@@ -33,6 +33,10 @@ public:
 
   virtual BagMetadata get_metadata() = 0;
 
+  virtual void setMetadataAllow0MessageCount(__attribute__((unused)) bool enable)
+  {
+  }
+
   /**
    * Retrieves the relative path to the backing of the storage plugin.
    *

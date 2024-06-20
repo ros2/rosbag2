@@ -187,6 +187,8 @@ void Reindexer::aggregate_metadata(
 
     // We aren't actually interested in reading messages, so use a blank converter option
     rosbag2_cpp::ConverterOptions blank_converter_options {};
+    // Shall be before open as metadata is read during file openning
+    bag_reader->setMetadataAllow0MessageCount(true);
     bag_reader->open(temp_so, blank_converter_options);
     auto temp_metadata = bag_reader->get_metadata();
 

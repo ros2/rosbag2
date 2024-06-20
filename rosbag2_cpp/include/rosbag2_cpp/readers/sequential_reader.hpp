@@ -72,6 +72,8 @@ public:
 
   const rosbag2_storage::BagMetadata & get_metadata() const override;
 
+  void setMetadataAllow0MessageCount(bool enable) override;
+
   std::vector<rosbag2_storage::TopicMetadata> get_all_topics_and_types() const override;
 
   void set_filter(const rosbag2_storage::StorageFilter & storage_filter) override;
@@ -187,6 +189,7 @@ private:
   std::shared_ptr<SerializationFormatConverterFactoryInterface> converter_factory_{};
 
   bag_events::EventCallbackManager callback_manager_;
+  bool allow_metadata0MessageCount = false;
 };
 
 }  // namespace readers
