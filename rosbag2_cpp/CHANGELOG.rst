@@ -2,6 +2,12 @@
 Changelog for package rosbag2
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.28.0 (2024-06-17)
+-------------------
+* Propagate "custom_data" and "ros_distro" in to the metadata.yaml file during re-indexing (`#1700 <https://github.com/ros2/rosbag2/issues/1700>`_)
+* Bugfix for writer not being able to open again after closing (`#1599 <https://github.com/ros2/rosbag2/issues/1599>`_)
+* Contributors: Cole Tucker, yschulz
+
 0.27.0 (2024-04-30)
 -------------------
 

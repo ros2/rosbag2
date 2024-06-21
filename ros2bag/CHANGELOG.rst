@@ -2,6 +2,15 @@
 Changelog for package ros2bag
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.28.0 (2024-06-17)
+-------------------
+* fix(start-offset): allow specifying a start offset of 0 (`#1682 <https://github.com/ros2/rosbag2/issues/1682>`_)
+* Exclude recorded /clock topic when --clock option is specified (`#1646 <https://github.com/ros2/rosbag2/issues/1646>`_)
+* Sweep cleanup in rosbag2 recorder CLI args verification code (`#1633 <https://github.com/ros2/rosbag2/issues/1633>`_)
+* Add --log-level to ros2 bag play and record (`#1625 <https://github.com/ros2/rosbag2/issues/1625>`_)
+* Add optional  '--topics' CLI argument for 'ros2 bag record' (`#1632 <https://github.com/ros2/rosbag2/issues/1632>`_)
+* Contributors: Kosuke Takeuchi, Michael Orlov, Rein Appeldoorn, Roman
+
 0.27.0 (2024-04-30)
 -------------------
 
