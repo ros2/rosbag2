@@ -243,6 +243,36 @@ TEST_P(ParametrizedTemporaryDirectoryFixture, reader_accepts_bare_file) {
   EXPECT_THAT(reader.get_metadata().topics_with_message_count, SizeIs(1));
 }
 
+TEST_F(TemporaryDirectoryFixture, get_metadata_include_topics_with_zero_messages) {
+  const auto bag_path = rcpputils::fs::path(temporary_dir_path_) / "bag_with_no_msgs";
+  const auto expected_bag = rcpputils::fs::path(temporary_dir_path_) / "bag_with_no_msgs.db3";
+  const std::string topic_name = "topic_with_0_messages";
+  const std::string storage_id = "sqlite3";
+  {
+    rosbag2_storage::TopicMetadata topic_metadata;
+    topic_metadata.name = topic_name;
+    topic_metadata.type = "std_msgs/msg/String";
+
+    rosbag2_storage::StorageFactory factory;
+    rosbag2_storage::StorageOptions options;
+    options.uri = bag_path.string();
+    options.storage_id = storage_id;
+    auto writer = factory.open_read_write(options);
+    writer->create_topic(topic_metadata);
+  }
+  ASSERT_TRUE(expected_bag.exists());
+  {
+    rosbag2_storage::StorageFactory factory;
+    rosbag2_storage::StorageOptions options;
+    options.uri = expected_bag.string();
+    options.storage_id = storage_id;
+    auto reader = factory.open_read_only(options);
+    auto metadata = reader->get_metadata();
+    ASSERT_THAT(metadata.topics_with_message_count, SizeIs(1));
+    EXPECT_EQ(metadata.topics_with_message_count[0].message_count, 0U);
+  }
+}
+
 INSTANTIATE_TEST_SUITE_P(
   BareFileTests,
   ParametrizedTemporaryDirectoryFixture,

@@ -463,13 +463,25 @@ void SqliteStorage::prepare_for_reading()
 
 void SqliteStorage::fill_topics_and_types()
 {
-  auto statement = database_->prepare_statement(
-    "SELECT name, type, serialization_format FROM topics ORDER BY id;");
-  auto query_results = statement->execute_query<std::string, std::string, std::string>();
+  if (database_->field_exists("topics", "offered_qos_profiles")) {
+    auto statement = database_->prepare_statement(
+      "SELECT name, type, serialization_format, offered_qos_profiles FROM topics ORDER BY id;");
+    auto query_results =
+      statement->execute_query<std::string, std::string, std::string, std::string>();
 
-  for (auto result : query_results) {
-    all_topics_and_types_.push_back(
-      {std::get<0>(result), std::get<1>(result), std::get<2>(result), ""});
+    for (auto result : query_results) {
+      all_topics_and_types_.push_back(
+        {std::get<0>(result), std::get<1>(result), std::get<2>(result), std::get<3>(result)});
+    }
+  } else {
+    auto statement = database_->prepare_statement(
+      "SELECT name, type, serialization_format FROM topics ORDER BY id;");
+    auto query_results = statement->execute_query<std::string, std::string, std::string>();
+
+    for (auto result : query_results) {
+      all_topics_and_types_.push_back(
+        {std::get<0>(result), std::get<1>(result), std::get<2>(result), ""});
+    }
   }
 }
 
@@ -500,6 +512,14 @@ rosbag2_storage::BagMetadata SqliteStorage::get_metadata()
   rcutils_time_point_value_t min_time = INT64_MAX;
   rcutils_time_point_value_t max_time = 0;
 
+  if (all_topics_and_types_.empty()) {
+    fill_topics_and_types();
+  }
+  metadata.topics_with_message_count.reserve(all_topics_and_types_.size());
+  for (const auto & topic_metadata : all_topics_and_types_) {
+    metadata.topics_with_message_count.push_back({topic_metadata, 0});
+  }
+
   if (database_->field_exists("topics", "offered_qos_profiles")) {
     std::string query =
       "SELECT name, type, serialization_format, COUNT(messages.id), MIN(messages.timestamp), "
@@ -513,11 +533,21 @@ rosbag2_storage::BagMetadata SqliteStorage::get_metadata()
       rcutils_time_point_value_t, std::string>();
 
     for (auto result : query_results) {
-      metadata.topics_with_message_count.push_back(
-        {
-          {std::get<0>(result), std::get<1>(result), std::get<2>(result), std::get<6>(result)},
-          static_cast<size_t>(std::get<3>(result))
+      const rosbag2_storage::TopicMetadata topic_metadata{std::get<0>(result),
+        std::get<1>(result), std::get<2>(result), std::get<6>(result)};
+      auto & topics_list = metadata.topics_with_message_count;
+      auto it = std::find_if(
+        topics_list.begin(), topics_list.end(),
+        [&](const rosbag2_storage::TopicInformation & topic_info) {
+          return topic_info.topic_metadata == topic_metadata;
         });
+      if (it != topics_list.end()) {
+        it->message_count = static_cast<size_t>(std::get<3>(result));
+      } else {
+        metadata.topics_with_message_count.push_back(
+          {topic_metadata, static_cast<size_t>(std::get<3>(result))}
+        );
+      }
 
       metadata.message_count += std::get<3>(result);
       min_time = std::get<4>(result) < min_time ? std::get<4>(result) : min_time;
@@ -535,11 +565,21 @@ rosbag2_storage::BagMetadata SqliteStorage::get_metadata()
       rcutils_time_point_value_t>();
 
     for (auto result : query_results) {
-      metadata.topics_with_message_count.push_back(
-        {
-          {std::get<0>(result), std::get<1>(result), std::get<2>(result), ""},
-          static_cast<size_t>(std::get<3>(result))
+      const rosbag2_storage::TopicMetadata topic_metadata{std::get<0>(result),
+        std::get<1>(result), std::get<2>(result), ""};
+      auto & topics_list = metadata.topics_with_message_count;
+      auto it = std::find_if(
+        topics_list.begin(), topics_list.end(),
+        [&](const rosbag2_storage::TopicInformation & topic_info) {
+          return topic_info.topic_metadata == topic_metadata;
         });
+      if (it != topics_list.end()) {
+        it->message_count = static_cast<size_t>(std::get<3>(result));
+      } else {
+        metadata.topics_with_message_count.push_back(
+          {topic_metadata, static_cast<size_t>(std::get<3>(result))}
+        );
+      }
 
       metadata.message_count += std::get<3>(result);
       min_time = std::get<4>(result) < min_time ? std::get<4>(result) : min_time;
