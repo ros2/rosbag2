@@ -39,10 +39,7 @@
 namespace rosbag2_cpp
 {
 
-<<<<<<< HEAD
-=======
 
->>>>>>> c611a80 (rosbag2_storage: expose default storage ID as method (#1146))
 Writer::Writer(std::unique_ptr<rosbag2_cpp::writer_interfaces::BaseWriterInterface> writer_impl)
 : writer_impl_(std::move(writer_impl))
 {}
@@ -56,10 +53,7 @@ void Writer::open(const std::string & uri)
 {
   rosbag2_storage::StorageOptions storage_options;
   storage_options.uri = uri;
-<<<<<<< HEAD
-=======
   storage_options.storage_id = rosbag2_storage::get_default_storage_id();
->>>>>>> c611a80 (rosbag2_storage: expose default storage ID as method (#1146))
 
   rosbag2_cpp::ConverterOptions converter_options{};
   return open(storage_options, converter_options);

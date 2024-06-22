@@ -36,13 +36,9 @@ class RecordVerb(VerbExtension):
 
     def add_arguments(self, parser, cli_name):  # noqa: D102
         writer_choices = get_registered_writers()
-<<<<<<< HEAD
-        default_writer = 'sqlite3' if 'sqlite3' in writer_choices else writer_choices[0]
-=======
         default_storage_id = get_default_storage_id()
         default_writer = default_storage_id if default_storage_id in writer_choices else \
             next(iter(writer_choices))
->>>>>>> c611a80 (rosbag2_storage: expose default storage ID as method (#1146))
 
         compression_format_choices = get_registered_compressors()
         serialization_choices = get_registered_serializers()
