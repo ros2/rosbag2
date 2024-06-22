@@ -815,10 +815,10 @@ void SqliteStorage::read_metadata()
   if (database_->field_exists("topics", "offered_qos_profiles")) {
     if (database_->field_exists("topics", "type_description_hash")) {
       std::string query =
-        "SELECT messages.topic_id, name, type, serialization_format, COUNT(messages.id), "
+        "SELECT topics.id, name, type, serialization_format, COUNT(messages.id), "
         "MIN(messages.timestamp), MAX(messages.timestamp), offered_qos_profiles, "
-        "type_description_hash FROM messages JOIN topics on topics.id = messages.topic_id "
-        "GROUP BY topics.name;";
+        "type_description_hash FROM topics LEFT OUTER JOIN messages on "
+        "topics.id = messages.topic_id GROUP BY topics.name;";
 
       auto statement = database_->prepare_statement(query);
       auto query_results = statement->execute_query<
@@ -833,14 +833,17 @@ void SqliteStorage::read_metadata()
           inner_topic_id, topic_name, topic_type, ser_format, msg_count,
           offered_qos_profiles_str, type_hash);
 
-        min_time = min_recv_timestamp < min_time ? min_recv_timestamp : min_time;
-        max_time = max_recv_timestamp > max_time ? max_recv_timestamp : max_time;
+        if (msg_count != 0) {
+          // if messages table does not have any data, query result is empty, so should skip.
+          min_time = min_recv_timestamp < min_time ? min_recv_timestamp : min_time;
+          max_time = max_recv_timestamp > max_time ? max_recv_timestamp : max_time;
+        }
       }
     } else {  // Without type_hash
       std::string query =
-        "SELECT messages.topic_id, name, type, serialization_format, COUNT(messages.id), "
+        "SELECT topics.id, name, type, serialization_format, COUNT(messages.id), "
         "MIN(messages.timestamp), MAX(messages.timestamp), offered_qos_profiles "
-        "FROM messages JOIN topics on topics.id = messages.topic_id "
+        "FROM topics LEFT OUTER JOIN messages on topics.id = messages.topic_id "
         "GROUP BY topics.name;";
 
       auto statement = database_->prepare_statement(query);
@@ -855,15 +858,18 @@ void SqliteStorage::read_metadata()
           inner_topic_id, topic_name, topic_type, ser_format, msg_count,
           offered_qos_profiles_str, "");
 
-        min_time = min_recv_timestamp < min_time ? min_recv_timestamp : min_time;
-        max_time = max_recv_timestamp > max_time ? max_recv_timestamp : max_time;
+        if (msg_count != 0) {
+          // if messages table does not have any data, query result is empty, so should skip.
+          min_time = min_recv_timestamp < min_time ? min_recv_timestamp : min_time;
+          max_time = max_recv_timestamp > max_time ? max_recv_timestamp : max_time;
+        }
       }
     }
   } else {  // No offered_qos_profiles and no type_hash
     std::string query =
-      "SELECT messages.topic_id, name, type, serialization_format, COUNT(messages.id), "
-      "MIN(messages.timestamp), MAX(messages.timestamp) "
-      "FROM messages JOIN topics on topics.id = messages.topic_id "
+      "SELECT topics.id, name, type, serialization_format, COUNT(messages.id), "
+      "MIN(messages.timestamp), MAX(messages.timestamp) FROM topics "
+      "LEFT OUTER JOIN messages on topics.id = messages.topic_id "
       "GROUP BY topics.name;";
     auto statement = database_->prepare_statement(query);
     auto query_results = statement->execute_query<int64_t, std::string, std::string,
@@ -874,8 +880,11 @@ void SqliteStorage::read_metadata()
     {
       add_topic_to_metadata(inner_topic_id, topic_name, topic_type, ser_format, msg_count, "", "");
 
-      min_time = min_recv_timestamp < min_time ? min_recv_timestamp : min_time;
-      max_time = max_recv_timestamp > max_time ? max_recv_timestamp : max_time;
+      if (msg_count != 0) {
+        // if messages table does not have any data, query result is empty, so should skip.
+        min_time = min_recv_timestamp < min_time ? min_recv_timestamp : min_time;
+        max_time = max_recv_timestamp > max_time ? max_recv_timestamp : max_time;
+      }
     }
   }
 
