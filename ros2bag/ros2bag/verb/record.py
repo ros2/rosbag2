@@ -198,9 +198,9 @@ class RecordVerb(VerbExtension):
                                'without a compression mode.')
 
         if args.compression_mode == 'message' and args.storage == 'mcap':
-            return print_error('Invalid choice: compression_mode \'message\' is only supported '
-                               'with the sqlite3 storage plugin. When using the MCAP storage plugin, you can '
-                               'enable chunk compression by setting `compression: \'Zstd\'` in storage config')
+            return print_error('Invalid choice: compression_mode \'message\' is not supported '
+                               'by the MCAP storage plugin. You can enable chunk compression by '
+                               'setting `compression: \'Zstd\'` in storage config')
 
         if args.compression_queue_size < 1:
             return print_error('Compression queue size must be at least 1.')
