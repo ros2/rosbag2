@@ -32,13 +32,8 @@ endif()
 macro(build_mcap_vendor)
   include(FetchContent)
   fetchcontent_declare(mcap
-<<<<<<< HEAD
     URL https://github.com/foxglove/mcap/archive/refs/tags/releases/cpp/v0.8.0.tar.gz
     URL_HASH SHA1=b44637791da2c9c1cec61a3ba6994f1ef63a228c # v0.8.0
-=======
-    GIT_REPOSITORY https://github.com/foxglove/mcap.git
-    GIT_TAG 801c4ae3f34b23e9a27eb34b88ab7a0180d4b40f # v0.8.0
->>>>>>> 9d7d7c3 (rosbag2_cpp: test more than one storage plugin (#1196))
   )
   fetchcontent_makeavailable(mcap)
 

@@ -187,7 +187,6 @@ TEST_P(
 TEST_P(ParametrizedTemporaryDirectoryFixture, info_for_standalone_bagfile) {
   const auto storage_id = GetParam();
   const auto bag_path = rcpputils::fs::path(temporary_dir_path_) / "bag";
-  const auto expected_bagfile_path = bag_path / "bag_0.db3";
   {
     // Create an empty bag with default storage
     rosbag2_cpp::Writer writer;
@@ -199,10 +198,16 @@ TEST_P(ParametrizedTemporaryDirectoryFixture, info_for_standalone_bagfile) {
     writer.write(msg, "testtopic", rclcpp::Time{});
   }
 
+  std::string first_storage_file_path;
+  {
+    rosbag2_storage::MetadataIo metadata_io;
+    auto metadata = metadata_io.read_metadata(bag_path.string());
+    first_storage_file_path = (bag_path / metadata.relative_file_paths[0]).string();
+  }
   rosbag2_cpp::Info info;
   rosbag2_storage::BagMetadata metadata;
   EXPECT_NO_THROW(
-    metadata = info.read_metadata(expected_bagfile_path.string())
+    metadata = info.read_metadata(first_storage_file_path)
   );
   EXPECT_THAT(metadata.topics_with_message_count, SizeIs(1));
 }

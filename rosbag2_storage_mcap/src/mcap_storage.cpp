@@ -258,10 +258,7 @@ private:
   rosbag2_storage_mcap::internal::MessageDefinitionCache msgdef_cache_{};
 
   bool has_read_summary_ = false;
-<<<<<<< HEAD
   bool has_added_ros_distro_metadata_ = false;
-=======
->>>>>>> 9d7d7c3 (rosbag2_cpp: test more than one storage plugin (#1196))
   rcutils_time_point_value_t last_read_time_point_ = 0;
   std::optional<mcap::RecordOffset> last_read_message_offset_;
   std::optional<mcap::RecordOffset> last_enqueued_message_offset_;

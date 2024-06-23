@@ -570,7 +570,6 @@ TEST_F(SequentialWriterTest, split_event_calls_callback)
   EXPECT_EQ(opened_file, fake_storage_uri_);
 }
 
-<<<<<<< HEAD
 TEST_F(SequentialWriterTest, split_event_calls_on_writer_close)
 {
   const int message_count = 7;
@@ -672,7 +671,6 @@ void write_sample_split_bag(
   }
   writer.close();
 }
-
 
 TEST_P(ParametrizedTemporaryDirectoryFixture, split_bag_metadata_has_full_duration) {
   const std::vector<std::vector<rcutils_time_point_value_t>> message_timestamps_by_file {
