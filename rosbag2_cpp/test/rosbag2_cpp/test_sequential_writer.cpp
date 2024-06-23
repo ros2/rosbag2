@@ -27,6 +27,7 @@
 #include "rosbag2_cpp/writer.hpp"
 
 #include "rosbag2_storage/bag_metadata.hpp"
+#include "rosbag2_storage/default_storage_id.hpp"
 #include "rosbag2_storage/ros_helper.hpp"
 #include "rosbag2_storage/topic_metadata.hpp"
 
@@ -639,7 +640,7 @@ public:
 };
 
 void write_sample_split_bag(
-  const std::string & uri,
+  const rosbag2_storage::StorageOptions & storage_options,
   const std::vector<std::vector<rcutils_time_point_value_t>> & message_timestamps_by_file)
 {
   std::string msg_content = "Hello";
@@ -647,10 +648,6 @@ void write_sample_split_bag(
   std::shared_ptr<rcutils_uint8_array_t> fake_data = rosbag2_storage::make_serialized_message(
     msg_content.c_str(), msg_length);
   std::string topic_name = "testtopic";
-
-  rosbag2_storage::StorageOptions storage_options;
-  storage_options.uri = uri;
-  storage_options.storage_id = "sqlite3";
 
   ManualSplitWriter writer;
   writer.open(storage_options, rosbag2_cpp::ConverterOptions{});
@@ -680,11 +677,13 @@ TEST_F(TemporaryDirectoryFixture, split_bag_metadata_has_full_duration) {
     {100, 300, 200},
     {500, 400, 600}
   };
-  std::string uri = (rcpputils::fs::path(temporary_dir_path_) / "split_duration_bag").string();
-  write_sample_split_bag(uri, message_timestamps_by_file);
+  rosbag2_storage::StorageOptions storage_options;
+  storage_options.uri = (rcpputils::fs::path(temporary_dir_path_) / "split_duration_bag").string();
+  storage_options.storage_id = rosbag2_storage::get_default_storage_id();
+  write_sample_split_bag(storage_options, message_timestamps_by_file);
 
   rosbag2_storage::MetadataIo metadata_io;
-  auto metadata = metadata_io.read_metadata(uri);
+  auto metadata = metadata_io.read_metadata(storage_options.uri);
   ASSERT_EQ(
     metadata.starting_time,
     std::chrono::high_resolution_clock::time_point(std::chrono::nanoseconds(100)));
