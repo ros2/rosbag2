@@ -80,6 +80,7 @@ public:
       rosbag2_storage::StorageOptions storage_options;
       storage_options.storage_id = GetParam();
       storage_options.uri = root_bag_path_.string();
+      storage_options.custom_data["name"] = "value";
       writer.open(storage_options);
       rosbag2_storage::TopicMetadata topic;
       topic.name = "/test_topic";
@@ -131,6 +132,15 @@ TEST_P(ReindexTestFixture, test_multiple_files) {
 
   EXPECT_EQ(generated_metadata.storage_identifier, GetParam());
   EXPECT_EQ(generated_metadata.version, target_metadata.version);
+
+  if (GetParam() != "mcap") {
+    // Skip check for mcap storage since it doesn't store serialized metadata in bag directly on
+    // Iron and Humble. Backporting of the relevant #1423 is not possible without updating
+    // mcap vendor package to the v1.1.0 because we have dependencies from the
+    // mcap_reader_->metadataIndexes(); API which became available only in the
+    // https://github.com/foxglove/mcap/pull/902
+    EXPECT_EQ(generated_metadata.custom_data, target_metadata.custom_data);
+  }
 
   for (const auto & gen_rel_path : generated_metadata.relative_file_paths) {
     EXPECT_TRUE(
