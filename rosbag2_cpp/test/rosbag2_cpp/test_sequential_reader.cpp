@@ -32,6 +32,7 @@
 #include "rosbag2_test_common/tested_storage_ids.hpp"
 #include "rosbag2_test_common/temporary_directory_fixture.hpp"
 
+#include "std_msgs/msg/string.hpp"
 #include "test_msgs/msg/basic_types.hpp"
 
 #include "fake_data.hpp"
