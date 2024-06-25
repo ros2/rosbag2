@@ -1,4 +1,4 @@
-// Copyright 2024 Open Source Robotics Foundation
+// Copyright 2024 Sony Group Corporation.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -32,7 +32,9 @@ public:
   explicit SimpleBagReader(const std::string & bag_filename)
   : Node("simple_bag_reader")
   {
-    publisher_ = this->create_publisher<example_interfaces::msg::String>("chatter", 10);
+    publisher_ = this->create_generic_publisher(
+      "chatter", "example_interfaces/msg/String", 10);
+
     timer_ = this->create_wall_timer(100ms,
         [this](){return this->timer_callback();}
     );
@@ -53,17 +55,14 @@ private:
         continue;
       }
       rclcpp::SerializedMessage serialized_msg(*msg->serialized_data);
-      auto ros_msg = std::make_shared<example_interfaces::msg::String>();
-      serialization_.deserialize_message(&serialized_msg, ros_msg.get());
-      publisher_->publish(*ros_msg);
-      std::cout << '(' << ros_msg->data << ")\n";
+      std::cout << "Publish serialized data to " << msg->topic_name << ".\n";
+      publisher_->publish(serialized_msg);
       break;
     }
   }
   rclcpp::TimerBase::SharedPtr timer_;
-  rclcpp::Publisher<example_interfaces::msg::String>::SharedPtr publisher_;
+  std::shared_ptr<rclcpp::GenericPublisher> publisher_;
 
-  rclcpp::Serialization<example_interfaces::msg::String> serialization_;
   std::unique_ptr<rosbag2_cpp::Reader> reader_;
 };
 
