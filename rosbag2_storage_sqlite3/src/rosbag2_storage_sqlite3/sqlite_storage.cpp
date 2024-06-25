@@ -771,7 +771,7 @@ void SqliteStorage::add_topic_to_metadata(
     // metadata_.version will be lower than 9
     offered_qos_profiles_str, (db_schema_version_ >= 3) ? metadata_.version : 8);
   const rosbag2_storage::TopicMetadata topic_metadata {
-    static_cast<uint16_t>(inner_topic_id), topic_name, topic_type, ser_format,
+    get_or_generate_extern_topic_id(inner_topic_id), topic_name, topic_type, ser_format,
     offered_qos_profiles, type_hash};
   auto & topics_list = metadata_.topics_with_message_count;
   auto it = std::find_if(
