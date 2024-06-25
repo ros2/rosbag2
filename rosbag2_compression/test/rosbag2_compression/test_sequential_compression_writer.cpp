@@ -147,7 +147,7 @@ public:
   std::unique_ptr<rosbag2_cpp::Writer> writer_;
 
   std::string serialization_format_;
-  std::atomic<uint32_t> fake_storage_size_{0};  // Need to be atomic for cache update since it
+  std::atomic<uint64_t> fake_storage_size_{0};  // Need to be atomic for cache update since it
   // uses in callback from cache_consumer thread
   std::string fake_storage_uri_;
   const std::string bag_base_dir_ = "test_bag";
