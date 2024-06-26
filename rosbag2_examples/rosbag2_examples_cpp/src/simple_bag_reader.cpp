@@ -35,8 +35,9 @@ public:
     publisher_ = this->create_generic_publisher(
       "chatter", "example_interfaces/msg/String", 10);
 
-    timer_ = this->create_wall_timer(100ms,
-        [this](){return this->timer_callback();}
+    timer_ = this->create_wall_timer(
+      100ms,
+      [this]() {return this->timer_callback();}
     );
 
     rosbag2_storage::StorageOptions storage_options;
