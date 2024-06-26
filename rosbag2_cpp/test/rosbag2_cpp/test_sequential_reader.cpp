@@ -32,6 +32,7 @@
 #include "rosbag2_test_common/tested_storage_ids.hpp"
 #include "rosbag2_test_common/temporary_directory_fixture.hpp"
 
+#include "std_msgs/msg/string.hpp"
 #include "test_msgs/msg/basic_types.hpp"
 
 #include "fake_data.hpp"
@@ -247,6 +248,38 @@ TEST_P(ParametrizedTemporaryDirectoryFixture, reader_accepts_bare_file) {
   EXPECT_NO_THROW(reader.open(first_storage.generic_string()));
   EXPECT_TRUE(reader.has_next());
   EXPECT_THAT(reader.get_metadata().topics_with_message_count, SizeIs(1));
+}
+
+TEST_P(ParametrizedTemporaryDirectoryFixture, get_metadata_include_topics_with_zero_messages) {
+  const auto bag_path = rcpputils::fs::path(temporary_dir_path_) / "bag_with_no_msgs";
+  const std::string topic_name = "topic_with_0_messages";
+  const auto storage_id = GetParam();
+  {
+    rosbag2_storage::TopicMetadata topic_metadata;
+    topic_metadata.name = topic_name;
+    topic_metadata.type = "std_msgs/msg/String";
+
+    rosbag2_cpp::Writer writer;
+    rosbag2_storage::StorageOptions options;
+    options.uri = bag_path.string();
+    options.storage_id = storage_id;
+    writer.open(options);
+    writer.create_topic(topic_metadata);
+  }
+
+  rosbag2_storage::MetadataIo metadata_io;
+  ASSERT_TRUE(metadata_io.metadata_file_exists(bag_path.string()));
+  auto metadata_from_yaml = metadata_io.read_metadata(bag_path.string());
+  auto first_storage = bag_path / metadata_from_yaml.relative_file_paths[0];
+
+  rosbag2_storage::StorageFactory factory;
+  rosbag2_storage::StorageOptions options;
+  options.uri = first_storage.string();
+  options.storage_id = storage_id;
+  auto reader = factory.open_read_only(options);
+  auto metadata = reader->get_metadata();
+  ASSERT_THAT(metadata.topics_with_message_count, SizeIs(1));
+  EXPECT_EQ(metadata.topics_with_message_count[0].message_count, 0U);
 }
 
 INSTANTIATE_TEST_SUITE_P(
