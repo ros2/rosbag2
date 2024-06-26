@@ -52,11 +52,16 @@ public:
     storage_ = std::make_shared<NiceMock<MockStorage>>();
     converter_factory_ = std::make_shared<StrictMock<MockConverterFactory>>();
     metadata_io_ = std::make_unique<NiceMock<MockMetadataIo>>();
+    tmp_dir_ = fs::temp_directory_path() / "SequentialWriterTest";
     storage_options_ = rosbag2_storage::StorageOptions{};
-    storage_options_.uri = "uri";
+    storage_options_.uri = (tmp_dir_ / bag_base_dir_).string();
 
+<<<<<<< HEAD
     rcpputils::fs::path dir(storage_options_.uri);
     rcpputils::fs::remove_all(dir);
+=======
+    fs::remove_all(tmp_dir_);
+>>>>>>> 1877b538 (Bugfix for bag_split event callbacks called to early with file compression (#1643))
 
     ON_CALL(*storage_factory_, open_read_write(_)).WillByDefault(
       DoAll(
@@ -72,8 +77,12 @@ public:
 
   ~SequentialWriterTest()
   {
+<<<<<<< HEAD
     rcpputils::fs::path dir(storage_options_.uri);
     rcpputils::fs::remove_all(dir);
+=======
+    fs::remove_all(tmp_dir_);
+>>>>>>> 1877b538 (Bugfix for bag_split event callbacks called to early with file compression (#1643))
   }
 
   std::unique_ptr<StrictMock<MockStorageFactory>> storage_factory_;
@@ -81,6 +90,7 @@ public:
   std::shared_ptr<StrictMock<MockConverterFactory>> converter_factory_;
   std::unique_ptr<MockMetadataIo> metadata_io_;
 
+  fs::path tmp_dir_;
   rosbag2_storage::StorageOptions storage_options_;
   std::atomic<uint32_t> fake_storage_size_{0};  // Need to be atomic for cache update since it
   // uses in callback from cache_consumer thread
@@ -88,6 +98,7 @@ public:
   //  Ensure writer_ is destructed before intercepted fake_metadata_
   std::unique_ptr<rosbag2_cpp::Writer> writer_;
   std::string fake_storage_uri_;
+  const std::string bag_base_dir_ = "test_bag";
 };
 
 std::shared_ptr<rosbag2_storage::SerializedBagMessage> make_test_msg()
@@ -275,11 +286,10 @@ TEST_F(SequentialWriterTest, writer_splits_when_storage_bagfile_size_gt_max_bagf
     static_cast<unsigned int>(expected_splits)) <<
     "Storage should have split bagfile " << (expected_splits - 1);
 
-  const auto base_path = storage_options_.uri;
   int counter = 0;
   for (const auto & path : fake_metadata_.relative_file_paths) {
     std::stringstream ss;
-    ss << base_path << "_" << counter;
+    ss << bag_base_dir_ << "_" << counter;
 
     const auto expected_path = ss.str();
     counter++;
@@ -377,11 +387,10 @@ TEST_F(
     static_cast<unsigned int>(expected_splits)) <<
     "Storage should have split bagfile " << (expected_splits - 1);
 
-  const auto base_path = storage_options_.uri;
   int counter = 0;
   for (const auto & path : fake_metadata_.relative_file_paths) {
     std::stringstream ss;
-    ss << base_path << "_" << counter;
+    ss << bag_base_dir_ << "_" << counter;
 
     const auto expected_path = ss.str();
     counter++;
@@ -512,8 +521,9 @@ TEST_F(SequentialWriterTest, snapshot_mode_zero_cache_size_throws_exception)
 
 TEST_F(SequentialWriterTest, split_event_calls_callback)
 {
-  const int message_count = 7;
-  const int max_bagfile_size = 5;
+  const uint64_t max_bagfile_size = 3;
+  const size_t num_splits = 2;
+  const int message_count = max_bagfile_size * num_splits + max_bagfile_size - 1;  // 8
 
   ON_CALL(
     *storage_,
@@ -546,14 +556,13 @@ TEST_F(SequentialWriterTest, split_event_calls_callback)
 
   storage_options_.max_bagfile_size = max_bagfile_size;
 
-  bool callback_called = false;
-  std::string closed_file, opened_file;
+  std::vector<std::string> closed_files;
+  std::vector<std::string> opened_files;
   rosbag2_cpp::bag_events::WriterEventCallbacks callbacks;
   callbacks.write_split_callback =
-    [&callback_called, &closed_file, &opened_file](rosbag2_cpp::bag_events::BagSplitInfo & info) {
-      closed_file = info.closed_file;
-      opened_file = info.opened_file;
-      callback_called = true;
+    [&closed_files, &opened_files](rosbag2_cpp::bag_events::BagSplitInfo & info) {
+      closed_files.emplace_back(info.closed_file);
+      opened_files.emplace_back(info.opened_file);
     };
   writer_->add_event_callbacks(callbacks);
 
@@ -563,11 +572,37 @@ TEST_F(SequentialWriterTest, split_event_calls_callback)
   for (auto i = 0; i < message_count; ++i) {
     writer_->write(message);
   }
+  writer_->close();
 
+<<<<<<< HEAD
   ASSERT_TRUE(callback_called);
   auto expected_closed = rcpputils::fs::path(storage_options_.uri) / (storage_options_.uri + "_0");
   EXPECT_EQ(closed_file, expected_closed.string());
   EXPECT_EQ(opened_file, fake_storage_uri_);
+=======
+  EXPECT_THAT(closed_files.size(), num_splits + 1);
+  EXPECT_THAT(opened_files.size(), num_splits + 1);
+
+  if (!((closed_files.size() == opened_files.size()) && (opened_files.size() == num_splits + 1))) {
+    // Output debug info
+    for (size_t i = 0; i < opened_files.size(); i++) {
+      std::cout << "opened_file[" << i << "] = '" << opened_files[i] <<
+        "'; closed_file[" << i << "] = '" << closed_files[i] << "';" << std::endl;
+    }
+  }
+
+  ASSERT_GE(opened_files.size(), num_splits + 1);
+  ASSERT_GE(closed_files.size(), num_splits + 1);
+  for (size_t i = 0; i < num_splits + 1; i++) {
+    auto expected_closed =
+      fs::path(storage_options_.uri) / (bag_base_dir_ + "_" + std::to_string(i));
+    auto expected_opened = (i == num_splits) ?
+      // The last opened file shall be empty string when we do "writer->close();"
+      "" : fs::path(storage_options_.uri) / (bag_base_dir_ + "_" + std::to_string(i + 1));
+    EXPECT_EQ(closed_files[i], expected_closed.generic_string());
+    EXPECT_EQ(opened_files[i], expected_opened.generic_string());
+  }
+>>>>>>> 1877b538 (Bugfix for bag_split event callbacks called to early with file compression (#1643))
 }
 
 TEST_F(SequentialWriterTest, split_event_calls_on_writer_close)
@@ -625,8 +660,13 @@ TEST_F(SequentialWriterTest, split_event_calls_on_writer_close)
   writer_->close();
 
   ASSERT_TRUE(callback_called);
+<<<<<<< HEAD
   auto expected_closed = rcpputils::fs::path(storage_options_.uri) / (storage_options_.uri + "_0");
   EXPECT_EQ(closed_file, expected_closed.string());
+=======
+  auto expected_closed = fs::path(storage_options_.uri) / (bag_base_dir_ + "_0");
+  EXPECT_EQ(closed_file, expected_closed.generic_string());
+>>>>>>> 1877b538 (Bugfix for bag_split event callbacks called to early with file compression (#1643))
   EXPECT_TRUE(opened_file.empty());
 }
 

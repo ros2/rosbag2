@@ -131,6 +131,7 @@ TEST_F(RecordIntegrationTestFixture, can_record_again_after_stop)
   EXPECT_THAT(recorded_messages, SizeIs(expected_messages));
 
   auto recorded_topics = mock_writer.get_topics();
+<<<<<<< HEAD
   ASSERT_THAT(recorded_topics, SizeIs(1)) << "size=" << recorded_topics.size();
   EXPECT_THAT(recorded_topics.at(string_topic).serialization_format, Eq("rmw_format"));
   ASSERT_THAT(recorded_messages, SizeIs(expected_messages));
@@ -138,6 +139,22 @@ TEST_F(RecordIntegrationTestFixture, can_record_again_after_stop)
     recorded_messages, string_topic);
   ASSERT_THAT(string_messages, SizeIs(4));
   EXPECT_THAT(string_messages[0]->string_value, Eq(string_message->string_value));
+=======
+  EXPECT_THAT(recorded_topics, SizeIs(1)) << "size=" << recorded_topics.size();
+  if (recorded_topics.size() != 1) {
+    for (const auto & topic : recorded_topics) {
+      std::cerr << "recorded topic name : " << topic.first << std::endl;
+    }
+  }
+  EXPECT_THAT(recorded_topics.at(string_topic).first.serialization_format, Eq("rmw_format"));
+
+  auto string_messages =
+    filter_messages<test_msgs::msg::Strings>(recorded_messages, string_topic);
+  EXPECT_THAT(string_messages, SizeIs(4));
+  for (const auto & str_msg : string_messages) {
+    EXPECT_THAT(str_msg->string_value, Eq(string_message->string_value));
+  }
+>>>>>>> 1877b538 (Bugfix for bag_split event callbacks called to early with file compression (#1643))
 }
 
 TEST_F(RecordIntegrationTestFixture, qos_is_stored_in_metadata)
