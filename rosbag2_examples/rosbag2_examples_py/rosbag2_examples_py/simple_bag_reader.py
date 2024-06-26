@@ -40,7 +40,7 @@ class SimpleBagReader(Node):
             if msg[0] != 'chatter':
                 continue
             self.publisher.publish(msg[1])
-            self.get_logger().info("Publish serialized data to " + msg[0])
+            self.get_logger().info('Publish serialized data to ' + msg[0])
 
 
 def main(args=None):
