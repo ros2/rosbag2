@@ -134,6 +134,7 @@ if(BUILD_TESTING)
   find_package(ament_cmake_gmock REQUIRED)
   find_package(ament_lint_auto REQUIRED)
   find_package(test_msgs REQUIRED)
+  find_package(std_msgs REQUIRED)
   find_package(rosbag2_test_msgdefs REQUIRED)
   ament_lint_auto_find_test_dependencies()
 
@@ -177,8 +178,18 @@ if(BUILD_TESTING)
   ament_add_gmock(test_sequential_reader
     test/rosbag2_cpp/test_sequential_reader.cpp test/rosbag2_cpp/fake_data.cpp)
   if(TARGET test_sequential_reader)
+<<<<<<< HEAD
     ament_target_dependencies(test_sequential_reader rosbag2_storage rosbag2_test_common test_msgs)
     target_link_libraries(test_sequential_reader ${PROJECT_NAME})
+=======
+    target_link_libraries(test_sequential_reader
+      ${PROJECT_NAME}
+      rosbag2_storage::rosbag2_storage
+      rosbag2_test_common::rosbag2_test_common
+      ${test_msgs_TARGETS}
+      ${std_msgs_TARGETS}
+    )
+>>>>>>> 2a627c91 (Add topics with zero message counts to the SQLiteStorage::get_metadata(). (#1725) (#1731))
   endif()
 
   ament_add_gmock(test_storage_without_metadata_file
