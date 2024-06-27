@@ -174,10 +174,6 @@ std::unordered_map<std::string, uint64_t> Info::compute_topics_size_contribution
     throw std::runtime_error("No plugin detected that could open file " + uri);
   }
 
-  rosbag2_storage::ReadOrder read_order;
-  if (!storage->set_read_order(read_order)) {
-    throw std::runtime_error("Failed to set read order on " + uri);
-  }
   
   std::unordered_map<std::string, uint64_t> topics_size;
   while (storage->has_next()) {
