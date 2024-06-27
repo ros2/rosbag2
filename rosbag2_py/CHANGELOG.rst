@@ -2,8 +2,8 @@
 Changelog for package rosbag2_py
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.26.4 (2024-06-27)
+-------------------
 * Add bindings for LocalMessageDefinitionSource (`#1697 <https://github.com/ros2/rosbag2/issues/1697>`_) (`#1701 <https://github.com/ros2/rosbag2/issues/1701>`_)
   Co-authored-by: Michael Orlov <michael.orlov@apex.ai>
   Co-authored-by: methylDragon <methylDragon@gmail.com>
