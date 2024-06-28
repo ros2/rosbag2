@@ -2,6 +2,14 @@
 Changelog for package rosbag2
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.26.4 (2024-06-27)
+-------------------
+* Add topics with zero message counts to the SQLiteStorage::get_metadata(). (`#1725 <https://github.com/ros2/rosbag2/issues/1725>`_) (`#1731 <https://github.com/ros2/rosbag2/issues/1731>`_)
+  Co-authored-by: Michael Orlov <michael.orlov@apex.ai>
+  Co-authored-by: Tomoya Fujita <Tomoya.Fujita@sony.com>
+* Propagate "custom_data" and "ros_distro" in to the metadata.yaml file during re-indexing (`#1700 <https://github.com/ros2/rosbag2/issues/1700>`_) (`#1710 <https://github.com/ros2/rosbag2/issues/1710>`_)
+  Co-authored-by: Cole Tucker <coalman321@users.noreply.github.com>
+
 0.26.3 (2024-05-15)
 -------------------
 * Bugfix for writer not being able to open again after closing (`#1599 <https://github.com/ros2/rosbag2/issues/1599>`_) (`#1639 <https://github.com/ros2/rosbag2/issues/1639>`_)

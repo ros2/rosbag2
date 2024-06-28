@@ -2,6 +2,9 @@
 Changelog for package zstd_vendor
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.26.4 (2024-06-27)
+-------------------
+
 0.26.3 (2024-05-15)
 -------------------
 * Fixed warnings on RHEL (`#1627 <https://github.com/ros2/rosbag2/issues/1627>`_) (`#1630 <https://github.com/ros2/rosbag2/issues/1630>`_)
