@@ -174,7 +174,10 @@ std::unordered_map<std::string, uint64_t> Info::compute_topics_size_contribution
     throw std::runtime_error("No plugin detected that could open file " + uri);
   }
 
+<<<<<<< HEAD
   
+=======
+>>>>>>> e175da5f (Fixes for review and failed tests, update rosbag2_tests)
   std::unordered_map<std::string, uint64_t> topics_size;
   while (storage->has_next()) {
     auto bag_msg = storage->read_next();

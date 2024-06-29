@@ -113,6 +113,7 @@ void format_file_paths(
 void format_topics_with_type(
   const std::vector<rosbag2_storage::TopicInformation> & topics,
   const std::unordered_map<std::string, uint64_t> & topics_size,
+  bool verbose,
   std::stringstream & info_stream,
   int indentation_spaces)
 {
@@ -122,13 +123,17 @@ void format_topics_with_type(
   }
 
   auto print_topic_info =
-    [&info_stream, &topics_size](const rosbag2_storage::TopicInformation & ti) -> void {
+    [&info_stream, &topics_size, verbose](const rosbag2_storage::TopicInformation & ti) -> void {
       info_stream << "Topic: " << ti.topic_metadata.name << " | ";
       info_stream << "Type: " << ti.topic_metadata.type << " | ";
       info_stream << "Count: " << ti.message_count << " | ";
-      auto topic_size_iter = topics_size.find(ti.topic_metadata.name);
-      if (topic_size_iter != topics_size.end()) {
-        info_stream << "Size Contribution: " << format_file_size(topic_size_iter->second) << " | ";
+      if (verbose) {
+        uint64_t topic_size = 0;
+        auto topic_size_iter = topics_size.find(ti.topic_metadata.name);
+        if (topic_size_iter != topics_size.end()) {
+          topic_size = topic_size_iter->second;
+        }
+        info_stream << "Size Contribution: " << format_file_size(topic_size) << " | ";
       }
       info_stream << "Serialization Format: " << ti.topic_metadata.serialization_format;
       info_stream << std::endl;
@@ -237,8 +242,8 @@ namespace rosbag2_py
 std::string format_bag_meta_data(
   const rosbag2_storage::BagMetadata & metadata,
   const std::unordered_map<std::string, uint64_t> & topics_size,
-  bool only_topic
-  )
+  bool verbose,
+  bool only_topic)
 {
   auto start_time = metadata.starting_time.time_since_epoch();
   auto end_time = start_time + metadata.duration;
@@ -271,7 +276,7 @@ std::string format_bag_meta_data(
     std::endl;
   info_stream << "Topic information: ";
   format_topics_with_type(
-    metadata.topics_with_message_count, topics_size, info_stream, indentation_spaces);
+    metadata.topics_with_message_count, topics_size, verbose, info_stream, indentation_spaces);
 
   if (!only_topic) {
     info_stream << "Service:           " << service_info_list.size() << std::endl;

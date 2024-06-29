@@ -130,15 +130,15 @@ TEST_P(InfoEndToEndTestFixture, info_with_verbose_option_end_to_end_test) {
   EXPECT_THAT(
     output, HasSubstr(
       "Topic: /events/write_split | Type: rosbag2_interfaces/msg/WriteSplitEvent | Count: 0 | "
-      "Serialization Format: cdr\n"));
+      "Size Contribution: 0 B | Serialization Format: cdr\n"));
   EXPECT_THAT(
     output, HasSubstr(
       "Topic: /test_topic1 | Type: test_msgs/msg/Strings | Count: 1 | "
-      "Serialization Format: cdr\n"));
+      "Size Contribution: 217 B | Serialization Format: cdr\n"));
   EXPECT_THAT(
     output, HasSubstr(
       "Topic: /test_topic2 | Type: test_msgs/msg/Strings | Count: 1 | "
-      "Serialization Format: cdr\n"));
+      "Size Contribution: 217 B | Serialization Format: cdr\n"));
 
   EXPECT_THAT(output, HasSubstr("Service:           2\n"));
 

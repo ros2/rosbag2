@@ -363,10 +363,7 @@ PYBIND11_MODULE(_storage, m) {
   .def_readwrite("compression_mode", &rosbag2_storage::BagMetadata::compression_mode)
   .def_readwrite("custom_data", &rosbag2_storage::BagMetadata::custom_data)
   .def_readwrite("ros_distro", &rosbag2_storage::BagMetadata::ros_distro)
-  .def(
-    "__repr__", [](const rosbag2_storage::BagMetadata & metadata) {
-      return rosbag2_py::format_bag_meta_data(metadata);
-    });
+  .def("__repr__", &rosbag2_py::format_bag_meta_data);
 
   pybind11::enum_<rosbag2_storage::ReadOrder::SortBy>(m, "ReadOrderSortBy")
   .value("ReceivedTimestamp", rosbag2_storage::ReadOrder::ReceivedTimestamp)

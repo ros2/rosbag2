@@ -18,6 +18,7 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include <unordered_map>
 
 #include "rosbag2_cpp/visibility_control.hpp"
 
