@@ -165,7 +165,7 @@ std::vector<std::shared_ptr<rosbag2_service_info_t>> Info::read_service_info(
   return ret_service_info;
 }
 
-std::unordered_map<std::string, uint64_t> Info::compute_topics_size_contribution(
+std::unordered_map<std::string, uint64_t> Info::compute_messages_size_contribution(
   const std::string & uri, const std::string & storage_id)
 {
   rosbag2_storage::StorageFactory factory;
@@ -174,17 +174,13 @@ std::unordered_map<std::string, uint64_t> Info::compute_topics_size_contribution
     throw std::runtime_error("No plugin detected that could open file " + uri);
   }
 
-<<<<<<< HEAD
-  
-=======
->>>>>>> e175da5f (Fixes for review and failed tests, update rosbag2_tests)
-  std::unordered_map<std::string, uint64_t> topics_size;
+  std::unordered_map<std::string, uint64_t> messages_size;
   while (storage->has_next()) {
     auto bag_msg = storage->read_next();
-    topics_size[bag_msg->topic_name] += bag_msg->serialized_data->buffer_length;
+    messages_size[bag_msg->topic_name] += bag_msg->serialized_data->buffer_length;
   }
 
-  return topics_size;
+  return messages_size;
 }
 
 }  // namespace rosbag2_cpp
