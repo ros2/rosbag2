@@ -103,9 +103,5 @@ class TestStorageStructs(unittest.TestCase):
             topics_with_message_count=[topic_information],
             compression_format='aaaa',
             compression_mode='bbbbb',
-            custom_data={
-                'keya': 'valuea',
-                'keyb': 'valueb'
-            }
         )
         assert metadata
