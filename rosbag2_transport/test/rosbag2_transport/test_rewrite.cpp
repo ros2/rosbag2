@@ -19,6 +19,7 @@
 #include <vector>
 #include <utility>
 
+#include "rosbag2_test_common/temporary_directory_fixture.hpp"
 #include "rosbag2_test_common/tested_storage_ids.hpp"
 #include "rosbag2_transport/bag_rewrite.hpp"
 #include "rosbag2_transport/reader_writer_factory.hpp"
@@ -53,8 +54,7 @@ class TestRewrite : public Test, public WithParamInterface<std::string>
 public:
   TestRewrite()
   {
-    auto tmp_dir = rcpputils::fs::create_temp_directory("test_bag_rewrite");
-    output_dir_ = fs::path(tmp_dir.string());
+    output_dir_ = rosbag2_test_common::create_temp_directory("test_bag_rewrite");
     storage_id_ = GetParam();
     bags_path_ = fs::path(_SRC_RESOURCES_DIR_PATH) / storage_id_;
   }
