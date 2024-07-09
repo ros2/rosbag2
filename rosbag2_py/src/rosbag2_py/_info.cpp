@@ -53,7 +53,8 @@ public:
     rosbag2_storage::BagMetadata metadata_info)
   {
     for (auto topic_info : metadata_info.topics_with_message_count) {
-      if (!rosbag2_cpp::is_service_event_topic(topic_info.topic_metadata.name,
+      if (!rosbag2_cpp::is_service_event_topic(
+          topic_info.topic_metadata.name,
           topic_info.topic_metadata.type))
       {
         std::cout << topic_info.topic_metadata.name << std::endl;
