@@ -85,10 +85,19 @@ SqliteWrapper::SqliteWrapper(
       throw SqliteException{errmsg.str()};
     }
   }
-
-  apply_pragma_settings(pragmas, io_flag);
-  sqlite3_extended_result_codes(db_ptr, 1);
-  initialize_application_functions();
+  try {
+    apply_pragma_settings(pragmas, io_flag);
+    sqlite3_extended_result_codes(db_ptr, 1);
+    initialize_application_functions();
+  } catch (...) {
+    const int rc = sqlite3_close(db_ptr);
+    if (rc != SQLITE_OK) {
+      ROSBAG2_STORAGE_DEFAULT_PLUGINS_LOG_ERROR_STREAM(
+        "Could not close open database. Error code: " << rc <<
+          " Error message: " << sqlite3_errstr(rc));
+    }
+    throw;
+  }
 }
 
 SqliteWrapper::SqliteWrapper()
