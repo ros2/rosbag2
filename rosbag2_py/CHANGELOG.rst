@@ -2,8 +2,8 @@
 Changelog for package rosbag2_py
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.22.7 (2024-07-11)
+-------------------
 * Gracefully handle SIGINT and SIGTERM signals for play and burst CLI (`#1690 <https://github.com/ros2/rosbag2/issues/1690>`_)
 * Fix for false negative tests in rosbag2_py (`#1688 <https://github.com/ros2/rosbag2/issues/1688>`_)
 * Add --log-level to ros2 bag play and record (`#1654 <https://github.com/ros2/rosbag2/issues/1654>`_)

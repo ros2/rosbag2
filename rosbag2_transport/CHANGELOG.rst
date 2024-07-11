@@ -2,8 +2,8 @@
 Changelog for package rosbag2_transport
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.22.7 (2024-07-11)
+-------------------
 * Gracefully handle SIGINT and SIGTERM signals for play and burst CLI (`#1690 <https://github.com/ros2/rosbag2/issues/1690>`_)
 * Contributors: Michael Orlov
 
