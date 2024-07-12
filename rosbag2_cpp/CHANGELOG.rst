@@ -2,6 +2,13 @@
 Changelog for package rosbag2_cpp
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.22.7 (2024-07-11)
+-------------------
+* Propagate "custom_data" and "ros_distro" in to the metadata.yaml file during re-indexing (`#1711 <https://github.com/ros2/rosbag2/issues/1711>`_)
+* Bugfix for writer not being able to open again after closing (`#1635 <https://github.com/ros2/rosbag2/issues/1635>`_)
+* Add BagSplitInfo service call on bag close (`#1636 <https://github.com/ros2/rosbag2/issues/1636>`_)
+* Contributors: Cole Tucker, Michael Orlov, Yannick Schulz
+
 0.22.6 (2024-02-07)
 -------------------
 * Call cv.wait_until only if necessary. (`#1522 <https://github.com/ros2/rosbag2/issues/1522>`_)

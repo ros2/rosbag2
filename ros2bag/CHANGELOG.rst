@@ -2,6 +2,13 @@
 Changelog for package ros2bag
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.22.7 (2024-07-11)
+-------------------
+* Allow to specify start offset from CLI arguments equal to 0.0 for the rosbag2 player (`#1714 <https://github.com/ros2/rosbag2/issues/1714>`_)
+* Add --log-level to ros2 bag play and record (`#1654 <https://github.com/ros2/rosbag2/issues/1654>`_)
+* Resolve recording option problem (`#1649 <https://github.com/ros2/rosbag2/issues/1649>`_)
+* Contributors: Barry Xu, Michael Orlov, Rein Appeldoorn, Roman
+
 0.22.6 (2024-02-07)
 -------------------
 

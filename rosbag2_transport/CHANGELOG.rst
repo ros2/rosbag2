@@ -2,6 +2,11 @@
 Changelog for package rosbag2_transport
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.22.7 (2024-07-11)
+-------------------
+* Gracefully handle SIGINT and SIGTERM signals for play and burst CLI (`#1690 <https://github.com/ros2/rosbag2/issues/1690>`_)
+* Contributors: Michael Orlov
+
 0.22.6 (2024-02-07)
 -------------------
 * Workaround for flaky test_play_services running with fastrtps (`#1562 <https://github.com/ros2/rosbag2/issues/1562>`_)

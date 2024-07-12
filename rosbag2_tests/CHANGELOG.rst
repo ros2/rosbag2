@@ -2,6 +2,13 @@
 Changelog for package rosbag2_tests
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.22.7 (2024-07-11)
+-------------------
+* Propagate "custom_data" and "ros_distro" in to the metadata.yaml file during re-indexing (`#1711 <https://github.com/ros2/rosbag2/issues/1711>`_)
+* Fix for regression in `open_succeeds_twice` and `minimal_writer_example` tests (`#1669 <https://github.com/ros2/rosbag2/issues/1669>`_)
+* Bugfix for writer not being able to open again after closing (`#1635 <https://github.com/ros2/rosbag2/issues/1635>`_)
+* Contributors: Cole Tucker, Michael Orlov, Yannick Schulz
+
 0.22.6 (2024-02-07)
 -------------------
 
