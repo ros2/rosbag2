@@ -42,9 +42,10 @@ std::unordered_map<std::string, std::string> format_duration(
   std::chrono::high_resolution_clock::duration duration)
 {
   std::unordered_map<std::string, std::string> formatted_duration;
-  auto m_seconds = std::chrono::duration_cast<std::chrono::milliseconds>(duration);
-  auto seconds = std::chrono::duration_cast<std::chrono::seconds>(m_seconds);
-  std::string fractional_seconds = std::to_string(m_seconds.count() % 1000);
+  auto seconds = std::chrono::duration_cast<std::chrono::seconds>(duration);
+  auto nanoseconds = std::chrono::duration_cast<std::chrono::nanoseconds>(duration);
+  auto nanoseconds_from_seconds = std::chrono::duration_cast<std::chrono::nanoseconds>(seconds);
+  std::string fractional_seconds = std::to_string((nanoseconds - nanoseconds_from_seconds).count());
   std::time_t std_time_point = seconds.count();
   tm time;
 #ifdef _WIN32
