@@ -179,15 +179,10 @@ void SequentialWriter::close()
   if (!metadata_.relative_file_paths.empty()) {
     // Take the latest file name from metadata in case if it was updated after compression in
     // derived class
-<<<<<<< HEAD
-    info->closed_file =
-      (rcpputils::fs::path(base_folder_) / metadata_.relative_file_paths.back()).string();
-    callback_manager_.execute_callbacks(bag_events::BagEvent::WRITE_SPLIT, info);
-=======
+
     auto closed_file =
-      (fs::path(base_folder_) / metadata_.relative_file_paths.back()).generic_string();
+      (rcpputils::fs::path(base_folder_) / metadata_.relative_file_paths.back()).string();
     execute_bag_split_callbacks(closed_file, "");
->>>>>>> 1877b538 (Bugfix for bag_split event callbacks called to early with file compression (#1643))
   }
 
   topics_names_to_info_.clear();
@@ -327,16 +322,12 @@ void SequentialWriter::execute_bag_split_callbacks(
   callback_manager_.execute_callbacks(bag_events::BagEvent::WRITE_SPLIT, info);
 }
 
-<<<<<<< HEAD
-void SequentialWriter::write(std::shared_ptr<rosbag2_storage::SerializedBagMessage> message)
-=======
 void SequentialWriter::split_bagfile()
 {
   (void)split_bagfile_local();
 }
 
-void SequentialWriter::write(std::shared_ptr<const rosbag2_storage::SerializedBagMessage> message)
->>>>>>> 1877b538 (Bugfix for bag_split event callbacks called to early with file compression (#1643))
+void SequentialWriter::write(std::shared_ptr<rosbag2_storage::SerializedBagMessage> message)
 {
   if (!storage_) {
     throw std::runtime_error("Bag is not open. Call open() before writing.");

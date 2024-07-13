@@ -34,6 +34,8 @@
 
 #include "logging.hpp"
 
+namespace fs = rcpputils::fs;
+
 namespace rosbag2_compression
 {
 
@@ -75,13 +77,8 @@ void SequentialCompressionWriter::compression_thread_fn()
   rcpputils::check_true(compressor != nullptr, "Could not create compressor.");
 
   while (true) {
-<<<<<<< HEAD
     std::shared_ptr<rosbag2_storage::SerializedBagMessage> message;
-    std::string file;
-=======
-    std::shared_ptr<const rosbag2_storage::SerializedBagMessage> message;
     std::string closed_file_relative_to_bag;
->>>>>>> 1877b538 (Bugfix for bag_split event callbacks called to early with file compression (#1643))
     {
       std::unique_lock<std::mutex> lock(compressor_queue_mutex_);
       compressor_condition_.wait(
@@ -120,7 +117,7 @@ void SequentialCompressionWriter::compression_thread_fn()
       // Execute callbacks from the base class
       static const std::string compressor_ext = "." + compressor->get_compression_identifier();
       auto closed_file =
-        (fs::path(base_folder_) / (closed_file_relative_to_bag + compressor_ext)).generic_string();
+        (fs::path(base_folder_) / (closed_file_relative_to_bag + compressor_ext)).string();
       std::string new_file;
       // To determine, a new_file we can't rely on the metadata_.relative_file_paths.back(),
       // because other compressor threads may have already pushed a new item above.
@@ -132,7 +129,7 @@ void SequentialCompressionWriter::compression_thread_fn()
         if (iter != metadata_.relative_file_paths.end()) {
           ++iter;
           if (iter != metadata_.relative_file_paths.end()) {
-            new_file = (fs::path(base_folder_) / *iter).generic_string();
+            new_file = (fs::path(base_folder_) / *iter).string();
           }
         }
       }
@@ -333,7 +330,7 @@ void SequentialCompressionWriter::split_bagfile()
     compressor_file_queue_.push(last_file_relative_to_bag);
     compressor_condition_.notify_one();
   } else {
-    auto last_file = (fs::path(base_folder_) / last_file_relative_to_bag).generic_string();
+    auto last_file = (fs::path(base_folder_) / last_file_relative_to_bag).string();
     SequentialWriter::execute_bag_split_callbacks(last_file, new_file);
   }
 

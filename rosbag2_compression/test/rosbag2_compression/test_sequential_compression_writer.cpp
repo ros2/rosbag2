@@ -40,6 +40,8 @@
 
 using namespace testing;  // NOLINT
 
+namespace fs = rcpputils::fs;
+
 static constexpr const char * DefaultTestCompressor = "fake_comp";
 
 class SequentialCompressionWriterTest : public TestWithParam<uint64_t>
@@ -54,13 +56,8 @@ public:
     tmp_dir_storage_options_{},
     serialization_format_{"rmw_format"}
   {
-<<<<<<< HEAD
-    tmp_dir_storage_options_.uri = tmp_dir_.string();
-    rcpputils::fs::remove_all(tmp_dir_);
-=======
     tmp_dir_storage_options_.uri = (tmp_dir_ / bag_base_dir_).string();
-    fs::remove_all(tmp_dir_);
->>>>>>> 1877b538 (Bugfix for bag_split event callbacks called to early with file compression (#1643))
+    rcpputils::fs::remove_all(tmp_dir_);
     ON_CALL(*storage_factory_, open_read_write(_)).WillByDefault(Return(storage_));
     EXPECT_CALL(*storage_factory_, open_read_write(_)).Times(AtLeast(0));
     // intercept the metadata write so we can analyze it.
@@ -82,8 +79,8 @@ public:
     auto msg_length = msg_content.length();
     auto message = std::make_shared<rosbag2_storage::SerializedBagMessage>();
     message->topic_name = "test_topic";
-    message->serialized_data = rosbag2_storage::make_serialized_message(
-      msg_content.c_str(), msg_length);
+    message->serialized_data =
+      rosbag2_storage::make_serialized_message(msg_content.c_str(), msg_length);
     return message;
   }
 
@@ -311,331 +308,6 @@ TEST_F(SequentialCompressionWriterTest, writer_creates_correct_metadata_relative
     EXPECT_EQ(ss.str(), path);
   }
 }
-<<<<<<< HEAD
-=======
-
-TEST_F(SequentialCompressionWriterTest, writer_call_metadata_update_on_open_and_destruction)
-{
-  const std::string test_topic_name = "test_topic";
-  const std::string test_topic_type = "test_msgs/BasicTypes";
-
-  // queue size should be 0 or at least the number of remaining messages to prevent message loss
-  rosbag2_compression::CompressionOptions compression_options {
-    DefaultTestCompressor,
-    rosbag2_compression::CompressionMode::MESSAGE,
-    0,
-    kDefaultCompressionQueueThreads,
-    kDefaultCompressionQueueThreadsPriority
-  };
-
-  initializeFakeFileStorage();
-  initializeWriter(compression_options);
-
-  EXPECT_CALL(*storage_, update_metadata(_)).Times(2);
-  writer_->open(tmp_dir_storage_options_);
-  writer_->create_topic({0u, test_topic_name, test_topic_type, "", {}, ""});
-
-  auto message = std::make_shared<rosbag2_storage::SerializedBagMessage>();
-  message->topic_name = test_topic_name;
-
-  const size_t kNumMessagesToWrite = 5;
-  for (size_t i = 0; i < kNumMessagesToWrite; i++) {
-    writer_->write(message);
-  }
-  writer_.reset();  // reset will call writer destructor
-
-  EXPECT_EQ(v_intercepted_update_metadata_.size(), 2u);
-  using rosbag2_compression::compression_mode_from_string;
-  auto compression_mode =
-    compression_mode_from_string(v_intercepted_update_metadata_[0].compression_mode);
-  EXPECT_EQ(compression_mode, rosbag2_compression::CompressionMode::MESSAGE);
-  EXPECT_EQ(v_intercepted_update_metadata_[0].message_count, 0u);
-  EXPECT_EQ(v_intercepted_update_metadata_[1].message_count, kNumMessagesToWrite);
-}
-
-TEST_F(SequentialCompressionWriterTest, writer_call_metadata_update_on_bag_split)
-{
-  const std::string test_topic_name = "test_topic";
-  const std::string test_topic_type = "test_msgs/BasicTypes";
-
-  // queue size should be 0 or at least the number of remaining messages to prevent message loss
-  rosbag2_compression::CompressionOptions compression_options {
-    DefaultTestCompressor,
-    rosbag2_compression::CompressionMode::MESSAGE,
-    0,
-    kDefaultCompressionQueueThreads,
-    kDefaultCompressionQueueThreadsPriority
-  };
-
-  initializeFakeFileStorage();
-  initializeWriter(compression_options);
-
-  EXPECT_CALL(*storage_, update_metadata(_)).Times(4);
-  writer_->open(tmp_dir_storage_options_);
-  writer_->create_topic({0u, test_topic_name, test_topic_type, "", {}, ""});
-
-  auto message = std::make_shared<rosbag2_storage::SerializedBagMessage>();
-  message->topic_name = test_topic_name;
-
-  const size_t kNumMessagesToWrite = 5;
-  for (size_t i = 0; i < kNumMessagesToWrite; i++) {
-    writer_->write(message);
-  }
-
-  writer_->split_bagfile();
-
-  for (size_t i = 0; i < kNumMessagesToWrite; i++) {
-    writer_->write(message);
-  }
-  writer_.reset();  // reset will call writer destructor
-
-  ASSERT_EQ(v_intercepted_update_metadata_.size(), 4u);
-  using rosbag2_compression::compression_mode_from_string;
-  auto compression_mode =
-    compression_mode_from_string(v_intercepted_update_metadata_[0].compression_mode);
-  EXPECT_EQ(compression_mode, rosbag2_compression::CompressionMode::MESSAGE);
-  EXPECT_EQ(v_intercepted_update_metadata_[0].message_count, 0u);  // On opening first bag file
-  EXPECT_EQ(v_intercepted_update_metadata_[1].files.size(), 1u);   // On closing first bag file
-  EXPECT_EQ(v_intercepted_update_metadata_[2].files.size(), 1u);   // On opening second bag file
-  EXPECT_EQ(v_intercepted_update_metadata_[3].files.size(), 2u);   // On writer destruction
-  EXPECT_EQ(v_intercepted_update_metadata_[3].message_count, 2 * kNumMessagesToWrite);
-}
-
-TEST_P(SequentialCompressionWriterTest, writer_writes_with_compression_queue_sizes)
-{
-  const std::string test_topic_name = "test_topic";
-  const std::string test_topic_type = "test_msgs/BasicTypes";
-  const uint64_t kCompressionQueueSize = GetParam();
-
-  // queue size should be 0 or at least the number of remaining messages to prevent message loss
-  rosbag2_compression::CompressionOptions compression_options {
-    DefaultTestCompressor,
-    rosbag2_compression::CompressionMode::MESSAGE,
-    kCompressionQueueSize,
-    kDefaultCompressionQueueThreads,
-    kDefaultCompressionQueueThreadsPriority
-  };
-
-  initializeFakeFileStorage();
-  initializeWriter(compression_options);
-
-  writer_->open(tmp_dir_storage_options_);
-  writer_->create_topic({0u, test_topic_name, test_topic_type, "", {}, ""});
-
-  auto message = std::make_shared<rosbag2_storage::SerializedBagMessage>();
-  message->topic_name = test_topic_name;
-
-  const size_t kNumMessagesToWrite = 5;
-  for (size_t i = 0; i < kNumMessagesToWrite; i++) {
-    writer_->write(message);
-  }
-  writer_.reset();  // reset will call writer destructor
-
-  EXPECT_EQ(fake_storage_size_.load(), kNumMessagesToWrite);
-}
-
-TEST_P(SequentialCompressionWriterTest, writer_sets_threads_priority)
-{
-  const std::string test_topic_name = "test_topic";
-  const std::string test_topic_type = "test_msgs/BasicTypes";
-  const uint64_t kCompressionQueueSize = GetParam();
-#ifndef _WIN32
-  const int32_t wanted_thread_priority = 10;
-  errno = 0;
-  int cur_nice_value = getpriority(PRIO_PROCESS, 0);
-  ASSERT_TRUE(!(cur_nice_value == -1 && errno != 0));
-#else
-  const int32_t wanted_thread_priority = THREAD_PRIORITY_LOWEST;
-  auto current_thread_priority = GetThreadPriority(GetCurrentThread());
-  ASSERT_NE(current_thread_priority, THREAD_PRIORITY_ERROR_RETURN);
-  ASSERT_NE(current_thread_priority, wanted_thread_priority);
-#endif
-
-  // queue size should be 0 or at least the number of remaining messages to prevent message loss
-  rosbag2_compression::CompressionOptions compression_options {
-    DefaultTestCompressor,
-    rosbag2_compression::CompressionMode::MESSAGE,
-    kCompressionQueueSize,
-    kDefaultCompressionQueueThreads,
-    wanted_thread_priority
-  };
-
-#ifndef _WIN32
-  // nice values are in the range from -20 to +19, so this value will never be read
-  int32_t detected_thread_priority = 100;
-#else
-  int32_t detected_thread_priority = THREAD_PRIORITY_ERROR_RETURN;
-#endif
-
-  initializeFakeFileStorage();
-  initializeWriter(
-    compression_options,
-    std::make_unique<FakeCompressionFactory>(detected_thread_priority));
-
-  writer_->open(tmp_dir_storage_options_);
-  writer_->create_topic({0u, test_topic_name, test_topic_type, "", {}, ""});
-
-  auto message = std::make_shared<rosbag2_storage::SerializedBagMessage>();
-  message->topic_name = test_topic_name;
-
-  const size_t kNumMessagesToWrite = 5;
-  for (size_t i = 0; i < kNumMessagesToWrite; i++) {
-    writer_->write(message);
-  }
-  writer_.reset();    // reset will call writer destructor
-
-  EXPECT_EQ(detected_thread_priority, *compression_options.thread_priority);
-  EXPECT_EQ(fake_storage_size_.load(), kNumMessagesToWrite);
-}
-
-TEST_P(SequentialCompressionWriterTest, split_event_calls_callback_with_msg_compression)
-{
-  const uint64_t max_bagfile_size = 3;
-  const size_t num_splits = 2;
-  const int message_count = max_bagfile_size * num_splits + max_bagfile_size - 1;  // 8
-
-  rosbag2_compression::CompressionOptions compression_options {
-    DefaultTestCompressor,
-    rosbag2_compression::CompressionMode::MESSAGE,
-    0,
-    1,
-    kDefaultCompressionQueueThreadsPriority
-  };
-
-  initializeFakeFileStorage();
-  initializeWriter(compression_options);
-
-  auto message = std::make_shared<rosbag2_storage::SerializedBagMessage>();
-  message->topic_name = "test_topic";
-
-  tmp_dir_storage_options_.max_bagfile_size = max_bagfile_size;
-
-  std::vector<std::string> closed_files;
-  std::vector<std::string> opened_files;
-  rosbag2_cpp::bag_events::WriterEventCallbacks callbacks;
-  callbacks.write_split_callback =
-    [&closed_files, &opened_files](rosbag2_cpp::bag_events::BagSplitInfo & info) {
-      closed_files.emplace_back(info.closed_file);
-      opened_files.emplace_back(info.opened_file);
-    };
-  writer_->add_event_callbacks(callbacks);
-
-  writer_->open(tmp_dir_storage_options_);
-  writer_->create_topic({0u, "test_topic", "test_msgs/BasicTypes", "", {}, ""});
-
-  for (auto i = 0; i < message_count; ++i) {
-    writer_->write(message);
-  }
-  writer_->close();
-
-  EXPECT_EQ(intercepted_write_metadata_.relative_file_paths.size(), num_splits + 1);
-
-  EXPECT_THAT(closed_files.size(), num_splits + 1);
-  EXPECT_THAT(opened_files.size(), num_splits + 1);
-
-  if (!((closed_files.size() == opened_files.size()) && (opened_files.size() == num_splits + 1))) {
-    // Output debug info
-    for (size_t i = 0; i < opened_files.size(); i++) {
-      std::cout << "opened_file[" << i << "] = '" << opened_files[i] <<
-        "'; closed_file[" << i << "] = '" << closed_files[i] << "';" << std::endl;
-    }
-    for (size_t i = 0; i < intercepted_write_metadata_.relative_file_paths.size(); i++) {
-      std::cout << "metadata file path [" << i << "] = '" <<
-        intercepted_write_metadata_.relative_file_paths[i] << "'\n";
-    }
-  }
-
-  ASSERT_GE(opened_files.size(), num_splits + 1);
-  ASSERT_GE(closed_files.size(), num_splits + 1);
-  for (size_t i = 0; i < num_splits + 1; i++) {
-    auto expected_closed =
-      fs::path(tmp_dir_storage_options_.uri) / (bag_base_dir_ + "_" + std::to_string(i));
-    auto expected_opened = (i == num_splits) ?
-      // The last opened file shall be empty string when we do "writer->close();"
-      "" : fs::path(tmp_dir_storage_options_.uri) / (bag_base_dir_ + "_" + std::to_string(i + 1));
-    EXPECT_EQ(closed_files[i], expected_closed.generic_string()) << "i = " << i;
-    EXPECT_EQ(opened_files[i], expected_opened.generic_string()) << "i = " << i;
-  }
-}
-
-TEST_P(SequentialCompressionWriterTest, split_event_calls_callback_with_file_compression)
-{
-  const uint64_t max_bagfile_size = 3;
-  const size_t num_splits = 2;
-  const int message_count = max_bagfile_size * num_splits + max_bagfile_size - 1;  // 8
-
-  rosbag2_compression::CompressionOptions compression_options {
-    DefaultTestCompressor,
-    rosbag2_compression::CompressionMode::FILE,
-    0,
-    1,
-    kDefaultCompressionQueueThreadsPriority
-  };
-
-  initializeFakeFileStorage();
-  initializeWriter(compression_options);
-
-  auto message = std::make_shared<rosbag2_storage::SerializedBagMessage>();
-  message->topic_name = "test_topic";
-
-  tmp_dir_storage_options_.max_bagfile_size = max_bagfile_size;
-
-  std::vector<std::string> closed_files;
-  std::vector<std::string> opened_files;
-  rosbag2_cpp::bag_events::WriterEventCallbacks callbacks;
-  callbacks.write_split_callback =
-    [&closed_files, &opened_files](rosbag2_cpp::bag_events::BagSplitInfo & info) {
-      closed_files.emplace_back(info.closed_file);
-      opened_files.emplace_back(info.opened_file);
-    };
-  writer_->add_event_callbacks(callbacks);
-
-  writer_->open(tmp_dir_storage_options_);
-  writer_->create_topic({0u, "test_topic", "test_msgs/BasicTypes", "", {}, ""});
-
-  for (auto i = 0; i < message_count; ++i) {
-    writer_->write(message);
-  }
-  writer_->close();
-
-  EXPECT_EQ(intercepted_write_metadata_.relative_file_paths.size(), num_splits + 1);
-
-  EXPECT_THAT(closed_files.size(), num_splits + 1);
-  EXPECT_THAT(opened_files.size(), num_splits + 1);
-
-  if (!((closed_files.size() == opened_files.size()) && (opened_files.size() == num_splits + 1))) {
-    // Output debug info
-    for (size_t i = 0; i < opened_files.size(); i++) {
-      std::cout << "opened_file[" << i << "] = '" << opened_files[i] <<
-        "'; closed_file[" << i << "] = '" << closed_files[i] << "';" << std::endl;
-    }
-    for (size_t i = 0; i < intercepted_write_metadata_.relative_file_paths.size(); i++) {
-      std::cout << "metadata file path [" << i << "] = '" <<
-        intercepted_write_metadata_.relative_file_paths[i] << "'\n";
-    }
-  }
-
-  ASSERT_GE(opened_files.size(), num_splits + 1);
-  ASSERT_GE(closed_files.size(), num_splits + 1);
-  for (size_t i = 0; i < num_splits + 1; i++) {
-    auto expected_closed =
-      fs::path(tmp_dir_storage_options_.uri) / (bag_base_dir_ + "_" + std::to_string(i) +
-      "." + DefaultTestCompressor);
-    auto expected_opened = (i == num_splits) ?
-      // The last opened file shall be empty string when we do "writer->close();"
-      "" : fs::path(tmp_dir_storage_options_.uri) / (bag_base_dir_ + "_" + std::to_string(i + 1));
-    EXPECT_EQ(closed_files[i], expected_closed.generic_string()) << "i = " << i;
-    EXPECT_EQ(opened_files[i], expected_opened.generic_string()) << "i = " << i;
-  }
-}
-
-INSTANTIATE_TEST_SUITE_P(
-  SequentialCompressionWriterTestQueueSizes,
-  SequentialCompressionWriterTest,
-  ::testing::Values(
-    0ul, 5ul
-));
->>>>>>> 1877b538 (Bugfix for bag_split event callbacks called to early with file compression (#1643))
 
 TEST_P(SequentialCompressionWriterTest, writer_writes_with_compression_queue_sizes)
 {
@@ -667,6 +339,147 @@ TEST_P(SequentialCompressionWriterTest, writer_writes_with_compression_queue_siz
   writer_.reset();  // reset will call writer destructor
 
   EXPECT_EQ(fake_storage_size_, kNumMessagesToWrite);
+}
+
+TEST_P(SequentialCompressionWriterTest, split_event_calls_callback_with_msg_compression)
+{
+  const uint64_t max_bagfile_size = 3;
+  const size_t num_splits = 2;
+  const int message_count = max_bagfile_size * num_splits + max_bagfile_size - 1;  // 8
+
+  rosbag2_compression::CompressionOptions compression_options {
+    DefaultTestCompressor,
+    rosbag2_compression::CompressionMode::MESSAGE,
+    0,
+    1
+  };
+
+  initializeFakeFileStorage();
+  initializeWriter(compression_options);
+
+  auto message = make_test_msg();
+  message->topic_name = "test_topic";
+
+  tmp_dir_storage_options_.max_bagfile_size = max_bagfile_size;
+
+  std::vector<std::string> closed_files;
+  std::vector<std::string> opened_files;
+  rosbag2_cpp::bag_events::WriterEventCallbacks callbacks;
+  callbacks.write_split_callback =
+    [&closed_files, &opened_files](rosbag2_cpp::bag_events::BagSplitInfo & info) {
+      closed_files.emplace_back(info.closed_file);
+      opened_files.emplace_back(info.opened_file);
+    };
+  writer_->add_event_callbacks(callbacks);
+
+  writer_->open(tmp_dir_storage_options_);
+  writer_->create_topic({"test_topic", "test_msgs/BasicTypes", "", {}});
+
+  for (auto i = 0; i < message_count; ++i) {
+    writer_->write(message);
+  }
+  writer_->close();
+
+  EXPECT_EQ(intercepted_metadata_.relative_file_paths.size(), num_splits + 1);
+
+  EXPECT_THAT(closed_files.size(), num_splits + 1);
+  EXPECT_THAT(opened_files.size(), num_splits + 1);
+
+  if (!((closed_files.size() == opened_files.size()) && (opened_files.size() == num_splits + 1))) {
+    // Output debug info
+    for (size_t i = 0; i < opened_files.size(); i++) {
+      std::cout << "opened_file[" << i << "] = '" << opened_files[i] <<
+        "'; closed_file[" << i << "] = '" << closed_files[i] << "';" << std::endl;
+    }
+    for (size_t i = 0; i < intercepted_metadata_.relative_file_paths.size(); i++) {
+      std::cout << "metadata file path [" << i << "] = '" <<
+        intercepted_metadata_.relative_file_paths[i] << "'\n";
+    }
+  }
+
+  ASSERT_GE(opened_files.size(), num_splits + 1);
+  ASSERT_GE(closed_files.size(), num_splits + 1);
+  for (size_t i = 0; i < num_splits + 1; i++) {
+    auto expected_closed =
+      fs::path(tmp_dir_storage_options_.uri) / (bag_base_dir_ + "_" + std::to_string(i));
+    auto expected_opened = (i == num_splits) ?
+      // The last opened file shall be empty string when we do "writer->close();"
+      fs::path("") :
+      fs::path(tmp_dir_storage_options_.uri) / (bag_base_dir_ + "_" + std::to_string(i + 1));
+    EXPECT_EQ(closed_files[i], expected_closed.string()) << "i = " << i;
+    EXPECT_EQ(opened_files[i], expected_opened.string()) << "i = " << i;
+  }
+}
+
+TEST_P(SequentialCompressionWriterTest, split_event_calls_callback_with_file_compression)
+{
+  const uint64_t max_bagfile_size = 3;
+  const size_t num_splits = 2;
+  const int message_count = max_bagfile_size * num_splits + max_bagfile_size - 1;  // 8
+
+  rosbag2_compression::CompressionOptions compression_options {
+    DefaultTestCompressor,
+    rosbag2_compression::CompressionMode::FILE,
+    0,
+    1
+  };
+
+  initializeFakeFileStorage();
+  initializeWriter(compression_options);
+
+  auto message = std::make_shared<rosbag2_storage::SerializedBagMessage>();
+  message->topic_name = "test_topic";
+
+  tmp_dir_storage_options_.max_bagfile_size = max_bagfile_size;
+
+  std::vector<std::string> closed_files;
+  std::vector<std::string> opened_files;
+  rosbag2_cpp::bag_events::WriterEventCallbacks callbacks;
+  callbacks.write_split_callback =
+    [&closed_files, &opened_files](rosbag2_cpp::bag_events::BagSplitInfo & info) {
+      closed_files.emplace_back(info.closed_file);
+      opened_files.emplace_back(info.opened_file);
+    };
+  writer_->add_event_callbacks(callbacks);
+
+  writer_->open(tmp_dir_storage_options_);
+  writer_->create_topic({"test_topic", "test_msgs/BasicTypes", "", {}});
+
+  for (auto i = 0; i < message_count; ++i) {
+    writer_->write(message);
+  }
+  writer_->close();
+
+  EXPECT_EQ(intercepted_metadata_.relative_file_paths.size(), num_splits + 1);
+
+  EXPECT_THAT(closed_files.size(), num_splits + 1);
+  EXPECT_THAT(opened_files.size(), num_splits + 1);
+
+  if (!((closed_files.size() == opened_files.size()) && (opened_files.size() == num_splits + 1))) {
+    // Output debug info
+    for (size_t i = 0; i < opened_files.size(); i++) {
+      std::cout << "opened_file[" << i << "] = '" << opened_files[i] <<
+        "'; closed_file[" << i << "] = '" << closed_files[i] << "';" << std::endl;
+    }
+    for (size_t i = 0; i < intercepted_metadata_.relative_file_paths.size(); i++) {
+      std::cout << "metadata file path [" << i << "] = '" <<
+        intercepted_metadata_.relative_file_paths[i] << "'\n";
+    }
+  }
+
+  ASSERT_GE(opened_files.size(), num_splits + 1);
+  ASSERT_GE(closed_files.size(), num_splits + 1);
+  for (size_t i = 0; i < num_splits + 1; i++) {
+    auto expected_closed =
+      fs::path(tmp_dir_storage_options_.uri) / (bag_base_dir_ + "_" + std::to_string(i) +
+      "." + DefaultTestCompressor);
+    auto expected_opened = (i == num_splits) ?
+      // The last opened file shall be empty string when we do "writer->close();"
+      fs::path("") :
+      fs::path(tmp_dir_storage_options_.uri) / (bag_base_dir_ + "_" + std::to_string(i + 1));
+    EXPECT_EQ(closed_files[i], expected_closed.string()) << "i = " << i;
+    EXPECT_EQ(opened_files[i], expected_opened.string()) << "i = " << i;
+  }
 }
 
 INSTANTIATE_TEST_SUITE_P(
