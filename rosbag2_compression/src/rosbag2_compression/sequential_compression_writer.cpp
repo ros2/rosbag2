@@ -326,7 +326,6 @@ void SequentialCompressionWriter::write(
   if (compression_options_.compression_mode == CompressionMode::FILE) {
     SequentialWriter::write(message);
   } else {
-<<<<<<< HEAD
     // since the compression operation will manipulate memory inplace, thus
     // if there are multiple writers with message compression, different manipulation
     // on the same memory address will cause problem. This problem is
@@ -365,12 +364,6 @@ void SequentialCompressionWriter::write(
     message_copy->serialized_data->buffer_capacity = message->serialized_data->buffer_capacity;
     message_copy->serialized_data->buffer_length = message->serialized_data->buffer_length;
 
-    std::lock_guard<std::mutex> lock(compressor_queue_mutex_);
-    while (compressor_message_queue_.size() > compression_options_.compression_queue_size) {
-      compressor_message_queue_.pop();
-    }
-    compressor_message_queue_.push(message_copy);
-=======
     std::unique_lock<std::mutex> lock(compressor_queue_mutex_);
     while (compressor_message_queue_.size() > compression_options_.compression_queue_size &&
       compression_options_.compression_queue_size > 0u)
@@ -391,8 +384,7 @@ void SequentialCompressionWriter::write(
         });
     }
 
-    compressor_message_queue_.push(message);
->>>>>>> 8325425 (Add option to prevent message loss while converting (#1058))
+    compressor_message_queue_.push(message_copy);
     compressor_condition_.notify_one();
   }
 }
