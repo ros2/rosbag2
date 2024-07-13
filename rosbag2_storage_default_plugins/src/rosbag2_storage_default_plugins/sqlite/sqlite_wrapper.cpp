@@ -60,9 +60,25 @@ SqliteWrapper::SqliteWrapper(
       throw SqliteException{errmsg.str()};
     }
   }
+<<<<<<< HEAD:rosbag2_storage_default_plugins/src/rosbag2_storage_default_plugins/sqlite/sqlite_wrapper.cpp
 
   apply_pragma_settings(pragmas, io_flag);
   sqlite3_extended_result_codes(db_ptr, 1);
+=======
+  try {
+    apply_pragma_settings(pragmas, io_flag);
+    sqlite3_extended_result_codes(db_ptr, 1);
+    initialize_application_functions();
+  } catch (...) {
+    const int rc = sqlite3_close(db_ptr);
+    if (rc != SQLITE_OK) {
+      ROSBAG2_STORAGE_DEFAULT_PLUGINS_LOG_ERROR_STREAM(
+        "Could not close open database. Error code: " << rc <<
+          " Error message: " << sqlite3_errstr(rc));
+    }
+    throw;
+  }
+>>>>>>> 055935d3 (Fix for failing throws_on_invalid_pragma_in_config_file on Windows (#1742)):rosbag2_storage_sqlite3/src/rosbag2_storage_sqlite3/sqlite_wrapper.cpp
 }
 
 SqliteWrapper::SqliteWrapper()
