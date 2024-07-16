@@ -28,6 +28,7 @@
 
 #include "rosbag2_cpp/writer.hpp"
 
+#include "rosbag2_storage/ros_helper.hpp"
 #include "rosbag2_storage/storage_options.hpp"
 
 #include "mock_converter_factory.hpp"
@@ -41,7 +42,7 @@ using namespace testing;  // NOLINT
 
 static constexpr const char * DefaultTestCompressor = "fake_comp";
 
-class SequentialCompressionWriterTest : public Test
+class SequentialCompressionWriterTest : public TestWithParam<uint64_t>
 {
 public:
   SequentialCompressionWriterTest()
@@ -67,6 +68,18 @@ public:
   ~SequentialCompressionWriterTest()
   {
     rcpputils::fs::remove_all(tmp_dir_);
+  }
+
+  std::shared_ptr<rosbag2_storage::SerializedBagMessage> make_test_msg()
+  {
+    static uint32_t counter = 0;
+    std::string msg_content = "Hello" + std::to_string(counter++);
+    auto msg_length = msg_content.length();
+    auto message = std::make_shared<rosbag2_storage::SerializedBagMessage>();
+    message->topic_name = "test_topic";
+    message->serialized_data = rosbag2_storage::make_serialized_message(
+      msg_content.c_str(), msg_length);
+    return message;
   }
 
   void initializeFakeFileStorage()
@@ -293,3 +306,42 @@ TEST_F(SequentialCompressionWriterTest, writer_creates_correct_metadata_relative
     EXPECT_EQ(ss.str(), path);
   }
 }
+
+TEST_P(SequentialCompressionWriterTest, writer_writes_with_compression_queue_sizes)
+{
+  const std::string test_topic_name = "test_topic";
+  const std::string test_topic_type = "test_msgs/BasicTypes";
+  const uint64_t kCompressionQueueSize = GetParam();
+
+  // queue size should be 0 or at least the number of remaining messages to prevent message loss
+  rosbag2_compression::CompressionOptions compression_options {
+    DefaultTestCompressor,
+    rosbag2_compression::CompressionMode::MESSAGE,
+    kCompressionQueueSize,
+    kDefaultCompressionQueueThreads
+  };
+
+  initializeFakeFileStorage();
+  initializeWriter(compression_options);
+
+  writer_->open(tmp_dir_storage_options_);
+  writer_->create_topic({test_topic_name, test_topic_type, "", ""});
+
+  auto message = make_test_msg();
+  message->topic_name = test_topic_name;
+
+  const size_t kNumMessagesToWrite = 5;
+  for (size_t i = 0; i < kNumMessagesToWrite; i++) {
+    writer_->write(message);
+  }
+  writer_.reset();  // reset will call writer destructor
+
+  EXPECT_EQ(fake_storage_size_, kNumMessagesToWrite);
+}
+
+INSTANTIATE_TEST_SUITE_P(
+  SequentialCompressionWriterTestQueueSizes,
+  SequentialCompressionWriterTest,
+  ::testing::Values(
+    0ul, 5ul
+));
