@@ -302,12 +302,12 @@ TEST_P(RecordFixture, record_end_to_end_with_splitting_bagsize_split_is_at_least
   ASSERT_TRUE(pub_manager.wait_for_matched(topic_name)) <<
     "Expected find rosbag subscription";
 
+  pub_manager.run_publishers();
+
   wait_for_storage_file();
 
   stop_execution(process_handle);
   cleanup_process_handle.cancel();
-
-  pub_manager.run_publishers();
 
   finalize_metadata_kludge(expected_splits);
   wait_for_metadata();
@@ -315,10 +315,7 @@ TEST_P(RecordFixture, record_end_to_end_with_splitting_bagsize_split_is_at_least
   const auto metadata = metadata_io.read_metadata(root_bag_path_.generic_string());
   const auto actual_splits = static_cast<int>(metadata.files.size());
 
-  // TODO(zmichaels11): Support reliable sync-to-disk for more accurate splits.
-  // The only guarantee with splits right now is that they will not occur until
-  // a bagfile is at least the specified max_bagfile_size.
-  EXPECT_GT(actual_splits, 0);
+  EXPECT_EQ(actual_splits, expected_splits);
 
   // Don't include the last bagfile since it won't be full
   for (int i = 0; i < actual_splits - 1; ++i) {
