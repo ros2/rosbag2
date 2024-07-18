@@ -94,7 +94,7 @@ TEST_P(InfoEndToEndTestFixture, info_with_verbose_option_and_topic_name_option) 
       "\nBag size:          .*B"
       "\nStorage id:        " + expected_storage +
       "\nROS Distro:        " + expected_ros_distro +
-      "\nDuration:          0\\.706.*s"
+      "\nDuration:          0\\.0706.*s"
       "\nStart:             Nov  7 2023 .*:30:36\\..* \\(1699345836\\..*\\)"
       "\nEnd:               Nov  7 2023 .*:30:36\\..* \\(1699345836\\..*\\)"
       "\nMessages:          2"
@@ -122,7 +122,7 @@ TEST_P(InfoEndToEndTestFixture, info_with_verbose_option_end_to_end_test) {
       "\nBag size:          .*B"
       "\nStorage id:        " + expected_storage +
       "\nROS Distro:        " + expected_ros_distro +
-      "\nDuration:          0\\.706.*s"
+      "\nDuration:          0\\.0706.*s"
       "\nStart:             Nov  7 2023 .*:30:36\\..* \\(1699345836\\..*\\)"
       "\nEnd:               Nov  7 2023 .*:30:36\\..* \\(1699345836\\..*\\)"
       "\nMessages:          2"
