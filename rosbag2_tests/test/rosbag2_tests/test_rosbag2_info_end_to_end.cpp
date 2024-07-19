@@ -51,9 +51,9 @@ TEST_P(InfoEndToEndTestFixture, info_end_to_end_test) {
       "\nFiles:             " + expected_file +
       "\nBag size:          .*B"
       "\nStorage id:        " + expected_storage +
-      "\nDuration:          0\\.151s"
-      "\nStart:             Apr  .+ 2020 .*:.*:36.763 \\(1586406456\\.763\\)"
-      "\nEnd:               Apr  .+ 2020 .*:.*:36.914 \\(1586406456\\.914\\)"
+      "\nDuration:          0.151137181s"
+      "\nStart:             Apr  .+ 2020 .*:.*:36.763032325 \\(1586406456.763032325\\)"
+      "\nEnd:               Apr  .+ 2020 .*:.*:36.914169506 \\(1586406456.914169506\\)"
       "\nMessages:          7"
       "\nTopic information: "));
   EXPECT_THAT(
