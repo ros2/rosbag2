@@ -122,6 +122,8 @@ void Reindexer::get_bag_files(
     }
   } while (rcutils_dir_iter_next(dir_iter));
 
+   rcutils_dir_iter_end(dir_iter);
+
   // Sort relative file path by database number
   std::sort(
     output.begin(), output.end(),
