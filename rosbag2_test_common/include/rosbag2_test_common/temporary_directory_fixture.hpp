@@ -36,7 +36,7 @@ public:
 
   ~TemporaryDirectoryFixture() override
   {
-    rcpputils::fs::remove_all(rcpputils::fs::path(temporary_dir_path_));
+    std::filesystem::remove_all(std::filesystem::path(temporary_dir_path_));
   }
 
   std::string temporary_dir_path_;
