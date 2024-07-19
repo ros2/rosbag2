@@ -326,24 +326,13 @@ TEST_F(RecordFixture, record_end_to_end_with_splitting_bagsize_split_is_at_least
   ASSERT_TRUE(pub_manager.wait_for_matched(topic_name)) <<
     "Expected find rosbag subscription";
 
-<<<<<<< HEAD
-  wait_for_db();
-=======
   pub_manager.run_publishers();
 
-  wait_for_storage_file();
->>>>>>> da1acb29 (Fix for a false negative integration test with bag split in recorder (#1743))
+  wait_for_db();
 
   stop_execution(process_handle);
   cleanup_process_handle.cancel();
 
-<<<<<<< HEAD
-  pub_manager.run_publishers();
-
-=======
-  finalize_metadata_kludge(expected_splits);
-  wait_for_metadata();
->>>>>>> da1acb29 (Fix for a false negative integration test with bag split in recorder (#1743))
   rosbag2_storage::MetadataIo metadata_io;
 
 #ifdef _WIN32
