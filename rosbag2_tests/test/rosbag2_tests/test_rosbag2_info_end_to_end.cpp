@@ -54,9 +54,9 @@ TEST_P(InfoEndToEndTestFixture, info_end_to_end_test) {
       "\nBag size:          .*B"
       "\nStorage id:        " + expected_storage +
       "\nROS Distro:        " + expected_ros_distro +
-      "\nDuration:          0\\.151s"
-      "\nStart:             Apr  .+ 2020 .*:.*:36.763 \\(1586406456\\.763\\)"
-      "\nEnd:               Apr  .+ 2020 .*:.*:36.914 \\(1586406456\\.914\\)"
+      "\nDuration:          0.151137181s"
+      "\nStart:             Apr  .+ 2020 .*:.*:36.763032325 \\(1586406456.763032325\\)"
+      "\nEnd:               Apr  .+ 2020 .*:.*:36.914169506 \\(1586406456.914169506\\)"
       "\nMessages:          7"
       "\nTopic information: "));
   EXPECT_THAT(
@@ -94,7 +94,7 @@ TEST_P(InfoEndToEndTestFixture, info_with_verbose_option_and_topic_name_option) 
       "\nBag size:          .*B"
       "\nStorage id:        " + expected_storage +
       "\nROS Distro:        " + expected_ros_distro +
-      "\nDuration:          0\\.70s"
+      "\nDuration:          0\\.0706.*s"
       "\nStart:             Nov  7 2023 .*:30:36\\..* \\(1699345836\\..*\\)"
       "\nEnd:               Nov  7 2023 .*:30:36\\..* \\(1699345836\\..*\\)"
       "\nMessages:          2"
@@ -122,7 +122,7 @@ TEST_P(InfoEndToEndTestFixture, info_with_verbose_option_end_to_end_test) {
       "\nBag size:          .*B"
       "\nStorage id:        " + expected_storage +
       "\nROS Distro:        " + expected_ros_distro +
-      "\nDuration:          0\\.70s"
+      "\nDuration:          0\\.0706.*s"
       "\nStart:             Nov  7 2023 .*:30:36\\..* \\(1699345836\\..*\\)"
       "\nEnd:               Nov  7 2023 .*:30:36\\..* \\(1699345836\\..*\\)"
       "\nMessages:          2"
