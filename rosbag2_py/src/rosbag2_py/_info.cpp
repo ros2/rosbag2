@@ -42,17 +42,15 @@ public:
     return info_->read_metadata(uri, storage_id);
   }
 
-  void print_output(
-    rosbag2_storage::BagMetadata metadata_info)
+  void print_output(const rosbag2_storage::BagMetadata & metadata_info)
   {
     // Output formatted metadata
     std::cout << format_bag_meta_data(metadata_info) << std::endl;
   }
 
-  void print_output_topic_name_only(
-    rosbag2_storage::BagMetadata metadata_info)
+  void print_output_topic_name_only(const rosbag2_storage::BagMetadata & metadata_info)
   {
-    for (auto topic_info : metadata_info.topics_with_message_count) {
+    for (const auto & topic_info : metadata_info.topics_with_message_count) {
       if (!rosbag2_cpp::is_service_event_topic(
           topic_info.topic_metadata.name,
           topic_info.topic_metadata.type))
@@ -63,8 +61,7 @@ public:
   }
 
   void print_output_verbose(
-    const std::string & uri,
-    rosbag2_storage::BagMetadata metadata_info)
+    const std::string & uri, const rosbag2_storage::BagMetadata & metadata_info)
   {
     std::vector<std::shared_ptr<rosbag2_cpp::rosbag2_service_info_t>> all_services_info;
     for (auto & file_info : metadata_info.files) {
@@ -80,7 +77,7 @@ public:
     }
 
     std::unordered_map<std::string, uint64_t> messages_size = {};
-    for (auto & file_info : metadata_info.files) {
+    for (const auto & file_info : metadata_info.files) {
       auto messages_size_tmp = info_->compute_messages_size_contribution(
         uri + "/" + file_info.path,
         metadata_info.storage_identifier);
