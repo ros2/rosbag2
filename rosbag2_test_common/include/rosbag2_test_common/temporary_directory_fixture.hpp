@@ -39,8 +39,8 @@ public:
       parent_path = std::filesystem::temp_directory_path();
     }
 
-    temporary_dir_path_ = rcpputils::fs::create_temp_directory(
-        "tmp_test_dir_", rcpputils::fs::path(parent_path.generic_string())).string();
+    temporary_dir_path_ =
+      rcpputils::fs::create_temporary_directory("tmp_test_dir_", parent_path).string();
   }
 
   ~TemporaryDirectoryFixture() override
