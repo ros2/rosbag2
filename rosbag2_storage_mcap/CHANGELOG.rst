@@ -2,6 +2,9 @@
 Changelog for package rosbag2_storage_mcap
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.15.11 (2024-05-20)
+--------------------
+
 0.15.10 (2024-05-17)
 --------------------
 * [humble] Use rw_lock to protect mcap metadata lists. (backport `#1561 <https://github.com/ros2/rosbag2/issues/1561>`_) (`#1567 <https://github.com/ros2/rosbag2/issues/1567>`_)

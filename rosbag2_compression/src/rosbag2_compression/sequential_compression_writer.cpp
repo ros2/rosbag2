@@ -34,6 +34,8 @@
 
 #include "logging.hpp"
 
+namespace fs = rcpputils::fs;
+
 namespace rosbag2_compression
 {
 
@@ -76,7 +78,7 @@ void SequentialCompressionWriter::compression_thread_fn()
 
   while (true) {
     std::shared_ptr<rosbag2_storage::SerializedBagMessage> message;
-    std::string file;
+    std::string closed_file_relative_to_bag;
     {
       std::unique_lock<std::mutex> lock(compressor_queue_mutex_);
       compressor_condition_.wait(
@@ -90,8 +92,9 @@ void SequentialCompressionWriter::compression_thread_fn()
       if (!compressor_message_queue_.empty()) {
         message = compressor_message_queue_.front();
         compressor_message_queue_.pop();
+        compressor_condition_.notify_all();
       } else if (!compressor_file_queue_.empty()) {
-        file = compressor_file_queue_.front();
+        closed_file_relative_to_bag = compressor_file_queue_.front();
         compressor_file_queue_.pop();
       } else if (!compression_is_running_) {
         // I woke up, all work queues are empty, and the main thread has stopped execution. Exit.
@@ -108,8 +111,35 @@ void SequentialCompressionWriter::compression_thread_fn()
         std::lock_guard<std::recursive_mutex> storage_lock(storage_mutex_);
         SequentialWriter::write(message);
       }
-    } else if (!file.empty()) {
-      compress_file(*compressor, file);
+    } else if (!closed_file_relative_to_bag.empty()) {
+      compress_file(*compressor, closed_file_relative_to_bag);
+
+      // Execute callbacks from the base class
+      static const std::string compressor_ext = "." + compressor->get_compression_identifier();
+      auto closed_file =
+        (fs::path(base_folder_) / (closed_file_relative_to_bag + compressor_ext)).string();
+      std::string new_file;
+      // To determine, a new_file we can't rely on the metadata_.relative_file_paths.back(),
+      // because other compressor threads may have already pushed a new item above.
+      {
+        std::lock_guard<std::recursive_mutex> lock(storage_mutex_);
+        auto iter = std::find(
+          metadata_.relative_file_paths.begin(), metadata_.relative_file_paths.end(),
+          closed_file_relative_to_bag + compressor_ext);
+        if (iter != metadata_.relative_file_paths.end()) {
+          ++iter;
+          if (iter != metadata_.relative_file_paths.end()) {
+            new_file = (fs::path(base_folder_) / *iter).string();
+          }
+        }
+      }
+      if (!new_file.empty()) {
+        // The new_file is empty when we compressed the last file after calling close().
+        // Note: We shall not call 'execute_bag_split_callbacks(closed_file, new_file)' for the
+        // last compressed file because it will be called inside base class
+        // SequentialWriter::close().
+        SequentialWriter::execute_bag_split_callbacks(closed_file, new_file);
+      }
     }
   }
 }
@@ -300,14 +330,17 @@ void SequentialCompressionWriter::split_bagfile()
   std::lock_guard<std::mutex> compressor_lock(compressor_queue_mutex_);
 
   // Grab last file before calling common splitting logic, which pushes the new filename
-  const auto last_file = metadata_.relative_file_paths.back();
-  SequentialWriter::split_bagfile();
+  const auto last_file_relative_to_bag = metadata_.relative_file_paths.back();
+  const auto new_file = SequentialWriter::split_bagfile_local(false);
 
   // If we're in FILE compression mode, push this file's name on to the queue so another
   // thread will handle compressing it.  If not, we can just carry on.
   if (compression_options_.compression_mode == rosbag2_compression::CompressionMode::FILE) {
-    compressor_file_queue_.push(last_file);
+    compressor_file_queue_.push(last_file_relative_to_bag);
     compressor_condition_.notify_one();
+  } else {
+    auto last_file = (fs::path(base_folder_) / last_file_relative_to_bag).string();
+    SequentialWriter::execute_bag_split_callbacks(last_file, new_file);
   }
 
   if (!storage_) {
@@ -332,6 +365,7 @@ void SequentialCompressionWriter::write(
   // If the compression mode is MESSAGE, push the message into a queue that will be handled
   // by the compression threads.
   if (compression_options_.compression_mode == CompressionMode::FILE) {
+    std::lock_guard<std::recursive_mutex> lock(storage_mutex_);
     SequentialWriter::write(message);
   } else {
     // since the compression operation will manipulate memory inplace, thus
@@ -372,25 +406,28 @@ void SequentialCompressionWriter::write(
     message_copy->serialized_data->buffer_capacity = message->serialized_data->buffer_capacity;
     message_copy->serialized_data->buffer_length = message->serialized_data->buffer_length;
 
-    std::lock_guard<std::mutex> lock(compressor_queue_mutex_);
-    while (compressor_message_queue_.size() > compression_options_.compression_queue_size) {
+    std::unique_lock<std::mutex> lock(compressor_queue_mutex_);
+    while (compressor_message_queue_.size() > compression_options_.compression_queue_size &&
+      compression_options_.compression_queue_size > 0u)
+    {
       compressor_message_queue_.pop();
     }
+
+    // If no message should be dropped and the queue has still messages,
+    // compress and write immediately
+    if (compression_options_.compression_queue_size == 0u &&
+      compressor_message_queue_.size() > compression_options_.compression_threads)
+    {
+      compressor_condition_.wait(
+        lock,
+        [&] {
+          return !compression_is_running_ ||
+          compressor_message_queue_.size() <= compression_options_.compression_threads;
+        });
+    }
+
     compressor_message_queue_.push(message_copy);
     compressor_condition_.notify_one();
-  }
-}
-
-bool SequentialCompressionWriter::should_split_bagfile(
-  const std::chrono::time_point<std::chrono::high_resolution_clock> & current_time)
-{
-  if (storage_options_.max_bagfile_size ==
-    rosbag2_storage::storage_interfaces::MAX_BAGFILE_SIZE_NO_SPLIT)
-  {
-    return false;
-  } else {
-    std::lock_guard<std::recursive_mutex> lock(storage_mutex_);
-    return SequentialWriter::should_split_bagfile(current_time);
   }
 }
 

@@ -16,6 +16,7 @@ from argparse import FileType
 
 from rclpy.qos import InvalidQoSProfileException
 from ros2bag.api import add_standard_reader_args
+from ros2bag.api import check_not_negative_float
 from ros2bag.api import check_not_negative_int
 from ros2bag.api import check_positive_float
 from ros2bag.api import convert_yaml_to_qos_profile
@@ -85,7 +86,7 @@ class PlayVerb(VerbExtension):
             '-p', '--start-paused', action='store_true', default=False,
             help='Start the playback player in a paused state.')
         parser.add_argument(
-            '--start-offset', type=check_positive_float, default=0.0,
+            '--start-offset', type=check_not_negative_float, default=0.0,
             help='Start the playback player this many seconds into the bag file.')
         parser.add_argument(
             '--wait-for-all-acked', type=check_not_negative_int, default=-1,

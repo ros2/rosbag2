@@ -2,6 +2,9 @@
 Changelog for package rosbag2_transport
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.15.11 (2024-05-20)
+--------------------
+
 0.15.10 (2024-05-17)
 --------------------
 * Add /bigobj to MSVC compiles. (`#1571 <https://github.com/ros2/rosbag2/issues/1571>`_)

@@ -21,6 +21,7 @@ from ros2bag.api import convert_yaml_to_qos_profile
 from ros2bag.api import print_error
 from ros2bag.verb import VerbExtension
 from ros2cli.node import NODE_NAME_PREFIX
+from rosbag2_py import get_default_storage_id
 from rosbag2_py import get_registered_compressors
 from rosbag2_py import get_registered_serializers
 from rosbag2_py import get_registered_writers
@@ -35,7 +36,9 @@ class RecordVerb(VerbExtension):
 
     def add_arguments(self, parser, cli_name):  # noqa: D102
         writer_choices = get_registered_writers()
-        default_writer = 'sqlite3' if 'sqlite3' in writer_choices else writer_choices[0]
+        default_storage_id = get_default_storage_id()
+        default_writer = default_storage_id if default_storage_id in writer_choices else \
+            next(iter(writer_choices))
 
         compression_format_choices = get_registered_compressors()
         serialization_choices = get_registered_serializers()
@@ -202,8 +205,8 @@ class RecordVerb(VerbExtension):
                                'by the MCAP storage plugin. You can enable chunk compression by '
                                'setting `compression: \'Zstd\'` in storage config')
 
-        if args.compression_queue_size < 1:
-            return print_error('Compression queue size must be at least 1.')
+        if args.compression_queue_size < 0:
+            return print_error('Compression queue size must be at least 0.')
 
         args.compression_mode = args.compression_mode.upper()
 

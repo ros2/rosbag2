@@ -26,9 +26,11 @@
 #include "rosbag2_cpp/writer.hpp"
 
 #include "rosbag2_storage/bag_metadata.hpp"
+#include "rosbag2_storage/default_storage_id.hpp"
 #include "rosbag2_storage/metadata_io.hpp"
 #include "rosbag2_storage/topic_metadata.hpp"
 
+#include "rosbag2_test_common/tested_storage_ids.hpp"
 #include "rosbag2_test_common/temporary_directory_fixture.hpp"
 
 #include "test_msgs/msg/basic_types.hpp"
@@ -40,7 +42,7 @@
 #include "mock_storage_factory.hpp"
 
 using namespace testing;  // NOLINT
-using rosbag2_test_common::TemporaryDirectoryFixture;
+using rosbag2_test_common::ParametrizedTemporaryDirectoryFixture;
 
 class SequentialReaderTest : public Test
 {
@@ -217,20 +219,32 @@ TEST_F(SequentialReaderTest, next_file_calls_callback) {
   EXPECT_EQ(opened_file, bag_file_2_path_.string());
 }
 
-TEST_F(TemporaryDirectoryFixture, reader_accepts_bare_file) {
+TEST_P(ParametrizedTemporaryDirectoryFixture, reader_accepts_bare_file) {
   const auto bag_path = rcpputils::fs::path(temporary_dir_path_) / "bag";
-  const auto expected_bagfile_path = bag_path / "bag_0.db3";
+  const auto storage_id = GetParam();
 
   {
     // Create an empty bag with default storage
     rosbag2_cpp::Writer writer;
-    writer.open(bag_path.string());
+    rosbag2_storage::StorageOptions options;
+    options.uri = bag_path.string();
+    options.storage_id = storage_id;
+    writer.open(options);
     test_msgs::msg::BasicTypes msg;
     writer.write(msg, "testtopic", rclcpp::Time{});
   }
 
+  rosbag2_storage::MetadataIo metadata_io;
+  auto metadata = metadata_io.read_metadata(bag_path.string());
+  auto first_storage = bag_path / metadata.relative_file_paths[0];
   rosbag2_cpp::Reader reader;
-  EXPECT_NO_THROW(reader.open(expected_bagfile_path.string()));
+  EXPECT_NO_THROW(reader.open(first_storage.string()));
   EXPECT_TRUE(reader.has_next());
   EXPECT_THAT(reader.get_metadata().topics_with_message_count, SizeIs(1));
 }
+
+INSTANTIATE_TEST_SUITE_P(
+  BareFileTests,
+  ParametrizedTemporaryDirectoryFixture,
+  ValuesIn(rosbag2_test_common::kTestedStorageIDs)
+);

@@ -133,6 +133,11 @@ protected:
   std::shared_ptr<rosbag2_cpp::cache::MessageCacheInterface> message_cache_;
   std::unique_ptr<rosbag2_cpp::cache::CacheConsumer> cache_consumer_;
 
+  std::string split_bagfile_local(bool execute_callbacks = true);
+
+  void execute_bag_split_callbacks(
+    const std::string & closed_file, const std::string & opened_file);
+
   void switch_to_next_storage();
 
   std::string format_storage_uri(
