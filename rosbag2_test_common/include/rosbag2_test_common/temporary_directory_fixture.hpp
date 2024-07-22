@@ -31,12 +31,12 @@ class TemporaryDirectoryFixture : public Test
 public:
   TemporaryDirectoryFixture()
   {
-    temporary_dir_path_ = rcpputils::fs::create_temp_directory("tmp_test_dir_").string();
+    temporary_dir_path_ = rcpputils::fs::create_temporary_directory("tmp_test_dir_").string();
   }
 
   ~TemporaryDirectoryFixture() override
   {
-    rcpputils::fs::remove_all(rcpputils::fs::path(temporary_dir_path_));
+    std::filesystem::remove_all(std::filesystem::path(temporary_dir_path_));
   }
 
   std::string temporary_dir_path_;

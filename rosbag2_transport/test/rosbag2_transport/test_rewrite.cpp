@@ -53,7 +53,7 @@ class TestRewrite : public Test, public WithParamInterface<std::string>
 public:
   TestRewrite()
   {
-    auto tmp_dir = rcpputils::fs::create_temp_directory("test_bag_rewrite");
+    auto tmp_dir = rcpputils::fs::create_temporary_directory("test_bag_rewrite");
     output_dir_ = fs::path(tmp_dir.string());
     storage_id_ = GetParam();
     bags_path_ = fs::path(_SRC_RESOURCES_DIR_PATH) / storage_id_;
