@@ -15,13 +15,38 @@
 #include <sstream>
 
 #include "format_service_info.hpp"
+#include "rosbag2_cpp/service_utils.hpp"
+
+namespace
+{
+
+std::string format_file_size(uint64_t file_size)
+{
+  double size = static_cast<double>(file_size);
+  static const char * units[] = {"B", "KiB", "MiB", "GiB", "TiB"};
+  double reference_number_bytes = 1024;
+  int index = 0;
+  while (size >= reference_number_bytes && index < 4) {
+    size /= reference_number_bytes;
+    index++;
+  }
+
+  std::stringstream rounded_size;
+  int size_format_precision = index == 0 ? 0 : 1;
+  rounded_size << std::setprecision(size_format_precision) << std::fixed << size;
+  return rounded_size.str() + " " + units[index];
+}
+
+}  // namespace
 
 namespace rosbag2_py
 {
 
 std::string
 format_service_info(
-  std::vector<std::shared_ptr<rosbag2_cpp::rosbag2_service_info_t>> & service_info_list)
+  std::vector<std::shared_ptr<rosbag2_cpp::rosbag2_service_info_t>> & service_info_list,
+  const std::unordered_map<std::string, uint64_t> & messages_size,
+  bool verbose)
 {
   std::stringstream info_stream;
   const std::string service_info_string = "Service information: ";
@@ -34,11 +59,21 @@ format_service_info(
   }
 
   auto print_service_info =
-    [&info_stream](const std::shared_ptr<rosbag2_cpp::rosbag2_service_info_t> & si) -> void {
+    [&info_stream, &messages_size, verbose](
+    const std::shared_ptr<rosbag2_cpp::rosbag2_service_info_t> & si) -> void {
       info_stream << "Service: " << si->name << " | ";
       info_stream << "Type: " << si->type << " | ";
       info_stream << "Request Count: " << si->request_count << " | ";
       info_stream << "Response Count: " << si->response_count << " | ";
+      if (verbose) {
+        uint64_t service_size = 0;
+        auto service_size_iter = messages_size.find(
+          rosbag2_cpp::service_name_to_service_event_topic_name(si->name));
+        if (service_size_iter != messages_size.end()) {
+          service_size = service_size_iter->second;
+        }
+        info_stream << "Size Contribution: " << format_file_size(service_size) << " | ";
+      }
       info_stream << "Serialization Format: " << si->serialization_format;
       info_stream << std::endl;
     };

@@ -19,6 +19,7 @@
 #include "format_bag_metadata.hpp"
 #include "format_service_info.hpp"
 #include "rosbag2_cpp/info.hpp"
+#include "rosbag2_cpp/service_utils.hpp"
 #include "rosbag2_storage/bag_metadata.hpp"
 
 #include "pybind11.hpp"
@@ -41,12 +42,27 @@ public:
     return info_->read_metadata(uri, storage_id);
   }
 
-  void read_metadata_and_output_service_verbose(
-    const std::string & uri,
-    const std::string & storage_id)
+  void print_output(const rosbag2_storage::BagMetadata & metadata_info)
   {
-    auto metadata_info = read_metadata(uri, storage_id);
+    // Output formatted metadata
+    std::cout << format_bag_meta_data(metadata_info) << std::endl;
+  }
 
+  void print_output_topic_name_only(const rosbag2_storage::BagMetadata & metadata_info)
+  {
+    for (const auto & topic_info : metadata_info.topics_with_message_count) {
+      if (!rosbag2_cpp::is_service_event_topic(
+          topic_info.topic_metadata.name,
+          topic_info.topic_metadata.type))
+      {
+        std::cout << topic_info.topic_metadata.name << std::endl;
+      }
+    }
+  }
+
+  void print_output_verbose(
+    const std::string & uri, const rosbag2_storage::BagMetadata & metadata_info)
+  {
     std::vector<std::shared_ptr<rosbag2_cpp::rosbag2_service_info_t>> all_services_info;
     for (auto & file_info : metadata_info.files) {
       auto services_info = info_->read_service_info(
@@ -60,9 +76,19 @@ public:
       }
     }
 
+    std::unordered_map<std::string, uint64_t> messages_size = {};
+    for (const auto & file_info : metadata_info.files) {
+      auto messages_size_tmp = info_->compute_messages_size_contribution(
+        uri + "/" + file_info.path,
+        metadata_info.storage_identifier);
+      for (const auto & topic_size_tmp : messages_size_tmp) {
+        messages_size[topic_size_tmp.first] += topic_size_tmp.second;
+      }
+    }
+
     // Output formatted metadata and service info
-    std::cout << format_bag_meta_data(metadata_info, true);
-    std::cout << format_service_info(all_services_info) << std::endl;
+    std::cout << format_bag_meta_data(metadata_info, messages_size, true, true);
+    std::cout << format_service_info(all_services_info, messages_size, true) << std::endl;
   }
 
 protected:
@@ -77,7 +103,7 @@ PYBIND11_MODULE(_info, m) {
   pybind11::class_<rosbag2_py::Info>(m, "Info")
   .def(pybind11::init())
   .def("read_metadata", &rosbag2_py::Info::read_metadata)
-  .def(
-    "read_metadata_and_output_service_verbose",
-    &rosbag2_py::Info::read_metadata_and_output_service_verbose);
+  .def("print_output", &rosbag2_py::Info::print_output)
+  .def("print_output_topic_name_only", &rosbag2_py::Info::print_output_topic_name_only)
+  .def("print_output_verbose", &rosbag2_py::Info::print_output_verbose);
 }

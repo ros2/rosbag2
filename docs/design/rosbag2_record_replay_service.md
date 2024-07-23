@@ -78,7 +78,7 @@ A new parameter is added.
 
 - `-v` or `--verbose`
 
-    This parameter only affects the service event topic. if `-v` or `--verbose` is set, the info command shows the number of requests and responses for each service based on the service event. Otherwise, only show the number of service events. Note that parsing the number of request and response need spent time. The duration of the parsing is related to the number of recorded service events.
+    If `-v` or `--verbose` is set, the info command shows two additional pieces of information: the size contribution of topics and services, and the number of requests and responses for each service based on the service event. Otherwise, only show the message count of the topics and the general number of service events. Note that parsing the messages need spent time. The duration of the parsing is related to the number of recorderd topic messages and service events.
 
 
 Without `-v` or `--verbose` parameter, info command shows as below example.
@@ -111,15 +111,15 @@ Duration:          15.59s
 Start:             May 19 2023 13:22:25.340 (1684473745.340)
 End:               May 19 2023 13:22:40.400 (1684473760.400)
 Messages:          60
-Topic information: Topic: /chatter | Type: std_msgs/msg/String | Count: 16 | Serialization Format: cdr
-                   Topic: /events/write_split | Type: rosbag2_interfaces/msg/WriteSplitEvent | Count: 0 | Serialization Format: cdr
-                   Topic: /parameter_events | Type: rcl_interfaces/msg/ParameterEvent | Count: 0 | Serialization Format: cdr
-                   Topic: /rosout | Type: rcl_interfaces/msg/Log | Count: 44 | Serialization Format: cdr
+Topic information: Topic: /chatter | Type: std_msgs/msg/String | Count: 16 | Size Contribution XX xxB | Serialization Format: cdr
+                   Topic: /events/write_split | Type: rosbag2_interfaces/msg/WriteSplitEvent | Count: 0 | Size Contribution 0 B | Serialization Format: cdr
+                   Topic: /parameter_events | Type: rcl_interfaces/msg/ParameterEvent | Count: 0 | Size Contribution 0 B | Serialization Format: cdr
+                   Topic: /rosout | Type: rcl_interfaces/msg/Log | Count: 44 | Size Contribution XX xxB | Serialization Format: cdr
 
 >>>> The below is new added items for service <<<<<<<
 Service : XX  <== The number of service
-Service information: Service: /xxx/xxx | Type: xxx/xxx/xxx | Request Count: XX | Response Count: XX | Serialization Format: XX
-                     Service: /xxx/xxx | Type: xxx/xxx/xxx | Request Count: XX | Response Count: XX | Serialization Format: XX
+Service information: Service: /xxx/xxx | Type: xxx/xxx/xxx | Request Count: XX | Response Count: XX | Size Contribution XX xxB | Serialization Format: XX
+                     Service: /xxx/xxx | Type: xxx/xxx/xxx | Request Count: XX | Response Count: XX | Size Contribution XX xxB | Serialization Format: XX
 ```
 
 ### Expand the 'play' command
