@@ -44,14 +44,12 @@ class SimpleBagReader(Node):
 
 
 def main(args=None):
-    rclpy.init(args=args)
     try:
-        sbr = SimpleBagReader(sys.argv[1])
-        rclpy.spin(sbr)
-    except KeyboardInterrupt:
+        with rclpy.init(args=args):
+            sbr = SimpleBagReader(sys.argv[1])
+            rclpy.spin(sbr)
+    except (KeyboardInterrupt, ExternalShutdownException):
         pass
-    except ExternalShutdownException:
-        rclpy.shutdown()
 
 
 if __name__ == '__main__':
