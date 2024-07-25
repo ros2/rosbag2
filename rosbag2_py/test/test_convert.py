@@ -22,7 +22,7 @@ from rosbag2_py import (
     bag_rewrite,
     get_default_storage_id,
     StorageOptions,
-)
+)  # noqa: E402
 
 RESOURCES_PATH = Path(os.environ['ROSBAG2_PY_TEST_RESOURCES_DIR'])
 
