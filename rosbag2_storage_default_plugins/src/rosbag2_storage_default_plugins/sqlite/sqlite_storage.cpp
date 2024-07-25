@@ -16,6 +16,7 @@
 
 #include <sys/stat.h>
 
+#include <algorithm>
 #include <atomic>
 #include <chrono>
 #include <cstring>
@@ -538,7 +539,7 @@ rosbag2_storage::BagMetadata SqliteStorage::get_metadata()
       auto & topics_list = metadata.topics_with_message_count;
       auto it = std::find_if(
         topics_list.begin(), topics_list.end(),
-        [&](const rosbag2_storage::TopicInformation & topic_info) {
+        [&topic_metadata = topic_metadata](const rosbag2_storage::TopicInformation & topic_info) {
           return topic_info.topic_metadata == topic_metadata;
         });
       if (it != topics_list.end()) {
@@ -570,7 +571,7 @@ rosbag2_storage::BagMetadata SqliteStorage::get_metadata()
       auto & topics_list = metadata.topics_with_message_count;
       auto it = std::find_if(
         topics_list.begin(), topics_list.end(),
-        [&](const rosbag2_storage::TopicInformation & topic_info) {
+        [&topic_metadata = topic_metadata](const rosbag2_storage::TopicInformation & topic_info) {
           return topic_info.topic_metadata == topic_metadata;
         });
       if (it != topics_list.end()) {
