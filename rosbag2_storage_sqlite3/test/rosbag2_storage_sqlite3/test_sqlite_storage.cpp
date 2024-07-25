@@ -76,6 +76,22 @@ TEST_F(StorageTestFixture, string_messages_are_written_and_read_to_and_from_sqli
   }
 }
 
+TEST_F(StorageTestFixture, get_bagfile_size_does_not_return_zero_size) {
+  std::vector<std::tuple<std::string, int64_t, std::string, std::string, std::string>>
+  string_messages =
+  {std::make_tuple("first message", 1, "", "", ""),
+    std::make_tuple("second message", 2, "", "", "")};
+
+  write_messages_to_sqlite(string_messages);
+  std::unique_ptr<rosbag2_storage::storage_interfaces::ReadOnlyInterface> readable_storage =
+    std::make_unique<rosbag2_storage_plugins::SqliteStorage>();
+
+  auto db_filename = (std::filesystem::path(temporary_dir_path_) / "rosbag.db3").generic_string();
+  readable_storage->open({db_filename, kPluginID});
+
+  EXPECT_GT(readable_storage->get_bagfile_size(), 0);
+}
+
 TEST_F(StorageTestFixture, has_next_return_false_if_there_are_no_more_messages) {
   std::vector<std::tuple<std::string, int64_t, std::string, std::string, std::string>>
   string_messages =
