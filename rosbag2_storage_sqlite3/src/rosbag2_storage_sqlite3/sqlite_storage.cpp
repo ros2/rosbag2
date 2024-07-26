@@ -217,16 +217,15 @@ void SqliteStorage::open(
     throw std::runtime_error("Failed to setup storage. Error: " + std::string(e.what()));
   }
 
-  db_page_size_ = get_page_size();
-  db_file_size_ = 0;
   page_count_statement_ = database_->prepare_statement("PRAGMA page_count;");
+  db_page_size_ = get_page_size();
+  db_file_size_ = db_page_size_ * read_total_page_count_locked();
 
   // initialize only for READ_WRITE since the DB is already initialized if in APPEND.
   if (is_read_write(io_flag)) {
     db_schema_version_ = kDBSchemaVersion_;
     std::lock_guard<std::mutex> db_lock(db_read_write_mutex_);
     initialize();
-    db_file_size_ = db_page_size_ * read_total_page_count_locked();
   } else {
     db_schema_version_ = read_db_schema_version();
     read_metadata();
