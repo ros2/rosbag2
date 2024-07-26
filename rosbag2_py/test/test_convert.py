@@ -15,10 +15,19 @@
 import os
 from pathlib import Path
 
+<<<<<<< HEAD
 import pytest
 
 from rosbag2_py import bag_rewrite, StorageOptions
 from rosbag2_test_common import TESTED_STORAGE_IDS
+=======
+import common  # noqa
+from rosbag2_py import (
+    bag_rewrite,
+    get_default_storage_id,
+    StorageOptions,
+)  # noqa: E402
+>>>>>>> 5da1796 ([Humble] Add topics with zero message counts to the SQLiteStorage::get_metadata(). (#1722))
 
 RESOURCES_PATH = Path(os.environ['ROSBAG2_PY_TEST_RESOURCES_DIR'])
 

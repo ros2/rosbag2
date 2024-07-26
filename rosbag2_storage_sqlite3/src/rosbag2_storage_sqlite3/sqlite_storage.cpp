@@ -16,6 +16,7 @@
 
 #include <sys/stat.h>
 
+#include <algorithm>
 #include <atomic>
 #include <chrono>
 #include <cstring>
@@ -582,6 +583,7 @@ void SqliteStorage::prepare_for_reading()
 void SqliteStorage::fill_topics_and_types()
 {
   if (database_->field_exists("topics", "offered_qos_profiles")) {
+<<<<<<< HEAD:rosbag2_storage_sqlite3/src/rosbag2_storage_sqlite3/sqlite_storage.cpp
     if (database_->field_exists("topics", "type_description_hash")) {
       auto statement = database_->prepare_statement(
         "SELECT name, type, serialization_format, offered_qos_profiles, type_description_hash"
@@ -608,6 +610,16 @@ void SqliteStorage::fill_topics_and_types()
         all_topics_and_types_.push_back(
           {std::get<0>(result), std::get<1>(result), std::get<2>(result), std::get<3>(result), ""});
       }
+=======
+    auto statement = database_->prepare_statement(
+      "SELECT name, type, serialization_format, offered_qos_profiles FROM topics ORDER BY id;");
+    auto query_results =
+      statement->execute_query<std::string, std::string, std::string, std::string>();
+
+    for (auto result : query_results) {
+      all_topics_and_types_.push_back(
+        {std::get<0>(result), std::get<1>(result), std::get<2>(result), std::get<3>(result)});
+>>>>>>> 5da1796 ([Humble] Add topics with zero message counts to the SQLiteStorage::get_metadata(). (#1722)):rosbag2_storage_default_plugins/src/rosbag2_storage_default_plugins/sqlite/sqlite_storage.cpp
     }
   } else {
     auto statement = database_->prepare_statement(
@@ -616,7 +628,11 @@ void SqliteStorage::fill_topics_and_types()
 
     for (auto result : query_results) {
       all_topics_and_types_.push_back(
+<<<<<<< HEAD:rosbag2_storage_sqlite3/src/rosbag2_storage_sqlite3/sqlite_storage.cpp
         {std::get<0>(result), std::get<1>(result), std::get<2>(result), "", ""});
+=======
+        {std::get<0>(result), std::get<1>(result), std::get<2>(result), ""});
+>>>>>>> 5da1796 ([Humble] Add topics with zero message counts to the SQLiteStorage::get_metadata(). (#1722)):rosbag2_storage_default_plugins/src/rosbag2_storage_default_plugins/sqlite/sqlite_storage.cpp
     }
   }
 }
@@ -666,6 +682,14 @@ void SqliteStorage::read_metadata()
   rcutils_time_point_value_t min_time = INT64_MAX;
   rcutils_time_point_value_t max_time = 0;
 
+  if (all_topics_and_types_.empty()) {
+    fill_topics_and_types();
+  }
+  metadata.topics_with_message_count.reserve(all_topics_and_types_.size());
+  for (const auto & topic_metadata : all_topics_and_types_) {
+    metadata.topics_with_message_count.push_back({topic_metadata, 0});
+  }
+
   if (database_->field_exists("topics", "offered_qos_profiles")) {
     if (database_->field_exists("topics", "type_description_hash")) {
       std::string query =
@@ -679,6 +703,7 @@ void SqliteStorage::read_metadata()
         std::string, std::string, std::string, int, rcutils_time_point_value_t,
         rcutils_time_point_value_t, std::string, std::string>();
 
+<<<<<<< HEAD:rosbag2_storage_sqlite3/src/rosbag2_storage_sqlite3/sqlite_storage.cpp
       for (auto result : query_results) {
         metadata_.topics_with_message_count.push_back(
           {
@@ -686,6 +711,24 @@ void SqliteStorage::read_metadata()
                 result), std::get<7>(result)},
             static_cast<size_t>(std::get<3>(result))
           });
+=======
+    for (auto result : query_results) {
+      const rosbag2_storage::TopicMetadata topic_metadata{std::get<0>(result),
+        std::get<1>(result), std::get<2>(result), std::get<6>(result)};
+      auto & topics_list = metadata.topics_with_message_count;
+      auto it = std::find_if(
+        topics_list.begin(), topics_list.end(),
+        [&topic_metadata = topic_metadata](const rosbag2_storage::TopicInformation & topic_info) {
+          return topic_info.topic_metadata == topic_metadata;
+        });
+      if (it != topics_list.end()) {
+        it->message_count = static_cast<size_t>(std::get<3>(result));
+      } else {
+        metadata.topics_with_message_count.push_back(
+          {topic_metadata, static_cast<size_t>(std::get<3>(result))}
+        );
+      }
+>>>>>>> 5da1796 ([Humble] Add topics with zero message counts to the SQLiteStorage::get_metadata(). (#1722)):rosbag2_storage_default_plugins/src/rosbag2_storage_default_plugins/sqlite/sqlite_storage.cpp
 
         metadata_.message_count += std::get<3>(result);
         min_time = std::get<4>(result) < min_time ? std::get<4>(result) : min_time;
@@ -728,12 +771,29 @@ void SqliteStorage::read_metadata()
       rcutils_time_point_value_t>();
 
     for (auto result : query_results) {
+<<<<<<< HEAD:rosbag2_storage_sqlite3/src/rosbag2_storage_sqlite3/sqlite_storage.cpp
       metadata_.topics_with_message_count.push_back(
         {
           {std::get<0>(result), std::get<1>(result), std::get<2>(
               result), "", ""},
           static_cast<size_t>(std::get<3>(result))
+=======
+      const rosbag2_storage::TopicMetadata topic_metadata{std::get<0>(result),
+        std::get<1>(result), std::get<2>(result), ""};
+      auto & topics_list = metadata.topics_with_message_count;
+      auto it = std::find_if(
+        topics_list.begin(), topics_list.end(),
+        [&topic_metadata = topic_metadata](const rosbag2_storage::TopicInformation & topic_info) {
+          return topic_info.topic_metadata == topic_metadata;
+>>>>>>> 5da1796 ([Humble] Add topics with zero message counts to the SQLiteStorage::get_metadata(). (#1722)):rosbag2_storage_default_plugins/src/rosbag2_storage_default_plugins/sqlite/sqlite_storage.cpp
         });
+      if (it != topics_list.end()) {
+        it->message_count = static_cast<size_t>(std::get<3>(result));
+      } else {
+        metadata.topics_with_message_count.push_back(
+          {topic_metadata, static_cast<size_t>(std::get<3>(result))}
+        );
+      }
 
       metadata_.message_count += std::get<3>(result);
       min_time = std::get<4>(result) < min_time ? std::get<4>(result) : min_time;
