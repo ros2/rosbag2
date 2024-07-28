@@ -2,6 +2,12 @@
 Changelog for package rosbag2_tests
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.15.12 (2024-07-28)
+--------------------
+* [humble] Fix for a false negative integration test with bag split in recorder (backport `#1743 <https://github.com/ros2/rosbag2/issues/1743>`_) (`#1751 <https://github.com/ros2/rosbag2/issues/1751>`_)
+* [humble] Bugfix for wrong timestamps in ros2 bag info (backport `#1745 <https://github.com/ros2/rosbag2/issues/1745>`_) (`#1754 <https://github.com/ros2/rosbag2/issues/1754>`_)
+* Contributors: mergify[bot]
+
 0.15.11 (2024-05-20)
 --------------------
 

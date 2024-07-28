@@ -2,6 +2,12 @@
 Changelog for package rosbag2_compression
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.15.12 (2024-07-28)
+--------------------
+* [humble] Bugfix for bag_split event callbacks called to early with file compression (backport `#1643 <https://github.com/ros2/rosbag2/issues/1643>`_) (`#1733 <https://github.com/ros2/rosbag2/issues/1733>`_)
+* [humble] Add option to prevent message loss while converting (backport `#1058 <https://github.com/ros2/rosbag2/issues/1058>`_) (`#1749 <https://github.com/ros2/rosbag2/issues/1749>`_)
+* Contributors: mergify[bot]
+
 0.15.11 (2024-05-20)
 --------------------
 * [humble] Rollback to rcpputils::fs and workaround failure in "open_succeds_twice" on second run. (`#1666 <https://github.com/ros2/rosbag2/issues/1666>`_)

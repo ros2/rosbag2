@@ -2,6 +2,12 @@
 Changelog for package rosbag2_storage
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.15.12 (2024-07-28)
+--------------------
+* [humble] Remove explicit sqlite3 from code (backport `#1166 <https://github.com/ros2/rosbag2/issues/1166>`_) (`#1723 <https://github.com/ros2/rosbag2/issues/1723>`_)
+* [humble] rosbag2_storage: expose default storage ID as method (backport `#1146 <https://github.com/ros2/rosbag2/issues/1146>`_) (`#1724 <https://github.com/ros2/rosbag2/issues/1724>`_)
+* Contributors: mergify[bot]
+
 0.15.11 (2024-05-20)
 --------------------
 

@@ -2,6 +2,15 @@
 Changelog for package rosbag2
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.15.12 (2024-07-28)
+--------------------
+* [Humble] Add topics with zero message counts to the SQLiteStorage::get_metadata(). (`#1722 <https://github.com/ros2/rosbag2/issues/1722>`_)
+* [humble] Bugfix for bag_split event callbacks called to early with file compression (backport `#1643 <https://github.com/ros2/rosbag2/issues/1643>`_) (`#1733 <https://github.com/ros2/rosbag2/issues/1733>`_)
+* [humble] rosbag2_cpp: test more than one storage plugin (backport `#1196 <https://github.com/ros2/rosbag2/issues/1196>`_) (`#1721 <https://github.com/ros2/rosbag2/issues/1721>`_)
+* [humble] Remove explicit sqlite3 from code (backport `#1166 <https://github.com/ros2/rosbag2/issues/1166>`_) (`#1723 <https://github.com/ros2/rosbag2/issues/1723>`_)
+* [humble] rosbag2_storage: expose default storage ID as method (backport `#1146 <https://github.com/ros2/rosbag2/issues/1146>`_) (`#1724 <https://github.com/ros2/rosbag2/issues/1724>`_)
+* Contributors: Michael Orlov, mergify[bot]
+
 0.15.11 (2024-05-20)
 --------------------
 

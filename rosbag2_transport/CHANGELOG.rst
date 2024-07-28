@@ -2,6 +2,13 @@
 Changelog for package rosbag2_transport
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.15.12 (2024-07-28)
+--------------------
+* [humble] Bugfix for bag_split event callbacks called to early with file compression (backport `#1643 <https://github.com/ros2/rosbag2/issues/1643>`_) (`#1733 <https://github.com/ros2/rosbag2/issues/1733>`_)
+* [humble] rosbag2_cpp: test more than one storage plugin (backport `#1196 <https://github.com/ros2/rosbag2/issues/1196>`_) (`#1721 <https://github.com/ros2/rosbag2/issues/1721>`_)
+* [humble] Remove explicit sqlite3 from code (backport `#1166 <https://github.com/ros2/rosbag2/issues/1166>`_) (`#1723 <https://github.com/ros2/rosbag2/issues/1723>`_)
+* Contributors: mergify[bot]
+
 0.15.11 (2024-05-20)
 --------------------
 
