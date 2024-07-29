@@ -2,6 +2,14 @@
 Changelog for package ros2bag
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.15.12 (2024-07-28)
+--------------------
+* [humble] Add option to prevent message loss while converting (backport `#1058 <https://github.com/ros2/rosbag2/issues/1058>`_) (`#1749 <https://github.com/ros2/rosbag2/issues/1749>`_)
+* [humble] rosbag2_cpp: test more than one storage plugin (backport `#1196 <https://github.com/ros2/rosbag2/issues/1196>`_) (`#1721 <https://github.com/ros2/rosbag2/issues/1721>`_)
+* [humble] rosbag2_storage: expose default storage ID as method (backport `#1146 <https://github.com/ros2/rosbag2/issues/1146>`_) (`#1724 <https://github.com/ros2/rosbag2/issues/1724>`_)
+* [humble] Allow to specify start offset from CLI arguments equal to 0.0 for the rosbag2 player (backport `#1682 <https://github.com/ros2/rosbag2/issues/1682>`_) (`#1715 <https://github.com/ros2/rosbag2/issues/1715>`_)
+* Contributors: mergify[bot]
+
 0.15.11 (2024-05-20)
 --------------------
 

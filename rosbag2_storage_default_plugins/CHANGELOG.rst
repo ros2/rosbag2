@@ -2,6 +2,12 @@
 Changelog for package rosbag2_storage_default_plugins
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.15.12 (2024-07-28)
+--------------------
+* [Humble] Add topics with zero message counts to the SQLiteStorage::get_metadata(). (`#1722 <https://github.com/ros2/rosbag2/issues/1722>`_)
+* [humble] Fix for failing throws_on_invalid_pragma_in_config_file test on Windows (backport `#1742 <https://github.com/ros2/rosbag2/issues/1742>`_) (`#1748 <https://github.com/ros2/rosbag2/issues/1748>`_)
+* Contributors: Michael Orlov, mergify[bot]
+
 0.15.11 (2024-05-20)
 --------------------
 

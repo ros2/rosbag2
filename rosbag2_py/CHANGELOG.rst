@@ -2,6 +2,17 @@
 Changelog for package rosbag2_py
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.15.12 (2024-07-28)
+--------------------
+* [Humble] Add topics with zero message counts to the SQLiteStorage::get_metadata(). (`#1722 <https://github.com/ros2/rosbag2/issues/1722>`_)
+* [humble] Bugfix for wrong timestamps in ros2 bag info (backport `#1745 <https://github.com/ros2/rosbag2/issues/1745>`_) (`#1754 <https://github.com/ros2/rosbag2/issues/1754>`_)
+* [humble] Expose py Reader metadata, improve `rosbag2_py.BagMetadata` usability (backport `#1082 <https://github.com/ros2/rosbag2/issues/1082>`_) (`#1404 <https://github.com/ros2/rosbag2/issues/1404>`_)
+* [humble] Remove explicit sqlite3 from code (backport `#1166 <https://github.com/ros2/rosbag2/issues/1166>`_) (`#1723 <https://github.com/ros2/rosbag2/issues/1723>`_)
+* [humble] rosbag2_storage: expose default storage ID as method (backport `#1146 <https://github.com/ros2/rosbag2/issues/1146>`_) (`#1724 <https://github.com/ros2/rosbag2/issues/1724>`_)
+* [rosbag2] Fix typo to properly restore SIGINT hanlder (`#1687 <https://github.com/ros2/rosbag2/issues/1687>`_)
+* [humble] Fix for false negative tests in rosbag2_py (backport `#1592 <https://github.com/ros2/rosbag2/issues/1592>`_) (`#1689 <https://github.com/ros2/rosbag2/issues/1689>`_)
+* Contributors: Eric Cousineau, Michael Orlov, mergify[bot]
+
 0.15.11 (2024-05-20)
 --------------------
 
