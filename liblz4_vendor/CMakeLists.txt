@@ -12,7 +12,7 @@ find_package(lz4 QUIET)
 ament_vendor(liblz4_vendor
   SATISFIED ${lz4_FOUND}
   VCS_URL https://github.com/lz4/lz4.git
-  VCS_VERSION v1.9.4
+  VCS_VERSION v1.10.0
   SOURCE_SUBDIR build/cmake
   CMAKE_ARGS
     -DBUILD_STATIC_LIBS:BOOL=OFF
