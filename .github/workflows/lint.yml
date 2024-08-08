@@ -8,13 +8,13 @@ jobs:
     name: ament_${{ matrix.linter }}
     runs-on: ubuntu-latest
     container:
-      image: rostooling/setup-ros-docker:ubuntu-focal-ros-rolling-ros-base-latest
+      image: rostooling/setup-ros-docker:ubuntu-jammy-ros-rolling-ros-base-latest
     strategy:
       fail-fast: false
       matrix:
           linter: [copyright, xmllint]
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v4
     - uses: ros-tooling/action-ros-lint@v0.1
       with:
         linter: ${{ matrix.linter }}
@@ -39,13 +39,13 @@ jobs:
     name: ament_${{ matrix.linter }}
     runs-on: ubuntu-latest
     container:
-      image: rostooling/setup-ros-docker:ubuntu-focal-ros-rolling-ros-base-latest
+      image: rostooling/setup-ros-docker:ubuntu-jammy-ros-rolling-ros-base-latest
     strategy:
       fail-fast: false
       matrix:
           linter: [cppcheck, cpplint, uncrustify]
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v4
     - uses: ros-tooling/action-ros-lint@v0.1
       with:
         linter: ${{ matrix.linter }}
@@ -67,7 +67,7 @@ jobs:
     name: ament_${{ matrix.linter }}
     runs-on: ubuntu-latest
     container:
-      image: rostooling/setup-ros-docker:ubuntu-focal-ros-rolling-ros-base-latest
+      image: rostooling/setup-ros-docker:ubuntu-jammy-ros-rolling-ros-base-latest
     strategy:
       fail-fast: false
       matrix:
@@ -76,7 +76,7 @@ jobs:
           - linter: clang_format
             arguments: "--config rosbag2_storage_mcap/.clang-format"
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v4
     - uses: ros-tooling/action-ros-lint@v0.1
       with:
         linter: ${{ matrix.linter }}
@@ -88,13 +88,13 @@ jobs:
     name: ament_${{ matrix.linter }}
     runs-on: ubuntu-latest
     container:
-      image: rostooling/setup-ros-docker:ubuntu-focal-ros-rolling-ros-base-latest
+      image: rostooling/setup-ros-docker:ubuntu-jammy-ros-rolling-ros-base-latest
     strategy:
       fail-fast: false
       matrix:
           linter: [pep257, flake8]
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v4
     - uses: ros-tooling/action-ros-lint@v0.1
       with:
         linter: ${{ matrix.linter }}
