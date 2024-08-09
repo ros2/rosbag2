@@ -200,6 +200,11 @@ class RecordVerb(VerbExtension):
             return print_error('Invalid choice: Cannot specify compression format '
                                'without a compression mode.')
 
+        if args.compression_mode == 'message' and args.storage == 'mcap':
+            return print_error("Invalid choice: compression_mode 'message' is not supported "
+                               'by the MCAP storage plugin. You can enable chunk compression by '
+                               "setting `compression: 'Zstd'` in storage config")
+
         if args.compression_queue_size < 0:
             return print_error('Compression queue size must be at least 0.')
 
