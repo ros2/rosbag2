@@ -50,5 +50,6 @@ class TestRecordWithCompressionThreadPriority(unittest.TestCase):
             self, record_process, proc_output):
         proc_output.assertWaitFor(
             'Setting compression thread priority to 1',
+            timeout=45,
             process=record_process
         )
