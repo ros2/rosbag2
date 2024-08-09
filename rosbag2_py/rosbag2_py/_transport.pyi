@@ -48,6 +48,7 @@ class RecordOptions:
     compression_mode: str
     compression_queue_size: int
     compression_threads: int
+    compression_threads_priority: int
     disable_keyboard_controls: bool
     exclude_regex: str
     exclude_service_events: List[str]

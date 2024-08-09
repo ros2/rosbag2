@@ -64,8 +64,9 @@ struct CompressionOptions
   /// \brief // The number of compression threads
   uint64_t compression_threads{0};
   /// \brief If set, the compression thread(s) will try to set the given priority for itself
-  /// For Windows the valid values are: THREAD_PRIORITY_LOWEST, THREAD_PRIORITY_BELOW_NORMAL and
-  /// THREAD_PRIORITY_NORMAL. For POSIX compatible OSes this is the "nice" value.
+  /// For Windows the valid values are: THREAD_PRIORITY_LOWEST=-2, THREAD_PRIORITY_BELOW_NORMAL=-1
+  /// and THREAD_PRIORITY_NORMAL=0. For POSIX compatible OSes this is the "nice" value.
+  /// The nice value range is -20 to +19 where -20 is highest, 0 default and +19 is lowest.
   std::optional<int32_t> thread_priority;
 };
 
