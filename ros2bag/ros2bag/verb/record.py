@@ -196,8 +196,15 @@ def add_recorder_arguments(parser: ArgumentParser) -> None:
              'Default is %(default)d, which will be interpreted as the number of CPU cores.')
     parser.add_argument(
         '--compression-threads-priority', type=int, default=0,
-        help='Thread scheduling priority. Use nice value for Linux and '
-             'priority level for Windows. Default is %(default)d.')
+        help='Compression threads scheduling priority. \nFor Windows the valid values are:'
+             ' THREAD_PRIORITY_LOWEST=-2, THREAD_PRIORITY_BELOW_NORMAL=-1 and'
+             ' THREAD_PRIORITY_NORMAL=0. Please refer to'
+             ' https://learn.microsoft.com/en-us/windows/win32/api/processthreadsapi/nf-processthreadsapi-setthreadpriority'  # noqa E501
+             ' for details.\n'
+             'For POSIX compatible OSes this is the "nice" value. The nice value range is'
+             ' -20 to +19 where -20 is highest, 0 default and +19 is lowest.'
+             ' Please refer to https://man7.org/linux/man-pages/man2/nice.2.html for details.\n'
+             'Default is %(default)d.')
     parser.add_argument(
         '--compression-mode', type=str, default='none',
         choices=['none', 'file', 'message'],
