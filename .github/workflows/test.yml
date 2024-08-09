@@ -98,7 +98,7 @@ jobs:
         git diff --exit-code
       working-directory: ${{ steps.action-ros-ci.outputs.ros-workspace-directory-name }}
       shell: bash
-    - uses: actions/upload-artifact@v1
+    - uses: actions/upload-artifact@v4
       with:
         name: colcon-logs
         path: ros_ws/log
