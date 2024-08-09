@@ -18,7 +18,7 @@ python3 -c 'import rosbag2_py'
 sudo apt update && sudo apt install mypy
 
 # Older Ubuntu
-# sudo pip3 install -U --break-system-packages mypy==1.9
+# pip3 install -U mypy==1.9
 
 cd <rosbag2 git repo>
 stubgen -p rosbag2_py -o rosbag2_py
