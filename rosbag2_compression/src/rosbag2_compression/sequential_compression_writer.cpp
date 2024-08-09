@@ -71,6 +71,9 @@ SequentialCompressionWriter::~SequentialCompressionWriter()
 void SequentialCompressionWriter::compression_thread_fn()
 {
   if (compression_options_.thread_priority) {
+    ROSBAG2_COMPRESSION_LOG_DEBUG_STREAM(
+      "Setting compression thread priority to "
+        << *compression_options_.thread_priority);
 #ifdef _WIN32
     // This must match THREAD_PRIORITY_IDLE, THREAD_PRIORITY_LOWEST...
     int wanted_thread_priority = *compression_options_.thread_priority;

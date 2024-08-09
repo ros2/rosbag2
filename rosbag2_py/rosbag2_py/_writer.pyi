@@ -1,6 +1,6 @@
-from typing import overload
 import rosbag2_py._compression_options
 import rosbag2_py._storage
+from typing import overload
 
 class SequentialCompressionWriter:
     def __init__(self, arg0: rosbag2_py._compression_options.CompressionOptions) -> None: ...

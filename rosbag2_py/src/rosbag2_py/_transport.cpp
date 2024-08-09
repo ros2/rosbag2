@@ -573,6 +573,7 @@ PYBIND11_MODULE(_transport, m) {
   .def_readwrite("compression_format", &RecordOptions::compression_format)
   .def_readwrite("compression_queue_size", &RecordOptions::compression_queue_size)
   .def_readwrite("compression_threads", &RecordOptions::compression_threads)
+  .def_readwrite("compression_threads_priority", &RecordOptions::compression_threads_priority)
   .def_property(
     "topic_qos_profile_overrides",
     &RecordOptions::getTopicQoSProfileOverrides,
