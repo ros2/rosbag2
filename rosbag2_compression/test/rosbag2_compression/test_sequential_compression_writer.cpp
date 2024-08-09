@@ -154,7 +154,7 @@ public:
 
   const uint64_t kDefaultCompressionQueueSize = 1;
   const uint64_t kDefaultCompressionQueueThreads = 4;
-  const std::optional<int32_t> kDefaultCompressionQueueThreadsPriority = std::nullopt;
+  const int32_t kDefaultCompressionQueueThreadsPriority = 0;
 };
 
 TEST_F(SequentialCompressionWriterTest, open_throws_on_empty_storage_options_uri)
