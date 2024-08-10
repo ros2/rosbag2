@@ -217,6 +217,15 @@ void SequentialCompressionWriter::open(
   if (storage_) {
     return;  // The writer already opened.
   }
+  // Note: a better solution was implemented in rosbag2-storage version 0.18+
+  // See MCAPStorage::update_metadata() for details.
+  if (compression_options_.compression_mode == CompressionMode::MESSAGE &&
+    storage_options.storage_id == "mcap")
+  {
+    throw std::runtime_error(
+            "MCAP storage plugin does not support message compression, "
+            "consider using chunk compression by setting `compression: 'Zstd'` in storage config");
+  }
   SequentialWriter::open(storage_options, converter_options);
   setup_compression();
 }
