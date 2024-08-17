@@ -317,7 +317,7 @@ protected:
         [](int /*signum*/) {
           // Note: Using condition_variable from signal handler is not safe and shall not be used.
           rosbag2_py::Player::exit_.store(true);
-      });
+        });
     }
     try {
       auto reader = rosbag2_transport::ReaderWriterFactory::make_reader(storage_options);
@@ -431,7 +431,7 @@ public:
         [](int /*signum*/) {
           // Note: Using condition_variable from signal handler is not safe and shall not be used.
           rosbag2_py::Recorder::exit_.store(true);
-      });
+        });
     }
     try {
       auto exec = std::make_unique<rclcpp::executors::SingleThreadedExecutor>();
