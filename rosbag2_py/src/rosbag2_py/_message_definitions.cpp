@@ -1,4 +1,4 @@
-// Copyright 2018-2021, Bosch Software Innovations GmbH.
+// Copyright 2024 Intrinsic Innovation LLC. All rights reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,23 +12,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef ROSBAG2_PY__FORMAT_BAG_METADATA_HPP_
-#define ROSBAG2_PY__FORMAT_BAG_METADATA_HPP_
+#include "rosbag2_cpp/message_definitions/local_message_definition_source.hpp"
 
-#include <string>
-#include <unordered_map>
+#include "./pybind11.hpp"
 
-#include "rosbag2_storage/bag_metadata.hpp"
+PYBIND11_MODULE(_message_definitions, m) {
+  m.doc() = "Python wrapper of the rosbag2_cpp message definitions API";
 
-namespace rosbag2_py
-{
-
-std::string format_bag_meta_data(
-  const rosbag2_storage::BagMetadata & metadata,
-  const std::unordered_map<std::string, uint64_t> & messages_size = {},
-  bool verbose = false,
-  bool only_topic = false);
-
-}  // namespace rosbag2_py
-
-#endif  // ROSBAG2_PY__FORMAT_BAG_METADATA_HPP_
+  pybind11::class_<rosbag2_cpp::LocalMessageDefinitionSource>(
+    m, "LocalMessageDefinitionSource")
+  .def(pybind11::init<>())
+  .def(
+    "get_full_text", &rosbag2_cpp::LocalMessageDefinitionSource::get_full_text);
+}

@@ -21,6 +21,7 @@ from ros2bag.api import add_writer_storage_plugin_extensions
 from ros2bag.api import convert_service_to_service_event_topic
 from ros2bag.api import convert_yaml_to_qos_profile
 from ros2bag.api import print_error
+from ros2bag.api import print_warn
 from ros2bag.api import SplitLineFormatter
 from ros2bag.verb import VerbExtension
 from ros2cli.node import NODE_NAME_PREFIX
@@ -84,8 +85,7 @@ def add_recorder_arguments(parser: ArgumentParser) -> None:
     parser.add_argument(
         '-e', '--regex', default='',
         help='Record only topics and services containing provided regular expression. '
-             'Overrides --all, --all-topics and --all-services, applies on top of '
-             'topics list and service list.')
+             'Note:  --all, --all-topics or --all-services will override --regex.')
     parser.add_argument(
         '--exclude-regex', default='',
         help='Exclude topics and services containing provided regular expression. '
@@ -98,11 +98,11 @@ def add_recorder_arguments(parser: ArgumentParser) -> None:
     parser.add_argument(
         '--exclude-topics', type=str, metavar='Topic', nargs='+',
         help='Space-delimited list of topics not being recorded. '
-             'Works on top of --all, --all-topics, or --regex.')
+             'Works on top of --all, --all-topics, --topics or --regex.')
     parser.add_argument(
         '--exclude-services', type=str, metavar='ServiceName', nargs='+',
         help='Space-delimited list of services not being recorded. '
-             'Works on top of --all, --all-services, or --regex.')
+             'Works on top of --all, --all-services, --services or --regex.')
 
     # Discovery behavior
     parser.add_argument(
@@ -195,6 +195,17 @@ def add_recorder_arguments(parser: ArgumentParser) -> None:
         help='Number of files or messages that may be compressed in parallel. '
              'Default is %(default)d, which will be interpreted as the number of CPU cores.')
     parser.add_argument(
+        '--compression-threads-priority', type=int, default=0,
+        help='Compression threads scheduling priority. \nFor Windows the valid values are:'
+             ' THREAD_PRIORITY_LOWEST=-2, THREAD_PRIORITY_BELOW_NORMAL=-1 and'
+             ' THREAD_PRIORITY_NORMAL=0. Please refer to'
+             ' https://learn.microsoft.com/en-us/windows/win32/api/processthreadsapi/nf-processthreadsapi-setthreadpriority'  # noqa E501
+             ' for details.\n'
+             'For POSIX compatible OSes this is the "nice" value. The nice value range is'
+             ' -20 to +19 where -20 is highest, 0 default and +19 is lowest.'
+             ' Please refer to https://man7.org/linux/man-pages/man2/nice.2.html for details.\n'
+             'Default is %(default)d.')
+    parser.add_argument(
         '--compression-mode', type=str, default='none',
         choices=['none', 'file', 'message'],
         help='Choose mode of compression for the storage. Default: %(default)s.')
@@ -205,76 +216,85 @@ def add_recorder_arguments(parser: ArgumentParser) -> None:
              'Has no effect if no compression mode is chosen. Default: %(default)s.')
 
 
+def check_necessary_argument(args):
+    # At least one options out of --all, --all-topics, --all-services, --services, --topics,
+    # --topic-types or --regex must be used
+    if not (args.all or args.all_topics or args.all_services or
+            (args.services and len(args.services) > 0) or
+            (args.topics and len(args.topics) > 0) or
+            (args.topic_types and len(args.topic_types) > 0) or args.regex):
+        return False
+    return True
+
+
+def validate_parsed_arguments(args, uri) -> str:
+    if args.topics_positional:
+        print(print_warn('Positional "topics" argument deprecated. '
+                         'Please use optional "--topics" argument instead.'))
+        args.topics = args.topics_positional
+
+    if not check_necessary_argument(args):
+        return print_error('Need to specify at least one option out of --all, --all-topics, '
+                           '--all-services, --services, --topics, --topic-types or --regex')
+
+    if args.exclude_regex and not \
+            (args.all or args.all_topics or args.topic_types or args.all_services or
+             args.regex):
+        return print_error('--exclude-regex argument requires either --all, '
+                           '--all-topics, --topic-types, --all-services or --regex')
+
+    if args.exclude_topics and not \
+            (args.all or args.all_topics or args.topic_types or args.regex):
+        return print_error('--exclude-topics argument requires either --all, --all-topics, '
+                           '--topic-types or --regex')
+
+    if args.exclude_topic_types and not \
+            (args.all or args.all_topics or args.topic_types or args.regex):
+        return print_error('--exclude-topic-types argument requires either --all, '
+                           '--all-topics or --regex')
+
+    if args.exclude_services and not (args.all or args.all_services or args.regex):
+        return print_error('--exclude-services argument requires either --all, --all-services '
+                           'or --regex')
+
+    if (args.all or args.all_services) and args.services:
+        print(print_warn('--all or --all-services will override --services'))
+
+    if (args.all or args.all_topics) and args.topics:
+        print(print_warn('--all or --all-topics will override --topics'))
+
+    if (args.all or args.all_topics or args.all_services) and args.regex:
+        print(print_warn('--all, --all-topics or --all-services will override --regex'))
+
+    if os.path.isdir(uri):
+        return print_error("Output folder '{}' already exists.".format(uri))
+
+    if args.use_sim_time and args.no_discovery:
+        return print_error(
+            '--use-sim-time and --no-discovery both set, but are incompatible settings. '
+            'The /clock topic needs to be discovered to record with sim time.')
+
+    if args.compression_format and args.compression_mode == 'none':
+        return print_error('Invalid choice: Cannot specify compression format '
+                           'without a compression mode.')
+
+    if args.compression_queue_size < 0:
+        return print_error('Compression queue size must be at least 0.')
+
+
 class RecordVerb(VerbExtension):
     """Record ROS data to a bag."""
 
     def add_arguments(self, parser, cli_name):  # noqa: D102
         add_recorder_arguments(parser)
 
-    def _check_necessary_argument(self, args):
-        # At least one options out of --all, --all-topics, --all-services, --services, --topics,
-        # --topic-types or --regex must be used
-        if not (args.all or args.all_topics or args.all_services or
-           args.services or (args.topics and len(args.topics) > 0) or
-           (args.topic_types and len(args.topic_types) > 0) or args.regex):
-            return False
-        return True
-
     def main(self, *, args):  # noqa: D102
-
-        if args.topics_positional:
-            print('Warning! Positional "topics" argument deprecated. '
-                  'Please use optional "--topics" argument instead.')
-            args.topics = args.topics_positional
-
-        if not self._check_necessary_argument(args):
-            return print_error('Need to specify one option out of --all, --all-topics, '
-                               '--all-services, --services, --topics, --topic-types and --regex')
-
-        # Only one option out of --all, --all-services --services or --regex can be used
-        if (args.all and args.all_services) or \
-           ((args.all or args.all_services) and args.regex) or \
-           ((args.all or args.all_services or args.regex) and args.services):
-            return print_error('Must specify only one option out of --all, --all-services, '
-                               '--services or --regex')
-
-        # Only one option out of --all, --all-topics, --topics, --topic-types or --regex can
-        # be used
-        if (args.all and args.all_topics) or \
-           ((args.all or args.all_topics) and args.regex) or \
-           ((args.all or args.all_topics or args.regex) and args.topics) or \
-           ((args.all or args.all_topics or args.regex or args.topics) and args.topic_types):
-            return print_error('Must specify only one option out of --all, --all-topics, '
-                               '--topics, --topic-types or --regex')
-
-        if (args.exclude_regex and
-           not (args.regex or args.all or args.all_topics or args.all_services)):
-            return print_error('--exclude-regex argument requires either --all, '
-                               '--all-topics, --all-services or --regex')
-
-        if args.exclude_topics and not (args.regex or args.all or args.all_topics):
-            return print_error('--exclude-topics argument requires either --all, --all-topics '
-                               'or --regex')
-
-        if args.exclude_topic_types and not (args.regex or args.all or args.all_topics):
-            return print_error('--exclude-topic-types argument requires either --all, '
-                               '--all-topics or --regex')
-
-        if args.exclude_services and not (args.regex or args.all or args.all_services):
-            return print_error('--exclude-services argument requires either --all, --all-services '
-                               'or --regex')
 
         uri = args.output or datetime.datetime.now().strftime('rosbag2_%Y_%m_%d-%H_%M_%S')
 
-        if os.path.isdir(uri):
-            return print_error("Output folder '{}' already exists.".format(uri))
-
-        if args.compression_format and args.compression_mode == 'none':
-            return print_error('Invalid choice: Cannot specify compression format '
-                               'without a compression mode.')
-
-        if args.compression_queue_size < 0:
-            return print_error('Compression queue size must be at least 0.')
+        error_str = validate_parsed_arguments(args, uri)
+        if error_str and len(error_str) > 0:
+            return error_str
 
         args.compression_mode = args.compression_mode.upper()
 
@@ -282,15 +302,9 @@ class RecordVerb(VerbExtension):
         if args.qos_profile_overrides_path:
             qos_profile_dict = yaml.safe_load(args.qos_profile_overrides_path)
             try:
-                qos_profile_overrides = convert_yaml_to_qos_profile(
-                    qos_profile_dict)
+                qos_profile_overrides = convert_yaml_to_qos_profile(qos_profile_dict)
             except (InvalidQoSProfileException, ValueError) as e:
                 return print_error(str(e))
-
-        if args.use_sim_time and args.no_discovery:
-            return print_error(
-                '--use-sim-time and --no-discovery both set, but are incompatible settings. '
-                'The /clock topic needs to be discovered to record with sim time.')
 
         # Prepare custom_data dictionary
         custom_data = {}
@@ -335,6 +349,7 @@ class RecordVerb(VerbExtension):
         record_options.compression_format = args.compression_format
         record_options.compression_queue_size = args.compression_queue_size
         record_options.compression_threads = args.compression_threads
+        record_options.compression_threads_priority = args.compression_threads_priority
         record_options.topic_qos_profile_overrides = qos_profile_overrides
         record_options.include_hidden_topics = args.include_hidden_topics
         record_options.include_unpublished_topics = args.include_unpublished_topics

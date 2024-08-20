@@ -20,6 +20,7 @@ endif()
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(rosbag2_cpp REQUIRED)
+find_package(rosbag2_transport REQUIRED)
 find_package(example_interfaces REQUIRED)
 
 add_executable(simple_bag_recorder src/simple_bag_recorder.cpp)
@@ -31,6 +32,19 @@ target_link_libraries(simple_bag_recorder
 
 install(TARGETS
   simple_bag_recorder
+  DESTINATION lib/${PROJECT_NAME}
+)
+
+add_executable(simple_bag_reader src/simple_bag_reader.cpp)
+target_link_libraries(simple_bag_reader
+  rclcpp::rclcpp
+  rosbag2_cpp::rosbag2_cpp
+  rosbag2_transport::rosbag2_transport
+  ${example_interfaces_TARGETS}
+)
+
+install(TARGETS
+  simple_bag_reader
   DESTINATION lib/${PROJECT_NAME}
 )
 

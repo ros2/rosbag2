@@ -165,4 +165,22 @@ std::vector<std::shared_ptr<rosbag2_service_info_t>> Info::read_service_info(
   return ret_service_info;
 }
 
+std::unordered_map<std::string, uint64_t> Info::compute_messages_size_contribution(
+  const std::string & uri, const std::string & storage_id)
+{
+  rosbag2_storage::StorageFactory factory;
+  auto storage = factory.open_read_only({uri, storage_id});
+  if (!storage) {
+    throw std::runtime_error("No plugin detected that could open file " + uri);
+  }
+
+  std::unordered_map<std::string, uint64_t> messages_size;
+  while (storage->has_next()) {
+    auto bag_msg = storage->read_next();
+    messages_size[bag_msg->topic_name] += bag_msg->serialized_data->buffer_length;
+  }
+
+  return messages_size;
+}
+
 }  // namespace rosbag2_cpp

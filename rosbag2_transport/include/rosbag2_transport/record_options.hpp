@@ -47,7 +47,12 @@ public:
   std::string compression_mode = "";
   std::string compression_format = "";
   uint64_t compression_queue_size = 1;
+  /// \brief // The number of compression threads
   uint64_t compression_threads = 0;
+  /// \brief Compression threads scheduling priority.
+  /// For Windows the valid values are: THREAD_PRIORITY_LOWEST=-2, THREAD_PRIORITY_BELOW_NORMAL=-1
+  /// and THREAD_PRIORITY_NORMAL=0. For POSIX compatible OSes this is the "nice" value.
+  /// The nice value range is -20 to +19 where -20 is highest, 0 default and +19 is lowest.
   int32_t compression_threads_priority = 0;
   std::unordered_map<std::string, rclcpp::QoS> topic_qos_profile_overrides{};
   bool include_hidden_topics = false;

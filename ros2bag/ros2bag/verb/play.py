@@ -16,6 +16,7 @@ from argparse import FileType
 
 from rclpy.qos import InvalidQoSProfileException
 from ros2bag.api import add_standard_reader_args
+from ros2bag.api import check_not_negative_float
 from ros2bag.api import check_not_negative_int
 from ros2bag.api import check_positive_float
 from ros2bag.api import convert_service_to_service_event_topic
@@ -87,7 +88,8 @@ class PlayVerb(VerbExtension):
         clock_args_group.add_argument(
             '--clock', type=positive_float, nargs='?', const=40, default=0,
             help='Publish to /clock at a specific frequency in Hz, to act as a ROS Time Source. '
-                 'Value must be positive. Defaults to not publishing.')
+                 'Value must be positive. Defaults to not publishing.'
+                 'If specified, /clock topic in the bag file is excluded to publish.')
         clock_args_group.add_argument(
             '--clock-topics', type=str, default=[], nargs='+',
             help='List of topics separated by spaces that will trigger a /clock update '
@@ -134,7 +136,7 @@ class PlayVerb(VerbExtension):
             '-p', '--start-paused', action='store_true', default=False,
             help='Start the playback player in a paused state.')
         parser.add_argument(
-            '--start-offset', type=check_positive_float, default=0.0,
+            '--start-offset', type=check_not_negative_float, default=0.0,
             help='Start the playback player this many seconds into the bag file.')
         parser.add_argument(
             '--wait-for-all-acked', type=check_not_negative_int, default=-1,
@@ -212,8 +214,6 @@ class PlayVerb(VerbExtension):
 
         play_options.exclude_regex_to_filter = args.exclude_regex
 
-        play_options.exclude_topics_to_filter = args.exclude_topics if args.exclude_topics else []
-
         play_options.exclude_service_events_to_filter = \
             convert_service_to_service_event_topic(args.exclude_services)
 
@@ -221,6 +221,10 @@ class PlayVerb(VerbExtension):
         play_options.loop = args.loop
         play_options.topic_remapping_options = topic_remapping
         play_options.clock_publish_frequency = args.clock
+        exclude_topics = args.exclude_topics if args.exclude_topics else []
+        if play_options.clock_publish_frequency > 0:
+            exclude_topics.append('/clock')
+        play_options.exclude_topics_to_filter = exclude_topics
         if args.clock_topics_all or len(args.clock_topics) > 0:
             play_options.clock_publish_on_topic_publish = True
         play_options.clock_topics = args.clock_topics

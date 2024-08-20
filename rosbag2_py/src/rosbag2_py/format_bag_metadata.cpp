@@ -42,9 +42,12 @@ std::unordered_map<std::string, std::string> format_duration(
   std::chrono::high_resolution_clock::duration duration)
 {
   std::unordered_map<std::string, std::string> formatted_duration;
-  auto m_seconds = std::chrono::duration_cast<std::chrono::milliseconds>(duration);
-  auto seconds = std::chrono::duration_cast<std::chrono::seconds>(m_seconds);
-  std::string fractional_seconds = std::to_string(m_seconds.count() % 1000);
+  auto seconds = std::chrono::duration_cast<std::chrono::seconds>(duration);
+  auto nanoseconds = std::chrono::duration_cast<std::chrono::nanoseconds>(duration);
+  auto nanoseconds_from_seconds = std::chrono::duration_cast<std::chrono::nanoseconds>(seconds);
+  std::stringstream fractional_seconds_ss;
+  fractional_seconds_ss << std::setw(9) << std::setfill('0') <<
+    (nanoseconds - nanoseconds_from_seconds).count();
   std::time_t std_time_point = seconds.count();
   tm time;
 #ifdef _WIN32
@@ -52,14 +55,14 @@ std::unordered_map<std::string, std::string> format_duration(
 #else
   localtime_r(&std_time_point, &time);
 #endif
-
   std::stringstream formatted_date;
   std::stringstream formatted_time;
   formatted_date << std::put_time(&time, "%b %e %Y");
-  formatted_time << std::put_time(&time, "%H:%M:%S") << "." << fractional_seconds;
+  formatted_time << std::put_time(&time, "%H:%M:%S") << "." << fractional_seconds_ss.str();
   formatted_duration["date"] = formatted_date.str();
   formatted_duration["time"] = formatted_time.str();
-  formatted_duration["time_in_sec"] = std::to_string(seconds.count()) + "." + fractional_seconds;
+  formatted_duration["time_in_sec"] = std::to_string(seconds.count()) + "." +
+    fractional_seconds_ss.str();
 
   return formatted_duration;
 }
@@ -109,6 +112,8 @@ void format_file_paths(
 
 void format_topics_with_type(
   const std::vector<rosbag2_storage::TopicInformation> & topics,
+  const std::unordered_map<std::string, uint64_t> & messages_size,
+  bool verbose,
   std::stringstream & info_stream,
   int indentation_spaces)
 {
@@ -118,10 +123,18 @@ void format_topics_with_type(
   }
 
   auto print_topic_info =
-    [&info_stream](const rosbag2_storage::TopicInformation & ti) -> void {
+    [&info_stream, &messages_size, verbose](const rosbag2_storage::TopicInformation & ti) -> void {
       info_stream << "Topic: " << ti.topic_metadata.name << " | ";
       info_stream << "Type: " << ti.topic_metadata.type << " | ";
       info_stream << "Count: " << ti.message_count << " | ";
+      if (verbose) {
+        uint64_t topic_size = 0;
+        auto topic_size_iter = messages_size.find(ti.topic_metadata.name);
+        if (topic_size_iter != messages_size.end()) {
+          topic_size = topic_size_iter->second;
+        }
+        info_stream << "Size Contribution: " << format_file_size(topic_size) << " | ";
+      }
       info_stream << "Serialization Format: " << ti.topic_metadata.serialization_format;
       info_stream << std::endl;
     };
@@ -196,6 +209,8 @@ std::vector<std::shared_ptr<ServiceInformation>> filter_service_event_topic(
 
 void format_service_with_type(
   const std::vector<std::shared_ptr<ServiceInformation>> & services,
+  const std::unordered_map<std::string, uint64_t> & messages_size,
+  bool verbose,
   std::stringstream & info_stream,
   int indentation_spaces)
 {
@@ -205,10 +220,20 @@ void format_service_with_type(
   }
 
   auto print_service_info =
-    [&info_stream](const std::shared_ptr<ServiceInformation> & si) -> void {
+    [&info_stream, &messages_size, verbose](
+    const std::shared_ptr<ServiceInformation> & si) -> void {
       info_stream << "Service: " << si->service_metadata.name << " | ";
       info_stream << "Type: " << si->service_metadata.type << " | ";
       info_stream << "Event Count: " << si->event_message_count << " | ";
+      if (verbose) {
+        uint64_t service_size = 0;
+        auto service_size_iter = messages_size.find(
+          rosbag2_cpp::service_name_to_service_event_topic_name(si->service_metadata.name));
+        if (service_size_iter != messages_size.end()) {
+          service_size = service_size_iter->second;
+        }
+        info_stream << "Size Contribution: " << format_file_size(service_size) << " | ";
+      }
       info_stream << "Serialization Format: " << si->service_metadata.serialization_format;
       info_stream << std::endl;
     };
@@ -228,6 +253,8 @@ namespace rosbag2_py
 
 std::string format_bag_meta_data(
   const rosbag2_storage::BagMetadata & metadata,
+  const std::unordered_map<std::string, uint64_t> & messages_size,
+  bool verbose,
   bool only_topic)
 {
   auto start_time = metadata.starting_time.time_since_epoch();
@@ -261,13 +288,14 @@ std::string format_bag_meta_data(
     std::endl;
   info_stream << "Topic information: ";
   format_topics_with_type(
-    metadata.topics_with_message_count, info_stream, indentation_spaces);
+    metadata.topics_with_message_count, messages_size, verbose, info_stream, indentation_spaces);
 
   if (!only_topic) {
     info_stream << "Service:           " << service_info_list.size() << std::endl;
     info_stream << "Service information: ";
     if (!service_info_list.empty()) {
-      format_service_with_type(service_info_list, info_stream, indentation_spaces + 2);
+      format_service_with_type(
+        service_info_list, messages_size, verbose, info_stream, indentation_spaces + 2);
     }
   }
 

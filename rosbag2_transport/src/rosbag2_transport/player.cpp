@@ -40,6 +40,7 @@
 #include "rosbag2_storage/qos.hpp"
 #include "rosbag2_transport/config_options_from_node_params.hpp"
 #include "rosbag2_transport/player_service_client.hpp"
+#include "rosbag2_transport/reader_writer_factory.hpp"
 
 #include "logging.hpp"
 
@@ -1543,7 +1544,7 @@ Player::Player(const std::string & node_name, const rclcpp::NodeOptions & node_o
     keyboard_handler = std::make_shared<KeyboardHandler>();
   }
 
-  auto reader = std::make_unique<rosbag2_cpp::Reader>();
+  auto reader = ReaderWriterFactory::make_reader(storage_options);
 
   pimpl_ = std::make_unique<PlayerImpl>(
     this, std::move(reader), keyboard_handler, storage_options, play_options);

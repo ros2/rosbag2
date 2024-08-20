@@ -13,7 +13,7 @@ jobs:
   build_and_test:
     runs-on: ubuntu-latest
     container:
-      image: rostooling/setup-ros-docker:ubuntu-jammy-latest
+      image: rostooling/setup-ros-docker:ubuntu-noble-latest
     steps:
     - name: Build and run tests
       id: action-ros-ci
@@ -91,15 +91,14 @@ jobs:
     - name: Is regeneration of Python stubs required?
       run: |
         rosbag2_path=$(colcon list -p --packages-select rosbag2)/..
-        sudo pip uninstall -y mypy
-        sudo apt update && sudo apt -y install mypy=0.942-1ubuntu1
+        sudo apt update && sudo apt -y install mypy
         source install/setup.sh
         stubgen -p rosbag2_py -o ${rosbag2_path}/rosbag2_py
         cd ${rosbag2_path}
         git diff --exit-code
       working-directory: ${{ steps.action-ros-ci.outputs.ros-workspace-directory-name }}
       shell: bash
-    - uses: actions/upload-artifact@v1
+    - uses: actions/upload-artifact@v4
       with:
         name: colcon-logs
         path: ros_ws/log

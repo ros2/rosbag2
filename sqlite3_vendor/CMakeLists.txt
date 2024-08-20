@@ -15,8 +15,8 @@ endif()
 ament_vendor(sqlite3_vendor
   SATISFIED ${SQLite3_FOUND}
   VCS_TYPE zip
-  VCS_URL https://www.sqlite.org/2022/sqlite-amalgamation-3370200.zip
-  VCS_VERSION sqlite-amalgamation-3370200
+  VCS_URL https://www.sqlite.org/2024/sqlite-amalgamation-3450100.zip
+  VCS_VERSION sqlite-amalgamation-3450100
   CMAKE_ARGS ${CMAKE_ARGS}
   PATCHES patches
 )

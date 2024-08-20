@@ -125,6 +125,17 @@ def check_positive_float(value: Any) -> float:
         raise ArgumentTypeError('{} is not the valid type (float)'.format(value))
 
 
+def check_not_negative_float(value: Any) -> float:
+    """Argparse validator to verify that a value is a float and that not negative."""
+    try:
+        fvalue = float(value)
+        if fvalue < 0.0:
+            raise ArgumentTypeError(f'Value {value} is less than zero.')
+        return fvalue
+    except ValueError:
+        raise ArgumentTypeError('{} is not the valid type (float)'.format(value))
+
+
 def check_path_exists(value: Any) -> str:
     """Argparse validator to verify a path exists."""
     try:

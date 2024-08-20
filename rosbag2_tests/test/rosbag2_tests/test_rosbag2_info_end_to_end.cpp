@@ -54,9 +54,9 @@ TEST_P(InfoEndToEndTestFixture, info_end_to_end_test) {
       "\nBag size:          .*B"
       "\nStorage id:        " + expected_storage +
       "\nROS Distro:        " + expected_ros_distro +
-      "\nDuration:          0\\.151s"
-      "\nStart:             Apr  .+ 2020 .*:.*:36.763 \\(1586406456\\.763\\)"
-      "\nEnd:               Apr  .+ 2020 .*:.*:36.914 \\(1586406456\\.914\\)"
+      "\nDuration:          0.151137181s"
+      "\nStart:             Apr  .+ 2020 .*:.*:36.763032325 \\(1586406456.763032325\\)"
+      "\nEnd:               Apr  .+ 2020 .*:.*:36.914169506 \\(1586406456.914169506\\)"
       "\nMessages:          7"
       "\nTopic information: "));
   EXPECT_THAT(
@@ -94,7 +94,7 @@ TEST_P(InfoEndToEndTestFixture, info_with_verbose_option_and_topic_name_option) 
       "\nBag size:          .*B"
       "\nStorage id:        " + expected_storage +
       "\nROS Distro:        " + expected_ros_distro +
-      "\nDuration:          0\\.70s"
+      "\nDuration:          0\\.0706.*s"
       "\nStart:             Nov  7 2023 .*:30:36\\..* \\(1699345836\\..*\\)"
       "\nEnd:               Nov  7 2023 .*:30:36\\..* \\(1699345836\\..*\\)"
       "\nMessages:          2"
@@ -122,7 +122,7 @@ TEST_P(InfoEndToEndTestFixture, info_with_verbose_option_end_to_end_test) {
       "\nBag size:          .*B"
       "\nStorage id:        " + expected_storage +
       "\nROS Distro:        " + expected_ros_distro +
-      "\nDuration:          0\\.70s"
+      "\nDuration:          0\\.0706.*s"
       "\nStart:             Nov  7 2023 .*:30:36\\..* \\(1699345836\\..*\\)"
       "\nEnd:               Nov  7 2023 .*:30:36\\..* \\(1699345836\\..*\\)"
       "\nMessages:          2"
@@ -130,27 +130,59 @@ TEST_P(InfoEndToEndTestFixture, info_with_verbose_option_end_to_end_test) {
   EXPECT_THAT(
     output, HasSubstr(
       "Topic: /events/write_split | Type: rosbag2_interfaces/msg/WriteSplitEvent | Count: 0 | "
-      "Serialization Format: cdr\n"));
+      "Size Contribution: 0 B | Serialization Format: cdr\n"));
   EXPECT_THAT(
     output, HasSubstr(
       "Topic: /test_topic1 | Type: test_msgs/msg/Strings | Count: 1 | "
-      "Serialization Format: cdr\n"));
+      "Size Contribution: 217 B | Serialization Format: cdr\n"));
   EXPECT_THAT(
     output, HasSubstr(
       "Topic: /test_topic2 | Type: test_msgs/msg/Strings | Count: 1 | "
-      "Serialization Format: cdr\n"));
+      "Size Contribution: 217 B | Serialization Format: cdr\n"));
 
   EXPECT_THAT(output, HasSubstr("Service:           2\n"));
 
   EXPECT_THAT(
     output, HasSubstr(
       "Service: /test_service1 | Type: test_msgs/srv/BasicTypes | Request Count: 2 | "
-      "Response Count: 2 | Serialization Format: cdr\n"));
+      "Response Count: 2 | Size Contribution: 434 B | Serialization Format: cdr\n"));
 
   EXPECT_THAT(
     output, HasSubstr(
       "Service: /test_service2 | Type: test_msgs/srv/BasicTypes | Request Count: 2 | "
-      "Response Count: 2 | Serialization Format: cdr\n"));
+      "Response Count: 2 | Size Contribution: 434 B | Serialization Format: cdr\n"));
+}
+
+TEST_P(InfoEndToEndTestFixture, info_basic_types_and_arrays_with_verbose_option_end_to_end_test) {
+  internal::CaptureStdout();
+  auto exit_code = execute_and_wait_until_completion(
+    "ros2 bag info cdr_test --verbose", bags_path_);
+  std::string output = internal::GetCapturedStdout();
+  auto expected_storage = GetParam();
+  auto expected_file = rosbag2_test_common::bag_filename_for_storage_id("cdr_test_0", GetParam());
+  std::string expected_ros_distro = "unknown";
+
+  EXPECT_THAT(exit_code, Eq(EXIT_SUCCESS));
+  // The bag size depends on the os and is not asserted, the time is asserted time zone independent
+  EXPECT_THAT(
+    output, ContainsRegex(
+      "\nFiles:             " + expected_file +
+      "\nBag size:          .*B"
+      "\nStorage id:        " + expected_storage +
+      "\nROS Distro:        " + expected_ros_distro +
+      "\nDuration:          0.151137181s"
+      "\nStart:             Apr  .+ 2020 .*:.*:36.763032325 \\(1586406456.763032325\\)"
+      "\nEnd:               Apr  .+ 2020 .*:.*:36.914169506 \\(1586406456.914169506\\)"
+      "\nMessages:          7"
+      "\nTopic information: "));
+  EXPECT_THAT(
+    output, HasSubstr(
+      "Topic: /test_topic | Type: test_msgs/msg/BasicTypes | Count: 3 | "
+      "Size Contribution: 156 B | Serialization Format: cdr\n"));
+  EXPECT_THAT(
+    output, HasSubstr(
+      "Topic: /array_topic | Type: test_msgs/msg/Arrays | Count: 4 | "
+      "Size Contribution: 2.7 KiB | Serialization Format: cdr"));
 }
 
 // TODO(Martin-Idel-SI): Revisit exit code non-zero here, gracefully should be exit code zero

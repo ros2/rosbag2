@@ -217,16 +217,15 @@ void SqliteStorage::open(
     throw std::runtime_error("Failed to setup storage. Error: " + std::string(e.what()));
   }
 
-  db_page_size_ = get_page_size();
-  db_file_size_ = 0;
   page_count_statement_ = database_->prepare_statement("PRAGMA page_count;");
+  db_page_size_ = get_page_size();
+  db_file_size_ = db_page_size_ * read_total_page_count_locked();
 
   // initialize only for READ_WRITE since the DB is already initialized if in APPEND.
   if (is_read_write(io_flag)) {
     db_schema_version_ = kDBSchemaVersion_;
     std::lock_guard<std::mutex> db_lock(db_read_write_mutex_);
     initialize();
-    db_file_size_ = db_page_size_ * read_total_page_count_locked();
   } else {
     db_schema_version_ = read_db_schema_version();
     read_metadata();
@@ -770,14 +769,27 @@ void SqliteStorage::add_topic_to_metadata(
     // Before db_schema_version_ = 3 we didn't store metadata in the database and real
     // metadata_.version will be lower than 9
     offered_qos_profiles_str, (db_schema_version_ >= 3) ? metadata_.version : 8);
-  metadata_.topics_with_message_count.push_back(
-    {
-      {
-        get_or_generate_extern_topic_id(inner_topic_id), topic_name, topic_type, ser_format,
-        offered_qos_profiles, type_hash
-      },
-      static_cast<size_t>(msg_count)
+  const rosbag2_storage::TopicMetadata topic_metadata {
+    get_or_generate_extern_topic_id(inner_topic_id), topic_name, topic_type, ser_format,
+    offered_qos_profiles, type_hash};
+  auto & topics_list = metadata_.topics_with_message_count;
+  auto it = std::find_if(
+    topics_list.begin(), topics_list.end(),
+    [&](const rosbag2_storage::TopicInformation & topic_info) {
+      return topic_info.topic_metadata == topic_metadata;
     });
+  if (it != topics_list.end()) {
+    it->message_count = msg_count;
+  } else {
+    metadata_.topics_with_message_count.push_back(
+      {
+        {
+          get_or_generate_extern_topic_id(inner_topic_id), topic_name, topic_type, ser_format,
+          offered_qos_profiles, type_hash
+        },
+        static_cast<size_t>(msg_count)
+      });
+  }
 
   metadata_.message_count += msg_count;
 }
@@ -811,6 +823,15 @@ void SqliteStorage::read_metadata()
 
   rcutils_time_point_value_t min_time = INT64_MAX;
   rcutils_time_point_value_t max_time = 0;
+
+  // fill in all topics and types even those do not have any messages
+  if (all_topics_and_types_.empty()) {
+    fill_topics_and_types();
+  }
+  metadata_.topics_with_message_count.reserve(all_topics_and_types_.size());
+  for (const auto & topic_metadata : all_topics_and_types_) {
+    metadata_.topics_with_message_count.push_back({topic_metadata, 0});
+  }
 
   if (database_->field_exists("topics", "offered_qos_profiles")) {
     if (database_->field_exists("topics", "type_description_hash")) {
