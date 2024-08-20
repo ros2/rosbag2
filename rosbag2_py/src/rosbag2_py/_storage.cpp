@@ -406,14 +406,9 @@ PYBIND11_MODULE(_storage, m) {
         "seconds"_a = qos_input.liveliness_lease_duration().to_rmw_time().sec,
         "nanoseconds"_a = qos_input.liveliness_lease_duration().to_rmw_time().nsec);
 
-      auto history = rclcpp::HistoryPolicy::KeepLast;
-      if (qos_input.history() != rclcpp::HistoryPolicy::Unknown) {
-        history = qos_input.history();
-      }
-
       pybind11::object qos_profile = rclcpy_qos.attr("QoSProfile")(
         "depth"_a = qos_input.depth(),
-        "history"_a = static_cast<int>(history),
+        "history"_a = static_cast<int>(qos_input.history()),
         "reliability"_a = static_cast<int>(qos_input.reliability()),
         "durability"_a = static_cast<int>(qos_input.durability()),
         "lifespan"_a = duration_lifespan,
