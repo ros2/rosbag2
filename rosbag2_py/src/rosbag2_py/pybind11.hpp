@@ -27,5 +27,6 @@
 #endif
 #include <pybind11/stl.h>
 #include <pybind11/chrono.h>
+#include <pybind11/embed.h>
 
 #endif  // ROSBAG2_PY__PYBIND11_HPP_
