@@ -391,6 +391,36 @@ PYBIND11_MODULE(_storage, m) {
     &rosbag2_storage::to_rclcpp_qos_vector,
     "Convert QoS in YAML to std::vector<QoS>");
 
+  m.def(
+    "convert_rclcpp_qos_to_rclpy_qos",
+    [](rclcpp::QoS qos_input) {
+      pybind11::object rclcpy_qos = pybind11::module_::import("rclpy.qos");
+      pybind11::object rclcpy_duration = pybind11::module_::import("rclpy.duration");
+      pybind11::object duration_lifespan = rclcpy_qos.attr("Duration")(
+        "seconds"_a = qos_input.lifespan().to_rmw_time().sec,
+        "nanoseconds"_a = qos_input.lifespan().to_rmw_time().nsec);
+      pybind11::object duration_deadline = rclcpy_qos.attr("Duration")(
+        "seconds"_a = qos_input.deadline().to_rmw_time().sec,
+        "nanoseconds"_a = qos_input.deadline().to_rmw_time().nsec);
+      pybind11::object duration_liveliness_lease_duration = rclcpy_qos.attr("Duration")(
+        "seconds"_a = qos_input.liveliness_lease_duration().to_rmw_time().sec,
+        "nanoseconds"_a = qos_input.liveliness_lease_duration().to_rmw_time().nsec);
+
+      pybind11::object qos_profile = rclcpy_qos.attr("QoSProfile")(
+        "depth"_a = qos_input.depth(),
+        "history"_a = static_cast<int>(qos_input.history()),
+        "reliability"_a = static_cast<int>(qos_input.reliability()),
+        "durability"_a = static_cast<int>(qos_input.durability()),
+        "lifespan"_a = duration_lifespan,
+        "deadline"_a = duration_deadline,
+        "liveliness"_a = static_cast<int>(qos_input.liveliness()),
+        "liveliness_lease_duration"_a = duration_liveliness_lease_duration,
+        "avoid_ros_namespace_conventions"_a = qos_input.avoid_ros_namespace_conventions());
+
+      return qos_profile;
+    },
+    "Converts rclcpp::QoS to rclpy.qos");
+
   pybind11::class_<rosbag2_storage::MetadataIo>(m, "MetadataIo")
   .def(pybind11::init<>())
   .def("write_metadata", &rosbag2_storage::MetadataIo::write_metadata)
