@@ -198,7 +198,7 @@ TEST_P(Rosbag2CPPGetServiceInfoTest, get_service_info_for_bag_with_services_only
   auto cleanup_process_handle = rcpputils::make_scope_exit(
     [&]() {stop_spinning();});
 
-  ASSERT_TRUE(service_client_manager->wait_for_srvice_to_be_ready());
+  ASSERT_TRUE(service_client_manager->wait_for_service_to_be_ready());
   ASSERT_TRUE(wait_for_subscriptions(*recorder, {"/test_service/_service_event"}));
 
   constexpr size_t num_service_requests = 3;
@@ -252,8 +252,8 @@ TEST_P(Rosbag2CPPGetServiceInfoTest, get_service_info_for_bag_with_topics_and_se
     std::make_shared<rosbag2_test_common::ClientManager<test_msgs::srv::BasicTypes>>(
     "test_service2");
 
-  ASSERT_TRUE(service_client_manager1->wait_for_srvice_to_be_ready());
-  ASSERT_TRUE(service_client_manager2->wait_for_srvice_to_be_ready());
+  ASSERT_TRUE(service_client_manager1->wait_for_service_to_be_ready());
+  ASSERT_TRUE(service_client_manager2->wait_for_service_to_be_ready());
 
   rosbag2_test_common::PublicationManager pub_manager;
   auto message = get_messages_strings()[0];

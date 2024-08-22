@@ -296,11 +296,11 @@ TEST_F(RecordIntegrationTestFixture, regex_and_exclude_regex_service_recording)
 
   start_async_spin(recorder);
 
-  ASSERT_TRUE(service_manager_v1->wait_for_srvice_to_be_ready());
-  ASSERT_TRUE(service_manager_v2->wait_for_srvice_to_be_ready());
-  ASSERT_TRUE(service_manager_e1->wait_for_srvice_to_be_ready());
-  ASSERT_TRUE(service_manager_b1->wait_for_srvice_to_be_ready());
-  ASSERT_TRUE(service_manager_b2->wait_for_srvice_to_be_ready());
+  ASSERT_TRUE(service_manager_v1->wait_for_service_to_be_ready());
+  ASSERT_TRUE(service_manager_v2->wait_for_service_to_be_ready());
+  ASSERT_TRUE(service_manager_e1->wait_for_service_to_be_ready());
+  ASSERT_TRUE(service_manager_b1->wait_for_service_to_be_ready());
+  ASSERT_TRUE(service_manager_b2->wait_for_service_to_be_ready());
 
   auto & writer = recorder->get_writer_handle();
   auto & mock_writer = dynamic_cast<MockSequentialWriter &>(writer.get_implementation_handle());
@@ -369,11 +369,11 @@ TEST_F(RecordIntegrationTestFixture, regex_and_exclude_service_service_recording
 
   start_async_spin(recorder);
 
-  ASSERT_TRUE(service_manager_v1->wait_for_srvice_to_be_ready());
-  ASSERT_TRUE(service_manager_v2->wait_for_srvice_to_be_ready());
-  ASSERT_TRUE(service_manager_e1->wait_for_srvice_to_be_ready());
-  ASSERT_TRUE(service_manager_b1->wait_for_srvice_to_be_ready());
-  ASSERT_TRUE(service_manager_b2->wait_for_srvice_to_be_ready());
+  ASSERT_TRUE(service_manager_v1->wait_for_service_to_be_ready());
+  ASSERT_TRUE(service_manager_v2->wait_for_service_to_be_ready());
+  ASSERT_TRUE(service_manager_e1->wait_for_service_to_be_ready());
+  ASSERT_TRUE(service_manager_b1->wait_for_service_to_be_ready());
+  ASSERT_TRUE(service_manager_b2->wait_for_service_to_be_ready());
 
   auto & writer = recorder->get_writer_handle();
   auto & mock_writer = dynamic_cast<MockSequentialWriter &>(writer.get_implementation_handle());
