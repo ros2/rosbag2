@@ -69,11 +69,11 @@ TEST_F(RecordIntegrationTestFixture, published_messages_from_two_topics_ignore_l
     static_cast<MockSequentialWriter &>(writer.get_implementation_handle());
 
   constexpr size_t expected_messages = 2;
-  auto ret = rosbag2_test_common::wait_until_shutdown(
-    std::chrono::seconds(5),
+  auto ret = rosbag2_test_common::wait_until_condition(
     [ =, &mock_writer]() {
       return mock_writer.get_messages().size() >= expected_messages;
-    });
+    },
+    std::chrono::seconds(5));
   auto recorded_messages = mock_writer.get_messages();
   // We may receive additional messages from rosout, it doesn't matter,
   // as long as we have received at least as many total messages as we expect

@@ -64,11 +64,11 @@ TEST_F(RecordIntegrationTestFixture, published_messages_from_multiple_topics_are
     static_cast<MockSequentialWriter &>(writer.get_implementation_handle());
 
   constexpr size_t expected_messages = 4;
-  auto ret = rosbag2_test_common::wait_until_shutdown(
-    std::chrono::seconds(5),
+  auto ret = rosbag2_test_common::wait_until_condition(
     [ =, &mock_writer]() {
       return mock_writer.get_messages().size() >= expected_messages;
-    });
+    },
+    std::chrono::seconds(5));
   auto recorded_messages = mock_writer.get_messages();
   EXPECT_TRUE(ret) << "failed to capture expected messages in time" <<
     "recorded messages = " << recorded_messages.size();
@@ -146,11 +146,11 @@ TEST_F(RecordIntegrationTestFixture, can_record_again_after_stop)
 
   // 4 because we're running recorder->record() and publishers twice
   constexpr size_t expected_messages = 4;
-  auto ret = rosbag2_test_common::wait_until_shutdown(
-    std::chrono::seconds(5),
+  auto ret = rosbag2_test_common::wait_until_condition(
     [ =, &mock_writer]() {
       return mock_writer.get_messages().size() >= expected_messages;
-    });
+    },
+    std::chrono::seconds(5));
   auto recorded_messages = mock_writer.get_messages();
   EXPECT_TRUE(ret) << "failed to capture expected messages in time";
   EXPECT_THAT(recorded_messages, SizeIs(expected_messages));
@@ -197,11 +197,11 @@ TEST_F(RecordIntegrationTestFixture, qos_is_stored_in_metadata)
     static_cast<MockSequentialWriter &>(writer.get_implementation_handle());
 
   constexpr size_t expected_messages = 2;
-  auto ret = rosbag2_test_common::wait_until_shutdown(
-    std::chrono::seconds(5),
+  auto ret = rosbag2_test_common::wait_until_condition(
     [ =, &mock_writer]() {
       return mock_writer.get_messages().size() >= expected_messages;
-    });
+    },
+    std::chrono::seconds(5));
   auto recorded_messages = mock_writer.get_messages();
   EXPECT_TRUE(ret) << "failed to capture expected messages in time";
   EXPECT_THAT(recorded_messages, SizeIs(expected_messages));
@@ -261,11 +261,11 @@ TEST_F(RecordIntegrationTestFixture, records_sensor_data)
     static_cast<MockSequentialWriter &>(writer.get_implementation_handle());
 
   constexpr size_t expected_messages = 2;
-  auto ret = rosbag2_test_common::wait_until_shutdown(
-    std::chrono::seconds(5),
+  auto ret = rosbag2_test_common::wait_until_condition(
     [ =, &mock_writer]() {
       return mock_writer.get_messages().size() >= expected_messages;
-    });
+    },
+    std::chrono::seconds(5));
   auto recorded_messages = mock_writer.get_messages();
   auto recorded_topics = mock_writer.get_topics();
   EXPECT_TRUE(ret) << "failed to capture expected messages in time";
@@ -302,11 +302,11 @@ TEST_F(RecordIntegrationTestFixture, receives_latched_messages)
     static_cast<MockSequentialWriter &>(writer.get_implementation_handle());
 
   size_t expected_messages = num_latched_messages;
-  auto ret = rosbag2_test_common::wait_until_shutdown(
-    std::chrono::seconds(5),
+  auto ret = rosbag2_test_common::wait_until_condition(
     [&mock_writer, &expected_messages]() {
       return mock_writer.get_messages().size() >= expected_messages;
-    });
+    },
+    std::chrono::seconds(5));
   auto recorded_messages = mock_writer.get_messages();
   auto recorded_topics = mock_writer.get_topics();
   EXPECT_TRUE(ret) << "failed to capture expected messages in time";
@@ -439,11 +439,11 @@ TEST_F(RecordIntegrationTestFixture, write_split_callback_is_called)
   ASSERT_TRUE(pub_manager.wait_for_matched(string_topic.c_str()));
   pub_manager.run_publishers();
 
-  auto ret = rosbag2_test_common::wait_until_shutdown(
-    std::chrono::seconds(5),
+  auto ret = rosbag2_test_common::wait_until_condition(
     [&mock_writer, &expected_messages]() {
       return mock_writer.get_messages().size() >= expected_messages;
-    });
+    },
+    std::chrono::seconds(5));
   auto recorded_messages = mock_writer.get_messages();
   EXPECT_TRUE(ret) << "failed to capture expected messages in time";
   EXPECT_THAT(recorded_messages, SizeIs(expected_messages));

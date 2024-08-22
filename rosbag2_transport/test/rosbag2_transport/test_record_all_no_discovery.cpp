@@ -54,11 +54,11 @@ TEST_F(RecordIntegrationTestFixture, record_all_without_discovery_ignores_later_
     static_cast<MockSequentialWriter &>(writer.get_implementation_handle());
 
   constexpr size_t expected_messages = 0;
-  rosbag2_test_common::wait_until_shutdown(
-    std::chrono::seconds(2),
+  rosbag2_test_common::wait_until_condition(
     [ =, &mock_writer]() {
       return mock_writer.get_messages().size() > expected_messages;
-    });
+    },
+    std::chrono::seconds(2));
   // We can't EXPECT anything here, since there may be some messages from rosout
 
   auto recorded_topics = mock_writer.get_topics();

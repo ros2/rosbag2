@@ -87,11 +87,11 @@ TEST_F(RecordIntegrationTestFixture, regex_topics_recording)
     static_cast<MockSequentialWriter &>(writer.get_implementation_handle());
 
   constexpr size_t expected_messages = 3;
-  auto ret = rosbag2_test_common::wait_until_shutdown(
-    std::chrono::seconds(5),
+  auto ret = rosbag2_test_common::wait_until_condition(
     [ =, &mock_writer]() {
       return mock_writer.get_messages().size() >= expected_messages;
-    });
+    },
+    std::chrono::seconds(5));
   auto recorded_messages = mock_writer.get_messages();
   // We may receive additional messages from rosout, it doesn't matter,
   // as long as we have received at least as many total messages as we expect
@@ -162,11 +162,11 @@ TEST_F(RecordIntegrationTestFixture, regex_and_exclude_regex_topic_recording)
     static_cast<MockSequentialWriter &>(writer.get_implementation_handle());
 
   constexpr size_t expected_messages = 3;
-  auto ret = rosbag2_test_common::wait_until_shutdown(
-    std::chrono::seconds(5),
+  auto ret = rosbag2_test_common::wait_until_condition(
     [ =, &mock_writer]() {
       return mock_writer.get_messages().size() >= expected_messages;
-    });
+    },
+    std::chrono::seconds(5));
   auto recorded_messages = mock_writer.get_messages();
   // We may receive additional messages from rosout, it doesn't matter,
   // as long as we have received at least as many total messages as we expect
@@ -237,11 +237,11 @@ TEST_F(RecordIntegrationTestFixture, regex_and_exclude_topic_topic_recording)
     static_cast<MockSequentialWriter &>(writer.get_implementation_handle());
 
   constexpr size_t expected_messages = 3;
-  auto ret = rosbag2_test_common::wait_until_shutdown(
-    std::chrono::seconds(5),
+  auto ret = rosbag2_test_common::wait_until_condition(
     [ =, &mock_writer]() {
       return mock_writer.get_messages().size() >= expected_messages;
-    });
+    },
+    std::chrono::seconds(5));
   auto recorded_messages = mock_writer.get_messages();
   // We may receive additional messages from rosout, it doesn't matter,
   // as long as we have received at least as many total messages as we expect
@@ -312,11 +312,11 @@ TEST_F(RecordIntegrationTestFixture, regex_and_exclude_regex_service_recording)
   ASSERT_TRUE(service_manager_b2->send_request());
 
   constexpr size_t expected_messages = 4;
-  auto ret = rosbag2_test_common::wait_until_shutdown(
-    std::chrono::seconds(5),
+  auto ret = rosbag2_test_common::wait_until_condition(
     [ =, &mock_writer]() {
       return mock_writer.get_messages().size() >= expected_messages;
-    });
+    },
+    std::chrono::seconds(5));
   EXPECT_TRUE(ret) << "failed to capture expected messages in time";
   auto recorded_messages = mock_writer.get_messages();
   EXPECT_THAT(recorded_messages, SizeIs(expected_messages));
@@ -385,11 +385,11 @@ TEST_F(RecordIntegrationTestFixture, regex_and_exclude_service_service_recording
   ASSERT_TRUE(service_manager_b2->send_request());
 
   constexpr size_t expected_messages = 4;
-  auto ret = rosbag2_test_common::wait_until_shutdown(
-    std::chrono::seconds(5),
+  auto ret = rosbag2_test_common::wait_until_condition(
     [ =, &mock_writer]() {
       return mock_writer.get_messages().size() >= expected_messages;
-    });
+    },
+    std::chrono::seconds(5));
   EXPECT_TRUE(ret) << "failed to capture expected messages in time";
   auto recorded_messages = mock_writer.get_messages();
   EXPECT_THAT(recorded_messages, SizeIs(expected_messages));
