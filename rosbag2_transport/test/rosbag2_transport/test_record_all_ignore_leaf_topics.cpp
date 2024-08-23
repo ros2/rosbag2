@@ -68,7 +68,7 @@ TEST_F(RecordIntegrationTestFixture, published_messages_from_two_topics_ignore_l
   MockSequentialWriter & mock_writer =
     static_cast<MockSequentialWriter &>(writer.get_implementation_handle());
 
-  size_t expected_messages = 2;
+  constexpr size_t expected_messages = 2;
   auto ret = rosbag2_test_common::wait_until_shutdown(
     std::chrono::seconds(5),
     [&mock_writer, &expected_messages]() {
