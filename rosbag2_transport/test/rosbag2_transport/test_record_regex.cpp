@@ -86,7 +86,7 @@ TEST_F(RecordIntegrationTestFixture, regex_topics_recording)
   MockSequentialWriter & mock_writer =
     static_cast<MockSequentialWriter &>(writer.get_implementation_handle());
 
-  size_t expected_messages = 3;
+  constexpr size_t expected_messages = 3;
   auto ret = rosbag2_test_common::wait_until_shutdown(
     std::chrono::seconds(5),
     [&mock_writer, &expected_messages]() {
@@ -161,7 +161,7 @@ TEST_F(RecordIntegrationTestFixture, regex_and_exclude_regex_topic_recording)
   MockSequentialWriter & mock_writer =
     static_cast<MockSequentialWriter &>(writer.get_implementation_handle());
 
-  size_t expected_messages = 3;
+  constexpr size_t expected_messages = 3;
   auto ret = rosbag2_test_common::wait_until_shutdown(
     std::chrono::seconds(5),
     [&mock_writer, &expected_messages]() {
@@ -236,7 +236,7 @@ TEST_F(RecordIntegrationTestFixture, regex_and_exclude_topic_topic_recording)
   MockSequentialWriter & mock_writer =
     static_cast<MockSequentialWriter &>(writer.get_implementation_handle());
 
-  size_t expected_messages = 3;
+  constexpr size_t expected_messages = 3;
   auto ret = rosbag2_test_common::wait_until_shutdown(
     std::chrono::seconds(5),
     [&mock_writer, &expected_messages]() {
@@ -296,11 +296,11 @@ TEST_F(RecordIntegrationTestFixture, regex_and_exclude_regex_service_recording)
 
   start_async_spin(recorder);
 
-  ASSERT_TRUE(service_manager_v1->wait_for_srvice_to_be_ready());
-  ASSERT_TRUE(service_manager_v2->wait_for_srvice_to_be_ready());
-  ASSERT_TRUE(service_manager_e1->wait_for_srvice_to_be_ready());
-  ASSERT_TRUE(service_manager_b1->wait_for_srvice_to_be_ready());
-  ASSERT_TRUE(service_manager_b2->wait_for_srvice_to_be_ready());
+  ASSERT_TRUE(service_manager_v1->wait_for_service_to_be_ready());
+  ASSERT_TRUE(service_manager_v2->wait_for_service_to_be_ready());
+  ASSERT_TRUE(service_manager_e1->wait_for_service_to_be_ready());
+  ASSERT_TRUE(service_manager_b1->wait_for_service_to_be_ready());
+  ASSERT_TRUE(service_manager_b2->wait_for_service_to_be_ready());
 
   auto & writer = recorder->get_writer_handle();
   auto & mock_writer = dynamic_cast<MockSequentialWriter &>(writer.get_implementation_handle());
@@ -311,7 +311,7 @@ TEST_F(RecordIntegrationTestFixture, regex_and_exclude_regex_service_recording)
   ASSERT_TRUE(service_manager_b1->send_request());
   ASSERT_TRUE(service_manager_b2->send_request());
 
-  size_t expected_messages = 4;
+  constexpr size_t expected_messages = 4;
   auto ret = rosbag2_test_common::wait_until_shutdown(
     std::chrono::seconds(5),
     [&mock_writer, &expected_messages]() {
@@ -369,11 +369,11 @@ TEST_F(RecordIntegrationTestFixture, regex_and_exclude_service_service_recording
 
   start_async_spin(recorder);
 
-  ASSERT_TRUE(service_manager_v1->wait_for_srvice_to_be_ready());
-  ASSERT_TRUE(service_manager_v2->wait_for_srvice_to_be_ready());
-  ASSERT_TRUE(service_manager_e1->wait_for_srvice_to_be_ready());
-  ASSERT_TRUE(service_manager_b1->wait_for_srvice_to_be_ready());
-  ASSERT_TRUE(service_manager_b2->wait_for_srvice_to_be_ready());
+  ASSERT_TRUE(service_manager_v1->wait_for_service_to_be_ready());
+  ASSERT_TRUE(service_manager_v2->wait_for_service_to_be_ready());
+  ASSERT_TRUE(service_manager_e1->wait_for_service_to_be_ready());
+  ASSERT_TRUE(service_manager_b1->wait_for_service_to_be_ready());
+  ASSERT_TRUE(service_manager_b2->wait_for_service_to_be_ready());
 
   auto & writer = recorder->get_writer_handle();
   auto & mock_writer = dynamic_cast<MockSequentialWriter &>(writer.get_implementation_handle());
@@ -384,7 +384,7 @@ TEST_F(RecordIntegrationTestFixture, regex_and_exclude_service_service_recording
   ASSERT_TRUE(service_manager_b1->send_request());
   ASSERT_TRUE(service_manager_b2->send_request());
 
-  size_t expected_messages = 4;
+  constexpr size_t expected_messages = 4;
   auto ret = rosbag2_test_common::wait_until_shutdown(
     std::chrono::seconds(5),
     [&mock_writer, &expected_messages]() {

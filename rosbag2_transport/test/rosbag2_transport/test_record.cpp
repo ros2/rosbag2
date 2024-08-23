@@ -63,7 +63,7 @@ TEST_F(RecordIntegrationTestFixture, published_messages_from_multiple_topics_are
   MockSequentialWriter & mock_writer =
     static_cast<MockSequentialWriter &>(writer.get_implementation_handle());
 
-  size_t expected_messages = 4;
+  constexpr size_t expected_messages = 4;
   auto ret = rosbag2_test_common::wait_until_shutdown(
     std::chrono::seconds(5),
     [&mock_writer, &expected_messages]() {
@@ -144,7 +144,8 @@ TEST_F(RecordIntegrationTestFixture, can_record_again_after_stop)
   ASSERT_TRUE(pub_manager.wait_for_matched(string_topic.c_str()));
   pub_manager.run_publishers();
 
-  size_t expected_messages = 4;  // 4 because was running recorder-record() and publishers twice
+  // 4 because we're running recorder->record() and publishers twice
+  constexpr size_t expected_messages = 4;
   auto ret = rosbag2_test_common::wait_until_shutdown(
     std::chrono::seconds(5),
     [&mock_writer, &expected_messages]() {
@@ -195,7 +196,7 @@ TEST_F(RecordIntegrationTestFixture, qos_is_stored_in_metadata)
   MockSequentialWriter & mock_writer =
     static_cast<MockSequentialWriter &>(writer.get_implementation_handle());
 
-  size_t expected_messages = 2;
+  constexpr size_t expected_messages = 2;
   auto ret = rosbag2_test_common::wait_until_shutdown(
     std::chrono::seconds(5),
     [&mock_writer, &expected_messages]() {
@@ -259,7 +260,7 @@ TEST_F(RecordIntegrationTestFixture, records_sensor_data)
   MockSequentialWriter & mock_writer =
     static_cast<MockSequentialWriter &>(writer.get_implementation_handle());
 
-  size_t expected_messages = 2;
+  constexpr size_t expected_messages = 2;
   auto ret = rosbag2_test_common::wait_until_shutdown(
     std::chrono::seconds(5),
     [&mock_writer, &expected_messages]() {
@@ -431,7 +432,7 @@ TEST_F(RecordIntegrationTestFixture, write_split_callback_is_called)
   auto & writer = recorder->get_writer_handle();
   mock_writer = dynamic_cast<MockSequentialWriter &>(writer.get_implementation_handle());
 
-  const size_t expected_messages = mock_writer.max_messages_per_file() + 1;
+  size_t expected_messages = mock_writer.max_messages_per_file() + 1;
 
   rosbag2_test_common::PublicationManager pub_manager;
   pub_manager.setup_publisher(string_topic, string_message, expected_messages);
