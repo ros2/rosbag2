@@ -86,7 +86,7 @@ TEST_F(RecordIntegrationTestFixture, regex_topics_recording)
   MockSequentialWriter & mock_writer =
     static_cast<MockSequentialWriter &>(writer.get_implementation_handle());
 
-  size_t expected_messages = 3;
+  constexpr size_t expected_messages = 3;
   auto ret = rosbag2_test_common::wait_until_shutdown(
     std::chrono::seconds(5),
     [&mock_writer, &expected_messages]() {
@@ -161,7 +161,7 @@ TEST_F(RecordIntegrationTestFixture, regex_and_exclude_regex_topic_recording)
   MockSequentialWriter & mock_writer =
     static_cast<MockSequentialWriter &>(writer.get_implementation_handle());
 
-  size_t expected_messages = 3;
+  constexpr size_t expected_messages = 3;
   auto ret = rosbag2_test_common::wait_until_shutdown(
     std::chrono::seconds(5),
     [&mock_writer, &expected_messages]() {
@@ -236,7 +236,7 @@ TEST_F(RecordIntegrationTestFixture, regex_and_exclude_topic_topic_recording)
   MockSequentialWriter & mock_writer =
     static_cast<MockSequentialWriter &>(writer.get_implementation_handle());
 
-  size_t expected_messages = 3;
+  constexpr size_t expected_messages = 3;
   auto ret = rosbag2_test_common::wait_until_shutdown(
     std::chrono::seconds(5),
     [&mock_writer, &expected_messages]() {
@@ -311,7 +311,7 @@ TEST_F(RecordIntegrationTestFixture, regex_and_exclude_regex_service_recording)
   ASSERT_TRUE(service_manager_b1->send_request());
   ASSERT_TRUE(service_manager_b2->send_request());
 
-  size_t expected_messages = 4;
+  constexpr size_t expected_messages = 4;
   auto ret = rosbag2_test_common::wait_until_shutdown(
     std::chrono::seconds(5),
     [&mock_writer, &expected_messages]() {
@@ -384,7 +384,7 @@ TEST_F(RecordIntegrationTestFixture, regex_and_exclude_service_service_recording
   ASSERT_TRUE(service_manager_b1->send_request());
   ASSERT_TRUE(service_manager_b2->send_request());
 
-  size_t expected_messages = 4;
+  constexpr size_t expected_messages = 4;
   auto ret = rosbag2_test_common::wait_until_shutdown(
     std::chrono::seconds(5),
     [&mock_writer, &expected_messages]() {
