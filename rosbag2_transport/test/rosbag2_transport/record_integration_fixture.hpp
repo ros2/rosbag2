@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <gmock/gmock.h>
-
+#include <atomic>
+#include <chrono>
 #include <future>
 #include <memory>
 #include <string>
@@ -22,15 +22,11 @@
 
 #include "rclcpp/rclcpp.hpp"
 
-#include "rosbag2_transport/record_options.hpp"
+#include "rosbag2_storage/serialized_bag_message.hpp"
 
 #include "rosbag2_test_common/memory_management.hpp"
 
 #include "rosbag2_transport_test_fixture.hpp"
-
-using namespace ::testing;  // NOLINT
-using namespace rosbag2_transport;  // NOLINT
-using namespace std::chrono_literals;  // NOLINT
 
 #ifndef ROSBAG2_TRANSPORT__RECORD_INTEGRATION_FIXTURE_HPP_
 #define ROSBAG2_TRANSPORT__RECORD_INTEGRATION_FIXTURE_HPP_
@@ -57,12 +53,20 @@ public:
   void start_async_spin(T node)
   {
     future_ = std::async(
-      std::launch::async, [node]() -> void {rclcpp::spin(node);});
+      std::launch::async,
+      [node, this]() -> void {
+        rclcpp::executors::SingleThreadedExecutor exec;
+        exec.add_node(node);
+        while (rclcpp::ok() && !done_) {
+          exec.spin_some(std::chrono::milliseconds(100));
+        }
+        exec.remove_node(node);
+      });
   }
 
   void stop_spinning()
   {
-    rclcpp::shutdown();
+    done_ = true;
     if (future_.valid()) {
       future_.wait();
     }
@@ -85,6 +89,7 @@ public:
 
   MemoryManagement memory_;
   std::future<void> future_;
+  std::atomic_bool done_{false};
 };
 
 #endif  // ROSBAG2_TRANSPORT__RECORD_INTEGRATION_FIXTURE_HPP_
