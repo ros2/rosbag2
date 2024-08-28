@@ -66,7 +66,7 @@ TEST_F(RecordIntegrationTestFixture, published_messages_from_multiple_topics_are
   constexpr size_t expected_messages = 4;
   auto ret = rosbag2_test_common::wait_until_shutdown(
     std::chrono::seconds(5),
-    [=, &mock_writer]() {
+    [ =, &mock_writer]() {
       return mock_writer.get_messages().size() >= expected_messages;
     });
   auto recorded_messages = mock_writer.get_messages();
@@ -148,7 +148,7 @@ TEST_F(RecordIntegrationTestFixture, can_record_again_after_stop)
   constexpr size_t expected_messages = 4;
   auto ret = rosbag2_test_common::wait_until_shutdown(
     std::chrono::seconds(5),
-    [=, &mock_writer]() {
+    [ =, &mock_writer]() {
       return mock_writer.get_messages().size() >= expected_messages;
     });
   auto recorded_messages = mock_writer.get_messages();
@@ -199,7 +199,7 @@ TEST_F(RecordIntegrationTestFixture, qos_is_stored_in_metadata)
   constexpr size_t expected_messages = 2;
   auto ret = rosbag2_test_common::wait_until_shutdown(
     std::chrono::seconds(5),
-    [=, &mock_writer]() {
+    [ =, &mock_writer]() {
       return mock_writer.get_messages().size() >= expected_messages;
     });
   auto recorded_messages = mock_writer.get_messages();
@@ -263,7 +263,7 @@ TEST_F(RecordIntegrationTestFixture, records_sensor_data)
   constexpr size_t expected_messages = 2;
   auto ret = rosbag2_test_common::wait_until_shutdown(
     std::chrono::seconds(5),
-    [=, &mock_writer]() {
+    [ =, &mock_writer]() {
       return mock_writer.get_messages().size() >= expected_messages;
     });
   auto recorded_messages = mock_writer.get_messages();
