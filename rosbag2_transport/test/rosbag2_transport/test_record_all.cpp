@@ -57,6 +57,18 @@ TEST_F(RecordIntegrationTestFixture, published_messages_from_multiple_topics_are
 
   start_async_spin(recorder);
 
+  // Wait until recorder discovery is complete, otherwise messages might be missed.
+  // The currently expected topics:
+  // /string_topic
+  // /events/write_split
+  // /array_topic
+  auto discovery_ret = rosbag2_test_common::wait_until_condition(
+    [&recorder]() {
+      return recorder->subscriptions().size() == 3;
+    },
+    std::chrono::seconds(5));
+  ASSERT_TRUE(discovery_ret);
+
   ASSERT_TRUE(pub_manager.wait_for_matched(array_topic.c_str()));
   ASSERT_TRUE(pub_manager.wait_for_matched(string_topic.c_str()));
 
@@ -104,6 +116,17 @@ TEST_F(RecordIntegrationTestFixture, published_messages_from_multiple_services_a
 
   start_async_spin(recorder);
 
+  // Wait until recorder discovery is complete, otherwise messages might be missed.
+  // The currently expected topics:
+  // /test_service_1/_service_event
+  // /test_service_2/_service_event
+  auto discovery_ret = rosbag2_test_common::wait_until_condition(
+    [&recorder]() {
+      return recorder->subscriptions().size() == 2;
+    },
+    std::chrono::seconds(5));
+  ASSERT_TRUE(discovery_ret);
+
   ASSERT_TRUE(client_manager_1->wait_for_service_to_be_ready());
   ASSERT_TRUE(client_manager_2->wait_for_service_to_be_ready());
 
@@ -145,6 +168,18 @@ TEST_F(RecordIntegrationTestFixture, published_messages_from_topic_and_service_a
   recorder->record();
 
   start_async_spin(recorder);
+
+  // Wait until recorder discovery is complete, otherwise messages might be missed.
+  // The currently expected topics:
+  // /test_service/_service_event
+  // /string_topic
+  // /events/write_split
+  auto discovery_ret = rosbag2_test_common::wait_until_condition(
+    [&recorder]() {
+      return recorder->subscriptions().size() == 3;
+    },
+    std::chrono::seconds(5));
+  ASSERT_TRUE(discovery_ret);
 
   ASSERT_TRUE(pub_manager.wait_for_matched(string_topic.c_str()));
 

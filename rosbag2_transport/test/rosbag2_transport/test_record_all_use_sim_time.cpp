@@ -100,6 +100,17 @@ TEST_F(RecordIntegrationTestFixture, record_all_with_sim_time)
 
   start_async_spin(recorder);
 
+  // Wait until recorder discovery is complete, otherwise messages might be missed.
+  // The currently expected topics:
+  // /clock
+  // /string_topic
+  auto discovery_ret = rosbag2_test_common::wait_until_condition(
+    [&recorder]() {
+      return recorder->subscriptions().size() == 2;
+    },
+    std::chrono::seconds(5));
+  ASSERT_TRUE(discovery_ret);
+
   ASSERT_TRUE(pub_manager.wait_for_matched(string_topic.c_str()));
 
   ASSERT_TRUE(recorder->wait_for_topic_to_be_discovered(string_topic));

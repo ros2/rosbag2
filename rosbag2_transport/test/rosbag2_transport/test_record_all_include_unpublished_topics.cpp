@@ -23,6 +23,7 @@
 #include "test_msgs/msg/basic_types.hpp"
 #include "test_msgs/message_fixtures.hpp"
 #include "rosbag2_test_common/publication_manager.hpp"
+#include "rosbag2_test_common/wait_for.hpp"
 #include "record_integration_fixture.hpp"
 
 using namespace std::chrono_literals;  // NOLINT
@@ -41,6 +42,18 @@ TEST_F(RecordIntegrationTestFixture, record_all_include_unpublished_false_ignore
   recorder->record();
   start_async_spin(recorder);
 
+  // Wait until recorder discovery is complete, otherwise messages might be missed.
+  // The currently expected topics:
+  // /rosout
+  // /parameter_events
+  // /events/write_split
+  auto discovery_ret = rosbag2_test_common::wait_until_condition(
+    [&recorder]() {
+      return recorder->subscriptions().size() == 3;
+    },
+    std::chrono::seconds(5));
+  ASSERT_TRUE(discovery_ret);
+
   ASSERT_TRUE(recorder->wait_for_topic_to_be_discovered(string_topic));
   ASSERT_FALSE(recorder->topic_available_for_recording(string_topic));
 }
@@ -58,6 +71,19 @@ TEST_F(RecordIntegrationTestFixture, record_all_include_unpublished_true_include
   auto recorder = std::make_shared<MockRecorder>(writer_, storage_options_, record_options);
   recorder->record();
   start_async_spin(recorder);
+
+  // Wait until recorder discovery is complete, otherwise messages might be missed.
+  // The currently expected topics:
+  // /string_topic
+  // /rosout
+  // /parameter_events
+  // /events/write_split
+  auto discovery_ret = rosbag2_test_common::wait_until_condition(
+    [&recorder]() {
+      return recorder->subscriptions().size() == 4;
+    },
+    std::chrono::seconds(5));
+  ASSERT_TRUE(discovery_ret);
 
   ASSERT_TRUE(recorder->wait_for_topic_to_be_discovered(string_topic));
   ASSERT_TRUE(recorder->topic_available_for_recording(string_topic));
@@ -79,6 +105,18 @@ TEST_F(
   recorder->record();
   start_async_spin(recorder);
 
+  // Wait until recorder discovery is complete, otherwise messages might be missed.
+  // The currently expected topics:
+  // /rosout
+  // /parameter_events
+  // /events/write_split
+  auto discovery_ret = rosbag2_test_common::wait_until_condition(
+    [&recorder]() {
+      return recorder->subscriptions().size() == 3;
+    },
+    std::chrono::seconds(5));
+  ASSERT_TRUE(discovery_ret);
+
   ASSERT_TRUE(recorder->wait_for_topic_to_be_discovered(string_topic));
   ASSERT_FALSE(recorder->topic_available_for_recording(string_topic));
 
@@ -90,6 +128,18 @@ TEST_F(
   // Publish 10 messages at a 30ms interval for a steady 300 milliseconds worth of data
   pub_manager.setup_publisher(
     string_topic, string_message, 10, rclcpp::QoS{rclcpp::KeepAll()}, 30ms);
+  // Wait again until recorder discovery is complete, otherwise messages might be missed.
+  // The currently expected topics:
+  // /string_topic
+  // /rosout
+  // /parameter_events
+  // /events/write_split
+  discovery_ret = rosbag2_test_common::wait_until_condition(
+    [&recorder]() {
+      return recorder->subscriptions().size() == 4;
+    },
+    std::chrono::seconds(5));
+  ASSERT_TRUE(discovery_ret);
 
   ASSERT_TRUE(pub_manager.wait_for_matched(string_topic.c_str()));
   pub_manager.run_publishers();
