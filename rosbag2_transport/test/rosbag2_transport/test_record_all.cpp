@@ -68,7 +68,7 @@ TEST_F(RecordIntegrationTestFixture, published_messages_from_multiple_topics_are
   constexpr size_t expected_messages = 4;
   auto ret = rosbag2_test_common::wait_until_shutdown(
     std::chrono::seconds(5),
-    [&mock_writer, &expected_messages]() {
+    [ =, &mock_writer]() {
       return mock_writer.get_messages().size() >= expected_messages;
     });
   EXPECT_TRUE(ret) << "failed to capture expected messages in time";
@@ -118,7 +118,7 @@ TEST_F(RecordIntegrationTestFixture, published_messages_from_multiple_services_a
   constexpr size_t expected_messages = 4;
   auto ret = rosbag2_test_common::wait_until_shutdown(
     std::chrono::seconds(5),
-    [&mock_writer, &expected_messages]() {
+    [ =, &mock_writer]() {
       return mock_writer.get_messages().size() >= expected_messages;
     });
   EXPECT_TRUE(ret) << "failed to capture expected messages in time";
@@ -162,7 +162,7 @@ TEST_F(RecordIntegrationTestFixture, published_messages_from_topic_and_service_a
   constexpr size_t expected_messages = 3;
   auto ret = rosbag2_test_common::wait_until_shutdown(
     std::chrono::seconds(5),
-    [&mock_writer, &expected_messages]() {
+    [ =, &mock_writer]() {
       return mock_writer.get_messages().size() >= expected_messages;
     });
   EXPECT_TRUE(ret) << "failed to capture expected messages in time";
