@@ -86,9 +86,10 @@ public:
       [node, this]() -> void {
         rclcpp::executors::SingleThreadedExecutor exec;
         exec.add_node(node);
-        while (!exit_from_node_spinner_) {
-          exec.spin_some();
+        while (rclcpp::ok() && !exit_from_node_spinner_) {
+          exec.spin_some(std::chrono::milliseconds(100));
         }
+        exec.remove_node(node);
       });
   }
 
