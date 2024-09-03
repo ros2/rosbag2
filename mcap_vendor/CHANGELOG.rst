@@ -2,6 +2,12 @@
 Changelog for package mcap_vendor
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.29.0 (2024-09-03)
+-------------------
+* Update mcap (`#1774 <https://github.com/ros2/rosbag2/issues/1774>`_)
+  Update mcap cpp to last version
+* Contributors: mosfet80
+
 0.28.0 (2024-06-17)
 -------------------
 * Update mcap-releases-cpp- into CMakeLists.txt (`#1612 <https://github.com/ros2/rosbag2/issues/1612>`_)

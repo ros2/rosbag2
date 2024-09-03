@@ -2,6 +2,11 @@
 Changelog for package rosbag2_examples_cpp
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.29.0 (2024-09-03)
+-------------------
+* Add rosbag2_examples_cpp/simple_bag_reader.cpp. (`#1683 <https://github.com/ros2/rosbag2/issues/1683>`_)
+* Contributors: Tomoya Fujita
+
 0.28.0 (2024-06-17)
 -------------------
 
