@@ -54,17 +54,6 @@ TEST_F(RecordIntegrationTestFixture, published_messages_from_multiple_topics_are
 
   start_async_spin(recorder);
 
-  // Wait until recorder discovery is complete, otherwise messages might be missed.
-  // The currently expected topics:
-  // /string_topic
-  // /array_topic
-  auto discovery_ret = rosbag2_test_common::wait_until_condition(
-    [&recorder]() {
-      return recorder->subscriptions().size() == 2;
-    },
-    std::chrono::seconds(5));
-  ASSERT_TRUE(discovery_ret);
-
   ASSERT_TRUE(pub_manager.wait_for_matched(array_topic.c_str()));
   ASSERT_TRUE(pub_manager.wait_for_matched(string_topic.c_str()));
 
@@ -139,16 +128,6 @@ TEST_F(RecordIntegrationTestFixture, can_record_again_after_stop)
 
   start_async_spin(recorder);
 
-  // Wait until recorder discovery is complete, otherwise messages might be missed.
-  // The currently expected topics:
-  // /string_topic
-  auto discovery_ret = rosbag2_test_common::wait_until_condition(
-    [&recorder]() {
-      return recorder->subscriptions().size() == 1;
-    },
-    std::chrono::seconds(5));
-  ASSERT_TRUE(discovery_ret);
-
   auto & writer = recorder->get_writer_handle();
   auto & mock_writer = dynamic_cast<MockSequentialWriter &>(writer.get_implementation_handle());
 
@@ -209,16 +188,6 @@ TEST_F(RecordIntegrationTestFixture, qos_is_stored_in_metadata)
   recorder->record();
 
   start_async_spin(recorder);
-
-  // Wait until recorder discovery is complete, otherwise messages might be missed.
-  // The currently expected topics:
-  // /qos_chatter
-  auto discovery_ret = rosbag2_test_common::wait_until_condition(
-    [&recorder]() {
-      return recorder->subscriptions().size() == 1;
-    },
-    std::chrono::seconds(5));
-  ASSERT_TRUE(discovery_ret);
 
   ASSERT_TRUE(pub_manager.wait_for_matched(topic.c_str()));
 
@@ -284,16 +253,6 @@ TEST_F(RecordIntegrationTestFixture, records_sensor_data)
 
   start_async_spin(recorder);
 
-  // Wait until recorder discovery is complete, otherwise messages might be missed.
-  // The currently expected topics:
-  // /sensor_chatter
-  auto discovery_ret = rosbag2_test_common::wait_until_condition(
-    [&recorder]() {
-      return recorder->subscriptions().size() == 1;
-    },
-    std::chrono::seconds(5));
-  ASSERT_TRUE(discovery_ret);
-
   ASSERT_TRUE(pub_manager.wait_for_matched(topic.c_str()));
 
   pub_manager.run_publishers();
@@ -336,16 +295,6 @@ TEST_F(RecordIntegrationTestFixture, receives_latched_messages)
   recorder->record();
 
   start_async_spin(recorder);
-
-  // Wait until recorder discovery is complete, otherwise messages might be missed.
-  // The currently expected topics:
-  // /latched_chatter
-  auto discovery_ret = rosbag2_test_common::wait_until_condition(
-    [&recorder]() {
-      return recorder->subscriptions().size() == 1;
-    },
-    std::chrono::seconds(5));
-  ASSERT_TRUE(discovery_ret);
 
   ASSERT_TRUE(pub_manager.wait_for_matched(topic.c_str()));
 
@@ -488,16 +437,6 @@ TEST_F(RecordIntegrationTestFixture, write_split_callback_is_called)
 
   rosbag2_test_common::PublicationManager pub_manager;
   pub_manager.setup_publisher(string_topic, string_message, expected_messages);
-
-  // Wait until recorder discovery is complete, otherwise messages might be missed.
-  // The currently expected topics:
-  // /string_topic
-  auto discovery_ret = rosbag2_test_common::wait_until_condition(
-    [&recorder]() {
-      return recorder->subscriptions().size() == 1;
-    },
-    std::chrono::seconds(5));
-  ASSERT_TRUE(discovery_ret);
 
   ASSERT_TRUE(pub_manager.wait_for_matched(string_topic.c_str()));
   pub_manager.run_publishers();

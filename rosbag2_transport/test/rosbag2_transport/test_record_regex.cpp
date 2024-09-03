@@ -78,16 +78,6 @@ TEST_F(RecordIntegrationTestFixture, regex_topics_recording)
 
   start_async_spin(recorder);
 
-  // Wait until recorder discovery is complete, otherwise messages might be missed.
-  // The currently expected topics:
-  // /aa
-  auto discovery_ret = rosbag2_test_common::wait_until_condition(
-    [&recorder]() {
-      return recorder->subscriptions().size() == 1;
-    },
-    std::chrono::seconds(5));
-  ASSERT_TRUE(discovery_ret);
-
   ASSERT_TRUE(pub_manager.wait_for_matched(v1.c_str()));
 
   pub_manager.run_publishers();
@@ -160,17 +150,6 @@ TEST_F(RecordIntegrationTestFixture, regex_and_exclude_regex_topic_recording)
   recorder->record();
 
   start_async_spin(recorder);
-
-  // Wait until recorder discovery is complete, otherwise messages might be missed.
-  // The currently expected topics:
-  // /still_nice_topic
-  // /awesome_nice_topic
-  auto discovery_ret = rosbag2_test_common::wait_until_condition(
-    [&recorder]() {
-      return recorder->subscriptions().size() == 2;
-    },
-    std::chrono::seconds(5));
-  ASSERT_TRUE(discovery_ret);
 
   ASSERT_TRUE(pub_manager.wait_for_matched(v1.c_str()));
   ASSERT_TRUE(pub_manager.wait_for_matched(v2.c_str()));
@@ -246,17 +225,6 @@ TEST_F(RecordIntegrationTestFixture, regex_and_exclude_topic_topic_recording)
   recorder->record();
 
   start_async_spin(recorder);
-
-  // Wait until recorder discovery is complete, otherwise messages might be missed.
-  // The currently expected topics:
-  // /still_nice_topic
-  // /awesome_nice_topic
-  auto discovery_ret = rosbag2_test_common::wait_until_condition(
-    [&recorder]() {
-      return recorder->subscriptions().size() == 2;
-    },
-    std::chrono::seconds(5));
-  ASSERT_TRUE(discovery_ret);
 
   ASSERT_TRUE(pub_manager.wait_for_matched(v1.c_str()));
   ASSERT_TRUE(pub_manager.wait_for_matched(v2.c_str()));
