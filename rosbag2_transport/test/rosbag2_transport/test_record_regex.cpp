@@ -307,8 +307,8 @@ TEST_F(RecordIntegrationTestFixture, regex_and_exclude_regex_service_recording)
   // and /awesome_nice_service/_service_event are available to be recorded.  However,
   // wait_for_service_to_be_ready() only checks the services, not the event topics, so ask the
   // recorder to make sure it has successfully subscribed to all.
-  ASSERT_TRUE(recorder->wait_for_topic_to_be_discovered("/still_nice_service/_service_event"));
-  ASSERT_TRUE(recorder->wait_for_topic_to_be_discovered("/awesome_nice_service/_service_event"));
+  ASSERT_TRUE(recorder->wait_for_topic_to_be_discovered(v1 + "/_service_event"));
+  ASSERT_TRUE(recorder->wait_for_topic_to_be_discovered(v2 + "/_service_event"));
 
   auto & writer = recorder->get_writer_handle();
   auto & mock_writer = dynamic_cast<MockSequentialWriter &>(writer.get_implementation_handle());
@@ -388,8 +388,8 @@ TEST_F(RecordIntegrationTestFixture, regex_and_exclude_service_service_recording
   // and /awesome_nice_service/_service_event are available to be recorded.  However,
   // wait_for_service_to_be_ready() only checks the services, not the event topics, so ask the
   // recorder to make sure it has successfully subscribed to all.
-  ASSERT_TRUE(recorder->wait_for_topic_to_be_discovered("/still_nice_service/_service_event"));
-  ASSERT_TRUE(recorder->wait_for_topic_to_be_discovered("/awesome_nice_service/_service_event"));
+  ASSERT_TRUE(recorder->wait_for_topic_to_be_discovered(v1 + "/_service_event"));
+  ASSERT_TRUE(recorder->wait_for_topic_to_be_discovered(v2 + "/_service_event"));
 
   auto & writer = recorder->get_writer_handle();
   auto & mock_writer = dynamic_cast<MockSequentialWriter &>(writer.get_implementation_handle());
