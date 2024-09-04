@@ -435,7 +435,7 @@ recorder:
   ros__parameters:
     use_sim_time: false
     record:
-      all: true
+      all_topics: true
       is_discovery_disabled: false
       topic_polling_interval:
         sec: 0
