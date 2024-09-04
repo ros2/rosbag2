@@ -16,6 +16,7 @@
 #include <chrono>
 #include <future>
 #include <memory>
+#include <stdexcept>
 #include <string>
 #include <vector>
 #include <utility>
@@ -52,16 +53,20 @@ public:
   template<class T>
   void start_async_spin(T node)
   {
-    future_ = std::async(
-      std::launch::async,
-      [node, this]() -> void {
-        rclcpp::executors::SingleThreadedExecutor exec;
-        exec.add_node(node);
-        while (rclcpp::ok() && !done_) {
-          exec.spin_some(std::chrono::milliseconds(100));
-        }
-        exec.remove_node(node);
-      });
+    if (!done_.exchange(false)) {
+      future_ = std::async(
+        std::launch::async,
+        [node, this]() -> void {
+          rclcpp::executors::SingleThreadedExecutor exec;
+          exec.add_node(node);
+          while (rclcpp::ok() && !done_) {
+            exec.spin_some(std::chrono::milliseconds(100));
+          }
+          exec.remove_node(node);
+        });
+    } else {
+      throw std::runtime_error("Already spinning a node, can't start a new node spin");
+    }
   }
 
   void stop_spinning()

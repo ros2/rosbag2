@@ -14,8 +14,10 @@
 
 #include <gmock/gmock.h>
 
+#include <atomic>
 #include <chrono>
 #include <filesystem>
+#include <stdexcept>
 #include <string>
 
 #include "rosbag2_cpp/info.hpp"
@@ -81,16 +83,20 @@ public:
   template<class T>
   void start_async_spin(T node)
   {
-    node_spinner_future_ = std::async(
-      std::launch::async,
-      [node, this]() -> void {
-        rclcpp::executors::SingleThreadedExecutor exec;
-        exec.add_node(node);
-        while (rclcpp::ok() && !exit_from_node_spinner_) {
-          exec.spin_some(std::chrono::milliseconds(100));
-        }
-        exec.remove_node(node);
-      });
+    if (!exit_from_node_spinner_.exchange(false)) {
+      node_spinner_future_ = std::async(
+        std::launch::async,
+        [node, this]() -> void {
+          rclcpp::executors::SingleThreadedExecutor exec;
+          exec.add_node(node);
+          while (rclcpp::ok() && !exit_from_node_spinner_) {
+            exec.spin_some(std::chrono::milliseconds(100));
+          }
+          exec.remove_node(node);
+        });
+    } else {
+      throw std::runtime_error("Already spinning a node, can't start a new node spin");
+    }
   }
 
   void stop_spinning()
