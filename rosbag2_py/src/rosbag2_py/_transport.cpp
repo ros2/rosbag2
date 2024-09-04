@@ -16,6 +16,7 @@
 #include <csignal>
 #include <chrono>
 #include <memory>
+#include <cstdio>  // For _fileno on Windows
 #include <string>
 #include <unordered_map>
 #include <utility>
@@ -152,6 +153,28 @@ public:
 };
 typedef OptionsWrapper<rosbag2_transport::PlayOptions> PlayOptions;
 typedef OptionsWrapper<rosbag2_transport::RecordOptions> RecordOptions;
+
+#ifdef _WIN32
+#ifndef sigset_t
+typedef uint32_t sigset_t;
+#endif
+#ifndef sigaddset
+#define sigaddset(what, sig) (*(what) |= (1 << (sig)), 0)
+#endif
+#ifndef sigdelset
+#define sigdelset(what, sig) (*(what) &= ~(1 << (sig)), 0)
+#endif
+#ifndef sigemptyset
+#define sigemptyset(what)   (*(what) = 0, 0)
+#endif
+#ifndef sigismember
+#define sigismember(what, sig) (((*(what)) & (1 << (sig))) != 0)
+#endif
+
+#ifndef STDERR_FILENO
+#define STDERR_FILENO _fileno(stderr)
+#endif
+#endif  // #ifdef _WIN32
 
 /// \brief Defers signals handling until class destruction or by an explicit call to the
 /// process_deferred_signals().
