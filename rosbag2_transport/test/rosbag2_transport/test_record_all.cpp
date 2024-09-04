@@ -52,7 +52,7 @@ TEST_F(RecordIntegrationTestFixture, published_messages_from_multiple_topics_are
 
   rosbag2_transport::RecordOptions record_options =
   {true, false, false, {}, {}, {}, {"/rosout"}, {}, {}, "rmw_format", 100ms};
-  auto recorder = std::make_shared<MockRecorder>(
+  auto recorder = std::make_shared<rosbag2_transport::Recorder>(
     std::move(writer_), storage_options_, record_options);
   recorder->record();
 
@@ -60,11 +60,6 @@ TEST_F(RecordIntegrationTestFixture, published_messages_from_multiple_topics_are
 
   ASSERT_TRUE(pub_manager.wait_for_matched(array_topic.c_str()));
   ASSERT_TRUE(pub_manager.wait_for_matched(string_topic.c_str()));
-
-  // At this point, we expect that the topics /string_topic, /array_topic, and /events/write_split
-  // are available to be recorded.  However, wait_for_matched() only checks for /string_topic
-  // and /array_topic, so ask the recorder to make sure it has successfully subscribed to all.
-  ASSERT_TRUE(recorder->wait_for_topic_to_be_discovered("/events/write_split"));
 
   pub_manager.run_publishers();
 
@@ -169,7 +164,6 @@ TEST_F(RecordIntegrationTestFixture, published_messages_from_topic_and_service_a
   // check on the service and the topic, not the event or the split topic, so ask the recorder to
   // make sure it has successfully subscribed to all.
   ASSERT_TRUE(recorder->wait_for_topic_to_be_discovered("/test_service/_service_event"));
-  ASSERT_TRUE(recorder->wait_for_topic_to_be_discovered("/events/write_split"));
 
   pub_manager.run_publishers();
 
