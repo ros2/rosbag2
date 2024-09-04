@@ -33,6 +33,7 @@
 #include "test_msgs/message_fixtures.hpp"
 #include "test_msgs/srv/basic_types.hpp"
 
+#include "mock_recorder.hpp"
 #include "record_integration_fixture.hpp"
 
 using namespace std::chrono_literals;  // NOLINT
@@ -289,28 +290,25 @@ TEST_F(RecordIntegrationTestFixture, regex_and_exclude_regex_service_recording)
   auto service_manager_b2 =
     std::make_shared<rosbag2_test_common::ClientManager<test_msgs::srv::BasicTypes>>(b2);
 
-  auto recorder = std::make_shared<rosbag2_transport::Recorder>(
+  auto recorder = std::make_shared<MockRecorder>(
     std::move(writer_), storage_options_, record_options);
   recorder->record();
 
   start_async_spin(recorder);
-
-  // Wait until recorder discovery is complete, otherwise messages might be missed.
-  // The currently expected topics:
-  // /still_nice_servce/_service_event
-  // /awesome_nice_service/_service_event
-  auto discovery_ret = rosbag2_test_common::wait_until_condition(
-    [&recorder]() {
-      return recorder->subscriptions().size() == 2;
-    },
-    std::chrono::seconds(5));
-  ASSERT_TRUE(discovery_ret);
 
   ASSERT_TRUE(service_manager_v1->wait_for_service_to_be_ready());
   ASSERT_TRUE(service_manager_v2->wait_for_service_to_be_ready());
   ASSERT_TRUE(service_manager_e1->wait_for_service_to_be_ready());
   ASSERT_TRUE(service_manager_b1->wait_for_service_to_be_ready());
   ASSERT_TRUE(service_manager_b2->wait_for_service_to_be_ready());
+
+  // At this point, we expect that the services /still_nice_service and /awesome_nice_service,
+  // along with the event topics /still_nice_service/_service_event
+  // and /awesome_nice_service/_service_event are available to be recorded.  However,
+  // wait_for_service_to_be_ready() only checks the services, not the event topics, so ask the
+  // recorder to make sure it has successfully subscribed to all.
+  ASSERT_TRUE(recorder->wait_for_topic_to_be_discovered("/still_nice_service/_service_event"));
+  ASSERT_TRUE(recorder->wait_for_topic_to_be_discovered("/awesome_nice_service/_service_event"));
 
   auto & writer = recorder->get_writer_handle();
   auto & mock_writer = dynamic_cast<MockSequentialWriter &>(writer.get_implementation_handle());
@@ -373,19 +371,9 @@ TEST_F(RecordIntegrationTestFixture, regex_and_exclude_service_service_recording
   auto service_manager_b2 =
     std::make_shared<rosbag2_test_common::ClientManager<test_msgs::srv::BasicTypes>>(b2);
 
-  auto recorder = std::make_shared<rosbag2_transport::Recorder>(
+  auto recorder = std::make_shared<MockRecorder>(
     std::move(writer_), storage_options_, record_options);
   recorder->record();
-  // Wait until recorder discovery is complete, otherwise messages might be missed.
-  // The currently expected topics:
-  // /still_nice_servce/_service_event
-  // /awesome_nice_service/_service_event
-  auto discovery_ret = rosbag2_test_common::wait_until_condition(
-    [&recorder]() {
-      return recorder->subscriptions().size() == 2;
-    },
-    std::chrono::seconds(5));
-  ASSERT_TRUE(discovery_ret);
 
   start_async_spin(recorder);
 
@@ -394,6 +382,14 @@ TEST_F(RecordIntegrationTestFixture, regex_and_exclude_service_service_recording
   ASSERT_TRUE(service_manager_e1->wait_for_service_to_be_ready());
   ASSERT_TRUE(service_manager_b1->wait_for_service_to_be_ready());
   ASSERT_TRUE(service_manager_b2->wait_for_service_to_be_ready());
+
+  // At this point, we expect that the services /still_nice_service and /awesome_nice_service,
+  // along with the event topics /still_nice_service/_service_event
+  // and /awesome_nice_service/_service_event are available to be recorded.  However,
+  // wait_for_service_to_be_ready() only checks the services, not the event topics, so ask the
+  // recorder to make sure it has successfully subscribed to all.
+  ASSERT_TRUE(recorder->wait_for_topic_to_be_discovered("/still_nice_service/_service_event"));
+  ASSERT_TRUE(recorder->wait_for_topic_to_be_discovered("/awesome_nice_service/_service_event"));
 
   auto & writer = recorder->get_writer_handle();
   auto & mock_writer = dynamic_cast<MockSequentialWriter &>(writer.get_implementation_handle());

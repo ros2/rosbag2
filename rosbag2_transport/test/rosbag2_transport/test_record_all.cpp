@@ -30,6 +30,7 @@
 
 #include "rosbag2_transport/recorder.hpp"
 
+#include "mock_recorder.hpp"
 #include "record_integration_fixture.hpp"
 
 using namespace std::chrono_literals;  // NOLINT
@@ -51,26 +52,19 @@ TEST_F(RecordIntegrationTestFixture, published_messages_from_multiple_topics_are
 
   rosbag2_transport::RecordOptions record_options =
   {true, false, false, {}, {}, {}, {"/rosout"}, {}, {}, "rmw_format", 100ms};
-  auto recorder = std::make_shared<rosbag2_transport::Recorder>(
+  auto recorder = std::make_shared<MockRecorder>(
     std::move(writer_), storage_options_, record_options);
   recorder->record();
 
   start_async_spin(recorder);
 
-  // Wait until recorder discovery is complete, otherwise messages might be missed.
-  // The currently expected topics:
-  // /string_topic
-  // /events/write_split
-  // /array_topic
-  auto discovery_ret = rosbag2_test_common::wait_until_condition(
-    [&recorder]() {
-      return recorder->subscriptions().size() == 3;
-    },
-    std::chrono::seconds(5));
-  ASSERT_TRUE(discovery_ret);
-
   ASSERT_TRUE(pub_manager.wait_for_matched(array_topic.c_str()));
   ASSERT_TRUE(pub_manager.wait_for_matched(string_topic.c_str()));
+
+  // At this point, we expect that the topics /string_topic, /array_topic, and /events/write_split
+  // are available to be recorded.  However, wait_for_matched() only checks for /string_topic
+  // and /array_topic, so ask the recorder to make sure it has successfully subscribed to all.
+  ASSERT_TRUE(recorder->wait_for_topic_to_be_discovered("/events/write_split"));
 
   pub_manager.run_publishers();
 
@@ -110,25 +104,21 @@ TEST_F(RecordIntegrationTestFixture, published_messages_from_multiple_services_a
 
   rosbag2_transport::RecordOptions record_options =
   {false, true, false, {}, {}, {}, {"/rosout"}, {}, {}, "rmw_format", 100ms};
-  auto recorder = std::make_shared<rosbag2_transport::Recorder>(
+  auto recorder = std::make_shared<MockRecorder>(
     std::move(writer_), storage_options_, record_options);
   recorder->record();
 
   start_async_spin(recorder);
 
-  // Wait until recorder discovery is complete, otherwise messages might be missed.
-  // The currently expected topics:
-  // /test_service_1/_service_event
-  // /test_service_2/_service_event
-  auto discovery_ret = rosbag2_test_common::wait_until_condition(
-    [&recorder]() {
-      return recorder->subscriptions().size() == 2;
-    },
-    std::chrono::seconds(5));
-  ASSERT_TRUE(discovery_ret);
-
   ASSERT_TRUE(client_manager_1->wait_for_service_to_be_ready());
   ASSERT_TRUE(client_manager_2->wait_for_service_to_be_ready());
+
+  // At this point, we expect that the services /test_service_1 and /test_service_2, along with
+  // the event topics /test_service_1/_service_event and /test_service_2/_service_event are
+  // available to be recorded.  However, wait_for_service_to_be_ready() only checks the services,
+  // not the event topics, so ask the recorder to make sure it has successfully subscribed to all.
+  ASSERT_TRUE(recorder->wait_for_topic_to_be_discovered("/test_service_1/_service_event"));
+  ASSERT_TRUE(recorder->wait_for_topic_to_be_discovered("/test_service_2/_service_event"));
 
   // By default, only client introspection is enabled.
   // For one request, service event topic gets 2 messages.
@@ -163,27 +153,23 @@ TEST_F(RecordIntegrationTestFixture, published_messages_from_topic_and_service_a
 
   rosbag2_transport::RecordOptions record_options =
   {true, true, false, {}, {}, {}, {"/rosout"}, {}, {}, "rmw_format", 100ms};
-  auto recorder = std::make_shared<rosbag2_transport::Recorder>(
+  auto recorder = std::make_shared<MockRecorder>(
     std::move(writer_), storage_options_, record_options);
   recorder->record();
 
   start_async_spin(recorder);
 
-  // Wait until recorder discovery is complete, otherwise messages might be missed.
-  // The currently expected topics:
-  // /test_service/_service_event
-  // /string_topic
-  // /events/write_split
-  auto discovery_ret = rosbag2_test_common::wait_until_condition(
-    [&recorder]() {
-      return recorder->subscriptions().size() == 3;
-    },
-    std::chrono::seconds(5));
-  ASSERT_TRUE(discovery_ret);
-
   ASSERT_TRUE(pub_manager.wait_for_matched(string_topic.c_str()));
 
   ASSERT_TRUE(client_manager_1->wait_for_service_to_be_ready());
+
+  // At this point, we expect that the service /test_service_1, along with the topic /string_topic,
+  // along with the event topic /test_service_1, along with the split topic /events/write_split are
+  // available to be recorded.  However, wait_for_matched() and wait_for_service_to_be_ready() only
+  // check on the service and the topic, not the event or the split topic, so ask the recorder to
+  // make sure it has successfully subscribed to all.
+  ASSERT_TRUE(recorder->wait_for_topic_to_be_discovered("/test_service/_service_event"));
+  ASSERT_TRUE(recorder->wait_for_topic_to_be_discovered("/events/write_split"));
 
   pub_manager.run_publishers();
 
