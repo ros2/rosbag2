@@ -2,6 +2,13 @@
 Changelog for package rosbag2_storage_default_plugins
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.29.0 (2024-09-03)
+-------------------
+* Fix incorrect zero size for sqlite storage (`#1759 <https://github.com/ros2/rosbag2/issues/1759>`_)
+* Fix for failing throws_on_invalid_pragma_in_config_file on Windows (`#1742 <https://github.com/ros2/rosbag2/issues/1742>`_)
+* Add topics with zero message counts to the SQLiteStorage::get_metadata(). (`#1725 <https://github.com/ros2/rosbag2/issues/1725>`_)
+* Contributors: Michael Orlov, Roman, Tomoya Fujita
+
 0.28.0 (2024-06-17)
 -------------------
 

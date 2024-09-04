@@ -2,6 +2,12 @@
 Changelog for package ros2bag
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.29.0 (2024-09-03)
+-------------------
+* Add cli option compression-threads-priority (`#1768 <https://github.com/ros2/rosbag2/issues/1768>`_)
+* Add computation of size contribution to info verb (`#1726 <https://github.com/ros2/rosbag2/issues/1726>`_)
+* Contributors: Nicola Loi, Roman
+
 0.28.0 (2024-06-17)
 -------------------
 * fix(start-offset): allow specifying a start offset of 0 (`#1682 <https://github.com/ros2/rosbag2/issues/1682>`_)

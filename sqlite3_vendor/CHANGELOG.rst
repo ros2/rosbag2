@@ -2,6 +2,11 @@
 Changelog for package sqlite3_vendor
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.29.0 (2024-09-03)
+-------------------
+* Bump sqlite3 to 3.45.1 (`#1737 <https://github.com/ros2/rosbag2/issues/1737>`_)
+* Contributors: Christophe Bedard
+
 0.28.0 (2024-06-17)
 -------------------
 

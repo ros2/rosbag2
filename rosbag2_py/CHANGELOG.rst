@@ -2,6 +2,15 @@
 Changelog for package rosbag2_py
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.29.0 (2024-09-03)
+-------------------
+* Added method to introspect QoS in Python (`#1648 <https://github.com/ros2/rosbag2/issues/1648>`_)
+* Update CI scripts to use Ubuntu Noble distros and bump action scripts to latest versions (`#1709 <https://github.com/ros2/rosbag2/issues/1709>`_)
+* Add cli option compression-threads-priority (`#1768 <https://github.com/ros2/rosbag2/issues/1768>`_)
+* Add computation of size contribution to info verb (`#1726 <https://github.com/ros2/rosbag2/issues/1726>`_)
+* Bugfix for wrong timestamps in ros2 bag info (`#1745 <https://github.com/ros2/rosbag2/issues/1745>`_)
+* Contributors: Alejandro Hernández Cordero, Michael Orlov, Nicola Loi, Roman
+
 0.28.0 (2024-06-17)
 -------------------
 * Add bindings for LocalMessageDefinitionSource (`#1697 <https://github.com/ros2/rosbag2/issues/1697>`_)

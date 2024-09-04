@@ -2,6 +2,15 @@
 Changelog for package rosbag2_transport
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.29.0 (2024-09-03)
+-------------------
+* Removed warnings (`#1794 <https://github.com/ros2/rosbag2/issues/1794>`_)
+* Small cleanups to the rosbag2 tests. (`#1792 <https://github.com/ros2/rosbag2/issues/1792>`_)
+* Add cli option compression-threads-priority (`#1768 <https://github.com/ros2/rosbag2/issues/1768>`_)
+* [WIP] Remove rcpputils::fs dependencies in rosbag2 packages (`#1740 <https://github.com/ros2/rosbag2/issues/1740>`_)
+* Bugfix for bag_split event callbacks called to early with file compression (`#1643 <https://github.com/ros2/rosbag2/issues/1643>`_)
+* Contributors: Alejandro Hernández Cordero, Chris Lalancette, Michael Orlov, Roman
+
 0.28.0 (2024-06-17)
 -------------------
 * Bugfix for issue where unable to create composable nodes with compression (`#1679 <https://github.com/ros2/rosbag2/issues/1679>`_)

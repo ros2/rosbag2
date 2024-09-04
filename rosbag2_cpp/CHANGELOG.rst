@@ -2,6 +2,15 @@
 Changelog for package rosbag2
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.29.0 (2024-09-03)
+-------------------
+* Add computation of size contribution to info verb (`#1726 <https://github.com/ros2/rosbag2/issues/1726>`_)
+* [WIP] Remove rcpputils::fs dependencies in rosbag2 packages (`#1740 <https://github.com/ros2/rosbag2/issues/1740>`_)
+* Removed deprecated write method (`#1738 <https://github.com/ros2/rosbag2/issues/1738>`_)
+* Bugfix for bag_split event callbacks called to early with file compression (`#1643 <https://github.com/ros2/rosbag2/issues/1643>`_)
+* Add topics with zero message counts to the SQLiteStorage::get_metadata(). (`#1725 <https://github.com/ros2/rosbag2/issues/1725>`_)
+* Contributors: Alejandro Hernández Cordero, Michael Orlov, Nicola Loi, Tomoya Fujita
+
 0.28.0 (2024-06-17)
 -------------------
 * Propagate "custom_data" and "ros_distro" in to the metadata.yaml file during re-indexing (`#1700 <https://github.com/ros2/rosbag2/issues/1700>`_)

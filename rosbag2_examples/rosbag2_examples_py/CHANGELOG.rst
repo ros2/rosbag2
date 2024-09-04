@@ -2,6 +2,13 @@
 Changelog for package rosbag2_examples_py
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.29.0 (2024-09-03)
+-------------------
+* simple_bag_reader.py should publish the data for each timer callback. (`#1767 <https://github.com/ros2/rosbag2/issues/1767>`_)
+* Change the python examples to use the rclpy context manager. (`#1758 <https://github.com/ros2/rosbag2/issues/1758>`_)
+* Add rosbag2_examples_cpp/simple_bag_reader.cpp. (`#1683 <https://github.com/ros2/rosbag2/issues/1683>`_)
+* Contributors: Chris Lalancette, Tomoya Fujita
+
 0.28.0 (2024-06-17)
 -------------------
 
