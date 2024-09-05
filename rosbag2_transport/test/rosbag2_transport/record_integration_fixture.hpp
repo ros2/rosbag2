@@ -47,6 +47,7 @@ public:
 
   void TearDown() override
   {
+    stop_spinning();
     rclcpp::shutdown();
   }
 

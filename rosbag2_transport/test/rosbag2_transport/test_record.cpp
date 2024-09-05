@@ -73,7 +73,6 @@ TEST_F(RecordIntegrationTestFixture, published_messages_from_multiple_topics_are
   EXPECT_TRUE(ret) << "failed to capture expected messages in time" <<
     "recorded messages = " << recorded_messages.size();
   EXPECT_THAT(recorded_messages, SizeIs(expected_messages));
-  stop_spinning();
 
   auto recorded_topics = mock_writer.get_topics();
   ASSERT_THAT(recorded_topics, SizeIs(2));

@@ -67,6 +67,7 @@ public:
 
   void TearDown() override
   {
+    stop_spinning();
     fs::remove_all(root_bag_path_);
   }
 
@@ -200,8 +201,6 @@ TEST_P(Rosbag2CPPGetServiceInfoTest, get_service_info_for_bag_with_services_only
   recorder->record();
 
   start_async_spin(recorder);
-  auto cleanup_process_handle = rcpputils::make_scope_exit(
-    [&]() {stop_spinning();});
 
   ASSERT_TRUE(service_client_manager->wait_for_service_to_be_ready());
   ASSERT_TRUE(wait_for_subscriptions(*recorder, {"/test_service/_service_event"}));
@@ -227,8 +226,6 @@ TEST_P(Rosbag2CPPGetServiceInfoTest, get_service_info_for_bag_with_services_only
   EXPECT_TRUE(ret) << "Failed to capture " << expected_messages << " expected messages in time";
 
   recorder->stop();
-  stop_spinning();
-  cleanup_process_handle.cancel();
 
   rosbag2_cpp::Info info;
   std::vector<std::shared_ptr<rosbag2_cpp::rosbag2_service_info_t>> ret_service_infos;
@@ -278,8 +275,6 @@ TEST_P(Rosbag2CPPGetServiceInfoTest, get_service_info_for_bag_with_topics_and_se
   recorder->record();
 
   start_async_spin(recorder);
-  auto cleanup_process_handle = rcpputils::make_scope_exit(
-    [&]() {stop_spinning();});
 
   ASSERT_TRUE(
     wait_for_subscriptions(
@@ -314,8 +309,6 @@ TEST_P(Rosbag2CPPGetServiceInfoTest, get_service_info_for_bag_with_topics_and_se
   EXPECT_TRUE(ret) << "Failed to capture " << expected_messages << " expected messages in time";
 
   recorder->stop();
-  stop_spinning();
-  cleanup_process_handle.cancel();
 
   rosbag2_cpp::Info info;
   std::vector<std::shared_ptr<rosbag2_cpp::rosbag2_service_info_t>> ret_service_infos;

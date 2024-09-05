@@ -121,7 +121,6 @@ TEST_F(RecordIntegrationTestFixture, record_all_with_sim_time)
   auto recorded_messages = mock_writer.get_messages();
   ASSERT_TRUE(ret) << "failed to capture expected messages in time. " <<
     "recorded messages = " << recorded_messages.size();
-  stop_spinning();
 
   auto messages_per_topic = mock_writer.messages_per_topic();
   ASSERT_EQ(messages_per_topic.count(string_topic), 1u);

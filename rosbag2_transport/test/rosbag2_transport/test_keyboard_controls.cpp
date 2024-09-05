@@ -210,6 +210,4 @@ TEST_F(RecordIntegrationTestFixture, test_keyboard_controls)
   EXPECT_THAT(recorder->is_paused(), false);
   keyboard_handler->simulate_key_press(rosbag2_transport::Recorder::kPauseResumeToggleKey);
   EXPECT_THAT(recorder->is_paused(), true);
-
-  this->stop_spinning();
 }
