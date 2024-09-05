@@ -92,7 +92,7 @@ public:
     return true;
   }
 
-  bool wait_for_srvice_to_be_ready(std::chrono::duration<double> timeout = std::chrono::seconds(5))
+  bool wait_for_service_to_be_ready(std::chrono::duration<double> timeout = std::chrono::seconds(5))
   {
     using clock = std::chrono::system_clock;
     auto start = clock::now();

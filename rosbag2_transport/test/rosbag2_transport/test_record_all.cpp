@@ -65,7 +65,7 @@ TEST_F(RecordIntegrationTestFixture, published_messages_from_multiple_topics_are
   auto & writer = recorder->get_writer_handle();
   auto & mock_writer = dynamic_cast<MockSequentialWriter &>(writer.get_implementation_handle());
 
-  size_t expected_messages = 4;
+  constexpr size_t expected_messages = 4;
   auto ret = rosbag2_test_common::wait_until_shutdown(
     std::chrono::seconds(5),
     [&mock_writer, &expected_messages]() {
@@ -104,8 +104,8 @@ TEST_F(RecordIntegrationTestFixture, published_messages_from_multiple_services_a
 
   start_async_spin(recorder);
 
-  ASSERT_TRUE(client_manager_1->wait_for_srvice_to_be_ready());
-  ASSERT_TRUE(client_manager_2->wait_for_srvice_to_be_ready());
+  ASSERT_TRUE(client_manager_1->wait_for_service_to_be_ready());
+  ASSERT_TRUE(client_manager_2->wait_for_service_to_be_ready());
 
   // By default, only client introspection is enabled.
   // For one request, service event topic get 2 messages.
@@ -115,7 +115,7 @@ TEST_F(RecordIntegrationTestFixture, published_messages_from_multiple_services_a
   auto & writer = recorder->get_writer_handle();
   auto & mock_writer = dynamic_cast<MockSequentialWriter &>(writer.get_implementation_handle());
 
-  size_t expected_messages = 4;
+  constexpr size_t expected_messages = 4;
   auto ret = rosbag2_test_common::wait_until_shutdown(
     std::chrono::seconds(5),
     [&mock_writer, &expected_messages]() {
@@ -148,7 +148,7 @@ TEST_F(RecordIntegrationTestFixture, published_messages_from_topic_and_service_a
 
   ASSERT_TRUE(pub_manager.wait_for_matched(string_topic.c_str()));
 
-  ASSERT_TRUE(client_manager_1->wait_for_srvice_to_be_ready());
+  ASSERT_TRUE(client_manager_1->wait_for_service_to_be_ready());
 
   pub_manager.run_publishers();
 
@@ -159,7 +159,7 @@ TEST_F(RecordIntegrationTestFixture, published_messages_from_topic_and_service_a
   auto & writer = recorder->get_writer_handle();
   auto & mock_writer = dynamic_cast<MockSequentialWriter &>(writer.get_implementation_handle());
 
-  size_t expected_messages = 3;
+  constexpr size_t expected_messages = 3;
   auto ret = rosbag2_test_common::wait_until_shutdown(
     std::chrono::seconds(5),
     [&mock_writer, &expected_messages]() {
