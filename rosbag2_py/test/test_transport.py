@@ -16,6 +16,7 @@ import datetime
 from pathlib import Path
 import re
 import signal
+import sys
 import threading
 
 from common import get_rosbag_options, wait_for
@@ -87,6 +88,9 @@ def test_recoder_log_level():
 
 @pytest.mark.parametrize('storage_id', TESTED_STORAGE_IDS)
 def test_process_sigint_in_recorder(tmp_path, storage_id, capfd):
+    if sys.platform.startswith('win'):
+        pytest.skip('Signal handling is not implemented on Windows yet.')
+
     bag_path = tmp_path / 'test_process_sigint_in_recorder'
     storage_options, converter_options = get_rosbag_options(str(bag_path), storage_id)
 
@@ -131,6 +135,9 @@ def test_process_sigint_in_recorder(tmp_path, storage_id, capfd):
 
 @pytest.mark.parametrize('storage_id', TESTED_STORAGE_IDS)
 def test_record_process_sigint_in_python_handler(tmp_path, storage_id, capfd):
+    if sys.platform.startswith('win'):
+        pytest.skip('Signal handling is not implemented on Windows yet.')
+
     bag_path = tmp_path / 'test_record_sigint_in_python'
     storage_options, converter_options = get_rosbag_options(str(bag_path), storage_id)
 
@@ -175,6 +182,9 @@ def test_record_process_sigint_in_python_handler(tmp_path, storage_id, capfd):
 
 @pytest.mark.parametrize('storage_id', TESTED_STORAGE_IDS)
 def test_process_sigint_in_player(storage_id, capfd):
+    if sys.platform.startswith('win'):
+        pytest.skip('Signal handling is not implemented on Windows yet.')
+
     bag_path = str(RESOURCES_PATH / storage_id / 'talker')
     storage_options, converter_options = get_rosbag_options(bag_path, storage_id)
 
@@ -211,6 +221,9 @@ def test_process_sigint_in_player(storage_id, capfd):
 
 @pytest.mark.parametrize('storage_id', TESTED_STORAGE_IDS)
 def test_play_process_sigint_in_python_handler(storage_id, capfd):
+    if sys.platform.startswith('win'):
+        pytest.skip('Signal handling is not implemented on Windows yet.')
+
     bag_path = str(RESOURCES_PATH / storage_id / 'talker')
     storage_options, converter_options = get_rosbag_options(bag_path, storage_id)
 
