@@ -53,16 +53,12 @@ public:
   template<class T>
   void start_async_spin(T node)
   {
-    if (!done_.exchange(false)) {
-      future_ = std::async(
-        std::launch::async,
-        [node, this]() -> void {
-          rclcpp::executors::SingleThreadedExecutor exec;
-          exec.add_node(node);
-          while (rclcpp::ok() && !done_) {
-            exec.spin_some(std::chrono::milliseconds(100));
-          }
-          exec.remove_node(node);
+    if (exec_ == nullptr) {
+      exec_ = std::make_unique<rclcpp::executors::SingleThreadedExecutor>();
+      exec_->add_node(node);
+      spin_thread_ = std::thread(
+        [this]() {
+          exec_->spin();
         });
     } else {
       throw std::runtime_error("Already spinning a node, can't start a new node spin");
@@ -71,9 +67,11 @@ public:
 
   void stop_spinning()
   {
-    done_ = true;
-    if (future_.valid()) {
-      future_.wait();
+    if (exec_ != nullptr) {
+      exec_->cancel();
+      if (spin_thread_.joinable()) {
+        spin_thread_.join();
+      }
     }
   }
 
@@ -92,9 +90,9 @@ public:
     return filtered_messages;
   }
 
+  std::unique_ptr<rclcpp::executors::SingleThreadedExecutor> exec_{nullptr};
   MemoryManagement memory_;
-  std::future<void> future_;
-  std::atomic_bool done_{false};
+  std::thread spin_thread_;
 };
 
 #endif  // ROSBAG2_TRANSPORT__RECORD_INTEGRATION_FIXTURE_HPP_

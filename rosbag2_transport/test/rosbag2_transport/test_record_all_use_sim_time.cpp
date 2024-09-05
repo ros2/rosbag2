@@ -106,9 +106,6 @@ TEST_F(RecordIntegrationTestFixture, record_all_with_sim_time)
 
   ASSERT_TRUE(recorder->topic_available_for_recording(string_topic));
 
-  // We have to ensure that the /clock topic is available as well
-  ASSERT_TRUE(recorder->wait_for_topic_to_be_discovered("/clock"));
-
   pub_manager.run_publishers();
 
   auto & writer = recorder->get_writer_handle();
@@ -122,11 +119,12 @@ TEST_F(RecordIntegrationTestFixture, record_all_with_sim_time)
     },
     std::chrono::seconds(5));
   auto recorded_messages = mock_writer.get_messages();
-  EXPECT_TRUE(ret) << "failed to capture expected messages in time. " <<
+  ASSERT_TRUE(ret) << "failed to capture expected messages in time. " <<
     "recorded messages = " << recorded_messages.size();
   stop_spinning();
 
   auto messages_per_topic = mock_writer.messages_per_topic();
+  ASSERT_EQ(messages_per_topic.count(string_topic), 1u);
   EXPECT_EQ(messages_per_topic[string_topic], 5u);
 
   EXPECT_THAT(recorded_messages, SizeIs(Ge(expected_messages)));

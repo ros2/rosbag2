@@ -83,16 +83,12 @@ public:
   template<class T>
   void start_async_spin(T node)
   {
-    if (!exit_from_node_spinner_.exchange(false)) {
-      node_spinner_future_ = std::async(
-        std::launch::async,
-        [node, this]() -> void {
-          rclcpp::executors::SingleThreadedExecutor exec;
-          exec.add_node(node);
-          while (rclcpp::ok() && !exit_from_node_spinner_) {
-            exec.spin_some(std::chrono::milliseconds(100));
-          }
-          exec.remove_node(node);
+    if (exec_ == nullptr) {
+      exec_ = std::make_unique<rclcpp::executors::SingleThreadedExecutor>();
+      exec_->add_node(node);
+      spin_thread_ = std::thread(
+        [this]() {
+          exec_->spin();
         });
     } else {
       throw std::runtime_error("Already spinning a node, can't start a new node spin");
@@ -101,9 +97,11 @@ public:
 
   void stop_spinning()
   {
-    exit_from_node_spinner_ = true;
-    if (node_spinner_future_.valid()) {
-      node_spinner_future_.wait();
+    if (exec_ != nullptr) {
+      exec_->cancel();
+      if (spin_thread_.joinable()) {
+        spin_thread_.join();
+      }
     }
   }
 
@@ -153,8 +151,8 @@ public:
 
   // relative path to the root of the bag file.
   fs::path root_bag_path_;
-  std::future<void> node_spinner_future_;
-  std::atomic_bool exit_from_node_spinner_{false};
+  std::unique_ptr<rclcpp::executors::SingleThreadedExecutor> exec_{nullptr};
+  std::thread spin_thread_;
 };
 
 TEST_P(Rosbag2CPPGetServiceInfoTest, get_service_info_for_bag_with_topics_only) {
