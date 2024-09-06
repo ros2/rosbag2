@@ -2,8 +2,8 @@
 Changelog for package rosbag2
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.26.5 (2024-09-06)
+-------------------
 * Bugfix for bag_split event callbacks called to early with file compression (`#1643 <https://github.com/ros2/rosbag2/issues/1643>`_) (`#1732 <https://github.com/ros2/rosbag2/issues/1732>`_)
   (cherry picked from commit 1877b53847bda4d1f2668187b79fa27a796c3438)
   Co-authored-by: Michael Orlov <michael.orlov@apex.ai>

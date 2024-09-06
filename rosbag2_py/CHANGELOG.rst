@@ -2,8 +2,8 @@
 Changelog for package rosbag2_py
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.26.5 (2024-09-06)
+-------------------
 * Added method to introspect QoS in Python (`#1648 <https://github.com/ros2/rosbag2/issues/1648>`_) (`#1790 <https://github.com/ros2/rosbag2/issues/1790>`_)
   (cherry picked from commit f0f3cc5f57ba9142b763247a68acc571d2500bb5)
   Co-authored-by: Alejandro Hernández Cordero <ahcorde@gmail.com>
