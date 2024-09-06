@@ -103,6 +103,7 @@ public:
       if (spin_thread_.joinable()) {
         spin_thread_.join();
       }
+      exec_ = nullptr;
     }
   }
 
@@ -201,6 +202,7 @@ TEST_P(Rosbag2CPPGetServiceInfoTest, get_service_info_for_bag_with_services_only
   recorder->record();
 
   start_async_spin(recorder);
+  auto cleanup_process_handle = rcpputils::make_scope_exit([&]() {stop_spinning();});
 
   ASSERT_TRUE(service_client_manager->wait_for_service_to_be_ready());
   ASSERT_TRUE(wait_for_subscriptions(*recorder, {"/test_service/_service_event"}));
@@ -275,6 +277,7 @@ TEST_P(Rosbag2CPPGetServiceInfoTest, get_service_info_for_bag_with_topics_and_se
   recorder->record();
 
   start_async_spin(recorder);
+  auto cleanup_process_handle = rcpputils::make_scope_exit([&]() {stop_spinning();});
 
   ASSERT_TRUE(
     wait_for_subscriptions(

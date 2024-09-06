@@ -99,6 +99,7 @@ TEST_F(RecordIntegrationTestFixture, record_all_with_sim_time)
   recorder->record();
 
   start_async_spin(recorder);
+  auto cleanup_process_handle = rcpputils::make_scope_exit([&]() {stop_spinning();});
 
   ASSERT_TRUE(pub_manager.wait_for_matched(string_topic.c_str()));
 

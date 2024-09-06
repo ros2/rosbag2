@@ -57,6 +57,7 @@ TEST_F(RecordIntegrationTestFixture, published_messages_from_multiple_topics_are
   recorder->record();
 
   start_async_spin(recorder);
+  auto cleanup_process_handle = rcpputils::make_scope_exit([&]() {stop_spinning();});
 
   ASSERT_TRUE(pub_manager.wait_for_matched(array_topic.c_str()));
   ASSERT_TRUE(pub_manager.wait_for_matched(string_topic.c_str()));
@@ -104,6 +105,7 @@ TEST_F(RecordIntegrationTestFixture, published_messages_from_multiple_services_a
   recorder->record();
 
   start_async_spin(recorder);
+  auto cleanup_process_handle = rcpputils::make_scope_exit([&]() {stop_spinning();});
 
   ASSERT_TRUE(client_manager_1->wait_for_service_to_be_ready());
   ASSERT_TRUE(client_manager_2->wait_for_service_to_be_ready());
@@ -153,6 +155,7 @@ TEST_F(RecordIntegrationTestFixture, published_messages_from_topic_and_service_a
   recorder->record();
 
   start_async_spin(recorder);
+  auto cleanup_process_handle = rcpputils::make_scope_exit([&]() {stop_spinning();});
 
   ASSERT_TRUE(pub_manager.wait_for_matched(string_topic.c_str()));
 

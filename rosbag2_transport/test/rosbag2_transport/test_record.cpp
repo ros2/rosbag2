@@ -53,6 +53,7 @@ TEST_F(RecordIntegrationTestFixture, published_messages_from_multiple_topics_are
   recorder->record();
 
   start_async_spin(recorder);
+  auto cleanup_process_handle = rcpputils::make_scope_exit([&]() {stop_spinning();});
 
   ASSERT_TRUE(pub_manager.wait_for_matched(array_topic.c_str()));
   ASSERT_TRUE(pub_manager.wait_for_matched(string_topic.c_str()));
@@ -126,6 +127,7 @@ TEST_F(RecordIntegrationTestFixture, can_record_again_after_stop)
   recorder->record();
 
   start_async_spin(recorder);
+  auto cleanup_process_handle = rcpputils::make_scope_exit([&]() {stop_spinning();});
 
   auto & writer = recorder->get_writer_handle();
   auto & mock_writer = dynamic_cast<MockSequentialWriter &>(writer.get_implementation_handle());
@@ -187,6 +189,7 @@ TEST_F(RecordIntegrationTestFixture, qos_is_stored_in_metadata)
   recorder->record();
 
   start_async_spin(recorder);
+  auto cleanup_process_handle = rcpputils::make_scope_exit([&]() {stop_spinning();});
 
   ASSERT_TRUE(pub_manager.wait_for_matched(topic.c_str()));
 
@@ -251,6 +254,7 @@ TEST_F(RecordIntegrationTestFixture, records_sensor_data)
   recorder->record();
 
   start_async_spin(recorder);
+  auto cleanup_process_handle = rcpputils::make_scope_exit([&]() {stop_spinning();});
 
   ASSERT_TRUE(pub_manager.wait_for_matched(topic.c_str()));
 
@@ -294,6 +298,7 @@ TEST_F(RecordIntegrationTestFixture, receives_latched_messages)
   recorder->record();
 
   start_async_spin(recorder);
+  auto cleanup_process_handle = rcpputils::make_scope_exit([&]() {stop_spinning();});
 
   ASSERT_TRUE(pub_manager.wait_for_matched(topic.c_str()));
 
@@ -428,6 +433,7 @@ TEST_F(RecordIntegrationTestFixture, write_split_callback_is_called)
   recorder->record();
 
   start_async_spin(recorder);
+  auto cleanup_process_handle = rcpputils::make_scope_exit([&]() {stop_spinning();});
 
   auto & writer = recorder->get_writer_handle();
   mock_writer = dynamic_cast<MockSequentialWriter &>(writer.get_implementation_handle());

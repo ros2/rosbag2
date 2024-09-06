@@ -73,6 +73,7 @@ public:
       if (spin_thread_.joinable()) {
         spin_thread_.join();
       }
+      exec_ = nullptr;
     }
   }
 

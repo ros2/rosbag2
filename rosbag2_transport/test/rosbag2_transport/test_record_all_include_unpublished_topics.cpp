@@ -41,6 +41,7 @@ TEST_F(RecordIntegrationTestFixture, record_all_include_unpublished_false_ignore
   auto recorder = std::make_shared<MockRecorder>(writer_, storage_options_, record_options);
   recorder->record();
   start_async_spin(recorder);
+  auto cleanup_process_handle = rcpputils::make_scope_exit([&]() {stop_spinning();});
 
   ASSERT_TRUE(recorder->wait_for_topic_to_be_discovered(string_topic));
   ASSERT_FALSE(recorder->topic_available_for_recording(string_topic));
@@ -59,6 +60,7 @@ TEST_F(RecordIntegrationTestFixture, record_all_include_unpublished_true_include
   auto recorder = std::make_shared<MockRecorder>(writer_, storage_options_, record_options);
   recorder->record();
   start_async_spin(recorder);
+  auto cleanup_process_handle = rcpputils::make_scope_exit([&]() {stop_spinning();});
 
   ASSERT_TRUE(recorder->wait_for_topic_to_be_discovered(string_topic));
   ASSERT_TRUE(recorder->topic_available_for_recording(string_topic));
@@ -79,6 +81,7 @@ TEST_F(
   auto recorder = std::make_shared<MockRecorder>(writer_, storage_options_, record_options);
   recorder->record();
   start_async_spin(recorder);
+  auto cleanup_process_handle = rcpputils::make_scope_exit([&]() {stop_spinning();});
 
   ASSERT_TRUE(recorder->wait_for_topic_to_be_discovered(string_topic));
   ASSERT_FALSE(recorder->topic_available_for_recording(string_topic));

@@ -44,6 +44,7 @@ TEST_F(RecordIntegrationTestFixture, record_all_without_discovery_ignores_later_
   recorder->record();
 
   start_async_spin(recorder);
+  auto cleanup_process_handle = rcpputils::make_scope_exit([&]() {stop_spinning();});
 
   rosbag2_test_common::PublicationManager pub_manager;
   pub_manager.setup_publisher(topic, string_message, 5);

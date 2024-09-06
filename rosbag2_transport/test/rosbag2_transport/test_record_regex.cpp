@@ -78,6 +78,7 @@ TEST_F(RecordIntegrationTestFixture, regex_topics_recording)
   recorder->record();
 
   start_async_spin(recorder);
+  auto cleanup_process_handle = rcpputils::make_scope_exit([&]() {stop_spinning();});
 
   ASSERT_TRUE(pub_manager.wait_for_matched(v1.c_str()));
 
@@ -151,6 +152,7 @@ TEST_F(RecordIntegrationTestFixture, regex_and_exclude_regex_topic_recording)
   recorder->record();
 
   start_async_spin(recorder);
+  auto cleanup_process_handle = rcpputils::make_scope_exit([&]() {stop_spinning();});
 
   ASSERT_TRUE(pub_manager.wait_for_matched(v1.c_str()));
   ASSERT_TRUE(pub_manager.wait_for_matched(v2.c_str()));
@@ -226,6 +228,7 @@ TEST_F(RecordIntegrationTestFixture, regex_and_exclude_topic_topic_recording)
   recorder->record();
 
   start_async_spin(recorder);
+  auto cleanup_process_handle = rcpputils::make_scope_exit([&]() {stop_spinning();});
 
   ASSERT_TRUE(pub_manager.wait_for_matched(v1.c_str()));
   ASSERT_TRUE(pub_manager.wait_for_matched(v2.c_str()));
@@ -295,6 +298,7 @@ TEST_F(RecordIntegrationTestFixture, regex_and_exclude_regex_service_recording)
   recorder->record();
 
   start_async_spin(recorder);
+  auto cleanup_process_handle = rcpputils::make_scope_exit([&]() {stop_spinning();});
 
   ASSERT_TRUE(service_manager_v1->wait_for_service_to_be_ready());
   ASSERT_TRUE(service_manager_v2->wait_for_service_to_be_ready());
@@ -376,6 +380,7 @@ TEST_F(RecordIntegrationTestFixture, regex_and_exclude_service_service_recording
   recorder->record();
 
   start_async_spin(recorder);
+  auto cleanup_process_handle = rcpputils::make_scope_exit([&]() {stop_spinning();});
 
   ASSERT_TRUE(service_manager_v1->wait_for_service_to_be_ready());
   ASSERT_TRUE(service_manager_v2->wait_for_service_to_be_ready());
