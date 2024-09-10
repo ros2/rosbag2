@@ -2,6 +2,13 @@
 Changelog for package rosbag2_test_common
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.26.5 (2024-09-06)
+-------------------
+* Small cleanups to the rosbag2 tests. (`#1792 <https://github.com/ros2/rosbag2/issues/1792>`_) (`#1793 <https://github.com/ros2/rosbag2/issues/1793>`_)
+  (cherry picked from commit 604cebcf11775151efa94f7c30ba1aea68e90c5c)
+  Co-authored-by: Chris Lalancette <clalancette@gmail.com>
+* Contributors: mergify[bot]
+
 0.26.4 (2024-06-27)
 -------------------
 

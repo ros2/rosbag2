@@ -2,6 +2,14 @@
 Changelog for package ros2bag
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.26.5 (2024-09-06)
+-------------------
+* Add cli option compression-threads-priority (`#1768 <https://github.com/ros2/rosbag2/issues/1768>`_) (`#1778 <https://github.com/ros2/rosbag2/issues/1778>`_)
+  Co-authored-by: Michael Orlov <michael.orlov@apex.ai>
+  (cherry picked from commit 25c3e1c2effdaea3b880c39ff7580b2f38a44b1c)
+  Co-authored-by: Roman <rsokolkov@gmail.com>
+* Contributors: mergify[bot]
+
 0.26.4 (2024-06-27)
 -------------------
 * fix(start-offset): allow specifying a start offset of 0 (`#1682 <https://github.com/ros2/rosbag2/issues/1682>`_) (`#1713 <https://github.com/ros2/rosbag2/issues/1713>`_)

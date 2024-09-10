@@ -2,6 +2,19 @@
 Changelog for package rosbag2_tests
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.26.5 (2024-09-06)
+-------------------
+* Small cleanups to the rosbag2 tests. (`#1792 <https://github.com/ros2/rosbag2/issues/1792>`_) (`#1793 <https://github.com/ros2/rosbag2/issues/1793>`_)
+  (cherry picked from commit 604cebcf11775151efa94f7c30ba1aea68e90c5c)
+  Co-authored-by: Chris Lalancette <clalancette@gmail.com>
+* Bugfix for wrong timestamps in ros2 bag info (`#1745 <https://github.com/ros2/rosbag2/issues/1745>`_) (`#1752 <https://github.com/ros2/rosbag2/issues/1752>`_)
+  (cherry picked from commit da28c9da82824b8ce5f6fc18935d1a954e52b636)
+  Co-authored-by: Michael Orlov <michael.orlov@apex.ai>
+* Fix for a false negative integration test with bag split in recorder (`#1743 <https://github.com/ros2/rosbag2/issues/1743>`_) (`#1750 <https://github.com/ros2/rosbag2/issues/1750>`_)
+  (cherry picked from commit da1acb29646258899ba73a81c803383c07905613)
+  Co-authored-by: Michael Orlov <michael.orlov@apex.ai>
+* Contributors: mergify[bot]
+
 0.26.4 (2024-06-27)
 -------------------
 * Propagate "custom_data" and "ros_distro" in to the metadata.yaml file during re-indexing (`#1700 <https://github.com/ros2/rosbag2/issues/1700>`_) (`#1710 <https://github.com/ros2/rosbag2/issues/1710>`_)

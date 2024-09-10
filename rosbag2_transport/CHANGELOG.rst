@@ -2,6 +2,20 @@
 Changelog for package rosbag2_transport
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.26.5 (2024-09-06)
+-------------------
+* Small cleanups to the rosbag2 tests. (`#1792 <https://github.com/ros2/rosbag2/issues/1792>`_) (`#1793 <https://github.com/ros2/rosbag2/issues/1793>`_)
+  (cherry picked from commit 604cebcf11775151efa94f7c30ba1aea68e90c5c)
+  Co-authored-by: Chris Lalancette <clalancette@gmail.com>
+* Add cli option compression-threads-priority (`#1768 <https://github.com/ros2/rosbag2/issues/1768>`_) (`#1778 <https://github.com/ros2/rosbag2/issues/1778>`_)
+  Co-authored-by: Michael Orlov <michael.orlov@apex.ai>
+  (cherry picked from commit 25c3e1c2effdaea3b880c39ff7580b2f38a44b1c)
+  Co-authored-by: Roman <rsokolkov@gmail.com>
+* Bugfix for bag_split event callbacks called to early with file compression (`#1643 <https://github.com/ros2/rosbag2/issues/1643>`_) (`#1732 <https://github.com/ros2/rosbag2/issues/1732>`_)
+  (cherry picked from commit 1877b53847bda4d1f2668187b79fa27a796c3438)
+  Co-authored-by: Michael Orlov <michael.orlov@apex.ai>
+* Contributors: mergify[bot]
+
 0.26.4 (2024-06-27)
 -------------------
 * Bugfix for issue where unable to create composable nodes with compression (`#1679 <https://github.com/ros2/rosbag2/issues/1679>`_) (`#1716 <https://github.com/ros2/rosbag2/issues/1716>`_)
