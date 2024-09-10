@@ -52,30 +52,39 @@ TEST_F(RecordIntegrationTestFixture, published_messages_from_multiple_topics_are
     std::move(writer_), storage_options_, record_options);
   recorder->record();
 
-  start_async_spin(recorder);
-  auto cleanup_process_handle = rcpputils::make_scope_exit([&]() {stop_spinning();});
-
-  ASSERT_TRUE(pub_manager.wait_for_matched(array_topic.c_str()));
-  ASSERT_TRUE(pub_manager.wait_for_matched(string_topic.c_str()));
-
-  pub_manager.run_publishers();
-
-  auto & writer = recorder->get_writer_handle();
-  MockSequentialWriter & mock_writer =
-    static_cast<MockSequentialWriter &>(writer.get_implementation_handle());
-
   constexpr size_t expected_messages = 4;
-  auto ret = rosbag2_test_common::wait_until_condition(
-    [ =, &mock_writer]() {
-      return mock_writer.get_messages().size() >= expected_messages;
-    },
-    std::chrono::seconds(5));
-  auto recorded_messages = mock_writer.get_messages();
-  EXPECT_TRUE(ret) << "failed to capture expected messages in time" <<
-    "recorded messages = " << recorded_messages.size();
+  std::vector<std::shared_ptr<const rosbag2_storage::SerializedBagMessage>> recorded_messages;
+  std::unordered_map<
+    std::string,
+    std::pair<rosbag2_storage::TopicMetadata, rosbag2_storage::MessageDefinition>
+  > recorded_topics;
+
+  start_async_spin(recorder);
+  {
+    auto cleanup_process_handle = rcpputils::make_scope_exit([&]() {stop_spinning();});
+
+    ASSERT_TRUE(pub_manager.wait_for_matched(array_topic.c_str()));
+    ASSERT_TRUE(pub_manager.wait_for_matched(string_topic.c_str()));
+
+    pub_manager.run_publishers();
+
+    auto & writer = recorder->get_writer_handle();
+    MockSequentialWriter & mock_writer =
+      static_cast<MockSequentialWriter &>(writer.get_implementation_handle());
+
+    auto ret = rosbag2_test_common::wait_until_condition(
+      [ =, &mock_writer]() {
+        return mock_writer.get_messages().size() >= expected_messages;
+      },
+      std::chrono::seconds(5));
+    EXPECT_TRUE(ret) << "failed to capture expected messages in time" <<
+      "recorded messages = " << recorded_messages.size();
+    recorded_messages = mock_writer.get_messages();
+    recorded_topics = mock_writer.get_topics();
+  }
+
   EXPECT_THAT(recorded_messages, SizeIs(expected_messages));
 
-  auto recorded_topics = mock_writer.get_topics();
   ASSERT_THAT(recorded_topics, SizeIs(2));
   EXPECT_THAT(recorded_topics.at(string_topic).first.serialization_format, Eq("rmw_format"));
   EXPECT_THAT(recorded_topics.at(array_topic).first.serialization_format, Eq("rmw_format"));

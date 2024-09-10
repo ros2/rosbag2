@@ -201,33 +201,36 @@ TEST_P(Rosbag2CPPGetServiceInfoTest, get_service_info_for_bag_with_services_only
     std::move(writer), storage_options, record_options);
   recorder->record();
 
-  start_async_spin(recorder);
-  auto cleanup_process_handle = rcpputils::make_scope_exit([&]() {stop_spinning();});
-
-  ASSERT_TRUE(service_client_manager->wait_for_service_to_be_ready());
-  ASSERT_TRUE(wait_for_subscriptions(*recorder, {"/test_service/_service_event"}));
-
   constexpr size_t num_service_requests = 3;
-  for (size_t i = 0; i < num_service_requests; i++) {
-    ASSERT_TRUE(service_client_manager->send_request());
-    std::this_thread::sleep_for(std::chrono::milliseconds(10));
+
+  start_async_spin(recorder);
+  {
+    auto cleanup_process_handle = rcpputils::make_scope_exit([&]() {stop_spinning();});
+
+    ASSERT_TRUE(service_client_manager->wait_for_service_to_be_ready());
+    ASSERT_TRUE(wait_for_subscriptions(*recorder, {"/test_service/_service_event"}));
+
+    for (size_t i = 0; i < num_service_requests; i++) {
+      ASSERT_TRUE(service_client_manager->send_request());
+      std::this_thread::sleep_for(std::chrono::milliseconds(10));
+    }
+
+    auto & writer_ref = recorder->get_writer_handle();
+    auto & recorder_writer =
+      dynamic_cast<SequentialWriterForTest &>(writer_ref.get_implementation_handle());
+
+    // By default, only client introspection is enabled.
+    // For one request, service event topic get 2 messages.
+    size_t expected_messages = num_service_requests * 2;
+    auto ret = rosbag2_test_common::wait_until_condition(
+      [&recorder_writer, &expected_messages]() {
+        return recorder_writer.get_number_of_written_messages() >= expected_messages;
+      },
+      std::chrono::seconds(5));
+    EXPECT_TRUE(ret) << "Failed to capture " << expected_messages << " expected messages in time";
+
+    recorder->stop();
   }
-
-  auto & writer_ref = recorder->get_writer_handle();
-  auto & recorder_writer =
-    dynamic_cast<SequentialWriterForTest &>(writer_ref.get_implementation_handle());
-
-  // By default, only client introspection is enabled.
-  // For one request, service event topic get 2 messages.
-  size_t expected_messages = num_service_requests * 2;
-  auto ret = rosbag2_test_common::wait_until_condition(
-    [&recorder_writer, &expected_messages]() {
-      return recorder_writer.get_number_of_written_messages() >= expected_messages;
-    },
-    std::chrono::seconds(5));
-  EXPECT_TRUE(ret) << "Failed to capture " << expected_messages << " expected messages in time";
-
-  recorder->stop();
 
   rosbag2_cpp::Info info;
   std::vector<std::shared_ptr<rosbag2_cpp::rosbag2_service_info_t>> ret_service_infos;
@@ -276,42 +279,45 @@ TEST_P(Rosbag2CPPGetServiceInfoTest, get_service_info_for_bag_with_topics_and_se
     std::move(writer), storage_options, record_options);
   recorder->record();
 
-  start_async_spin(recorder);
-  auto cleanup_process_handle = rcpputils::make_scope_exit([&]() {stop_spinning();});
-
-  ASSERT_TRUE(
-    wait_for_subscriptions(
-      *recorder,
-      {"/test_service1/_service_event",
-        "/test_service2/_service_event",
-        "/test_topic1",
-        "/test_topic2"}
-    )
-  );
-
   constexpr size_t num_service_requests = 2;
-  for (size_t i = 0; i < num_service_requests; i++) {
-    ASSERT_TRUE(service_client_manager1->send_request());
-    ASSERT_TRUE(service_client_manager2->send_request());
-    std::this_thread::sleep_for(std::chrono::milliseconds(10));
+
+  start_async_spin(recorder);
+  {
+    auto cleanup_process_handle = rcpputils::make_scope_exit([&]() {stop_spinning();});
+
+    ASSERT_TRUE(
+      wait_for_subscriptions(
+        *recorder,
+        {"/test_service1/_service_event",
+          "/test_service2/_service_event",
+          "/test_topic1",
+          "/test_topic2"}
+      )
+    );
+
+    for (size_t i = 0; i < num_service_requests; i++) {
+      ASSERT_TRUE(service_client_manager1->send_request());
+      ASSERT_TRUE(service_client_manager2->send_request());
+      std::this_thread::sleep_for(std::chrono::milliseconds(10));
+    }
+    pub_manager.run_publishers();
+
+    auto & writer_ref = recorder->get_writer_handle();
+    auto & recorder_writer =
+      dynamic_cast<SequentialWriterForTest &>(writer_ref.get_implementation_handle());
+
+    // By default, only client introspection is enabled.
+    // For one request, service event topic get 2 messages.
+    size_t expected_messages = num_service_requests * 2 + 2;
+    auto ret = rosbag2_test_common::wait_until_condition(
+      [&recorder_writer, &expected_messages]() {
+        return recorder_writer.get_number_of_written_messages() >= expected_messages;
+      },
+      std::chrono::seconds(5));
+    EXPECT_TRUE(ret) << "Failed to capture " << expected_messages << " expected messages in time";
+
+    recorder->stop();
   }
-  pub_manager.run_publishers();
-
-  auto & writer_ref = recorder->get_writer_handle();
-  auto & recorder_writer =
-    dynamic_cast<SequentialWriterForTest &>(writer_ref.get_implementation_handle());
-
-  // By default, only client introspection is enabled.
-  // For one request, service event topic get 2 messages.
-  size_t expected_messages = num_service_requests * 2 + 2;
-  auto ret = rosbag2_test_common::wait_until_condition(
-    [&recorder_writer, &expected_messages]() {
-      return recorder_writer.get_number_of_written_messages() >= expected_messages;
-    },
-    std::chrono::seconds(5));
-  EXPECT_TRUE(ret) << "Failed to capture " << expected_messages << " expected messages in time";
-
-  recorder->stop();
 
   rosbag2_cpp::Info info;
   std::vector<std::shared_ptr<rosbag2_cpp::rosbag2_service_info_t>> ret_service_infos;
