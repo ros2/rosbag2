@@ -115,7 +115,8 @@ void format_topics_with_type(
   const std::unordered_map<std::string, uint64_t> & messages_size,
   bool verbose,
   std::stringstream & info_stream,
-  int indentation_spaces)
+  int indentation_spaces,
+  std::string sort_method = "name")
 {
   if (topics.empty()) {
     info_stream << std::endl;
@@ -139,13 +140,37 @@ void format_topics_with_type(
       info_stream << std::endl;
     };
 
+  std::vector<size_t> sorted_idx(topics.size());
+  std::iota(sorted_idx.begin(), sorted_idx.end(), 0);
+  std::sort(
+    sorted_idx.begin(),
+    sorted_idx.end(),
+    [&topics, sort_method](size_t i1, size_t i2) {
+      if (sort_method == "type")
+      {
+        return topics[i1].topic_metadata.type < topics[i2].topic_metadata.type;
+      }
+      if (sort_method == "count")
+      {
+        return topics[i1].message_count < topics[i2].message_count;
+      }
+      if (sort_method == "serialization_format")
+      {
+        std::string format_1 = topics[i1].topic_metadata.serialization_format;
+        std::string format_2 = topics[i2].topic_metadata.serialization_format;
+        return format_1 < format_2;
+      }
+      return topics[i1].topic_metadata.name < topics[i2].topic_metadata.name;
+    }
+  );
+
   size_t number_of_topics = topics.size();
   size_t i = 0;
   // Find first topic which isn't service event topic
   while (i < number_of_topics &&
     rosbag2_cpp::is_service_event_topic(
-      topics[i].topic_metadata.name,
-      topics[i].topic_metadata.type))
+      topics[sorted_idx[i]].topic_metadata.name,
+      topics[sorted_idx[i]].topic_metadata.type))
   {
     i++;
   }
@@ -155,15 +180,15 @@ void format_topics_with_type(
     return;
   }
 
-  print_topic_info(topics[i]);
+  print_topic_info(topics[sorted_idx[i]]);
   for (size_t j = ++i; j < number_of_topics; ++j) {
     if (rosbag2_cpp::is_service_event_topic(
-        topics[j].topic_metadata.name, topics[j].topic_metadata.type))
+        topics[sorted_idx[j]].topic_metadata.name, topics[sorted_idx[j]].topic_metadata.type))
     {
       continue;
     }
     indent(info_stream, indentation_spaces);
-    print_topic_info(topics[j]);
+    print_topic_info(topics[sorted_idx[j]]);
   }
 }
 
