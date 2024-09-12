@@ -61,6 +61,16 @@ public:
         [this]() {
           exec_->spin();
         });
+      // Wait for the executor to start spinning in the newly spawned thread to avoid race condition
+      // with exec_->cancel()
+      using clock = std::chrono::steady_clock;
+      auto start = clock::now();
+      while (!exec_->is_spinning() && (clock::now() - start) < std::chrono::seconds(5)) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(20));
+      }
+      if (!exec_->is_spinning()) {
+        throw std::runtime_error("Failed to start spinning node");
+      }
     } else {
       throw std::runtime_error("Already spinning a node, can't start a new node spin");
     }
