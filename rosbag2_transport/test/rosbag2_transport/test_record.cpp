@@ -52,30 +52,39 @@ TEST_F(RecordIntegrationTestFixture, published_messages_from_multiple_topics_are
     std::move(writer_), storage_options_, record_options);
   recorder->record();
 
-  start_async_spin(recorder);
-
-  ASSERT_TRUE(pub_manager.wait_for_matched(array_topic.c_str()));
-  ASSERT_TRUE(pub_manager.wait_for_matched(string_topic.c_str()));
-
-  pub_manager.run_publishers();
-
-  auto & writer = recorder->get_writer_handle();
-  MockSequentialWriter & mock_writer =
-    static_cast<MockSequentialWriter &>(writer.get_implementation_handle());
-
   constexpr size_t expected_messages = 4;
-  auto ret = rosbag2_test_common::wait_until_shutdown(
-    std::chrono::seconds(5),
-    [ =, &mock_writer]() {
-      return mock_writer.get_messages().size() >= expected_messages;
-    });
-  auto recorded_messages = mock_writer.get_messages();
-  EXPECT_TRUE(ret) << "failed to capture expected messages in time" <<
-    "recorded messages = " << recorded_messages.size();
-  EXPECT_THAT(recorded_messages, SizeIs(expected_messages));
-  stop_spinning();
+  std::vector<std::shared_ptr<const rosbag2_storage::SerializedBagMessage>> recorded_messages;
+  std::unordered_map<
+    std::string,
+    std::pair<rosbag2_storage::TopicMetadata, rosbag2_storage::MessageDefinition>
+  > recorded_topics;
 
-  auto recorded_topics = mock_writer.get_topics();
+  start_async_spin(recorder);
+  {
+    auto cleanup_process_handle = rcpputils::make_scope_exit([&]() {stop_spinning();});
+
+    ASSERT_TRUE(pub_manager.wait_for_matched(array_topic.c_str()));
+    ASSERT_TRUE(pub_manager.wait_for_matched(string_topic.c_str()));
+
+    pub_manager.run_publishers();
+
+    auto & writer = recorder->get_writer_handle();
+    MockSequentialWriter & mock_writer =
+      static_cast<MockSequentialWriter &>(writer.get_implementation_handle());
+
+    auto ret = rosbag2_test_common::wait_until_condition(
+      [ =, &mock_writer]() {
+        return mock_writer.get_messages().size() >= expected_messages;
+      },
+      std::chrono::seconds(5));
+    EXPECT_TRUE(ret) << "failed to capture expected messages in time" <<
+      "recorded messages = " << recorded_messages.size();
+    recorded_messages = mock_writer.get_messages();
+    recorded_topics = mock_writer.get_topics();
+  }
+
+  EXPECT_THAT(recorded_messages, SizeIs(expected_messages));
+
   ASSERT_THAT(recorded_topics, SizeIs(2));
   EXPECT_THAT(recorded_topics.at(string_topic).first.serialization_format, Eq("rmw_format"));
   EXPECT_THAT(recorded_topics.at(array_topic).first.serialization_format, Eq("rmw_format"));
@@ -126,10 +135,12 @@ TEST_F(RecordIntegrationTestFixture, can_record_again_after_stop)
     std::move(writer_), storage_options_, record_options);
   recorder->record();
 
+  start_async_spin(recorder);
+  auto cleanup_process_handle = rcpputils::make_scope_exit([&]() {stop_spinning();});
+
   auto & writer = recorder->get_writer_handle();
   auto & mock_writer = dynamic_cast<MockSequentialWriter &>(writer.get_implementation_handle());
 
-  start_async_spin(recorder);
   ASSERT_TRUE(pub_manager.wait_for_matched(string_topic.c_str()));
 
   pub_manager.run_publishers();
@@ -146,11 +157,11 @@ TEST_F(RecordIntegrationTestFixture, can_record_again_after_stop)
 
   // 4 because we're running recorder->record() and publishers twice
   constexpr size_t expected_messages = 4;
-  auto ret = rosbag2_test_common::wait_until_shutdown(
-    std::chrono::seconds(5),
+  auto ret = rosbag2_test_common::wait_until_condition(
     [ =, &mock_writer]() {
       return mock_writer.get_messages().size() >= expected_messages;
-    });
+    },
+    std::chrono::seconds(5));
   auto recorded_messages = mock_writer.get_messages();
   EXPECT_TRUE(ret) << "failed to capture expected messages in time";
   EXPECT_THAT(recorded_messages, SizeIs(expected_messages));
@@ -187,6 +198,7 @@ TEST_F(RecordIntegrationTestFixture, qos_is_stored_in_metadata)
   recorder->record();
 
   start_async_spin(recorder);
+  auto cleanup_process_handle = rcpputils::make_scope_exit([&]() {stop_spinning();});
 
   ASSERT_TRUE(pub_manager.wait_for_matched(topic.c_str()));
 
@@ -197,11 +209,11 @@ TEST_F(RecordIntegrationTestFixture, qos_is_stored_in_metadata)
     static_cast<MockSequentialWriter &>(writer.get_implementation_handle());
 
   constexpr size_t expected_messages = 2;
-  auto ret = rosbag2_test_common::wait_until_shutdown(
-    std::chrono::seconds(5),
+  auto ret = rosbag2_test_common::wait_until_condition(
     [ =, &mock_writer]() {
       return mock_writer.get_messages().size() >= expected_messages;
-    });
+    },
+    std::chrono::seconds(5));
   auto recorded_messages = mock_writer.get_messages();
   EXPECT_TRUE(ret) << "failed to capture expected messages in time";
   EXPECT_THAT(recorded_messages, SizeIs(expected_messages));
@@ -251,6 +263,7 @@ TEST_F(RecordIntegrationTestFixture, records_sensor_data)
   recorder->record();
 
   start_async_spin(recorder);
+  auto cleanup_process_handle = rcpputils::make_scope_exit([&]() {stop_spinning();});
 
   ASSERT_TRUE(pub_manager.wait_for_matched(topic.c_str()));
 
@@ -261,11 +274,11 @@ TEST_F(RecordIntegrationTestFixture, records_sensor_data)
     static_cast<MockSequentialWriter &>(writer.get_implementation_handle());
 
   constexpr size_t expected_messages = 2;
-  auto ret = rosbag2_test_common::wait_until_shutdown(
-    std::chrono::seconds(5),
+  auto ret = rosbag2_test_common::wait_until_condition(
     [ =, &mock_writer]() {
       return mock_writer.get_messages().size() >= expected_messages;
-    });
+    },
+    std::chrono::seconds(5));
   auto recorded_messages = mock_writer.get_messages();
   auto recorded_topics = mock_writer.get_topics();
   EXPECT_TRUE(ret) << "failed to capture expected messages in time";
@@ -294,6 +307,7 @@ TEST_F(RecordIntegrationTestFixture, receives_latched_messages)
   recorder->record();
 
   start_async_spin(recorder);
+  auto cleanup_process_handle = rcpputils::make_scope_exit([&]() {stop_spinning();});
 
   ASSERT_TRUE(pub_manager.wait_for_matched(topic.c_str()));
 
@@ -302,11 +316,11 @@ TEST_F(RecordIntegrationTestFixture, receives_latched_messages)
     static_cast<MockSequentialWriter &>(writer.get_implementation_handle());
 
   size_t expected_messages = num_latched_messages;
-  auto ret = rosbag2_test_common::wait_until_shutdown(
-    std::chrono::seconds(5),
+  auto ret = rosbag2_test_common::wait_until_condition(
     [&mock_writer, &expected_messages]() {
       return mock_writer.get_messages().size() >= expected_messages;
-    });
+    },
+    std::chrono::seconds(5));
   auto recorded_messages = mock_writer.get_messages();
   auto recorded_topics = mock_writer.get_topics();
   EXPECT_TRUE(ret) << "failed to capture expected messages in time";
@@ -428,6 +442,7 @@ TEST_F(RecordIntegrationTestFixture, write_split_callback_is_called)
   recorder->record();
 
   start_async_spin(recorder);
+  auto cleanup_process_handle = rcpputils::make_scope_exit([&]() {stop_spinning();});
 
   auto & writer = recorder->get_writer_handle();
   mock_writer = dynamic_cast<MockSequentialWriter &>(writer.get_implementation_handle());
@@ -436,14 +451,15 @@ TEST_F(RecordIntegrationTestFixture, write_split_callback_is_called)
 
   rosbag2_test_common::PublicationManager pub_manager;
   pub_manager.setup_publisher(string_topic, string_message, expected_messages);
+
   ASSERT_TRUE(pub_manager.wait_for_matched(string_topic.c_str()));
   pub_manager.run_publishers();
 
-  auto ret = rosbag2_test_common::wait_until_shutdown(
-    std::chrono::seconds(5),
+  auto ret = rosbag2_test_common::wait_until_condition(
     [&mock_writer, &expected_messages]() {
       return mock_writer.get_messages().size() >= expected_messages;
-    });
+    },
+    std::chrono::seconds(5));
   auto recorded_messages = mock_writer.get_messages();
   EXPECT_TRUE(ret) << "failed to capture expected messages in time";
   EXPECT_THAT(recorded_messages, SizeIs(expected_messages));
