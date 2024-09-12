@@ -203,13 +203,12 @@ TEST_F(RecordIntegrationTestFixture, test_keyboard_controls)
 
   recorder->record();
 
-  this->start_async_spin(recorder);
+  start_async_spin(recorder);
+  auto cleanup_process_handle = rcpputils::make_scope_exit([&]() {stop_spinning();});
 
   EXPECT_THAT(recorder->is_paused(), true);
   keyboard_handler->simulate_key_press(rosbag2_transport::Recorder::kPauseResumeToggleKey);
   EXPECT_THAT(recorder->is_paused(), false);
   keyboard_handler->simulate_key_press(rosbag2_transport::Recorder::kPauseResumeToggleKey);
   EXPECT_THAT(recorder->is_paused(), true);
-
-  this->stop_spinning();
 }
