@@ -20,6 +20,8 @@
 #include <string>
 #include <unordered_map>
 #include <vector>
+#include <algorithm>
+#include <numeric>
 
 #ifdef _WIN32
 #include <time.h>
