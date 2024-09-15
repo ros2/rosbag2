@@ -36,6 +36,10 @@ class InfoVerb(VerbExtension):
             print("Warning! You have set both the '-t' and '-v' parameters. The '-t' parameter "
                   'will be ignored.')
         m = Info().read_metadata(args.bag_path, args.storage)
+
+        sorted_topics = sorted(m.topics_with_message_count, key=lambda topic_info: topic_info.topic_metadata.name)
+        m.topics = sorted_topics = sorted_topics
+
         if args.verbose:
             Info().print_output_verbose(args.bag_path, m)
         else:
