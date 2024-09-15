@@ -38,7 +38,7 @@ class InfoVerb(VerbExtension):
         m = Info().read_metadata(args.bag_path, args.storage)
 
         sorted_topics = sorted(m.topics_with_message_count, key=lambda topic_info: topic_info.topic_metadata.name)
-        m.topics = sorted_topics = sorted_topics
+        m.topics = sorted_topics
 
         if args.verbose:
             Info().print_output_verbose(args.bag_path, m)
