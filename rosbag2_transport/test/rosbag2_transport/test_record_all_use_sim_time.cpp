@@ -98,32 +98,38 @@ TEST_F(RecordIntegrationTestFixture, record_all_with_sim_time)
     std::move(writer_), storage_options_, record_options);
   recorder->record();
 
-  start_async_spin(recorder);
-
-  ASSERT_TRUE(pub_manager.wait_for_matched(string_topic.c_str()));
-
-  ASSERT_TRUE(recorder->wait_for_topic_to_be_discovered(string_topic));
-
-  ASSERT_TRUE(recorder->topic_available_for_recording(string_topic));
-
-  pub_manager.run_publishers();
-
-  auto & writer = recorder->get_writer_handle();
-  MockSequentialWriter & mock_writer =
-    static_cast<MockSequentialWriter &>(writer.get_implementation_handle());
-
   constexpr size_t expected_messages = 10;
-  auto ret = rosbag2_test_common::wait_until_shutdown(
-    std::chrono::seconds(5),
-    [ =, &mock_writer]() {
-      return mock_writer.get_messages().size() >= expected_messages;
-    });
-  auto recorded_messages = mock_writer.get_messages();
-  EXPECT_TRUE(ret) << "failed to capture expected messages in time. " <<
-    "recorded messages = " << recorded_messages.size();
-  stop_spinning();
+  std::vector<std::shared_ptr<const rosbag2_storage::SerializedBagMessage>> recorded_messages;
+  std::unordered_map<std::string, size_t> messages_per_topic;
 
-  auto messages_per_topic = mock_writer.messages_per_topic();
+  start_async_spin(recorder);
+  {
+    auto cleanup_process_handle = rcpputils::make_scope_exit([&]() {stop_spinning();});
+
+    ASSERT_TRUE(pub_manager.wait_for_matched(string_topic.c_str()));
+
+    ASSERT_TRUE(recorder->wait_for_topic_to_be_discovered(string_topic));
+
+    ASSERT_TRUE(recorder->topic_available_for_recording(string_topic));
+
+    pub_manager.run_publishers();
+
+    auto & writer = recorder->get_writer_handle();
+    MockSequentialWriter & mock_writer =
+      static_cast<MockSequentialWriter &>(writer.get_implementation_handle());
+
+    auto ret = rosbag2_test_common::wait_until_condition(
+      [ =, &mock_writer]() {
+        return mock_writer.get_messages().size() >= expected_messages;
+      },
+      std::chrono::seconds(5));
+    ASSERT_TRUE(ret) << "failed to capture expected messages in time. " <<
+      "recorded messages = " << recorded_messages.size();
+    recorded_messages = mock_writer.get_messages();
+    messages_per_topic = mock_writer.messages_per_topic();
+  }
+
+  ASSERT_EQ(messages_per_topic.count(string_topic), 1u);
   EXPECT_EQ(messages_per_topic[string_topic], 5u);
 
   EXPECT_THAT(recorded_messages, SizeIs(Ge(expected_messages)));
