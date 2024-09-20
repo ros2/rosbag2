@@ -15,6 +15,8 @@
 #include <iostream>
 #include <memory>
 #include <string>
+#include <algorithm>
+#include <numeric>
 
 #include "format_bag_metadata.hpp"
 #include "format_service_info.hpp"
@@ -58,7 +60,19 @@ public:
 
   void print_output_topic_name_only(const rosbag2_storage::BagMetadata & metadata_info)
   {
-    for (const auto & topic_info : metadata_info.topics_with_message_count) {
+    std::vector<size_t> sorted_idx(metadata_info.topics_with_message_count.size());
+    std::iota(sorted_idx.begin(), sorted_idx.end(), 0);
+    std::sort(
+      sorted_idx.begin(),
+      sorted_idx.end(),
+      [&metadata_info](size_t i1, size_t i2) {
+        std::string topic_name_1 = metadata_info.topics_with_message_count[i1].topic_metadata.name;
+        std::string topic_name_2 = metadata_info.topics_with_message_count[i2].topic_metadata.name;
+        return topic_name_1 < topic_name_2;
+      }
+    );
+    for (auto idx : sorted_idx) {
+      auto topic_info = metadata_info.topics_with_message_count[idx];
       if (!rosbag2_cpp::is_service_event_topic(
           topic_info.topic_metadata.name,
           topic_info.topic_metadata.type))
