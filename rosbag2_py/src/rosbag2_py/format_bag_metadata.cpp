@@ -118,7 +118,7 @@ void format_topics_with_type(
   bool verbose,
   std::stringstream & info_stream,
   int indentation_spaces,
-  std::string sort_method = "name")
+  const rosbag2_py::SortingMethod sort_method = rosbag2_py::SortingMethod::NAME)
 {
   if (topics.empty()) {
     info_stream << std::endl;
@@ -148,10 +148,10 @@ void format_topics_with_type(
     sorted_idx.begin(),
     sorted_idx.end(),
     [&topics, sort_method](size_t i1, size_t i2) {
-      if (sort_method == "type") {
+      if (sort_method == rosbag2_py::SortingMethod::TYPE) {
         return topics[i1].topic_metadata.type < topics[i2].topic_metadata.type;
       }
-      if (sort_method == "count") {
+      if (sort_method == rosbag2_py::SortingMethod::COUNT) {
         return topics[i1].message_count < topics[i2].message_count;
       }
       return topics[i1].topic_metadata.name < topics[i2].topic_metadata.name;
@@ -232,7 +232,7 @@ void format_service_with_type(
   bool verbose,
   std::stringstream & info_stream,
   int indentation_spaces,
-  std::string sort_method = "name")
+  const rosbag2_py::SortingMethod sort_method = rosbag2_py::SortingMethod::NAME)
 {
   if (services.empty()) {
     info_stream << std::endl;
@@ -264,10 +264,10 @@ void format_service_with_type(
     sorted_idx.begin(),
     sorted_idx.end(),
     [&services, sort_method](size_t i1, size_t i2) {
-      if (sort_method == "type") {
+      if (sort_method == rosbag2_py::SortingMethod::TYPE) {
         return services[i1]->service_metadata.type < services[i2]->service_metadata.type;
       }
-      if (sort_method == "count") {
+      if (sort_method == rosbag2_py::SortingMethod::COUNT) {
         return services[i1]->event_message_count < services[i2]->event_message_count;
       }
       return services[i1]->service_metadata.name < services[i2]->service_metadata.name;
@@ -291,7 +291,8 @@ std::string format_bag_meta_data(
   const rosbag2_storage::BagMetadata & metadata,
   const std::unordered_map<std::string, uint64_t> & messages_size,
   bool verbose,
-  bool only_topic)
+  bool only_topic,
+  const SortingMethod sort_method)
 {
   auto start_time = metadata.starting_time.time_since_epoch();
   auto end_time = start_time + metadata.duration;
@@ -324,14 +325,22 @@ std::string format_bag_meta_data(
     std::endl;
   info_stream << "Topic information: ";
   format_topics_with_type(
-    metadata.topics_with_message_count, messages_size, verbose, info_stream, indentation_spaces);
+    metadata.topics_with_message_count,
+    messages_size, verbose, info_stream,
+    indentation_spaces,
+    sort_method);
 
   if (!only_topic) {
     info_stream << "Service:           " << service_info_list.size() << std::endl;
     info_stream << "Service information: ";
     if (!service_info_list.empty()) {
       format_service_with_type(
-        service_info_list, messages_size, verbose, info_stream, indentation_spaces + 2);
+        service_info_list,
+        messages_size,
+        verbose,
+        info_stream,
+        indentation_spaces + 2,
+        sort_method);
     }
   }
 

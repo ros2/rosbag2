@@ -27,6 +27,12 @@
 namespace rosbag2_py
 {
 
+
+std::unordered_map<std::string, SortingMethod> stringToSortingMethod = {
+  {"name", SortingMethod::NAME},
+  {"type", SortingMethod::TYPE},
+  {"count", SortingMethod::COUNT}};
+
 class Info
 {
 public:
@@ -42,10 +48,12 @@ public:
     return info_->read_metadata(uri, storage_id);
   }
 
-  void print_output(const rosbag2_storage::BagMetadata & metadata_info)
+  void print_output(
+    const rosbag2_storage::BagMetadata & metadata_info, std::string sorting_method)
   {
+    rosbag2_py::SortingMethod sort_method = rosbag2_py::stringToSortingMethod[sorting_method];
     // Output formatted metadata
-    std::cout << format_bag_meta_data(metadata_info) << std::endl;
+    std::cout << format_bag_meta_data(metadata_info, {}, false, false, sort_method) << std::endl;
   }
 
   void print_output_topic_name_only(const rosbag2_storage::BagMetadata & metadata_info)
@@ -61,7 +69,9 @@ public:
   }
 
   void print_output_verbose(
-    const std::string & uri, const rosbag2_storage::BagMetadata & metadata_info)
+    const std::string & uri,
+    const rosbag2_storage::BagMetadata & metadata_info,
+    std::string sorting_method)
   {
     std::vector<std::shared_ptr<rosbag2_cpp::rosbag2_service_info_t>> all_services_info;
     for (auto & file_info : metadata_info.files) {
@@ -86,9 +96,19 @@ public:
       }
     }
 
+    rosbag2_py::SortingMethod sort_method = rosbag2_py::stringToSortingMethod[sorting_method];
     // Output formatted metadata and service info
-    std::cout << format_bag_meta_data(metadata_info, messages_size, true, true);
+    std::cout << format_bag_meta_data(metadata_info, messages_size, true, true, sort_method);
     std::cout << format_service_info(all_services_info, messages_size, true) << std::endl;
+  }
+
+  std::unordered_set<std::string> get_sorting_methods()
+  {
+    std::unordered_set<std::string> sorting_methods;
+    for (auto sorting_method : rosbag2_py::stringToSortingMethod) {
+      sorting_methods.insert(sorting_method.first);
+    }
+    return sorting_methods;
   }
 
 protected:
@@ -105,5 +125,6 @@ PYBIND11_MODULE(_info, m) {
   .def("read_metadata", &rosbag2_py::Info::read_metadata)
   .def("print_output", &rosbag2_py::Info::print_output)
   .def("print_output_topic_name_only", &rosbag2_py::Info::print_output_topic_name_only)
-  .def("print_output_verbose", &rosbag2_py::Info::print_output_verbose);
+  .def("print_output_verbose", &rosbag2_py::Info::print_output_verbose)
+  .def("get_sorting_methods", &rosbag2_py::Info::get_sorting_methods);
 }

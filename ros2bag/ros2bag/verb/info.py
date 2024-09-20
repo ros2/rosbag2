@@ -30,6 +30,11 @@ class InfoVerb(VerbExtension):
             '-v', '--verbose', action='store_true',
             help='Display request/response information for services'
         )
+        available_sorting_methods = Info().get_sorting_methods()
+        parser.add_argument(
+            '--sort', default='name', choices=available_sorting_methods,
+            help='Configuration for sorting of output. '
+                 'By default sorts by topic name - use this argument to override.')
 
     def main(self, *, args):  # noqa: D102
         if args.topic_name and args.verbose:
@@ -37,9 +42,9 @@ class InfoVerb(VerbExtension):
                   'will be ignored.')
         m = Info().read_metadata(args.bag_path, args.storage)
         if args.verbose:
-            Info().print_output_verbose(args.bag_path, m)
+            Info().print_output_verbose(args.bag_path, m, args.sort)
         else:
             if args.topic_name:
                 Info().print_output_topic_name_only(m)
             else:
-                Info().print_output(m)
+                Info().print_output(m, args.sort)
