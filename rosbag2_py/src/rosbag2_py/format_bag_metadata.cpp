@@ -148,19 +148,11 @@ void format_topics_with_type(
     sorted_idx.begin(),
     sorted_idx.end(),
     [&topics, sort_method](size_t i1, size_t i2) {
-      if (sort_method == "type")
-      {
+      if (sort_method == "type") {
         return topics[i1].topic_metadata.type < topics[i2].topic_metadata.type;
       }
-      if (sort_method == "count")
-      {
+      if (sort_method == "count") {
         return topics[i1].message_count < topics[i2].message_count;
-      }
-      if (sort_method == "serialization_format")
-      {
-        std::string format_1 = topics[i1].topic_metadata.serialization_format;
-        std::string format_2 = topics[i2].topic_metadata.serialization_format;
-        return format_1 < format_2;
       }
       return topics[i1].topic_metadata.name < topics[i2].topic_metadata.name;
     }
@@ -239,7 +231,8 @@ void format_service_with_type(
   const std::unordered_map<std::string, uint64_t> & messages_size,
   bool verbose,
   std::stringstream & info_stream,
-  int indentation_spaces)
+  int indentation_spaces,
+  std::string sort_method = "name")
 {
   if (services.empty()) {
     info_stream << std::endl;
@@ -265,11 +258,27 @@ void format_service_with_type(
       info_stream << std::endl;
     };
 
-  print_service_info(services[0]);
+  std::vector<size_t> sorted_idx(services.size());
+  std::iota(sorted_idx.begin(), sorted_idx.end(), 0);
+  std::sort(
+    sorted_idx.begin(),
+    sorted_idx.end(),
+    [&services, sort_method](size_t i1, size_t i2) {
+      if (sort_method == "type") {
+        return services[i1]->service_metadata.type < services[i2]->service_metadata.type;
+      }
+      if (sort_method == "count") {
+        return services[i1]->event_message_count < services[i2]->event_message_count;
+      }
+      return services[i1]->service_metadata.name < services[i2]->service_metadata.name;
+    }
+  );
+
+  print_service_info(services[sorted_idx[0]]);
   auto number_of_services = services.size();
   for (size_t j = 1; j < number_of_services; ++j) {
     indent(info_stream, indentation_spaces);
-    print_service_info(services[j]);
+    print_service_info(services[sorted_idx[j]]);
   }
 }
 
