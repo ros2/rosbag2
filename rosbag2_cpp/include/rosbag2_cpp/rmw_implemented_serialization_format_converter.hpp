@@ -19,6 +19,7 @@
 #include <string>
 
 #include "rosbag2_cpp/converter_interfaces/serialization_format_converter.hpp"
+#include "rosbag2_cpp/visibility_control.hpp"
 
 namespace rosbag2_cpp
 {
@@ -31,7 +32,7 @@ class RMWImplementedConverterImpl;
  * searches the system for an installed RMW implementation that understands the requested format,
  * loads that library if found, and uses its implementation for serialization.
  */
-class RMWImplementedConverter
+class ROSBAG2_CPP_PUBLIC RMWImplementedConverter
   : public rosbag2_cpp::converter_interfaces::SerializationFormatConverter
 {
 public:
@@ -40,7 +41,7 @@ public:
    * \throws std::runtime_error if no RMW implementation was found supporting the format.
    */
   explicit RMWImplementedConverter(const std::string & format);
-  virtual ~RMWImplementedConverter();
+  ~RMWImplementedConverter() override;
 
   void deserialize(
     std::shared_ptr<const rosbag2_storage::SerializedBagMessage> serialized_message,

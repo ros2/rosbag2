@@ -30,7 +30,7 @@ option(DISABLE_SANITIZERS "disables the use of gcc sanitizers" ON)
 if(NOT DISABLE_SANITIZERS AND CMAKE_COMPILER_IS_GNUCXX)
   include(CheckCXXSourceRuns)
   set(OLD_CMAKE_REQUIRED_FLAGS ${CMAKE_REQUIRED_FLAGS})
-  set(CMAKE_REQUIRED_FLAGS "${OLD_CMAKE_REQUIRED_FLAGS} -fsanitize=leak")
+  set(CMAKE_REQUIRED_FLAGS "${OLD_CMAKE_REQUIRED_FLAGS} -fsanitize=address,leak,undefined")
   check_cxx_source_runs("int main() {}" HAVE_SANITIZERS)
   set(CMAKE_REQUIRED_FLAGS ${OLD_CMAKE_REQUIRED_FLAGS})
   if(NOT HAVE_SANITIZERS)
@@ -251,6 +251,19 @@ if(BUILD_TESTING)
       rosbag2_storage::rosbag2_storage
       rosbag2_test_common::rosbag2_test_common
       ${test_msgs_TARGETS}
+    )
+  endif()
+
+  ament_add_gmock(test_serialization_converter test/rosbag2_cpp/test_serialization_converter.cpp)
+  if(TARGET test_serialization_converter)
+    if(NOT DISABLE_SANITIZERS)
+      target_compile_options(test_serialization_converter PUBLIC $<$<CXX_COMPILER_ID:GNU>:-fsanitize=address,leak,undefined>)
+      target_link_libraries(test_serialization_converter $<$<CXX_COMPILER_ID:GNU>:-fsanitize=address,leak,undefined>)
+    endif()
+    target_link_libraries(test_serialization_converter
+      ${PROJECT_NAME}
+      rosbag2_storage::rosbag2_storage
+      ${std_msgs_TARGETS}
     )
   endif()
 
