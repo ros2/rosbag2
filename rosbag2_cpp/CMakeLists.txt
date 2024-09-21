@@ -139,6 +139,7 @@ if(BUILD_TESTING)
   find_package(test_msgs REQUIRED)
   find_package(std_msgs REQUIRED)
   find_package(rosbag2_test_msgdefs REQUIRED)
+  find_package(rmw_implementation_cmake REQUIRED)
   ament_lint_auto_find_test_dependencies()
 
   add_library(
@@ -254,7 +255,7 @@ if(BUILD_TESTING)
     )
   endif()
 
-  ament_add_gmock(test_serialization_converter test/rosbag2_cpp/test_serialization_converter.cpp)
+  ament_add_gmock_executable(test_serialization_converter test/rosbag2_cpp/test_serialization_converter.cpp)
   if(TARGET test_serialization_converter)
     if(NOT DISABLE_SANITIZERS)
       target_compile_options(test_serialization_converter PUBLIC $<$<CXX_COMPILER_ID:GNU>:-fsanitize=address,leak,undefined>)
@@ -266,6 +267,17 @@ if(BUILD_TESTING)
       ${std_msgs_TARGETS}
     )
   endif()
+
+  function(test_serialization_converter_for_rmw_implementation)
+    set(rmw_implementation_env_var RMW_IMPLEMENTATION=${rmw_implementation})
+    ament_add_gmock_test(test_serialization_converter
+      TEST_NAME test_serialization_converter${target_suffix}
+      ENV ${rmw_implementation_env_var}
+    )
+  endfunction()
+  # Run test_serialization_converter for each rmw implementation because default serialization
+  # converter uses rmw specific functions for serialization and deserialization.
+  call_for_each_rmw_implementation(test_serialization_converter_for_rmw_implementation)
 
   ament_add_gmock(test_multifile_reader
     test/rosbag2_cpp/test_multifile_reader.cpp)
