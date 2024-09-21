@@ -128,10 +128,12 @@ TEST_F(SerializationConverterTest, default_rmw_converter_can_deserialize) {
   auto mock_converter = std::make_unique<StrictMock<MockConverter>>();
   std::vector<std::shared_ptr<const rosbag2_cpp::rosbag2_introspection_message_t>>
     intercepted_converter_messages;
-  EXPECT_CALL(*mock_converter,
-     serialize(An<std::shared_ptr<const rosbag2_cpp::rosbag2_introspection_message_t>>(),
-               An<const rosidl_message_type_support_t *>(),
-               An<std::shared_ptr<rosbag2_storage::SerializedBagMessage>>())).
+  EXPECT_CALL(
+    *mock_converter,
+    serialize(
+      An<std::shared_ptr<const rosbag2_cpp::rosbag2_introspection_message_t>>(),
+      An<const rosidl_message_type_support_t *>(),
+      An<std::shared_ptr<rosbag2_storage::SerializedBagMessage>>())).
   WillRepeatedly(
     [&](std::shared_ptr<const rosbag2_cpp::rosbag2_introspection_message_t> ros_message,
     const rosidl_message_type_support_t * type_support,
@@ -171,10 +173,12 @@ TEST_F(SerializationConverterTest, default_rmw_converter_can_serialize) {
   const std::string rmw_serialization_format = rmw_get_serialization_format();
 
   auto mock_converter = std::make_unique<StrictMock<MockConverter>>();
-  EXPECT_CALL(*mock_converter,
-              deserialize(An<std::shared_ptr<const rosbag2_storage::SerializedBagMessage>>(),
-                          An<const rosidl_message_type_support_t *>(),
-                          An<std::shared_ptr<rosbag2_cpp::rosbag2_introspection_message_t>>())).
+  EXPECT_CALL(
+    *mock_converter,
+    deserialize(
+      An<std::shared_ptr<const rosbag2_storage::SerializedBagMessage>>(),
+      An<const rosidl_message_type_support_t *>(),
+      An<std::shared_ptr<rosbag2_cpp::rosbag2_introspection_message_t>>())).
   WillRepeatedly(
     [&](std::shared_ptr<const rosbag2_storage::SerializedBagMessage> serialized_message,
     const rosidl_message_type_support_t * type_support,
