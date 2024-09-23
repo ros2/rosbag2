@@ -181,3 +181,18 @@ TEST(test_local_message_definition_source, no_crash_on_bad_name)
   });
   ASSERT_EQ(result.encoding, "unknown");
 }
+
+TEST(test_local_message_definition_source, throw_definition_not_found_for_unknown_msg)
+{
+  LocalMessageDefinitionSource source;
+  ASSERT_THROW(
+  {
+    source.get_full_text("rosbag2_test_msgdefs/msg/UnknownMessage");
+  }, rosbag2_cpp::DefinitionNotFoundError);
+
+  // Throw DefinitionNotFoundError for not found message definition package name
+  ASSERT_THROW(
+  {
+    source.get_full_text("not_found_msgdefs_pkg/msg/UnknownMessage");
+  }, rosbag2_cpp::DefinitionNotFoundError);
+}
