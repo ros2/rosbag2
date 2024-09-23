@@ -111,7 +111,7 @@ setup_topic_filtering(
   }
 
   for (const auto & [writer, record_options] : output_bags) {
-    rosbag2_transport::TopicFilter topic_filter{record_options};
+    rosbag2_transport::TopicFilter topic_filter{record_options, nullptr, true};
     auto filtered_topics_and_types = topic_filter.filter_topics(input_topics);
 
     // Done filtering - set up writer
