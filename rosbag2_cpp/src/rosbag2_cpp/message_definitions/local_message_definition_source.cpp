@@ -166,10 +166,6 @@ const LocalMessageDefinitionSource::MessageSpec & LocalMessageDefinitionSource::
     throw TypenameNotUnderstoodError(topic_type);
   }
   std::string package = match[1];
-<<<<<<< HEAD
-  std::string share_dir = ament_index_cpp::get_package_share_directory(package);
-  std::ifstream file{share_dir + "/msg/" + match[2].str() +
-=======
   std::string share_dir;
   try {
     share_dir = ament_index_cpp::get_package_share_directory(package);
@@ -177,10 +173,7 @@ const LocalMessageDefinitionSource::MessageSpec & LocalMessageDefinitionSource::
     ROSBAG2_CPP_LOG_WARN("'%s'", e.what());
     throw DefinitionNotFoundError(definition_identifier.topic_type());
   }
-  std::string dir = definition_identifier.format() == Format::MSG ||
-    definition_identifier.format() == Format::IDL ? "/msg/" : "/srv/";
-  std::ifstream file{share_dir + dir + match[2].str() +
->>>>>>> cd7bd636 (Allow unknown types in bag rewrite (#1812))
+  std::ifstream file{share_dir + "/msg/" + match[2].str() +
     extension_for_format(definition_identifier.format())};
   if (!file.good()) {
     throw DefinitionNotFoundError(definition_identifier.topic_type());
