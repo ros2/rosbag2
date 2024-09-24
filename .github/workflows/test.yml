@@ -88,7 +88,7 @@ jobs:
         source /opt/ros/iron/setup.sh && colcon test --mixin linters-skip --packages-select ${rosbag2_packages} --packages-skip rosbag2_performance_benchmarking --event-handlers console_cohesion+ --return-code-on-test-failure --ctest-args "-L xfail" --pytest-args "-m xfail"
       working-directory: ${{ steps.action-ros-ci.outputs.ros-workspace-directory-name }}
       shell: bash
-    - uses: actions/upload-artifact@v1
+    - uses: actions/upload-artifact@v4
       with:
         name: colcon-logs
         path: ros_ws/log
