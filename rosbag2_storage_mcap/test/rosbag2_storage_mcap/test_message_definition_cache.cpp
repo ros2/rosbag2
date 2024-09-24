@@ -147,3 +147,14 @@ TEST(test_message_definition_cache, get_service_message_definitions)
   ASSERT_EQ(result.first, rosbag2_storage_mcap::internal::Format::MSG);
   ASSERT_EQ(result.second, "\nstring resp\n");
 }
+
+TEST(test_local_message_definition_source, throw_definition_not_found_for_unknown_msg)
+{
+  MessageDefinitionCache source;
+  ASSERT_THROW({ source.get_full_text("rosbag2_test_msgdefs/msg/UnknownMessage"); },
+               rosbag2_storage_mcap::internal::DefinitionNotFoundError);
+
+  // Throw DefinitionNotFoundError for not found message definition package name
+  ASSERT_THROW({ source.get_full_text("not_found_msgdefs_pkg/msg/UnknownMessage"); },
+               rosbag2_storage_mcap::internal::DefinitionNotFoundError);
+}

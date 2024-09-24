@@ -14,6 +14,7 @@
 
 #include "rosbag2_storage_mcap/message_definition_cache.hpp"
 
+#include <ament_index_cpp/get_package_prefix.hpp>
 #include <ament_index_cpp/get_package_share_directory.hpp>
 #include <ament_index_cpp/get_resource.hpp>
 #include <ament_index_cpp/get_resources.hpp>
@@ -165,7 +166,13 @@ const MessageSpec & MessageDefinitionCache::load_message_spec(
     namespace_name = "msg";
   }
   const std::string type_name = match[3];
-  std::string share_dir = ament_index_cpp::get_package_share_directory(package);
+  std::string share_dir;
+  try {
+    share_dir = ament_index_cpp::get_package_share_directory(package);
+  } catch (const ament_index_cpp::PackageNotFoundError & e) {
+    RCUTILS_LOG_WARN_NAMED("rosbag2_storage_mcap", "%s", e.what());
+    throw DefinitionNotFoundError(definition_identifier.package_resource_name);
+  }
   std::ifstream file{share_dir + "/" + namespace_name + "/" + type_name +
                      extension_for_format(definition_identifier.format)};
   if (!file.good()) {
