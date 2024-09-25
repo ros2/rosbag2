@@ -28,7 +28,7 @@
 #include "rosbag2_cpp/logging.hpp"
 #include "rosbag2_cpp/visibility_control.hpp"
 
-#include "./rmw_implemented_serialization_format_converter.hpp"
+#include "rosbag2_cpp/rmw_implemented_serialization_format_converter.hpp"
 
 namespace rosbag2_cpp
 {
