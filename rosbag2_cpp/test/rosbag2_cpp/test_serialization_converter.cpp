@@ -127,7 +127,7 @@ TEST_F(SerializationConverterTest, default_rmw_converter_can_deserialize) {
 
   auto mock_converter = std::make_unique<StrictMock<MockConverter>>();
   std::vector<std::shared_ptr<const rosbag2_cpp::rosbag2_introspection_message_t>>
-    intercepted_converter_messages;
+  intercepted_converter_messages;
   EXPECT_CALL(
     *mock_converter,
     serialize(
