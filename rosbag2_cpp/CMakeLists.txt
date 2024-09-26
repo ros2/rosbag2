@@ -244,25 +244,27 @@ if(BUILD_TESTING)
     )
   endif()
 
-  ament_add_gmock_executable(test_serialization_converter test/rosbag2_cpp/test_serialization_converter.cpp)
-  if(TARGET test_serialization_converter)
-    if(NOT DISABLE_SANITIZERS)
-      target_compile_options(test_serialization_converter PUBLIC $<$<CXX_COMPILER_ID:GNU>:-fsanitize=address,leak,undefined>)
-      target_link_libraries(test_serialization_converter $<$<CXX_COMPILER_ID:GNU>:-fsanitize=address,leak,undefined>)
-    endif()
-    target_link_libraries(test_serialization_converter
-      ${PROJECT_NAME}
-      rosbag2_storage::rosbag2_storage
-      ${std_msgs_TARGETS}
-    )
-  endif()
-
   function(test_serialization_converter_for_rmw_implementation)
     set(rmw_implementation_env_var RMW_IMPLEMENTATION=${rmw_implementation})
-    ament_add_gmock_test(test_serialization_converter
-      TEST_NAME test_serialization_converter${target_suffix}
+    ament_add_gmock(test_serialization_converter${target_suffix}
+      test/rosbag2_cpp/test_serialization_converter.cpp
       ENV ${rmw_implementation_env_var}
     )
+    if(TARGET test_serialization_converter${target_suffix})
+      if(NOT DISABLE_SANITIZERS)
+        target_compile_options(test_serialization_converter${target_suffix}
+          PUBLIC $<$<CXX_COMPILER_ID:GNU>:-fsanitize=address,leak,undefined>
+        )
+        target_link_libraries(test_serialization_converter${target_suffix}
+          $<$<CXX_COMPILER_ID:GNU>:-fsanitize=address,leak,undefined>
+        )
+      endif()
+      target_link_libraries(test_serialization_converter${target_suffix}
+        ${PROJECT_NAME}
+        rosbag2_storage::rosbag2_storage
+        ${std_msgs_TARGETS}
+      )
+    endif()
   endfunction()
   # Run test_serialization_converter for each rmw implementation because default serialization
   # converter uses rmw specific functions for serialization and deserialization.
