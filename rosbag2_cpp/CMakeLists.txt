@@ -30,7 +30,7 @@ option(DISABLE_SANITIZERS "disables the use of gcc sanitizers" ON)
 if(NOT DISABLE_SANITIZERS AND CMAKE_COMPILER_IS_GNUCXX)
   include(CheckCXXSourceRuns)
   set(OLD_CMAKE_REQUIRED_FLAGS ${CMAKE_REQUIRED_FLAGS})
-  set(CMAKE_REQUIRED_FLAGS "${OLD_CMAKE_REQUIRED_FLAGS} -fsanitize=leak")
+  set(CMAKE_REQUIRED_FLAGS "${OLD_CMAKE_REQUIRED_FLAGS} -fsanitize=address,leak,undefined")
   check_cxx_source_runs("int main() {}" HAVE_SANITIZERS)
   set(CMAKE_REQUIRED_FLAGS ${OLD_CMAKE_REQUIRED_FLAGS})
   if(NOT HAVE_SANITIZERS)
@@ -133,8 +133,10 @@ ament_export_dependencies(
 if(BUILD_TESTING)
   find_package(ament_cmake_gmock REQUIRED)
   find_package(ament_lint_auto REQUIRED)
+  find_package(std_msgs REQUIRED)
   find_package(test_msgs REQUIRED)
   find_package(rosbag2_test_msgdefs REQUIRED)
+  find_package(rmw_implementation_cmake REQUIRED)
   ament_lint_auto_find_test_dependencies()
 
   add_library(
@@ -242,6 +244,32 @@ if(BUILD_TESTING)
       ${test_msgs_TARGETS}
     )
   endif()
+
+  function(test_serialization_converter_for_rmw_implementation)
+    set(rmw_implementation_env_var RMW_IMPLEMENTATION=${rmw_implementation})
+    ament_add_gmock(test_serialization_converter${target_suffix}
+      test/rosbag2_cpp/test_serialization_converter.cpp
+      ENV ${rmw_implementation_env_var}
+    )
+    if(TARGET test_serialization_converter${target_suffix})
+      if(NOT DISABLE_SANITIZERS)
+        target_compile_options(test_serialization_converter${target_suffix}
+          PUBLIC $<$<CXX_COMPILER_ID:GNU>:-fsanitize=address,leak,undefined>
+        )
+        target_link_libraries(test_serialization_converter${target_suffix}
+          $<$<CXX_COMPILER_ID:GNU>:-fsanitize=address,leak,undefined>
+        )
+      endif()
+      target_link_libraries(test_serialization_converter${target_suffix}
+        ${PROJECT_NAME}
+        rosbag2_storage::rosbag2_storage
+        ${std_msgs_TARGETS}
+      )
+    endif()
+  endfunction()
+  # Run test_serialization_converter for each rmw implementation because default serialization
+  # converter uses rmw specific functions for serialization and deserialization.
+  call_for_each_rmw_implementation(test_serialization_converter_for_rmw_implementation)
 
   ament_add_gmock(test_multifile_reader
     test/rosbag2_cpp/test_multifile_reader.cpp)
