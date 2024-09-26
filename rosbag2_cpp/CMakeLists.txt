@@ -133,6 +133,7 @@ ament_export_dependencies(
 if(BUILD_TESTING)
   find_package(ament_cmake_gmock REQUIRED)
   find_package(ament_lint_auto REQUIRED)
+  find_package(std_msgs REQUIRED)
   find_package(test_msgs REQUIRED)
   find_package(rosbag2_test_msgdefs REQUIRED)
   find_package(rmw_implementation_cmake REQUIRED)
