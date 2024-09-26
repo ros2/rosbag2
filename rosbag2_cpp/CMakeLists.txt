@@ -133,11 +133,7 @@ if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
   find_package(std_msgs REQUIRED)
   find_package(test_msgs REQUIRED)
-<<<<<<< HEAD
-=======
-  find_package(rosbag2_test_msgdefs REQUIRED)
   find_package(rmw_implementation_cmake REQUIRED)
->>>>>>> a269cd4 ([iron] Bugfix for rosbag2_cpp serialization converter (backport #1814) (#1823))
   ament_lint_auto_find_test_dependencies()
 
   add_library(
