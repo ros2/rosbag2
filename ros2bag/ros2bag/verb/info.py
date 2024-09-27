@@ -45,6 +45,6 @@ class InfoVerb(VerbExtension):
             Info().print_output_verbose(args.bag_path, m, args.sort)
         else:
             if args.topic_name:
-                Info().print_output_topic_name_only(m)
+                Info().print_output_topic_name_only(m, args.sort)
             else:
                 Info().print_output(m, args.sort)

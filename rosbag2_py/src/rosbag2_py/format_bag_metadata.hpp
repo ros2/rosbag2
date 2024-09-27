@@ -18,27 +18,18 @@
 #include <string>
 #include <unordered_map>
 
+#include "info_sorting_method.hpp"
 #include "rosbag2_storage/bag_metadata.hpp"
 
 namespace rosbag2_py
 {
-
-/**
- * \brief Available sorting methods for info output.
- */
-enum class SortingMethod
-{
-  NAME,
-  TYPE,
-  COUNT,
-};
 
 std::string format_bag_meta_data(
   const rosbag2_storage::BagMetadata & metadata,
   const std::unordered_map<std::string, uint64_t> & messages_size = {},
   bool verbose = false,
   bool only_topic = false,
-  const SortingMethod sort_method = SortingMethod::NAME);
+  const InfoSortingMethod sort_method = InfoSortingMethod::NAME);
 
 }  // namespace rosbag2_py
 

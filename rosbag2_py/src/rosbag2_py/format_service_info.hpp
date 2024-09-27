@@ -20,6 +20,7 @@
 #include <vector>
 #include <unordered_map>
 
+#include "info_sorting_method.hpp"
 #include "rosbag2_cpp/info.hpp"
 
 namespace rosbag2_py
@@ -28,7 +29,8 @@ namespace rosbag2_py
 std::string format_service_info(
   std::vector<std::shared_ptr<rosbag2_cpp::rosbag2_service_info_t>> & service_info,
   const std::unordered_map<std::string, uint64_t> & messages_size = {},
-  bool verbose = false);
+  bool verbose = false,
+  const InfoSortingMethod sort_method = InfoSortingMethod::NAME);
 
 }  // namespace rosbag2_py
 

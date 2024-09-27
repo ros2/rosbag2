@@ -118,7 +118,7 @@ void format_topics_with_type(
   bool verbose,
   std::stringstream & info_stream,
   int indentation_spaces,
-  const rosbag2_py::SortingMethod sort_method = rosbag2_py::SortingMethod::NAME)
+  const rosbag2_py::InfoSortingMethod sort_method = rosbag2_py::InfoSortingMethod::NAME)
 {
   if (topics.empty()) {
     info_stream << std::endl;
@@ -142,21 +142,7 @@ void format_topics_with_type(
       info_stream << std::endl;
     };
 
-  std::vector<size_t> sorted_idx(topics.size());
-  std::iota(sorted_idx.begin(), sorted_idx.end(), 0);
-  std::sort(
-    sorted_idx.begin(),
-    sorted_idx.end(),
-    [&topics, sort_method](size_t i1, size_t i2) {
-      if (sort_method == rosbag2_py::SortingMethod::TYPE) {
-        return topics[i1].topic_metadata.type < topics[i2].topic_metadata.type;
-      }
-      if (sort_method == rosbag2_py::SortingMethod::COUNT) {
-        return topics[i1].message_count < topics[i2].message_count;
-      }
-      return topics[i1].topic_metadata.name < topics[i2].topic_metadata.name;
-    }
-  );
+  std::vector<size_t> sorted_idx = rosbag2_py::generate_sorted_idx(topics, sort_method);
 
   size_t number_of_topics = topics.size();
   size_t i = 0;
@@ -186,31 +172,19 @@ void format_topics_with_type(
   }
 }
 
-struct ServiceMetadata
-{
-  std::string name;
-  std::string type;
-  std::string serialization_format;
-};
 
-struct ServiceInformation
-{
-  ServiceMetadata service_metadata;
-  size_t event_message_count = 0;
-};
-
-std::vector<std::shared_ptr<ServiceInformation>> filter_service_event_topic(
+std::vector<std::shared_ptr<rosbag2_storage::ServiceInformation>> filter_service_event_topic(
   const std::vector<rosbag2_storage::TopicInformation> & topics_with_message_count,
   size_t & total_service_event_msg_count)
 {
   total_service_event_msg_count = 0;
-  std::vector<std::shared_ptr<ServiceInformation>> service_info_list;
+  std::vector<std::shared_ptr<rosbag2_storage::ServiceInformation>> service_info_list;
 
   for (auto & topic : topics_with_message_count) {
     if (rosbag2_cpp::is_service_event_topic(
         topic.topic_metadata.name, topic.topic_metadata.type))
     {
-      auto service_info = std::make_shared<ServiceInformation>();
+      auto service_info = std::make_shared<rosbag2_storage::ServiceInformation>();
       service_info->service_metadata.name =
         rosbag2_cpp::service_event_topic_name_to_service_name(topic.topic_metadata.name);
       service_info->service_metadata.type =
@@ -227,12 +201,12 @@ std::vector<std::shared_ptr<ServiceInformation>> filter_service_event_topic(
 }
 
 void format_service_with_type(
-  const std::vector<std::shared_ptr<ServiceInformation>> & services,
+  const std::vector<std::shared_ptr<rosbag2_storage::ServiceInformation>> & services,
   const std::unordered_map<std::string, uint64_t> & messages_size,
   bool verbose,
   std::stringstream & info_stream,
   int indentation_spaces,
-  const rosbag2_py::SortingMethod sort_method = rosbag2_py::SortingMethod::NAME)
+  const rosbag2_py::InfoSortingMethod sort_method = rosbag2_py::InfoSortingMethod::NAME)
 {
   if (services.empty()) {
     info_stream << std::endl;
@@ -241,7 +215,7 @@ void format_service_with_type(
 
   auto print_service_info =
     [&info_stream, &messages_size, verbose](
-    const std::shared_ptr<ServiceInformation> & si) -> void {
+    const std::shared_ptr<rosbag2_storage::ServiceInformation> & si) -> void {
       info_stream << "Service: " << si->service_metadata.name << " | ";
       info_stream << "Type: " << si->service_metadata.type << " | ";
       info_stream << "Event Count: " << si->event_message_count << " | ";
@@ -258,21 +232,7 @@ void format_service_with_type(
       info_stream << std::endl;
     };
 
-  std::vector<size_t> sorted_idx(services.size());
-  std::iota(sorted_idx.begin(), sorted_idx.end(), 0);
-  std::sort(
-    sorted_idx.begin(),
-    sorted_idx.end(),
-    [&services, sort_method](size_t i1, size_t i2) {
-      if (sort_method == rosbag2_py::SortingMethod::TYPE) {
-        return services[i1]->service_metadata.type < services[i2]->service_metadata.type;
-      }
-      if (sort_method == rosbag2_py::SortingMethod::COUNT) {
-        return services[i1]->event_message_count < services[i2]->event_message_count;
-      }
-      return services[i1]->service_metadata.name < services[i2]->service_metadata.name;
-    }
-  );
+  std::vector<size_t> sorted_idx = rosbag2_py::generate_sorted_idx(services, sort_method);
 
   print_service_info(services[sorted_idx[0]]);
   auto number_of_services = services.size();
@@ -292,7 +252,7 @@ std::string format_bag_meta_data(
   const std::unordered_map<std::string, uint64_t> & messages_size,
   bool verbose,
   bool only_topic,
-  const SortingMethod sort_method)
+  const InfoSortingMethod sort_method)
 {
   auto start_time = metadata.starting_time.time_since_epoch();
   auto end_time = start_time + metadata.duration;
@@ -304,7 +264,7 @@ std::string format_bag_meta_data(
   }
 
   size_t total_service_event_msg_count = 0;
-  std::vector<std::shared_ptr<ServiceInformation>> service_info_list;
+  std::vector<std::shared_ptr<rosbag2_storage::ServiceInformation>> service_info_list;
   service_info_list = filter_service_event_topic(
     metadata.topics_with_message_count,
     total_service_event_msg_count);

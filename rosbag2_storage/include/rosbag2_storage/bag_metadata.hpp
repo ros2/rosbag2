@@ -32,6 +32,19 @@ struct TopicInformation
   size_t message_count;
 };
 
+struct ServiceMetadata
+{
+  std::string name;
+  std::string type;
+  std::string serialization_format;
+};
+
+struct ServiceInformation
+{
+  ServiceMetadata service_metadata;
+  size_t event_message_count = 0;
+};
+
 struct FileInformation
 {
   std::string path;
