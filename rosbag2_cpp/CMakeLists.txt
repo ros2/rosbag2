@@ -244,6 +244,13 @@ if(BUILD_TESTING)
           $<$<CXX_COMPILER_ID:GNU>:-fsanitize=address,leak,undefined>
         )
       endif()
+      ament_target_dependencies(test_serialization_converter${target_suffix}
+        rosbag2_storage
+        rcpputils
+        rclcpp
+        rmw
+        std_msgs
+      )
       target_link_libraries(test_serialization_converter${target_suffix}
         ${PROJECT_NAME}
         rosbag2_storage::rosbag2_storage

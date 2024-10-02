@@ -14,11 +14,12 @@
 
 #include <gmock/gmock.h>
 
-#include <filesystem>
 #include <memory>
 #include <string>
 #include <utility>
 #include <vector>
+
+#include "rcpputils/filesystem_helper.hpp"
 
 #include "mock_converter.hpp"
 #include "mock_converter_factory.hpp"
@@ -36,7 +37,7 @@
 
 using namespace testing;  // NOLINT
 
-namespace fs = std::filesystem;
+namespace fs = rcpputils::fs;
 
 class SerializationConverterTest : public Test
 {
