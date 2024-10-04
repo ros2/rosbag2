@@ -19,6 +19,7 @@
 #include <unordered_map>
 
 #include "info_sorting_method.hpp"
+#include "service_event_info.hpp"
 #include "rosbag2_storage/bag_metadata.hpp"
 
 namespace rosbag2_py

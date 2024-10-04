@@ -104,7 +104,8 @@ public:
     rosbag2_py::InfoSortingMethod sort_method = info_sorting_method_from_string(sorting_method);
     // Output formatted metadata and service info
     std::cout << format_bag_meta_data(metadata_info, messages_size, true, true, sort_method);
-    std::cout << format_service_info(all_services_info, messages_size, true) << std::endl;
+    std::cout <<
+      format_service_info(all_services_info, messages_size, true, sort_method) << std::endl;
   }
 
   std::unordered_set<std::string> get_sorting_methods()

@@ -173,18 +173,18 @@ void format_topics_with_type(
 }
 
 
-std::vector<std::shared_ptr<rosbag2_storage::ServiceInformation>> filter_service_event_topic(
+std::vector<std::shared_ptr<rosbag2_py::ServiceEventInformation>> filter_service_event_topic(
   const std::vector<rosbag2_storage::TopicInformation> & topics_with_message_count,
   size_t & total_service_event_msg_count)
 {
   total_service_event_msg_count = 0;
-  std::vector<std::shared_ptr<rosbag2_storage::ServiceInformation>> service_info_list;
+  std::vector<std::shared_ptr<rosbag2_py::ServiceEventInformation>> service_info_list;
 
   for (auto & topic : topics_with_message_count) {
     if (rosbag2_cpp::is_service_event_topic(
         topic.topic_metadata.name, topic.topic_metadata.type))
     {
-      auto service_info = std::make_shared<rosbag2_storage::ServiceInformation>();
+      auto service_info = std::make_shared<rosbag2_py::ServiceEventInformation>();
       service_info->service_metadata.name =
         rosbag2_cpp::service_event_topic_name_to_service_name(topic.topic_metadata.name);
       service_info->service_metadata.type =
@@ -201,7 +201,7 @@ std::vector<std::shared_ptr<rosbag2_storage::ServiceInformation>> filter_service
 }
 
 void format_service_with_type(
-  const std::vector<std::shared_ptr<rosbag2_storage::ServiceInformation>> & services,
+  const std::vector<std::shared_ptr<rosbag2_py::ServiceEventInformation>> & services,
   const std::unordered_map<std::string, uint64_t> & messages_size,
   bool verbose,
   std::stringstream & info_stream,
@@ -215,7 +215,7 @@ void format_service_with_type(
 
   auto print_service_info =
     [&info_stream, &messages_size, verbose](
-    const std::shared_ptr<rosbag2_storage::ServiceInformation> & si) -> void {
+    const std::shared_ptr<rosbag2_py::ServiceEventInformation> & si) -> void {
       info_stream << "Service: " << si->service_metadata.name << " | ";
       info_stream << "Type: " << si->service_metadata.type << " | ";
       info_stream << "Event Count: " << si->event_message_count << " | ";
@@ -264,7 +264,7 @@ std::string format_bag_meta_data(
   }
 
   size_t total_service_event_msg_count = 0;
-  std::vector<std::shared_ptr<rosbag2_storage::ServiceInformation>> service_info_list;
+  std::vector<std::shared_ptr<ServiceEventInformation>> service_info_list;
   service_info_list = filter_service_event_topic(
     metadata.topics_with_message_count,
     total_service_event_msg_count);

@@ -79,7 +79,36 @@ format_service_info(
       info_stream << std::endl;
     };
 
-  std::vector<size_t> sorted_idx = rosbag2_py::generate_sorted_idx(service_info_list, sort_method);
+  // std::vector<size_t> sorted_idx = generate_sorted_idx(service_info_list, sort_method);
+  std::vector<size_t> sorted_idx(service_info_list.size());
+  std::iota(sorted_idx.begin(), sorted_idx.end(), 0);
+  std::sort(
+    sorted_idx.begin(),
+    sorted_idx.end(),
+    [&service_info_list, sort_method](size_t i1, size_t i2) {
+      bool is_greater = false;
+      switch (sort_method) {
+        case InfoSortingMethod::NAME:
+          is_greater = service_info_list[i1]->name < service_info_list[i2]->name;
+          break;
+        case InfoSortingMethod::TYPE:
+          is_greater = service_info_list[i1]->type < service_info_list[i2]->type;
+          break;
+        case InfoSortingMethod::COUNT:
+          {
+            const auto & count_1 = (
+              service_info_list[i1]->request_count + service_info_list[i1]->response_count);
+            const auto & count_2 = (
+              service_info_list[i2]->request_count + service_info_list[i2]->response_count);
+            is_greater = count_1 < count_2;
+            break;
+          }
+        default:
+          throw std::runtime_error("switch is not exhaustive");
+      }
+      return is_greater;
+    }
+  );
 
   print_service_info(service_info_list[sorted_idx[0]]);
   auto number_of_services = service_info_list.size();

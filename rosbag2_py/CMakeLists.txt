@@ -67,6 +67,7 @@ target_link_libraries(_reader PUBLIC
 pybind11_add_module(_storage SHARED
   src/rosbag2_py/_storage.cpp
   src/rosbag2_py/format_bag_metadata.cpp
+  src/rosbag2_py/info_sorting_method.cpp
 )
 target_link_libraries(_storage PUBLIC
   rosbag2_cpp::rosbag2_cpp

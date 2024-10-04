@@ -23,7 +23,7 @@ namespace rosbag2_py
 InfoSortingMethod info_sorting_method_from_string(std::string str)
 {
   std::transform(str.begin(), str.end(), str.begin(), ::tolower);
-  auto find_result = sorting_method_map.find("str");
+  auto find_result = sorting_method_map.find(str);
   if (find_result == sorting_method_map.end()) {
     throw std::runtime_error("Enum value match for \"" + str + "\" string is not found.");
   }
@@ -40,13 +40,21 @@ std::vector<size_t> generate_sorted_idx(
     sorted_idx.begin(),
     sorted_idx.end(),
     [&topics, sort_method](size_t i1, size_t i2) {
-      if (sort_method == InfoSortingMethod::TYPE) {
-        return topics[i1].topic_metadata.type < topics[i2].topic_metadata.type;
+      bool is_greater = false;
+      switch (sort_method) {
+        case InfoSortingMethod::NAME:
+          is_greater = topics[i1].topic_metadata.name < topics[i2].topic_metadata.name;
+          break;
+        case InfoSortingMethod::TYPE:
+          is_greater = topics[i1].topic_metadata.type < topics[i2].topic_metadata.type;
+          break;
+        case InfoSortingMethod::COUNT:
+          is_greater = topics[i1].message_count < topics[i2].message_count;
+          break;
+        default:
+          throw std::runtime_error("switch is not exhaustive");
       }
-      if (sort_method == InfoSortingMethod::COUNT) {
-        return topics[i1].message_count < topics[i2].message_count;
-      }
-      return topics[i1].topic_metadata.name < topics[i2].topic_metadata.name;
+      return is_greater;
     }
   );
   return sorted_idx;
@@ -63,15 +71,25 @@ std::vector<size_t> generate_sorted_idx(
     sorted_idx.begin(),
     sorted_idx.end(),
     [&services, sort_method](size_t i1, size_t i2) {
-      if (sort_method == InfoSortingMethod::TYPE) {
-        return services[i1]->type < services[i2]->type;
+      bool is_greater = false;
+      switch (sort_method) {
+        case InfoSortingMethod::NAME:
+          is_greater = services[i1]->name < services[i2]->name;
+          break;
+        case InfoSortingMethod::TYPE:
+          is_greater = services[i1]->type < services[i2]->type;
+          break;
+        case InfoSortingMethod::COUNT:
+          {
+            const auto & count_1 = services[i1]->request_count + services[i1]->response_count;
+            const auto & count_2 = services[i2]->request_count + services[i2]->response_count;
+            is_greater = count_1 < count_2;
+            break;
+          }
+        default:
+          throw std::runtime_error("switch is not exhaustive");
       }
-      if (sort_method == InfoSortingMethod::COUNT) {
-        const auto & count_1 = services[i1]->request_count + services[i1]->response_count;
-        const auto & count_2 = services[i2]->request_count + services[i2]->response_count;
-        return count_1 < count_2;
-      }
-      return services[i1]->name < services[i2]->name;
+      return is_greater;
     }
   );
   return sorted_idx;
@@ -79,7 +97,7 @@ std::vector<size_t> generate_sorted_idx(
 
 
 std::vector<size_t> generate_sorted_idx(
-  const std::vector<std::shared_ptr<rosbag2_storage::ServiceInformation>> & services,
+  const std::vector<std::shared_ptr<ServiceEventInformation>> & services,
   const InfoSortingMethod sort_method)
 {
   std::vector<size_t> sorted_idx(services.size());
@@ -88,13 +106,21 @@ std::vector<size_t> generate_sorted_idx(
     sorted_idx.begin(),
     sorted_idx.end(),
     [&services, sort_method](size_t i1, size_t i2) {
-      if (sort_method == InfoSortingMethod::TYPE) {
-        return services[i1]->service_metadata.type < services[i2]->service_metadata.type;
+      bool is_greater = false;
+      switch (sort_method) {
+        case InfoSortingMethod::NAME:
+          is_greater = services[i1]->service_metadata.name < services[i2]->service_metadata.name;
+          break;
+        case InfoSortingMethod::TYPE:
+          is_greater = services[i1]->service_metadata.type < services[i2]->service_metadata.type;
+          break;
+        case InfoSortingMethod::COUNT:
+          is_greater = services[i1]->event_message_count < services[i2]->event_message_count;
+          break;
+        default:
+          throw std::runtime_error("switch is not exhaustive");
       }
-      if (sort_method == InfoSortingMethod::COUNT) {
-        return services[i1]->event_message_count < services[i2]->event_message_count;
-      }
-      return services[i1]->service_metadata.name < services[i2]->service_metadata.name;
+      return is_greater;
     }
   );
   return sorted_idx;
