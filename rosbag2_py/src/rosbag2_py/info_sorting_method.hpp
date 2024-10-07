@@ -49,15 +49,15 @@ InfoSortingMethod info_sorting_method_from_string(std::string str);
 
 std::vector<size_t> generate_sorted_idx(
   const std::vector<rosbag2_storage::TopicInformation> & topics,
-  const InfoSortingMethod sort_method = InfoSortingMethod::NAME);
+  InfoSortingMethod sort_method = InfoSortingMethod::NAME);
 
 std::vector<size_t> generate_sorted_idx(
   const std::vector<std::shared_ptr<rosbag2_cpp::rosbag2_service_info_t>> & services,
-  const InfoSortingMethod sort_method = InfoSortingMethod::NAME);
+  InfoSortingMethod sort_method = InfoSortingMethod::NAME);
 
 std::vector<size_t> generate_sorted_idx(
   const std::vector<std::shared_ptr<ServiceEventInformation>> & services,
-  const InfoSortingMethod sort_method = InfoSortingMethod::NAME);
+  InfoSortingMethod sort_method = InfoSortingMethod::NAME);
 
 }  // namespace rosbag2_py
 

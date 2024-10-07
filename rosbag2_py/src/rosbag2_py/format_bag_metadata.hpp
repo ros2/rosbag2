@@ -19,7 +19,6 @@
 #include <unordered_map>
 
 #include "info_sorting_method.hpp"
-#include "service_event_info.hpp"
 #include "rosbag2_storage/bag_metadata.hpp"
 
 namespace rosbag2_py
@@ -30,7 +29,7 @@ std::string format_bag_meta_data(
   const std::unordered_map<std::string, uint64_t> & messages_size = {},
   bool verbose = false,
   bool only_topic = false,
-  const InfoSortingMethod sort_method = InfoSortingMethod::NAME);
+  InfoSortingMethod sort_method = InfoSortingMethod::NAME);
 
 }  // namespace rosbag2_py
 

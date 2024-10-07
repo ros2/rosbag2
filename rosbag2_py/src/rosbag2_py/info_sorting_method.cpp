@@ -62,7 +62,7 @@ std::vector<size_t> generate_sorted_idx(
 
 
 std::vector<size_t> generate_sorted_idx(
-  std::vector<std::shared_ptr<rosbag2_cpp::rosbag2_service_info_t>> & services,
+  const std::vector<std::shared_ptr<rosbag2_cpp::rosbag2_service_info_t>> & services,
   const InfoSortingMethod sort_method)
 {
   std::vector<size_t> sorted_idx(services.size());

@@ -20,8 +20,6 @@
 #include <string>
 #include <unordered_map>
 #include <vector>
-#include <algorithm>
-#include <numeric>
 
 #ifdef _WIN32
 #include <time.h>
@@ -31,6 +29,7 @@
 #include "rosbag2_storage/bag_metadata.hpp"
 
 #include "format_bag_metadata.hpp"
+#include "service_event_info.hpp"
 
 namespace
 {
@@ -264,10 +263,8 @@ std::string format_bag_meta_data(
   }
 
   size_t total_service_event_msg_count = 0;
-  std::vector<std::shared_ptr<ServiceEventInformation>> service_info_list;
-  service_info_list = filter_service_event_topic(
-    metadata.topics_with_message_count,
-    total_service_event_msg_count);
+  std::vector<std::shared_ptr<ServiceEventInformation>> service_info_list =
+    filter_service_event_topic(metadata.topics_with_message_count, total_service_event_msg_count);
 
   info_stream << std::endl;
   info_stream << "Files:             ";

@@ -16,7 +16,6 @@
 #include <memory>
 #include <string>
 #include <algorithm>
-#include <numeric>
 
 #include "info_sorting_method.hpp"
 #include "format_bag_metadata.hpp"
@@ -29,7 +28,6 @@
 
 namespace rosbag2_py
 {
-
 
 class Info
 {
