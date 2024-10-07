@@ -109,7 +109,7 @@ public:
   std::unordered_set<std::string> get_sorting_methods()
   {
     std::unordered_set<std::string> sorting_methods;
-    for (auto sorting_method : rosbag2_py::sorting_method_map) {
+    for (const auto & sorting_method : rosbag2_py::sorting_method_map) {
       sorting_methods.insert(sorting_method.first);
     }
     return sorting_methods;
