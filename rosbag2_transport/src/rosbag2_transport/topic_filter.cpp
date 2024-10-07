@@ -129,17 +129,6 @@ bool TopicFilter::take_topic(
   const std::string & topic_type = topic_types[0];
   bool is_service_event_topic = rosbag2_cpp::is_service_event_topic(topic_name, topic_type);
 
-  if (!record_options_.include_unpublished_topics && node_graph_ &&
-    topic_is_unpublished(topic_name, *node_graph_))
-  {
-    return false;
-  }
-
-  if (record_options_.ignore_leaf_topics && node_graph_ &&
-    is_leaf_topic(topic_name, *node_graph_))
-  {
-    return false;
-  }
 
   if (!is_service_event_topic) {
     if (!record_options_.all_topics &&
@@ -232,6 +221,18 @@ bool TopicFilter::take_topic(
   }
 
   if (!allow_unknown_types_ && !type_is_known(topic_name, topic_type)) {
+    return false;
+  }
+
+  if (!record_options_.include_unpublished_topics && node_graph_ &&
+    topic_is_unpublished(topic_name, *node_graph_))
+  {
+    return false;
+  }
+
+  if (record_options_.ignore_leaf_topics && node_graph_ &&
+    is_leaf_topic(topic_name, *node_graph_))
+  {
     return false;
   }
 
