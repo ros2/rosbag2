@@ -32,9 +32,11 @@
 
 #include "rosbag2_interfaces/srv/is_paused.hpp"
 #include "rosbag2_interfaces/srv/pause.hpp"
+#include "rosbag2_interfaces/srv/record.hpp"
 #include "rosbag2_interfaces/srv/resume.hpp"
 #include "rosbag2_interfaces/srv/snapshot.hpp"
 #include "rosbag2_interfaces/srv/split_bagfile.hpp"
+#include "rosbag2_interfaces/srv/stop.hpp"
 
 #include "rosbag2_interfaces/msg/write_split_event.hpp"
 

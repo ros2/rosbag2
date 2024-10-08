@@ -137,9 +137,11 @@ private:
   std::unordered_set<std::string> topic_unknown_types_;
   rclcpp::Service<rosbag2_interfaces::srv::IsPaused>::SharedPtr srv_is_paused_;
   rclcpp::Service<rosbag2_interfaces::srv::Pause>::SharedPtr srv_pause_;
+  rclcpp::Service<rosbag2_interfaces::srv::Record>::SharedPtr srv_record_;
   rclcpp::Service<rosbag2_interfaces::srv::Resume>::SharedPtr srv_resume_;
   rclcpp::Service<rosbag2_interfaces::srv::Snapshot>::SharedPtr srv_snapshot_;
   rclcpp::Service<rosbag2_interfaces::srv::SplitBagfile>::SharedPtr srv_split_bagfile_;
+  rclcpp::Service<rosbag2_interfaces::srv::Stop>::SharedPtr srv_stop_;
 
   std::mutex start_stop_transition_mutex_;
   std::mutex discovery_mutex_;
@@ -292,6 +294,26 @@ void RecorderImpl::record()
       const std::shared_ptr<rosbag2_interfaces::srv::SplitBagfile::Response>/* response */)
     {
       writer_->split_bagfile();
+    });
+
+  srv_record_ = node->create_service<rosbag2_interfaces::srv::Record>(
+    "~/record",
+    [this](
+      const std::shared_ptr<rmw_request_id_t>/* request_header */,
+      const std::shared_ptr<rosbag2_interfaces::srv::Record::Request>/* request */,
+      const std::shared_ptr<rosbag2_interfaces::srv::Record::Response>/* response */)
+    {
+      record();
+    });
+
+  srv_stop_ = node->create_service<rosbag2_interfaces::srv::Stop>(
+    "~/stop",
+    [this](
+      const std::shared_ptr<rmw_request_id_t>/* request_header */,
+      const std::shared_ptr<rosbag2_interfaces::srv::Stop::Request>/* request */,
+      const std::shared_ptr<rosbag2_interfaces::srv::Stop::Response>/* response */)
+    {
+      stop();
     });
 
   srv_pause_ = node->create_service<rosbag2_interfaces::srv::Pause>(
