@@ -145,7 +145,7 @@ private:
 
   std::mutex start_stop_transition_mutex_;
   std::mutex discovery_mutex_;
-  std::atomic<bool> stop_discovery_ = false;
+  std::atomic<bool> stop_discovery_ = true;
   std::atomic_uchar paused_ = 0;
   std::atomic<bool> in_recording_ = false;
   std::shared_ptr<KeyboardHandler> keyboard_handler_;
@@ -462,7 +462,7 @@ bool RecorderImpl::is_paused()
 void RecorderImpl::start_discovery()
 {
   std::lock_guard<std::mutex> state_lock(discovery_mutex_);
-  if (stop_discovery_.exchange(false)) {
+  if (!stop_discovery_.exchange(false)) {
     RCLCPP_DEBUG(node->get_logger(), "Recorder topic discovery is already running.");
   } else {
     discovery_future_ =
