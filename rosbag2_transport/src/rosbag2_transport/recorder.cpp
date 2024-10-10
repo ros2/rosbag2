@@ -105,8 +105,6 @@ Recorder::Recorder(
     get_logger(),
     "Press " << key_str << " for pausing/resuming");
 
-    RCLCPP_INFO_STREAM(get_logger(), "split_snapshots: " << (storage_options_.split_snapshots ? "true":"false"));
-
   for (auto & topic : record_options_.topics) {
     topic = rclcpp::expand_topic_or_service_name(topic, get_name(), get_namespace(), false);
   }
