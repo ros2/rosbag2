@@ -140,6 +140,10 @@ class RecordVerb(VerbExtension):
                  'the "/rosbag2_recorder/snapshot" service is called.'
         )
         parser.add_argument(
+            '--split-snapshots', action='store_true',
+            help='Splitting the bag file if a snapshot is taken'
+        )
+        parser.add_argument(
             '--ignore-leaf-topics', action='store_true',
             help='Ignore topics without a publisher.'
         )
@@ -236,7 +240,8 @@ class RecordVerb(VerbExtension):
             max_cache_size=args.max_cache_size,
             storage_preset_profile=args.storage_preset_profile,
             storage_config_uri=storage_config_file,
-            snapshot_mode=args.snapshot_mode
+            snapshot_mode=args.snapshot_mode,
+            split_snapshots=args.split_snapshots
         )
         record_options = RecordOptions()
         record_options.all = args.all

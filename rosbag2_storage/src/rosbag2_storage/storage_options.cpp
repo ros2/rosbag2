@@ -31,6 +31,7 @@ Node convert<rosbag2_storage::StorageOptions>::encode(
   node["storage_preset_profile"] = storage_options.storage_preset_profile;
   node["storage_config_uri"] = storage_options.storage_config_uri;
   node["snapshot_mode"] = storage_options.snapshot_mode;
+  node["split_snapshots"] = storage_options.split_snapshots;
   return node;
 }
 
@@ -46,6 +47,7 @@ bool convert<rosbag2_storage::StorageOptions>::decode(
     node, "storage_preset_profile", storage_options.storage_preset_profile);
   optional_assign<std::string>(node, "storage_config_uri", storage_options.storage_config_uri);
   optional_assign<bool>(node, "snapshot_mode", storage_options.snapshot_mode);
+  optional_assign<bool>(node, "split_snapshots", storage_options.split_snapshots);
   return true;
 }
 
