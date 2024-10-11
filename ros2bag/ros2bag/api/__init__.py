@@ -24,20 +24,20 @@ from typing import Dict
 from typing import Optional
 
 from rclpy.duration import Duration
-from rclpy.qos import QoSDurabilityPolicy
-from rclpy.qos import QoSHistoryPolicy
-from rclpy.qos import QoSLivelinessPolicy
+from rclpy.qos import DurabilityPolicy
+from rclpy.qos import HistoryPolicy
+from rclpy.qos import LivelinessPolicy
 from rclpy.qos import QoSProfile
-from rclpy.qos import QoSReliabilityPolicy
+from rclpy.qos import ReliabilityPolicy
 from ros2cli.entry_points import get_entry_points
 import rosbag2_py
 
 # This map needs to be updated when new policies are introduced
 _QOS_POLICY_FROM_SHORT_NAME = {
-    'history': QoSHistoryPolicy.get_from_short_key,
-    'reliability': QoSReliabilityPolicy.get_from_short_key,
-    'durability': QoSDurabilityPolicy.get_from_short_key,
-    'liveliness': QoSLivelinessPolicy.get_from_short_key
+    'history': HistoryPolicy.get_from_short_key,
+    'reliability': ReliabilityPolicy.get_from_short_key,
+    'durability': DurabilityPolicy.get_from_short_key,
+    'liveliness': LivelinessPolicy.get_from_short_key
 }
 _DURATION_KEYS = ['deadline', 'lifespan', 'liveliness_lease_duration']
 _VALUE_KEYS = ['depth', 'avoid_ros_namespace_conventions']
