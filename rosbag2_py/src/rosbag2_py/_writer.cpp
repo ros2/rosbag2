@@ -36,7 +36,7 @@ namespace rosbag2_py
 {
 
 template<typename T>
-class Writer
+class Writer : public rosbag2_cpp::Writer
 {
 public:
   Writer()
@@ -113,6 +113,7 @@ PYBIND11_MODULE(_writer, m) {
   .def(pybind11::init())
   .def("open", &rosbag2_py::Writer<rosbag2_cpp::writers::SequentialWriter>::open)
   .def("write", &rosbag2_py::Writer<rosbag2_cpp::writers::SequentialWriter>::write)
+  .def("close", &rosbag2_py::Writer<rosbag2_cpp::writers::SequentialWriter>::close)
   .def("remove_topic", &rosbag2_py::Writer<rosbag2_cpp::writers::SequentialWriter>::remove_topic)
   .def("create_topic", &rosbag2_py::Writer<rosbag2_cpp::writers::SequentialWriter>::create_topic);
 
