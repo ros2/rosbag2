@@ -36,7 +36,9 @@
 #include "rosbag2_interfaces/srv/resume.hpp"
 #include "rosbag2_interfaces/srv/snapshot.hpp"
 #include "rosbag2_interfaces/srv/split_bagfile.hpp"
+#include "rosbag2_interfaces/srv/start_discovery.hpp"
 #include "rosbag2_interfaces/srv/stop.hpp"
+#include "rosbag2_interfaces/srv/stop_discovery.hpp"
 
 #include "rosbag2_interfaces/msg/write_split_event.hpp"
 
