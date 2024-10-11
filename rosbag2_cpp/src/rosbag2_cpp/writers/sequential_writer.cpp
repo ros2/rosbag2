@@ -389,6 +389,9 @@ bool SequentialWriter::take_snapshot()
     return false;
   }
   message_cache_->notify_data_ready();
+  if (storage_options_.split_snapshots) {
+    split_bagfile();
+  }
   return true;
 }
 

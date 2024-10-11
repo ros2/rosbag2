@@ -54,6 +54,10 @@ public:
   // Enable snapshot mode.
   // Defaults to disabled.
   bool snapshot_mode = false;
+
+  // Split the bag files if a snapshot is created. Only used in snapshot mode.
+  // Defaults to disabled.
+  bool split_snapshots = false;
 };
 
 }  // namespace rosbag2_storage

@@ -29,6 +29,7 @@ TEST(storage_options, test_yaml_serialization)
   original.storage_preset_profile = "profile";
   original.storage_config_uri = "config_uri";
   original.snapshot_mode = true;
+  original.split_snapshots = true;
 
   auto node = YAML::convert<rosbag2_storage::StorageOptions>().encode(original);
 
@@ -46,4 +47,5 @@ TEST(storage_options, test_yaml_serialization)
   ASSERT_EQ(original.storage_preset_profile, reconstructed.storage_preset_profile);
   ASSERT_EQ(original.storage_config_uri, reconstructed.storage_config_uri);
   ASSERT_EQ(original.snapshot_mode, reconstructed.snapshot_mode);
+  ASSERT_EQ(original.split_snapshots, reconstructed.split_snapshots);
 }
