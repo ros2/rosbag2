@@ -42,6 +42,7 @@
 
 #include <algorithm>
 #include <cstring>
+#include <filesystem>
 #include <memory>
 #include <mutex>
 #include <optional>
@@ -316,6 +317,7 @@ MCAPStorage::~MCAPStorage()
   }
   if (mcap_writer_) {
     mcap_writer_->close();
+    std::filesystem::rename(relative_path_ + ".active", relative_path_);
   }
 }
 
@@ -400,7 +402,7 @@ void MCAPStorage::open_impl(const std::string & uri, const std::string & preset_
         YAML::convert<McapWriterOptions>::decode(yaml_node, options);
       }
 
-      auto status = mcap_writer_->open(relative_path_, options);
+      auto status = mcap_writer_->open(relative_path_ + ".active", options);
       if (!status.ok()) {
         throw std::runtime_error(status.message);
       }
