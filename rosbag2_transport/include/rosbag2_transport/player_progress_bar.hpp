@@ -15,8 +15,6 @@
 #ifndef ROSBAG2_TRANSPORT__PLAYER_PROGRESS_BAR_HPP_
 #define ROSBAG2_TRANSPORT__PLAYER_PROGRESS_BAR_HPP_
 
-#include <mutex>
-#include <utility>
 #include <string>
 
 #include "rcl/types.h"
