@@ -10,6 +10,7 @@ class PlayOptions:
     delay: float
     disable_keyboard_controls: bool
     disable_loan_message: bool
+    disable_progress_bar: bool
     exclude_regex_to_filter: str
     exclude_service_events_to_filter: List[str]
     exclude_topics_to_filter: List[str]

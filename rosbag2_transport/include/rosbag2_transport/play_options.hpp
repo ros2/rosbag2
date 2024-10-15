@@ -123,6 +123,9 @@ public:
 
   // The source of the service request
   ServiceRequestsSource service_requests_source = ServiceRequestsSource::SERVICE_INTROSPECTION;
+
+  // Disable to print a progress bar of the playback player
+  bool disable_progress_bar = true;
 };
 
 }  // namespace rosbag2_transport

@@ -168,6 +168,9 @@ class PlayVerb(VerbExtension):
             '--log-level', type=str, default='info',
             choices=['debug', 'info', 'warn', 'error', 'fatal'],
             help='Logging level.')
+        parser.add_argument(
+            '--progress-bar', action='store_true', default=False,
+            help='Print a progress bar of the playback player.')
 
     def get_playback_until_from_arg_group(self, playback_until_sec, playback_until_nsec) -> int:
         nano_scale = 1000 * 1000 * 1000
@@ -243,6 +246,7 @@ class PlayVerb(VerbExtension):
             play_options.service_requests_source = ServiceRequestsSource.SERVICE_INTROSPECTION
         else:
             play_options.service_requests_source = ServiceRequestsSource.CLIENT_INTROSPECTION
+        play_options.disable_progress_bar = not args.progress_bar
 
         player = Player(args.log_level)
         try:
