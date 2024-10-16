@@ -73,11 +73,15 @@ void CircularMessageCache::done_flushing()
 
 void CircularMessageCache::notify_data_ready()
 {
-  {
-    std::lock_guard<std::mutex> lock(producer_buffer_mutex_);
-    data_ready_ = true;
-  }
+  set_data_ready();
   cache_condition_var_.notify_one();
+}
+
+/// Sets the flag that the data are ready but does not notify the consumer use notify_data_ready() to notify the consumer as well
+void CircularMessageCache::set_data_ready()
+{
+  std::lock_guard<std::mutex> lock(producer_buffer_mutex_);
+  data_ready_ = true;
 }
 
 void CircularMessageCache::wait_for_data()

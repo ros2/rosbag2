@@ -111,6 +111,9 @@ public:
   /// Producer API: notify consumer to wake-up (primary buffer has data)
   void notify_data_ready() override;
 
+  /// Sets the flag that the data are ready but does not notify the consumer use notify_data_ready() to notify the consumer as well
+  void set_data_ready() override;
+
 protected:
   /// Dropped messages per topic. Used for printing in alphabetic order
   std::unordered_map<std::string, uint32_t> messages_dropped_per_topic_;

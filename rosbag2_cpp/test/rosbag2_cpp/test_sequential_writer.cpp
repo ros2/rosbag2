@@ -580,6 +580,97 @@ TEST_F(SequentialWriterTest, snapshot_mode_zero_cache_size_throws_exception)
   EXPECT_THROW(writer_->open(storage_options_, {rmw_format, rmw_format}), std::runtime_error);
 }
 
+TEST_F(SequentialWriterTest, snapshot_mode_write_on_trigger_with_splitting)
+{
+    storage_options_.max_bagfile_size = 0;
+    storage_options_.max_cache_size = 200;
+    storage_options_.snapshot_mode = true;
+    storage_options_.split_snapshots = true;
+
+    // Expect a single write call when the snapshot is triggered
+    EXPECT_CALL(
+        *storage_, write(
+        An
+            <const std::vector<std::shared_ptr<const rosbag2_storage::SerializedBagMessage>> &>())
+    ).Times(1);
+
+    ON_CALL(
+        *storage_,
+        write(An<std::shared_ptr<const rosbag2_storage::SerializedBagMessage>>())).WillByDefault(
+        [this](std::shared_ptr<const rosbag2_storage::SerializedBagMessage>) {
+            fake_storage_size_ += 1;
+        });
+
+    ON_CALL(*storage_, get_bagfile_size).WillByDefault(
+        [this]() {
+            return fake_storage_size_.load();
+        });
+
+    ON_CALL(*metadata_io_, write_metadata).WillByDefault(
+        [this](const std::string &, const rosbag2_storage::BagMetadata & metadata) {
+            fake_metadata_ = metadata;
+        });
+
+    ON_CALL(*storage_, get_relative_file_path).WillByDefault(
+        [this]() {
+            return fake_storage_uri_;
+        });
+
+    auto sequential_writer = std::make_unique<rosbag2_cpp::writers::SequentialWriter>(
+        std::move(storage_factory_), converter_factory_, std::move(metadata_io_));
+    writer_ = std::make_unique<rosbag2_cpp::Writer>(std::move(sequential_writer));
+
+    std::vector<std::string> closed_files;
+    std::vector<std::string> opened_files;
+    rosbag2_cpp::bag_events::WriterEventCallbacks callbacks;
+    callbacks.write_split_callback =
+        [&closed_files, &opened_files](rosbag2_cpp::bag_events::BagSplitInfo & info) {
+            closed_files.emplace_back(info.closed_file);
+            opened_files.emplace_back(info.opened_file);
+        };
+    writer_->add_event_callbacks(callbacks);
+
+    std::string rmw_format = "rmw_format";
+
+    std::string msg_content = "Hello";
+    auto msg_length = msg_content.length();
+    auto message = std::make_shared<rosbag2_storage::SerializedBagMessage>();
+    message->topic_name = "test_topic";
+    message->serialized_data = rosbag2_storage::make_serialized_message(
+        msg_content.c_str(), msg_length);
+
+    writer_->open(storage_options_, {rmw_format, rmw_format});
+    writer_->create_topic({0u, "test_topic", "test_msgs/BasicTypes", "", {}, ""});
+
+    for (auto i = 0u; i < 100; ++i) {
+        writer_->write(message);
+    }
+    writer_->take_snapshot();
+
+    EXPECT_THAT(closed_files.size(), 1);
+    EXPECT_THAT(opened_files.size(), 1);
+
+    if (!((closed_files.size() == opened_files.size()) && (opened_files.size() == 1))) {
+        // Output debug info
+        for (size_t i = 0; i < opened_files.size(); i++) {
+            std::cout << "opened_file[" << i << "] = '" << opened_files[i] <<
+                      "'; closed_file[" << i << "] = '" << closed_files[i] << "';" << std::endl;
+        }
+    }
+
+    ASSERT_GE(opened_files.size(), 1);
+    ASSERT_GE(closed_files.size(), 1);
+    for (size_t i = 0; i < 1; i++) {
+        auto expected_closed =
+            fs::path(storage_options_.uri) / (bag_base_dir_ + "_" + std::to_string(i));
+        auto expected_opened = (i == 1) ?
+            // The last opened file shall be empty string when we do "writer->close();"
+            fs::path("") : fs::path(storage_options_.uri) / (bag_base_dir_ + "_" + std::to_string(i + 1));
+        EXPECT_EQ(closed_files[i], expected_closed.string());
+        EXPECT_EQ(opened_files[i], expected_opened.string());
+    }
+}
+
 TEST_F(SequentialWriterTest, split_event_calls_callback)
 {
   const uint64_t max_bagfile_size = 3;

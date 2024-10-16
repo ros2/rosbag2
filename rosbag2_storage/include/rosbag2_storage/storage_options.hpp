@@ -56,6 +56,10 @@ public:
   // Defaults to disabled.
   bool snapshot_mode = false;
 
+  // Split the bag files if a snapshot is created. Only used in snapshot mode.
+  // Defaults to disabled.
+  bool split_snapshots = false;
+
   // Start and end time for cutting
   int64_t start_time_ns = -1;
   int64_t end_time_ns = -1;
