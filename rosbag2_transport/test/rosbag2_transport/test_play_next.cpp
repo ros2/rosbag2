@@ -49,6 +49,7 @@ TEST_F(RosBag2PlayTestFixture, play_next_with_false_preconditions) {
   ASSERT_FALSE(player->play_next());
   player->pause();
   ASSERT_TRUE(player->is_paused());
+  ASSERT_FALSE(player->play_next());
 }
 
 TEST_F(RosBag2PlayTestFixture, play_next_playing_all_messages_without_delays) {
@@ -99,6 +100,9 @@ TEST_F(RosBag2PlayTestFixture, play_next_playing_all_messages_without_delays) {
   ASSERT_TRUE(player->is_paused());
   player->resume();
   player->wait_for_playback_to_finish();
+  ASSERT_FALSE(player->play_next());
+  player->resume();
+  ASSERT_FALSE(player->play_next());
   await_received_messages.get();
 
   auto replayed_topic1 = sub_->get_received_messages<test_msgs::msg::BasicTypes>("/topic1");

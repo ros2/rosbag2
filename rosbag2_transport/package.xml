@@ -15,12 +15,13 @@
 
   <depend>rclcpp</depend>
   <depend>rclcpp_components</depend>
+  <depend>rcpputils</depend>
+  <depend>rcutils</depend>
   <depend>rmw</depend>
   <depend>rosbag2_compression</depend>
   <depend>rosbag2_cpp</depend>
   <depend>rosbag2_interfaces</depend>
   <depend>rosbag2_storage</depend>
-  <depend>shared_queues_vendor</depend>
   <depend>yaml_cpp_vendor</depend>
   <depend>keyboard_handler</depend>
 

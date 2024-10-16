@@ -24,7 +24,6 @@
   <depend>rosidl_runtime_cpp</depend>
   <depend>rosidl_typesupport_cpp</depend>
   <depend>rosidl_typesupport_introspection_cpp</depend>
-  <depend>shared_queues_vendor</depend>
 
   <test_depend>rosbag2_storage_default_plugins</test_depend>
   <test_depend>ament_cmake_gmock</test_depend>
