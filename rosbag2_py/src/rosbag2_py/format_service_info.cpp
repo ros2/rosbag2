@@ -46,7 +46,8 @@ std::string
 format_service_info(
   std::vector<std::shared_ptr<rosbag2_cpp::rosbag2_service_info_t>> & service_info_list,
   const std::unordered_map<std::string, uint64_t> & messages_size,
-  bool verbose)
+  bool verbose,
+  const InfoSortingMethod sort_method)
 {
   std::stringstream info_stream;
   const std::string service_info_string = "Service information: ";
@@ -78,11 +79,13 @@ format_service_info(
       info_stream << std::endl;
     };
 
-  print_service_info(service_info_list[0]);
+  std::vector<size_t> sorted_idx = generate_sorted_idx(service_info_list, sort_method);
+
+  print_service_info(service_info_list[sorted_idx[0]]);
   auto number_of_services = service_info_list.size();
   for (size_t j = 1; j < number_of_services; ++j) {
     info_stream << std::string(indentation_spaces, ' ');
-    print_service_info(service_info_list[j]);
+    print_service_info(service_info_list[sorted_idx[j]]);
   }
 
   return info_stream.str();

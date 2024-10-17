@@ -1,4 +1,4 @@
-// Copyright 2018-2021, Bosch Software Innovations GmbH.
+// Copyright 2024 Open Source Robotics Foundation, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,25 +12,28 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef ROSBAG2_PY__FORMAT_BAG_METADATA_HPP_
-#define ROSBAG2_PY__FORMAT_BAG_METADATA_HPP_
+
+#ifndef ROSBAG2_PY__SERVICE_EVENT_INFO_HPP_
+#define ROSBAG2_PY__SERVICE_EVENT_INFO_HPP_
 
 #include <string>
-#include <unordered_map>
-
-#include "info_sorting_method.hpp"
-#include "rosbag2_storage/bag_metadata.hpp"
 
 namespace rosbag2_py
 {
 
-std::string format_bag_meta_data(
-  const rosbag2_storage::BagMetadata & metadata,
-  bool verbose = false,
-  bool only_topic = false,
-  const std::unordered_map<std::string, uint64_t> & messages_size = {},
-  InfoSortingMethod sort_method = InfoSortingMethod::NAME);
+struct ServiceMetadata
+{
+  std::string name;
+  std::string type;
+  std::string serialization_format;
+};
+
+struct ServiceEventInformation
+{
+  ServiceMetadata service_metadata;
+  size_t event_message_count = 0;
+};
 
 }  // namespace rosbag2_py
 
-#endif  // ROSBAG2_PY__FORMAT_BAG_METADATA_HPP_
+#endif  // ROSBAG2_PY__SERVICE_EVENT_INFO_HPP_
