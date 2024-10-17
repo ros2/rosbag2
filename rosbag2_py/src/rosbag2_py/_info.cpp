@@ -15,7 +15,9 @@
 #include <iostream>
 #include <memory>
 #include <string>
+#include <algorithm>
 
+#include "info_sorting_method.hpp"
 #include "format_bag_metadata.hpp"
 #include "format_service_info.hpp"
 #include "rosbag2_cpp/info.hpp"
@@ -42,15 +44,24 @@ public:
     return info_->read_metadata(uri, storage_id);
   }
 
-  void print_output(const rosbag2_storage::BagMetadata & metadata_info)
+  void print_output(
+    const rosbag2_storage::BagMetadata & metadata_info, const std::string & sorting_method)
   {
+    InfoSortingMethod sort_method = info_sorting_method_from_string(sorting_method);
     // Output formatted metadata
-    std::cout << format_bag_meta_data(metadata_info) << std::endl;
+    std::cout << format_bag_meta_data(metadata_info, {}, false, false, sort_method) << std::endl;
   }
 
-  void print_output_topic_name_only(const rosbag2_storage::BagMetadata & metadata_info)
+  void print_output_topic_name_only(
+    const rosbag2_storage::BagMetadata & metadata_info, const std::string & sorting_method)
   {
-    for (const auto & topic_info : metadata_info.topics_with_message_count) {
+    InfoSortingMethod sort_method = info_sorting_method_from_string(sorting_method);
+    std::vector<size_t> sorted_idx = generate_sorted_idx(
+      metadata_info.topics_with_message_count,
+      sort_method);
+
+    for (auto idx : sorted_idx) {
+      const auto & topic_info = metadata_info.topics_with_message_count[idx];
       if (!rosbag2_cpp::is_service_event_topic(
           topic_info.topic_metadata.name,
           topic_info.topic_metadata.type))
@@ -61,7 +72,9 @@ public:
   }
 
   void print_output_verbose(
-    const std::string & uri, const rosbag2_storage::BagMetadata & metadata_info)
+    const std::string & uri,
+    const rosbag2_storage::BagMetadata & metadata_info,
+    const std::string & sorting_method)
   {
     std::vector<std::shared_ptr<rosbag2_cpp::rosbag2_service_info_t>> all_services_info;
     for (auto & file_info : metadata_info.files) {
@@ -86,9 +99,20 @@ public:
       }
     }
 
+    rosbag2_py::InfoSortingMethod sort_method = info_sorting_method_from_string(sorting_method);
     // Output formatted metadata and service info
-    std::cout << format_bag_meta_data(metadata_info, messages_size, true, true);
-    std::cout << format_service_info(all_services_info, messages_size, true) << std::endl;
+    std::cout << format_bag_meta_data(metadata_info, messages_size, true, true, sort_method);
+    std::cout <<
+      format_service_info(all_services_info, messages_size, true, sort_method) << std::endl;
+  }
+
+  std::unordered_set<std::string> get_sorting_methods()
+  {
+    std::unordered_set<std::string> sorting_methods;
+    for (const auto & sorting_method : rosbag2_py::sorting_method_map) {
+      sorting_methods.insert(sorting_method.first);
+    }
+    return sorting_methods;
   }
 
 protected:
@@ -105,5 +129,6 @@ PYBIND11_MODULE(_info, m) {
   .def("read_metadata", &rosbag2_py::Info::read_metadata)
   .def("print_output", &rosbag2_py::Info::print_output)
   .def("print_output_topic_name_only", &rosbag2_py::Info::print_output_topic_name_only)
-  .def("print_output_verbose", &rosbag2_py::Info::print_output_verbose);
+  .def("print_output_verbose", &rosbag2_py::Info::print_output_verbose)
+  .def("get_sorting_methods", &rosbag2_py::Info::get_sorting_methods);
 }

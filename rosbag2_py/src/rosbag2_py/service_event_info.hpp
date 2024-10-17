@@ -1,4 +1,4 @@
-// Copyright 2023 Sony Group Corporation.
+// Copyright 2024 Open Source Robotics Foundation, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,26 +12,28 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef ROSBAG2_PY__FORMAT_SERVICE_INFO_HPP_
-#define ROSBAG2_PY__FORMAT_SERVICE_INFO_HPP_
 
-#include <memory>
+#ifndef ROSBAG2_PY__SERVICE_EVENT_INFO_HPP_
+#define ROSBAG2_PY__SERVICE_EVENT_INFO_HPP_
+
 #include <string>
-#include <vector>
-#include <unordered_map>
-
-#include "info_sorting_method.hpp"
-#include "rosbag2_cpp/info.hpp"
 
 namespace rosbag2_py
 {
 
-std::string format_service_info(
-  std::vector<std::shared_ptr<rosbag2_cpp::rosbag2_service_info_t>> & service_info,
-  const std::unordered_map<std::string, uint64_t> & messages_size = {},
-  bool verbose = false,
-  const InfoSortingMethod sort_method = InfoSortingMethod::NAME);
+struct ServiceMetadata
+{
+  std::string name;
+  std::string type;
+  std::string serialization_format;
+};
+
+struct ServiceEventInformation
+{
+  ServiceMetadata service_metadata;
+  size_t event_message_count = 0;
+};
 
 }  // namespace rosbag2_py
 
-#endif  // ROSBAG2_PY__FORMAT_SERVICE_INFO_HPP_
+#endif  // ROSBAG2_PY__SERVICE_EVENT_INFO_HPP_

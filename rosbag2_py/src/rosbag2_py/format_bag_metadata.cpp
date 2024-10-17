@@ -29,6 +29,7 @@
 #include "rosbag2_storage/bag_metadata.hpp"
 
 #include "format_bag_metadata.hpp"
+#include "service_event_info.hpp"
 
 namespace
 {
@@ -115,7 +116,8 @@ void format_topics_with_type(
   const std::unordered_map<std::string, uint64_t> & messages_size,
   bool verbose,
   std::stringstream & info_stream,
-  int indentation_spaces)
+  int indentation_spaces,
+  const rosbag2_py::InfoSortingMethod sort_method = rosbag2_py::InfoSortingMethod::NAME)
 {
   if (topics.empty()) {
     info_stream << std::endl;
@@ -139,13 +141,15 @@ void format_topics_with_type(
       info_stream << std::endl;
     };
 
+  std::vector<size_t> sorted_idx = rosbag2_py::generate_sorted_idx(topics, sort_method);
+
   size_t number_of_topics = topics.size();
   size_t i = 0;
   // Find first topic which isn't service event topic
   while (i < number_of_topics &&
     rosbag2_cpp::is_service_event_topic(
-      topics[i].topic_metadata.name,
-      topics[i].topic_metadata.type))
+      topics[sorted_idx[i]].topic_metadata.name,
+      topics[sorted_idx[i]].topic_metadata.type))
   {
     i++;
   }
@@ -155,43 +159,31 @@ void format_topics_with_type(
     return;
   }
 
-  print_topic_info(topics[i]);
+  print_topic_info(topics[sorted_idx[i]]);
   for (size_t j = ++i; j < number_of_topics; ++j) {
     if (rosbag2_cpp::is_service_event_topic(
-        topics[j].topic_metadata.name, topics[j].topic_metadata.type))
+        topics[sorted_idx[j]].topic_metadata.name, topics[sorted_idx[j]].topic_metadata.type))
     {
       continue;
     }
     indent(info_stream, indentation_spaces);
-    print_topic_info(topics[j]);
+    print_topic_info(topics[sorted_idx[j]]);
   }
 }
 
-struct ServiceMetadata
-{
-  std::string name;
-  std::string type;
-  std::string serialization_format;
-};
 
-struct ServiceInformation
-{
-  ServiceMetadata service_metadata;
-  size_t event_message_count = 0;
-};
-
-std::vector<std::shared_ptr<ServiceInformation>> filter_service_event_topic(
+std::vector<std::shared_ptr<rosbag2_py::ServiceEventInformation>> filter_service_event_topic(
   const std::vector<rosbag2_storage::TopicInformation> & topics_with_message_count,
   size_t & total_service_event_msg_count)
 {
   total_service_event_msg_count = 0;
-  std::vector<std::shared_ptr<ServiceInformation>> service_info_list;
+  std::vector<std::shared_ptr<rosbag2_py::ServiceEventInformation>> service_info_list;
 
   for (auto & topic : topics_with_message_count) {
     if (rosbag2_cpp::is_service_event_topic(
         topic.topic_metadata.name, topic.topic_metadata.type))
     {
-      auto service_info = std::make_shared<ServiceInformation>();
+      auto service_info = std::make_shared<rosbag2_py::ServiceEventInformation>();
       service_info->service_metadata.name =
         rosbag2_cpp::service_event_topic_name_to_service_name(topic.topic_metadata.name);
       service_info->service_metadata.type =
@@ -208,11 +200,12 @@ std::vector<std::shared_ptr<ServiceInformation>> filter_service_event_topic(
 }
 
 void format_service_with_type(
-  const std::vector<std::shared_ptr<ServiceInformation>> & services,
+  const std::vector<std::shared_ptr<rosbag2_py::ServiceEventInformation>> & services,
   const std::unordered_map<std::string, uint64_t> & messages_size,
   bool verbose,
   std::stringstream & info_stream,
-  int indentation_spaces)
+  int indentation_spaces,
+  const rosbag2_py::InfoSortingMethod sort_method = rosbag2_py::InfoSortingMethod::NAME)
 {
   if (services.empty()) {
     info_stream << std::endl;
@@ -221,7 +214,7 @@ void format_service_with_type(
 
   auto print_service_info =
     [&info_stream, &messages_size, verbose](
-    const std::shared_ptr<ServiceInformation> & si) -> void {
+    const std::shared_ptr<rosbag2_py::ServiceEventInformation> & si) -> void {
       info_stream << "Service: " << si->service_metadata.name << " | ";
       info_stream << "Type: " << si->service_metadata.type << " | ";
       info_stream << "Event Count: " << si->event_message_count << " | ";
@@ -238,11 +231,13 @@ void format_service_with_type(
       info_stream << std::endl;
     };
 
-  print_service_info(services[0]);
+  std::vector<size_t> sorted_idx = rosbag2_py::generate_sorted_idx(services, sort_method);
+
+  print_service_info(services[sorted_idx[0]]);
   auto number_of_services = services.size();
   for (size_t j = 1; j < number_of_services; ++j) {
     indent(info_stream, indentation_spaces);
-    print_service_info(services[j]);
+    print_service_info(services[sorted_idx[j]]);
   }
 }
 
@@ -255,7 +250,8 @@ std::string format_bag_meta_data(
   const rosbag2_storage::BagMetadata & metadata,
   const std::unordered_map<std::string, uint64_t> & messages_size,
   bool verbose,
-  bool only_topic)
+  bool only_topic,
+  const InfoSortingMethod sort_method)
 {
   auto start_time = metadata.starting_time.time_since_epoch();
   auto end_time = start_time + metadata.duration;
@@ -267,10 +263,8 @@ std::string format_bag_meta_data(
   }
 
   size_t total_service_event_msg_count = 0;
-  std::vector<std::shared_ptr<ServiceInformation>> service_info_list;
-  service_info_list = filter_service_event_topic(
-    metadata.topics_with_message_count,
-    total_service_event_msg_count);
+  std::vector<std::shared_ptr<ServiceEventInformation>> service_info_list =
+    filter_service_event_topic(metadata.topics_with_message_count, total_service_event_msg_count);
 
   info_stream << std::endl;
   info_stream << "Files:             ";
@@ -288,14 +282,22 @@ std::string format_bag_meta_data(
     std::endl;
   info_stream << "Topic information: ";
   format_topics_with_type(
-    metadata.topics_with_message_count, messages_size, verbose, info_stream, indentation_spaces);
+    metadata.topics_with_message_count,
+    messages_size, verbose, info_stream,
+    indentation_spaces,
+    sort_method);
 
   if (!only_topic) {
     info_stream << "Service:           " << service_info_list.size() << std::endl;
     info_stream << "Service information: ";
     if (!service_info_list.empty()) {
       format_service_with_type(
-        service_info_list, messages_size, verbose, info_stream, indentation_spaces + 2);
+        service_info_list,
+        messages_size,
+        verbose,
+        info_stream,
+        indentation_spaces + 2,
+        sort_method);
     }
   }
 
