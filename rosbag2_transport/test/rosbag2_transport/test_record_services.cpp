@@ -93,13 +93,13 @@ public:
     cli_is_discovery_stopped_ = client_node_->create_client<IsDiscoveryStopped>(ns + "/is_discovery_stopped");
     cli_is_paused_ = client_node_->create_client<IsPaused>(ns + "/is_paused");
     cli_pause_ = client_node_->create_client<Pause>(ns + "/pause");
-    cli_record = client_node_->create_client<Record>(ns + "/record");
+    cli_record_ = client_node_->create_client<Record>(ns + "/record");
     cli_resume_ = client_node_->create_client<Resume>(ns + "/resume");
     cli_snapshot_ = client_node_->create_client<Snapshot>(ns + "/snapshot");
     cli_split_bagfile_ = client_node_->create_client<SplitBagfile>(ns + "/split_bagfile");
-    cli_start_discovery = client_node_->create_client<StartDiscovery>(ns + "/start_discovery");
-    cli_stop = client_node_->create_client<Stop>(ns + "/stop");
-    cli_stop_discovery = client_node_->create_client<StopDiscovery>(ns + "/stop_discovery");
+    cli_start_discovery_ = client_node_->create_client<StartDiscovery>(ns + "/start_discovery");
+    cli_stop_ = client_node_->create_client<Stop>(ns + "/stop");
+    cli_stop_discovery_ = client_node_->create_client<StopDiscovery>(ns + "/stop_discovery");
     exec_ = std::make_shared<rclcpp::executors::SingleThreadedExecutor>();
 
     exec_->add_node(recorder_);
@@ -253,14 +253,14 @@ TEST_F(RecordSrvsTest, stop_start_discovery)
   auto is_discovery_stopped_response = successful_service_request<IsDiscoveryStopped>(cli_is_discovery_stopped_);
   EXPECT_FALSE(is_discovery_stopped_response->stopped);
 
-  successful_service_request<StopDiscovery>(cli_stop_discovery);
+  successful_service_request<StopDiscovery>(cli_stop_discovery_);
   EXPECT_TRUE(recorder_->is_discovery_stopped());
   is_discovery_stopped_response = successful_service_request<IsDiscoveryStopped>(cli_is_discovery_stopped_);
   EXPECT_TRUE(is_discovery_stopped_response->stopped);
 
-  successful_service_request<StartDiscovery>(cli_start_discovery);
+  successful_service_request<StartDiscovery>(cli_start_discovery_);
   EXPECT_FALSE(recorder_->is_discovery_stopped());
-  auto is_discovery_stopped_response = successful_service_request<IsDiscoveryStopped>(cli_is_discovery_stopped_);
+  is_discovery_stopped_response = successful_service_request<IsDiscoveryStopped>(cli_is_discovery_stopped_);
   EXPECT_FALSE(is_discovery_stopped_response->stopped);
 }
 
@@ -271,9 +271,9 @@ TEST_F(RecordSrvsTest, record_stop)
 
   EXPECT_FALSE(mock_writer.closed_was_called());
 
-  successful_service_request<Stop>(cli_stop);
+  successful_service_request<Stop>(cli_stop_);
   EXPECT_TRUE(mock_writer.closed_was_called());
 
-  successful_service_request<Record>(cli_record);
+  successful_service_request<Record>(cli_record_);
   EXPECT_FALSE(mock_writer.closed_was_called());
 }
