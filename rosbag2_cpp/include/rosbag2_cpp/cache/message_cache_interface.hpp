@@ -72,6 +72,10 @@ public:
 
   /// \brief Producer API: notify wait_for_data() to wake up and unblock consumer thread.
   virtual void notify_data_ready() {}
+
+  /// Sets the flag that the data are ready but does not notify the consumer
+  /// use notify_data_ready() to notify the consumer as well
+  virtual void set_data_ready() {}
 };
 
 }  // namespace cache

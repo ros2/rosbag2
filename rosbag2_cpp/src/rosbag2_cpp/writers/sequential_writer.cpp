@@ -444,7 +444,12 @@ bool SequentialWriter::take_snapshot()
     ROSBAG2_CPP_LOG_WARN("SequentialWriter take_snaphot called when snapshot mode is disabled");
     return false;
   }
-  message_cache_->notify_data_ready();
+  if (storage_options_.split_snapshots) {
+    message_cache_->set_data_ready();
+    split_bagfile();
+  } else {
+    message_cache_->notify_data_ready();
+  }
   return true;
 }
 

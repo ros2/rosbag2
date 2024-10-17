@@ -73,11 +73,14 @@ void MessageCache::release_consumer_buffer()
 
 void MessageCache::notify_data_ready()
 {
-  {
-    std::lock_guard<std::mutex> lock(producer_buffer_mutex_);
-    data_ready_ = true;
-  }
+  set_data_ready();
   cache_condition_var_.notify_one();
+}
+
+void MessageCache::set_data_ready()
+{
+  std::lock_guard<std::mutex> lock(producer_buffer_mutex_);
+  data_ready_ = true;
 }
 
 void MessageCache::wait_for_data()
