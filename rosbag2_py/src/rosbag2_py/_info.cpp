@@ -15,7 +15,9 @@
 #include <iostream>
 #include <memory>
 #include <string>
+#include <algorithm>
 
+#include "info_sorting_method.hpp"
 #include "format_bag_metadata.hpp"
 #include "format_service_info.hpp"
 #include "rosbag2_cpp/info.hpp"
@@ -41,12 +43,47 @@ public:
     return info_->read_metadata(uri, storage_id);
   }
 
+<<<<<<< HEAD
   void read_metadata_and_output_service_verbose(
     const std::string & uri,
     const std::string & storage_id)
   {
     auto metadata_info = read_metadata(uri, storage_id);
 
+=======
+  void print_output(
+    const rosbag2_storage::BagMetadata & metadata_info, const std::string & sorting_method)
+  {
+    InfoSortingMethod sort_method = info_sorting_method_from_string(sorting_method);
+    // Output formatted metadata
+    std::cout << format_bag_meta_data(metadata_info, {}, false, false, sort_method) << std::endl;
+  }
+
+  void print_output_topic_name_only(
+    const rosbag2_storage::BagMetadata & metadata_info, const std::string & sorting_method)
+  {
+    InfoSortingMethod sort_method = info_sorting_method_from_string(sorting_method);
+    std::vector<size_t> sorted_idx = generate_sorted_idx(
+      metadata_info.topics_with_message_count,
+      sort_method);
+
+    for (auto idx : sorted_idx) {
+      const auto & topic_info = metadata_info.topics_with_message_count[idx];
+      if (!rosbag2_cpp::is_service_event_topic(
+          topic_info.topic_metadata.name,
+          topic_info.topic_metadata.type))
+      {
+        std::cout << topic_info.topic_metadata.name << std::endl;
+      }
+    }
+  }
+
+  void print_output_verbose(
+    const std::string & uri,
+    const rosbag2_storage::BagMetadata & metadata_info,
+    const std::string & sorting_method)
+  {
+>>>>>>> 25304dd3 (Add "--sort" CLI option to the "ros2 bag info" command (#1804))
     std::vector<std::shared_ptr<rosbag2_cpp::rosbag2_service_info_t>> all_services_info;
     for (auto & file_info : metadata_info.files) {
       auto services_info = info_->read_service_info(
@@ -60,9 +97,36 @@ public:
       }
     }
 
+<<<<<<< HEAD
     // Output formatted metadata and service info
     std::cout << format_bag_meta_data(metadata_info, true);
     std::cout << format_service_info(all_services_info) << std::endl;
+=======
+    std::unordered_map<std::string, uint64_t> messages_size = {};
+    for (const auto & file_info : metadata_info.files) {
+      auto messages_size_tmp = info_->compute_messages_size_contribution(
+        uri + "/" + file_info.path,
+        metadata_info.storage_identifier);
+      for (const auto & topic_size_tmp : messages_size_tmp) {
+        messages_size[topic_size_tmp.first] += topic_size_tmp.second;
+      }
+    }
+
+    rosbag2_py::InfoSortingMethod sort_method = info_sorting_method_from_string(sorting_method);
+    // Output formatted metadata and service info
+    std::cout << format_bag_meta_data(metadata_info, messages_size, true, true, sort_method);
+    std::cout <<
+      format_service_info(all_services_info, messages_size, true, sort_method) << std::endl;
+  }
+
+  std::unordered_set<std::string> get_sorting_methods()
+  {
+    std::unordered_set<std::string> sorting_methods;
+    for (const auto & sorting_method : rosbag2_py::sorting_method_map) {
+      sorting_methods.insert(sorting_method.first);
+    }
+    return sorting_methods;
+>>>>>>> 25304dd3 (Add "--sort" CLI option to the "ros2 bag info" command (#1804))
   }
 
 protected:
@@ -77,7 +141,14 @@ PYBIND11_MODULE(_info, m) {
   pybind11::class_<rosbag2_py::Info>(m, "Info")
   .def(pybind11::init())
   .def("read_metadata", &rosbag2_py::Info::read_metadata)
+<<<<<<< HEAD
   .def(
     "read_metadata_and_output_service_verbose",
     &rosbag2_py::Info::read_metadata_and_output_service_verbose);
+=======
+  .def("print_output", &rosbag2_py::Info::print_output)
+  .def("print_output_topic_name_only", &rosbag2_py::Info::print_output_topic_name_only)
+  .def("print_output_verbose", &rosbag2_py::Info::print_output_verbose)
+  .def("get_sorting_methods", &rosbag2_py::Info::get_sorting_methods);
+>>>>>>> 25304dd3 (Add "--sort" CLI option to the "ros2 bag info" command (#1804))
 }

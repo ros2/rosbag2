@@ -19,13 +19,21 @@
 #include <string>
 #include <vector>
 
+#include "info_sorting_method.hpp"
 #include "rosbag2_cpp/info.hpp"
 
 namespace rosbag2_py
 {
 
 std::string format_service_info(
+<<<<<<< HEAD
   std::vector<std::shared_ptr<rosbag2_cpp::rosbag2_service_info_t>> & service_info);
+=======
+  std::vector<std::shared_ptr<rosbag2_cpp::rosbag2_service_info_t>> & service_info,
+  const std::unordered_map<std::string, uint64_t> & messages_size = {},
+  bool verbose = false,
+  const InfoSortingMethod sort_method = InfoSortingMethod::NAME);
+>>>>>>> 25304dd3 (Add "--sort" CLI option to the "ros2 bag info" command (#1804))
 
 }  // namespace rosbag2_py
 

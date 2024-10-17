@@ -17,13 +17,22 @@
 
 #include <string>
 
+#include "info_sorting_method.hpp"
 #include "rosbag2_storage/bag_metadata.hpp"
 
 namespace rosbag2_py
 {
 
 std::string format_bag_meta_data(
+<<<<<<< HEAD
   const rosbag2_storage::BagMetadata & metadata, bool only_topic = false);
+=======
+  const rosbag2_storage::BagMetadata & metadata,
+  const std::unordered_map<std::string, uint64_t> & messages_size = {},
+  bool verbose = false,
+  bool only_topic = false,
+  InfoSortingMethod sort_method = InfoSortingMethod::NAME);
+>>>>>>> 25304dd3 (Add "--sort" CLI option to the "ros2 bag info" command (#1804))
 
 }  // namespace rosbag2_py
 
