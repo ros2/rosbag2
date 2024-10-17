@@ -86,6 +86,9 @@ public:
   /// Stop discovery
   void stop_discovery();
 
+  /// Return the current discovery state.
+  bool is_discovery_stopped();
+
   std::unordered_map<std::string, std::string> get_requested_or_available_topics();
 
   /// Public members for access by wrapper
@@ -135,6 +138,7 @@ private:
   std::string serialization_format_;
   std::unordered_map<std::string, rclcpp::QoS> topic_qos_profile_overrides_;
   std::unordered_set<std::string> topic_unknown_types_;
+  rclcpp::Service<rosbag2_interfaces::srv::IsDiscoveryStopped>::SharedPtr srv_is_discovery_stopped_;
   rclcpp::Service<rosbag2_interfaces::srv::IsPaused>::SharedPtr srv_is_paused_;
   rclcpp::Service<rosbag2_interfaces::srv::Pause>::SharedPtr srv_pause_;
   rclcpp::Service<rosbag2_interfaces::srv::Record>::SharedPtr srv_record_;
@@ -316,6 +320,16 @@ void RecorderImpl::record()
       const std::shared_ptr<rosbag2_interfaces::srv::StopDiscovery::Response>/* response */)
     {
       stop_discovery();
+    });
+
+  srv_is_discovery_stopped_ = node->create_service<rosbag2_interfaces::srv::IsDiscoveryStopped>(
+    "~/is_discovery_stopped",
+    [this](
+      const std::shared_ptr<rmw_request_id_t>/* request_header */,
+      const std::shared_ptr<rosbag2_interfaces::srv::IsDiscoveryStopped::Request>/* request */,
+      const std::shared_ptr<rosbag2_interfaces::srv::IsDiscoveryStopped::Response> response)
+    {
+      response->stopped = is_discovery_stopped();
     });
 
   srv_record_ = node->create_service<rosbag2_interfaces::srv::Record>(
@@ -510,6 +524,11 @@ void RecorderImpl::stop_discovery()
       }
     }
   }
+}
+
+bool RecorderImpl::is_discovery_stopped()
+{
+  return stop_discovery_.load();
 }
 
 void RecorderImpl::topics_discovery()
@@ -895,6 +914,12 @@ bool
 Recorder::is_paused()
 {
   return pimpl_->is_paused();
+}
+
+bool
+Recorder::is_discovery_stopped()
+{
+  return pimpl_->is_discovery_stopped();
 }
 
 std::unordered_map<std::string, std::string>

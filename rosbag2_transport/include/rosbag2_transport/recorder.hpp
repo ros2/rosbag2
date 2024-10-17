@@ -30,6 +30,7 @@
 
 #include "rosbag2_cpp/writer.hpp"
 
+#include "rosbag2_interfaces/srv/is_discovery_stopped.hpp"
 #include "rosbag2_interfaces/srv/is_paused.hpp"
 #include "rosbag2_interfaces/srv/pause.hpp"
 #include "rosbag2_interfaces/srv/record.hpp"
@@ -157,6 +158,10 @@ public:
   /// Return the current paused state.
   ROSBAG2_TRANSPORT_PUBLIC
   bool is_paused();
+
+  /// Return the current discovery state
+  ROSBAG2_TRANSPORT_PUBLIC
+  bool is_discovery_stopped();
 
   inline constexpr static const auto kPauseResumeToggleKey = KeyboardHandler::KeyCode::SPACE;
 

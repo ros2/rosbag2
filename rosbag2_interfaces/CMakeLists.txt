@@ -18,6 +18,7 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/WriteSplitEvent.msg"
   "srv/Burst.srv"
   "srv/GetRate.srv"
+  "srv/IsDiscoveryStopped.srv"
   "srv/IsPaused.srv"
   "srv/Pause.srv"
   "srv/Play.srv"
