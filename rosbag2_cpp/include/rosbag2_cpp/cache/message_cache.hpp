@@ -111,7 +111,8 @@ public:
   /// Producer API: notify consumer to wake-up (primary buffer has data)
   void notify_data_ready() override;
 
-  /// Sets the flag that the data are ready but does not notify the consumer use notify_data_ready() to notify the consumer as well
+  /// Sets the flag that the data are ready but does not notify the consumer
+  /// use notify_data_ready() to notify the consumer as well
   void set_data_ready() override;
 
 protected:

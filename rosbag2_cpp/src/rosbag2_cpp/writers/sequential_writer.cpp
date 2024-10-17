@@ -447,8 +447,7 @@ bool SequentialWriter::take_snapshot()
   if (storage_options_.split_snapshots) {
     message_cache_->set_data_ready();
     split_bagfile();
-  }
-  else {
+  } else {
     message_cache_->notify_data_ready();
   }
   return true;

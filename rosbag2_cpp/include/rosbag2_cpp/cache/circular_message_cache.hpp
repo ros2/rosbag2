@@ -86,7 +86,8 @@ public:
   /// Snapshot API: notify cache consumer to wake-up for dumping buffer
   void notify_data_ready() override;
 
-  /// Sets the flag that the data are ready but does not notify the consumer use notify_data_ready() to notify the consumer as well
+  /// Sets the flag that the data are ready but does not notify the consumer
+  /// use notify_data_ready() to notify the consumer as well
   void set_data_ready() override;
 
 private:
