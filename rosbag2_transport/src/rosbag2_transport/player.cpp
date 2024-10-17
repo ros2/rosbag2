@@ -41,6 +41,7 @@
 #include "rosbag2_transport/config_options_from_node_params.hpp"
 #include "rosbag2_transport/player_service_client.hpp"
 #include "rosbag2_transport/reader_writer_factory.hpp"
+#include "rosbag2_transport/player_progress_bar.hpp"
 
 #include "logging.hpp"
 
@@ -349,6 +350,9 @@ private:
   std::vector<KeyboardHandler::callback_handle_t> keyboard_callbacks_;
 
   std::shared_ptr<PlayerServiceClientManager> player_service_client_manager_;
+
+  // progress bar
+  std::unique_ptr<PlayerProgressBar> progress_bar_;
 };
 
 PlayerImpl::PlayerImpl(
@@ -393,6 +397,7 @@ PlayerImpl::PlayerImpl(
     // keep reader open until player is destroyed
     reader_->open(storage_options_, {"", rmw_get_serialization_format()});
     auto metadata = reader_->get_metadata();
+    rcutils_duration_value_t bag_duration = metadata.duration.count();
     starting_time_ = std::chrono::duration_cast<std::chrono::nanoseconds>(
       metadata.starting_time.time_since_epoch()).count();
     // If a non-default (positive) starting time offset is provided in PlayOptions,
@@ -405,10 +410,13 @@ PlayerImpl::PlayerImpl(
           ". Negative start offset ignored.");
     } else {
       starting_time_ += play_options_.start_offset;
+      bag_duration -= play_options_.start_offset;
     }
     clock_ = std::make_unique<rosbag2_cpp::TimeControllerClock>(
       starting_time_, std::chrono::steady_clock::now,
       std::chrono::milliseconds{100}, play_options_.start_paused);
+    progress_bar_ = std::make_unique<PlayerProgressBar>(play_options_.disable_progress_bar,
+      starting_time_, bag_duration);
     set_rate(play_options_.rate);
     topic_qos_profile_overrides_ = play_options_.topic_qos_profile_overrides;
     prepare_publishers();
@@ -416,6 +424,7 @@ PlayerImpl::PlayerImpl(
   }
   create_control_services();
   add_keyboard_callbacks();
+  RCLCPP_INFO_STREAM(owner_->get_logger(), progress_bar_->get_help_str());
 }
 
 PlayerImpl::~PlayerImpl()
@@ -486,6 +495,7 @@ bool PlayerImpl::play()
         do {
           if (delay > rclcpp::Duration(0, 0)) {
             RCLCPP_INFO_STREAM(owner_->get_logger(), "Sleep " << delay.nanoseconds() << " ns");
+            progress_bar_->print_delayed_status(clock_->now());
             std::chrono::nanoseconds delay_duration(delay.nanoseconds());
             std::this_thread::sleep_for(delay_duration);
           }
@@ -602,18 +612,25 @@ void PlayerImpl::stop()
       playback_thread_.join();
     }
   }
+  if (clock_->is_paused()) {
+    progress_bar_->print_paused_status(clock_->now());
+  } else {
+    progress_bar_->print_running_status(clock_->now());
+  }
 }
 
 void PlayerImpl::pause()
 {
   clock_->pause();
   RCLCPP_INFO_STREAM(owner_->get_logger(), "Pausing play.");
+  progress_bar_->print_paused_status(clock_->now());
 }
 
 void PlayerImpl::resume()
 {
   clock_->resume();
   RCLCPP_INFO_STREAM(owner_->get_logger(), "Resuming play.");
+  progress_bar_->print_running_status(clock_->now());
 }
 
 void PlayerImpl::toggle_paused()
@@ -639,6 +656,11 @@ bool PlayerImpl::set_rate(double rate)
     RCLCPP_INFO_STREAM(owner_->get_logger(), "Set rate to " << rate);
   } else {
     RCLCPP_WARN_STREAM(owner_->get_logger(), "Failed to set rate to invalid value " << rate);
+  }
+  if (clock_->is_paused()) {
+    progress_bar_->print_paused_status(clock_->now());
+  } else {
+    progress_bar_->print_running_status(clock_->now());
   }
   return ok;
 }
@@ -707,6 +729,7 @@ bool PlayerImpl::play_next()
     next_message_published = publish_message(message_ptr);
     clock_->jump(message_ptr->recv_timestamp);
 
+    progress_bar_->print_paused_status(clock_->now());
     message_queue_.pop();
     message_ptr = peek_next_message_from_queue();
   }
@@ -717,6 +740,7 @@ size_t PlayerImpl::burst(const size_t num_messages)
 {
   if (!clock_->is_paused()) {
     RCLCPP_WARN_STREAM(owner_->get_logger(), "Burst can only be used when in the paused state.");
+    progress_bar_->print_running_status(clock_->now());
     return 0;
   }
 
@@ -731,6 +755,7 @@ size_t PlayerImpl::burst(const size_t num_messages)
   }
 
   RCLCPP_INFO_STREAM(owner_->get_logger(), "Burst " << messages_played << " messages.");
+  progress_bar_->print_running_status(clock_->now());
   return messages_played;
 }
 
@@ -956,6 +981,7 @@ void PlayerImpl::play_messages_from_queue()
         continue;
       }
       publish_message(message_ptr);
+      progress_bar_->print_running_status(clock_->now());
     }
     message_queue_.pop();
     message_ptr = peek_next_message_from_queue();
