@@ -30,6 +30,11 @@ class InfoVerb(VerbExtension):
             '-v', '--verbose', action='store_true',
             help='Display request/response information for services'
         )
+        available_sorting_methods = Info().get_sorting_methods()
+        parser.add_argument(
+            '--sort', default='name', choices=available_sorting_methods,
+            help='Configuration for sorting of output. '
+                 'By default sorts by topic name - use this argument to override.')
 
     def _is_service_event_topic(self, topic_name, topic_type) -> bool:
 
@@ -51,13 +56,23 @@ class InfoVerb(VerbExtension):
             print("Warning! You have set both the '-t' and '-v' parameters. The '-t' parameter "
                   'will be ignored.')
         if args.verbose:
+<<<<<<< HEAD
             Info().read_metadata_and_output_service_verbose(args.bag_path, args.storage)
+=======
+            Info().print_output_verbose(args.bag_path, m, args.sort)
+>>>>>>> 25304dd3 (Add "--sort" CLI option to the "ros2 bag info" command (#1804))
         else:
             m = Info().read_metadata(args.bag_path, args.storage)
             if args.topic_name:
+<<<<<<< HEAD
                 for topic_info in m.topics_with_message_count:
                     if not self._is_service_event_topic(topic_info.topic_metadata.name,
                                                         topic_info.topic_metadata.type):
                         print(topic_info.topic_metadata.name)
             else:
                 print(m)
+=======
+                Info().print_output_topic_name_only(m, args.sort)
+            else:
+                Info().print_output(m, args.sort)
+>>>>>>> 25304dd3 (Add "--sort" CLI option to the "ros2 bag info" command (#1804))

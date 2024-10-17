@@ -153,6 +153,102 @@ TEST_P(InfoEndToEndTestFixture, info_with_verbose_option_end_to_end_test) {
       "Response Count: 2 | Serialization Format: cdr\n"));
 }
 
+TEST_P(InfoEndToEndTestFixture, info_output_default_sorted_by_name_test) {
+  internal::CaptureStdout();
+  auto exit_code = execute_and_wait_until_completion("ros2 bag info cdr_test", bags_path_);
+  std::string output = internal::GetCapturedStdout();
+
+  EXPECT_THAT(exit_code, Eq(EXIT_SUCCESS));
+  EXPECT_THAT(
+    output, HasSubstr(
+      "Topic: /array_topic | Type: test_msgs/msg/Arrays | Count: 4 | "
+      "Serialization Format: cdr\n"
+      "                   Topic: /test_topic | Type: test_msgs/msg/BasicTypes | Count: 3 | "
+      "Serialization Format: cdr"));
+}
+
+TEST_P(InfoEndToEndTestFixture, info_output_sorted_by_name_test) {
+  internal::CaptureStdout();
+  auto exit_code = execute_and_wait_until_completion(
+    "ros2 bag info cdr_test --sort name", bags_path_);
+  std::string output = internal::GetCapturedStdout();
+
+  EXPECT_THAT(exit_code, Eq(EXIT_SUCCESS));
+  EXPECT_THAT(
+    output, HasSubstr(
+      "Topic: /array_topic | Type: test_msgs/msg/Arrays | Count: 4 | "
+      "Serialization Format: cdr\n"
+      "                   Topic: /test_topic | Type: test_msgs/msg/BasicTypes | Count: 3 | "
+      "Serialization Format: cdr"));
+}
+
+TEST_P(InfoEndToEndTestFixture, info_output_sorted_by_type_test) {
+  internal::CaptureStdout();
+  auto exit_code = execute_and_wait_until_completion(
+    "ros2 bag info cdr_test --sort type", bags_path_);
+  std::string output = internal::GetCapturedStdout();
+
+  EXPECT_THAT(exit_code, Eq(EXIT_SUCCESS));
+  EXPECT_THAT(
+    output, HasSubstr(
+      "Topic: /array_topic | Type: test_msgs/msg/Arrays | Count: 4 | "
+      "Serialization Format: cdr\n"
+      "                   Topic: /test_topic | Type: test_msgs/msg/BasicTypes | Count: 3 | "
+      "Serialization Format: cdr"));
+}
+
+TEST_P(InfoEndToEndTestFixture, info_output_sorted_by_count_test) {
+  internal::CaptureStdout();
+  auto exit_code = execute_and_wait_until_completion(
+    "ros2 bag info cdr_test --sort count", bags_path_);
+  std::string output = internal::GetCapturedStdout();
+
+  EXPECT_THAT(exit_code, Eq(EXIT_SUCCESS));
+  EXPECT_THAT(
+    output, HasSubstr(
+      "Topic: /test_topic | Type: test_msgs/msg/BasicTypes | Count: 3 | "
+      "Serialization Format: cdr\n"
+      "                   Topic: /array_topic | Type: test_msgs/msg/Arrays | Count: 4 | "
+      "Serialization Format: cdr"));
+}
+
+TEST_P(InfoEndToEndTestFixture, info_output_topics_only_sorted_by_count_test) {
+  internal::CaptureStdout();
+  auto exit_code = execute_and_wait_until_completion(
+    "ros2 bag info -t cdr_test --sort count", bags_path_);
+  std::string output = internal::GetCapturedStdout();
+
+  EXPECT_THAT(exit_code, Eq(EXIT_SUCCESS));
+  EXPECT_THAT(
+    output, HasSubstr(
+      "/test_topic\n"
+      "/array_topic"));
+}
+
+TEST_P(InfoEndToEndTestFixture, info_output_topics_only_default_sorted_by_name_test) {
+  internal::CaptureStdout();
+  auto exit_code = execute_and_wait_until_completion(
+    "ros2 bag info -t cdr_test", bags_path_);
+  std::string output = internal::GetCapturedStdout();
+
+  EXPECT_THAT(exit_code, Eq(EXIT_SUCCESS));
+  EXPECT_THAT(
+    output, HasSubstr(
+      "/array_topic\n"
+      "/test_topic"));
+}
+
+TEST_P(InfoEndToEndTestFixture, info_fails_gracefully_sort_method_does_not_exist_test) {
+  internal::CaptureStderr();
+  auto exit_code = execute_and_wait_until_completion(
+    "ros2 bag info cdr_test --sort non_existent", bags_path_);
+  auto error_output = internal::GetCapturedStderr();
+
+  EXPECT_THAT(exit_code, Ne(EXIT_SUCCESS));
+  EXPECT_THAT(
+    error_output, HasSubstr("--sort: invalid choice: 'non_existent'"));
+}
+
 // TODO(Martin-Idel-SI): Revisit exit code non-zero here, gracefully should be exit code zero
 TEST_P(InfoEndToEndTestFixture, info_fails_gracefully_if_bag_does_not_exist) {
   internal::CaptureStderr();
