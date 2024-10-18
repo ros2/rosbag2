@@ -90,7 +90,8 @@ public:
     pub_manager.setup_publisher(test_topic_, string_message, 10);
 
     const std::string ns = "/" + recorder_name_;
-    cli_is_discovery_stopped_ = client_node_->create_client<IsDiscoveryStopped>(ns + "/is_discovery_stopped");
+    cli_is_discovery_stopped_ = client_node_->create_client<IsDiscoveryStopped>(ns +
+      "/is_discovery_stopped");
     cli_is_paused_ = client_node_->create_client<IsPaused>(ns + "/is_paused");
     cli_pause_ = client_node_->create_client<Pause>(ns + "/pause");
     cli_record_ = client_node_->create_client<Record>(ns + "/record");
@@ -250,17 +251,20 @@ TEST_F(RecordSrvsTest, pause_resume)
 TEST_F(RecordSrvsTest, stop_start_discovery)
 {
   EXPECT_FALSE(recorder_->is_discovery_stopped());
-  auto is_discovery_stopped_response = successful_service_request<IsDiscoveryStopped>(cli_is_discovery_stopped_);
+  auto is_discovery_stopped_response =
+    successful_service_request<IsDiscoveryStopped>(cli_is_discovery_stopped_);
   EXPECT_FALSE(is_discovery_stopped_response->stopped);
 
   successful_service_request<StopDiscovery>(cli_stop_discovery_);
   EXPECT_TRUE(recorder_->is_discovery_stopped());
-  is_discovery_stopped_response = successful_service_request<IsDiscoveryStopped>(cli_is_discovery_stopped_);
+  is_discovery_stopped_response =
+    successful_service_request<IsDiscoveryStopped>(cli_is_discovery_stopped_);
   EXPECT_TRUE(is_discovery_stopped_response->stopped);
 
   successful_service_request<StartDiscovery>(cli_start_discovery_);
   EXPECT_FALSE(recorder_->is_discovery_stopped());
-  is_discovery_stopped_response = successful_service_request<IsDiscoveryStopped>(cli_is_discovery_stopped_);
+  is_discovery_stopped_response =
+    successful_service_request<IsDiscoveryStopped>(cli_is_discovery_stopped_);
   EXPECT_FALSE(is_discovery_stopped_response->stopped);
 }
 
