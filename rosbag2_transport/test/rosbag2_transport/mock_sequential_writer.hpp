@@ -38,6 +38,7 @@ public:
 
   void close() override
   {
+    topics_.clear();
     writer_close_called_ = true;
   }
 

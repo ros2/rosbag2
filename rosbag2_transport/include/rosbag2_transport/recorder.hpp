@@ -30,11 +30,16 @@
 
 #include "rosbag2_cpp/writer.hpp"
 
+#include "rosbag2_interfaces/srv/is_discovery_stopped.hpp"
 #include "rosbag2_interfaces/srv/is_paused.hpp"
 #include "rosbag2_interfaces/srv/pause.hpp"
+#include "rosbag2_interfaces/srv/record.hpp"
 #include "rosbag2_interfaces/srv/resume.hpp"
 #include "rosbag2_interfaces/srv/snapshot.hpp"
 #include "rosbag2_interfaces/srv/split_bagfile.hpp"
+#include "rosbag2_interfaces/srv/start_discovery.hpp"
+#include "rosbag2_interfaces/srv/stop.hpp"
+#include "rosbag2_interfaces/srv/stop_discovery.hpp"
 
 #include "rosbag2_interfaces/msg/write_split_event.hpp"
 
@@ -153,6 +158,10 @@ public:
   /// Return the current paused state.
   ROSBAG2_TRANSPORT_PUBLIC
   bool is_paused();
+
+  /// Return the current discovery state
+  ROSBAG2_TRANSPORT_PUBLIC
+  bool is_discovery_stopped();
 
   inline constexpr static const auto kPauseResumeToggleKey = KeyboardHandler::KeyCode::SPACE;
 

@@ -86,6 +86,9 @@ public:
   /// Stop discovery
   void stop_discovery();
 
+  /// Return the current discovery state.
+  bool is_discovery_stopped();
+
   std::unordered_map<std::string, std::string> get_requested_or_available_topics();
 
   /// Public members for access by wrapper
@@ -135,15 +138,20 @@ private:
   std::string serialization_format_;
   std::unordered_map<std::string, rclcpp::QoS> topic_qos_profile_overrides_;
   std::unordered_set<std::string> topic_unknown_types_;
+  rclcpp::Service<rosbag2_interfaces::srv::IsDiscoveryStopped>::SharedPtr srv_is_discovery_stopped_;
   rclcpp::Service<rosbag2_interfaces::srv::IsPaused>::SharedPtr srv_is_paused_;
   rclcpp::Service<rosbag2_interfaces::srv::Pause>::SharedPtr srv_pause_;
+  rclcpp::Service<rosbag2_interfaces::srv::Record>::SharedPtr srv_record_;
   rclcpp::Service<rosbag2_interfaces::srv::Resume>::SharedPtr srv_resume_;
   rclcpp::Service<rosbag2_interfaces::srv::Snapshot>::SharedPtr srv_snapshot_;
   rclcpp::Service<rosbag2_interfaces::srv::SplitBagfile>::SharedPtr srv_split_bagfile_;
+  rclcpp::Service<rosbag2_interfaces::srv::StartDiscovery>::SharedPtr srv_start_discovery_;
+  rclcpp::Service<rosbag2_interfaces::srv::Stop>::SharedPtr srv_stop_;
+  rclcpp::Service<rosbag2_interfaces::srv::StopDiscovery>::SharedPtr srv_stop_discovery_;
 
   std::mutex start_stop_transition_mutex_;
   std::mutex discovery_mutex_;
-  std::atomic<bool> stop_discovery_ = false;
+  std::atomic<bool> stop_discovery_ = true;
   std::atomic_uchar paused_ = 0;
   std::atomic<bool> in_recording_ = false;
   std::shared_ptr<KeyboardHandler> keyboard_handler_;
@@ -294,6 +302,56 @@ void RecorderImpl::record()
       writer_->split_bagfile();
     });
 
+  srv_start_discovery_ = node->create_service<rosbag2_interfaces::srv::StartDiscovery>(
+    "~/start_discovery",
+    [this](
+      const std::shared_ptr<rmw_request_id_t>/* request_header */,
+      const std::shared_ptr<rosbag2_interfaces::srv::StartDiscovery::Request>/* request */,
+      const std::shared_ptr<rosbag2_interfaces::srv::StartDiscovery::Response>/* response */)
+    {
+      start_discovery();
+    });
+
+  srv_stop_discovery_ = node->create_service<rosbag2_interfaces::srv::StopDiscovery>(
+    "~/stop_discovery",
+    [this](
+      const std::shared_ptr<rmw_request_id_t>/* request_header */,
+      const std::shared_ptr<rosbag2_interfaces::srv::StopDiscovery::Request>/* request */,
+      const std::shared_ptr<rosbag2_interfaces::srv::StopDiscovery::Response>/* response */)
+    {
+      stop_discovery();
+    });
+
+  srv_is_discovery_stopped_ = node->create_service<rosbag2_interfaces::srv::IsDiscoveryStopped>(
+    "~/is_discovery_stopped",
+    [this](
+      const std::shared_ptr<rmw_request_id_t>/* request_header */,
+      const std::shared_ptr<rosbag2_interfaces::srv::IsDiscoveryStopped::Request>/* request */,
+      const std::shared_ptr<rosbag2_interfaces::srv::IsDiscoveryStopped::Response> response)
+    {
+      response->stopped = is_discovery_stopped();
+    });
+
+  srv_record_ = node->create_service<rosbag2_interfaces::srv::Record>(
+    "~/record",
+    [this](
+      const std::shared_ptr<rmw_request_id_t>/* request_header */,
+      const std::shared_ptr<rosbag2_interfaces::srv::Record::Request>/* request */,
+      const std::shared_ptr<rosbag2_interfaces::srv::Record::Response>/* response */)
+    {
+      record();
+    });
+
+  srv_stop_ = node->create_service<rosbag2_interfaces::srv::Stop>(
+    "~/stop",
+    [this](
+      const std::shared_ptr<rmw_request_id_t>/* request_header */,
+      const std::shared_ptr<rosbag2_interfaces::srv::Stop::Request>/* request */,
+      const std::shared_ptr<rosbag2_interfaces::srv::Stop::Response>/* response */)
+    {
+      stop();
+    });
+
   srv_pause_ = node->create_service<rosbag2_interfaces::srv::Pause>(
     "~/pause",
     [this](
@@ -328,6 +386,10 @@ void RecorderImpl::record()
     node->create_publisher<rosbag2_interfaces::msg::WriteSplitEvent>("events/write_split", 1);
 
   // Start the thread that will publish events
+  {
+    std::lock_guard<std::mutex> lock(event_publisher_thread_mutex_);
+    event_publisher_thread_should_exit_ = false;
+  }
   event_publisher_thread_ = std::thread(&RecorderImpl::event_publisher_thread_main, this);
 
   rosbag2_cpp::bag_events::WriterEventCallbacks callbacks;
@@ -436,7 +498,7 @@ bool RecorderImpl::is_paused()
 void RecorderImpl::start_discovery()
 {
   std::lock_guard<std::mutex> state_lock(discovery_mutex_);
-  if (stop_discovery_.exchange(false)) {
+  if (!stop_discovery_.exchange(false)) {
     RCLCPP_DEBUG(node->get_logger(), "Recorder topic discovery is already running.");
   } else {
     discovery_future_ =
@@ -462,6 +524,11 @@ void RecorderImpl::stop_discovery()
       }
     }
   }
+}
+
+bool RecorderImpl::is_discovery_stopped()
+{
+  return stop_discovery_.load();
 }
 
 void RecorderImpl::topics_discovery()
@@ -847,6 +914,12 @@ bool
 Recorder::is_paused()
 {
   return pimpl_->is_paused();
+}
+
+bool
+Recorder::is_discovery_stopped()
+{
+  return pimpl_->is_discovery_stopped();
 }
 
 std::unordered_map<std::string, std::string>
