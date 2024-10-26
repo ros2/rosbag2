@@ -409,7 +409,7 @@ void SequentialWriter::write(std::shared_ptr<const rosbag2_storage::SerializedBa
     is_first_message_ = false;
   }
 
-  if (should_split_bagfile(message_timestamp)) {
+  if (!storage_options_.snapshot_mode && should_split_bagfile(message_timestamp)) {
     split_bagfile();
     metadata_.files.back().starting_time = message_timestamp;
   }
@@ -441,10 +441,13 @@ void SequentialWriter::write(std::shared_ptr<const rosbag2_storage::SerializedBa
 bool SequentialWriter::take_snapshot()
 {
   if (!storage_options_.snapshot_mode) {
-    ROSBAG2_CPP_LOG_WARN("SequentialWriter take_snaphot called when snapshot mode is disabled");
+    ROSBAG2_CPP_LOG_WARN("SequentialWriter take_snapshot called when snapshot mode is disabled");
     return false;
   }
+  // Note: Information about start, duration and num messages for the current file in metadata_
+  // will be updated in the write_messages(..), when cache_consumer call it as a callback.
   message_cache_->notify_data_ready();
+  (void)split_bagfile_local(true);
   return true;
 }
 
@@ -528,6 +531,16 @@ void SequentialWriter::write_messages(
     return;
   }
   storage_->write(messages);
+  if (storage_options_.snapshot_mode) {
+    // Update FileInformation about the last file in metadata in case of snapshot mode
+    const auto first_msg_timestamp = std::chrono::time_point<std::chrono::high_resolution_clock>(
+      std::chrono::nanoseconds(messages.front()->recv_timestamp));
+    const auto last_msg_timestamp = std::chrono::time_point<std::chrono::high_resolution_clock>(
+      std::chrono::nanoseconds(messages.back()->recv_timestamp));
+    metadata_.files.back().starting_time = first_msg_timestamp;
+    metadata_.files.back().duration = last_msg_timestamp - first_msg_timestamp;
+    metadata_.files.back().message_count = messages.size();
+  }
   std::lock_guard<std::mutex> lock(topics_info_mutex_);
   for (const auto & msg : messages) {
     if (topics_names_to_info_.find(msg->topic_name) != topics_names_to_info_.end()) {
