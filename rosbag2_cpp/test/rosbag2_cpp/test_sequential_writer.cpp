@@ -226,7 +226,7 @@ TEST_F(SequentialWriterTest, sequantial_writer_call_metadata_update_on_bag_split
   EXPECT_TRUE(v_intercepted_update_metadata_[0].compression_mode.empty());
   EXPECT_EQ(v_intercepted_update_metadata_[0].message_count, 0u);  // On opening first bag file
   EXPECT_EQ(v_intercepted_update_metadata_[1].files.size(), 1u);   // On closing first bag file
-  EXPECT_EQ(v_intercepted_update_metadata_[2].files.size(), 1u);   // On opening second bag file
+  EXPECT_EQ(v_intercepted_update_metadata_[2].files.size(), 2u);   // On opening second bag file
   EXPECT_EQ(v_intercepted_update_metadata_[3].files.size(), 2u);   // On writer destruction
   EXPECT_EQ(v_intercepted_update_metadata_[3].message_count, 2 * kNumMessagesToWrite);
 }

@@ -334,6 +334,14 @@ void SequentialWriter::switch_to_next_storage()
 
     throw std::runtime_error(errmsg.str());
   }
+
+  rosbag2_storage::FileInformation file_info{};
+  file_info.starting_time =
+    std::chrono::time_point<std::chrono::high_resolution_clock>(std::chrono::nanoseconds::max());
+  file_info.path = strip_parent_path(storage_->get_relative_file_path());
+  metadata_.files.push_back(file_info);
+  metadata_.relative_file_paths.push_back(file_info.path);
+
   storage_->update_metadata(metadata_);
   // Re-register all topics since we rolled-over to a new bagfile.
   for (const auto & topic : topics_names_to_info_) {
@@ -352,14 +360,6 @@ std::string SequentialWriter::split_bagfile_local(bool execute_callbacks)
   auto closed_file = storage_->get_relative_file_path();
   switch_to_next_storage();
   auto opened_file = storage_->get_relative_file_path();
-
-  metadata_.relative_file_paths.push_back(strip_parent_path(storage_->get_relative_file_path()));
-
-  rosbag2_storage::FileInformation file_info{};
-  file_info.starting_time = std::chrono::time_point<std::chrono::high_resolution_clock>(
-    std::chrono::nanoseconds::max());
-  file_info.path = strip_parent_path(storage_->get_relative_file_path());
-  metadata_.files.push_back(file_info);
 
   if (execute_callbacks) {
     execute_bag_split_callbacks(closed_file, opened_file);
