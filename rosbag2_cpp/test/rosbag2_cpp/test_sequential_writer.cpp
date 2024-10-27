@@ -580,7 +580,7 @@ TEST_F(SequentialWriterTest, snapshot_mode_zero_cache_size_throws_exception)
   EXPECT_THROW(writer_->open(storage_options_, {rmw_format, rmw_format}), std::runtime_error);
 }
 
-TEST_F(SequentialWriterTest, snapshot_writes_with_splitting)
+TEST_F(SequentialWriterTest, snapshot_writes_to_new_file)
 {
   storage_options_.max_bagfile_size = 0;
   storage_options_.max_cache_size = 200;

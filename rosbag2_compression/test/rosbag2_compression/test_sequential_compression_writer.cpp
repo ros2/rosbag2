@@ -625,7 +625,7 @@ TEST_P(SequentialCompressionWriterTest, split_event_calls_callback_with_file_com
   }
 }
 
-TEST_F(SequentialCompressionWriterTest, snapshot_writes_with_splitting_and_file_compression)
+TEST_F(SequentialCompressionWriterTest, snapshot_writes_to_new_file_with_file_compression)
 {
   tmp_dir_storage_options_.max_bagfile_size = 0;
   tmp_dir_storage_options_.max_cache_size = 200;
