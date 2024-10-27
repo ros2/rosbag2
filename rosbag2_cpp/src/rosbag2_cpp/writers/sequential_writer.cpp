@@ -447,7 +447,7 @@ bool SequentialWriter::take_snapshot()
   // Note: Information about start, duration and num messages for the current file in metadata_
   // will be updated in the write_messages(..), when cache_consumer call it as a callback.
   message_cache_->notify_data_ready();
-  (void)split_bagfile_local(true);
+  split_bagfile();
   return true;
 }
 
