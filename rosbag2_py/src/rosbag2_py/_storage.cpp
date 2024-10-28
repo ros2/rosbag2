@@ -92,7 +92,7 @@ PYBIND11_MODULE(_storage, m) {
     pybind11::arg("storage_preset_profile") = "",
     pybind11::arg("storage_config_uri") = "",
     pybind11::arg("snapshot_mode") = false,
-    pybind11::arg("snapshot_duration_ms") = 0,
+    pybind11::arg("snapshot_duration") = 0,
     pybind11::arg("start_time_ns") = -1,
     pybind11::arg("end_time_ns") = -1,
     pybind11::arg("custom_data") = KEY_VALUE_MAP{})
@@ -117,8 +117,8 @@ PYBIND11_MODULE(_storage, m) {
     "snapshot_mode",
     &rosbag2_storage::StorageOptions::snapshot_mode)
   .def_readwrite(
-      "snapshot_duration_ms",
-      &rosbag2_storage::StorageOptions::snapshot_duration_ms)
+      "snapshot_duration",
+      &rosbag2_storage::StorageOptions::snapshot_duration)
   .def_readwrite(
     "start_time_ns",
     &rosbag2_storage::StorageOptions::start_time_ns)

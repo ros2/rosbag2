@@ -58,7 +58,7 @@ public:
 
   // The maximum snapshot duration in milliseconds.
   // A value of 0 indicates that snapshot will be limited by the max_cache_size only.
-  int64_t snapshot_duration_ms = 0;
+  int64_t snapshot_duration = 0;
 
   // Start and end time for cutting
   int64_t start_time_ns = -1;

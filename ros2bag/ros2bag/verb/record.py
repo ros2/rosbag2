@@ -380,7 +380,7 @@ class RecordVerb(VerbExtension):
             storage_preset_profile=args.storage_preset_profile,
             storage_config_uri=storage_config_file,
             snapshot_mode=args.snapshot_mode,
-            snapshot_duration_ms=args.snapshot_duration,
+            snapshot_duration=args.snapshot_duration,
             custom_data=custom_data
         )
         record_options = RecordOptions()
