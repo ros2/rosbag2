@@ -52,7 +52,7 @@ bool MessageCacheCircularBuffer::push(CacheBufferInterface::buffer_element_t msg
   }
 
   // Remove any old items until there is room for a new message
-  while (buffer_bytes_size_ > 0 &&
+  while (max_bytes_size_ > 0 &&
     buffer_bytes_size_ > (max_bytes_size_ - msg->serialized_data->buffer_length))
   {
     buffer_bytes_size_ -= buffer_.front()->serialized_data->buffer_length;
@@ -60,10 +60,12 @@ bool MessageCacheCircularBuffer::push(CacheBufferInterface::buffer_element_t msg
   }
   // Remove any old items until the difference between last and newest message timestamp
   // will be less than or equal to the max_cache_duration_.
-  auto current_buffer_duration = buffer_.front()->recv_timestamp - buffer_.back()->recv_timestamp;
-  while (max_cache_duration_ > 0 && current_buffer_duration > max_cache_duration_) {
-    buffer_.pop_front();
-    current_buffer_duration = buffer_.front()->recv_timestamp - buffer_.back()->recv_timestamp;
+  if (buffer_.size() > 1) {
+    auto current_buffer_duration = buffer_.front()->recv_timestamp - buffer_.back()->recv_timestamp;
+    while (max_cache_duration_ > 0 && current_buffer_duration > max_cache_duration_) {
+      buffer_.pop_front();
+      current_buffer_duration = buffer_.front()->recv_timestamp - buffer_.back()->recv_timestamp;
+    }
   }
   // Add a new message to the end of the buffer
   buffer_bytes_size_ += msg->serialized_data->buffer_length;
