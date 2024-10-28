@@ -25,9 +25,17 @@ namespace rosbag2_cpp
 namespace cache
 {
 
-MessageCacheCircularBuffer::MessageCacheCircularBuffer(size_t max_cache_size)
-: max_bytes_size_(max_cache_size)
+MessageCacheCircularBuffer::MessageCacheCircularBuffer(
+  size_t max_cache_size,
+  int64_t max_cache_duration_ns)
+: max_bytes_size_(max_cache_size), max_cache_duration_(max_cache_duration_ns)
 {
+  if (max_bytes_size_ == 0 && max_cache_duration_ == 0) {
+    ROSBAG2_CPP_LOG_ERROR_STREAM("Invalid arguments for the MessageCacheCircularBuffer. "
+                                 "Both max_bytes_size and max_cache_duration are zero.");
+    throw std::invalid_argument("Invalid arguments for the MessageCacheCircularBuffer. "
+                                "Both max_bytes_size and max_cache_duration are zero.");
+  }
 }
 
 bool MessageCacheCircularBuffer::push(CacheBufferInterface::buffer_element_t msg)
@@ -38,17 +46,26 @@ bool MessageCacheCircularBuffer::push(CacheBufferInterface::buffer_element_t msg
   }
 
   // Drop message if it exceeds the buffer size
-  if (msg->serialized_data->buffer_length > max_bytes_size_) {
+  if (buffer_bytes_size_ > 0 && msg->serialized_data->buffer_length > max_bytes_size_) {
     ROSBAG2_CPP_LOG_WARN("Last message exceeds snapshot buffer size. Dropping message!");
     return false;
   }
 
-  // Remove any old items until there is room for new message
-  while (buffer_bytes_size_ > (max_bytes_size_ - msg->serialized_data->buffer_length)) {
+  // Remove any old items until there is room for a new message
+  while (buffer_bytes_size_ > 0 &&
+    buffer_bytes_size_ > (max_bytes_size_ - msg->serialized_data->buffer_length))
+  {
     buffer_bytes_size_ -= buffer_.front()->serialized_data->buffer_length;
     buffer_.pop_front();
   }
-  // Add new message to end of buffer
+  // Remove any old items until the difference between last and newest message timestamp
+  // will be less than or equal to the max_cache_duration_.
+  auto current_buffer_duration = buffer_.front()->recv_timestamp - buffer_.back()->recv_timestamp;
+  while (max_cache_duration_ > 0 && current_buffer_duration > max_cache_duration_) {
+    buffer_.pop_front();
+    current_buffer_duration = buffer_.front()->recv_timestamp - buffer_.back()->recv_timestamp;
+  }
+  // Add a new message to the end of the buffer
   buffer_bytes_size_ += msg->serialized_data->buffer_length;
   buffer_.push_back(msg);
 

@@ -147,16 +147,19 @@ void SequentialWriter::open(
     throw std::runtime_error{error.str()};
   }
 
-  use_cache_ = storage_options.max_cache_size > 0u;
+  use_cache_ = storage_options.max_cache_size > 0u ||
+    (storage_options.snapshot_mode && storage_options.snapshot_duration_ms > 0);
   if (storage_options.snapshot_mode && !use_cache_) {
     throw std::runtime_error(
-            "Max cache size must be greater than 0 when snapshot mode is enabled");
+            "Either the max cache size or the maximum snapshot duration must be greater than 0"
+            " when snapshot mode is enabled");
   }
 
   if (use_cache_) {
     if (storage_options.snapshot_mode) {
+      int64_t max_buffer_duration_ns = storage_options.snapshot_duration_ms * 1000000;
       message_cache_ = std::make_shared<rosbag2_cpp::cache::CircularMessageCache>(
-        storage_options.max_cache_size);
+        storage_options.max_cache_size, max_buffer_duration_ns);
     } else {
       message_cache_ = std::make_shared<rosbag2_cpp::cache::MessageCache>(
         storage_options.max_cache_size);

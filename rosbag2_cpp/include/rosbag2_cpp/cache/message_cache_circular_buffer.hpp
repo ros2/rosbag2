@@ -1,4 +1,4 @@
-// Copyright 2021 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+// Copyright 2021 Amazonhe t.com, Inc. or its affiliates. All Rights Reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -36,31 +36,35 @@ namespace rosbag2_cpp
 namespace cache
 {
 
-/**
-* This class implements a circular buffer message cache. Since the buffer
-* size is limited by total byte size of the storage messages rather than
-* a fix number of messages, a deque is used instead of a vector since
-* older messages can always be dropped from the front and new messages added
-* to the end. The buffer will never consume more than max_cache_size bytes,
-* and will log a warning message if an individual message exceeds the buffer
-* size.
-*/
+/// This class implements a circular buffer message cache. Since the buffer
+/// size is limited by the total byte size of the storage messages or a total messages duration
+/// rather than a fix number of messages, a deque is used instead of a vector since
+/// older messages can always be dropped from the front and new messages added
+/// to the end. The buffer will never consume more than max_cache_size bytes, if max_cache_size > 0.
+/// And will log a warning message if an individual message exceeds the buffer size.
 class ROSBAG2_CPP_PUBLIC MessageCacheCircularBuffer
   : public CacheBufferInterface
 {
 public:
   // Delete default constructor since max_cache_size is required
   MessageCacheCircularBuffer() = delete;
-  explicit MessageCacheCircularBuffer(size_t max_cache_size);
 
-  /**
-  * \brief Pushes a SerializedBagMessage into the cache buffer.
-  * \details If buffer size has some space left, we push the message regardless of its size,
-  * but if this results in exceeding buffer size, we begin dropping old messages.
-  * \param msg SerializedBagMessage to add to the buffer.
-  * \return True if message was successfully pushed. Returns false if msg is null or if msg size
-  * exceeds max buffer size.
-  */
+  /// \brief Parametrized constructor
+  /// \param max_cache_size Maximum amount of memory which could be occupied by the messages stored
+  /// in the circular buffer. Note. If max_cache_size is zero, the circular buffer will be only
+  /// bounded by the max_cache_duration.
+  /// \param max_cache_duration_ns Maximum duration in nanoseconds of message sequence allowed to be
+  /// stored in the circular buffer. Note. If max_cache_duration is zero, the circular buffer will
+  /// be only bounded by the max_cache_size.
+  /// \throws std::invalid_argument if both max_cache_size and max_cache_duration are zero.
+  explicit MessageCacheCircularBuffer(size_t max_cache_size, int64_t max_cache_duration_ns = 0);
+
+  /// \brief Pushes a new message into the circular buffer
+  /// \details If buffer size has some space left, we push the message regardless of its size,
+  /// but if this results in exceeding buffer size, we begin dropping old messages.
+  /// \param msg Shared pointer to the rosbag2_storage::SerializedBagMessage to add to the buffer.
+  /// \return True if message was successfully pushed. Returns false if msg is null or if
+  /// buffer_bytes_size > 0 and msg->serialized_data->buffer_length > max_bytes_size.
   bool push(CacheBufferInterface::buffer_element_t msg) override;
 
   /// Clear buffer
@@ -77,6 +81,7 @@ private:
   std::vector<CacheBufferInterface::buffer_element_t> msg_vector_;
   size_t buffer_bytes_size_ {0u};
   const size_t max_bytes_size_;
+  const int64_t max_cache_duration_;
 };
 
 }  // namespace cache
