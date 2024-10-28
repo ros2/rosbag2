@@ -29,7 +29,7 @@ TEST(storage_options, test_yaml_serialization)
   original.storage_preset_profile = "profile";
   original.storage_config_uri = "config_uri";
   original.snapshot_mode = true;
-  original.snapshot_duration = 1500;
+  original.snapshot_duration = rclcpp::Duration::from_seconds(1.5);
   original.start_time_ns = 12345000;
   original.end_time_ns = 23456000;
   original.custom_data["key1"] = "value1";

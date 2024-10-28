@@ -21,6 +21,7 @@ import time
 
 from rclpy.qos import InvalidQoSProfileException
 from ros2bag.api import add_writer_storage_plugin_extensions
+from ros2bag.api import check_not_negative_float
 from ros2bag.api import convert_service_to_service_event_topic
 from ros2bag.api import convert_yaml_to_qos_profile
 from ros2bag.api import print_error
@@ -191,8 +192,8 @@ def add_recorder_arguments(parser: ArgumentParser) -> None:
              'the "/rosbag2_recorder/snapshot" service is called. e.g. \n '
              'ros2 service call /rosbag2_recorder/snapshot rosbag2_interfaces/Snapshot')
     parser.add_argument(
-        '--snapshot-duration', type=int, default=0,
-        help='Maximum snapshot duration in milliseconds.\n'
+        '--snapshot-duration', type=check_not_negative_float, default=0.0,
+        help='Maximum snapshot duration in a fraction of seconds.\n'
              'Default: %(default)d, indicates that the snapshot will be limited by the'
              ' --max-cache-size parameter only. If the value is more than 0, the cyclic buffer'
              ' for the snapshot will be limited by both the series of messages duration and the'
@@ -322,7 +323,7 @@ def validate_parsed_arguments(args, uri) -> str:
     if args.stats_max_publishing_rate < 0 or args.stats_max_publishing_rate > 1000.0:
         return print_error('stats_max_publishing_rate must be between 0 and 1000.')
 
-    if args.snapshot_mode and args.snapshot_duration == 0 and args.max_cache_size == 0:
+    if args.snapshot_mode and args.snapshot_duration == 0.0 and args.max_cache_size == 0:
         return print_error('In snapshot mode, either the snapshot_duration or max_bytes_size shall'
                            ' not be set to zero.')
 
