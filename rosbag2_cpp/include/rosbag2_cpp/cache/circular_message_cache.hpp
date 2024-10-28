@@ -52,7 +52,7 @@ class ROSBAG2_CPP_PUBLIC CircularMessageCache
   : public MessageCacheInterface
 {
 public:
-  explicit CircularMessageCache(size_t max_buffer_size);
+  explicit CircularMessageCache(size_t max_buffer_size, int64_t max_buffer_duration_ns = 0);
 
   ~CircularMessageCache() override;
 
