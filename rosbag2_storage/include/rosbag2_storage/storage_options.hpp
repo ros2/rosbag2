@@ -19,6 +19,7 @@
 #include <string>
 #include <unordered_map>
 
+#include "rclcpp/duration.hpp"
 #include "rosbag2_storage/visibility_control.hpp"
 #include "rosbag2_storage/yaml.hpp"
 
@@ -56,9 +57,9 @@ public:
   // Defaults to disabled.
   bool snapshot_mode = false;
 
-  // The maximum snapshot duration in milliseconds.
-  // A value of 0 indicates that snapshot will be limited by the max_cache_size only.
-  int64_t snapshot_duration = 0;
+  // The maximum snapshot duration.
+  // A value of 0.0 indicates that snapshot will be limited by the max_cache_size only.
+  rclcpp::Duration snapshot_duration{0, 0};
 
   // Start and end time for cutting
   int64_t start_time_ns = -1;
