@@ -55,4 +55,7 @@ player_params_node:
       max_cache_size: 9898
       storage_preset_profile: "resilient"
       snapshot_mode: false
+      snapshot_duration:
+        sec: 1
+        nsec: 500000000
       custom_data: ["key1=value1", "key2=value2"]

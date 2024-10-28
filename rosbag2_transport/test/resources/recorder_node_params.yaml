@@ -46,6 +46,9 @@ recorder_params_node:
       max_cache_size: 989888
       storage_preset_profile: "none"
       snapshot_mode: false
+      snapshot_duration:
+        sec: 1
+        nsec: 500000000
       custom_data: ["key1=value1", "key2=value2"]
       start_time_ns: 0
       end_time_ns: 100000
