@@ -103,13 +103,14 @@ class StorageOptions:
     max_bagfile_duration: int
     max_bagfile_size: int
     max_cache_size: int
+    snapshot_duration_ms: int
     snapshot_mode: bool
     start_time_ns: int
     storage_config_uri: str
     storage_id: str
     storage_preset_profile: str
     uri: str
-    def __init__(self, uri: str, storage_id: str = ..., max_bagfile_size: int = ..., max_bagfile_duration: int = ..., max_cache_size: int = ..., storage_preset_profile: str = ..., storage_config_uri: str = ..., snapshot_mode: bool = ..., start_time_ns: int = ..., end_time_ns: int = ..., custom_data: Dict[str, str] = ...) -> None: ...
+    def __init__(self, uri: str, storage_id: str = ..., max_bagfile_size: int = ..., max_bagfile_duration: int = ..., max_cache_size: int = ..., storage_preset_profile: str = ..., storage_config_uri: str = ..., snapshot_mode: bool = ..., snapshot_duration_ms: int = ..., start_time_ns: int = ..., end_time_ns: int = ..., custom_data: Dict[str, str] = ...) -> None: ...
 
 class TopicInformation:
     message_count: int
