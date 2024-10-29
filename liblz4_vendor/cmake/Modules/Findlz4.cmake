@@ -4,6 +4,13 @@ if(NOT lz4_ROOT_DIR AND DEFINED ENV{lz4_ROOT_DIR})
       "lz4 base directory location (optional, used for nonstandard installation paths)")
 endif()
 
+# When using lz4 from conda on Windows, and cmake before 3.29.0,
+# we need to add the library prefix "lib" so that the library can
+# be successfully found.
+if(MSVC and CMAKE_VERSION VERSION_LESS "3.29.0")
+  set(CMAKE_FIND_LIBRARY_PREFIXES "" "lib")
+endif()
+
 # Search path for nonstandard package locations
 if(lz4_ROOT_DIR)
   set(lz4_INCLUDE_PATH PATHS "${lz4_ROOT_DIR}/include" NO_DEFAULT_PATH)
