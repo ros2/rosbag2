@@ -78,11 +78,13 @@ void SequentialWriter::init_metadata()
   metadata_.storage_identifier = storage_->get_storage_identifier();
   metadata_.starting_time = std::chrono::time_point<std::chrono::high_resolution_clock>(
     std::chrono::nanoseconds::max());
+  metadata_.duration = std::chrono::nanoseconds(0);
   metadata_.relative_file_paths = {strip_parent_path(storage_->get_relative_file_path())};
   rosbag2_storage::FileInformation file_info{};
   file_info.path = strip_parent_path(storage_->get_relative_file_path());
   file_info.starting_time = std::chrono::time_point<std::chrono::high_resolution_clock>(
     std::chrono::nanoseconds::max());
+  file_info.duration = std::chrono::nanoseconds(0);
   file_info.message_count = 0;
   metadata_.custom_data = storage_options_.custom_data;
   metadata_.files = {file_info};
@@ -540,6 +542,7 @@ void SequentialWriter::write_messages(
     metadata_.files.back().starting_time = first_msg_timestamp;
     metadata_.files.back().duration = last_msg_timestamp - first_msg_timestamp;
     metadata_.files.back().message_count = messages.size();
+    metadata_.message_count += messages.size();
   }
   std::lock_guard<std::mutex> lock(topics_info_mutex_);
   for (const auto & msg : messages) {
