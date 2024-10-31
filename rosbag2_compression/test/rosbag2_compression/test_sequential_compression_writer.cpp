@@ -28,8 +28,8 @@
 
 #include "rosbag2_cpp/writer.hpp"
 
-#include "rosbag2_storage/storage_options.hpp"
 #include "rosbag2_storage/ros_helper.hpp"
+#include "rosbag2_storage/storage_options.hpp"
 
 #include "mock_converter_factory.hpp"
 #include "mock_metadata_io.hpp"
