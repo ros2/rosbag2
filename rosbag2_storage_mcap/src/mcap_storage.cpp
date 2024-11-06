@@ -38,6 +38,11 @@
   #endif
 #endif
 
+#ifdef _WIN32
+  #pragma warning(push)
+  #pragma warning(disable : 4251)
+#endif
+
 #include <mcap/mcap.hpp>
 
 #include <algorithm>
@@ -823,3 +828,7 @@ void MCAPStorage::ensure_rosdistro_metadata_added()
 #include "pluginlib/class_list_macros.hpp"  // NOLINT
 PLUGINLIB_EXPORT_CLASS(rosbag2_storage_plugins::MCAPStorage,
                        rosbag2_storage::storage_interfaces::ReadWriteInterface)
+
+#ifdef _WIN32
+  #pragma warning(pop)
+#endif

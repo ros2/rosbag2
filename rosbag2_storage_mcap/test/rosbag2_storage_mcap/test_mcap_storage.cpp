@@ -23,6 +23,10 @@
 #include "rosbag2_test_common/temporary_directory_fixture.hpp"
 #include "std_msgs/msg/string.hpp"
 
+#ifdef _WIN32
+  #pragma warning(push)
+  #pragma warning(disable : 4251)
+#endif
 #include <mcap/mcap.hpp>
 
 #include <gmock/gmock.h>
@@ -204,3 +208,7 @@ TEST_F(TemporaryDirectoryFixture, mcap_contains_ros_distro)
   }
   EXPECT_EQ(read_metadata_ros_distro, current_ros_distro);
 }
+
+#ifdef _WIN32
+  #pragma warning(pop)
+#endif
