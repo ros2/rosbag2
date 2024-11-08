@@ -2,8 +2,8 @@
 Changelog for package rosbag2_tests
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.22.8 (2024-11-09)
+-------------------
 * Bugfix for wrong timestamps in ros2 bag info (`#1753 <https://github.com/ros2/rosbag2/issues/1753>`_)
 * Contributors: Michael Orlov
 

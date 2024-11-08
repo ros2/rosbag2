@@ -2,8 +2,8 @@
 Changelog for package rosbag2_cpp
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.22.8 (2024-11-09)
+-------------------
 * Bugfix for rosbag2_cpp serialization converter (`#1823 <https://github.com/ros2/rosbag2/issues/1823>`_)
 * Allow unknown types in bag rewrite (`#1818 <https://github.com/ros2/rosbag2/issues/1818>`_)
 * Add topics with zero message counts to the SQLiteStorage::get_metadata(). (`#1766 <https://github.com/ros2/rosbag2/issues/1766>`_)

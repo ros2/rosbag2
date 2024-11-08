@@ -2,8 +2,8 @@
 Changelog for package rosbag2_transport
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.22.8 (2024-11-09)
+-------------------
 * Allow unknown types in bag rewrite (`#1818 <https://github.com/ros2/rosbag2/issues/1818>`_)
 * Contributors: Alejandro Hernández Cordero, Michael Orlov
 
