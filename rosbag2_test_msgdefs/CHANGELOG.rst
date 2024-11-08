@@ -2,6 +2,9 @@
 Changelog for package rosbag2_test_msgdefs
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+
 0.22.7 (2024-07-11)
 -------------------
 

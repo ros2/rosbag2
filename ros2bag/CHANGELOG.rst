@@ -2,6 +2,9 @@
 Changelog for package ros2bag
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+
 0.22.7 (2024-07-11)
 -------------------
 * Allow to specify start offset from CLI arguments equal to 0.0 for the rosbag2 player (`#1714 <https://github.com/ros2/rosbag2/issues/1714>`_)

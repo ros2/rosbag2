@@ -2,6 +2,11 @@
 Changelog for package rosbag2_tests
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Bugfix for wrong timestamps in ros2 bag info (`#1753 <https://github.com/ros2/rosbag2/issues/1753>`_)
+* Contributors: Michael Orlov
+
 0.22.7 (2024-07-11)
 -------------------
 * Propagate "custom_data" and "ros_distro" in to the metadata.yaml file during re-indexing (`#1711 <https://github.com/ros2/rosbag2/issues/1711>`_)

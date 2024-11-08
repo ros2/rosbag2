@@ -2,6 +2,13 @@
 Changelog for package rosbag2_cpp
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Bugfix for rosbag2_cpp serialization converter (`#1823 <https://github.com/ros2/rosbag2/issues/1823>`_)
+* Allow unknown types in bag rewrite (`#1818 <https://github.com/ros2/rosbag2/issues/1818>`_)
+* Add topics with zero message counts to the SQLiteStorage::get_metadata(). (`#1766 <https://github.com/ros2/rosbag2/issues/1766>`_)
+* Contributors: Alejandro Hernández Cordero, Michael Orlov
+
 0.22.7 (2024-07-11)
 -------------------
 * Propagate "custom_data" and "ros_distro" in to the metadata.yaml file during re-indexing (`#1711 <https://github.com/ros2/rosbag2/issues/1711>`_)

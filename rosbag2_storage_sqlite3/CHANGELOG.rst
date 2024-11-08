@@ -2,6 +2,12 @@
 Changelog for package rosbag2_storage_sqlite3
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Add topics with zero message counts to the SQLiteStorage::get_metadata(). (`#1766 <https://github.com/ros2/rosbag2/issues/1766>`_)
+* Fix for failing throws_on_invalid_pragma_in_config_file on Windows (`#1747 <https://github.com/ros2/rosbag2/issues/1747>`_)
+* Contributors: Michael Orlov
+
 0.22.7 (2024-07-11)
 -------------------
 
