@@ -485,6 +485,9 @@ bool PlayerImpl::play()
       try {
         do {
           if (delay > rclcpp::Duration(0, 0)) {
+            if (clock_publish_timer_ != nullptr) {
+              clock_publish_timer_->cancel();
+            }
             RCLCPP_INFO_STREAM(owner_->get_logger(), "Sleep " << delay.nanoseconds() << " ns");
             std::chrono::nanoseconds delay_duration(delay.nanoseconds());
             std::this_thread::sleep_for(delay_duration);
@@ -493,6 +496,9 @@ bool PlayerImpl::play()
             std::lock_guard<std::mutex> lk(reader_mutex_);
             reader_->seek(starting_time_);
             clock_->jump(starting_time_);
+          }
+          if (clock_publish_timer_ != nullptr) {
+            clock_publish_timer_->reset();
           }
           load_storage_content_ = true;
           storage_loading_future_ = std::async(
@@ -1072,7 +1078,7 @@ void PlayerImpl::prepare_publishers()
     clock_publish_timer_ = owner_->create_wall_timer(
       publish_period, [this]() {
         publish_clock_update();
-      });
+      }, nullptr, false);
   }
 
   if (play_options_.clock_publish_on_topic_publish) {
