@@ -462,9 +462,9 @@ void SequentialWriter::write_messages(
   if (storage_options_.snapshot_mode) {
     // Update FileInformation about the last file in metadata in case of snapshot mode
     const auto first_msg_timestamp = std::chrono::time_point<std::chrono::high_resolution_clock>(
-      std::chrono::nanoseconds(messages.front()->recv_timestamp));
+      std::chrono::nanoseconds(messages.front()->time_stamp));
     const auto last_msg_timestamp = std::chrono::time_point<std::chrono::high_resolution_clock>(
-      std::chrono::nanoseconds(messages.back()->recv_timestamp));
+      std::chrono::nanoseconds(messages.back()->time_stamp));
     metadata_.files.back().starting_time = first_msg_timestamp;
     metadata_.files.back().duration = last_msg_timestamp - first_msg_timestamp;
     metadata_.files.back().message_count = messages.size();

@@ -529,8 +529,7 @@ TEST_F(SequentialWriterTest, snapshot_writes_to_new_file_with_bag_split)
   std::vector<rosbag2_storage::SerializedBagMessageSharedPtr> messages;
   for (size_t i = 0; i < num_msgs_to_write; i++) {
     auto message = std::make_shared<rosbag2_storage::SerializedBagMessage>();
-    message->recv_timestamp = first_msg_timestamp + static_cast<rcutils_time_point_value_t>(i);
-    message->send_timestamp = first_msg_timestamp + static_cast<rcutils_time_point_value_t>(i);
+    message->time_stamp = first_msg_timestamp + static_cast<rcutils_time_point_value_t>(i);
     message->topic_name = topic_name;
     message->serialized_data =
       rosbag2_storage::make_serialized_message(msg_content.c_str(), msg_content.length());
@@ -540,7 +539,7 @@ TEST_F(SequentialWriterTest, snapshot_writes_to_new_file_with_bag_split)
   // Expect a single write call when the snapshot is triggered
   EXPECT_CALL(
     *storage_, write(
-    An<const std::vector<std::shared_ptr<const rosbag2_storage::SerializedBagMessage>> &>())
+      An<const std::vector<std::shared_ptr<const rosbag2_storage::SerializedBagMessage>> &>())
   ).Times(1);
 
   ON_CALL(
@@ -582,17 +581,18 @@ TEST_F(SequentialWriterTest, snapshot_writes_to_new_file_with_bag_split)
   std::string rmw_format = "rmw_format";
 
   writer_->open(storage_options_, {rmw_format, rmw_format});
-  writer_->create_topic({0u, "test_topic", "test_msgs/BasicTypes", "", {}, ""});
+  writer_->create_topic({"test_topic", "test_msgs/BasicTypes", "", ""});
 
   for (const auto & message : messages) {
     writer_->write(message);
   }
   writer_->take_snapshot();
+  writer_->close();
 
-  EXPECT_THAT(closed_files.size(), 1);
-  EXPECT_THAT(opened_files.size(), 1);
+  EXPECT_THAT(closed_files.size(), 2);
+  EXPECT_THAT(opened_files.size(), 2);
 
-  if (!((closed_files.size() == opened_files.size()) && (opened_files.size() == 1))) {
+  if (!((closed_files.size() == opened_files.size()) && (opened_files.size() == 2))) {
     // Output debug info
     for (size_t i = 0; i < opened_files.size(); i++) {
       std::cout << "opened_file[" << i << "] = '" << opened_files[i] <<
@@ -600,37 +600,32 @@ TEST_F(SequentialWriterTest, snapshot_writes_to_new_file_with_bag_split)
     }
   }
 
-  ASSERT_EQ(opened_files.size(), 1);
-  ASSERT_EQ(closed_files.size(), 1);
+  ASSERT_EQ(opened_files.size(), 2);
+  ASSERT_EQ(closed_files.size(), 2);
 
-  const auto expected_closed = fs::path(storage_options_.uri) / (bag_base_dir_ + "_0");
-  const auto expected_opened = fs::path(storage_options_.uri) / (bag_base_dir_ + "_1");
-  ASSERT_STREQ(closed_files[0].c_str(), expected_closed.generic_string().c_str());
-  ASSERT_STREQ(opened_files[0].c_str(), expected_opened.generic_string().c_str());
-
+  for (size_t i = 0; i < 2; i++) {
+    auto expected_closed =
+      fs::path(storage_options_.uri) / (bag_base_dir_ + "_" + std::to_string(i));
+    auto expected_opened = (i == 1) ?
+      // The last opened file shall be empty string when we do "writer->close();"
+      fs::path("") : fs::path(storage_options_.uri) / (bag_base_dir_ + "_" + std::to_string(i + 1));
+    ASSERT_STREQ(closed_files[i].c_str(), expected_closed.string().c_str());
+    ASSERT_STREQ(opened_files[i].c_str(), expected_opened.string().c_str());
+  }
   // Check metadata
-  ASSERT_EQ(v_intercepted_update_metadata_.size(), 3u);
-  // The v_intercepted_update_metadata_[0] is the very first metadata saved from the writer's
-  // constructor. We don't update it during the snapshot, and it doesn't make sense checking it.
-  // The v_intercepted_update_metadata_[1] is the metadata written right before closing the file
-  // with the new snapshot.
-  // The v_intercepted_update_metadata_[2] is the metadata written when we are opening a new file
-  // after switching to a new storage.
-  EXPECT_EQ(v_intercepted_update_metadata_[1].message_count, num_expected_msgs);
-  EXPECT_EQ(v_intercepted_update_metadata_[2].message_count, num_expected_msgs);
+  EXPECT_EQ(fake_metadata_.message_count, num_expected_msgs);
   EXPECT_EQ(
     std::chrono::time_point_cast<std::chrono::nanoseconds>(
-      v_intercepted_update_metadata_[1].starting_time).time_since_epoch().count(),
-    first_msg_timestamp);
+      fake_metadata_.starting_time).time_since_epoch().count(), first_msg_timestamp);
 
-  ASSERT_FALSE(v_intercepted_update_metadata_[1].files.empty());
-  const auto & first_file_info = v_intercepted_update_metadata_[1].files[0];
+  ASSERT_FALSE(fake_metadata_.files.empty());
+
+  const auto & first_file_info = fake_metadata_.files[0];
   EXPECT_STREQ(first_file_info.path.c_str(), std::string(bag_base_dir_ + "_0").c_str());
   EXPECT_EQ(first_file_info.message_count, num_expected_msgs);
   EXPECT_EQ(
     std::chrono::time_point_cast<std::chrono::nanoseconds>(
-    first_file_info.starting_time).time_since_epoch().count(),
-    expected_start_time);
+      first_file_info.starting_time).time_since_epoch().count(), expected_start_time);
   EXPECT_EQ(first_file_info.duration.count(), expected_duration);
 }
 
@@ -644,7 +639,7 @@ TEST_F(SequentialWriterTest, snapshot_can_be_called_twice)
   // Expect to call write method twice. Once per each snapshot.
   EXPECT_CALL(
     *storage_, write(
-    An<const std::vector<std::shared_ptr<const rosbag2_storage::SerializedBagMessage>> &>())
+      An<const std::vector<std::shared_ptr<const rosbag2_storage::SerializedBagMessage>> &>())
   ).Times(2);
 
   ON_CALL(*storage_, get_relative_file_path).WillByDefault(
@@ -669,7 +664,7 @@ TEST_F(SequentialWriterTest, snapshot_can_be_called_twice)
   std::string rmw_format = "rmw_format";
 
   writer_->open(storage_options_, {rmw_format, rmw_format});
-  writer_->create_topic({0u, "test_topic", "test_msgs/BasicTypes", "", {}, ""});
+  writer_->create_topic({"test_topic", "test_msgs/BasicTypes", "", ""});
 
   std::string msg_content = "Hello";
   auto message = std::make_shared<rosbag2_storage::SerializedBagMessage>();
@@ -706,8 +701,8 @@ TEST_F(SequentialWriterTest, snapshot_can_be_called_twice)
       (bag_base_dir_ + "_" + std::to_string(i));
     const auto expected_opened = fs::path(storage_options_.uri) /
       (bag_base_dir_ + "_" + std::to_string(i + 1));
-    ASSERT_STREQ(closed_files[i].c_str(), expected_closed.generic_string().c_str());
-    ASSERT_STREQ(opened_files[i].c_str(), expected_opened.generic_string().c_str());
+    ASSERT_STREQ(closed_files[i].c_str(), expected_closed.string().c_str());
+    ASSERT_STREQ(opened_files[i].c_str(), expected_opened.string().c_str());
   }
 }
 

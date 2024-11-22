@@ -499,8 +499,7 @@ TEST_F(SequentialCompressionWriterTest, snapshot_writes_to_new_file_with_file_co
     DefaultTestCompressor,
     rosbag2_compression::CompressionMode::FILE,
     1,
-    1,
-    kDefaultCompressionQueueThreadsPriority
+    1
   };
   initializeWriter(compression_options);
 
@@ -524,7 +523,7 @@ TEST_F(SequentialCompressionWriterTest, snapshot_writes_to_new_file_with_file_co
     rosbag2_storage::make_serialized_message(msg_content.c_str(), msg_length);
 
   writer_->open(tmp_dir_storage_options_, {rmw_format, rmw_format});
-  writer_->create_topic({0u, "test_topic", "test_msgs/BasicTypes", "", {}, ""});
+  writer_->create_topic({"test_topic", "test_msgs/BasicTypes", "", ""});
 
   for (size_t i = 0; i < 100; i++) {
     writer_->write(message);
@@ -551,10 +550,10 @@ TEST_F(SequentialCompressionWriterTest, snapshot_writes_to_new_file_with_file_co
       (bag_base_dir_ + "_" + std::to_string(i) + "." + DefaultTestCompressor);
     auto expected_opened = (i == 1) ?
       // The last opened file shall be empty string when we do "writer->close();"
-      "" : fs::path(tmp_dir_storage_options_.uri) /
+      fs::path("") : fs::path(tmp_dir_storage_options_.uri) /
       (bag_base_dir_ + "_" + std::to_string(i + 1));
-    ASSERT_STREQ(closed_files[i].c_str(), expected_closed.generic_string().c_str());
-    ASSERT_STREQ(opened_files[i].c_str(), expected_opened.generic_string().c_str());
+    ASSERT_STREQ(closed_files[i].c_str(), expected_closed.string().c_str());
+    ASSERT_STREQ(opened_files[i].c_str(), expected_opened.string().c_str());
   }
 }
 
