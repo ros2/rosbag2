@@ -76,11 +76,13 @@ void SequentialWriter::init_metadata()
   metadata_.storage_identifier = storage_->get_storage_identifier();
   metadata_.starting_time = std::chrono::time_point<std::chrono::high_resolution_clock>(
     std::chrono::nanoseconds::max());
+  metadata_.duration = std::chrono::nanoseconds(0);
   metadata_.relative_file_paths = {strip_parent_path(storage_->get_relative_file_path())};
   rosbag2_storage::FileInformation file_info{};
   file_info.path = strip_parent_path(storage_->get_relative_file_path());
   file_info.starting_time = std::chrono::time_point<std::chrono::high_resolution_clock>(
     std::chrono::nanoseconds::max());
+  file_info.duration = std::chrono::nanoseconds(0);
   file_info.message_count = 0;
   metadata_.files = {file_info};
 }
@@ -353,7 +355,7 @@ void SequentialWriter::write(std::shared_ptr<rosbag2_storage::SerializedBagMessa
     is_first_message_ = false;
   }
 
-  if (should_split_bagfile(message_timestamp)) {
+  if (!storage_options_.snapshot_mode && should_split_bagfile(message_timestamp)) {
     split_bagfile();
     metadata_.files.back().starting_time = message_timestamp;
   }
@@ -385,10 +387,13 @@ void SequentialWriter::write(std::shared_ptr<rosbag2_storage::SerializedBagMessa
 bool SequentialWriter::take_snapshot()
 {
   if (!storage_options_.snapshot_mode) {
-    ROSBAG2_CPP_LOG_WARN("SequentialWriter take_snaphot called when snapshot mode is disabled");
+    ROSBAG2_CPP_LOG_WARN("SequentialWriter take_snapshot called when snapshot mode is disabled");
     return false;
   }
+  // Note: Information about start, duration and num messages for the current file in metadata_
+  // will be updated in the write_messages(..), when cache_consumer call it as a callback.
   message_cache_->notify_data_ready();
+  split_bagfile();
   return true;
 }
 
@@ -454,6 +459,17 @@ void SequentialWriter::write_messages(
     return;
   }
   storage_->write(messages);
+  if (storage_options_.snapshot_mode) {
+    // Update FileInformation about the last file in metadata in case of snapshot mode
+    const auto first_msg_timestamp = std::chrono::time_point<std::chrono::high_resolution_clock>(
+      std::chrono::nanoseconds(messages.front()->time_stamp));
+    const auto last_msg_timestamp = std::chrono::time_point<std::chrono::high_resolution_clock>(
+      std::chrono::nanoseconds(messages.back()->time_stamp));
+    metadata_.files.back().starting_time = first_msg_timestamp;
+    metadata_.files.back().duration = last_msg_timestamp - first_msg_timestamp;
+    metadata_.files.back().message_count = messages.size();
+  }
+  metadata_.message_count += messages.size();
   std::lock_guard<std::mutex> lock(topics_info_mutex_);
   for (const auto & msg : messages) {
     if (topics_names_to_info_.find(msg->topic_name) != topics_names_to_info_.end()) {
