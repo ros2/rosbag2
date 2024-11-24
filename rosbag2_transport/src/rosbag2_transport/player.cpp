@@ -483,15 +483,12 @@ bool PlayerImpl::play()
   playback_thread_ = std::thread(
     [&, delay]() {
       try {
+        if (delay > rclcpp::Duration(0, 0)) {
+          RCLCPP_INFO_STREAM(owner_->get_logger(), "Sleep " << delay.nanoseconds() << " ns");
+          std::chrono::nanoseconds delay_duration(delay.nanoseconds());
+          std::this_thread::sleep_for(delay_duration);
+        }
         do {
-          if (delay > rclcpp::Duration(0, 0)) {
-            if (clock_publish_timer_ != nullptr) {
-              clock_publish_timer_->cancel();
-            }
-            RCLCPP_INFO_STREAM(owner_->get_logger(), "Sleep " << delay.nanoseconds() << " ns");
-            std::chrono::nanoseconds delay_duration(delay.nanoseconds());
-            std::this_thread::sleep_for(delay_duration);
-          }
           {
             std::lock_guard<std::mutex> lk(reader_mutex_);
             reader_->seek(starting_time_);
