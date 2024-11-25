@@ -641,8 +641,8 @@ void PlayerImpl::stop()
     }
 
     if (clock_->is_paused()) {
-      clock_->resume();  // Temporary resume clock to force wakeup in clock_->sleep_until(time)
-      clock_->pause();   // Return in pause mode to preserve original state of the player
+      // Wake up the clock in case it's in a sleep_until(time) call
+      clock_->wakeup();
     }
     // Note: Don't clean up message queue here. It will be cleaned up automatically in
     // playback thread after finishing play_messages_from_queue();
