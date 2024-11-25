@@ -2,6 +2,13 @@
 Changelog for package rosbag2_transport
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Reintroduce `Don't warn for unknown types if topics are not selected` (`#1825 <https://github.com/ros2/rosbag2/issues/1825>`_)
+* Allow unknown types in bag rewrite (`#1812 <https://github.com/ros2/rosbag2/issues/1812>`_)
+* Improve the reliability of rosbag2 tests (`#1796 <https://github.com/ros2/rosbag2/issues/1796>`_)
+* Contributors: Alejandro Hernández Cordero, Chris Lalancette, Michael Orlov, Ramon Wijnands, Roman
+
 0.29.0 (2024-09-03)
 -------------------
 * Removed warnings (`#1794 <https://github.com/ros2/rosbag2/issues/1794>`_)

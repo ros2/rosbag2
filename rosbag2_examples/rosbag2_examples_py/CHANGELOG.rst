@@ -2,6 +2,9 @@
 Changelog for package rosbag2_examples_py
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+
 0.29.0 (2024-09-03)
 -------------------
 * simple_bag_reader.py should publish the data for each timer callback. (`#1767 <https://github.com/ros2/rosbag2/issues/1767>`_)

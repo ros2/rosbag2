@@ -5,6 +5,11 @@ Changelog for package rosbag2
 0.29.0 (2024-09-03)
 -------------------
 
+Forthcoming
+-----------
+* [Rolling] Release 0.28.1 (`#1791 <https://github.com/ros2/rosbag2/issues/1791>`_)
+* Contributors: Alejandro Hernández Cordero
+
 0.28.0 (2024-06-17)
 -------------------
 

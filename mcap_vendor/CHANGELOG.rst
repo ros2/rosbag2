@@ -2,6 +2,9 @@
 Changelog for package mcap_vendor
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+
 0.29.0 (2024-09-03)
 -------------------
 * Update mcap (`#1774 <https://github.com/ros2/rosbag2/issues/1774>`_)

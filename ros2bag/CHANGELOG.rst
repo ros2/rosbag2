@@ -2,6 +2,12 @@
 Changelog for package ros2bag
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Rename rclpy.qos.QoS*Policy to rclpy.qos.*Policy (`#1832 <https://github.com/ros2/rosbag2/issues/1832>`_)
+* Add "--sort" CLI option to the "ros2 bag info" command (`#1804 <https://github.com/ros2/rosbag2/issues/1804>`_)
+* Contributors: Alejandro Hernández Cordero, Christophe Bedard, Nicola Loi, Roman, Sanoronas
+
 0.29.0 (2024-09-03)
 -------------------
 * Add cli option compression-threads-priority (`#1768 <https://github.com/ros2/rosbag2/issues/1768>`_)

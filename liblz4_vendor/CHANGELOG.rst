@@ -5,6 +5,11 @@ Changelog for package liblz4_vendor
 0.29.0 (2024-09-03)
 -------------------
 
+Forthcoming
+-----------
+* Add in a library prefix for lz4 from conda on Windows. (`#1846 <https://github.com/ros2/rosbag2/issues/1846>`_)
+* Contributors: Alejandro Hernández Cordero, Chris Lalancette
+
 0.28.0 (2024-06-17)
 -------------------
 
