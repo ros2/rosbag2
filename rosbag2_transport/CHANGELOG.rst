@@ -2,6 +2,11 @@
 Changelog for package rosbag2_transport
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.15.13 (2024-11-25)
+--------------------
+* [humble] Allow unknown types in bag rewrite (backport `#1812 <https://github.com/ros2/rosbag2/issues/1812>`_) (`#1819 <https://github.com/ros2/rosbag2/issues/1819>`_)
+* Contributors: mergify[bot]
+
 0.15.12 (2024-07-28)
 --------------------
 * [humble] Bugfix for bag_split event callbacks called to early with file compression (backport `#1643 <https://github.com/ros2/rosbag2/issues/1643>`_) (`#1733 <https://github.com/ros2/rosbag2/issues/1733>`_)

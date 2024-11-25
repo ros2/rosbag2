@@ -2,6 +2,12 @@
 Changelog for package rosbag2_compression
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.15.13 (2024-11-25)
+--------------------
+* [humble] Make snapshot writing into a new file each time it is triggered (backport `#1842 <https://github.com/ros2/rosbag2/issues/1842>`_) (`#1850 <https://github.com/ros2/rosbag2/issues/1850>`_)
+* Prevent using message compression mode with mcap storage (`#1782 <https://github.com/ros2/rosbag2/issues/1782>`_)
+* Contributors: Roman Shtylman, mergify[bot]
+
 0.15.12 (2024-07-28)
 --------------------
 * [humble] Bugfix for bag_split event callbacks called to early with file compression (backport `#1643 <https://github.com/ros2/rosbag2/issues/1643>`_) (`#1733 <https://github.com/ros2/rosbag2/issues/1733>`_)

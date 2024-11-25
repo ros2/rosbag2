@@ -2,6 +2,12 @@
 Changelog for package rosbag2
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.15.13 (2024-11-25)
+--------------------
+* [humble] Make snapshot writing into a new file each time it is triggered (backport `#1842 <https://github.com/ros2/rosbag2/issues/1842>`_) (`#1850 <https://github.com/ros2/rosbag2/issues/1850>`_)
+* [humble] Bugfix for rosbag2_cpp serialization converter (backport `#1814 <https://github.com/ros2/rosbag2/issues/1814>`_) (backport `#1823 <https://github.com/ros2/rosbag2/issues/1823>`_) (`#1824 <https://github.com/ros2/rosbag2/issues/1824>`_)
+* Contributors: mergify[bot]
+
 0.15.12 (2024-07-28)
 --------------------
 * [Humble] Add topics with zero message counts to the SQLiteStorage::get_metadata(). (`#1722 <https://github.com/ros2/rosbag2/issues/1722>`_)
