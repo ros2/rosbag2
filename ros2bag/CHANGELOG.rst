@@ -2,6 +2,11 @@
 Changelog for package ros2bag
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.15.13 (2024-11-25)
+--------------------
+* Prevent using message compression mode with mcap storage (`#1782 <https://github.com/ros2/rosbag2/issues/1782>`_)
+* Contributors: Roman Shtylman
+
 0.15.12 (2024-07-28)
 --------------------
 * [humble] Add option to prevent message loss while converting (backport `#1058 <https://github.com/ros2/rosbag2/issues/1058>`_) (`#1749 <https://github.com/ros2/rosbag2/issues/1749>`_)

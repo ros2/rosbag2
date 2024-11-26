@@ -2,6 +2,11 @@
 Changelog for package rosbag2_py
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.15.13 (2024-11-25)
+--------------------
+* Fixes clang compiler error introduced by `#1404 <https://github.com/ros2/rosbag2/issues/1404>`_. (`#1769 <https://github.com/ros2/rosbag2/issues/1769>`_)
+* Contributors: Halvor Platou
+
 0.15.12 (2024-07-28)
 --------------------
 * [Humble] Add topics with zero message counts to the SQLiteStorage::get_metadata(). (`#1722 <https://github.com/ros2/rosbag2/issues/1722>`_)

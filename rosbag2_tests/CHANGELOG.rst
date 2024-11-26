@@ -2,6 +2,9 @@
 Changelog for package rosbag2_tests
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.15.13 (2024-11-25)
+--------------------
+
 0.15.12 (2024-07-28)
 --------------------
 * [humble] Fix for a false negative integration test with bag split in recorder (backport `#1743 <https://github.com/ros2/rosbag2/issues/1743>`_) (`#1751 <https://github.com/ros2/rosbag2/issues/1751>`_)
