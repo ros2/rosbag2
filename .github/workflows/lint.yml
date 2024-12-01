@@ -33,7 +33,6 @@ jobs:
             rosbag2_test_common
             rosbag2_tests
             rosbag2_transport
-            shared_queues_vendor
 
   ament_lint_cpp: # Linters applicable to C++ packages
     name: ament_${{ matrix.linter }}
@@ -62,7 +61,6 @@ jobs:
             rosbag2_test_common
             rosbag2_tests
             rosbag2_transport
-            shared_queues_vendor
 
   ament_lint_clang_format: # Linters applicable to C++ packages formatted with clang-format
     name: ament_${{ matrix.linter }}

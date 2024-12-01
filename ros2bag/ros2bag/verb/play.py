@@ -15,13 +15,15 @@
 from argparse import FileType
 
 from rclpy.qos import InvalidQoSProfileException
-from ros2bag.api import add_standard_reader_args
+from ros2bag.api import add_standard_multi_reader_args
 from ros2bag.api import check_not_negative_float
 from ros2bag.api import check_not_negative_int
 from ros2bag.api import check_positive_float
 from ros2bag.api import convert_service_to_service_event_topic
 from ros2bag.api import convert_yaml_to_qos_profile
+from ros2bag.api import input_bag_arg_to_storage_options
 from ros2bag.api import print_error
+from ros2bag.api import print_warn
 from ros2bag.verb import VerbExtension
 from ros2cli.node import NODE_NAME_PREFIX
 from rosbag2_py import Player
@@ -42,7 +44,7 @@ class PlayVerb(VerbExtension):
     """Play back ROS data from a bag."""
 
     def add_arguments(self, parser, cli_name):  # noqa: D102
-        add_standard_reader_args(parser)
+        add_standard_multi_reader_args(parser)
         parser.add_argument(
             '--read-ahead-queue-size', type=int, default=1000,
             help='size of message queue rosbag tries to hold in memory to help deterministic '
@@ -196,11 +198,41 @@ class PlayVerb(VerbExtension):
             topic_remapping.append('--remap')
             topic_remapping.append(remap_rule)
 
-        storage_options = StorageOptions(
-            uri=args.bag_path,
-            storage_id=args.storage,
-            storage_config_uri=storage_config_file,
-        )
+        # Do not allow using both positional arg and --input option for input bags
+        if args.bag_path and args.input:
+            return print_error(
+                'do not mix the [bag_path] positional argument and the -i,--input option; '
+                'for multiple input bags, use -i,--input multiple times')
+        # Add bag from optional positional arg, then bag(s) from optional flag
+        storage_options = []
+        if args.bag_path:
+            storage_options.append(StorageOptions(
+                uri=args.bag_path,
+                storage_id=args.storage,
+                storage_config_uri=storage_config_file,
+            ))
+            if args.storage:
+                print(print_warn('--storage option is deprecated, use -i,--input to '
+                                 'provide an input bag with a specific storage ID'))
+        try:
+            storage_options.extend(
+                input_bag_arg_to_storage_options(args.input or [], storage_config_file))
+        except ValueError as e:
+            return print_error(str(e))
+        if not storage_options:
+            return print_error('no input bags were provided')
+
+        # Users can currently only provide one storage config file, which is storage
+        # implementation-specific. Since we can replay bags from different storage
+        # implementations, this may lead to errors. For now, just warn if input bags have
+        # different explicit storage IDs and a storage config file is provided.
+        storage_ids = {options.storage_id for options in storage_options if options.storage_id}
+        if storage_config_file and len(storage_ids) > 1:
+            print(
+                print_warn('a global --storage-config-file was provided, but -i,--input bags are '
+                           'using different explicit storage IDs, which may lead to errors with '
+                           f'replay: {storage_ids}'))
+
         play_options = PlayOptions()
         play_options.read_ahead_queue_size = args.read_ahead_queue_size
         play_options.node_prefix = NODE_NAME_PREFIX

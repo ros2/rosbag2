@@ -174,6 +174,66 @@ TEST_F(RosBag2PlayTestFixture, recorded_messages_are_played_for_all_topics)
           ElementsAre(40.0f, 2.0f, 0.0f)))));
 }
 
+TEST_F(RosBag2PlayTestFixture, recorded_messages_are_played_for_all_topics_from_three_bags)
+{
+  auto msg = get_messages_basic_types()[0];
+  msg->int32_value = 42;
+
+  auto topic_types = std::vector<rosbag2_storage::TopicMetadata>{
+    {1u, "topic1", "test_msgs/msg/BasicTypes", "", {}, ""},
+    {2u, "topic2", "test_msgs/msg/BasicTypes", "", {}, ""},
+  };
+
+  // Make sure each reader's/bag's messages are ordered by time
+  // However, do interlace messages across bags
+  std::vector<std::vector<std::shared_ptr<rosbag2_storage::SerializedBagMessage>>> messages_list{};
+  messages_list.emplace_back(std::vector<std::shared_ptr<rosbag2_storage::SerializedBagMessage>>{
+    serialize_test_message("topic1", 1, msg),
+    serialize_test_message("topic2", 5, msg),
+    serialize_test_message("topic1", 8, msg),
+    serialize_test_message("topic2", 10, msg),
+    serialize_test_message("topic1", 13, msg),
+    serialize_test_message("topic2", 14, msg)});
+  messages_list.emplace_back(std::vector<std::shared_ptr<rosbag2_storage::SerializedBagMessage>>{
+    serialize_test_message("topic1", 2, msg),
+    serialize_test_message("topic2", 3, msg),
+    serialize_test_message("topic1", 6, msg),
+    serialize_test_message("topic2", 10, msg),
+    serialize_test_message("topic1", 12, msg),
+    serialize_test_message("topic2", 16, msg)});
+  messages_list.emplace_back(std::vector<std::shared_ptr<rosbag2_storage::SerializedBagMessage>>{
+    serialize_test_message("topic1", 1, msg),
+    serialize_test_message("topic2", 4, msg),
+    serialize_test_message("topic1", 7, msg),
+    serialize_test_message("topic2", 9, msg),
+    serialize_test_message("topic1", 11, msg),
+    serialize_test_message("topic2", 15, msg)});
+  std::vector<rosbag2_transport::Player::reader_storage_options_pair_t> bags{};
+  std::size_t total_messages = 0u;
+  for (std::size_t i = 0u; i < messages_list.size(); i++) {
+    auto prepared_mock_reader = std::make_unique<MockSequentialReader>();
+    total_messages += messages_list[i].size();
+    prepared_mock_reader->prepare(messages_list[i], topic_types);
+    bags.emplace_back(
+      std::make_unique<rosbag2_cpp::Reader>(std::move(prepared_mock_reader)), storage_options_);
+  }
+  ASSERT_GT(total_messages, 0u);
+
+  auto player = std::make_shared<rosbag2_transport::Player>(std::move(bags), play_options_);
+  std::size_t num_played_messages = 0u;
+  rcutils_time_point_value_t last_timetamp = 0;
+  const auto callback = [&](std::shared_ptr<rosbag2_storage::SerializedBagMessage> msg) {
+      // Make sure messages are played in order
+      EXPECT_LE(last_timetamp, msg->recv_timestamp);
+      last_timetamp = msg->recv_timestamp;
+      num_played_messages++;
+    };
+  player->add_on_play_message_pre_callback(callback);
+  player->play();
+  player->wait_for_playback_to_finish();
+  EXPECT_EQ(total_messages, num_played_messages);
+}
+
 TEST_F(RosBag2PlayTestFixture, recorded_messages_are_played_for_all_services)
 {
   const std::string service_name1 = "/test_service1";

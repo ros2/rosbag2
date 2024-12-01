@@ -138,6 +138,14 @@ $ ros2 bag play <bag>
 The bag argument can be a directory containing `metadata.yaml` and one or more storage files, or to a single storage file such as `.mcap` or `.db3`.
 The Player will automatically detect which storage implementation to use for playing.
 
+To play back multiple bags:
+
+```
+$ ros2 bag play <bag1> -i <bag2> -i <bag3>
+```
+
+Messages from all provided bags will be played in order, based on their original recording reception timestamps.
+
 #### Controlling playback via services
 
 The Rosbag2 player provides the following services for remote control, which can be called via `ros2 service` commandline or from your nodes,

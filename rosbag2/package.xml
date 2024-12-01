@@ -18,7 +18,6 @@
   <exec_depend>rosbag2_py</exec_depend>
   <exec_depend>rosbag2_storage</exec_depend>
   <exec_depend>rosbag2_transport</exec_depend>
-  <exec_depend>shared_queues_vendor</exec_depend>
 
   <!-- Default plugins -->
   <exec_depend>rosbag2_compression_zstd</exec_depend>

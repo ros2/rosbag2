@@ -103,7 +103,7 @@ public:
 };
 
 TEST_P(RosBag2PlaySeekTestFixture, seek_back_in_time) {
-  const size_t expected_number_of_messages = num_msgs_in_bag_ + 2;
+  const size_t expected_number_of_messages = num_msgs_in_bag_ + 4;
   auto player = std::make_shared<MockPlayer>(std::move(reader_), storage_options_, play_options_);
 
   sub_ = std::make_shared<SubscriptionManager>();
@@ -212,7 +212,7 @@ TEST_P(RosBag2PlaySeekTestFixture, seek_forward) {
   await_received_messages.get();
 
   auto replayed_topic1 = sub_->get_received_messages<test_msgs::msg::BasicTypes>("/topic1");
-  EXPECT_THAT(replayed_topic1, SizeIs(expected_number_of_messages));
+  ASSERT_THAT(replayed_topic1, SizeIs(expected_number_of_messages));
   EXPECT_EQ(replayed_topic1[0]->int32_value, 1);
   EXPECT_EQ(replayed_topic1[1]->int32_value, 3);
 
@@ -254,7 +254,7 @@ TEST_P(RosBag2PlaySeekTestFixture, seek_back_in_time_from_the_end_of_the_bag) {
   await_received_messages.get();
 
   auto replayed_topic1 = sub_->get_received_messages<test_msgs::msg::BasicTypes>("/topic1");
-  EXPECT_THAT(replayed_topic1, SizeIs(expected_number_of_messages));
+  ASSERT_THAT(replayed_topic1, SizeIs(expected_number_of_messages));
 
   for (size_t i = 0; i < num_msgs_in_bag_; i++) {
     EXPECT_EQ(replayed_topic1[i]->int32_value, static_cast<int32_t>(i + 1)) << "i=" << i;
@@ -300,7 +300,7 @@ TEST_P(RosBag2PlaySeekTestFixture, seek_forward_from_the_end_of_the_bag) {
   await_received_messages.get();
 
   auto replayed_topic1 = sub_->get_received_messages<test_msgs::msg::BasicTypes>("/topic1");
-  EXPECT_THAT(replayed_topic1, SizeIs(expected_number_of_messages));
+  ASSERT_THAT(replayed_topic1, SizeIs(expected_number_of_messages));
 
   for (size_t i = 0; i < replayed_topic1.size(); i++) {
     EXPECT_EQ(replayed_topic1[i]->int32_value, static_cast<int32_t>(i + 1)) << "i=" << i;
