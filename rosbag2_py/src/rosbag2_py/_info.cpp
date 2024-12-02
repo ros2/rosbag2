@@ -49,7 +49,7 @@ public:
   {
     InfoSortingMethod sort_method = info_sorting_method_from_string(sorting_method);
     // Output formatted metadata
-    std::cout << format_bag_meta_data(metadata_info, {}, false, false, sort_method) << std::endl;
+    std::cout << format_bag_meta_data(metadata_info, false, false, {}, sort_method) << std::endl;
   }
 
   void print_output_topic_name_only(
