@@ -253,9 +253,9 @@ namespace rosbag2_py
 
 std::string format_bag_meta_data(
   const rosbag2_storage::BagMetadata & metadata,
-  const std::unordered_map<std::string, uint64_t> & messages_size,
   bool verbose,
-  bool only_topic)
+  bool only_topic,
+  const std::unordered_map<std::string, uint64_t> & messages_size)
 {
   auto start_time = metadata.starting_time.time_since_epoch();
   auto end_time = start_time + metadata.duration;
