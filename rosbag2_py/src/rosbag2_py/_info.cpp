@@ -45,7 +45,7 @@ public:
   }
 
   void print_output(
-    const rosbag2_storage::BagMetadata & metadata_info, const std::string & sorting_method)
+    const rosbag2_storage::BagMetadata & metadata_info, const std::string & sorting_method = "name")
   {
     InfoSortingMethod sort_method = info_sorting_method_from_string(sorting_method);
     // Output formatted metadata
@@ -74,7 +74,7 @@ public:
   void print_output_verbose(
     const std::string & uri,
     const rosbag2_storage::BagMetadata & metadata_info,
-    const std::string & sorting_method)
+    const std::string & sorting_method = "name")
   {
     std::vector<std::shared_ptr<rosbag2_cpp::rosbag2_service_info_t>> all_services_info;
     for (auto & file_info : metadata_info.files) {
