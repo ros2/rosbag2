@@ -15,13 +15,27 @@
 #ifndef ROSBAG2_CPP__STORAGE_OPTIONS_HPP_
 #define ROSBAG2_CPP__STORAGE_OPTIONS_HPP_
 
+<<<<<<< HEAD:rosbag2_cpp/include/rosbag2_cpp/storage_options.hpp
 #include "rosbag2_storage/storage_options.hpp"
+=======
+#include <memory>
+#include <string>
+#include <vector>
+#include <unordered_map>
+>>>>>>> 9ec61ea ([jazzy] Add computation of size contribution to info verb (backport #1726) (#1872)):rosbag2_py/src/rosbag2_py/format_service_info.hpp
 
 namespace rosbag2_cpp
 {
 
+<<<<<<< HEAD:rosbag2_cpp/include/rosbag2_cpp/storage_options.hpp
 using StorageOptions [[deprecated("use rosbag2_storage::StorageOptions instead")]] =
   rosbag2_storage::StorageOptions;
+=======
+std::string format_service_info(
+  std::vector<std::shared_ptr<rosbag2_cpp::rosbag2_service_info_t>> & service_info,
+  const std::unordered_map<std::string, uint64_t> & messages_size = {},
+  bool verbose = false);
+>>>>>>> 9ec61ea ([jazzy] Add computation of size contribution to info verb (backport #1726) (#1872)):rosbag2_py/src/rosbag2_py/format_service_info.hpp
 
 }  // namespace rosbag2_cpp
 #endif  // ROSBAG2_CPP__STORAGE_OPTIONS_HPP_

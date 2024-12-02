@@ -110,6 +110,8 @@ void format_file_paths(
 
 void format_topics_with_type(
   const std::vector<rosbag2_storage::TopicInformation> & topics,
+  const std::unordered_map<std::string, uint64_t> & messages_size,
+  bool verbose,
   std::stringstream & info_stream,
   int indentation_spaces)
 {
@@ -119,10 +121,18 @@ void format_topics_with_type(
   }
 
   auto print_topic_info =
-    [&info_stream](const rosbag2_storage::TopicInformation & ti) -> void {
+    [&info_stream, &messages_size, verbose](const rosbag2_storage::TopicInformation & ti) -> void {
       info_stream << "Topic: " << ti.topic_metadata.name << " | ";
       info_stream << "Type: " << ti.topic_metadata.type << " | ";
       info_stream << "Count: " << ti.message_count << " | ";
+      if (verbose) {
+        uint64_t topic_size = 0;
+        auto topic_size_iter = messages_size.find(ti.topic_metadata.name);
+        if (topic_size_iter != messages_size.end()) {
+          topic_size = topic_size_iter->second;
+        }
+        info_stream << "Size Contribution: " << format_file_size(topic_size) << " | ";
+      }
       info_stream << "Serialization Format: " << ti.topic_metadata.serialization_format;
       info_stream << std::endl;
     };
@@ -135,9 +145,101 @@ void format_topics_with_type(
   }
 }
 
+<<<<<<< HEAD
 }  // namespace
 
 std::string format_bag_meta_data(const rosbag2_storage::BagMetadata & metadata)
+=======
+struct ServiceMetadata
+{
+  std::string name;
+  std::string type;
+  std::string serialization_format;
+};
+
+struct ServiceInformation
+{
+  ServiceMetadata service_metadata;
+  size_t event_message_count = 0;
+};
+
+std::vector<std::shared_ptr<ServiceInformation>> filter_service_event_topic(
+  const std::vector<rosbag2_storage::TopicInformation> & topics_with_message_count,
+  size_t & total_service_event_msg_count)
+{
+  total_service_event_msg_count = 0;
+  std::vector<std::shared_ptr<ServiceInformation>> service_info_list;
+
+  for (auto & topic : topics_with_message_count) {
+    if (rosbag2_cpp::is_service_event_topic(
+        topic.topic_metadata.name, topic.topic_metadata.type))
+    {
+      auto service_info = std::make_shared<ServiceInformation>();
+      service_info->service_metadata.name =
+        rosbag2_cpp::service_event_topic_name_to_service_name(topic.topic_metadata.name);
+      service_info->service_metadata.type =
+        rosbag2_cpp::service_event_topic_type_to_service_type(topic.topic_metadata.type);
+      service_info->service_metadata.serialization_format =
+        topic.topic_metadata.serialization_format;
+      service_info->event_message_count = topic.message_count;
+      total_service_event_msg_count += topic.message_count;
+      service_info_list.emplace_back(service_info);
+    }
+  }
+
+  return service_info_list;
+}
+
+void format_service_with_type(
+  const std::vector<std::shared_ptr<ServiceInformation>> & services,
+  const std::unordered_map<std::string, uint64_t> & messages_size,
+  bool verbose,
+  std::stringstream & info_stream,
+  int indentation_spaces)
+{
+  if (services.empty()) {
+    info_stream << std::endl;
+    return;
+  }
+
+  auto print_service_info =
+    [&info_stream, &messages_size, verbose](
+    const std::shared_ptr<ServiceInformation> & si) -> void {
+      info_stream << "Service: " << si->service_metadata.name << " | ";
+      info_stream << "Type: " << si->service_metadata.type << " | ";
+      info_stream << "Event Count: " << si->event_message_count << " | ";
+      if (verbose) {
+        uint64_t service_size = 0;
+        auto service_size_iter = messages_size.find(
+          rosbag2_cpp::service_name_to_service_event_topic_name(si->service_metadata.name));
+        if (service_size_iter != messages_size.end()) {
+          service_size = service_size_iter->second;
+        }
+        info_stream << "Size Contribution: " << format_file_size(service_size) << " | ";
+      }
+      info_stream << "Serialization Format: " << si->service_metadata.serialization_format;
+      info_stream << std::endl;
+    };
+
+  print_service_info(services[0]);
+  auto number_of_services = services.size();
+  for (size_t j = 1; j < number_of_services; ++j) {
+    indent(info_stream, indentation_spaces);
+    print_service_info(services[j]);
+  }
+}
+
+}  // namespace
+
+namespace rosbag2_py
+{
+
+std::string format_bag_meta_data(
+  const rosbag2_storage::BagMetadata & metadata,
+  bool verbose,
+  bool only_topic,
+  const std::unordered_map<std::string, uint64_t> & messages_size)
+>>>>>>> 9ec61ea ([jazzy] Add computation of size contribution to info verb (backport #1726) (#1872))
 {
   auto start_time = metadata.starting_time.time_since_epoch();
   auto end_time = start_time + metadata.duration;
@@ -158,7 +260,19 @@ std::string format_bag_meta_data(const rosbag2_storage::BagMetadata & metadata)
   info_stream << "Messages:          " << metadata.message_count << std::endl;
   info_stream << "Topic information: ";
   format_topics_with_type(
-    metadata.topics_with_message_count, info_stream, indentation_spaces);
+    metadata.topics_with_message_count, messages_size, verbose, info_stream, indentation_spaces);
 
+<<<<<<< HEAD
+=======
+  if (!only_topic) {
+    info_stream << "Service:           " << service_info_list.size() << std::endl;
+    info_stream << "Service information: ";
+    if (!service_info_list.empty()) {
+      format_service_with_type(
+        service_info_list, messages_size, verbose, info_stream, indentation_spaces + 2);
+    }
+  }
+
+>>>>>>> 9ec61ea ([jazzy] Add computation of size contribution to info verb (backport #1726) (#1872))
   return info_stream.str();
 }

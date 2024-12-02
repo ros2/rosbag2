@@ -16,6 +16,11 @@
 #define ROSBAG2_CPP__INFO_HPP_
 
 #include <string>
+<<<<<<< HEAD
+=======
+#include <vector>
+#include <unordered_map>
+>>>>>>> 9ec61ea ([jazzy] Add computation of size contribution to info verb (backport #1726) (#1872))
 
 #include "rosbag2_cpp/visibility_control.hpp"
 
@@ -31,6 +36,15 @@ public:
 
   virtual rosbag2_storage::BagMetadata read_metadata(
     const std::string & uri, const std::string & storage_id = "");
+<<<<<<< HEAD
+=======
+
+  virtual std::vector<std::shared_ptr<rosbag2_service_info_t>> read_service_info(
+    const std::string & uri, const std::string & storage_id = "");
+
+  std::unordered_map<std::string, uint64_t> compute_messages_size_contribution(
+    const std::string & uri, const std::string & storage_id = "");
+>>>>>>> 9ec61ea ([jazzy] Add computation of size contribution to info verb (backport #1726) (#1872))
 };
 
 }  // namespace rosbag2_cpp
