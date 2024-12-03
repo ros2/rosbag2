@@ -81,11 +81,18 @@ public:
   ROSBAG2_CPP_PUBLIC
   bool sleep_until(rclcpp::Time until) override;
 
+  /**
+   * \return whether the clock is currently sleeping.
+   */
   ROSBAG2_CPP_PUBLIC
-  bool is_sleeping() override;
+  bool is_sleeping();
 
+  /**
+   * \brief Wake up the clock if it is sleeping.
+   * \note This will wake any waiting `sleep_until`.
+   */
   ROSBAG2_CPP_PUBLIC
-  void wakeup() override;
+  void wakeup();
 
   /**
    * Change the rate of the flow of time for the clock.
