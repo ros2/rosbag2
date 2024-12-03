@@ -55,15 +55,40 @@ public:
   std::shared_ptr<rosbag2_storage::SerializedBagMessage>
   serialize_test_message(
     const std::string & topic,
-    int64_t milliseconds,
+    int64_t milliseconds_recv,
+    std::shared_ptr<MessageT> message)
+  {
+    return serialize_test_message(topic, milliseconds_recv, 0, message);
+  }
+
+  template<typename MessageT>
+  std::shared_ptr<rosbag2_storage::SerializedBagMessage>
+  serialize_test_message(
+    const std::string & topic,
+    int64_t milliseconds_recv,
+    int64_t milliseconds_send,
     std::shared_ptr<MessageT> message)
   {
     auto bag_msg = std::make_shared<rosbag2_storage::SerializedBagMessage>();
     bag_msg->serialized_data = memory_management_.serialize_message(message);
-    bag_msg->recv_timestamp = milliseconds * 1000000;
+    bag_msg->recv_timestamp = milliseconds_recv * 1000000;
+    bag_msg->send_timestamp = milliseconds_send * 1000000;
     bag_msg->topic_name = topic;
 
     return bag_msg;
+  }
+
+  static std::string format_message_order(
+    const TestParamInfo<rosbag2_transport::MessageOrder> & info)
+  {
+    switch (info.param) {
+      case rosbag2_transport::MessageOrder::RECV_TIMESTAMP:
+        return "recv_timestamp";
+      case rosbag2_transport::MessageOrder::SEND_TIMESTAMP:
+        return "send_timestamp";
+      default:
+        throw std::runtime_error("unknown value");
+    }
   }
 
   MemoryManagement memory_management_;

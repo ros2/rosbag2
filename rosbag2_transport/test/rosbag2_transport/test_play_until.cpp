@@ -154,6 +154,48 @@ TEST_F(RosBag2PlayUntilTestFixture, play_until_less_than_the_total_duration)
   EXPECT_EQ(replayed_topic1[1]->int32_value, 1);
 }
 
+TEST_F(RosBag2PlayUntilTestFixture, play_until_less_than_the_total_duration_message_order)
+{
+  auto primitive_message1 = get_messages_basic_types()[0];
+  auto primitive_message2 = get_messages_basic_types()[0];
+  primitive_message1->int32_value = 1;
+  primitive_message2->int32_value = 2;
+
+  auto topic_types = std::vector<rosbag2_storage::TopicMetadata>{
+    {1u, kTopic1Name_, "test_msgs/BasicTypes", "", {}, ""}};
+
+  std::vector<std::shared_ptr<rosbag2_storage::SerializedBagMessage>> messages =
+  {
+    serialize_test_message(kTopic1Name_, 10, 5, primitive_message1),
+    serialize_test_message(kTopic1Name_, 50, 45, primitive_message2),
+  };
+
+  auto prepared_mock_reader = std::make_unique<MockSequentialReader>();
+  prepared_mock_reader->prepare(messages, topic_types);
+  auto reader = std::make_unique<rosbag2_cpp::Reader>(std::move(prepared_mock_reader));
+
+  // Expect to receive 2 messages from play() due to the send_timestamp order
+  sub_->add_subscription<test_msgs::msg::BasicTypes>(kTopic1_, 2u);
+  play_options_.playback_until_timestamp = RCL_MS_TO_NS(50) - 1;
+  play_options_.message_order = MessageOrder::SEND_TIMESTAMP;
+
+  std::shared_ptr<MockPlayer> player_ = std::make_shared<MockPlayer>(
+    std::move(reader), storage_options_, play_options_);
+
+  // Wait for discovery to match publishers with subscribers
+  ASSERT_TRUE(sub_->spin_and_wait_for_matched(player_->get_list_of_publishers(), 5s));
+
+  auto await_received_messages = sub_->spin_subscriptions();
+  ASSERT_TRUE(player_->play());
+  player_->wait_for_playback_to_finish();
+
+  await_received_messages.get();
+  auto replayed_topic1 = sub_->get_received_messages<test_msgs::msg::BasicTypes>(kTopic1_);
+  EXPECT_THAT(replayed_topic1, SizeIs(2));
+  EXPECT_EQ(replayed_topic1[0]->int32_value, 1);
+  EXPECT_EQ(replayed_topic1[1]->int32_value, 2);
+}
+
 TEST_F(
   RosBag2PlayUntilTestFixture,
   play_until_intermediate_duration_recorded_messages_with_filtered_topics)

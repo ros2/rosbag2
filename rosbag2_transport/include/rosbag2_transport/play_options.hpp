@@ -34,6 +34,14 @@ enum class ServiceRequestsSource : int8_t
   CLIENT_INTROSPECTION = 1
 };
 
+enum class MessageOrder : std::uint8_t
+{
+  // Order chronologically by message reception timestamp
+  RECV_TIMESTAMP = 0,
+  // Order chronologically by message publication timestamp
+  SEND_TIMESTAMP = 1
+};
+
 struct PlayOptions
 {
 public:
@@ -123,6 +131,12 @@ public:
 
   // The source of the service request
   ServiceRequestsSource service_requests_source = ServiceRequestsSource::SERVICE_INTROSPECTION;
+
+  // The reference to use for bag message chronological ordering.
+  // If messages are significantly disordered (within a single bag or across multiple bags),
+  // replayed messages may not be correctly ordered. A possible solution could be to increase the
+  // read_ahead_queue_size value to buffer (and order) more messages.
+  MessageOrder message_order = MessageOrder::RECV_TIMESTAMP;
 };
 
 }  // namespace rosbag2_transport

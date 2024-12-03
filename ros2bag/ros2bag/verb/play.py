@@ -26,6 +26,7 @@ from ros2bag.api import print_error
 from ros2bag.api import print_warn
 from ros2bag.verb import VerbExtension
 from ros2cli.node import NODE_NAME_PREFIX
+from rosbag2_py import MessageOrder
 from rosbag2_py import Player
 from rosbag2_py import PlayOptions
 from rosbag2_py import ServiceRequestsSource
@@ -167,6 +168,15 @@ class PlayVerb(VerbExtension):
                  'makes sense if the "--publish-service-requests" option is set. By default,'
                  ' the service requests replaying from recorded service introspection message.')
         parser.add_argument(
+            '--message-order', default='recv',
+            choices=['recv', 'send'],
+            help='The reference to use for bag message chronological ordering. Choices: reception '
+                 'timestamp, publication timestamp. Default: reception timestamp. '
+                 'If messages are significantly disordered (within a single bag or across '
+                 'multiple bags), replayed messages may not be correctly ordered. A possible '
+                 'solution could be to increase the read_ahead_queue_size value to buffer (and '
+                 'order) more messages.')
+        parser.add_argument(
             '--log-level', type=str, default='info',
             choices=['debug', 'info', 'warn', 'error', 'fatal'],
             help='Logging level.')
@@ -275,6 +285,11 @@ class PlayVerb(VerbExtension):
             play_options.service_requests_source = ServiceRequestsSource.SERVICE_INTROSPECTION
         else:
             play_options.service_requests_source = ServiceRequestsSource.CLIENT_INTROSPECTION
+        # argparse makes sure that we get a valid arg value
+        play_options.message_order = {
+            'recv': MessageOrder.RECV_TIMESTAMP,
+            'send': MessageOrder.SEND_TIMESTAMP,
+        }.get(args.message_order)
 
         player = Player(args.log_level)
         try:

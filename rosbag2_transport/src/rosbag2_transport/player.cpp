@@ -303,6 +303,8 @@ private:
   void create_control_services();
   void configure_play_until_timestamp();
   bool shall_stop_at_timestamp(const rcutils_time_point_value_t & msg_timestamp) const;
+  rcutils_time_point_value_t get_message_order_timestamp(
+    const rosbag2_storage::SerializedBagMessageSharedPtr & message) const;
 
   static constexpr double read_ahead_lower_bound_percentage_ = 0.9;
   static const std::chrono::milliseconds queue_read_wait_period_;
@@ -320,7 +322,7 @@ private:
   rosbag2_transport::PlayOptions play_options_;
   rcutils_time_point_value_t play_until_timestamp_ = -1;
   using BagMessageComparator = std::function<
-    int(
+    bool(
       const rosbag2_storage::SerializedBagMessageSharedPtr &,
       const rosbag2_storage::SerializedBagMessageSharedPtr &)>;
   LockedPriorityQueue<
@@ -372,6 +374,8 @@ private:
 
   std::shared_ptr<PlayerServiceClientManager> player_service_client_manager_;
 
+  static BagMessageComparator get_bag_message_comparator(const MessageOrder & order);
+
   /// Comparator for SerializedBagMessageSharedPtr to order chronologically by recv_timestamp.
   struct
   {
@@ -381,8 +385,38 @@ private:
     {
       return l->recv_timestamp > r->recv_timestamp;
     }
-  } bag_message_chronological_recv_timestamp_comparator;
+  } static bag_message_chronological_recv_timestamp_comparator;
+
+  /// Comparator for SerializedBagMessageSharedPtr to order chronologically by send_timestamp.
+  struct
+  {
+    bool operator()(
+      const rosbag2_storage::SerializedBagMessageSharedPtr & l,
+      const rosbag2_storage::SerializedBagMessageSharedPtr & r) const
+    {
+      return l->send_timestamp > r->send_timestamp;
+    }
+  } static bag_message_chronological_send_timestamp_comparator;
 };
+
+decltype(PlayerImpl::bag_message_chronological_recv_timestamp_comparator)
+PlayerImpl::bag_message_chronological_recv_timestamp_comparator;
+decltype(PlayerImpl::bag_message_chronological_send_timestamp_comparator)
+PlayerImpl::bag_message_chronological_send_timestamp_comparator;
+
+PlayerImpl::BagMessageComparator PlayerImpl::get_bag_message_comparator(const MessageOrder & order)
+{
+  switch (order) {
+    case MessageOrder::RECV_TIMESTAMP:
+      return bag_message_chronological_recv_timestamp_comparator;
+    case MessageOrder::SEND_TIMESTAMP:
+      return bag_message_chronological_send_timestamp_comparator;
+    default:
+      throw std::runtime_error(
+        "unknown MessageOrder: " +
+        std::to_string(static_cast<std::underlying_type_t<MessageOrder>>(order)));
+  }
+}
 
 PlayerImpl::PlayerImpl(
   Player * owner,
@@ -392,7 +426,7 @@ PlayerImpl::PlayerImpl(
 : readers_with_options_(std::move(readers_with_options)),
   owner_(owner),
   play_options_(play_options),
-  message_queue_(bag_message_chronological_recv_timestamp_comparator),
+  message_queue_(get_bag_message_comparator(play_options_.message_order)),
   keyboard_handler_(std::move(keyboard_handler)),
   player_service_client_manager_(std::make_shared<PlayerServiceClientManager>())
 {
@@ -984,13 +1018,13 @@ void PlayerImpl::play_messages_from_queue()
   while (rclcpp::ok() && !stop_playback_) {
     // While there's a message to play and we haven't reached the end timestamp yet
     while (rclcpp::ok() && !stop_playback_ &&
-      message_ptr != nullptr && !shall_stop_at_timestamp(message_ptr->recv_timestamp))
+      message_ptr != nullptr && !shall_stop_at_timestamp(get_message_order_timestamp(message_ptr)))
     {
       // Sleep until the message's replay time, do not move on until sleep_until returns true
       // It will always sleep, so this is not a tight busy loop on pause
       // However, skip sleeping if we're trying to play the next message
       while (rclcpp::ok() && !stop_playback_ && !play_next_.load() &&
-        !clock_->sleep_until(message_ptr->recv_timestamp))
+        !clock_->sleep_until(get_message_order_timestamp(message_ptr)))
       {
         // Stop sleeping if cancelled
         if (std::atomic_exchange(&cancel_wait_for_next_message_, false)) {
@@ -1012,7 +1046,7 @@ void PlayerImpl::play_messages_from_queue()
         const bool message_published = publish_message(message_ptr);
         // If we tried to publish because of play_next(), jump the clock
         if (play_next_.load()) {
-          clock_->jump(message_ptr->recv_timestamp);
+          clock_->jump(get_message_order_timestamp(message_ptr));
           // If we successfully played next, notify that we're done, otherwise keep trying
           if (message_published) {
             play_next_ = false;
@@ -1055,6 +1089,22 @@ void PlayerImpl::play_messages_from_queue()
       cancel_wait_for_next_message_ = false;
       message_ptr = take_next_message_from_queue();
     }
+  }
+}
+
+rcutils_time_point_value_t PlayerImpl::get_message_order_timestamp(
+  const rosbag2_storage::SerializedBagMessageSharedPtr & message) const
+{
+  switch (play_options_.message_order) {
+    case MessageOrder::RECV_TIMESTAMP:
+      return message->recv_timestamp;
+    case MessageOrder::SEND_TIMESTAMP:
+      return message->send_timestamp;
+    default:
+      throw std::runtime_error(
+        "unknown MessageOrder: " +
+        std::to_string(
+          static_cast<std::underlying_type_t<MessageOrder>>(play_options_.message_order)));
   }
 }
 

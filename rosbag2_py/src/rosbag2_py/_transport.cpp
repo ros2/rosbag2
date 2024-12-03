@@ -560,11 +560,17 @@ PYBIND11_MODULE(_transport, m) {
   .def_readwrite("disable_loan_message", &PlayOptions::disable_loan_message)
   .def_readwrite("publish_service_requests", &PlayOptions::publish_service_requests)
   .def_readwrite("service_requests_source", &PlayOptions::service_requests_source)
+  .def_readwrite("message_order", &PlayOptions::message_order)
   ;
 
   py::enum_<rosbag2_transport::ServiceRequestsSource>(m, "ServiceRequestsSource")
   .value("SERVICE_INTROSPECTION", rosbag2_transport::ServiceRequestsSource::SERVICE_INTROSPECTION)
   .value("CLIENT_INTROSPECTION", rosbag2_transport::ServiceRequestsSource::CLIENT_INTROSPECTION)
+  ;
+
+  py::enum_<rosbag2_transport::MessageOrder>(m, "MessageOrder")
+  .value("RECV_TIMESTAMP", rosbag2_transport::MessageOrder::RECV_TIMESTAMP)
+  .value("SEND_TIMESTAMP", rosbag2_transport::MessageOrder::SEND_TIMESTAMP)
   ;
 
   py::class_<RecordOptions>(m, "RecordOptions")
