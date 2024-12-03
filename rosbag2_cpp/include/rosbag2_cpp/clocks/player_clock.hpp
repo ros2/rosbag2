@@ -78,6 +78,19 @@ public:
   virtual bool sleep_until(rclcpp::Time time) = 0;
 
   /**
+   * \return whether the clock is currently sleeping.
+   */
+  ROSBAG2_CPP_PUBLIC
+  virtual bool is_sleeping() = 0;
+
+  /**
+   * \brief Wake up the clock if it is sleeping.
+   * \note This will wake any waiting `sleep_until`.
+   */
+  ROSBAG2_CPP_PUBLIC
+  virtual void wakeup() = 0;
+
+  /**
    * Change the rate of the flow of time for the clock.
    * \param rate new rate of clock playback
    * \bool false if rate is invalid for the clock implementation
