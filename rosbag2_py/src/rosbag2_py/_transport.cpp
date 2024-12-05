@@ -569,7 +569,7 @@ PYBIND11_MODULE(_transport, m) {
   ;
 
   py::enum_<rosbag2_transport::MessageOrder>(m, "MessageOrder")
-  .value("RECV_TIMESTAMP", rosbag2_transport::MessageOrder::RECV_TIMESTAMP)
+  .value("RECEIVED_TIMESTAMP", rosbag2_transport::MessageOrder::RECEIVED_TIMESTAMP)
   .value("SEND_TIMESTAMP", rosbag2_transport::MessageOrder::SEND_TIMESTAMP)
   ;
 

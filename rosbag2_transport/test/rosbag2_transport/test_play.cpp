@@ -231,7 +231,7 @@ TEST_P(RosBag2PlayTestFixtureMessageOrder, recorded_msgs_are_played_for_all_topi
   const auto get_timestamp =
     [message_order](std::shared_ptr<rosbag2_storage::SerializedBagMessage> msg) {
       switch (message_order) {
-        case rosbag2_transport::MessageOrder::RECV_TIMESTAMP:
+        case rosbag2_transport::MessageOrder::RECEIVED_TIMESTAMP:
           return msg->recv_timestamp;
         case rosbag2_transport::MessageOrder::SEND_TIMESTAMP:
           return msg->send_timestamp;
@@ -256,7 +256,7 @@ INSTANTIATE_TEST_SUITE_P(
   ParametrizedPlayTests,
   RosBag2PlayTestFixtureMessageOrder,
   Values(
-    rosbag2_transport::MessageOrder::RECV_TIMESTAMP,
+    rosbag2_transport::MessageOrder::RECEIVED_TIMESTAMP,
     rosbag2_transport::MessageOrder::SEND_TIMESTAMP
   ),
   Rosbag2TransportTestFixture::format_message_order

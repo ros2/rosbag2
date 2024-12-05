@@ -407,7 +407,7 @@ PlayerImpl::bag_message_chronological_send_timestamp_comparator;
 PlayerImpl::BagMessageComparator PlayerImpl::get_bag_message_comparator(const MessageOrder & order)
 {
   switch (order) {
-    case MessageOrder::RECV_TIMESTAMP:
+    case MessageOrder::RECEIVED_TIMESTAMP:
       return bag_message_chronological_recv_timestamp_comparator;
     case MessageOrder::SEND_TIMESTAMP:
       return bag_message_chronological_send_timestamp_comparator;
@@ -1096,7 +1096,7 @@ rcutils_time_point_value_t PlayerImpl::get_message_order_timestamp(
   const rosbag2_storage::SerializedBagMessageSharedPtr & message) const
 {
   switch (play_options_.message_order) {
-    case MessageOrder::RECV_TIMESTAMP:
+    case MessageOrder::RECEIVED_TIMESTAMP:
       return message->recv_timestamp;
     case MessageOrder::SEND_TIMESTAMP:
       return message->send_timestamp;

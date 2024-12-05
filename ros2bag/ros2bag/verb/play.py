@@ -168,8 +168,8 @@ class PlayVerb(VerbExtension):
                  'makes sense if the "--publish-service-requests" option is set. By default,'
                  ' the service requests replaying from recorded service introspection message.')
         parser.add_argument(
-            '--message-order', default='recv',
-            choices=['recv', 'send'],
+            '--message-order', default='received',
+            choices=['received', 'send'],
             help='The reference to use for bag message chronological ordering. Choices: reception '
                  'timestamp, publication timestamp. Default: reception timestamp. '
                  'If messages are significantly disordered (within a single bag or across '
@@ -287,7 +287,7 @@ class PlayVerb(VerbExtension):
             play_options.service_requests_source = ServiceRequestsSource.CLIENT_INTROSPECTION
         # argparse makes sure that we get a valid arg value
         play_options.message_order = {
-            'recv': MessageOrder.RECV_TIMESTAMP,
+            'received': MessageOrder.RECEIVED_TIMESTAMP,
             'send': MessageOrder.SEND_TIMESTAMP,
         }.get(args.message_order)
 

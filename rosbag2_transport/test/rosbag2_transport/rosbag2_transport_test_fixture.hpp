@@ -82,7 +82,7 @@ public:
     const TestParamInfo<rosbag2_transport::MessageOrder> & info)
   {
     switch (info.param) {
-      case rosbag2_transport::MessageOrder::RECV_TIMESTAMP:
+      case rosbag2_transport::MessageOrder::RECEIVED_TIMESTAMP:
         return "recv_timestamp";
       case rosbag2_transport::MessageOrder::SEND_TIMESTAMP:
         return "send_timestamp";
