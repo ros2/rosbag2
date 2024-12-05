@@ -237,6 +237,21 @@ PlayOptions get_play_options_from_node_params(rclcpp::Node & node)
   play_options.publish_service_requests =
     node.declare_parameter<bool>("play.publish_service_request", false);
 
+  auto message_order =
+    node.declare_parameter<std::string>("play.message_order", "RECEIVED_TIMESTAMP");
+  if (message_order == "RECEIVED_TIMESTAMP") {
+    play_options.message_order = MessageOrder::RECEIVED_TIMESTAMP;
+  } else if (message_order == "SEND_TIMESTAMP") {
+    play_options.message_order = MessageOrder::SEND_TIMESTAMP;
+  } else {
+    play_options.message_order = MessageOrder::RECEIVED_TIMESTAMP;
+    RCLCPP_ERROR(
+      node.get_logger(),
+      "play.message_order doesn't support %s. It must be one of RECEIVED_TIMESTAMP"
+      " and SEND_TIMESTAMP. Changed it to default value RECEIVED_TIMESTAMP.",
+      message_order.c_str());
+  }
+
   return play_options;
 }
 

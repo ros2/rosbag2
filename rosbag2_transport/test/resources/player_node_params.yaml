@@ -39,6 +39,7 @@ player_params_node:
       disable_loan_message: false
       publish_service_requests: false
       service_requests_source: "CLIENT_INTROSPECTION" # SERVICE_INTROSPECTION or CLIENT_INTROSPECTION
+      message_order: "SEND_TIMESTAMP" # RECEIVED_TIMESTAMP or SEND_TIMESTAMP
 
     storage:
       uri: "path/to/some_bag"
