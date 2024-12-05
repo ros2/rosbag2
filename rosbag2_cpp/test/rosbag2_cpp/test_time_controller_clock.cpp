@@ -211,6 +211,32 @@ TEST_F(TimeControllerClockTest, interrupted_sleep_returns_false_immediately)
   EXPECT_FALSE(thread_sleep_result);
 }
 
+TEST_F(TimeControllerClockTest, wakeup_sleep_returns_immediately)
+{
+  // Use a bigger value for sleep_time_while_paused
+  auto sleep_time_while_paused = std::chrono::seconds(30);
+  rosbag2_cpp::TimeControllerClock clock(ros_start_time, now_fn, sleep_time_while_paused);
+  clock.pause();
+  EXPECT_FALSE(clock.is_sleeping());
+  auto steady_start = std::chrono::steady_clock::now();
+  std::atomic_bool thread_sleep_result{true};
+  auto sleep_long_thread = std::thread(
+    [&clock, &thread_sleep_result]() {
+      bool sleep_result = clock.sleep_until(clock.now() + RCUTILS_S_TO_NS(10));
+      thread_sleep_result.store(sleep_result);
+    });
+  // Wait for the thread to be sleeping for the purposes of this test
+  while (!clock.is_sleeping()) {
+    std::this_thread::sleep_for(std::chrono::milliseconds(1));
+  }
+  clock.wakeup();
+  sleep_long_thread.join();
+  EXPECT_FALSE(clock.is_sleeping());
+  // Check that the clock slept less than the sleep_time_while_paused value
+  EXPECT_LT(std::chrono::steady_clock::now() - steady_start, sleep_time_while_paused);
+  EXPECT_FALSE(thread_sleep_result);
+}
+
 TEST_F(TimeControllerClockTest, resumes_at_correct_ros_time)
 {
   rosbag2_cpp::TimeControllerClock clock(ros_start_time, now_fn);

@@ -123,6 +123,7 @@ public:
   std::condition_variable cv RCPPUTILS_TSA_GUARDED_BY(state_mutex);
   double rate RCPPUTILS_TSA_GUARDED_BY(state_mutex) = 1.0;
   bool paused RCPPUTILS_TSA_GUARDED_BY(state_mutex) = false;
+  bool is_sleeping RCPPUTILS_TSA_GUARDED_BY(state_mutex) = false;
   TimeReference reference RCPPUTILS_TSA_GUARDED_BY(state_mutex);
 };
 
@@ -165,12 +166,16 @@ bool TimeControllerClock::sleep_until(rcutils_time_point_value_t until)
   {
     rcpputils::unique_lock<std::mutex> lock(impl_->state_mutex);
     if (impl_->paused) {
+      impl_->is_sleeping = true;
       impl_->cv.wait_for(lock, impl_->sleep_time_while_paused);
+      impl_->is_sleeping = false;
     } else {
       const auto steady_until = impl_->ros_to_steady(until);
       // wait only if necessary for performance
       if (steady_until > impl_->now_fn()) {
+        impl_->is_sleeping = true;
         impl_->cv.wait_until(lock, steady_until);
+        impl_->is_sleeping = false;
       }
     }
     if (impl_->paused) {
@@ -185,6 +190,17 @@ bool TimeControllerClock::sleep_until(rcutils_time_point_value_t until)
 bool TimeControllerClock::sleep_until(rclcpp::Time until)
 {
   return sleep_until(until.nanoseconds());
+}
+
+bool TimeControllerClock::is_sleeping()
+{
+  std::lock_guard<std::mutex> lock(impl_->state_mutex);
+  return impl_->is_sleeping;
+}
+
+void TimeControllerClock::wakeup()
+{
+  impl_->cv.notify_all();
 }
 
 bool TimeControllerClock::set_rate(double rate)

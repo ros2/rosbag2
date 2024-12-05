@@ -23,12 +23,12 @@
 #include "rclcpp/rclcpp.hpp"
 
 #include "rosbag2_test_common/publication_manager.hpp"
-#include "rosbag2_test_common/client_manager.hpp"
 #include "rosbag2_test_common/wait_for.hpp"
 
 #include "rosbag2_transport/recorder.hpp"
 
 #include "test_msgs/msg/arrays.hpp"
+#include "test_msgs/msg/basic_types.hpp"
 #include "test_msgs/message_fixtures.hpp"
 
 #include "rosbag2_storage/qos.hpp"
@@ -123,14 +123,18 @@ TEST_F(RecordIntegrationTestFixture, published_messages_from_multiple_topics_are
 
 TEST_F(RecordIntegrationTestFixture, can_record_again_after_stop)
 {
-  auto string_message = get_messages_strings()[1];
-  std::string string_topic = "/string_topic";
+  auto basic_type_message = get_messages_basic_types()[0];
+  basic_type_message->uint64_value = 5;
+  basic_type_message->int64_value = -1;
+  std::string test_topic = "/can_record_again_after_stop_topic";
+  const size_t num_messages_to_publish = 2;
 
   rosbag2_test_common::PublicationManager pub_manager;
-  pub_manager.setup_publisher(string_topic, string_message, 2);
+  pub_manager.setup_publisher(
+    test_topic, basic_type_message, num_messages_to_publish, rclcpp::QoS{rclcpp::KeepAll()}, 50ms);
 
   rosbag2_transport::RecordOptions record_options =
-  {false, false, false, {string_topic}, {}, {}, {}, {}, {}, "rmw_format", 50ms};
+  {false, false, false, {test_topic}, {}, {}, {}, {}, {}, "rmw_format", 50ms};
   auto recorder = std::make_shared<rosbag2_transport::Recorder>(
     std::move(writer_), storage_options_, record_options);
   recorder->record();
@@ -141,7 +145,7 @@ TEST_F(RecordIntegrationTestFixture, can_record_again_after_stop)
   auto & writer = recorder->get_writer_handle();
   auto & mock_writer = dynamic_cast<MockSequentialWriter &>(writer.get_implementation_handle());
 
-  ASSERT_TRUE(pub_manager.wait_for_matched(string_topic.c_str()));
+  ASSERT_TRUE(pub_manager.wait_for_matched(test_topic.c_str()));
 
   pub_manager.run_publishers();
 
@@ -152,7 +156,7 @@ TEST_F(RecordIntegrationTestFixture, can_record_again_after_stop)
   // Record one more time after stop()
   recorder->record();
 
-  ASSERT_TRUE(pub_manager.wait_for_matched(string_topic.c_str()));
+  ASSERT_TRUE(pub_manager.wait_for_matched(test_topic.c_str()));
   pub_manager.run_publishers();
 
   // 4 because we're running recorder->record() and publishers twice
@@ -166,6 +170,16 @@ TEST_F(RecordIntegrationTestFixture, can_record_again_after_stop)
   EXPECT_TRUE(ret) << "failed to capture expected messages in time";
   EXPECT_THAT(recorded_messages, SizeIs(expected_messages));
 
+  // Output debug info if test fails
+  if (recorded_messages.size() != expected_messages) {
+    for (size_t i = 0; i < recorded_messages.size(); i++) {
+      std::cerr << "=> recorded_messages[" << i << "].send_timestamp = " <<
+        recorded_messages[i]->send_timestamp << std::endl;
+      std::cerr << "recorded_messages[" << i << "].recv_timestamp = " <<
+        recorded_messages[i]->recv_timestamp << std::endl;
+    }
+  }
+
   auto recorded_topics = mock_writer.get_topics();
   EXPECT_THAT(recorded_topics, SizeIs(1)) << "size=" << recorded_topics.size();
   if (recorded_topics.size() != 1) {
@@ -173,13 +187,25 @@ TEST_F(RecordIntegrationTestFixture, can_record_again_after_stop)
       std::cerr << "recorded topic name : " << topic.first << std::endl;
     }
   }
-  EXPECT_THAT(recorded_topics.at(string_topic).first.serialization_format, Eq("rmw_format"));
+  EXPECT_THAT(recorded_topics.at(test_topic).first.serialization_format, Eq("rmw_format"));
 
-  auto string_messages =
-    filter_messages<test_msgs::msg::Strings>(recorded_messages, string_topic);
-  EXPECT_THAT(string_messages, SizeIs(4));
-  for (const auto & str_msg : string_messages) {
-    EXPECT_THAT(str_msg->string_value, Eq(string_message->string_value));
+  auto basic_type_messages =
+    filter_messages<test_msgs::msg::BasicTypes>(recorded_messages, test_topic);
+  EXPECT_THAT(basic_type_messages, SizeIs(expected_messages));
+
+  // Output debug info if test fails
+  if (basic_type_messages.size() != expected_messages) {
+    for (size_t i = 0; i < basic_type_messages.size(); i++) {
+      std::cerr << "=> basic_type_messages[" << i << "].uint64_value = " <<
+        basic_type_messages[i]->uint64_value << std::endl;
+      std::cerr << "basic_type_messages[" << i << "].int64_value = " <<
+        basic_type_messages[i]->int64_value << std::endl;
+    }
+  }
+
+  for (size_t i = 0; i < basic_type_messages.size(); i++) {
+    const uint64_t expected_u64_value = i % num_messages_to_publish;
+    EXPECT_THAT(basic_type_messages[i]->uint64_value, Eq(expected_u64_value));
   }
 }
 

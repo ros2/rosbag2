@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <package format="2">
   <name>rosbag2_cpp</name>
-  <version>0.29.0</version>
+  <version>0.30.0</version>
   <description>C++ ROSBag2 client library</description>
   <maintainer email="michael.orlov@apex.ai">Michael Orlov</maintainer>
   <maintainer email="geoff@openrobotics.org">Geoffrey Biggs</maintainer>
@@ -24,7 +24,6 @@
   <depend>rosidl_runtime_cpp</depend>
   <depend>rosidl_typesupport_cpp</depend>
   <depend>rosidl_typesupport_introspection_cpp</depend>
-  <depend>shared_queues_vendor</depend>
 
   <test_depend>rosbag2_storage_default_plugins</test_depend>
   <test_depend>ament_cmake_gmock</test_depend>

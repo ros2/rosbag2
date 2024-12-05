@@ -24,6 +24,7 @@
 #include <vector>
 
 #include "rclcpp/rclcpp.hpp"  // rclcpp must be included before the Windows specific includes.
+#include "test_msgs/msg/basic_types.hpp"
 
 using namespace std::chrono_literals;  // NOLINT
 
@@ -157,6 +158,39 @@ private:
   using PublicationF = std::function<void (bool)>;
   std::vector<std::pair<rclcpp::PublisherBase::SharedPtr, PublicationF>> publishers_;
 };
+
+/// \brief Template specialization with test_msgs::msg::BasicTypes.
+/// \details Will assign current repetition number to the message->uint64_value and timestamp
+/// from steady clock to the message->int64_value for each publishing message.
+template<>
+void PublicationManager::setup_publisher(
+  const std::string & topic_name,
+  const test_msgs::msg::BasicTypes & message,
+  const size_t repetition,
+  const rclcpp::QoS & qos,
+  const std::chrono::milliseconds interval)
+{
+  auto publisher = pub_node_->create_publisher<test_msgs::msg::BasicTypes>(topic_name, qos);
+
+  auto publisher_fcn = [publisher, message, repetition, interval](bool verbose = false) {
+      for (auto i = 0u; i < repetition; ++i) {
+        if (rclcpp::ok()) {
+          test_msgs::msg::BasicTypes pub_message = message;
+          pub_message.uint64_value = i;
+          pub_message.int64_value = std::chrono::steady_clock::now().time_since_epoch().count();
+          publisher->publish(pub_message);
+          if (verbose) {
+            RCLCPP_INFO(
+            rclcpp::get_logger("publication_manager"),
+            "publish on topic %s", publisher->get_topic_name());
+          }
+          std::this_thread::sleep_for(interval);
+        }
+      }
+    };
+
+  publishers_.push_back(std::make_pair(publisher, publisher_fcn));
+}
 
 }  // namespace rosbag2_test_common
 

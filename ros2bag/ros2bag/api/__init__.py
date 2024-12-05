@@ -21,6 +21,7 @@ from argparse import (
 import os
 from typing import Any
 from typing import Dict
+from typing import List
 from typing import Optional
 
 from rclpy.duration import Duration
@@ -158,13 +159,102 @@ def check_not_negative_int(arg: str) -> int:
 
 
 def add_standard_reader_args(parser: ArgumentParser) -> None:
+    """
+    Add arguments for one input bag.
+
+    :param parser: the parser
+    """
     reader_choices = rosbag2_py.get_registered_readers()
     parser.add_argument(
-        'bag_path', type=check_path_exists, help='Bag to open')
+        'bag_path',
+        nargs=None,
+        type=check_path_exists,
+        help='Bag to open.')
     parser.add_argument(
         '-s', '--storage', default='', choices=reader_choices,
         help='Storage implementation of bag. '
              'By default attempts to detect automatically - use this argument to override.')
+
+
+def add_standard_multi_reader_args(parser: ArgumentParser) -> None:
+    """
+    Add arguments for multiple input bags.
+
+    :param parser: the parser
+    """
+    # Let user provide an input bag path using an optional positional arg, but require them to use
+    # --input to provide an input bag with a specific storage ID
+    reader_choices = rosbag2_py.get_registered_readers()
+    parser.add_argument(
+        'bag_path',
+        nargs='?',
+        type=check_path_exists,
+        help='Bag to open. '
+             'Use --input instead to provide an input bag with a specific storage ID.')
+    parser.add_argument(
+        '-s', '--storage', default='', choices=reader_choices,
+        help='Storage implementation of bag. '
+             'By default attempts to detect automatically - use this argument to override.'
+             ' (deprecated: use --input to provide an input bag with a specific storage ID)')
+    add_multi_bag_input_arg(parser, required=False)
+
+
+def add_multi_bag_input_arg(parser: ArgumentParser, required: bool = False) -> None:
+    """
+    Add option for list of input bags.
+
+    :param parser: the parser
+    :param required: whether this option should be required
+    """
+    reader_choices = ', '.join(rosbag2_py.get_registered_readers())
+    parser.add_argument(
+        '-i', '--input',
+        required=required,
+        action='append', nargs='+',
+        metavar=('uri', 'storage_id'),
+        help='URI (and optional storage ID) of an input bag. '
+             'May be provided more than once for multiple input bags. '
+             f'Storage ID options are: {reader_choices}.')
+
+
+def input_bag_arg_to_storage_options(
+    input_arg: List[List[str]],
+    storage_config_file: Optional[str] = None,
+) -> List[rosbag2_py.StorageOptions]:
+    """
+    Convert input bag argument value(s) to list of StorageOptions.
+
+    Raises ValueError if validation fails, including:
+    1. Bag path existence
+    2. Storage ID
+    3. Storage config file existence
+
+    :param input_arg: the values of the input argument
+    :param storage_config_file: the storage config file, if any
+    """
+    if storage_config_file and not os.path.exists(storage_config_file):
+        raise ValueError(f"File '{storage_config_file}' does not exist!")
+    storage_id_options = rosbag2_py.get_registered_readers()
+    storage_options = []
+    for input_bag_info in input_arg:
+        if len(input_bag_info) > 2:
+            raise ValueError(
+                f'--input expects 1 or 2 arguments, {len(input_bag_info)} provided')
+        bag_path = input_bag_info[0]
+        if not os.path.exists(bag_path):
+            raise ValueError(f"Bag path '{bag_path}' does not exist!")
+        storage_id = input_bag_info[1] if len(input_bag_info) > 1 else ''
+        if storage_id and storage_id not in storage_id_options:
+            raise ValueError(
+                f"Unknown storage ID '{storage_id}', options are: {', '.join(storage_id_options)}")
+        options = rosbag2_py.StorageOptions(
+            uri=bag_path,
+            storage_id=storage_id,
+        )
+        if storage_config_file:
+            options.storage_config_uri = storage_config_file
+        storage_options.append(options)
+    return storage_options
 
 
 def _parse_cli_storage_plugin():

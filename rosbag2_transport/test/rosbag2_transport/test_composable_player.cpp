@@ -136,7 +136,7 @@ TEST_P(ComposablePlayerTests, player_can_parse_parameters_from_file) {
 
   auto player = std::make_shared<MockPlayer>("player_params_node", opts);
   auto play_options = player->get_play_options();
-  auto storage_options = player->get_storage_options();
+  auto storage_options = player->get_all_storage_options();
 
   EXPECT_EQ(play_options.read_ahead_queue_size, 3);
   EXPECT_EQ(play_options.node_prefix, "test");
@@ -178,19 +178,20 @@ TEST_P(ComposablePlayerTests, player_can_parse_parameters_from_file) {
     play_options.service_requests_source,
     rosbag2_transport::ServiceRequestsSource::CLIENT_INTROSPECTION);
 
-  EXPECT_EQ(storage_options.uri, uri_str);
-  EXPECT_EQ(storage_options.storage_id, GetParam());
-  EXPECT_EQ(storage_options.storage_config_uri, "");
-  EXPECT_EQ(storage_options.max_bagfile_size, 12345);
-  EXPECT_EQ(storage_options.max_bagfile_duration, 54321);
-  EXPECT_EQ(storage_options.max_cache_size, 9898);
-  EXPECT_EQ(storage_options.storage_preset_profile, "resilient");
-  EXPECT_EQ(storage_options.snapshot_mode, false);
+  ASSERT_EQ(1, storage_options.size());
+  EXPECT_EQ(storage_options[0].uri, uri_str);
+  EXPECT_EQ(storage_options[0].storage_id, GetParam());
+  EXPECT_EQ(storage_options[0].storage_config_uri, "");
+  EXPECT_EQ(storage_options[0].max_bagfile_size, 12345);
+  EXPECT_EQ(storage_options[0].max_bagfile_duration, 54321);
+  EXPECT_EQ(storage_options[0].max_cache_size, 9898);
+  EXPECT_EQ(storage_options[0].storage_preset_profile, "resilient");
+  EXPECT_EQ(storage_options[0].snapshot_mode, false);
   std::unordered_map<std::string, std::string> custom_data{
     std::pair{"key1", "value1"},
     std::pair{"key2", "value2"}
   };
-  EXPECT_EQ(storage_options.custom_data, custom_data);
+  EXPECT_EQ(storage_options[0].custom_data, custom_data);
 }
 
 TEST_P(ComposablePlayerIntegrationTests, player_can_automatically_play_file_after_composition) {
