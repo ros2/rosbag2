@@ -110,8 +110,7 @@ void spin_thread_and_wait_for_sent_service_requests_to_finish(
 }  // namespace
 
 class RosBag2PlayTestFixtureMessageOrder
-  : public RosBag2PlayTestFixture, public WithParamInterface<rosbag2_transport::MessageOrder>
-{};
+  : public RosBag2PlayTestFixture, public WithParamInterface<rosbag2_transport::MessageOrder> {};
 
 TEST_F(RosBag2PlayTestFixture, recorded_messages_are_played_for_all_topics)
 {
@@ -178,8 +177,7 @@ TEST_F(RosBag2PlayTestFixture, recorded_messages_are_played_for_all_topics)
           ElementsAre(40.0f, 2.0f, 0.0f)))));
 }
 
-TEST_P(
-  RosBag2PlayTestFixtureMessageOrder, recorded_messages_are_played_for_all_topics_from_three_bags)
+TEST_P(RosBag2PlayTestFixtureMessageOrder, recorded_msgs_are_played_for_all_topics_from_three_bags)
 {
   auto msg = get_messages_basic_types()[0];
   msg->int32_value = 42;
