@@ -374,7 +374,7 @@ private:
 
   std::shared_ptr<PlayerServiceClientManager> player_service_client_manager_;
 
-  static BagMessageComparator get_bag_message_comparator(const MessageOrder & order);
+  BagMessageComparator get_bag_message_comparator(const MessageOrder & order);
 
   /// Comparator for SerializedBagMessageSharedPtr to order chronologically by recv_timestamp.
   struct
@@ -385,7 +385,7 @@ private:
     {
       return l->recv_timestamp > r->recv_timestamp;
     }
-  } static bag_message_chronological_recv_timestamp_comparator;
+  } bag_message_chronological_recv_timestamp_comparator;
 
   /// Comparator for SerializedBagMessageSharedPtr to order chronologically by send_timestamp.
   struct
@@ -396,13 +396,8 @@ private:
     {
       return l->send_timestamp > r->send_timestamp;
     }
-  } static bag_message_chronological_send_timestamp_comparator;
+  } bag_message_chronological_send_timestamp_comparator;
 };
-
-decltype(PlayerImpl::bag_message_chronological_recv_timestamp_comparator)
-PlayerImpl::bag_message_chronological_recv_timestamp_comparator;
-decltype(PlayerImpl::bag_message_chronological_send_timestamp_comparator)
-PlayerImpl::bag_message_chronological_send_timestamp_comparator;
 
 PlayerImpl::BagMessageComparator PlayerImpl::get_bag_message_comparator(const MessageOrder & order)
 {
