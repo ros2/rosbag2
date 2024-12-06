@@ -399,11 +399,6 @@ private:
   } static bag_message_chronological_send_timestamp_comparator;
 };
 
-decltype(PlayerImpl::bag_message_chronological_recv_timestamp_comparator)
-PlayerImpl::bag_message_chronological_recv_timestamp_comparator;
-decltype(PlayerImpl::bag_message_chronological_send_timestamp_comparator)
-PlayerImpl::bag_message_chronological_send_timestamp_comparator;
-
 PlayerImpl::BagMessageComparator PlayerImpl::get_bag_message_comparator(const MessageOrder & order)
 {
   switch (order) {
