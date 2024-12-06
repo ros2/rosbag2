@@ -83,7 +83,7 @@ public:
   {
     switch (info.param) {
       case rosbag2_transport::MessageOrder::RECEIVED_TIMESTAMP:
-        return "recv_timestamp";
+        return "received_timestamp";
       case rosbag2_transport::MessageOrder::SENT_TIMESTAMP:
         return "sent_timestamp";
       default:
