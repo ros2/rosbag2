@@ -162,7 +162,7 @@ TEST_F(RosBag2PlayUntilTestFixture, play_until_less_than_the_total_duration_mess
   primitive_message2->int32_value = 2;
 
   auto topic_types = std::vector<rosbag2_storage::TopicMetadata>{
-    {1u, kTopic1Name_, "test_msgs/BasicTypes", "", {}, ""}};
+    {1u, kTopic1Name_, "test_msgs/msg/BasicTypes", "", {}, ""}};
 
   std::vector<std::shared_ptr<rosbag2_storage::SerializedBagMessage>> messages =
   {
