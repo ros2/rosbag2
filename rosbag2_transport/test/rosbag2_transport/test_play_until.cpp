@@ -166,8 +166,8 @@ TEST_F(RosBag2PlayUntilTestFixture, play_until_less_than_the_total_duration_mess
 
   std::vector<std::shared_ptr<rosbag2_storage::SerializedBagMessage>> messages =
   {
-    serialize_test_message(kTopic1Name_, 10, 5, primitive_message1),
-    serialize_test_message(kTopic1Name_, 50, 45, primitive_message2),
+    serialize_test_message(kTopic1Name_, 46, 45, primitive_message1),
+    serialize_test_message(kTopic1Name_, 50, 5, primitive_message2),
   };
 
   auto prepared_mock_reader = std::make_unique<MockSequentialReader>();
@@ -192,8 +192,8 @@ TEST_F(RosBag2PlayUntilTestFixture, play_until_less_than_the_total_duration_mess
   await_received_messages.get();
   auto replayed_topic1 = sub_->get_received_messages<test_msgs::msg::BasicTypes>(kTopic1_);
   EXPECT_THAT(replayed_topic1, SizeIs(2));
-  EXPECT_EQ(replayed_topic1[0]->int32_value, 1);
-  EXPECT_EQ(replayed_topic1[1]->int32_value, 2);
+  EXPECT_EQ(replayed_topic1[0]->int32_value, 2);
+  EXPECT_EQ(replayed_topic1[1]->int32_value, 1);
 }
 
 TEST_F(
