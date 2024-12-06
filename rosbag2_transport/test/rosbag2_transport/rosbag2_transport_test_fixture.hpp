@@ -84,8 +84,8 @@ public:
     switch (info.param) {
       case rosbag2_transport::MessageOrder::RECEIVED_TIMESTAMP:
         return "recv_timestamp";
-      case rosbag2_transport::MessageOrder::SEND_TIMESTAMP:
-        return "send_timestamp";
+      case rosbag2_transport::MessageOrder::SENT_TIMESTAMP:
+        return "sent_timestamp";
       default:
         throw std::runtime_error("unknown value");
     }

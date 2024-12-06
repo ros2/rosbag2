@@ -177,7 +177,7 @@ TEST_F(RosBag2PlayUntilTestFixture, play_until_less_than_the_total_duration_mess
   // Expect to receive 2 messages from play() due to the send_timestamp order
   sub_->add_subscription<test_msgs::msg::BasicTypes>(kTopic1_, 2u);
   play_options_.playback_until_timestamp = RCL_MS_TO_NS(50) - 1;
-  play_options_.message_order = MessageOrder::SEND_TIMESTAMP;
+  play_options_.message_order = MessageOrder::SENT_TIMESTAMP;
 
   std::shared_ptr<MockPlayer> player_ = std::make_shared<MockPlayer>(
     std::move(reader), storage_options_, play_options_);

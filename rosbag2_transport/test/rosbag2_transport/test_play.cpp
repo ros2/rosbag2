@@ -233,7 +233,7 @@ TEST_P(RosBag2PlayTestFixtureMessageOrder, recorded_msgs_are_played_for_all_topi
       switch (message_order) {
         case rosbag2_transport::MessageOrder::RECEIVED_TIMESTAMP:
           return msg->recv_timestamp;
-        case rosbag2_transport::MessageOrder::SEND_TIMESTAMP:
+        case rosbag2_transport::MessageOrder::SENT_TIMESTAMP:
           return msg->send_timestamp;
         default:
           throw std::runtime_error("unknown rosbag2_transport::MessageOrder value");
@@ -257,7 +257,7 @@ INSTANTIATE_TEST_SUITE_P(
   RosBag2PlayTestFixtureMessageOrder,
   Values(
     rosbag2_transport::MessageOrder::RECEIVED_TIMESTAMP,
-    rosbag2_transport::MessageOrder::SEND_TIMESTAMP
+    rosbag2_transport::MessageOrder::SENT_TIMESTAMP
   ),
   Rosbag2TransportTestFixture::format_message_order
 );

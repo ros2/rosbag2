@@ -404,7 +404,7 @@ PlayerImpl::BagMessageComparator PlayerImpl::get_bag_message_comparator(const Me
   switch (order) {
     case MessageOrder::RECEIVED_TIMESTAMP:
       return bag_message_chronological_recv_timestamp_comparator;
-    case MessageOrder::SEND_TIMESTAMP:
+    case MessageOrder::SENT_TIMESTAMP:
       return bag_message_chronological_send_timestamp_comparator;
     default:
       throw std::runtime_error(
@@ -1093,7 +1093,7 @@ rcutils_time_point_value_t PlayerImpl::get_message_order_timestamp(
   switch (play_options_.message_order) {
     case MessageOrder::RECEIVED_TIMESTAMP:
       return message->recv_timestamp;
-    case MessageOrder::SEND_TIMESTAMP:
+    case MessageOrder::SENT_TIMESTAMP:
       return message->send_timestamp;
     default:
       throw std::runtime_error(

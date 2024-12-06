@@ -169,7 +169,7 @@ class PlayVerb(VerbExtension):
                  ' the service requests replaying from recorded service introspection message.')
         parser.add_argument(
             '--message-order', default='received',
-            choices=['received', 'send'],
+            choices=['received', 'sent'],
             help='The reference to use for bag message chronological ordering. Choices: reception '
                  'timestamp, publication timestamp. Default: reception timestamp. '
                  'If messages are significantly disordered (within a single bag or across '
@@ -288,7 +288,7 @@ class PlayVerb(VerbExtension):
         # argparse makes sure that we get a valid arg value
         play_options.message_order = {
             'received': MessageOrder.RECEIVED_TIMESTAMP,
-            'send': MessageOrder.SEND_TIMESTAMP,
+            'sent': MessageOrder.SENT_TIMESTAMP,
         }.get(args.message_order)
 
         player = Player(args.log_level)

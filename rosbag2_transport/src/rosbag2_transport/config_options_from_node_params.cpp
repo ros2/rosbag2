@@ -241,14 +241,14 @@ PlayOptions get_play_options_from_node_params(rclcpp::Node & node)
     node.declare_parameter<std::string>("play.message_order", "RECEIVED_TIMESTAMP");
   if (message_order == "RECEIVED_TIMESTAMP") {
     play_options.message_order = MessageOrder::RECEIVED_TIMESTAMP;
-  } else if (message_order == "SEND_TIMESTAMP") {
-    play_options.message_order = MessageOrder::SEND_TIMESTAMP;
+  } else if (message_order == "SENT_TIMESTAMP") {
+    play_options.message_order = MessageOrder::SENT_TIMESTAMP;
   } else {
     play_options.message_order = MessageOrder::RECEIVED_TIMESTAMP;
     RCLCPP_ERROR(
       node.get_logger(),
       "play.message_order doesn't support %s. It must be one of RECEIVED_TIMESTAMP"
-      " and SEND_TIMESTAMP. Changed it to default value RECEIVED_TIMESTAMP.",
+      " and SENT_TIMESTAMP. Changed it to default value RECEIVED_TIMESTAMP.",
       message_order.c_str());
   }
 

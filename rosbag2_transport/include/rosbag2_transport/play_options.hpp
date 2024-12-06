@@ -39,7 +39,7 @@ enum class MessageOrder : std::uint8_t
   // Order chronologically by message reception timestamp
   RECEIVED_TIMESTAMP = 0,
   // Order chronologically by message publication timestamp
-  SEND_TIMESTAMP = 1
+  SENT_TIMESTAMP = 1
 };
 
 struct PlayOptions
