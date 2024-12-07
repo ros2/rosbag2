@@ -83,7 +83,7 @@ public:
   // a /clock update to be published. If list is empty, all topics will act as a trigger
   std::vector<std::string> clock_trigger_topics = {};
 
-  // Sleep before play. Negative durations invalid. Will delay at the beginning of each loop.
+  // Sleep before play. Negative durations invalid. Loops are not affected.
   rclcpp::Duration delay = rclcpp::Duration(0, 0);
 
   // Determines the maximum duration of the playback. Negative durations will make the playback to

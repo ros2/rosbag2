@@ -103,7 +103,8 @@ class PlayVerb(VerbExtension):
         )
         parser.add_argument(
             '-d', '--delay', type=positive_float, default=0.0,
-            help='Sleep duration before play (each loop), in seconds. Negative durations invalid.')
+            help='Sleep duration before play (loops are not affected), in seconds.'
+                 'Negative durations invalid.')
         parser.add_argument(
             '--playback-duration', type=float, default=-1.0,
             help='Playback duration, in seconds. Negative durations mark an infinite playback. '
