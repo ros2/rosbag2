@@ -29,11 +29,11 @@ rosbag2 is part of the ROS 2 command line interface as `ros2 bag`.
 These verbs are available for `ros2 bag`:
 
 * `ros2 bag burst`
-* `ros2 bag convert`
-* `ros2 bag info`
+* [`ros2 bag convert`](#converting-bags)
+* [`ros2 bag info`](#analyzing-data)
 * `ros2 bag list`
-* `ros2 bag play`
-* `ros2 bag record`
+* [`ros2 bag play`](#replaying-data)
+* [`ros2 bag record`](#recording-data)
 * `ros2 bag reindex`
 
 For up-to-date information on the available options for each, use `ros2 bag <verb> --help`.
@@ -145,6 +145,27 @@ $ ros2 bag play <bag1> -i <bag2> -i <bag3>
 ```
 
 Messages from all provided bags will be played in order, based on their original recording reception timestamps.
+
+Options:
+
+* `--topics`:
+  Space-delimited list of topics to play.
+* `--services`:
+  Space-delimited list of services to play.
+* `-e,--regex`:
+  Play only topics and services matches with regular expression.
+* `-x,--exclude-regex`:
+  Regular expressions to exclude topics and services from replay.
+* `--exclude-topics`:
+  Space-delimited list of topics not to play.
+* `--exclude-services`:
+  Space-delimited list of services not to play.
+* `--message-order {received,sent}`:
+  The reference to use for bag message chronological ordering.
+  Choices: reception timestamp (`received`), publication timestamp (`sent`).
+  Default: reception timestamp.
+
+For more options, run with `--help`.
 
 #### Controlling playback via services
 
