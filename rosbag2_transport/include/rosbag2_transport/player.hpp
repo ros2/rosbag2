@@ -111,6 +111,7 @@ public:
   /// \param node_name Name for the underlying node.
   /// \param node_options Node options which will be used during construction of the underlying
   /// node.
+  [[deprecated("Use Player constructor with vector of storage options")]]
   ROSBAG2_TRANSPORT_PUBLIC
   Player(
     const rosbag2_storage::StorageOptions & storage_options,
@@ -128,6 +129,7 @@ public:
   /// \param node_name Name for the underlying node.
   /// \param node_options Node options which will be used during construction of the underlying
   /// node.
+  [[deprecated("Use Player constructor with std::vector<reader_storage_options_pair_t>")]]
   ROSBAG2_TRANSPORT_PUBLIC
   Player(
     std::unique_ptr<rosbag2_cpp::Reader> reader,
@@ -146,6 +148,7 @@ public:
   /// \param node_name Name for the underlying node.
   /// \param node_options Node options which will be used during construction of the underlying
   /// node.
+  [[deprecated("Use Player constructor with std::vector<reader_storage_options_pair_t>")]]
   ROSBAG2_TRANSPORT_PUBLIC
   Player(
     std::unique_ptr<rosbag2_cpp::Reader> reader,
@@ -353,6 +356,8 @@ protected:
 
   /// \brief Getter for the first of the currently stored storage options
   /// \return Reference to the first item in the StorageOptions vector
+  [[deprecated(
+    "Please use ::get_all_storage_options() instead; this will only return the first one")]]
   ROSBAG2_TRANSPORT_PUBLIC
   const rosbag2_storage::StorageOptions & get_storage_options();
 
