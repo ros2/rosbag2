@@ -53,7 +53,7 @@ class BaseWriterInterface;
  * The Writer allows writing messages to a new bag. For every topic, information about its type
  * needs to be added before writing the first message.
  */
-class ROSBAG2_CPP_PUBLIC Writer final
+class ROSBAG2_CPP_PUBLIC Writer
 {
 public:
   explicit Writer(
