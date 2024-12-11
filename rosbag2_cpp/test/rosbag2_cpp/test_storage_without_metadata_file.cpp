@@ -74,6 +74,7 @@ TEST_F(StorageWithoutMetadataFileTest, open_uses_storage_id_from_storage_options
   EXPECT_CALL(*metadata_io, metadata_file_exists).Times(1).WillOnce(Return(false));
 
   rosbag2_storage::StorageOptions storage_options;
+  storage_options.uri = "foo.bar";
   storage_options.storage_id = kStorageId;
 
   auto sequential_reader = std::make_unique<rosbag2_cpp::readers::SequentialReader>(

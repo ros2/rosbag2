@@ -103,6 +103,10 @@ void SequentialWriter::open(
   if (is_open_) {
     return;  // The writer already opened
   }
+  if (storage_options.uri.empty()) {
+    throw std::runtime_error("Can't open rosbag2_cpp::SequentialWriter. The input URI is empty");
+  }
+
   base_folder_ = storage_options.uri;
   storage_options_ = storage_options;
 
