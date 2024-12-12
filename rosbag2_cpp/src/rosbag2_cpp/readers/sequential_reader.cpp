@@ -112,7 +112,7 @@ void SequentialReader::open(
   } else {
     storage_ = storage_factory_->open_read_only(storage_options_);
     if (!storage_) {
-      throw std::runtime_error("No storage could be initialized for the input uri: " +
+      throw std::runtime_error("No storage could be initialized for the input URI: " +
             storage_options.uri);
     }
     if (!set_read_order(read_order_)) {

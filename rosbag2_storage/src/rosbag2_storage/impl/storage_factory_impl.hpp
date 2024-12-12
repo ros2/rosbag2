@@ -17,10 +17,10 @@
 #define ROSBAG2_STORAGE__IMPL__STORAGE_FACTORY_IMPL_HPP_
 
 #include <algorithm>
-#include <vector>
 #include <memory>
 #include <string>
 #include <unordered_set>
+#include <vector>
 
 #include "pluginlib/class_loader.hpp"
 
