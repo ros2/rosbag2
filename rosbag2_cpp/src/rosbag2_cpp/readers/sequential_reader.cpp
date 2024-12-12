@@ -87,6 +87,10 @@ void SequentialReader::open(
   const rosbag2_storage::StorageOptions & storage_options,
   const ConverterOptions & converter_options)
 {
+  if (storage_options.uri.empty()) {
+    throw std::runtime_error("Can't open rosbag2_cpp::SequentialReader. The input URI is empty");
+  }
+
   storage_options_ = storage_options;
   base_folder_ = storage_options.uri;
 
@@ -108,7 +112,8 @@ void SequentialReader::open(
   } else {
     storage_ = storage_factory_->open_read_only(storage_options_);
     if (!storage_) {
-      throw std::runtime_error{"No storage could be initialized from the inputs."};
+      throw std::runtime_error("No storage could be initialized for the input URI: " +
+            storage_options.uri);
     }
     if (!set_read_order(read_order_)) {
       ROSBAG2_CPP_LOG_WARN(

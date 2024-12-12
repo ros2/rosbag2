@@ -19,6 +19,8 @@
 #include <algorithm>
 #include <memory>
 #include <string>
+#include <unordered_set>
+#include <vector>
 
 #include "pluginlib/class_loader.hpp"
 
@@ -160,19 +162,38 @@ public:
 
   virtual ~StorageFactoryImpl() = default;
 
+  std::unordered_set<std::string> get_registered_plugin_names()
+  {
+    std::vector<std::string> read_only_plugins = read_only_class_loader_->getDeclaredClasses();
+    std::vector<std::string> read_write_plugins = read_write_class_loader_->getDeclaredClasses();
+
+    // Merge read-only and read-write plugins
+    std::unordered_set<std::string> combined_plugins(
+      read_only_plugins.begin(), read_only_plugins.end());
+    combined_plugins.insert(read_write_plugins.begin(), read_write_plugins.end());
+    return combined_plugins;
+  }
+
   std::shared_ptr<ReadWriteInterface> open_read_write(const StorageOptions & storage_options)
   {
-    auto instance =
-      get_interface_instance(read_write_class_loader_, storage_options);
+    auto instance = get_interface_instance(read_write_class_loader_, storage_options);
 
     if (instance == nullptr) {
       if (storage_options.storage_id.empty()) {
         ROSBAG2_STORAGE_LOG_ERROR_STREAM(
-          "No storage id specified, and no plugin found that could open URI");
+          "No storage id specified, and no plugin found that could open URI: '" <<
+            storage_options.uri << "'");
       } else {
         ROSBAG2_STORAGE_LOG_ERROR_STREAM(
           "Could not load/open plugin with storage id '" << storage_options.storage_id << "'");
       }
+      auto available_plugins = read_write_class_loader_->getDeclaredClasses();
+      std::stringstream ss;
+      ss << "Available read-write storage plugins: ";
+      for (const auto & storage_plugin : available_plugins) {
+        ss << "'" << storage_plugin << "', ";
+      }
+      ROSBAG2_STORAGE_LOG_INFO("%s", ss.str().c_str());
     }
 
     return instance;
@@ -193,11 +214,19 @@ public:
     if (instance == nullptr) {
       if (storage_options.storage_id.empty()) {
         ROSBAG2_STORAGE_LOG_ERROR_STREAM(
-          "No storage id specified, and no plugin found that could open URI");
+          "No storage id specified, and no plugin found that could open URI: '" <<
+            storage_options.uri << "'");
       } else {
         ROSBAG2_STORAGE_LOG_ERROR_STREAM(
-          "Could not load/open plugin with storage id '" << storage_options.storage_id << "'");
+          "Could not load/open plugin with storage id: '" << storage_options.storage_id << "'");
       }
+      auto available_plugins = get_registered_plugin_names();
+      std::stringstream ss;
+      ss << "Available storage plugins: ";
+      for (const auto & storage_plugin : available_plugins) {
+        ss << "'" << storage_plugin << "', ";
+      }
+      ROSBAG2_STORAGE_LOG_INFO("%s", ss.str().c_str());
     }
 
     return instance;
