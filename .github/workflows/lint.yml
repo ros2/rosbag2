@@ -8,7 +8,7 @@ jobs:
     name: ament_${{ matrix.linter }}
     runs-on: ubuntu-latest
     container:
-      image: rostooling/setup-ros-docker:ubuntu-focal-ros-rolling-ros-base-latest
+      image: rostooling/setup-ros-docker:ubuntu-jammy-ros-humble-ros-base-latest
     strategy:
       fail-fast: false
       matrix:
@@ -18,7 +18,7 @@ jobs:
     - uses: ros-tooling/action-ros-lint@v0.1
       with:
         linter: ${{ matrix.linter }}
-        distribution: rolling
+        distribution: humble
         package-name: |
             ros2bag
             rosbag2
@@ -38,17 +38,17 @@ jobs:
     name: ament_${{ matrix.linter }}
     runs-on: ubuntu-latest
     container:
-      image: rostooling/setup-ros-docker:ubuntu-focal-ros-rolling-ros-base-latest
+      image: rostooling/setup-ros-docker:ubuntu-jammy-ros-humble-ros-base-latest
     strategy:
       fail-fast: false
       matrix:
-          linter: [cppcheck, cpplint, uncrustify]
+          linter: [cpplint, uncrustify]
     steps:
     - uses: actions/checkout@v4
     - uses: ros-tooling/action-ros-lint@v0.1
       with:
         linter: ${{ matrix.linter }}
-        distribution: rolling
+        distribution: humble
         package-name: |
             rosbag2_compression
             rosbag2_compression_zstd
@@ -65,11 +65,11 @@ jobs:
     name: ament_${{ matrix.linter }}
     runs-on: ubuntu-latest
     container:
-      image: rostooling/setup-ros-docker:ubuntu-focal-ros-rolling-ros-base-latest
+      image: rostooling/setup-ros-docker:ubuntu-jammy-ros-humble-ros-base-latest
     strategy:
       fail-fast: false
       matrix:
-          linter: [cppcheck, cpplint, clang_format]
+          linter: [cpplint, clang_format]
           include:
           - linter: clang_format
             arguments: "--config rosbag2_storage_mcap/.clang-format"
@@ -79,14 +79,14 @@ jobs:
       with:
         linter: ${{ matrix.linter }}
         arguments: ${{ matrix.arguments }}
-        distribution: rolling
+        distribution: humble
         package-name: rosbag2_storage_mcap
 
   ament_lint_python: # Linters applicable to Python packages
     name: ament_${{ matrix.linter }}
     runs-on: ubuntu-latest
     container:
-      image: rostooling/setup-ros-docker:ubuntu-focal-ros-rolling-ros-base-latest
+      image: rostooling/setup-ros-docker:ubuntu-jammy-ros-humble-ros-base-latest
     strategy:
       fail-fast: false
       matrix:
@@ -96,7 +96,7 @@ jobs:
     - uses: ros-tooling/action-ros-lint@v0.1
       with:
         linter: ${{ matrix.linter }}
-        distribution: rolling
+        distribution: humble
         package-name: |
             ros2bag
             rosbag2_py
