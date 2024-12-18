@@ -13,8 +13,8 @@ Changelog for package rosbag2_storage_default_plugins
   Co-authored-by: Michael Orlov <michael.orlov@apex.ai>
 * Contributors: mergify[bot]
 
-Forthcoming
------------
+0.26.6 (2024-12-18)
+-------------------
 * [Jazzy] Release 0.26.5 (`#1800 <https://github.com/ros2/rosbag2/issues/1800>`_)
 * Fix incorrect zero size for sqlite storage (`#1759 <https://github.com/ros2/rosbag2/issues/1759>`_) (`#1761 <https://github.com/ros2/rosbag2/issues/1761>`_)
   * Fix incorrect zero size for sqlite storage

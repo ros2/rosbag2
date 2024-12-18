@@ -15,8 +15,8 @@ Changelog for package rosbag2_tests
   Co-authored-by: Michael Orlov <michael.orlov@apex.ai>
 * Contributors: mergify[bot]
 
-Forthcoming
------------
+0.26.6 (2024-12-18)
+-------------------
 * [jazzy] Add "--sort" CLI option to the "ros2 bag info" command (backport `#1804 <https://github.com/ros2/rosbag2/issues/1804>`_) (`#1838 <https://github.com/ros2/rosbag2/issues/1838>`_)
   * Add "--sort" CLI option to the "ros2 bag info" command (`#1804 <https://github.com/ros2/rosbag2/issues/1804>`_)
   * sort info output by topic name

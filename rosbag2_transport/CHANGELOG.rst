@@ -16,8 +16,8 @@ Changelog for package rosbag2_transport
   Co-authored-by: Michael Orlov <michael.orlov@apex.ai>
 * Contributors: mergify[bot]
 
-Forthcoming
------------
+0.26.6 (2024-12-18)
+-------------------
 * Publish clock after delay is over and disable delay on next loops (`#1861 <https://github.com/ros2/rosbag2/issues/1861>`_) (`#1878 <https://github.com/ros2/rosbag2/issues/1878>`_)
   * publish clock after the delay is over
   * Disable delay period in subsequent loops (ros2 bag play)

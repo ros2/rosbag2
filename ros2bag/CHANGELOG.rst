@@ -10,8 +10,8 @@ Changelog for package ros2bag
   Co-authored-by: Roman <rsokolkov@gmail.com>
 * Contributors: mergify[bot]
 
-Forthcoming
------------
+0.26.6 (2024-12-18)
+-------------------
 * Publish clock after delay is over and disable delay on next loops (`#1861 <https://github.com/ros2/rosbag2/issues/1861>`_) (`#1878 <https://github.com/ros2/rosbag2/issues/1878>`_)
   * publish clock after the delay is over
   * Disable delay period in subsequent loops (ros2 bag play)

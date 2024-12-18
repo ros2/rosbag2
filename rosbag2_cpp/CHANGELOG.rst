@@ -9,8 +9,8 @@ Changelog for package rosbag2
   Co-authored-by: Michael Orlov <michael.orlov@apex.ai>
 * Contributors: mergify[bot]
 
-Forthcoming
------------
+0.26.6 (2024-12-18)
+-------------------
 * Add more logging info to storage and reader/writer open operations (`#1881 <https://github.com/ros2/rosbag2/issues/1881>`_) (`#1882 <https://github.com/ros2/rosbag2/issues/1882>`_)
   (cherry picked from commit 0823be2723e04715baacf99625b844cb88f58c21)
   Co-authored-by: Michael Orlov <michael.orlov@apex.ai>

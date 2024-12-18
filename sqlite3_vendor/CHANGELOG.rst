@@ -5,8 +5,8 @@ Changelog for package sqlite3_vendor
 0.26.5 (2024-09-06)
 -------------------
 
-Forthcoming
------------
+0.26.6 (2024-12-18)
+-------------------
 * [Jazzy] Release 0.26.5 (`#1800 <https://github.com/ros2/rosbag2/issues/1800>`_)
 * Contributors: Marco A. Gutierrez
 

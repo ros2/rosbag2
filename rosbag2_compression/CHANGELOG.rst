@@ -13,8 +13,8 @@ Changelog for package rosbag2_compression
   Co-authored-by: Michael Orlov <michael.orlov@apex.ai>
 * Contributors: mergify[bot]
 
-Forthcoming
------------
+0.26.6 (2024-12-18)
+-------------------
 * Bugfix: Update metadata with new file_info before saving it first time (`#1843 <https://github.com/ros2/rosbag2/issues/1843>`_) (`#1853 <https://github.com/ros2/rosbag2/issues/1853>`_)
   (cherry picked from commit b5098eff15281c9e79853e8bb2ae9a0a104e6ea5)
   Co-authored-by: Michael Orlov <michael.orlov@apex.ai>
