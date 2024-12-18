@@ -9,6 +9,64 @@ Changelog for package rosbag2_test_common
   Co-authored-by: Chris Lalancette <clalancette@gmail.com>
 * Contributors: mergify[bot]
 
+Forthcoming
+-----------
+* Add debug information for flaky can_record_again_after_stop test (`#1871 <https://github.com/ros2/rosbag2/issues/1871>`_) (`#1874 <https://github.com/ros2/rosbag2/issues/1874>`_)
+  (cherry picked from commit 4602b2ce829842e17ccb8bf4a74c135d6c8f2623)
+  Co-authored-by: Michael Orlov <michael.orlov@apex.ai>
+* Improve the reliability of rosbag2 tests (`#1796 <https://github.com/ros2/rosbag2/issues/1796>`_) (`#1806 <https://github.com/ros2/rosbag2/issues/1806>`_)
+  * Remove wait_until_shutdown.
+  This has almost exactly the same functionality as wait_for_condition,
+  except for two things:
+  1.  It is templated on the Timeout type.
+  2.  It calls rclcpp::shutdown after the loop completes.
+  However, neither of those is necessary; all callers to it use
+  a std::chrono::duration, and all of the test fixtures already
+  call rclcpp::shutdown.  Thus, just remove it and make all
+  callers use wait_for_condition instead.
+  * Shutdown the async spinner node without rclcpp::shutdown.
+  That is, we really don't actually want to do a full
+  rclcpp shutdown here; we only want to stop spinning.
+  Accomplish that with an executor, and timing out
+  every 100 milliseconds to check if we are done yet.
+  * Small fixes to start_async_spin in rosbag2_tests.
+  Make sure it only spins as long as we haven't shutdown,
+  and that it wakes up every so often to check that fact.
+  * Wait for topics to be discovered during recorder->record().
+  The main reason for that is that these tests generally want
+  to test certain expectations around how many messages were
+  received.  However, if discovery takes longer than we expect,
+  then it could be the case that we "missed" messages at the
+  beginning because discovery hadn't yet completed.
+  Fix this by just waiting around for the recorder to get all
+  the subscriptions it expects before moving on with the test.
+  * Feedback from review.
+  * Switch to using MockRecorder.
+  * Fixes from review.
+  * Feedback from review.
+  * Apply suggestions from code review
+  * Switch to using spin, rather than spin_some.
+  That's because there is currently at least one bug
+  associated with spin_some in rclcpp.  However, it turns
+  out that we don't even need to use it, as we can just as
+  easily use spin() along with exec.cancel().
+  * Make sure to stop_spinning when we tear down the test.
+  * Use scopes to shutdown spinning.
+  * Nested contexts just to explicitly cleanup the async spinners.
+  * Update rosbag2_transport/test/rosbag2_transport/record_integration_fixture.hpp
+  * Apply the same fix to rosbag2_tests.
+  ---------
+  Co-authored-by: Chris Lalancette <clalancette@gmail.com>
+  Co-authored-by: Michael Orlov <michael.orlov@apex.ai>
+* [Jazzy] Release 0.26.5 (`#1800 <https://github.com/ros2/rosbag2/issues/1800>`_)
+* Small cleanups to the rosbag2 tests. (`#1792 <https://github.com/ros2/rosbag2/issues/1792>`_) (`#1793 <https://github.com/ros2/rosbag2/issues/1793>`_)
+  * Small cleanups to the rosbag2 tests.
+  1.  Rename "wait_for_srvice_to_be_ready" to "wait_for_service_to_be_ready".
+  2.  Make some of the constants constexpr, so we no longer have to capture them.
+  (cherry picked from commit 604cebcf11775151efa94f7c30ba1aea68e90c5c)
+  Co-authored-by: Chris Lalancette <clalancette@gmail.com>
+* Contributors: Marco A. Gutierrez, mergify[bot]
+
 0.26.4 (2024-06-27)
 -------------------
 

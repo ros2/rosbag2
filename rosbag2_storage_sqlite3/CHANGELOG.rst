@@ -13,6 +13,28 @@ Changelog for package rosbag2_storage_default_plugins
   Co-authored-by: Michael Orlov <michael.orlov@apex.ai>
 * Contributors: mergify[bot]
 
+Forthcoming
+-----------
+* [Jazzy] Release 0.26.5 (`#1800 <https://github.com/ros2/rosbag2/issues/1800>`_)
+* Fix incorrect zero size for sqlite storage (`#1759 <https://github.com/ros2/rosbag2/issues/1759>`_) (`#1761 <https://github.com/ros2/rosbag2/issues/1761>`_)
+  * Fix incorrect zero size for sqlite storage
+  * Adjust unit test to precisely verify the returned file size
+  ---------
+  Co-authored-by: Michael Orlov <michael.orlov@apex.ai>
+  (cherry picked from commit 86f681d9f525a4b7c3b4133d6b657e342283aad8)
+  Co-authored-by: Roman <rsokolkov@gmail.com>
+* Fix for failing throws_on_invalid_pragma_in_config_file on Windows (`#1742 <https://github.com/ros2/rosbag2/issues/1742>`_) (`#1746 <https://github.com/ros2/rosbag2/issues/1746>`_)
+  - The failure was because database file was not properly closed after
+  throwing exception from the SqliteWrapper constructor and
+  std::filesystem::remove_all(..) failed to delete temporary folder in the
+  test fixture destructor.
+  - Added reset for prepared sql statement before throwing exception.
+  - Try to close database in constructor if we got exception after
+  opening it since destructor will not be called in this case.
+  (cherry picked from commit 055935d33dd2fed2772657c9dc1f2173eaa7f752)
+  Co-authored-by: Michael Orlov <michael.orlov@apex.ai>
+* Contributors: Marco A. Gutierrez, mergify[bot]
+
 0.26.4 (2024-06-27)
 -------------------
 * Add topics with zero message counts to the SQLiteStorage::get_metadata(). (`#1725 <https://github.com/ros2/rosbag2/issues/1725>`_) (`#1731 <https://github.com/ros2/rosbag2/issues/1731>`_)

@@ -5,6 +5,11 @@ Changelog for package zstd_vendor
 0.26.5 (2024-09-06)
 -------------------
 
+Forthcoming
+-----------
+* [Jazzy] Release 0.26.5 (`#1800 <https://github.com/ros2/rosbag2/issues/1800>`_)
+* Contributors: Marco A. Gutierrez
+
 0.26.4 (2024-06-27)
 -------------------
 

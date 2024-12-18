@@ -16,6 +16,136 @@ Changelog for package rosbag2_transport
   Co-authored-by: Michael Orlov <michael.orlov@apex.ai>
 * Contributors: mergify[bot]
 
+Forthcoming
+-----------
+* Publish clock after delay is over and disable delay on next loops (`#1861 <https://github.com/ros2/rosbag2/issues/1861>`_) (`#1878 <https://github.com/ros2/rosbag2/issues/1878>`_)
+  * publish clock after the delay is over
+  * Disable delay period in subsequent loops (ros2 bag play)
+  * Reset clock publisher timer outisde playback loop
+  * review
+  ---------
+  (cherry picked from commit 15b82607d0e36a6ff87f60405b072919d16fb03d)
+  Co-authored-by: Nicola Loi <nicolaloi@outlook.com>
+* [jazzy] Add PlayerClock::wakeup() to interrupt sleeping (backport `#1869 <https://github.com/ros2/rosbag2/issues/1869>`_) (`#1875 <https://github.com/ros2/rosbag2/issues/1875>`_)
+  * Add PlayerClock::wakeup() to interrupt sleeping (`#1869 <https://github.com/ros2/rosbag2/issues/1869>`_)
+  * Add PlayerClock::wakeup() to interrupt sleeping
+  * Use PlayerClock::wakeup() in new play_next() impl
+  ---------
+  (cherry picked from commit c8feaea5b64e824bbe76e920f48a3ca39b72f9fc)
+  * Make backporting PR ABI compatible
+  - Make "is_sleeping()" and " wakeup()" functions as non-virtual and
+  defined only in the derived "TimeControllerClock" class.
+  - Use "TimeControllerClock" directly instead of the "PlayerClock" base
+  class in the player.cpp.
+  ---------
+  Co-authored-by: Christophe Bedard <christophe.bedard@apex.ai>
+  Co-authored-by: Michael Orlov <michael.orlov@apex.ai>
+* Add debug information for flaky can_record_again_after_stop test (`#1871 <https://github.com/ros2/rosbag2/issues/1871>`_) (`#1874 <https://github.com/ros2/rosbag2/issues/1874>`_)
+  (cherry picked from commit 4602b2ce829842e17ccb8bf4a74c135d6c8f2623)
+  Co-authored-by: Michael Orlov <michael.orlov@apex.ai>
+* [jazzy] Add support for replaying multiple bags (backport `#1848 <https://github.com/ros2/rosbag2/issues/1848>`_) (`#1873 <https://github.com/ros2/rosbag2/issues/1873>`_)
+  * Support replaying multiple bags (`#1848 <https://github.com/ros2/rosbag2/issues/1848>`_)
+  (cherry picked from commit 125db50b4d9a585bab33f2908008fe1168bb9cf3)
+  # Conflicts:
+  #	shared_queues_vendor/CHANGELOG.rst
+  #	shared_queues_vendor/package.xml
+  * Revert shared_queue_vendor package deletion
+  ---------
+  Co-authored-by: Christophe Bedard <christophe.bedard@apex.ai>
+  Co-authored-by: Michael Orlov <michael.orlov@apex.ai>
+* Reintroduce `Don't warn for unknown types if topics are not selected` (`#1825 <https://github.com/ros2/rosbag2/issues/1825>`_) (`#1827 <https://github.com/ros2/rosbag2/issues/1827>`_)
+  Reintroduce the fix from 51a83f4421ff335c2237e6214e9bb7e6ae206a92 which
+  was discussed in https://github.com/ros2/rosbag2/issues/1485. This gives
+  a massive CPU improvement.
+  (cherry picked from commit e75d6d659fcae243b8486a94173255b237817f22)
+  Co-authored-by: Ramon Wijnands <ramon.wijnands007@gmail.com>
+* Allow unknown types in bag rewrite (`#1812 <https://github.com/ros2/rosbag2/issues/1812>`_) (`#1817 <https://github.com/ros2/rosbag2/issues/1817>`_)
+  (cherry picked from commit cd7bd63696604973e23c739afa6387556f3e7781)
+  Co-authored-by: Michael Orlov <michael.orlov@apex.ai>
+* Improve the reliability of rosbag2 tests (`#1796 <https://github.com/ros2/rosbag2/issues/1796>`_) (`#1806 <https://github.com/ros2/rosbag2/issues/1806>`_)
+  * Remove wait_until_shutdown.
+  This has almost exactly the same functionality as wait_for_condition,
+  except for two things:
+  1.  It is templated on the Timeout type.
+  2.  It calls rclcpp::shutdown after the loop completes.
+  However, neither of those is necessary; all callers to it use
+  a std::chrono::duration, and all of the test fixtures already
+  call rclcpp::shutdown.  Thus, just remove it and make all
+  callers use wait_for_condition instead.
+  * Shutdown the async spinner node without rclcpp::shutdown.
+  That is, we really don't actually want to do a full
+  rclcpp shutdown here; we only want to stop spinning.
+  Accomplish that with an executor, and timing out
+  every 100 milliseconds to check if we are done yet.
+  * Small fixes to start_async_spin in rosbag2_tests.
+  Make sure it only spins as long as we haven't shutdown,
+  and that it wakes up every so often to check that fact.
+  * Wait for topics to be discovered during recorder->record().
+  The main reason for that is that these tests generally want
+  to test certain expectations around how many messages were
+  received.  However, if discovery takes longer than we expect,
+  then it could be the case that we "missed" messages at the
+  beginning because discovery hadn't yet completed.
+  Fix this by just waiting around for the recorder to get all
+  the subscriptions it expects before moving on with the test.
+  * Feedback from review.
+  * Switch to using MockRecorder.
+  * Fixes from review.
+  * Feedback from review.
+  * Apply suggestions from code review
+  * Switch to using spin, rather than spin_some.
+  That's because there is currently at least one bug
+  associated with spin_some in rclcpp.  However, it turns
+  out that we don't even need to use it, as we can just as
+  easily use spin() along with exec.cancel().
+  * Make sure to stop_spinning when we tear down the test.
+  * Use scopes to shutdown spinning.
+  * Nested contexts just to explicitly cleanup the async spinners.
+  * Update rosbag2_transport/test/rosbag2_transport/record_integration_fixture.hpp
+  * Apply the same fix to rosbag2_tests.
+  ---------
+  Co-authored-by: Chris Lalancette <clalancette@gmail.com>
+  Co-authored-by: Michael Orlov <michael.orlov@apex.ai>
+* Removed warnings (`#1794 <https://github.com/ros2/rosbag2/issues/1794>`_) (`#1810 <https://github.com/ros2/rosbag2/issues/1810>`_)
+  * Removed warnings
+  * compile with windows
+  * make linters happy
+  (cherry picked from commit 88c51a133a9a9aa3ef65a851f4d2aed448803fa1)
+  Co-authored-by: Alejandro Hernández Cordero <ahcorde@gmail.com>
+* [Jazzy] Release 0.26.5 (`#1800 <https://github.com/ros2/rosbag2/issues/1800>`_)
+* Small cleanups to the rosbag2 tests. (`#1792 <https://github.com/ros2/rosbag2/issues/1792>`_) (`#1793 <https://github.com/ros2/rosbag2/issues/1793>`_)
+  * Small cleanups to the rosbag2 tests.
+  1.  Rename "wait_for_srvice_to_be_ready" to "wait_for_service_to_be_ready".
+  2.  Make some of the constants constexpr, so we no longer have to capture them.
+  (cherry picked from commit 604cebcf11775151efa94f7c30ba1aea68e90c5c)
+  Co-authored-by: Chris Lalancette <clalancette@gmail.com>
+* Add cli option compression-threads-priority (`#1768 <https://github.com/ros2/rosbag2/issues/1768>`_) (`#1778 <https://github.com/ros2/rosbag2/issues/1778>`_)
+  * Add cli option compression-threads-priority
+  * Fix CI issues
+  * Add timeout for the test_priority_propagated_into_compression_thread
+  * Update help section and doxygen comments for thread priority parameters
+  * Use integer type for compression threads priority default value in tests
+  - Rationale: To test the same behavior as in the writer factory class
+  ---------
+  Co-authored-by: Michael Orlov <michael.orlov@apex.ai>
+  (cherry picked from commit 25c3e1c2effdaea3b880c39ff7580b2f38a44b1c)
+  Co-authored-by: Roman <rsokolkov@gmail.com>
+* Bugfix for bag_split event callbacks called to early with file compression (`#1643 <https://github.com/ros2/rosbag2/issues/1643>`_) (`#1732 <https://github.com/ros2/rosbag2/issues/1732>`_)
+  * Bugfix for bag_split event callbacks not called with file compression
+  * Delete redundant "should_split_bagfile" in compression_writer
+  - It is a non-virtual method and doesn't call from the base class.
+  * Adjust "split_event_calls_callback" for testing multiple splits
+  * Use temp folder for "SequentialWriterTest" fixture instead of "uri"
+  * Add tests for split event callbacks when using file and msg compression
+  - Added "split_event_calls_callback_with_msg_compression" and
+  "split_event_calls_callback_with_file_compression" uit tests
+  * Add debug info to the flaky "can_record_again_after_stop" test
+  * Use `uint64_t` type for `fake_storage_size\_` in tests
+  ---------
+  (cherry picked from commit 1877b53847bda4d1f2668187b79fa27a796c3438)
+  Co-authored-by: Michael Orlov <michael.orlov@apex.ai>
+* Contributors: Marco A. Gutierrez, mergify[bot]
+
 0.26.4 (2024-06-27)
 -------------------
 * Bugfix for issue where unable to create composable nodes with compression (`#1679 <https://github.com/ros2/rosbag2/issues/1679>`_) (`#1716 <https://github.com/ros2/rosbag2/issues/1716>`_)
