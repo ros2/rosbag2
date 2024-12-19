@@ -2,23 +2,16 @@
 Changelog for package rosbag2
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-0.26.5 (2024-09-06)
--------------------
-
 0.26.6 (2024-12-18)
 -------------------
 * [jazzy] Add support for replaying multiple bags (backport `#1848 <https://github.com/ros2/rosbag2/issues/1848>`_) (`#1873 <https://github.com/ros2/rosbag2/issues/1873>`_)
-  * Support replaying multiple bags (`#1848 <https://github.com/ros2/rosbag2/issues/1848>`_)
   (cherry picked from commit 125db50b4d9a585bab33f2908008fe1168bb9cf3)
-  # Conflicts:
-  #	shared_queues_vendor/CHANGELOG.rst
-  #	shared_queues_vendor/package.xml
-  * Revert shared_queue_vendor package deletion
-  ---------
   Co-authored-by: Christophe Bedard <christophe.bedard@apex.ai>
   Co-authored-by: Michael Orlov <michael.orlov@apex.ai>
-* [Jazzy] Release 0.26.5 (`#1800 <https://github.com/ros2/rosbag2/issues/1800>`_)
 * Contributors: Marco A. Gutierrez, mergify[bot]
+
+0.26.5 (2024-09-06)
+-------------------
 
 0.26.4 (2024-06-27)
 -------------------

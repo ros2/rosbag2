@@ -2,6 +2,20 @@
 Changelog for package rosbag2_tests
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.26.6 (2024-12-18)
+-------------------
+* [jazzy] Add "--sort" CLI option to the "ros2 bag info" command (backport `#1804 <https://github.com/ros2/rosbag2/issues/1804>`_) (`#1838 <https://github.com/ros2/rosbag2/issues/1838>`_)
+  Co-authored-by: Soenke Prophet <soenke.prophet@gmail.com>
+  Co-authored-by: Michael Orlov <michael.orlov@apex.ai>
+  Co-authored-by: Sanoronas <soenke.prophet@gmail.com>
+* [jazzy] Add computation of size contribution to info verb (backport `#1726 <https://github.com/ros2/rosbag2/issues/1726>`_) (`#1872 <https://github.com/ros2/rosbag2/issues/1872>`_)
+  Co-authored-by: Nicola Loi <nicolaloi@outlook.com>
+  Co-authored-by: Michael Orlov <michael.orlov@apex.ai>
+* Improve the reliability of rosbag2 tests (`#1796 <https://github.com/ros2/rosbag2/issues/1796>`_) (`#1806 <https://github.com/ros2/rosbag2/issues/1806>`_)
+  Co-authored-by: Chris Lalancette <clalancette@gmail.com>
+  Co-authored-by: Michael Orlov <michael.orlov@apex.ai>
+* Contributors: Marco A. Gutierrez, mergify[bot]
+
 0.26.5 (2024-09-06)
 -------------------
 * Small cleanups to the rosbag2 tests. (`#1792 <https://github.com/ros2/rosbag2/issues/1792>`_) (`#1793 <https://github.com/ros2/rosbag2/issues/1793>`_)
@@ -14,130 +28,6 @@ Changelog for package rosbag2_tests
   (cherry picked from commit da1acb29646258899ba73a81c803383c07905613)
   Co-authored-by: Michael Orlov <michael.orlov@apex.ai>
 * Contributors: mergify[bot]
-
-0.26.6 (2024-12-18)
--------------------
-* [jazzy] Add "--sort" CLI option to the "ros2 bag info" command (backport `#1804 <https://github.com/ros2/rosbag2/issues/1804>`_) (`#1838 <https://github.com/ros2/rosbag2/issues/1838>`_)
-  * Add "--sort" CLI option to the "ros2 bag info" command (`#1804 <https://github.com/ros2/rosbag2/issues/1804>`_)
-  * sort info output by topic name
-  * add missing imports
-  * add sorting to service topics and remove sorting option by serialization format
-  * add CLI option for sorting output and move sorting methods to enum
-  * add sorting by name to topic only option of info output
-  * move InfoSortingMethod and generate sorted idx functions to seprate files; move ServiceInformation and ServiceMetadata struct to storage package for clear include structure
-  * move ServiceInformation struct to its own header file and rename to ServiceEventInformation; replace if-else by switch-case for differantiating between sorting methods; bugfix sorting method from string resolution and service info verbose not being sorted
-  * add test-cases for sorted info output
-  * Fix linker issues
-  - Add missing const qualifier for the generate_sorted_idx(..) version
-  with rosbag2_cpp::rosbag2_service_info_t
-  - Small cleanups
-  * Regenerate pyi stub files
-  * Small nitpick for using const reference in the for loop
-  ---------
-  Co-authored-by: Soenke Prophet <soenke.prophet@gmail.com>
-  Co-authored-by: Michael Orlov <michael.orlov@apex.ai>
-  * Fixup for backporting commit
-  - On Jazzy parameters in the "format_bag_meta_data(..)" has a different
-  order. The "sizes" at the end. Changed calling function accordingly.
-  * Make backport API compatible
-  - Add default value for newly added argument "sorting_method" in
-  "print_output(..)" and "print_output_verbose(..)"
-  ---------
-  Co-authored-by: Sanoronas <soenke.prophet@gmail.com>
-  Co-authored-by: Michael Orlov <michael.orlov@apex.ai>
-* [jazzy] Add computation of size contribution to info verb (backport `#1726 <https://github.com/ros2/rosbag2/issues/1726>`_) (`#1872 <https://github.com/ros2/rosbag2/issues/1872>`_)
-  * Add computation of size contribution to info verb (`#1726 <https://github.com/ros2/rosbag2/issues/1726>`_)
-  * Add optional computation of size contribution to info verb
-  * Update rosbag2_cpp/src/rosbag2_cpp/info.cpp
-  Co-authored-by: Michael Orlov <morlovmr@gmail.com>
-  * Fixes for review and failed tests
-  - Also update rosbag2_tests
-  * Support services' size
-  - Also add new test and update design doc
-  * Fix style divergence
-  * Apply suggestions from code review
-  Co-authored-by: Michael Orlov <morlovmr@gmail.com>
-  * Update timestamp check for new ros bag info test
-  ---------
-  Co-authored-by: Michael Orlov <morlovmr@gmail.com>
-  (cherry picked from commit 22148a7a8efa5e465eb8c88035d29e02c332b327)
-  * Make PR ABI/API compatible
-  - Made "compute_messages_size_contribution(..)"" as non-virtual method
-  - Make "format_bag_meta_data(..)" APi compatible by moving
-  "messages_size" argument to the end.
-  ---------
-  Co-authored-by: Nicola Loi <nicolaloi@outlook.com>
-  Co-authored-by: Michael Orlov <michael.orlov@apex.ai>
-* Improve the reliability of rosbag2 tests (`#1796 <https://github.com/ros2/rosbag2/issues/1796>`_) (`#1806 <https://github.com/ros2/rosbag2/issues/1806>`_)
-  * Remove wait_until_shutdown.
-  This has almost exactly the same functionality as wait_for_condition,
-  except for two things:
-  1.  It is templated on the Timeout type.
-  2.  It calls rclcpp::shutdown after the loop completes.
-  However, neither of those is necessary; all callers to it use
-  a std::chrono::duration, and all of the test fixtures already
-  call rclcpp::shutdown.  Thus, just remove it and make all
-  callers use wait_for_condition instead.
-  * Shutdown the async spinner node without rclcpp::shutdown.
-  That is, we really don't actually want to do a full
-  rclcpp shutdown here; we only want to stop spinning.
-  Accomplish that with an executor, and timing out
-  every 100 milliseconds to check if we are done yet.
-  * Small fixes to start_async_spin in rosbag2_tests.
-  Make sure it only spins as long as we haven't shutdown,
-  and that it wakes up every so often to check that fact.
-  * Wait for topics to be discovered during recorder->record().
-  The main reason for that is that these tests generally want
-  to test certain expectations around how many messages were
-  received.  However, if discovery takes longer than we expect,
-  then it could be the case that we "missed" messages at the
-  beginning because discovery hadn't yet completed.
-  Fix this by just waiting around for the recorder to get all
-  the subscriptions it expects before moving on with the test.
-  * Feedback from review.
-  * Switch to using MockRecorder.
-  * Fixes from review.
-  * Feedback from review.
-  * Apply suggestions from code review
-  * Switch to using spin, rather than spin_some.
-  That's because there is currently at least one bug
-  associated with spin_some in rclcpp.  However, it turns
-  out that we don't even need to use it, as we can just as
-  easily use spin() along with exec.cancel().
-  * Make sure to stop_spinning when we tear down the test.
-  * Use scopes to shutdown spinning.
-  * Nested contexts just to explicitly cleanup the async spinners.
-  * Update rosbag2_transport/test/rosbag2_transport/record_integration_fixture.hpp
-  * Apply the same fix to rosbag2_tests.
-  ---------
-  Co-authored-by: Chris Lalancette <clalancette@gmail.com>
-  Co-authored-by: Michael Orlov <michael.orlov@apex.ai>
-* [Jazzy] Release 0.26.5 (`#1800 <https://github.com/ros2/rosbag2/issues/1800>`_)
-* Small cleanups to the rosbag2 tests. (`#1792 <https://github.com/ros2/rosbag2/issues/1792>`_) (`#1793 <https://github.com/ros2/rosbag2/issues/1793>`_)
-  * Small cleanups to the rosbag2 tests.
-  1.  Rename "wait_for_srvice_to_be_ready" to "wait_for_service_to_be_ready".
-  2.  Make some of the constants constexpr, so we no longer have to capture them.
-  (cherry picked from commit 604cebcf11775151efa94f7c30ba1aea68e90c5c)
-  Co-authored-by: Chris Lalancette <clalancette@gmail.com>
-* Bugfix for wrong timestamps in ros2 bag info (`#1745 <https://github.com/ros2/rosbag2/issues/1745>`_) (`#1752 <https://github.com/ros2/rosbag2/issues/1752>`_)
-  * Bugfix for wrong timestamps in ros2 bag info
-  - Correctly calculate fractional part for seconds by subtracting
-  `nanoseconds_from_seconds` from `nanoseconds`.
-  * Adjust expectations in the "ros2 bag info" integration tests
-  * Add leading zeros to the fractional seconds in the format_duration(..)
-  * Adjust expectations in info end-to-end tests by adding leading zero
-  The real file duration is: 70633730 nanoseconds.
-  i.e., regex mask shall be "0\\.0706.*s" to match 070633730 nanoseconds.
-  ---------
-  (cherry picked from commit da28c9da82824b8ce5f6fc18935d1a954e52b636)
-  Co-authored-by: Michael Orlov <michael.orlov@apex.ai>
-* Fix for a false negative integration test with bag split in recorder (`#1743 <https://github.com/ros2/rosbag2/issues/1743>`_) (`#1750 <https://github.com/ros2/rosbag2/issues/1750>`_)
-  - In
-  record_end_to_end_with_splitting_bagsize_split_is_at_least_specified_size
-  publisher was starting after terminating recorder.
-  (cherry picked from commit da1acb29646258899ba73a81c803383c07905613)
-  Co-authored-by: Michael Orlov <michael.orlov@apex.ai>
-* Contributors: Marco A. Gutierrez, mergify[bot]
 
 0.26.4 (2024-06-27)
 -------------------

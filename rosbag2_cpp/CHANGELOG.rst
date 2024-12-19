@@ -2,63 +2,18 @@
 Changelog for package rosbag2
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-0.26.5 (2024-09-06)
--------------------
-* Bugfix for bag_split event callbacks called to early with file compression (`#1643 <https://github.com/ros2/rosbag2/issues/1643>`_) (`#1732 <https://github.com/ros2/rosbag2/issues/1732>`_)
-  (cherry picked from commit 1877b53847bda4d1f2668187b79fa27a796c3438)
-  Co-authored-by: Michael Orlov <michael.orlov@apex.ai>
-* Contributors: mergify[bot]
-
 0.26.6 (2024-12-18)
 -------------------
 * Add more logging info to storage and reader/writer open operations (`#1881 <https://github.com/ros2/rosbag2/issues/1881>`_) (`#1882 <https://github.com/ros2/rosbag2/issues/1882>`_)
   (cherry picked from commit 0823be2723e04715baacf99625b844cb88f58c21)
   Co-authored-by: Michael Orlov <michael.orlov@apex.ai>
 * [jazzy] Add PlayerClock::wakeup() to interrupt sleeping (backport `#1869 <https://github.com/ros2/rosbag2/issues/1869>`_) (`#1875 <https://github.com/ros2/rosbag2/issues/1875>`_)
-  * Add PlayerClock::wakeup() to interrupt sleeping (`#1869 <https://github.com/ros2/rosbag2/issues/1869>`_)
-  * Add PlayerClock::wakeup() to interrupt sleeping
-  * Use PlayerClock::wakeup() in new play_next() impl
-  ---------
-  (cherry picked from commit c8feaea5b64e824bbe76e920f48a3ca39b72f9fc)
-  * Make backporting PR ABI compatible
-  - Make "is_sleeping()" and " wakeup()" functions as non-virtual and
-  defined only in the derived "TimeControllerClock" class.
-  - Use "TimeControllerClock" directly instead of the "PlayerClock" base
-  class in the player.cpp.
-  ---------
   Co-authored-by: Christophe Bedard <christophe.bedard@apex.ai>
   Co-authored-by: Michael Orlov <michael.orlov@apex.ai>
 * [jazzy] Add support for replaying multiple bags (backport `#1848 <https://github.com/ros2/rosbag2/issues/1848>`_) (`#1873 <https://github.com/ros2/rosbag2/issues/1873>`_)
-  * Support replaying multiple bags (`#1848 <https://github.com/ros2/rosbag2/issues/1848>`_)
-  (cherry picked from commit 125db50b4d9a585bab33f2908008fe1168bb9cf3)
-  # Conflicts:
-  #	shared_queues_vendor/CHANGELOG.rst
-  #	shared_queues_vendor/package.xml
-  * Revert shared_queue_vendor package deletion
-  ---------
   Co-authored-by: Christophe Bedard <christophe.bedard@apex.ai>
   Co-authored-by: Michael Orlov <michael.orlov@apex.ai>
 * [jazzy] Add computation of size contribution to info verb (backport `#1726 <https://github.com/ros2/rosbag2/issues/1726>`_) (`#1872 <https://github.com/ros2/rosbag2/issues/1872>`_)
-  * Add computation of size contribution to info verb (`#1726 <https://github.com/ros2/rosbag2/issues/1726>`_)
-  * Add optional computation of size contribution to info verb
-  * Update rosbag2_cpp/src/rosbag2_cpp/info.cpp
-  Co-authored-by: Michael Orlov <morlovmr@gmail.com>
-  * Fixes for review and failed tests
-  - Also update rosbag2_tests
-  * Support services' size
-  - Also add new test and update design doc
-  * Fix style divergence
-  * Apply suggestions from code review
-  Co-authored-by: Michael Orlov <morlovmr@gmail.com>
-  * Update timestamp check for new ros bag info test
-  ---------
-  Co-authored-by: Michael Orlov <morlovmr@gmail.com>
-  (cherry picked from commit 22148a7a8efa5e465eb8c88035d29e02c332b327)
-  * Make PR ABI/API compatible
-  - Made "compute_messages_size_contribution(..)"" as non-virtual method
-  - Make "format_bag_meta_data(..)" APi compatible by moving
-  "messages_size" argument to the end.
-  ---------
   Co-authored-by: Nicola Loi <nicolaloi@outlook.com>
   Co-authored-by: Michael Orlov <michael.orlov@apex.ai>
 * Bugfix: Update metadata with new file_info before saving it first time (`#1843 <https://github.com/ros2/rosbag2/issues/1843>`_) (`#1853 <https://github.com/ros2/rosbag2/issues/1853>`_)
@@ -66,46 +21,19 @@ Changelog for package rosbag2
   Co-authored-by: Michael Orlov <michael.orlov@apex.ai>
 * Make snapshot writing into a new file each time it is triggered (`#1842 <https://github.com/ros2/rosbag2/issues/1842>`_) (`#1849 <https://github.com/ros2/rosbag2/issues/1849>`_)
 * Bugfix for rosbag2_cpp serialization converter (`#1814 <https://github.com/ros2/rosbag2/issues/1814>`_) (`#1822 <https://github.com/ros2/rosbag2/issues/1822>`_)
-  * Bugfix for rosbag2 serialization converter
-  - Use rmw specific type support for rmw_serilize{deserialize} function
-  calls.
-  Note: It is ok for CycloneDDS to use introspection type support for
-  rmw_serilize{deserialize} functions. However, for FastRTPS it must be
-  rmw specific type support. e.g. rosidl_typesupport_cpp. Fix works for
-  both CycloneDDS and FastRTPS rmw.
-  * Add test coverage for default rmv serialization format converter
-  * Run test_serialization_converter for each rmw implementation
-  - Rationale: To make sure that the default serialization converter can
-  serialize and deserialize messages with all supported rmw
-  implementations. Since it uses rmw specific functions for serialization
-  and deserialization inside.
-  * Address uncrustify formating warnings
-  * Enable sanitizer by default
-  * Address Windows build warnings
-  * Revert "Enable sanitizer by default"
-  This reverts commit 724196378dfbfeb7ae6c96bf869ea8e6c502fbf5.
-  ---------
   (cherry picked from commit 6e82f52f3917c365ce60f9ffd8f5248e25c0fe55)
   Co-authored-by: Michael Orlov <michael.orlov@apex.ai>
 * Allow unknown types in bag rewrite (`#1812 <https://github.com/ros2/rosbag2/issues/1812>`_) (`#1817 <https://github.com/ros2/rosbag2/issues/1817>`_)
   (cherry picked from commit cd7bd63696604973e23c739afa6387556f3e7781)
   Co-authored-by: Michael Orlov <michael.orlov@apex.ai>
-* [Jazzy] Release 0.26.5 (`#1800 <https://github.com/ros2/rosbag2/issues/1800>`_)
+* Contributors: Marco A. Gutierrez, mergify[bot]
+
+0.26.5 (2024-09-06)
+-------------------
 * Bugfix for bag_split event callbacks called to early with file compression (`#1643 <https://github.com/ros2/rosbag2/issues/1643>`_) (`#1732 <https://github.com/ros2/rosbag2/issues/1732>`_)
-  * Bugfix for bag_split event callbacks not called with file compression
-  * Delete redundant "should_split_bagfile" in compression_writer
-  - It is a non-virtual method and doesn't call from the base class.
-  * Adjust "split_event_calls_callback" for testing multiple splits
-  * Use temp folder for "SequentialWriterTest" fixture instead of "uri"
-  * Add tests for split event callbacks when using file and msg compression
-  - Added "split_event_calls_callback_with_msg_compression" and
-  "split_event_calls_callback_with_file_compression" uit tests
-  * Add debug info to the flaky "can_record_again_after_stop" test
-  * Use `uint64_t` type for `fake_storage_size\_` in tests
-  ---------
   (cherry picked from commit 1877b53847bda4d1f2668187b79fa27a796c3438)
   Co-authored-by: Michael Orlov <michael.orlov@apex.ai>
-* Contributors: Marco A. Gutierrez, mergify[bot]
+* Contributors: mergify[bot]
 
 0.26.4 (2024-06-27)
 -------------------

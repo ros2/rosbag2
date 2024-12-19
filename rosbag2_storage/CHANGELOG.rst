@@ -2,16 +2,15 @@
 Changelog for package rosbag2_storage
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-0.26.5 (2024-09-06)
--------------------
-
 0.26.6 (2024-12-18)
 -------------------
 * Add more logging info to storage and reader/writer open operations (`#1881 <https://github.com/ros2/rosbag2/issues/1881>`_) (`#1882 <https://github.com/ros2/rosbag2/issues/1882>`_)
   (cherry picked from commit 0823be2723e04715baacf99625b844cb88f58c21)
   Co-authored-by: Michael Orlov <michael.orlov@apex.ai>
-* [Jazzy] Release 0.26.5 (`#1800 <https://github.com/ros2/rosbag2/issues/1800>`_)
 * Contributors: Marco A. Gutierrez, mergify[bot]
+
+0.26.5 (2024-09-06)
+-------------------
 
 0.26.4 (2024-06-27)
 -------------------

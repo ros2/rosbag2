@@ -2,6 +2,22 @@
 Changelog for package rosbag2_py
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.26.6 (2024-12-18)
+-------------------
+* [jazzy] Add support for replaying multiple bags (backport `#1848 <https://github.com/ros2/rosbag2/issues/1848>`_) (`#1873 <https://github.com/ros2/rosbag2/issues/1873>`_)
+  Co-authored-by: Christophe Bedard <christophe.bedard@apex.ai>
+  Co-authored-by: Michael Orlov <michael.orlov@apex.ai>
+* [jazzy] Add "--sort" CLI option to the "ros2 bag info" command (backport `#1804 <https://github.com/ros2/rosbag2/issues/1804>`_) (`#1838 <https://github.com/ros2/rosbag2/issues/1838>`_)
+  Co-authored-by: Soenke Prophet <soenke.prophet@gmail.com>
+  Co-authored-by: Michael Orlov <michael.orlov@apex.ai>
+  Co-authored-by: Sanoronas <soenke.prophet@gmail.com>
+* Add in python3-dev build dependency. (`#1863 <https://github.com/ros2/rosbag2/issues/1863>`_) (`#1864 <https://github.com/ros2/rosbag2/issues/1864>`_)
+  Co-authored-by: Chris Lalancette <clalancette@gmail.com>
+* [jazzy] Add computation of size contribution to info verb (backport `#1726 <https://github.com/ros2/rosbag2/issues/1726>`_) (`#1872 <https://github.com/ros2/rosbag2/issues/1872>`_)
+  Co-authored-by: Nicola Loi <nicolaloi@outlook.com>
+  Co-authored-by: Michael Orlov <michael.orlov@apex.ai>
+* Contributors: Marco A. Gutierrez, mergify[bot]
+
 0.26.5 (2024-09-06)
 -------------------
 * Added method to introspect QoS in Python (`#1648 <https://github.com/ros2/rosbag2/issues/1648>`_) (`#1790 <https://github.com/ros2/rosbag2/issues/1790>`_)
@@ -19,131 +35,6 @@ Changelog for package rosbag2_py
   (cherry picked from commit da28c9da82824b8ce5f6fc18935d1a954e52b636)
   Co-authored-by: Michael Orlov <michael.orlov@apex.ai>
 * Contributors: mergify[bot]
-
-0.26.6 (2024-12-18)
--------------------
-* [jazzy] Add support for replaying multiple bags (backport `#1848 <https://github.com/ros2/rosbag2/issues/1848>`_) (`#1873 <https://github.com/ros2/rosbag2/issues/1873>`_)
-  * Support replaying multiple bags (`#1848 <https://github.com/ros2/rosbag2/issues/1848>`_)
-  (cherry picked from commit 125db50b4d9a585bab33f2908008fe1168bb9cf3)
-  # Conflicts:
-  #	shared_queues_vendor/CHANGELOG.rst
-  #	shared_queues_vendor/package.xml
-  * Revert shared_queue_vendor package deletion
-  ---------
-  Co-authored-by: Christophe Bedard <christophe.bedard@apex.ai>
-  Co-authored-by: Michael Orlov <michael.orlov@apex.ai>
-* [jazzy] Add "--sort" CLI option to the "ros2 bag info" command (backport `#1804 <https://github.com/ros2/rosbag2/issues/1804>`_) (`#1838 <https://github.com/ros2/rosbag2/issues/1838>`_)
-  * Add "--sort" CLI option to the "ros2 bag info" command (`#1804 <https://github.com/ros2/rosbag2/issues/1804>`_)
-  * sort info output by topic name
-  * add missing imports
-  * add sorting to service topics and remove sorting option by serialization format
-  * add CLI option for sorting output and move sorting methods to enum
-  * add sorting by name to topic only option of info output
-  * move InfoSortingMethod and generate sorted idx functions to seprate files; move ServiceInformation and ServiceMetadata struct to storage package for clear include structure
-  * move ServiceInformation struct to its own header file and rename to ServiceEventInformation; replace if-else by switch-case for differantiating between sorting methods; bugfix sorting method from string resolution and service info verbose not being sorted
-  * add test-cases for sorted info output
-  * Fix linker issues
-  - Add missing const qualifier for the generate_sorted_idx(..) version
-  with rosbag2_cpp::rosbag2_service_info_t
-  - Small cleanups
-  * Regenerate pyi stub files
-  * Small nitpick for using const reference in the for loop
-  ---------
-  Co-authored-by: Soenke Prophet <soenke.prophet@gmail.com>
-  Co-authored-by: Michael Orlov <michael.orlov@apex.ai>
-  * Fixup for backporting commit
-  - On Jazzy parameters in the "format_bag_meta_data(..)" has a different
-  order. The "sizes" at the end. Changed calling function accordingly.
-  * Make backport API compatible
-  - Add default value for newly added argument "sorting_method" in
-  "print_output(..)" and "print_output_verbose(..)"
-  ---------
-  Co-authored-by: Sanoronas <soenke.prophet@gmail.com>
-  Co-authored-by: Michael Orlov <michael.orlov@apex.ai>
-* Add in python3-dev build dependency. (`#1863 <https://github.com/ros2/rosbag2/issues/1863>`_) (`#1864 <https://github.com/ros2/rosbag2/issues/1864>`_)
-  We need this because we call find_package(Python3 Development) in our CMakeLists.txt here.
-  (cherry picked from commit ebd9ed0b786b2ca8bef00554fb8d1655fc9b55fb)
-  Co-authored-by: Chris Lalancette <clalancette@gmail.com>
-* [jazzy] Add computation of size contribution to info verb (backport `#1726 <https://github.com/ros2/rosbag2/issues/1726>`_) (`#1872 <https://github.com/ros2/rosbag2/issues/1872>`_)
-  * Add computation of size contribution to info verb (`#1726 <https://github.com/ros2/rosbag2/issues/1726>`_)
-  * Add optional computation of size contribution to info verb
-  * Update rosbag2_cpp/src/rosbag2_cpp/info.cpp
-  Co-authored-by: Michael Orlov <morlovmr@gmail.com>
-  * Fixes for review and failed tests
-  - Also update rosbag2_tests
-  * Support services' size
-  - Also add new test and update design doc
-  * Fix style divergence
-  * Apply suggestions from code review
-  Co-authored-by: Michael Orlov <morlovmr@gmail.com>
-  * Update timestamp check for new ros bag info test
-  ---------
-  Co-authored-by: Michael Orlov <morlovmr@gmail.com>
-  (cherry picked from commit 22148a7a8efa5e465eb8c88035d29e02c332b327)
-  * Make PR ABI/API compatible
-  - Made "compute_messages_size_contribution(..)"" as non-virtual method
-  - Make "format_bag_meta_data(..)" APi compatible by moving
-  "messages_size" argument to the end.
-  ---------
-  Co-authored-by: Nicola Loi <nicolaloi@outlook.com>
-  Co-authored-by: Michael Orlov <michael.orlov@apex.ai>
-* [Jazzy] Release 0.26.5 (`#1800 <https://github.com/ros2/rosbag2/issues/1800>`_)
-* Added method to introspect QoS in Python (`#1648 <https://github.com/ros2/rosbag2/issues/1648>`_) (`#1790 <https://github.com/ros2/rosbag2/issues/1790>`_)
-  (cherry picked from commit f0f3cc5f57ba9142b763247a68acc571d2500bb5)
-  Co-authored-by: Alejandro Hernández Cordero <ahcorde@gmail.com>
-* Add cli option compression-threads-priority (`#1768 <https://github.com/ros2/rosbag2/issues/1768>`_) (`#1778 <https://github.com/ros2/rosbag2/issues/1778>`_)
-  * Add cli option compression-threads-priority
-  * Fix CI issues
-  * Add timeout for the test_priority_propagated_into_compression_thread
-  * Update help section and doxygen comments for thread priority parameters
-  * Use integer type for compression threads priority default value in tests
-  - Rationale: To test the same behavior as in the writer factory class
-  ---------
-  Co-authored-by: Michael Orlov <michael.orlov@apex.ai>
-  (cherry picked from commit 25c3e1c2effdaea3b880c39ff7580b2f38a44b1c)
-  Co-authored-by: Roman <rsokolkov@gmail.com>
-* [jazzy] Update CI scripts to use Ubuntu Noble distros and bump action scripts to latest versions (backport `#1709 <https://github.com/ros2/rosbag2/issues/1709>`_) (`#1779 <https://github.com/ros2/rosbag2/issues/1779>`_)
-  * Update CI scripts to use Ubuntu Noble distros and bump action scripts to latest versions (`#1709 <https://github.com/ros2/rosbag2/issues/1709>`_)
-  * Use Ubuntu Noble distros for ci jobs on rolling
-  * Bump actions-ros-lint to version 0.1.3 and actions/checkout to v4
-  * Exclude cppcheck from CI due to known issue that it is very slow
-  See https://github.com/ament/ament_lint/pull/345 for details.
-  * Bump mypy to version 1.9.0-4ubuntu1 to be aligned with Noble
-  - Also add `--break-system-packages` to avoid error during pip uninstall
-  * Remove "sudo pip uninstall -y mypy" since it is not installed with pip
-  Addressing the error message:
-  Found existing installation: mypy 1.9.0
-  ERROR: Cannot uninstall mypy 1.9.0, RECORD file not found. Hint:
-  The package was installed by debian.
-  * Revert "Bump mypy to version 1.9.0-4ubuntu1 to be aligned with Noble"
-  This reverts commit b5aa0186
-  * Fixes for new mypy (Ubuntu 24.04) (`#1763 <https://github.com/ros2/rosbag2/issues/1763>`_)
-  * Apply new stubgen changes
-  * Update CI script and README.md
-  ---------
-  * Remove "--break-system-packages" flag from mypy install in README.md
-  - Rationale: On Ubuntu 22.04 is an older version of the pip3 and python
-  version which doesn't have this flag.
-  - Also removed sudo before "pip3 install -U mypy==1.9" in README.md
-  ---------
-  Co-authored-by: Roman <rsokolkov@gmail.com>
-  (cherry picked from commit 27a6b600c2a813ec1f2154145fe77392c88b314b)
-  * Update github CI scripts to use jazzy instead of rolling
-  ---------
-  Co-authored-by: Michael Orlov <michael.orlov@apex.ai>
-* Bugfix for wrong timestamps in ros2 bag info (`#1745 <https://github.com/ros2/rosbag2/issues/1745>`_) (`#1752 <https://github.com/ros2/rosbag2/issues/1752>`_)
-  * Bugfix for wrong timestamps in ros2 bag info
-  - Correctly calculate fractional part for seconds by subtracting
-  `nanoseconds_from_seconds` from `nanoseconds`.
-  * Adjust expectations in the "ros2 bag info" integration tests
-  * Add leading zeros to the fractional seconds in the format_duration(..)
-  * Adjust expectations in info end-to-end tests by adding leading zero
-  The real file duration is: 70633730 nanoseconds.
-  i.e., regex mask shall be "0\\.0706.*s" to match 070633730 nanoseconds.
-  ---------
-  (cherry picked from commit da28c9da82824b8ce5f6fc18935d1a954e52b636)
-  Co-authored-by: Michael Orlov <michael.orlov@apex.ai>
-* Contributors: Marco A. Gutierrez, mergify[bot]
 
 0.26.4 (2024-06-27)
 -------------------
