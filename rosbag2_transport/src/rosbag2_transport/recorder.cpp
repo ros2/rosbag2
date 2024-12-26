@@ -328,7 +328,11 @@ void RecorderImpl::record()
     node->create_publisher<rosbag2_interfaces::msg::WriteSplitEvent>("events/write_split", 1);
 
   // Start the thread that will publish events
-  event_publisher_thread_ = std::thread(&RecorderImpl::event_publisher_thread_main, this);
+  {
+    std::lock_guard<std::mutex> lock(event_publisher_thread_mutex_);
+    event_publisher_thread_should_exit_ = false;
+    event_publisher_thread_ = std::thread(&RecorderImpl::event_publisher_thread_main, this);
+  }
 
   rosbag2_cpp::bag_events::WriterEventCallbacks callbacks;
   callbacks.write_split_callback =
