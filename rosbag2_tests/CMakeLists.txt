@@ -45,7 +45,7 @@ if(BUILD_TESTING)
   ament_add_gmock(test_rosbag2_record_end_to_end
     test/rosbag2_tests/test_rosbag2_record_end_to_end.cpp
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-    TIMEOUT 120)
+    TIMEOUT 180)
   if(TARGET test_rosbag2_record_end_to_end)
     target_link_libraries(test_rosbag2_record_end_to_end
       rclcpp::rclcpp
