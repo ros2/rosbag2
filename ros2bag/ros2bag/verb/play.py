@@ -182,12 +182,12 @@ class PlayVerb(VerbExtension):
             choices=['debug', 'info', 'warn', 'error', 'fatal'],
             help='Logging level.')
         parser.add_argument(
-            '--progress-bar', type=float, default=3.0,
-            help='Print a progress bar of the playback player at a specific frequency in Hz. '
+            '--progress-bar', type=int, default=3,
+            help='Print a progress bar for the playback at a specific rate in times per second. '
                  'Default is %(default)d. '
                  'Negative values mark an update for every published message, while '
                  ' a zero value disables the progress bar.',
-            metavar='PROGRESS_BAR_FREQUENCY')
+            metavar='PROGRESS_BAR_UPDATE_RATE')
         parser.add_argument(
             '--progress-bar-separation-lines', type=check_not_negative_int, default=2,
             help='Number of lines to separate the progress bar from the rest of the '
@@ -197,7 +197,7 @@ class PlayVerb(VerbExtension):
                  'than the progress bar string and are printed at a rate higher than the '
                  'progress bar update rate. In these cases, a larger value will avoid '
                  'the external log message to be mixed with the progress bar string.',
-            metavar='SEPARATION_LINES')
+            metavar='NUM_SEPARATION_LINES')
 
     def get_playback_until_from_arg_group(self, playback_until_sec, playback_until_nsec) -> int:
         nano_scale = 1000 * 1000 * 1000

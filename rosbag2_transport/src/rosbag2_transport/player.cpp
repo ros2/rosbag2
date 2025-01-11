@@ -475,7 +475,7 @@ PlayerImpl::PlayerImpl(
   progress_bar_update_always_(play_options.progress_bar_update_rate < 0),
   progress_bar_update_period_(play_options.progress_bar_update_rate != 0 ?
     RCUTILS_S_TO_NS(1.0 / play_options.progress_bar_update_rate) :
-    std::numeric_limits<int64_t>::max())
+    std::numeric_limits<rcutils_duration_value_t>::max())
 {
   for (auto & topic : play_options_.topics_to_filter) {
     topic = rclcpp::expand_topic_or_service_name(

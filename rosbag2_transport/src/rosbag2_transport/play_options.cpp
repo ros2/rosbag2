@@ -117,10 +117,10 @@ bool convert<rosbag2_transport::PlayOptions>::decode(
 
   optional_assign<bool>(node, "disable_loan_message", play_options.disable_loan_message);
 
-  optional_assign<double>(
+  optional_assign<int32_t>(
     node, "progress_bar_update_rate", play_options.progress_bar_update_rate);
 
-  optional_assign<int>(
+  optional_assign<int32_t>(
     node, "progress_bar_separation_lines", play_options.progress_bar_separation_lines);
 
   return true;
