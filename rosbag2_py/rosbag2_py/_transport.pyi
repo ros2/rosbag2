@@ -34,6 +34,8 @@ class PlayOptions:
     node_prefix: str
     playback_duration: float
     playback_until_timestamp: int
+    progress_bar_separation_lines: int
+    progress_bar_update_rate: float
     publish_service_requests: bool
     rate: float
     read_ahead_queue_size: int

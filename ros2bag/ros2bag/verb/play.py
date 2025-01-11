@@ -181,6 +181,23 @@ class PlayVerb(VerbExtension):
             '--log-level', type=str, default='info',
             choices=['debug', 'info', 'warn', 'error', 'fatal'],
             help='Logging level.')
+        parser.add_argument(
+            '--progress-bar', type=float, default=3.0,
+            help='Print a progress bar of the playback player at a specific frequency in Hz. '
+                 'Default is %(default)d. '
+                 'Negative values mark an update for every published message, while '
+                 ' a zero value disables the progress bar.',
+            metavar='PROGRESS_BAR_FREQUENCY')
+        parser.add_argument(
+            '--progress-bar-separation-lines', type=check_not_negative_int, default=2,
+            help='Number of lines to separate the progress bar from the rest of the '
+                 'playback player output. Negative values are invalid. Default is %(default)d. '
+                 'This option makes sense only if the progress bar is enabled. '
+                 'Large values are useful if external log messages from other nodes are shorter '
+                 'than the progress bar string and are printed at a rate higher than the '
+                 'progress bar update rate. In these cases, a larger value will avoid '
+                 'the external log message to be mixed with the progress bar string.',
+            metavar='SEPARATION_LINES')
 
     def get_playback_until_from_arg_group(self, playback_until_sec, playback_until_nsec) -> int:
         nano_scale = 1000 * 1000 * 1000
@@ -291,6 +308,9 @@ class PlayVerb(VerbExtension):
             'received': MessageOrder.RECEIVED_TIMESTAMP,
             'sent': MessageOrder.SENT_TIMESTAMP,
         }.get(args.message_order)
+
+        play_options.progress_bar_update_rate = args.progress_bar
+        play_options.progress_bar_separation_lines = args.progress_bar_separation_lines
 
         player = Player(args.log_level)
         try:
