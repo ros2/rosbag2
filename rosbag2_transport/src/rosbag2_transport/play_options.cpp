@@ -59,6 +59,9 @@ Node convert<rosbag2_transport::PlayOptions>::encode(
 
   node["disable_loan_message"] = play_options.disable_loan_message;
 
+  node["progress_bar_update_rate"] = play_options.progress_bar_update_rate;
+  node["progress_bar_separation_lines"] = play_options.progress_bar_separation_lines;
+
   return node;
 }
 
@@ -113,6 +116,12 @@ bool convert<rosbag2_transport::PlayOptions>::decode(
   play_options.wait_acked_timeout = wait_acked_timeout.nanoseconds();
 
   optional_assign<bool>(node, "disable_loan_message", play_options.disable_loan_message);
+
+  optional_assign<double>(
+    node, "progress_bar_update_rate", play_options.progress_bar_update_rate);
+
+  optional_assign<int>(
+    node, "progress_bar_separation_lines", play_options.progress_bar_separation_lines);
 
   return true;
 }

@@ -150,6 +150,10 @@ Added or changed parameters:
 
     Rename from `--exclude`. Exclude topics and services containing provided regular expression.
 
+- `--progress-bar [ProgressBarFrequency]`
+
+    Print a progress bar of the playback player at a specific frequency in Hz. Negative values mark an update for every published message, while a zero value disables the progress bar. Default to a positive low value. 
+
 `-e REGEX, --regex REGEX` affects both topics and services.
 
 ## Implementation Staging

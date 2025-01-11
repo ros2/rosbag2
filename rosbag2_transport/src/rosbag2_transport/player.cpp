@@ -80,6 +80,15 @@ rclcpp::QoS publisher_qos_for_topic(
 
 namespace rosbag2_transport
 {
+
+enum class PlayerStatus : char
+{
+  RUNNING = 'R',
+  PAUSED = 'P',
+  BURST = 'B',
+  DELAYED = 'D',
+};
+
 constexpr Player::callback_handle_t Player::invalid_callback_handle;
 
 class PlayerImpl
@@ -123,12 +132,13 @@ public:
   virtual bool set_rate(double);
 
   /// \brief Playing next message from queue when in pause.
+  /// \param in_burst_mode If true, it will not call the progress bar update to avoid delays.
   /// \details This is blocking call and it will wait until next available message will be
   /// published or rclcpp context shut down.
   /// \note If internal player queue is starving and storage has not been completely loaded,
   /// this method will wait until new element will be pushed to the queue.
   /// \return true if player in pause mode and successfully played next message, otherwise false.
-  virtual bool play_next();
+  virtual bool play_next(bool in_burst_mode = false);
 
   /// \brief Burst the next \p num_messages messages from the queue when paused.
   /// \param num_messages The number of messages to burst from the queue. Specifying zero means no
@@ -308,6 +318,32 @@ private:
   rcutils_time_point_value_t get_message_order_timestamp(
     const rosbag2_storage::SerializedBagMessageSharedPtr & message) const;
 
+  std::atomic_bool is_delayed_status_{false};
+
+  std::string progress_bar_helper_clear_and_move_cursor_down_;
+  std::string progress_bar_helper_move_cursor_up_;
+
+  void print_progress_bar_help_str() const;
+  // Update progress bar with an input timestamp,
+  // taking into account the update rate set by the user.
+  // The function should be called for regular progress bar updates, for example
+  // after the recurrent publishing of the messages.
+  // Call update_progress_bar_check_rate function only where it cannot run
+  // contemporaneously in multiple threads, i.e. function calls are already protected by a mutex.
+  // To avoid locking overhead no new mutex inside the function is directly protecting
+  // the access to the class attribute progress_bar_last_time_updated_.
+  void update_progress_bar_check_rate(
+    const rcutils_time_point_value_t & timestamp,
+    const PlayerStatus & status);
+  // Update progress bar with the current playback timestamp,
+  // irrespective of the update rate set by the user.
+  // The function should be called for extraordinary progress bar updates, for example
+  // when a log message is printed and we want to 'redraw' the progress bar.
+  void update_progress_bar(const PlayerStatus & status) const;
+  void cout_progress_bar(
+    const rcutils_time_point_value_t & timestamp,
+    const PlayerStatus & status) const;
+
   static constexpr double read_ahead_lower_bound_percentage_ = 0.9;
   static const std::chrono::milliseconds queue_read_wait_period_;
   std::atomic_bool cancel_wait_for_next_message_{false};
@@ -354,6 +390,9 @@ private:
   std::atomic_bool play_next_result_{false};
 
   rcutils_time_point_value_t starting_time_;
+  rcutils_time_point_value_t ending_time_;
+  double starting_time_secs_;
+  double duration_secs_;
 
   // control services
   rclcpp::Service<rosbag2_interfaces::srv::Pause>::SharedPtr srv_pause_;
@@ -399,6 +438,12 @@ private:
       return l->send_timestamp > r->send_timestamp;
     }
   } bag_message_chronological_send_timestamp_comparator;
+
+  // progress bar
+  const bool enable_progress_bar_;
+  const bool progress_bar_update_always_;
+  const rcutils_duration_value_t progress_bar_update_period_;
+  std::chrono::steady_clock::time_point progress_bar_last_time_updated_{};
 };
 
 PlayerImpl::BagMessageComparator PlayerImpl::get_bag_message_comparator(const MessageOrder & order)
@@ -425,7 +470,12 @@ PlayerImpl::PlayerImpl(
   play_options_(play_options),
   message_queue_(get_bag_message_comparator(play_options_.message_order)),
   keyboard_handler_(std::move(keyboard_handler)),
-  player_service_client_manager_(std::make_shared<PlayerServiceClientManager>())
+  player_service_client_manager_(std::make_shared<PlayerServiceClientManager>()),
+  enable_progress_bar_(play_options.progress_bar_update_rate != 0),
+  progress_bar_update_always_(play_options.progress_bar_update_rate < 0),
+  progress_bar_update_period_(play_options.progress_bar_update_rate != 0 ?
+    RCUTILS_S_TO_NS(1.0 / play_options.progress_bar_update_rate) :
+    std::numeric_limits<int64_t>::max())
 {
   for (auto & topic : play_options_.topics_to_filter) {
     topic = rclcpp::expand_topic_or_service_name(
@@ -451,9 +501,20 @@ PlayerImpl::PlayerImpl(
       owner_->get_namespace(), false);
   }
 
+  std::ostringstream oss_clear_and_move_cursor_down;
+  for (int i = 0; i < play_options_.progress_bar_separation_lines; i++) {
+    oss_clear_and_move_cursor_down << "\033[2K\n";
+  }
+  oss_clear_and_move_cursor_down << "\033[2K";
+  progress_bar_helper_clear_and_move_cursor_down_ = oss_clear_and_move_cursor_down.str();
+  std::ostringstream oss_move_cursor_up;
+  oss_move_cursor_up << "\033[" << play_options_.progress_bar_separation_lines + 1 << "F";
+  progress_bar_helper_move_cursor_up_ = oss_move_cursor_up.str();
+
   {
     std::lock_guard<std::mutex> lk(reader_mutex_);
     starting_time_ = std::numeric_limits<decltype(starting_time_)>::max();
+    ending_time_ = std::numeric_limits<decltype(ending_time_)>::min();
     for (const auto & [reader, storage_options] : readers_with_options_) {
       // keep readers open until player is destroyed
       reader->open(storage_options, {"", rmw_get_serialization_format()});
@@ -461,8 +522,13 @@ PlayerImpl::PlayerImpl(
       const auto metadata = reader->get_metadata();
       const auto metadata_starting_time = std::chrono::duration_cast<std::chrono::nanoseconds>(
         metadata.starting_time.time_since_epoch()).count();
+      const auto metadata_bag_duration = std::chrono::duration_cast<std::chrono::nanoseconds>(
+        metadata.duration).count();
       if (metadata_starting_time < starting_time_) {
         starting_time_ = metadata_starting_time;
+      }
+      if (metadata_starting_time + metadata_bag_duration > ending_time_) {
+        ending_time_ = metadata_starting_time + metadata_bag_duration;
       }
     }
     // If a non-default (positive) starting time offset is provided in PlayOptions,
@@ -476,6 +542,10 @@ PlayerImpl::PlayerImpl(
     } else {
       starting_time_ += play_options_.start_offset;
     }
+    starting_time_secs_ = RCUTILS_NS_TO_S(
+      static_cast<double>(std::min(starting_time_, ending_time_)));
+    duration_secs_ = RCUTILS_NS_TO_S(
+      std::max(static_cast<double>(ending_time_ - starting_time_), 0.0));
     clock_ = std::make_unique<rosbag2_cpp::TimeControllerClock>(
       starting_time_, std::chrono::steady_clock::now,
       std::chrono::milliseconds{100}, play_options_.start_paused);
@@ -486,6 +556,7 @@ PlayerImpl::PlayerImpl(
   }
   create_control_services();
   add_keyboard_callbacks();
+  print_progress_bar_help_str();
 }
 
 PlayerImpl::~PlayerImpl()
@@ -507,6 +578,13 @@ PlayerImpl::~PlayerImpl()
     if (reader) {
       reader->close();
     }
+  }
+  update_progress_bar(clock_->is_paused() ? PlayerStatus::PAUSED : PlayerStatus::RUNNING);
+  // arrange cursor position to be after the progress bar
+  if (enable_progress_bar_) {
+    std::ostringstream oss;
+    oss << "\033[" << play_options_.progress_bar_separation_lines + 1 << "B\n";
+    std::cout << oss.str() << std::flush;
   }
 }
 
@@ -531,6 +609,7 @@ bool PlayerImpl::play()
       RCLCPP_WARN_STREAM(
         owner_->get_logger(),
         "Trying to play() while in playback, dismissing request.");
+      update_progress_bar(clock_->is_paused() ? PlayerStatus::PAUSED : PlayerStatus::RUNNING);
       return false;
     }
   }
@@ -556,9 +635,12 @@ bool PlayerImpl::play()
     [&, delay]() {
       try {
         if (delay > rclcpp::Duration(0, 0)) {
+          is_delayed_status_ = true;
           RCLCPP_INFO_STREAM(owner_->get_logger(), "Sleep " << delay.nanoseconds() << " ns");
+          update_progress_bar(PlayerStatus::DELAYED);
           std::chrono::nanoseconds delay_duration(delay.nanoseconds());
           std::this_thread::sleep_for(delay_duration);
+          is_delayed_status_ = false;
         }
         do {
           {
@@ -571,6 +653,9 @@ bool PlayerImpl::play()
           if (clock_publish_timer_ != nullptr) {
             clock_publish_timer_->reset();
           }
+
+          update_progress_bar(clock_->is_paused() ? PlayerStatus::PAUSED : PlayerStatus::RUNNING);
+
           load_storage_content_ = true;
           storage_loading_future_ = std::async(
             std::launch::async, [this]() {
@@ -600,6 +685,8 @@ bool PlayerImpl::play()
         is_ready_to_play_from_queue_ = false;
         ready_to_play_from_queue_cv_.notify_all();
       }
+
+      update_progress_bar(clock_->is_paused() ? PlayerStatus::PAUSED : PlayerStatus::RUNNING);
 
       // Wait for all published messages to be acknowledged.
       if (play_options_.wait_acked_timeout >= 0) {
@@ -638,6 +725,7 @@ bool PlayerImpl::play()
         play_next_result_ = false;
         finished_play_next_cv_.notify_all();
       }
+      update_progress_bar(clock_->is_paused() ? PlayerStatus::PAUSED : PlayerStatus::RUNNING);
     });
   return true;
 }
@@ -674,6 +762,8 @@ void PlayerImpl::stop()
       cancel_wait_for_next_message_ = true;
     }
 
+    update_progress_bar(clock_->is_paused() ? PlayerStatus::PAUSED : PlayerStatus::RUNNING);
+
     if (clock_->is_paused()) {
       // Wake up the clock in case it's in a sleep_until(time) call
       clock_->wakeup();
@@ -694,12 +784,14 @@ void PlayerImpl::pause()
 {
   clock_->pause();
   RCLCPP_INFO_STREAM(owner_->get_logger(), "Pausing play.");
+  update_progress_bar(PlayerStatus::PAUSED);
 }
 
 void PlayerImpl::resume()
 {
   clock_->resume();
   RCLCPP_INFO_STREAM(owner_->get_logger(), "Resuming play.");
+  update_progress_bar(PlayerStatus::RUNNING);
 }
 
 void PlayerImpl::toggle_paused()
@@ -726,6 +818,7 @@ bool PlayerImpl::set_rate(double rate)
   } else {
     RCLCPP_WARN_STREAM(owner_->get_logger(), "Failed to set rate to invalid value " << rate);
   }
+  update_progress_bar(clock_->is_paused() ? PlayerStatus::PAUSED : PlayerStatus::RUNNING);
   return ok;
 }
 
@@ -747,7 +840,7 @@ rosbag2_storage::SerializedBagMessageSharedPtr PlayerImpl::take_next_message_fro
   return message_queue_.take().value_or(nullptr);
 }
 
-bool PlayerImpl::play_next()
+bool PlayerImpl::play_next(bool is_burst_mode)
 {
   if (!is_in_playback_) {
     RCLCPP_WARN_STREAM(owner_->get_logger(), "Called play next, but player is not playing.");
@@ -755,6 +848,7 @@ bool PlayerImpl::play_next()
   }
   if (!clock_->is_paused()) {
     RCLCPP_WARN_STREAM(owner_->get_logger(), "Called play next, but not in paused state.");
+    update_progress_bar(PlayerStatus::RUNNING);
     return false;
   }
 
@@ -778,6 +872,11 @@ bool PlayerImpl::play_next()
   finished_play_next_ = false;
   finished_play_next_cv_.wait(lk, [this] {return finished_play_next_.load();});
   play_next_ = false;
+
+  if (!is_burst_mode) {
+    update_progress_bar(clock_->is_paused() ? PlayerStatus::PAUSED : PlayerStatus::RUNNING);
+  }
+
   return play_next_result_.exchange(false);
 }
 
@@ -785,13 +884,15 @@ size_t PlayerImpl::burst(const size_t num_messages)
 {
   if (!clock_->is_paused()) {
     RCLCPP_WARN_STREAM(owner_->get_logger(), "Burst can only be used when in the paused state.");
+    update_progress_bar(PlayerStatus::RUNNING);
     return 0;
   }
 
+  update_progress_bar(PlayerStatus::BURST);
   uint64_t messages_played = 0;
 
   for (auto ii = 0u; ii < num_messages || num_messages == 0; ++ii) {
-    if (play_next()) {
+    if (play_next(true)) {
       ++messages_played;
     } else {
       break;
@@ -799,6 +900,7 @@ size_t PlayerImpl::burst(const size_t num_messages)
   }
 
   RCLCPP_INFO_STREAM(owner_->get_logger(), "Burst " << messages_played << " messages.");
+  update_progress_bar(clock_->is_paused() ? PlayerStatus::PAUSED : PlayerStatus::RUNNING);
   return messages_played;
 }
 
@@ -1059,6 +1161,11 @@ void PlayerImpl::play_messages_from_queue()
           finished_play_next_ = true;
           play_next_result_ = message_published;
           finished_play_next_cv_.notify_all();
+        } else {
+          // update_progress_bar_check_rate in this code section is protected
+          // by the mutex skip_message_in_main_play_loop_mutex_.
+          update_progress_bar_check_rate(
+            message_ptr->recv_timestamp, PlayerStatus::RUNNING);
         }
       }
       message_ptr = take_next_message_from_queue();
@@ -1706,6 +1813,87 @@ std::vector<rosbag2_storage::StorageOptions> PlayerImpl::get_all_storage_options
 const rosbag2_transport::PlayOptions & PlayerImpl::get_play_options()
 {
   return play_options_;
+}
+
+void PlayerImpl::print_progress_bar_help_str() const
+{
+  std::string help_str;
+  if (enable_progress_bar_) {
+    if (progress_bar_update_always_) {
+      help_str = "Progress bar enabled for every message.";
+    } else {
+      std::ostringstream oss;
+      oss << "Progress bar enabled at " <<
+        play_options_.progress_bar_update_rate << " Hz";
+      help_str = oss.str();
+    }
+    RCLCPP_INFO_STREAM(owner_->get_logger(), help_str);
+    std::string help_str2 = "Progress bar [?]: [R]unning, [P]aused, [B]urst, [D]elayed";
+    RCLCPP_INFO_STREAM(owner_->get_logger(), help_str2);
+  } else {
+    help_str = "Progress bar disabled";
+    RCLCPP_INFO_STREAM(owner_->get_logger(), help_str);
+  }
+}
+
+void PlayerImpl::update_progress_bar_check_rate(
+  const rcutils_time_point_value_t & timestamp,
+  const PlayerStatus & status)
+{
+  if (!enable_progress_bar_) {
+    return;
+  }
+
+  // If we are not updating the progress bar for every call, check if we should update it now
+  // based on the update rate set by the user
+  if (!progress_bar_update_always_) {
+    std::chrono::steady_clock::time_point steady_time_now = std::chrono::steady_clock::now();
+    if (std::chrono::duration_cast<std::chrono::nanoseconds>(
+      steady_time_now - progress_bar_last_time_updated_).count() < progress_bar_update_period_)
+    {
+      return;
+    }
+    progress_bar_last_time_updated_ = steady_time_now;
+  }
+
+  cout_progress_bar(timestamp, status);
+}
+
+void PlayerImpl::update_progress_bar(const PlayerStatus & status) const
+{
+  if (!enable_progress_bar_) {
+    return;
+  }
+
+  // Update progress bar irrespective of the update rate set by the user.
+  // Overwrite the input status if we are in a special case.
+  if (is_delayed_status_) {
+    cout_progress_bar(starting_time_, PlayerStatus::DELAYED);
+  } else {
+    cout_progress_bar(std::min(clock_->now(), ending_time_), status);
+  }
+}
+
+void PlayerImpl::cout_progress_bar(
+  const rcutils_time_point_value_t & timestamp,
+  const PlayerStatus & status) const
+{
+  const double current_time_secs = RCUTILS_NS_TO_S(static_cast<double>(timestamp));
+  const double progress_secs = current_time_secs - starting_time_secs_;
+  std::ostringstream oss;
+  oss <<
+    // Clear and print newlines
+    progress_bar_helper_clear_and_move_cursor_down_ <<
+    // Print progress bar
+    "====== Playback Progress ======\n" <<
+    "[" << std::setw(13) << std::fixed << std::setprecision(9) << current_time_secs <<
+    "] Duration " << std::setprecision(2) << progress_secs <<
+    // Spaces at the end are used to clear any previous progress bar in case the new one is shorter,
+    // which can happen when the playback starts a new loop.
+    "/" << duration_secs_ << " [" << static_cast<char>(status) << "]      " <<
+    // Go up to the beginning of the blank lines
+    progress_bar_helper_move_cursor_up_;
+  std::cout << oss.str() << std::flush;
 }
 
 ///////////////////////////////

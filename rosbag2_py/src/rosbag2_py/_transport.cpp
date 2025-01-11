@@ -556,6 +556,8 @@ PYBIND11_MODULE(_transport, m) {
     "playback_until_timestamp",
     &PlayOptions::getPlaybackUntilTimestamp,
     &PlayOptions::setPlaybackUntilTimestamp)
+  .def_readwrite("progress_bar_update_rate", &PlayOptions::progress_bar_update_rate)
+  .def_readwrite("progress_bar_separation_lines", &PlayOptions::progress_bar_separation_lines)
   .def_readwrite("wait_acked_timeout", &PlayOptions::wait_acked_timeout)
   .def_readwrite("disable_loan_message", &PlayOptions::disable_loan_message)
   .def_readwrite("publish_service_requests", &PlayOptions::publish_service_requests)
