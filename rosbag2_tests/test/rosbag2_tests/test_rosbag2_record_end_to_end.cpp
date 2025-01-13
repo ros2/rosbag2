@@ -520,6 +520,151 @@ TEST_P(RecordFixture, record_end_to_end_test_with_zstd_file_compression_compress
   }
 }
 
+TEST_P(RecordFixture, record_end_to_end_with_size_stop_recording_splits_bagfile) {
+  constexpr const char topic_name[] = "/test_topic";
+  constexpr const int recording_size = 5 * 1024 * 1024;  // 5MB.
+  constexpr const int bagfile_split_size = 2 * 1024 * 1024;  // 2MB.
+  constexpr const int expected_splits = 3;
+  constexpr const char message_str[] = "Test";
+  constexpr const int message_size = 1024 * 1024 / 2;  // 0.5MB
+  // string message from test_msgs
+  const auto message = create_string_message(message_str, message_size);
+  // Use double the messages to continue to publish beyond the max recording size
+  constexpr const int message_count = 2 * recording_size / message_size;
+
+  rosbag2_test_common::PublicationManager pub_manager;
+  pub_manager.setup_publisher(topic_name, message, message_count);
+
+  std::stringstream command;
+  command << get_base_record_command() <<
+    " --max-recording-size " << recording_size <<
+    " --max-bag-size " << bagfile_split_size <<
+    " --topics " << topic_name;
+  auto process_handle = start_execution(command.str());
+  auto cleanup_process_handle = rcpputils::make_scope_exit(
+    [process_handle]() {
+      stop_execution(process_handle);
+    });
+
+  ASSERT_TRUE(pub_manager.wait_for_matched(topic_name)) <<
+    "Expected find rosbag subscription";
+
+  pub_manager.run_publishers();
+
+  wait_for_storage_file();
+
+  stop_execution(process_handle);
+  cleanup_process_handle.cancel();
+
+  finalize_metadata_kludge(expected_splits);
+  wait_for_metadata();
+  rosbag2_storage::MetadataIo metadata_io;
+  const auto metadata = metadata_io.read_metadata(root_bag_path_.generic_string());
+  const auto actual_splits = static_cast<int>(metadata.files.size());
+
+  EXPECT_EQ(actual_splits, expected_splits);
+
+  uintmax_t actual_recording_size = 0;
+  for (int i = 0; i < actual_splits; ++i) {
+    const auto bagfile_path = root_bag_path_ / fs::path{metadata.files[i].path};
+    ASSERT_TRUE(fs::exists(bagfile_path)) <<
+      "Expected bag file: \"" << bagfile_path.generic_string() << "\" to exist.";
+
+    const auto actual_split_size = static_cast<int>(fs::file_size(bagfile_path));
+    actual_recording_size += actual_split_size;
+  }
+
+  // Actual size is guaranteed to be >= recording_size
+  EXPECT_LT(recording_size, actual_recording_size);
+}
+
+TEST_P(RecordFixture, record_end_to_end_with_duration_stop_recording) {
+  constexpr const char topic_name[] = "/test_topic";
+  constexpr const int recording_duration = 3;   // 3 seconds
+  constexpr const char message_str[] = "Test";
+  constexpr const int message_size = 1024 * 1024 / 4;  // 0.25MB
+  constexpr const int message_time = 250;  // 250ms
+  // string message from test_msgs
+  const auto message = create_string_message(message_str, message_size);
+  // Use double the messages to continue to publish beyond the max recording duration
+  constexpr const int message_count = 2 * recording_duration / message_time;
+
+  rosbag2_test_common::PublicationManager pub_manager;
+  pub_manager.setup_publisher(topic_name, message, message_count);
+
+  std::stringstream command;
+  command << get_base_record_command() <<
+    " --max-recording-duration " << recording_duration <<
+    " --topics " << topic_name;
+  auto process_handle = start_execution(command.str());
+  auto cleanup_process_handle = rcpputils::make_scope_exit(
+    [process_handle]() {
+      stop_execution(process_handle);
+    });
+
+  ASSERT_TRUE(pub_manager.wait_for_matched(topic_name)) <<
+    "Expected find rosbag subscription";
+
+  wait_for_storage_file();
+
+  pub_manager.run_publishers();
+
+  stop_execution(process_handle);
+  cleanup_process_handle.cancel();
+
+  finalize_metadata_kludge();
+  wait_for_metadata();
+  rosbag2_storage::MetadataIo metadata_io;
+  const auto metadata = metadata_io.read_metadata(root_bag_path_.generic_string());
+  auto actual_recording_duration = std::chrono::duration_cast<std::chrono::seconds>(
+    metadata.duration).count();
+
+  // Actual duration is guaranteed to be < recording_duration
+  EXPECT_GT(recording_duration, actual_recording_duration);
+}
+
+TEST_P(RecordFixture, record_end_to_end_with_messages_stop_recording) {
+  constexpr const char topic_name[] = "/test_topic";
+  constexpr const int recording_messages = 10;
+  constexpr const char message_str[] = "Test";
+  constexpr const int message_size = 1024 * 1024 / 2;  // 0.5MB
+  // string message from test_msgs
+  const auto message = create_string_message(message_str, message_size);
+  // Use double the messages to continue to publish beyond the max recording messages
+  constexpr const int message_count = 2 * recording_messages;
+
+  rosbag2_test_common::PublicationManager pub_manager;
+  pub_manager.setup_publisher(topic_name, message, message_count);
+
+  std::stringstream command;
+  command << get_base_record_command() <<
+    " --max-recording-messages " << recording_messages <<
+    " --topics " << topic_name;
+  auto process_handle = start_execution(command.str());
+  auto cleanup_process_handle = rcpputils::make_scope_exit(
+    [process_handle]() {
+      stop_execution(process_handle);
+    });
+
+  ASSERT_TRUE(pub_manager.wait_for_matched(topic_name)) <<
+    "Expected find rosbag subscription";
+
+  pub_manager.run_publishers();
+
+  wait_for_storage_file();
+
+  stop_execution(process_handle);
+  cleanup_process_handle.cancel();
+
+  finalize_metadata_kludge();
+  wait_for_metadata();
+  rosbag2_storage::MetadataIo metadata_io;
+  const auto metadata = metadata_io.read_metadata(root_bag_path_.generic_string());
+  uintmax_t actual_recording_messages = metadata.message_count;
+
+  EXPECT_EQ(recording_messages, actual_recording_messages);
+}
+
 TEST_P(RecordFixture, record_fails_gracefully_if_bag_already_exists) {
   auto bag_path = _SRC_RESOURCES_DIR_PATH;  // variable defined in CMakeLists.txt
 

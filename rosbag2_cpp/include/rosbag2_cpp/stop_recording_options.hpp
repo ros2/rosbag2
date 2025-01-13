@@ -1,4 +1,4 @@
-// Copyright 2019 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+// Copyright 2025 Open Source Robotics Foundation, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,16 +12,21 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "rosbag2_storage/storage_interfaces/base_io_interface.hpp"
+#ifndef ROSBAG2_CPP__STOP_RECORDING_OPTIONS_HPP_
+#define ROSBAG2_CPP__STOP_RECORDING_OPTIONS_HPP_
 
-namespace rosbag2_storage
+#include <cstdint>
+
+namespace rosbag2_cpp
 {
-namespace storage_interfaces
+
+struct StopRecordingOptions
 {
-const uint64_t MAX_BAGFILE_SIZE_NO_SPLIT = 0;
-const uint64_t MAX_BAGFILE_DURATION_NO_SPLIT = 0;
-const uint64_t MAX_RECORDING_SIZE_NO_STOP = 0;
-const uint64_t MAX_RECORDING_DURATION_NO_STOP = 0;
-const uint64_t MAX_RECORDING_MESSAGES_NO_STOP = 0;
-}
-}  // namespace rosbag2_storage
+  uint64_t max_duration;
+  uint64_t max_size;
+  uint64_t max_messages;
+};
+
+}  // namespace rosbag2_cpp
+
+#endif  // ROSBAG2_CPP__STOP_RECORDING_OPTIONS_HPP_

@@ -74,6 +74,18 @@ Messages written to the bag will use the latest received value of `/clock` for t
 Note: Until the first `/clock` message is received, the recorder will not write any messages.
 Before that message is received, the time is 0, which leads to a significant time jump once simulation time begins, making the bag essentially unplayable if messages are written first with time 0 and then time N from `/clock`.
 
+#### Recording with termination conditions
+
+rosbag2 can be configured to stop recording after a certain size, duration or number of messages is reached (considering **all** the bag files of the current recording). By default the recording will continue until an external signal is stopping it, but this can be changed using the CLI options.
+
+_Stopping by size_: `ros2 bag record -a --max-recording-size 100000` will stop the recording after it becomes greater than 100 kilobytes. This option defaults to `0`, which means the recording will not stop based on size.
+
+_Stopping by duration_: `ros2 bag record -a --max-recording-duration 9000` will stop the recording after `9000` seconds. This option defaults to `0`, which means the recording will not stop based on duration.
+
+_Stopping by number of messages_: `ros2 bag record -a --max-recording-messages 1000` will stop the recording after `1000` messages have been recorded. This option defaults to `0`, which means the recording will not stop based on number of messages.
+
+If multiple stopping conditions are enabled, the recording will stop at whichever threshold is reached first.
+
 #### Splitting files during recording
 
 rosbag2 offers the capability to split bag files when they reach a maximum size or after a specified duration. By default rosbag2 will record all data into a single bag file, but this can be changed using the CLI options.
@@ -253,6 +265,9 @@ output_bags:
   storage_id: ""  # will use the default storage plugin, if unspecified
   max_bagfile_size: 0
   max_bagfile_duration: 0
+  max_recording_size: 0
+  max_recording_duration: 0
+  max_recording_messages: 0
   storage_preset_profile: ""
   storage_config_uri: ""
   all_topics: false

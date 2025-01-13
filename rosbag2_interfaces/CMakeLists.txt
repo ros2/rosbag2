@@ -15,6 +15,7 @@ find_package(rosidl_default_generators REQUIRED)
 
 rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/ReadSplitEvent.msg"
+  "msg/StopRecordingEvent.msg"
   "msg/WriteSplitEvent.msg"
   "srv/Burst.srv"
   "srv/GetRate.srv"

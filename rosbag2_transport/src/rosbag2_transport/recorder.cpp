@@ -29,6 +29,8 @@
 #include "rclcpp/logging.hpp"
 #include "rclcpp/clock.hpp"
 
+#include "rcpputils/unique_lock.hpp"
+
 #include "rmw/types.h"
 
 #include "rosbag2_cpp/bag_events.hpp"
@@ -88,6 +90,9 @@ public:
 
   std::unordered_map<std::string, std::string> get_requested_or_available_topics();
 
+  bool wait_for_recording_to_finish(
+    std::chrono::duration<double> timeout = std::chrono::seconds(-1));
+
   /// Public members for access by wrapper
   std::unordered_set<std::string> topics_warned_about_incompatibility_;
   std::shared_ptr<rosbag2_cpp::Writer> writer_;
@@ -128,6 +133,7 @@ private:
 
   void event_publisher_thread_main();
   bool event_publisher_thread_should_wake();
+  bool event_publisher_thread_should_exit();
 
   rclcpp::Node * node;
   std::unique_ptr<TopicFilter> topic_filter_;
@@ -145,19 +151,26 @@ private:
   std::mutex discovery_mutex_;
   std::atomic<bool> stop_discovery_ = false;
   std::atomic_uchar paused_ = 0;
-  std::atomic<bool> in_recording_ = false;
+  std::atomic<bool> in_recording_ RCPPUTILS_TSA_GUARDED_BY(start_stop_transition_mutex_) = false;
   std::shared_ptr<KeyboardHandler> keyboard_handler_;
   KeyboardHandler::callback_handle_t toggle_paused_key_callback_handle_ =
     KeyboardHandler::invalid_handle;
 
   // Variables for event publishing
   rclcpp::Publisher<rosbag2_interfaces::msg::WriteSplitEvent>::SharedPtr split_event_pub_;
+  rclcpp::Publisher<rosbag2_interfaces::msg::StopRecordingEvent>::SharedPtr
+    stop_recording_event_pub_;
   std::atomic<bool> event_publisher_thread_should_exit_ = false;
   std::atomic<bool> write_split_has_occurred_ = false;
   rosbag2_cpp::bag_events::BagSplitInfo bag_split_info_;
   std::mutex event_publisher_thread_mutex_;
   std::condition_variable event_publisher_thread_wake_cv_;
   std::thread event_publisher_thread_;
+  std::mutex signal_stop_recording_mutex_;
+  std::atomic<bool> signal_stop_recording_ = false;
+  std::atomic<bool> stop_recording_has_occurred_ = false;
+  std::condition_variable stop_recording_cv_;
+  rosbag2_cpp::bag_events::StopRecordingInfo stop_recording_info_;
 };
 
 RecorderImpl::RecorderImpl(
@@ -229,7 +242,7 @@ RecorderImpl::~RecorderImpl()
 
 void RecorderImpl::stop()
 {
-  std::lock_guard<std::mutex> state_lock(start_stop_transition_mutex_);
+  rcpputils::unique_lock<std::mutex> state_lock(start_stop_transition_mutex_);
   if (!in_recording_) {
     RCLCPP_DEBUG(node->get_logger(), "Recording has already been stopped or not running.");
     return;
@@ -242,6 +255,7 @@ void RecorderImpl::stop()
 
   {
     std::lock_guard<std::mutex> lock(event_publisher_thread_mutex_);
+    stop_recording_has_occurred_ = true;
     event_publisher_thread_should_exit_ = true;
   }
   event_publisher_thread_wake_cv_.notify_all();
@@ -250,11 +264,12 @@ void RecorderImpl::stop()
   }
   in_recording_ = false;
   RCLCPP_INFO(node->get_logger(), "Recording stopped");
+  stop_recording_cv_.notify_all();
 }
 
 void RecorderImpl::record()
 {
-  std::lock_guard<std::mutex> state_lock(start_stop_transition_mutex_);
+  rcpputils::unique_lock<std::mutex> state_lock(start_stop_transition_mutex_);
   if (in_recording_.exchange(true)) {
     RCLCPP_WARN_STREAM(
       node->get_logger(),
@@ -327,6 +342,9 @@ void RecorderImpl::record()
   split_event_pub_ =
     node->create_publisher<rosbag2_interfaces::msg::WriteSplitEvent>("events/write_split", 1);
 
+  stop_recording_event_pub_ =
+    node->create_publisher<rosbag2_interfaces::msg::StopRecordingEvent>("events/stop_recording", 1);
+
   // Start the thread that will publish events
   {
     std::lock_guard<std::mutex> lock(event_publisher_thread_mutex_);
@@ -334,6 +352,7 @@ void RecorderImpl::record()
     event_publisher_thread_ = std::thread(&RecorderImpl::event_publisher_thread_main, this);
   }
 
+  stop_recording_info_ = {storage_options_.uri, ""};
   rosbag2_cpp::bag_events::WriterEventCallbacks callbacks;
   callbacks.write_split_callback =
     [this](rosbag2_cpp::bag_events::BagSplitInfo & info) {
@@ -343,6 +362,20 @@ void RecorderImpl::record()
         write_split_has_occurred_ = true;
       }
       event_publisher_thread_wake_cv_.notify_all();
+    };
+  callbacks.stop_recording_callback =
+    [this](rosbag2_cpp::bag_events::StopRecordingInfo & info) {
+      // Don't notify the event publisher thread here, since it will
+      // be notified by the RecorderImpl::stop() function.
+      {
+        std::lock_guard<std::mutex> lock(event_publisher_thread_mutex_);
+        stop_recording_info_ = info;
+      }
+      {
+        std::lock_guard<std::mutex> lock(signal_stop_recording_mutex_);
+        signal_stop_recording_ = true;
+      }
+      stop_recording_cv_.notify_all();
     };
   writer_->add_event_callbacks(callbacks);
 
@@ -366,7 +399,7 @@ void RecorderImpl::record()
 void RecorderImpl::event_publisher_thread_main()
 {
   RCLCPP_INFO(node->get_logger(), "Event publisher thread: Starting");
-  while (!event_publisher_thread_should_exit_.load()) {
+  while (!event_publisher_thread_should_exit()) {
     std::unique_lock<std::mutex> lock(event_publisher_thread_mutex_);
     event_publisher_thread_wake_cv_.wait(
       lock,
@@ -391,13 +424,41 @@ void RecorderImpl::event_publisher_thread_main()
           "Failed to publish message on '/events/write_split' topic.");
       }
     }
+
+    if (stop_recording_has_occurred_) {
+      stop_recording_has_occurred_ = false;
+
+      auto message = rosbag2_interfaces::msg::StopRecordingEvent();
+      message.base_folder = stop_recording_info_.base_folder;
+      message.reason = stop_recording_info_.reason;
+      message.node_name = node->get_fully_qualified_name();
+      try {
+        stop_recording_event_pub_->publish(message);
+      } catch (const std::exception & e) {
+        RCLCPP_ERROR_STREAM(
+          node->get_logger(),
+          "Failed to publish message on '/events/stop_recording' topic. \nError: " << e.what());
+      } catch (...) {
+        RCLCPP_ERROR_STREAM(
+          node->get_logger(),
+          "Failed to publish message on '/events/stop_recording' topic.");
+      }
+    }
   }
   RCLCPP_INFO(node->get_logger(), "Event publisher thread: Exiting");
 }
 
 bool RecorderImpl::event_publisher_thread_should_wake()
 {
-  return write_split_has_occurred_ || event_publisher_thread_should_exit_;
+  return write_split_has_occurred_ || stop_recording_has_occurred_ ||
+         event_publisher_thread_should_exit_;
+}
+
+bool RecorderImpl::event_publisher_thread_should_exit()
+{
+  std::lock_guard<std::mutex> lock(event_publisher_thread_mutex_);
+  return !write_split_has_occurred_ && !stop_recording_has_occurred_ &&
+         event_publisher_thread_should_exit_;
 }
 
 const rosbag2_cpp::Writer & RecorderImpl::get_writer_handle()
@@ -515,6 +576,22 @@ RecorderImpl::get_requested_or_available_topics()
 {
   auto all_topics_and_types = node->get_topic_names_and_types();
   return topic_filter_->filter_topics(all_topics_and_types);
+}
+
+bool RecorderImpl::wait_for_recording_to_finish(std::chrono::duration<double> timeout)
+{
+  rcpputils::unique_lock<std::mutex> state_lock(start_stop_transition_mutex_);
+  if (timeout.count() < 0) {
+    stop_recording_cv_.wait(state_lock, [this] {
+        return !in_recording_.load() || signal_stop_recording_.load();
+                                                                      }
+    );
+    return true;
+  } else {
+    return stop_recording_cv_.wait_for(
+      state_lock,
+      timeout, [this] {return !in_recording_.load() || signal_stop_recording_.load();});
+  }
 }
 
 std::unordered_map<std::string, std::string>
@@ -851,6 +928,11 @@ bool
 Recorder::is_paused()
 {
   return pimpl_->is_paused();
+}
+
+bool Recorder::wait_for_recording_to_finish(std::chrono::duration<double> timeout)
+{
+  return pimpl_->wait_for_recording_to_finish(timeout);
 }
 
 std::unordered_map<std::string, std::string>

@@ -36,6 +36,7 @@
 #include "rosbag2_interfaces/srv/snapshot.hpp"
 #include "rosbag2_interfaces/srv/split_bagfile.hpp"
 
+#include "rosbag2_interfaces/msg/stop_recording_event.hpp"
 #include "rosbag2_interfaces/msg/write_split_event.hpp"
 
 #include "rosbag2_storage/topic_metadata.hpp"
@@ -153,6 +154,14 @@ public:
   /// Return the current paused state.
   ROSBAG2_TRANSPORT_PUBLIC
   bool is_paused();
+
+  /// \brief Waits on the condition variable until the record thread finishes.
+  /// @param timeout Maximum time in the fraction of seconds to wait for recorder to finish.
+  /// If timeout is negative, the wait_for_recording_to_finish will be a blocking call.
+  /// @return true if recording finished during timeout, otherwise false.
+  ROSBAG2_TRANSPORT_PUBLIC
+  bool wait_for_recording_to_finish(
+    std::chrono::duration<double> timeout = std::chrono::seconds(-1));
 
   inline constexpr static const auto kPauseResumeToggleKey = KeyboardHandler::KeyCode::SPACE;
 

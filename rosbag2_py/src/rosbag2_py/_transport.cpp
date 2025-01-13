@@ -383,14 +383,25 @@ public:
         [&exec]() {
           exec->spin();
         });
+
+      auto wait_for_exit_thread = std::thread(
+        [&]() {
+          std::unique_lock<std::mutex> lock(wait_for_exit_mutex_);
+          wait_for_exit_cv_.wait(lock, [] {return rosbag2_py::Recorder::exit_.load();});
+          recorder->stop();
+        });
       {
         // Release the GIL for long-running record, so that calling Python code
         // can use other threads
         py::gil_scoped_release release;
-        std::unique_lock<std::mutex> lock(wait_for_exit_mutex_);
-        wait_for_exit_cv_.wait(lock, [] {return rosbag2_py::Recorder::exit_.load();});
-        recorder->stop();
+        recorder->wait_for_recording_to_finish();
       }
+
+      rosbag2_py::Recorder::cancel();  // Need to trigger exit from wait_for_exit_thread
+      if (wait_for_exit_thread.joinable()) {
+        wait_for_exit_thread.join();
+      }
+
       exec->cancel();
       if (spin_thread.joinable()) {
         spin_thread.join();

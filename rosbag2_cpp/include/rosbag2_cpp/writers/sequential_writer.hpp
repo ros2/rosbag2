@@ -158,6 +158,10 @@ protected:
   void execute_bag_split_callbacks(
     const std::string & closed_file, const std::string & opened_file);
 
+  void signal_stop_recording(const std::string & out_stop_reason);
+
+  void execute_signal_stop_recording_callbacks(const std::string & out_stop_reason);
+
   void switch_to_next_storage();
 
   std::string format_storage_uri(
@@ -183,6 +187,16 @@ protected:
   bool should_split_bagfile(
     const std::chrono::time_point<std::chrono::high_resolution_clock> & current_time) const;
 
+  // Checks if the recording needs to be stopped due to predefined conditions
+  // before writing the current message.
+  bool should_stop_recording_pre_write(
+    const std::chrono::time_point<std::chrono::high_resolution_clock> & current_time,
+    std::string & stop_reason) const;
+
+  // Checks if the recording needs to be stopped due to predefined conditions
+  // after writing the current message.
+  bool should_stop_recording_post_write(std::string & stop_reason) const;
+
   // Checks if the message to be written is within accepted time range
   bool message_within_accepted_time_range(
     const rcutils_time_point_value_t current_time) const;
@@ -199,6 +213,15 @@ protected:
   virtual std::shared_ptr<const rosbag2_storage::SerializedBagMessage>
   get_writeable_message(
     std::shared_ptr<const rosbag2_storage::SerializedBagMessage> message);
+
+  // Used to track the approximate size of the previously splitted bags.
+  uint64_t previous_bags_size_ {0};
+
+  // Used to track the number of messages in the previously splitted bags.
+  uint64_t previous_bags_num_messages_ {0};
+
+  // Used to track if the stop recording signal has been already sent.
+  bool signaled_stop_recording_ {false};
 
 private:
   /// Helper method to write messages while also updating tracked metadata.
