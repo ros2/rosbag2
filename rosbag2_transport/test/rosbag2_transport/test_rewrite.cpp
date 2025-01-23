@@ -19,11 +19,13 @@
 #include <vector>
 #include <utility>
 
+#include "rosbag2_test_common/temporary_directory_fixture.hpp"
 #include "rosbag2_test_common/tested_storage_ids.hpp"
 #include "rosbag2_transport/bag_rewrite.hpp"
 #include "rosbag2_transport/reader_writer_factory.hpp"
 
 using namespace ::testing;  // NOLINT
+using namespace rosbag2_test_common;  // NOLINT
 
 namespace fs = std::filesystem;
 
@@ -48,13 +50,12 @@ rewriter_b:
     - 50 messages
     - 1 offered QoS Profile
 */
-class TestRewrite : public Test, public WithParamInterface<std::string>
+class TestRewrite : public ParametrizedTemporaryDirectoryFixture
 {
 public:
   TestRewrite()
   {
-    auto tmp_dir = rcpputils::fs::create_temporary_directory("test_bag_rewrite");
-    output_dir_ = fs::path(tmp_dir.string());
+    output_dir_ = fs::path(temporary_dir_path_);
     storage_id_ = GetParam();
     bags_path_ = fs::path(_SRC_RESOURCES_DIR_PATH) / storage_id_;
   }
@@ -75,10 +76,7 @@ public:
     input_bags_.push_back(storage);
   }
 
-  ~TestRewrite()
-  {
-    fs::remove_all(output_dir_);
-  }
+  ~TestRewrite() override = default;
 
   fs::path output_dir_;
   fs::path bags_path_{_SRC_RESOURCES_DIR_PATH};
