@@ -21,14 +21,14 @@ namespace rosbag2_transport
 {
 
 PlayerProgressBar::PlayerProgressBar(
-  rclcpp::Logger logger,
+  std::ostream & output_stream,
   rcutils_time_point_value_t starting_time,
   rcutils_time_point_value_t ending_time,
   int32_t progress_bar_update_rate,
   int32_t progress_bar_separation_lines)
 {
   pimpl_ = std::make_unique<PlayerProgressBarImpl>(
-    std::move(logger), starting_time, ending_time,
+    output_stream, starting_time, ending_time,
     progress_bar_update_rate, progress_bar_separation_lines);
 }
 

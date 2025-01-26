@@ -488,7 +488,7 @@ PlayerImpl::PlayerImpl(
     }
 
     progress_bar_ = std::make_unique<PlayerProgressBar>(
-      owner_->get_logger(), starting_time_, ending_time,
+      std::cout, starting_time_, ending_time,
       play_options.progress_bar_update_rate,
       play_options.progress_bar_separation_lines);
 
