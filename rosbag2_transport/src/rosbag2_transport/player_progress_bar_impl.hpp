@@ -42,10 +42,8 @@ public:
     uint32_t progress_bar_separation_lines)
   : o_stream_(output_stream),
     enable_progress_bar_(progress_bar_update_rate != 0),
-    progress_bar_update_always_(progress_bar_update_rate < 0),
-    progress_bar_update_period_(progress_bar_update_rate != 0 ?
-      RCUTILS_S_TO_NS(1.0 / progress_bar_update_rate) :
-      std::numeric_limits<rcutils_duration_value_t>::max()),
+    progress_bar_update_period_ms_(progress_bar_update_rate > 0 ?
+      (1000 / progress_bar_update_rate) : 0),
     progress_bar_separation_lines_(progress_bar_separation_lines)
   {
     starting_time_secs_ = RCUTILS_NS_TO_S(
@@ -79,11 +77,10 @@ public:
   {
     std::stringstream ss;
     if (enable_progress_bar_) {
-      if (progress_bar_update_always_) {
-        ss << "Progress bar enabled for every message.\n";
+      if (progress_bar_update_period_ms_ > 0) {
+        ss << "Progress bar enabled at " << (1000 / progress_bar_update_period_ms_) << " Hz.\n";
       } else {
-        ss << "Progress bar enabled at " <<
-          (1.0 / (progress_bar_update_period_ / (1000LL * 1000LL))) / 1000LL << " Hz.\n";
+        ss << "Progress bar enabled for every message.\n";
       }
       ss << "Progress bar [?]: [R]unning, [P]aused, [B]urst, [D]elayed, [S]topped\n";
     } else {
@@ -102,10 +99,10 @@ public:
 
     // If we are not updating the progress bar for every call, check if we should update it now
     // based on the update rate set by the user
-    if (!progress_bar_update_always_) {
+    if (progress_bar_update_period_ms_ > 0) {
       std::chrono::steady_clock::time_point steady_time_now = std::chrono::steady_clock::now();
-      if (std::chrono::duration_cast<std::chrono::nanoseconds>(
-        steady_time_now - progress_bar_last_time_updated_).count() < progress_bar_update_period_)
+      if (std::chrono::duration_cast<std::chrono::milliseconds>(
+        steady_time_now - progress_bar_last_time_updated_).count() < progress_bar_update_period_ms_)
       {
         return;
       }
@@ -126,7 +123,7 @@ public:
 
   void draw_progress_bar(const rcutils_time_point_value_t & timestamp, const PlayerStatus & status)
   {
-    if (timestamp > 0) {
+    if (timestamp >= 0) {
       progress_current_time_secs_ = RCUTILS_NS_TO_S(static_cast<double>(timestamp));
       progress_secs_from_start_ = progress_current_time_secs_ - starting_time_secs_;
     }
@@ -152,10 +149,8 @@ private:
   double duration_secs_ = 0.0;
   std::string progress_bar_helper_clear_and_move_cursor_down_;
   std::string progress_bar_helper_move_cursor_up_;
-
   bool enable_progress_bar_;
-  bool progress_bar_update_always_;
-  rcutils_duration_value_t progress_bar_update_period_;
+  uint16_t progress_bar_update_period_ms_;
   std::chrono::steady_clock::time_point progress_bar_last_time_updated_{};
   uint32_t progress_bar_separation_lines_ = 3;
   double progress_secs_from_start_ = 0.0;
