@@ -81,18 +81,18 @@ rclcpp::QoS publisher_qos_for_topic(
 namespace rosbag2_transport
 {
 
-enum class PlayerStatus : char
-{
-  BURST = 'B',
-  DELAYED = 'D',
-  PAUSED = 'P',
-  RUNNING = 'R',
-  STOPPED = 'S',
-};
-
 class PlayerProgressBar
 {
 public:
+  enum class PlayerStatus : char
+  {
+    BURST = 'B',
+    DELAYED = 'D',
+    PAUSED = 'P',
+    RUNNING = 'R',
+    STOPPED = 'S',
+  };
+
   explicit PlayerProgressBar(
     rclcpp::Logger logger,
     rcutils_time_point_value_t starting_time,
@@ -246,6 +246,7 @@ public:
   using callback_handle_t = Player::callback_handle_t;
   using play_msg_callback_t = Player::play_msg_callback_t;
   using reader_storage_options_pair_t = Player::reader_storage_options_pair_t;
+  using PlayerStatus = PlayerProgressBar::PlayerStatus;
 
   PlayerImpl(
     Player * owner,
