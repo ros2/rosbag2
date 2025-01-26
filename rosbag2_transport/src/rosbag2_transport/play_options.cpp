@@ -120,7 +120,7 @@ bool convert<rosbag2_transport::PlayOptions>::decode(
   optional_assign<int32_t>(
     node, "progress_bar_update_rate", play_options.progress_bar_update_rate);
 
-  optional_assign<int32_t>(
+  optional_assign<uint32_t>(
     node, "progress_bar_separation_lines", play_options.progress_bar_separation_lines);
 
   return true;

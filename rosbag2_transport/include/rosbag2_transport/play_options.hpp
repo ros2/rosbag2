@@ -141,9 +141,8 @@ public:
   // Progress bar update rate in times per second (Hz)
   int32_t progress_bar_update_rate = 3;
 
-  // Number of separation lines to print in between the playback output
-  // and the progress bar.
-  int32_t progress_bar_separation_lines = 3;
+  // Number of separation lines to print in between the playback output and the progress bar.
+  uint32_t progress_bar_separation_lines = 3;
 };
 
 }  // namespace rosbag2_transport

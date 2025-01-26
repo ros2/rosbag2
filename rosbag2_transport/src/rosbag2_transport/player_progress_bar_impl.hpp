@@ -39,7 +39,7 @@ public:
     rcutils_time_point_value_t starting_time,
     rcutils_time_point_value_t ending_time,
     int32_t progress_bar_update_rate,
-    int32_t progress_bar_separation_lines)
+    uint32_t progress_bar_separation_lines)
   : o_stream_(output_stream),
     enable_progress_bar_(progress_bar_update_rate != 0),
     progress_bar_update_always_(progress_bar_update_rate < 0),
@@ -55,7 +55,7 @@ public:
     progress_secs_from_start_ = starting_time_secs_;
     progress_current_time_secs_ = starting_time_secs_;
     std::ostringstream oss_clear_and_move_cursor_down;
-    for (int i = 0; i < progress_bar_separation_lines_; i++) {
+    for (uint32_t i = 0; i < progress_bar_separation_lines_; i++) {
       oss_clear_and_move_cursor_down << "\033[2K\n";
     }
     oss_clear_and_move_cursor_down << "\033[2K";
@@ -83,7 +83,7 @@ public:
         ss << "Progress bar enabled for every message.\n";
       } else {
         ss << "Progress bar enabled at " <<
-           (1.0 / (progress_bar_update_period_ / (1000LL * 1000LL))) / 1000LL << " Hz.\n";
+          (1.0 / (progress_bar_update_period_ / (1000LL * 1000LL))) / 1000LL << " Hz.\n";
       }
       ss << "Progress bar [?]: [R]unning, [P]aused, [B]urst, [D]elayed, [S]topped\n";
     } else {
@@ -136,8 +136,8 @@ public:
       progress_bar_helper_clear_and_move_cursor_down_ <<
         // Print progress bar
       "====== Playback Progress ======\n" <<
-       "[" << std::setw(13) << std::fixed << std::setprecision(9) << progress_current_time_secs_ <<
-       "] Duration " << std::setprecision(2) << progress_secs_from_start_ <<
+      "[" << std::setw(13) << std::fixed << std::setprecision(9) << progress_current_time_secs_ <<
+      "] Duration " << std::setprecision(2) << progress_secs_from_start_ <<
         // Spaces at the end are used to clear any previous progress bar in case the new one is
         // shorter, which can happen when the playback starts a new loop.
       "/" << duration_secs_ << " [" << static_cast<char>(status) << "]      " <<
@@ -157,7 +157,7 @@ private:
   bool progress_bar_update_always_;
   rcutils_duration_value_t progress_bar_update_period_;
   std::chrono::steady_clock::time_point progress_bar_last_time_updated_{};
-  int32_t progress_bar_separation_lines_ = 3;
+  uint32_t progress_bar_separation_lines_ = 3;
   double progress_secs_from_start_ = 0.0;
   double progress_current_time_secs_ = 0.0;
 };

@@ -25,7 +25,7 @@ PlayerProgressBar::PlayerProgressBar(
   rcutils_time_point_value_t starting_time,
   rcutils_time_point_value_t ending_time,
   int32_t progress_bar_update_rate,
-  int32_t progress_bar_separation_lines)
+  uint32_t progress_bar_separation_lines)
 {
   pimpl_ = std::make_unique<PlayerProgressBarImpl>(
     output_stream, starting_time, ending_time,
