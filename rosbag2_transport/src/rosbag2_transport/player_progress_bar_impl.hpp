@@ -69,27 +69,27 @@ public:
   {
     // arrange cursor position to be after the progress bar
     if (enable_progress_bar_) {
-      std::ostringstream oss;
-      oss << "\033[" << progress_bar_separation_lines_ + 1 << "B\n";
-      o_stream_ << oss.str() << std::flush;
+      std::stringstream ss;
+      ss << "\033[" << progress_bar_separation_lines_ + 1 << "B\n";
+      o_stream_ << ss.rdbuf() << std::flush;
     }
   }
 
   void print_help_str() const
   {
-    std::ostringstream oss;
+    std::stringstream ss;
     if (enable_progress_bar_) {
       if (progress_bar_update_always_) {
-        oss << "Progress bar enabled for every message.\n";
+        ss << "Progress bar enabled for every message.\n";
       } else {
-        oss << "Progress bar enabled at " <<
-          (1.0 / (progress_bar_update_period_ / (1000LL * 1000LL))) / 1000LL << " Hz.\n";
+        ss << "Progress bar enabled at " <<
+           (1.0 / (progress_bar_update_period_ / (1000LL * 1000LL))) / 1000LL << " Hz.\n";
       }
-      oss << "Progress bar [?]: [R]unning, [P]aused, [B]urst, [D]elayed, [S]topped\n";
+      ss << "Progress bar [?]: [R]unning, [P]aused, [B]urst, [D]elayed, [S]topped\n";
     } else {
-      oss << "Progress bar disabled.\n";
+      ss << "Progress bar disabled.\n";
     }
-    o_stream_ << oss.str() << std::flush;
+    o_stream_ << ss.rdbuf() << std::flush;
   }
 
   void update_with_limited_rate(
@@ -130,20 +130,20 @@ public:
       progress_current_time_secs_ = RCUTILS_NS_TO_S(static_cast<double>(timestamp));
       progress_secs_from_start_ = progress_current_time_secs_ - starting_time_secs_;
     }
-    std::ostringstream oss;
-    oss <<
+    std::stringstream ss;
+    ss <<
         // Clear and print newlines
       progress_bar_helper_clear_and_move_cursor_down_ <<
         // Print progress bar
       "====== Playback Progress ======\n" <<
-      "[" << std::setw(13) << std::fixed << std::setprecision(9) << progress_current_time_secs_ <<
-      "] Duration " << std::setprecision(2) << progress_secs_from_start_ <<
+       "[" << std::setw(13) << std::fixed << std::setprecision(9) << progress_current_time_secs_ <<
+       "] Duration " << std::setprecision(2) << progress_secs_from_start_ <<
         // Spaces at the end are used to clear any previous progress bar in case the new one is
         // shorter, which can happen when the playback starts a new loop.
       "/" << duration_secs_ << " [" << static_cast<char>(status) << "]      " <<
         // Go up to the beginning of the blank lines
       progress_bar_helper_move_cursor_up_;
-    o_stream_ << oss.str() << std::flush;
+    o_stream_ << ss.rdbuf() << std::flush;
   }
 
 private:
