@@ -535,6 +535,9 @@ if(BUILD_TESTING)
     rcpputils::rcpputils
     rosbag2_test_common::rosbag2_test_common
   )
+
+  ament_add_gmock(test_player_progress_bar test/rosbag2_transport/test_player_progress_bar.cpp)
+  target_link_libraries(test_player_progress_bar ${PROJECT_NAME})
 endif()
 
 ament_package()
