@@ -15,14 +15,14 @@
 #ifndef ROSBAG2_TRANSPORT__PLAYER_PROGRESS_BAR_HPP_
 #define ROSBAG2_TRANSPORT__PLAYER_PROGRESS_BAR_HPP_
 
+#include <memory>
 #include <string>
 
-#include "rclcpp/logger.hpp"
-#include "rcutils/time.h"
 #include "rosbag2_transport/visibility_control.hpp"
 
 namespace rosbag2_transport
 {
+class PlayerProgressBarImpl;
 
 class ROSBAG2_TRANSPORT_PUBLIC PlayerProgressBar
 {
@@ -36,6 +36,17 @@ public:
     STOPPED = 'S',
   };
 
+  /// PlayerProgressBar constructor
+  /// \param logger The rclcpp::Logger to be used in cases when PlayerProgressBar needs to log its
+  /// own error messages.
+  /// \param starting_time Time stamp of the first message in the bag.
+  /// \param ending_time Time stamp of the last message in the bag.
+  /// \param progress_bar_update_rate The progress bar maximum update rate in times per second (Hz).
+  /// If update rate equal 0 the progress bar will be disabled and will not output any information.
+  /// If update rate less than 0 the progress bar will be updated for every update(..) and
+  /// update_with_limited_rate(..) calls.
+  /// \param progress_bar_separation_lines Number of separation lines to print in between the
+  /// playback output and the progress bar.
   explicit PlayerProgressBar(
     rclcpp::Logger logger,
     rcutils_time_point_value_t starting_time,
@@ -45,44 +56,32 @@ public:
 
   virtual ~PlayerProgressBar();
 
+  /// \brief Prints help string about player progress bar.
+  /// Expected to be printed once at the beginning.
   void print_help_str() const;
 
-  // Update progress bar with an input timestamp,
-  // taking into account the update rate set by the user.
-  // The function should be called for regular progress bar updates, for example
-  // after the recurrent publishing of the messages.
-  // Call update_progress_bar_check_rate function only where it cannot run
-  // contemporaneously in multiple threads, i.e. function calls are already protected by a mutex.
-  // To avoid locking overhead no new mutex inside the function is directly protecting
-  // the access to the class attribute progress_bar_last_time_updated_.
+  /// \brief Updates progress bar with the specified timestamp and player status, taking into
+  /// account the update rate set by the user.
+  /// \note The function should be used for regular progress bar updates, for example
+  /// after the publishing the next message.
+  /// \warning This function is not thread safe and shall not be called concurrently from multiple
+  /// threads.
+  /// \param timestamp Timestamp of the last published message.
+  /// \param status The player status to be updated on progress bar.
   void update_with_limited_rate(
     const rcutils_time_point_value_t & timestamp,
     const PlayerStatus & status);
 
-  // Update progress bar with the current playback timestamp,
-  // irrespective of the update rate set by the user.
-  // The function should be called for extraordinary progress bar updates, for example
-  // when a log message is printed and we want to 'redraw' the progress bar.
+  /// \brief Updates progress bar with the specified player status, irrespective to the update rate
+  /// set by the user.
+  /// \note The function should be called for extraordinary progress bar updates, for example
+  /// when player changed its internal status or a log message is printed, and we want to 'redraw'
+  /// the progress bar.
+  /// \param status The player status to be updated on progress bar.
   void update(const PlayerStatus & status);
 
-  void draw_progress_bar(
-    const rcutils_time_point_value_t & timestamp,
-    const PlayerStatus & status);
-
 private:
-  rclcpp::Logger logger_;
-  double starting_time_secs_ = 0.0;
-  double duration_secs_ = 0.0;
-  std::string progress_bar_helper_clear_and_move_cursor_down_;
-  std::string progress_bar_helper_move_cursor_up_;
-
-  bool enable_progress_bar_;
-  bool progress_bar_update_always_;
-  rcutils_duration_value_t progress_bar_update_period_;
-  std::chrono::steady_clock::time_point progress_bar_last_time_updated_{};
-  int32_t progress_bar_separation_lines_ = 3;
-  double progress_secs_from_start_ = 0.0;
-  double progress_current_time_secs_ = 0.0;
+  std::unique_ptr<PlayerProgressBarImpl> pimpl_;
 };
 
 }  // namespace rosbag2_transport
