@@ -18,6 +18,7 @@
 #include <memory>
 #include <string>
 
+#include "rcutils/time.h"
 #include "rosbag2_transport/visibility_control.hpp"
 
 namespace rosbag2_transport
