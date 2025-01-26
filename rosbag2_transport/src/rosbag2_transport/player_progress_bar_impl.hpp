@@ -35,12 +35,12 @@ public:
   using PlayerStatus = PlayerProgressBar::PlayerStatus;
 
   PlayerProgressBarImpl(
-    rclcpp::Logger logger,
+    std::ostream & output_stream,
     rcutils_time_point_value_t starting_time,
     rcutils_time_point_value_t ending_time,
     int32_t progress_bar_update_rate,
     int32_t progress_bar_separation_lines)
-  : logger_(std::move(logger)),
+  : o_stream_(output_stream),
     enable_progress_bar_(progress_bar_update_rate != 0),
     progress_bar_update_always_(progress_bar_update_rate < 0),
     progress_bar_update_period_(progress_bar_update_rate != 0 ?
@@ -71,30 +71,25 @@ public:
     if (enable_progress_bar_) {
       std::ostringstream oss;
       oss << "\033[" << progress_bar_separation_lines_ + 1 << "B\n";
-      std::cout << oss.str() << std::flush;
+      o_stream_ << oss.str() << std::flush;
     }
   }
 
   void print_help_str() const
   {
-    std::string help_str;
+    std::ostringstream oss;
     if (enable_progress_bar_) {
       if (progress_bar_update_always_) {
-        help_str = "Progress bar enabled for every message.";
+        oss << "Progress bar enabled for every message.\n";
       } else {
-        std::ostringstream oss;
         oss << "Progress bar enabled at " <<
-          (1.0 / (progress_bar_update_period_ / (1000LL * 1000LL))) / 1000LL << " Hz";
-        help_str = oss.str();
+          (1.0 / (progress_bar_update_period_ / (1000LL * 1000LL))) / 1000LL << " Hz.\n";
       }
-      RCLCPP_INFO_STREAM(logger_, help_str);
-      std::string help_str2 =
-        "Progress bar [?]: [R]unning, [P]aused, [B]urst, [D]elayed, [S]topped";
-      RCLCPP_INFO_STREAM(logger_, help_str2);
+      oss << "Progress bar [?]: [R]unning, [P]aused, [B]urst, [D]elayed, [S]topped\n";
     } else {
-      help_str = "Progress bar disabled";
-      RCLCPP_INFO_STREAM(logger_, help_str);
+      oss << "Progress bar disabled.\n";
     }
+    o_stream_ << oss.str() << std::flush;
   }
 
   void update_with_limited_rate(
@@ -129,9 +124,7 @@ public:
     draw_progress_bar(-1, status);
   }
 
-  void draw_progress_bar(
-    const rcutils_time_point_value_t & timestamp,
-    const PlayerStatus & status)
+  void draw_progress_bar(const rcutils_time_point_value_t & timestamp, const PlayerStatus & status)
   {
     if (timestamp > 0) {
       progress_current_time_secs_ = RCUTILS_NS_TO_S(static_cast<double>(timestamp));
@@ -150,11 +143,11 @@ public:
       "/" << duration_secs_ << " [" << static_cast<char>(status) << "]      " <<
         // Go up to the beginning of the blank lines
       progress_bar_helper_move_cursor_up_;
-    std::cout << oss.str() << std::flush;
+    o_stream_ << oss.str() << std::flush;
   }
 
 private:
-  rclcpp::Logger logger_;
+  std::ostream & o_stream_;
   double starting_time_secs_ = 0.0;
   double duration_secs_ = 0.0;
   std::string progress_bar_helper_clear_and_move_cursor_down_;

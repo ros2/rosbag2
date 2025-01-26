@@ -37,8 +37,8 @@ public:
   };
 
   /// PlayerProgressBar constructor
-  /// \param logger The rclcpp::Logger to be used in cases when PlayerProgressBar needs to log its
-  /// own error messages.
+  /// \param output_stream Reference to output stream where progress bar and help information
+  /// will be printed out. Could be std::cout, std::cerr or std::ostringstream for tests.
   /// \param starting_time Time stamp of the first message in the bag.
   /// \param ending_time Time stamp of the last message in the bag.
   /// \param progress_bar_update_rate The progress bar maximum update rate in times per second (Hz).
@@ -48,7 +48,7 @@ public:
   /// \param progress_bar_separation_lines Number of separation lines to print in between the
   /// playback output and the progress bar.
   explicit PlayerProgressBar(
-    rclcpp::Logger logger,
+    std::ostream & output_stream,
     rcutils_time_point_value_t starting_time,
     rcutils_time_point_value_t ending_time,
     int32_t progress_bar_update_rate = 3,
