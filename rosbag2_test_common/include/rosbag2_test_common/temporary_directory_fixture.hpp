@@ -34,7 +34,7 @@ public:
   TemporaryDirectoryFixture()
   {
     std::filesystem::path parent_path = std::filesystem::path("/tmpfs");
-    if (!std::filesystem::exists(std::filesystem::path("/tmpfs"))) {
+    if (!std::filesystem::exists(parent_path)) {
       std::cerr << "The '/tmpfs' doesn't exist, falling back to the default temp directory \n";
       parent_path = std::filesystem::temp_directory_path();
     }
