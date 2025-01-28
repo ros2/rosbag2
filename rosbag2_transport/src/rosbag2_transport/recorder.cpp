@@ -143,7 +143,7 @@ private:
 
   std::mutex start_stop_transition_mutex_;
   std::mutex discovery_mutex_;
-  std::atomic<bool> stop_discovery_ = false;
+  std::atomic<bool> discovery_running_ = false;
   std::atomic_uchar paused_ = 0;
   std::atomic<bool> in_recording_ = false;
   std::shared_ptr<KeyboardHandler> keyboard_handler_;
@@ -440,7 +440,7 @@ bool RecorderImpl::is_paused()
 void RecorderImpl::start_discovery()
 {
   std::lock_guard<std::mutex> state_lock(discovery_mutex_);
-  if (stop_discovery_.exchange(false)) {
+  if (discovery_running_.exchange(true)) {
     RCLCPP_DEBUG(node->get_logger(), "Recorder topic discovery is already running.");
   } else {
     discovery_future_ =
@@ -451,10 +451,7 @@ void RecorderImpl::start_discovery()
 void RecorderImpl::stop_discovery()
 {
   std::lock_guard<std::mutex> state_lock(discovery_mutex_);
-  if (stop_discovery_.exchange(true)) {
-    RCLCPP_DEBUG(
-      node->get_logger(), "Recorder topic discovery has already been stopped or not running.");
-  } else {
+  if (discovery_running_.exchange(false)) {
     if (discovery_future_.valid()) {
       auto status = discovery_future_.wait_for(2 * record_options_.topic_polling_interval);
       if (status != std::future_status::ready) {
@@ -465,6 +462,9 @@ void RecorderImpl::stop_discovery()
             (status == std::future_status::timeout ? "timeout" : "deferred"));
       }
     }
+  } else {
+    RCLCPP_DEBUG(
+      node->get_logger(), "Recorder topic discovery has already been stopped or not running.");
   }
 }
 
@@ -475,7 +475,7 @@ void RecorderImpl::topics_discovery()
     RCLCPP_INFO(
       node->get_logger(),
       "use_sim_time set, waiting for /clock before starting recording...");
-    while (rclcpp::ok() && stop_discovery_ == false) {
+    while (rclcpp::ok() && discovery_running_) {
       if (node->get_clock()->wait_until_started(record_options_.topic_polling_interval)) {
         break;
       }
@@ -484,7 +484,7 @@ void RecorderImpl::topics_discovery()
       RCLCPP_INFO(node->get_logger(), "Sim time /clock found, starting recording.");
     }
   }
-  while (rclcpp::ok() && stop_discovery_ == false) {
+  while (rclcpp::ok() && discovery_running_) {
     try {
       auto topics_to_subscribe = get_requested_or_available_topics();
       for (const auto & topic_and_type : topics_to_subscribe) {
