@@ -267,6 +267,7 @@ void RecorderImpl::record()
     throw std::runtime_error("No serialization format specified!");
   }
 
+  subscriptions_.clear();
   writer_->open(
     storage_options_,
     {rmw_get_serialization_format(), record_options_.rmw_serialization_format});
