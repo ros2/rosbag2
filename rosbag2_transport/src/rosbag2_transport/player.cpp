@@ -374,10 +374,10 @@ private:
 
   std::shared_ptr<PlayerServiceClientManager> player_service_client_manager_;
 
-  BagMessageComparator get_bag_message_comparator(const MessageOrder & order);
+  static BagMessageComparator get_bag_message_comparator(const MessageOrder & order);
 
   /// Comparator for SerializedBagMessageSharedPtr to order chronologically by recv_timestamp.
-  struct
+  static inline const struct
   {
     bool operator()(
       const rosbag2_storage::SerializedBagMessageSharedPtr & l,
@@ -388,7 +388,7 @@ private:
   } bag_message_chronological_recv_timestamp_comparator;
 
   /// Comparator for SerializedBagMessageSharedPtr to order chronologically by send_timestamp.
-  struct
+  static inline const struct
   {
     bool operator()(
       const rosbag2_storage::SerializedBagMessageSharedPtr & l,
