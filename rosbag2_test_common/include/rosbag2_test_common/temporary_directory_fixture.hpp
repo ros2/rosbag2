@@ -17,6 +17,8 @@
 
 #include <gmock/gmock.h>
 
+#include <filesystem>
+#include <iostream>
 #include <string>
 
 #include "rcpputils/filesystem_helper.hpp"
@@ -31,7 +33,18 @@ class TemporaryDirectoryFixture : public Test
 public:
   TemporaryDirectoryFixture()
   {
+<<<<<<< HEAD
     temporary_dir_path_ = rcpputils::fs::create_temp_directory("tmp_test_dir_").string();
+=======
+    std::filesystem::path parent_path = std::filesystem::path("/tmpfs");
+    if (!std::filesystem::exists(parent_path)) {
+      std::cerr << "The '/tmpfs' doesn't exist, falling back to the default temp directory \n";
+      parent_path = std::filesystem::temp_directory_path();
+    }
+
+    temporary_dir_path_ =
+      rcpputils::fs::create_temporary_directory("tmp_test_dir_", parent_path).string();
+>>>>>>> 1d60d7b (Use tmpfs in rosbag2 temporary_directory_fixture (#1901))
   }
 
   ~TemporaryDirectoryFixture() override
