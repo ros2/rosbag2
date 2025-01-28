@@ -586,7 +586,7 @@ bool PlayerImpl::play()
             ready_to_play_from_queue_cv_.notify_all();
           }
         } while (rclcpp::ok() && !stop_playback_ && play_options_.loop);
-      } catch (std::runtime_error & e) {
+      } catch (const std::exception & e) {
         RCLCPP_ERROR(owner_->get_logger(), "Failed to play: %s", e.what());
         load_storage_content_ = false;
         if (storage_loading_future_.valid()) {storage_loading_future_.get();}
@@ -1357,10 +1357,11 @@ bool PlayerImpl::publish_message(rosbag2_storage::SerializedBagMessageSharedPtr 
 {
   auto pub_iter = publishers_.find(message->topic_name);
   if (pub_iter != publishers_.end()) {
-    // Calling on play message pre-callbacks
-    run_play_msg_pre_callbacks(message);
     bool message_published = false;
     try {
+      // Calling on play message pre-callbacks
+      run_play_msg_pre_callbacks(message);
+
       pub_iter->second->publish(rclcpp::SerializedMessage(*message->serialized_data));
       message_published = true;
     } catch (const std::exception & e) {
@@ -1369,8 +1370,14 @@ bool PlayerImpl::publish_message(rosbag2_storage::SerializedBagMessageSharedPtr 
           "' topic. \nError: " << e.what());
     }
 
-    // Calling on play message post-callbacks
-    run_play_msg_post_callbacks(message);
+    try {
+      // Calling on play message post-callbacks
+      run_play_msg_post_callbacks(message);
+    } catch (const std::exception & e) {
+      RCLCPP_ERROR_STREAM(owner_->get_logger(),
+        "Failed to call on play message post-callback on '" << message->topic_name <<
+        "' topic. \nError: " << e.what());
+    }
     return message_published;
   }
 
