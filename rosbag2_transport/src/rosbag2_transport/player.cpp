@@ -196,9 +196,11 @@ public:
   /// \return Shared pointer to the inner clock_publisher
   rclcpp::Publisher<rosgraph_msgs::msg::Clock>::SharedPtr get_clock_publisher();
 
-  /// \brief Blocks and wait on condition variable until first message will be taken from read
-  /// queue
-  void wait_for_playback_to_start();
+  /// \brief Waits on the condition variable until first message will be taken from read queue
+  /// @param timeout Maximum time in the fraction of seconds to wait for player to start.
+  /// If timeout is negative, the wait_for_playback_to_start will be a blocking call.
+  /// @return true if playback successfully started during timeout, otherwise false.
+  bool wait_for_playback_to_start(std::chrono::duration<double> timeout = std::chrono::seconds(-1));
 
   /// \brief Waits on the condition variable until the play thread finishes.
   /// @param timeout Maximum time in the fraction of seconds to wait for player to finish.
@@ -917,10 +919,17 @@ rclcpp::Publisher<rosgraph_msgs::msg::Clock>::SharedPtr PlayerImpl::get_clock_pu
   return clock_publisher_;
 }
 
-void PlayerImpl::wait_for_playback_to_start()
+bool PlayerImpl::wait_for_playback_to_start(std::chrono::duration<double> timeout)
 {
   std::unique_lock<std::mutex> lk(ready_to_play_from_queue_mutex_);
-  ready_to_play_from_queue_cv_.wait(lk, [this] {return is_ready_to_play_from_queue_;});
+  if (timeout.count() < 0) {
+    ready_to_play_from_queue_cv_.wait(lk, [this] {return is_ready_to_play_from_queue_;});
+    return true;
+  } else {
+    return ready_to_play_from_queue_cv_.wait_for(
+      lk, timeout, [this] {return is_ready_to_play_from_queue_;}
+    );
+  }
 }
 
 size_t PlayerImpl::get_number_of_registered_on_play_msg_pre_callbacks()
@@ -1904,9 +1913,9 @@ rclcpp::Publisher<rosgraph_msgs::msg::Clock>::SharedPtr Player::get_clock_publis
   return pimpl_->get_clock_publisher();
 }
 
-void Player::wait_for_playback_to_start()
+bool Player::wait_for_playback_to_start(std::chrono::duration<double> timeout)
 {
-  pimpl_->wait_for_playback_to_start();
+  return pimpl_->wait_for_playback_to_start(timeout);
 }
 
 size_t Player::get_number_of_registered_on_play_msg_pre_callbacks()
