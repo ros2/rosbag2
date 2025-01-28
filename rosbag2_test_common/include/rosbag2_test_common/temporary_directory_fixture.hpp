@@ -33,23 +33,19 @@ class TemporaryDirectoryFixture : public Test
 public:
   TemporaryDirectoryFixture()
   {
-<<<<<<< HEAD
-    temporary_dir_path_ = rcpputils::fs::create_temp_directory("tmp_test_dir_").string();
-=======
     std::filesystem::path parent_path = std::filesystem::path("/tmpfs");
     if (!std::filesystem::exists(parent_path)) {
       std::cerr << "The '/tmpfs' doesn't exist, falling back to the default temp directory \n";
       parent_path = std::filesystem::temp_directory_path();
     }
 
-    temporary_dir_path_ =
-      rcpputils::fs::create_temporary_directory("tmp_test_dir_", parent_path).string();
->>>>>>> 1d60d7b (Use tmpfs in rosbag2 temporary_directory_fixture (#1901))
+    temporary_dir_path_ = rcpputils::fs::create_temp_directory(
+        "tmp_test_dir_", rcpputils::fs::path(parent_path.generic_string())).string();
   }
 
   ~TemporaryDirectoryFixture() override
   {
-    rcpputils::fs::remove_all(rcpputils::fs::path(temporary_dir_path_));
+    std::filesystem::remove_all(std::filesystem::path(temporary_dir_path_));
   }
 
   std::string temporary_dir_path_;

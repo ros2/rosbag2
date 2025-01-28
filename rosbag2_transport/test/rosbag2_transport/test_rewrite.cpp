@@ -55,12 +55,7 @@ class TestRewrite : public ParametrizedTemporaryDirectoryFixture
 public:
   TestRewrite()
   {
-<<<<<<< HEAD
-    auto tmp_dir = rcpputils::fs::create_temp_directory("test_bag_rewrite");
-    output_dir_ = fs::path(tmp_dir.string());
-=======
     output_dir_ = fs::path(temporary_dir_path_);
->>>>>>> 1d60d7b (Use tmpfs in rosbag2 temporary_directory_fixture (#1901))
     storage_id_ = GetParam();
     bags_path_ = fs::path(_SRC_RESOURCES_DIR_PATH) / storage_id_;
   }
