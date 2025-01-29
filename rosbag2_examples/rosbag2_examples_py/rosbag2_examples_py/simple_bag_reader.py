@@ -25,10 +25,10 @@ class SimpleBagReader(Node):
     def __init__(self, bag_filename):
         super().__init__('simple_bag_reader')
         self.reader = rosbag2_py.SequentialReader()
-        storage_options = rosbag2_py._storage.StorageOptions(
+        storage_options = rosbag2_py.StorageOptions(
             uri=bag_filename,
             storage_id='sqlite3')
-        converter_options = rosbag2_py._storage.ConverterOptions('', '')
+        converter_options = rosbag2_py.ConverterOptions('', '')
         self.reader.open(storage_options, converter_options)
 
         self.publisher = self.create_publisher(String, 'chatter', 10)
