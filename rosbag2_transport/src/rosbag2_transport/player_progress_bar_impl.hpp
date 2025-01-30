@@ -50,8 +50,8 @@ public:
       static_cast<double>(std::min(starting_time, ending_time)));
     duration_secs_ = RCUTILS_NS_TO_S(
       std::max(static_cast<double>(ending_time - starting_time), 0.0));
-    progress_secs_from_start_ = starting_time_secs_;
     progress_current_time_secs_ = starting_time_secs_;
+    progress_secs_from_start_ = progress_current_time_secs_ - starting_time_secs_;
     std::ostringstream oss_clear_and_move_cursor_down;
     for (uint32_t i = 0; i < progress_bar_separation_lines_; i++) {
       oss_clear_and_move_cursor_down << "\033[2K\n";
