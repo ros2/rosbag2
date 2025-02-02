@@ -2,8 +2,8 @@
 Changelog for package rosbag2_test_common
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.31.0 (2025-02-02)
+-------------------
 * Use tmpfs in rosbag2 temporary_directory_fixture (`#1901 <https://github.com/ros2/rosbag2/issues/1901>`_)
 * Add debug information for flaky can_record_again_after_stop test (`#1871 <https://github.com/ros2/rosbag2/issues/1871>`_)
 * Contributors: Michael Orlov

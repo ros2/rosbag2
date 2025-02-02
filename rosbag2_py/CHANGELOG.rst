@@ -2,8 +2,8 @@
 Changelog for package rosbag2_py
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.31.0 (2025-02-02)
+-------------------
 * Add support for replaying based on publication timestamp (`#1876 <https://github.com/ros2/rosbag2/issues/1876>`_)
 * Support replaying multiple bags (`#1848 <https://github.com/ros2/rosbag2/issues/1848>`_)
 * Contributors: Christophe Bedard

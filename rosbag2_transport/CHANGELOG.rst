@@ -2,8 +2,8 @@
 Changelog for package rosbag2_transport
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.31.0 (2025-02-02)
+-------------------
 * Use tmpfs in rosbag2 temporary_directory_fixture (`#1901 <https://github.com/ros2/rosbag2/issues/1901>`_)
 * Bugfix: Recorder discovery does not restart after being stopped (`#1894 <https://github.com/ros2/rosbag2/issues/1894>`_)
 * Bugfix. Event publisher not starting for second run after stop (`#1888 <https://github.com/ros2/rosbag2/issues/1888>`_)
