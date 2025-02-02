@@ -2,6 +2,12 @@
 Changelog for package rosbag2_examples_py
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* avoid using internal modules for examples. (`#1905 <https://github.com/ros2/rosbag2/issues/1905>`_)
+* Add test_xmllint.py to python packages. (`#1879 <https://github.com/ros2/rosbag2/issues/1879>`_)
+* Contributors: Chris Lalancette, Tomoya Fujita
+
 0.30.0 (2024-11-26)
 -------------------
 

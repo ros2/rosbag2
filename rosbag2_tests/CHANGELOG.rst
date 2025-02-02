@@ -2,6 +2,11 @@
 Changelog for package rosbag2_tests
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Increase timeout to 180s for test_rosbag2_record_end_to_end (`#1889 <https://github.com/ros2/rosbag2/issues/1889>`_)
+* Contributors: yadunund
+
 0.30.0 (2024-11-26)
 -------------------
 * Add "--sort" CLI option to the "ros2 bag info" command (`#1804 <https://github.com/ros2/rosbag2/issues/1804>`_)
