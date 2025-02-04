@@ -21,6 +21,7 @@
 #include <stdexcept>
 #include <string>
 #include <unordered_map>
+#include <unordered_set>
 #include <utility>
 #include <vector>
 
@@ -461,6 +462,8 @@ void RecorderImpl::stop_discovery()
           "discovery_future_.wait_for(" << record_options_.topic_polling_interval.count() <<
             ") return status: " <<
             (status == std::future_status::timeout ? "timeout" : "deferred"));
+      } else {
+        discovery_future_.get();
       }
     }
   } else {
