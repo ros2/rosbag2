@@ -1364,16 +1364,26 @@ bool PlayerImpl::publish_message(rosbag2_storage::SerializedBagMessageSharedPtr 
   auto pub_iter = publishers_.find(message->topic_name);
   if (pub_iter != publishers_.end()) {
     bool message_published = false;
+    bool pre_callbacks_failed = true;
     try {
       // Calling on play message pre-callbacks
       run_play_msg_pre_callbacks(message);
-
-      pub_iter->second->publish(rclcpp::SerializedMessage(*message->serialized_data));
-      message_published = true;
+      pre_callbacks_failed = false;
     } catch (const std::exception & e) {
-      RCLCPP_ERROR_STREAM(
-        owner_->get_logger(), "Failed to publish message on '" << message->topic_name <<
+      RCLCPP_ERROR_STREAM(owner_->get_logger(),
+        "Failed to call on play message pre-callback on '" << message->topic_name <<
+        "' topic. \nError: " << e.what());
+    }
+
+    if (!pre_callbacks_failed) {
+      try {
+        pub_iter->second->publish(rclcpp::SerializedMessage(*message->serialized_data));
+        message_published = true;
+      } catch (const std::exception & e) {
+        RCLCPP_ERROR_STREAM(owner_->get_logger(),
+          "Failed to publish message on '" << message->topic_name <<
           "' topic. \nError: " << e.what());
+      }
     }
 
     try {
