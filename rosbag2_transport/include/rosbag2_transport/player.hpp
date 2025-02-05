@@ -213,6 +213,14 @@ public:
   ROSBAG2_TRANSPORT_PUBLIC
   bool play();
 
+  /// \brief Waits on the condition variable until the play thread starts and the message's queue
+  /// will be filled.
+  /// @param timeout Maximum time in the fraction of seconds to wait for player to start.
+  /// If timeout is negative, the wait_for_playback_to_start will be a blocking call.
+  /// @return true if playback successfully started during timeout, otherwise false.
+  ROSBAG2_TRANSPORT_PUBLIC
+  bool wait_for_playback_to_start(std::chrono::duration<double> timeout = std::chrono::seconds(-1));
+
   /// \brief Waits on the condition variable until the play thread finishes.
   /// @param timeout Maximum time in the fraction of seconds to wait for player to finish.
   /// If timeout is negative, the wait_for_playback_to_finish will be a blocking call.
@@ -319,13 +327,6 @@ public:
   bool wait_for_sent_service_requests_to_finish(
     const std::string & service_name,
     std::chrono::duration<double> timeout = std::chrono::seconds(5));
-
-  /// \brief Waits on the condition variable until the play thread finishes.
-  /// @param timeout Maximum time in the fraction of seconds to wait for player to finish.
-  /// If timeout is negative, the wait_for_playback_to_finish will be a blocking call.
-  /// @return true if playback finished during timeout, otherwise false.
-  ROSBAG2_TRANSPORT_PUBLIC
-  bool wait_for_playback_to_start(std::chrono::duration<double> timeout = std::chrono::seconds(-1));
 
 protected:
   /// \brief Getter for publishers corresponding to each topic
