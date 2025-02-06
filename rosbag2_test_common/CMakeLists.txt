@@ -24,6 +24,7 @@ endif()
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(rcutils REQUIRED)
+find_package(rcpputils REQUIRED)
 find_package(test_msgs REQUIRED)
 
 add_library(${PROJECT_NAME} INTERFACE)
