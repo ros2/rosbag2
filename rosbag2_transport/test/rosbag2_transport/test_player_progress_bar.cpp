@@ -294,5 +294,18 @@ TEST_F(TestPlayerProgressBar, update_with_limited_rate_with_zero_update_rate) {
 }
 
 TEST_F(TestPlayerProgressBar, update_with_limited_rate_with_zero_timestamp) {
-  // TODO(someone): Add content for this test
+  rcutils_time_point_value_t starting_time = RCUTILS_S_TO_NS(1);
+  rcutils_time_point_value_t ending_time = starting_time + RCUTILS_S_TO_NS(5);
+  std::ostringstream oss;
+  auto progress_bar =
+    std::make_unique<PlayerProgressBar>(oss, starting_time, ending_time, 1, 0);
+
+  progress_bar->update_with_limited_rate(0, PlayerProgressBar::PlayerStatus::RUNNING);
+
+  EXPECT_THAT(oss.str(),
+    MatchesRegex(
+      ".*====== Playback Progress ======\n"
+      "\\[0\\.000000000\\] Duration -1\\.00/5\\.00.*"
+    )
+  );
 }
