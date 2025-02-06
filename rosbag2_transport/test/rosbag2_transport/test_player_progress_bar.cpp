@@ -30,17 +30,22 @@ public:
   {
     std::ostringstream oss;
     for (uint32_t i = 0; i < num_lines; i++) {
-      oss << "\x1B[2K\n";
+      // The ANSI control code "\033[2K" is used to clear an entire line in the terminal.
+      // Cleanup current line and jump down to one new line with "\n"
+      oss << "\033\\[2K\n";
     }
-    oss << "\x1B[2K";
-    return CursorMoveStringEscapeRegex(oss.str());
+    return oss.str();
   }
 
   std::string GenerateMoveCursorUpRegexString(uint32_t num_lines)
   {
+    static const size_t progress_bar_lines_count = 2;
+    // ====== Playback Progress ======
+    // [0.000000000] Duration 0.00/0.00 [R]
     std::ostringstream oss;
-    oss << "\x1B[" << num_lines + 1 << "F";
-    return CursorMoveStringEscapeRegex(oss.str());
+    // Move cursor up by a specific number of lines using "Cursor Up" '\033[<N>A' escape sequence
+    oss << "\033\\[" << num_lines + progress_bar_lines_count << "A";
+    return oss.str();
   }
 
   std::vector<PlayerProgressBar::PlayerStatus> status_list_ = {
@@ -50,19 +55,6 @@ public:
     PlayerProgressBar::PlayerStatus::BURST,
     PlayerProgressBar::PlayerStatus::STOPPED
   };
-
-private:
-  std::string CursorMoveStringEscapeRegex(std::string str)
-  {
-    std::ostringstream oss;
-    for (const char c : str) {
-      if (c == '[' || c == ']') {
-        oss << "\\";
-      }
-      oss << c;
-    }
-    return oss.str();
-  }
 };
 
 TEST_F(TestPlayerProgressBar, default_ctor_dtor) {
