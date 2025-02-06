@@ -196,9 +196,11 @@ public:
   /// \return Shared pointer to the inner clock_publisher
   rclcpp::Publisher<rosgraph_msgs::msg::Clock>::SharedPtr get_clock_publisher();
 
-  /// \brief Blocks and wait on condition variable until first message will be taken from read
-  /// queue
-  void wait_for_playback_to_start();
+  /// \brief Waits on the condition variable until first message will be taken from read queue
+  /// @param timeout Maximum time in the fraction of seconds to wait for player to start.
+  /// If timeout is negative, the wait_for_playback_to_start will be a blocking call.
+  /// @return true if playback successfully started during timeout, otherwise false.
+  bool wait_for_playback_to_start(std::chrono::duration<double> timeout = std::chrono::seconds(-1));
 
   /// \brief Waits on the condition variable until the play thread finishes.
   /// @param timeout Maximum time in the fraction of seconds to wait for player to finish.
@@ -372,8 +374,13 @@ private:
 
   std::shared_ptr<PlayerServiceClientManager> player_service_client_manager_;
 
+<<<<<<< HEAD
+=======
+  static BagMessageComparator get_bag_message_comparator(const MessageOrder & order);
+
+>>>>>>> 871a447 (Upstream quality changes from Apex.AI part 1 (#1903))
   /// Comparator for SerializedBagMessageSharedPtr to order chronologically by recv_timestamp.
-  struct
+  static inline const struct
   {
     bool operator()(
       const rosbag2_storage::SerializedBagMessageSharedPtr & l,
@@ -382,6 +389,20 @@ private:
       return l->recv_timestamp > r->recv_timestamp;
     }
   } bag_message_chronological_recv_timestamp_comparator;
+<<<<<<< HEAD
+=======
+
+  /// Comparator for SerializedBagMessageSharedPtr to order chronologically by send_timestamp.
+  static inline const struct
+  {
+    bool operator()(
+      const rosbag2_storage::SerializedBagMessageSharedPtr & l,
+      const rosbag2_storage::SerializedBagMessageSharedPtr & r) const
+    {
+      return l->send_timestamp > r->send_timestamp;
+    }
+  } bag_message_chronological_send_timestamp_comparator;
+>>>>>>> 871a447 (Upstream quality changes from Apex.AI part 1 (#1903))
 };
 
 PlayerImpl::PlayerImpl(
@@ -557,7 +578,7 @@ bool PlayerImpl::play()
             ready_to_play_from_queue_cv_.notify_all();
           }
         } while (rclcpp::ok() && !stop_playback_ && play_options_.loop);
-      } catch (std::runtime_error & e) {
+      } catch (const std::exception & e) {
         RCLCPP_ERROR(owner_->get_logger(), "Failed to play: %s", e.what());
         load_storage_content_ = false;
         if (storage_loading_future_.valid()) {storage_loading_future_.get();}
@@ -888,10 +909,17 @@ rclcpp::Publisher<rosgraph_msgs::msg::Clock>::SharedPtr PlayerImpl::get_clock_pu
   return clock_publisher_;
 }
 
-void PlayerImpl::wait_for_playback_to_start()
+bool PlayerImpl::wait_for_playback_to_start(std::chrono::duration<double> timeout)
 {
   std::unique_lock<std::mutex> lk(ready_to_play_from_queue_mutex_);
-  ready_to_play_from_queue_cv_.wait(lk, [this] {return is_ready_to_play_from_queue_;});
+  if (timeout.count() < 0) {
+    ready_to_play_from_queue_cv_.wait(lk, [this] {return is_ready_to_play_from_queue_;});
+    return true;
+  } else {
+    return ready_to_play_from_queue_cv_.wait_for(
+      lk, timeout, [this] {return is_ready_to_play_from_queue_;}
+    );
+  }
 }
 
 size_t PlayerImpl::get_number_of_registered_on_play_msg_pre_callbacks()
@@ -1015,6 +1043,7 @@ void PlayerImpl::play_messages_from_queue()
         const bool message_published = publish_message(message_ptr);
         // If we tried to publish because of play_next(), jump the clock
         if (play_next_.load()) {
+<<<<<<< HEAD
           clock_->jump(message_ptr->recv_timestamp);
           // If we successfully played next, notify that we're done, otherwise keep trying
           if (message_published) {
@@ -1024,6 +1053,14 @@ void PlayerImpl::play_messages_from_queue()
             play_next_result_ = true;
             finished_play_next_cv_.notify_all();
           }
+=======
+          clock_->jump(get_message_order_timestamp(message_ptr));
+          play_next_ = false;
+          std::lock_guard<std::mutex> lk(finished_play_next_mutex_);
+          finished_play_next_ = true;
+          play_next_result_ = message_published;
+          finished_play_next_cv_.notify_all();
+>>>>>>> 871a447 (Upstream quality changes from Apex.AI part 1 (#1903))
         }
       }
       message_ptr = take_next_message_from_queue();
@@ -1312,20 +1349,37 @@ bool PlayerImpl::publish_message(rosbag2_storage::SerializedBagMessageSharedPtr 
 {
   auto pub_iter = publishers_.find(message->topic_name);
   if (pub_iter != publishers_.end()) {
-    // Calling on play message pre-callbacks
-    run_play_msg_pre_callbacks(message);
     bool message_published = false;
+    bool pre_callbacks_failed = true;
     try {
-      pub_iter->second->publish(rclcpp::SerializedMessage(*message->serialized_data));
-      message_published = true;
+      // Calling on play message pre-callbacks
+      run_play_msg_pre_callbacks(message);
+      pre_callbacks_failed = false;
     } catch (const std::exception & e) {
-      RCLCPP_ERROR_STREAM(
-        owner_->get_logger(), "Failed to publish message on '" << message->topic_name <<
-          "' topic. \nError: " << e.what());
+      RCLCPP_ERROR_STREAM(owner_->get_logger(),
+        "Failed to call on play message pre-callback on '" << message->topic_name <<
+        "' topic. \nError: " << e.what());
     }
 
-    // Calling on play message post-callbacks
-    run_play_msg_post_callbacks(message);
+    if (!pre_callbacks_failed) {
+      try {
+        pub_iter->second->publish(rclcpp::SerializedMessage(*message->serialized_data));
+        message_published = true;
+      } catch (const std::exception & e) {
+        RCLCPP_ERROR_STREAM(owner_->get_logger(),
+          "Failed to publish message on '" << message->topic_name <<
+          "' topic. \nError: " << e.what());
+      }
+    }
+
+    try {
+      // Calling on play message post-callbacks
+      run_play_msg_post_callbacks(message);
+    } catch (const std::exception & e) {
+      RCLCPP_ERROR_STREAM(owner_->get_logger(),
+        "Failed to call on play message post-callback on '" << message->topic_name <<
+        "' topic. \nError: " << e.what());
+    }
     return message_published;
   }
 
@@ -1852,9 +1906,9 @@ rclcpp::Publisher<rosgraph_msgs::msg::Clock>::SharedPtr Player::get_clock_publis
   return pimpl_->get_clock_publisher();
 }
 
-void Player::wait_for_playback_to_start()
+bool Player::wait_for_playback_to_start(std::chrono::duration<double> timeout)
 {
-  pimpl_->wait_for_playback_to_start();
+  return pimpl_->wait_for_playback_to_start(timeout);
 }
 
 size_t Player::get_number_of_registered_on_play_msg_pre_callbacks()

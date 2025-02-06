@@ -328,3 +328,81 @@ TEST_F(RosBag2PlayTestFixture, play_next_playing_only_filtered_topics) {
   // All we care is that any messages arrived
   EXPECT_THAT(replayed_topic2, SizeIs(Eq(3u)));
 }
+
+TEST_F(RosBag2PlayTestFixture, play_next_calls_pre_callback_only_once_if_fail) {
+  auto primitive_message = get_messages_basic_types()[0];
+  primitive_message->int32_value = 42;
+
+  auto topic_types = std::vector<rosbag2_storage::TopicMetadata>{
+    {1u, "topic1", "test_msgs/msg/BasicTypes", "", {}, ""}};
+
+  std::vector<std::shared_ptr<rosbag2_storage::SerializedBagMessage>> messages =
+  {
+    serialize_test_message("topic1", 2100, primitive_message),
+    serialize_test_message("topic1", 3300, primitive_message),
+    serialize_test_message("topic1", 4600, primitive_message),
+    serialize_test_message("topic1", 5900, primitive_message)
+  };
+
+  auto prepared_mock_reader = std::make_unique<MockSequentialReader>();
+  prepared_mock_reader->prepare(messages, topic_types);
+  auto reader = std::make_unique<rosbag2_cpp::Reader>(std::move(prepared_mock_reader));
+  size_t callbacks_counter = 0;
+  {
+    auto player = std::make_shared<MockPlayer>(std::move(reader), storage_options_, play_options_);
+    player->pause();
+    ASSERT_TRUE(player->is_paused());
+
+    player->play();
+    player->wait_for_playback_to_start();
+    ASSERT_TRUE(player->is_paused());
+    auto callback = [&callbacks_counter](std::shared_ptr<rosbag2_storage::SerializedBagMessage>) {
+        callbacks_counter++;
+        throw std::runtime_error("Throw exception from callback");
+      };
+    player->add_on_play_message_pre_callback(callback);
+    ASSERT_FALSE(player->play_next());
+  }
+  ASSERT_EQ(callbacks_counter, 1);
+}
+
+TEST_F(RosBag2PlayTestFixture, play_next_returns_false_if_pre_callback_throw_exception) {
+  auto primitive_message = get_messages_basic_types()[0];
+  primitive_message->int32_value = 42;
+
+  auto topic_types = std::vector<rosbag2_storage::TopicMetadata>{
+    {1u, "topic1", "test_msgs/msg/BasicTypes", "", {}, ""}};
+
+  std::vector<std::shared_ptr<rosbag2_storage::SerializedBagMessage>> messages =
+  {
+    serialize_test_message("topic1", 2100, primitive_message),
+    serialize_test_message("topic1", 3300, primitive_message),
+    serialize_test_message("topic1", 4600, primitive_message),
+    serialize_test_message("topic1", 5900, primitive_message)
+  };
+
+  auto prepared_mock_reader = std::make_unique<MockSequentialReader>();
+  prepared_mock_reader->prepare(messages, topic_types);
+  auto reader = std::make_unique<rosbag2_cpp::Reader>(std::move(prepared_mock_reader));
+  auto player = std::make_shared<MockPlayer>(std::move(reader), storage_options_, play_options_);
+  player->pause();
+
+  ASSERT_TRUE(player->is_paused());
+  ASSERT_FALSE(player->play_next());
+
+  player->play();
+  player->wait_for_playback_to_start();
+  ASSERT_TRUE(player->is_paused());
+  ASSERT_TRUE(player->play_next());
+  auto callback_with_exception = [](std::shared_ptr<rosbag2_storage::SerializedBagMessage>) {
+      throw std::runtime_error("Throw exception from callback");
+    };
+  auto pre_callback_handle = player->add_on_play_message_pre_callback(callback_with_exception);
+  ASSERT_FALSE(player->play_next());
+  player->delete_on_play_message_callback(pre_callback_handle);
+
+  auto post_callback_handle = player->add_on_play_message_post_callback(callback_with_exception);
+  // play_next shall return true if post_callback fails, because message was published.
+  ASSERT_TRUE(player->play_next());
+  player->delete_on_play_message_callback(post_callback_handle);
+}
