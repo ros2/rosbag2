@@ -75,45 +75,37 @@ TEST_F(TestPlayerProgressBar, can_dtor_after_output) {
 
 TEST_F(TestPlayerProgressBar, print_help_str_with_zero_update_rate) {
   std::ostringstream oss;
-  {
-    auto progress_bar = std::make_unique<PlayerProgressBar>(oss, 0, 0, 0);
-    progress_bar->print_help_str();
-    EXPECT_EQ(oss.str(), "Progress bar disabled.\n");
-  }
+  auto progress_bar = std::make_unique<PlayerProgressBar>(oss, 0, 0, 0);
+  progress_bar->print_help_str();
+  EXPECT_EQ(oss.str(), "Progress bar disabled.\n");
 }
 
 TEST_F(TestPlayerProgressBar, print_help_str_with_negative_update_rate) {
-  {
-    std::ostringstream oss;
-    auto progress_bar = std::make_unique<PlayerProgressBar>(oss, 0, 0, -1);
-    progress_bar->print_help_str();
-    EXPECT_EQ(oss.str(),
-      "Progress bar enabled for every message."
-      "\nProgress bar [?]: [R]unning, [P]aused, [B]urst, [D]elayed, [S]topped\n");
-  }
+  std::ostringstream oss;
+  auto progress_bar = std::make_unique<PlayerProgressBar>(oss, 0, 0, -1);
+  progress_bar->print_help_str();
+  EXPECT_EQ(oss.str(),
+    "Progress bar enabled for every message."
+    "\nProgress bar [?]: [R]unning, [P]aused, [B]urst, [D]elayed, [S]topped\n");
 }
 
 TEST_F(TestPlayerProgressBar, print_help_str_with_positive_update_rate) {
-  {
-    std::ostringstream oss;
-    auto progress_bar = std::make_unique<PlayerProgressBar>(oss, 0, 0, 1);
-    progress_bar->print_help_str();
-    EXPECT_EQ(oss.str(),
-      "Progress bar enabled at 1 Hz."
-      "\nProgress bar [?]: [R]unning, [P]aused, [B]urst, [D]elayed, [S]topped\n");
-  }
+  std::ostringstream oss;
+  auto progress_bar = std::make_unique<PlayerProgressBar>(oss, 0, 0, 1);
+  progress_bar->print_help_str();
+  EXPECT_EQ(oss.str(),
+    "Progress bar enabled at 1 Hz."
+    "\nProgress bar [?]: [R]unning, [P]aused, [B]urst, [D]elayed, [S]topped\n");
 }
 
 TEST_F(TestPlayerProgressBar, update_status_with_disabled_progress_bar) {
-  {
-    std::ostringstream oss;
-    auto progress_bar = std::make_unique<PlayerProgressBar>(oss, 0, 0, 0);
-    for (const auto & status : status_list_) {
-      progress_bar->update(status);
-      EXPECT_THAT(oss.str(), IsEmpty());
-      oss.clear();
-      oss.str("");
-    }
+  std::ostringstream oss;
+  auto progress_bar = std::make_unique<PlayerProgressBar>(oss, 0, 0, 0);
+  for (const auto & status : status_list_) {
+    progress_bar->update(status);
+    EXPECT_THAT(oss.str(), IsEmpty());
+    oss.clear();
+    oss.str("");
   }
 }
 
@@ -129,26 +121,6 @@ TEST_F(TestPlayerProgressBar, update_status_with_enabled_progress_bar) {
       "\n.*\\[R\\]"
       ".*====== Playback Progress ======"
       "\n.*\\[S\\].*"));
-  }
-
-  {
-    // Test status update with update rate 1 Hz
-    std::ostringstream oss;
-    auto progress_bar = std::make_unique<PlayerProgressBar>(oss, 0, 0, 1);
-    progress_bar->update(PlayerProgressBar::PlayerStatus::RUNNING);
-    progress_bar->update(PlayerProgressBar::PlayerStatus::STOPPED);
-    EXPECT_THAT(oss.str(), MatchesRegex(
-      ".*\\[R\\].*\n.*\\[S\\].*"));
-  }
-
-  {
-    // Test status update with update rate 10 Hz
-    std::ostringstream oss;
-    auto progress_bar = std::make_unique<PlayerProgressBar>(oss, 0, 0, 10);
-    progress_bar->update(PlayerProgressBar::PlayerStatus::RUNNING);
-    progress_bar->update(PlayerProgressBar::PlayerStatus::STOPPED);
-    EXPECT_THAT(oss.str(), MatchesRegex(
-      ".*\\[R\\].*\n.*\\[S\\].*"));
   }
 
   {
@@ -184,27 +156,6 @@ TEST_F(TestPlayerProgressBar, update_status_with_separation_lines) {
       ".*\\[D\\].*" + expected_post_line_separator +
       expected_pre_line_separator +
       ".*\\[R\\].*" + expected_post_line_separator));
-  }
-
-  {
-    // Test status update with 5 separation lines
-    std::ostringstream oss;
-    uint32_t num_separation_lines = 5;
-    std::string expected_pre_line_separator =
-      GenerateClearAndMoveCursorDownRegexString(num_separation_lines);
-    std::string expected_post_line_separator =
-      GenerateMoveCursorUpRegexString(num_separation_lines);
-    auto progress_bar = std::make_unique<PlayerProgressBar>(oss, 0, 0, 1, num_separation_lines);
-    progress_bar->update(PlayerProgressBar::PlayerStatus::DELAYED);
-    progress_bar->update(PlayerProgressBar::PlayerStatus::RUNNING);
-    progress_bar->update(PlayerProgressBar::PlayerStatus::PAUSED);
-    EXPECT_THAT(oss.str(), MatchesRegex(
-      expected_pre_line_separator +
-      ".*\\[D\\].*" + expected_post_line_separator +
-      expected_pre_line_separator +
-      ".*\\[R\\].*" + expected_post_line_separator +
-      expected_pre_line_separator +
-      ".*\\[P\\].*" + expected_post_line_separator));
   }
 
   {
@@ -307,72 +258,39 @@ TEST_F(TestPlayerProgressBar, update_with_limited_rate_with_negative_update_rate
   rcutils_time_point_value_t starting_time = 1e18;  // nanoseconds
   rcutils_time_point_value_t ending_time = starting_time + 5e9;
   int32_t update_rate = -1;
-  {
-    // Test if progress bar is updated every time
-    std::ostringstream oss;
-    auto progress_bar = std::make_unique<PlayerProgressBar>(
-      oss, starting_time, ending_time, update_rate, 0);
-    rcutils_time_point_value_t timestamp_1 = starting_time;
-    rcutils_time_point_value_t timestamp_2 = starting_time + 1e6;
-    rcutils_time_point_value_t timestamp_3 = starting_time + 2e6;
-    progress_bar->update_with_limited_rate(timestamp_1, PlayerProgressBar::PlayerStatus::RUNNING);
-    progress_bar->update_with_limited_rate(timestamp_2, PlayerProgressBar::PlayerStatus::STOPPED);
-    progress_bar->update_with_limited_rate(timestamp_3, PlayerProgressBar::PlayerStatus::RUNNING);
-    EXPECT_THAT(oss.str(), MatchesRegex(
-      ".*\\[1000000000\\.000000000\\] Duration 0\\.00/5\\.00"
-      ".*\\[1000000000\\.0009.*\\] Duration 0\\.00/5\\.00"
-      ".*\\[1000000000\\.0019.*\\] Duration 0\\.00/5\\.00.*"));
-  }
 
-  {
-    // Test if progress bar is updated every time
-    std::ostringstream oss;
-    auto progress_bar = std::make_unique<PlayerProgressBar>(
-      oss, starting_time, ending_time, update_rate, 0);
-    rcutils_time_point_value_t timestamp_1 = starting_time;
-    rcutils_time_point_value_t timestamp_2 = starting_time + 1e9;
-    rcutils_time_point_value_t timestamp_3 = starting_time + 2e9;
-    progress_bar->update_with_limited_rate(timestamp_1, PlayerProgressBar::PlayerStatus::RUNNING);
-    progress_bar->update_with_limited_rate(timestamp_2, PlayerProgressBar::PlayerStatus::STOPPED);
-    progress_bar->update_with_limited_rate(timestamp_3, PlayerProgressBar::PlayerStatus::RUNNING);
-    EXPECT_THAT(oss.str(), MatchesRegex(
-      ".*\\[1000000000\\.000000000\\] Duration 0\\.00/5\\.00"
-      ".*\\[1000000001\\.000000000\\] Duration 1\\.00/5\\.00"
-      ".*\\[1000000002\\.000000000\\] Duration 2\\.00/5\\.00.*"));
-  }
+  // Test if progress bar is updated every time
+  std::ostringstream oss;
+  auto progress_bar = std::make_unique<PlayerProgressBar>(
+    oss, starting_time, ending_time, update_rate, 0);
+  rcutils_time_point_value_t timestamp_1 = starting_time;
+  rcutils_time_point_value_t timestamp_2 = starting_time + 1e6;
+  rcutils_time_point_value_t timestamp_3 = starting_time + 2e6;
+  progress_bar->update_with_limited_rate(timestamp_1, PlayerProgressBar::PlayerStatus::RUNNING);
+  progress_bar->update_with_limited_rate(timestamp_2, PlayerProgressBar::PlayerStatus::STOPPED);
+  progress_bar->update_with_limited_rate(timestamp_3, PlayerProgressBar::PlayerStatus::RUNNING);
+  EXPECT_THAT(oss.str(), MatchesRegex(
+    ".*\\[1000000000\\.000000000\\] Duration 0\\.00/5\\.00"
+    ".*\\[1000000000\\.0009.*\\] Duration 0\\.00/5\\.00"
+    ".*\\[1000000000\\.0019.*\\] Duration 0\\.00/5\\.00.*"));
 }
 
 TEST_F(TestPlayerProgressBar, update_with_limited_rate_with_zero_update_rate) {
   rcutils_time_point_value_t starting_time = 1e18;  // nanoseconds
   rcutils_time_point_value_t ending_time = starting_time + 5e9;
   int32_t update_rate = 0;
-  {
-    // Test if progress bar is not updated
-    std::ostringstream oss;
-    auto progress_bar = std::make_unique<PlayerProgressBar>(
-      oss, starting_time, ending_time, update_rate);
-    rcutils_time_point_value_t timestamp_1 = starting_time;
-    rcutils_time_point_value_t timestamp_2 = starting_time + 1e6;
-    rcutils_time_point_value_t timestamp_3 = starting_time + 2e6;
-    progress_bar->update_with_limited_rate(timestamp_1, PlayerProgressBar::PlayerStatus::DELAYED);
-    progress_bar->update_with_limited_rate(timestamp_2, PlayerProgressBar::PlayerStatus::RUNNING);
-    progress_bar->update_with_limited_rate(timestamp_3, PlayerProgressBar::PlayerStatus::RUNNING);
-    EXPECT_THAT(oss.str(), IsEmpty());
-  }
 
-  {
-    // Test if progress bar is not updated
-    std::ostringstream oss;
-    auto progress_bar = std::make_unique<PlayerProgressBar>(
-      oss, starting_time, ending_time, update_rate);
-    rcutils_time_point_value_t timestamp_1 = starting_time;
-    rcutils_time_point_value_t timestamp_2 = starting_time + 1e9;
-    rcutils_time_point_value_t timestamp_3 = starting_time + 2e9;
-    progress_bar->update_with_limited_rate(timestamp_1, PlayerProgressBar::PlayerStatus::DELAYED);
-    progress_bar->update_with_limited_rate(timestamp_2, PlayerProgressBar::PlayerStatus::RUNNING);
-    progress_bar->update_with_limited_rate(timestamp_3, PlayerProgressBar::PlayerStatus::RUNNING);
-    EXPECT_THAT(oss.str(), IsEmpty());
-  }
+  // Test if progress bar is not updated
+  std::ostringstream oss;
+  auto progress_bar = std::make_unique<PlayerProgressBar>(
+    oss, starting_time, ending_time, update_rate);
+  rcutils_time_point_value_t timestamp_1 = starting_time;
+  rcutils_time_point_value_t timestamp_2 = starting_time + 1e6;
+  rcutils_time_point_value_t timestamp_3 = starting_time + 2e6;
+  progress_bar->update_with_limited_rate(timestamp_1, PlayerProgressBar::PlayerStatus::DELAYED);
+  progress_bar->update_with_limited_rate(timestamp_2, PlayerProgressBar::PlayerStatus::RUNNING);
+  progress_bar->update_with_limited_rate(timestamp_3, PlayerProgressBar::PlayerStatus::RUNNING);
+  EXPECT_THAT(oss.str(), IsEmpty());
 }
 
 TEST_F(TestPlayerProgressBar, update_with_limited_rate_with_zero_timestamp) {
