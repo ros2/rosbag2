@@ -138,7 +138,7 @@ public:
       progress_bar_helper_clear_and_move_cursor_down_ <<
         // Print progress bar
       "====== Playback Progress ======\n" <<
-      "[" << std::setw(13) << std::fixed << std::setprecision(9) << progress_current_time_secs_ <<
+      "[" << std::fixed << std::setprecision(9) << progress_current_time_secs_ <<
       "] Duration " << std::setprecision(2) << progress_secs_from_start_ <<
         // Spaces at the end are used to clear any previous progress bar in case the new one is
         // shorter, which can happen when the playback starts a new loop.
