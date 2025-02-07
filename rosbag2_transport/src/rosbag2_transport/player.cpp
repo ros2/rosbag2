@@ -374,11 +374,6 @@ private:
 
   std::shared_ptr<PlayerServiceClientManager> player_service_client_manager_;
 
-<<<<<<< HEAD
-=======
-  static BagMessageComparator get_bag_message_comparator(const MessageOrder & order);
-
->>>>>>> 871a447 (Upstream quality changes from Apex.AI part 1 (#1903))
   /// Comparator for SerializedBagMessageSharedPtr to order chronologically by recv_timestamp.
   static inline const struct
   {
@@ -389,20 +384,6 @@ private:
       return l->recv_timestamp > r->recv_timestamp;
     }
   } bag_message_chronological_recv_timestamp_comparator;
-<<<<<<< HEAD
-=======
-
-  /// Comparator for SerializedBagMessageSharedPtr to order chronologically by send_timestamp.
-  static inline const struct
-  {
-    bool operator()(
-      const rosbag2_storage::SerializedBagMessageSharedPtr & l,
-      const rosbag2_storage::SerializedBagMessageSharedPtr & r) const
-    {
-      return l->send_timestamp > r->send_timestamp;
-    }
-  } bag_message_chronological_send_timestamp_comparator;
->>>>>>> 871a447 (Upstream quality changes from Apex.AI part 1 (#1903))
 };
 
 PlayerImpl::PlayerImpl(
@@ -1043,24 +1024,12 @@ void PlayerImpl::play_messages_from_queue()
         const bool message_published = publish_message(message_ptr);
         // If we tried to publish because of play_next(), jump the clock
         if (play_next_.load()) {
-<<<<<<< HEAD
           clock_->jump(message_ptr->recv_timestamp);
-          // If we successfully played next, notify that we're done, otherwise keep trying
-          if (message_published) {
-            play_next_ = false;
-            std::lock_guard<std::mutex> lk(finished_play_next_mutex_);
-            finished_play_next_ = true;
-            play_next_result_ = true;
-            finished_play_next_cv_.notify_all();
-          }
-=======
-          clock_->jump(get_message_order_timestamp(message_ptr));
           play_next_ = false;
           std::lock_guard<std::mutex> lk(finished_play_next_mutex_);
           finished_play_next_ = true;
           play_next_result_ = message_published;
           finished_play_next_cv_.notify_all();
->>>>>>> 871a447 (Upstream quality changes from Apex.AI part 1 (#1903))
         }
       }
       message_ptr = take_next_message_from_queue();
