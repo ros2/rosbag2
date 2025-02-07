@@ -1099,13 +1099,8 @@ void PlayerImpl::play_messages_from_queue()
         }
         // Updating progress bar in this code section protected
         // by the mutex skip_message_in_main_play_loop_mutex_.
-        if (play_options_.message_order == MessageOrder::RECEIVED_TIMESTAMP) {
-          progress_bar_->update_with_limited_rate(
-            message_ptr->recv_timestamp, PlayerStatus::RUNNING);
-        } else if (play_options_.message_order == MessageOrder::SENT_TIMESTAMP) {
-          progress_bar_->update_with_limited_rate(
-            message_ptr->send_timestamp, PlayerStatus::RUNNING);
-        }
+        progress_bar_->update_with_limited_rate(
+          get_message_order_timestamp(message_ptr), PlayerStatus::RUNNING);
       }
       message_ptr = take_next_message_from_queue();
     }
