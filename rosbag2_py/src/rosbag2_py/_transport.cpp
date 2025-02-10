@@ -47,13 +47,13 @@ public:
     std::for_each(
       arguments_.begin(), arguments_.end(),
       [this](const std::string & arg) {
-        pointers_.push_back(const_cast<char *>(arg.c_str()));
+        pointers_.push_back(arg.c_str());
       }
     );
     pointers_.push_back(nullptr);
   }
 
-  char ** argv()
+  const char ** argv()
   {
     return arguments_.empty() ? nullptr : pointers_.data();
   }
@@ -65,7 +65,7 @@ public:
 
 private:
   std::vector<std::string> arguments_;
-  std::vector<char *> pointers_;
+  std::vector<const char *> pointers_;
 };
 
 rclcpp::QoS qos_from_handle(const py::handle source)
@@ -283,7 +283,7 @@ protected:
       player->play();
 
       auto wait_for_exit_thread = std::thread(
-        [&]() {
+        [this, player]() {
           std::unique_lock<std::mutex> lock(wait_for_exit_mutex_);
           wait_for_exit_cv_.wait(lock, [] {return rosbag2_py::Player::exit_.load();});
           player->stop();

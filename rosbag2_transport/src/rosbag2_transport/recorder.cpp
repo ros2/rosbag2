@@ -21,6 +21,7 @@
 #include <stdexcept>
 #include <string>
 #include <unordered_map>
+#include <unordered_set>
 #include <utility>
 #include <vector>
 
@@ -267,6 +268,7 @@ void RecorderImpl::record()
     throw std::runtime_error("No serialization format specified!");
   }
 
+  subscriptions_.clear();
   writer_->open(
     storage_options_,
     {rmw_get_serialization_format(), record_options_.rmw_serialization_format});
@@ -460,6 +462,8 @@ void RecorderImpl::stop_discovery()
           "discovery_future_.wait_for(" << record_options_.topic_polling_interval.count() <<
             ") return status: " <<
             (status == std::future_status::timeout ? "timeout" : "deferred"));
+      } else {
+        discovery_future_.get();
       }
     }
   } else {

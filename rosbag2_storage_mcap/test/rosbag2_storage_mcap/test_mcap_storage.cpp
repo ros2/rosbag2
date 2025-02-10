@@ -45,9 +45,12 @@ public:
     auto serialized_msg = std::make_shared<rclcpp::SerializedMessage>();
     serialization.serialize_message(&std_string_msg, serialized_msg.get());
 
-    auto ret = std::make_shared<rcutils_uint8_array_t>();
-    *ret = serialized_msg->release_rcl_serialized_message();
-    return ret;
+    auto msg = new rcutils_uint8_array_t;
+    *msg = serialized_msg->release_rcl_serialized_message();
+    return std::shared_ptr<rcutils_uint8_array_t>(msg, [](rmw_serialized_message_t * msg) {
+      EXPECT_EQ(rmw_serialized_message_fini(msg), RMW_RET_OK);
+      delete msg;
+    });
   }
 
   std::shared_ptr<rosbag2_storage::storage_interfaces::ReadWriteInterface> write_messages_to_mcap(
