@@ -67,6 +67,7 @@ class PlayVerb(VerbExtension):
         parser.add_argument(
             '--storage-config-file', type=FileType('r'),
             help='Path to a yaml file defining storage specific configurations. '
+<<<<<<< HEAD
                  'For the default storage plugin settings are specified through syntax:'
                  'read:'
                  '  pragmas: [\"<setting_name>\" = <setting_value>]'
@@ -74,6 +75,12 @@ class PlayVerb(VerbExtension):
                  'For a list of sqlite3 settings, refer to sqlite3 documentation')
         parser.add_argument(
             '--clock', type=positive_float, nargs='?', const=40, default=0,
+=======
+                 'See storage plugin documentation for the format of this file.')
+        clock_args_group = parser.add_mutually_exclusive_group()
+        clock_args_group.add_argument(
+            '--clock', type=positive_float, metavar='Hz', nargs='?', const=40, default=0,
+>>>>>>> 323ebbf (CLI - play verb metavar (#1906))
             help='Publish to /clock at a specific frequency in Hz, to act as a ROS Time Source. '
                  'Value must be positive. Defaults to not publishing.')
         parser.add_argument(
