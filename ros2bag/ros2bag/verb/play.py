@@ -88,7 +88,7 @@ class PlayVerb(VerbExtension):
                  'See storage plugin documentation for the format of this file.')
         clock_args_group = parser.add_mutually_exclusive_group()
         clock_args_group.add_argument(
-            '--clock', type=positive_float, nargs='?', const=40, default=0,
+            '--clock', type=positive_float, metavar='Hz', nargs='?', const=40, default=0,
             help='Publish to /clock at a specific frequency in Hz, to act as a ROS Time Source. '
                  'Value must be positive. Defaults to not publishing.'
                  'If specified, /clock topic in the bag file is excluded to publish.')
