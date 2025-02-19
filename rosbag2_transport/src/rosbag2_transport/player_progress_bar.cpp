@@ -55,7 +55,7 @@ void PlayerProgressBar::update(
 
 PlayerProgressBar::PlayerStatus PlayerProgressBar::get_player_status()
 {
-  return pimpl_->current_player_status_;
+  return pimpl_->current_player_status_.load();
 }
 
 }  // namespace rosbag2_transport

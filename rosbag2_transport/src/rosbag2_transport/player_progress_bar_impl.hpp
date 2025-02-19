@@ -16,6 +16,7 @@
 #define ROSBAG2_TRANSPORT__PLAYER_PROGRESS_BAR_IMPL_HPP_
 
 #include <algorithm>
+#include <atomic>
 #include <chrono>
 #include <limits>
 #include <string>
@@ -96,7 +97,7 @@ public:
     const PlayerStatus & status,
     const rcutils_time_point_value_t & timestamp)
   {
-    current_player_status_ = status;
+    current_player_status_.store(status);
     if (!enable_progress_bar_) {
       return;
     }
@@ -118,7 +119,7 @@ public:
 
   void update(const PlayerStatus & status, const rcutils_time_point_value_t & timestamp = -1)
   {
-    current_player_status_ = status;
+    current_player_status_.store(status);
     if (!enable_progress_bar_) {
       return;
     }
@@ -130,7 +131,6 @@ public:
     const PlayerStatus & status,
     const rcutils_time_point_value_t & timestamp = -1)
   {
-    current_player_status_ = status;
     if (timestamp >= 0) {
       progress_current_time_secs_ = RCUTILS_NS_TO_S(static_cast<double>(timestamp));
       progress_secs_from_start_ = progress_current_time_secs_ - starting_time_secs_;
@@ -150,7 +150,7 @@ public:
     o_stream_ << ss.rdbuf() << std::flush;
   }
 
-  PlayerStatus current_player_status_{PlayerStatus::STOPPED};
+  std::atomic<PlayerStatus> current_player_status_{PlayerStatus::STOPPED};
 
 private:
   std::ostream & o_stream_;
