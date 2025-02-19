@@ -88,8 +88,6 @@ public:
         ss << "Progress bar enabled for every message.\n";
       }
       ss << "Progress bar [?]: [R]unning, [P]aused, [B]urst, [D]elayed, [S]topped\n";
-    } else {
-      ss << "Progress bar disabled.\n";
     }
     o_stream_ << ss.rdbuf() << std::flush;
   }

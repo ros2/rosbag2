@@ -83,7 +83,7 @@ TEST_F(TestPlayerProgressBar, print_help_str_with_zero_update_rate) {
   std::ostringstream oss;
   auto progress_bar = std::make_unique<PlayerProgressBar>(oss, 0, 0, 0);
   progress_bar->print_help_str();
-  EXPECT_EQ(oss.str(), "Progress bar disabled.\n");
+  EXPECT_EQ(oss.str(), "");
 }
 
 TEST_F(TestPlayerProgressBar, print_help_str_with_negative_update_rate) {

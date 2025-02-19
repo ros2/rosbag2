@@ -52,7 +52,7 @@ public:
     std::ostream & output_stream,
     rcutils_time_point_value_t starting_time,
     rcutils_time_point_value_t ending_time,
-    int32_t progress_bar_update_rate = 3,
+    int32_t progress_bar_update_rate = 0,
     uint32_t progress_bar_separation_lines = 3);
 
   virtual ~PlayerProgressBar();
