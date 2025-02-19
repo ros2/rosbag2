@@ -246,12 +246,12 @@ TEST_F(TestPlayerProgressBar, update_with_limited_rate_respect_update_rate) {
   timestamps.push_back(second_update_timestamp +
     static_cast<rcutils_duration_value_t>(1.5 * update_period_ns));  // 3rd update
 
-  progress_bar->update_with_limited_rate(timestamps[0], PlayerProgressBar::PlayerStatus::RUNNING);
+  progress_bar->update_with_limited_rate(PlayerProgressBar::PlayerStatus::RUNNING, timestamps[0]);
   for (size_t i = 1; i < timestamps.size(); i++) {
     std::this_thread::sleep_for(std::chrono::nanoseconds(timestamps[i] - timestamps[i - 1]));
 
     progress_bar->update_with_limited_rate(
-      timestamps[i], PlayerProgressBar::PlayerStatus::RUNNING);
+      PlayerProgressBar::PlayerStatus::RUNNING, timestamps[i]);
   }
 
   // Check if the progress bar is updated at the correct 3 timestamps
@@ -279,9 +279,9 @@ TEST_F(TestPlayerProgressBar, update_with_limited_rate_with_negative_update_rate
   rcutils_time_point_value_t timestamp_1 = starting_time;
   rcutils_time_point_value_t timestamp_2 = starting_time + RCUTILS_MS_TO_NS(1);
   rcutils_time_point_value_t timestamp_3 = starting_time + RCUTILS_MS_TO_NS(2);
-  progress_bar->update_with_limited_rate(timestamp_1, PlayerProgressBar::PlayerStatus::RUNNING);
-  progress_bar->update_with_limited_rate(timestamp_2, PlayerProgressBar::PlayerStatus::STOPPED);
-  progress_bar->update_with_limited_rate(timestamp_3, PlayerProgressBar::PlayerStatus::RUNNING);
+  progress_bar->update_with_limited_rate(PlayerProgressBar::PlayerStatus::RUNNING, timestamp_1);
+  progress_bar->update_with_limited_rate(PlayerProgressBar::PlayerStatus::STOPPED, timestamp_2);
+  progress_bar->update_with_limited_rate(PlayerProgressBar::PlayerStatus::RUNNING, timestamp_3);
   EXPECT_THAT(oss.str(), MatchesRegex(
     ".*\\[1000000000\\.000000000\\] Duration 0\\.00/5\\.00"
     ".*\\[1000000000\\.0009.*\\] Duration 0\\.00/5\\.00"
@@ -300,9 +300,9 @@ TEST_F(TestPlayerProgressBar, update_with_limited_rate_with_zero_update_rate) {
   rcutils_time_point_value_t timestamp_1 = starting_time;
   rcutils_time_point_value_t timestamp_2 = starting_time + RCUTILS_MS_TO_NS(1);
   rcutils_time_point_value_t timestamp_3 = starting_time + RCUTILS_MS_TO_NS(2);
-  progress_bar->update_with_limited_rate(timestamp_1, PlayerProgressBar::PlayerStatus::DELAYED);
-  progress_bar->update_with_limited_rate(timestamp_2, PlayerProgressBar::PlayerStatus::RUNNING);
-  progress_bar->update_with_limited_rate(timestamp_3, PlayerProgressBar::PlayerStatus::RUNNING);
+  progress_bar->update_with_limited_rate(PlayerProgressBar::PlayerStatus::DELAYED, timestamp_1);
+  progress_bar->update_with_limited_rate(PlayerProgressBar::PlayerStatus::RUNNING, timestamp_2);
+  progress_bar->update_with_limited_rate(PlayerProgressBar::PlayerStatus::RUNNING, timestamp_3);
   EXPECT_THAT(oss.str(), IsEmpty());
 }
 
@@ -313,7 +313,7 @@ TEST_F(TestPlayerProgressBar, update_with_limited_rate_with_zero_timestamp) {
   auto progress_bar =
     std::make_unique<PlayerProgressBar>(oss, starting_time, ending_time, 1, 0);
 
-  progress_bar->update_with_limited_rate(0, PlayerProgressBar::PlayerStatus::RUNNING);
+  progress_bar->update_with_limited_rate(PlayerProgressBar::PlayerStatus::RUNNING, 0);
 
   EXPECT_THAT(oss.str(),
     MatchesRegex(

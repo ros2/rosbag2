@@ -40,14 +40,22 @@ void PlayerProgressBar::print_help_str() const
 }
 
 void PlayerProgressBar::update_with_limited_rate(
-  const rcutils_time_point_value_t & timestamp, const PlayerStatus & status)
+  const PlayerStatus & status,
+  const rcutils_time_point_value_t & timestamp)
 {
-  pimpl_->update_with_limited_rate(timestamp, status);
+  pimpl_->update_with_limited_rate(status, timestamp);
 }
 
-void PlayerProgressBar::update(const PlayerStatus & status)
+void PlayerProgressBar::update(
+  const PlayerStatus & status,
+  const rcutils_time_point_value_t & timestamp)
 {
-  pimpl_->update(status);
+  pimpl_->update(status, timestamp);
+}
+
+PlayerProgressBar::PlayerStatus PlayerProgressBar::get_player_status()
+{
+  return pimpl_->current_player_status_;
 }
 
 }  // namespace rosbag2_transport

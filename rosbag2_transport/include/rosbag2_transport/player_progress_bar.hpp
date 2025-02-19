@@ -67,11 +67,11 @@ public:
   /// after the publishing the next message.
   /// \warning This function is not thread safe and shall not be called concurrently from multiple
   /// threads.
-  /// \param timestamp Timestamp of the last published message.
   /// \param status The player status to be updated on progress bar.
+  /// \param timestamp Timestamp of the last published message.
   void update_with_limited_rate(
-    const rcutils_time_point_value_t & timestamp,
-    const PlayerStatus & status);
+    const PlayerStatus & status,
+    const rcutils_time_point_value_t & timestamp);
 
   /// \brief Updates progress bar with the specified player status, irrespective to the update rate
   /// set by the user.
@@ -79,7 +79,13 @@ public:
   /// when player changed its internal status or a log message is printed, and we want to 'redraw'
   /// the progress bar.
   /// \param status The player status to be updated on progress bar.
-  void update(const PlayerStatus & status);
+  /// \param timestamp Timestamp of the last published message. If timestamp is less than 0 the
+  /// last published timestamp will be taken from the inner progress bar cache.
+  void update(const PlayerStatus & status, const rcutils_time_point_value_t & timestamp = -1);
+
+  /// \brief Getter function for current player status.
+  /// \return Current player status.
+  PlayerStatus get_player_status();
 
 private:
   std::unique_ptr<PlayerProgressBarImpl> pimpl_;

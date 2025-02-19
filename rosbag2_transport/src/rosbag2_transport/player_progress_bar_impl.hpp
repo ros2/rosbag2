@@ -93,9 +93,10 @@ public:
   }
 
   void update_with_limited_rate(
-    const rcutils_time_point_value_t & timestamp,
-    const PlayerStatus & status)
+    const PlayerStatus & status,
+    const rcutils_time_point_value_t & timestamp)
   {
+    current_player_status_ = status;
     if (!enable_progress_bar_) {
       return;
     }
@@ -112,20 +113,24 @@ public:
       progress_bar_last_time_updated_ = steady_time_now;
     }
 
-    draw_progress_bar(timestamp, status);
+    draw_progress_bar(status, timestamp);
   }
 
-  void update(const PlayerStatus & status)
+  void update(const PlayerStatus & status, const rcutils_time_point_value_t & timestamp = -1)
   {
+    current_player_status_ = status;
     if (!enable_progress_bar_) {
       return;
     }
     // Update progress bar irrespective of the update rate set by the user.
-    draw_progress_bar(-1, status);
+    draw_progress_bar(status, timestamp);
   }
 
-  void draw_progress_bar(const rcutils_time_point_value_t & timestamp, const PlayerStatus & status)
+  void draw_progress_bar(
+    const PlayerStatus & status,
+    const rcutils_time_point_value_t & timestamp = -1)
   {
+    current_player_status_ = status;
     if (timestamp >= 0) {
       progress_current_time_secs_ = RCUTILS_NS_TO_S(static_cast<double>(timestamp));
       progress_secs_from_start_ = progress_current_time_secs_ - starting_time_secs_;
@@ -144,6 +149,8 @@ public:
       progress_bar_helper_move_cursor_up_;
     o_stream_ << ss.rdbuf() << std::flush;
   }
+
+  PlayerStatus current_player_status_{PlayerStatus::STOPPED};
 
 private:
   std::ostream & o_stream_;

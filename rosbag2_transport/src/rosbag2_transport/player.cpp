@@ -1099,8 +1099,22 @@ void PlayerImpl::play_messages_from_queue()
         }
         // Updating progress bar in this code section protected
         // by the mutex skip_message_in_main_play_loop_mutex_.
-        progress_bar_->update_with_limited_rate(
-          get_message_order_timestamp(message_ptr), PlayerStatus::RUNNING);
+        const auto current_player_status = progress_bar_->get_player_status();
+        switch (current_player_status) {
+          case PlayerStatus::PAUSED:
+            // Update progress bar without delays for each explicit play_next() call
+            progress_bar_->update(PlayerStatus::PAUSED, get_message_order_timestamp(message_ptr));
+            break;
+          case PlayerStatus::BURST:
+            // Limit progress bar update in burst mode
+            progress_bar_->update_with_limited_rate(
+              PlayerStatus::BURST, get_message_order_timestamp(message_ptr));
+            break;
+          default:
+            progress_bar_->update_with_limited_rate(
+              PlayerStatus::RUNNING, get_message_order_timestamp(message_ptr));
+            break;
+        }
       }
       message_ptr = take_next_message_from_queue();
     }
