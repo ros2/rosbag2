@@ -26,13 +26,12 @@ using namespace rosbag2_transport;  // NOLINT
 class TestPlayerProgressBar : public Test
 {
 public:
-  std::string GenerateClearAndMoveCursorDownRegexString(uint32_t num_lines)
+  std::string GenerateMoveCursorDownRegexString(uint32_t num_lines)
   {
     std::ostringstream oss;
     for (uint32_t i = 0; i < num_lines; i++) {
-      // The ANSI control code "\033[2K" is used to clear an entire line in the terminal.
-      // Cleanup current line and jump down to one new line with "\n"
-      oss << "\033\\[2K\n";
+      // Jump down to one new line with "\n"
+      oss << "\n";
     }
     return oss.str();
   }
@@ -154,7 +153,7 @@ TEST_F(TestPlayerProgressBar, update_status_with_separation_lines) {
     std::ostringstream oss;
     uint32_t num_separation_lines = 2;
     std::string expected_pre_line_separator =
-      GenerateClearAndMoveCursorDownRegexString(num_separation_lines);
+      GenerateMoveCursorDownRegexString(num_separation_lines);
     std::string cursor_up_regex_string = GenerateMoveCursorUpRegexString(num_separation_lines);
     auto progress_bar = std::make_unique<PlayerProgressBar>(oss, 0, 0, 1, num_separation_lines);
     progress_bar->update(PlayerProgressBar::PlayerStatus::DELAYED);
@@ -171,7 +170,7 @@ TEST_F(TestPlayerProgressBar, update_status_with_separation_lines) {
     std::ostringstream oss;
     uint32_t num_separation_lines = 5;
     std::string expected_pre_line_separator =
-      GenerateClearAndMoveCursorDownRegexString(num_separation_lines);
+      GenerateMoveCursorDownRegexString(num_separation_lines);
     std::string cursor_up_regex_string = GenerateMoveCursorUpRegexString(num_separation_lines);
     auto progress_bar = std::make_unique<PlayerProgressBar>(oss, 0, 0, 1, num_separation_lines);
     progress_bar->update(PlayerProgressBar::PlayerStatus::DELAYED);

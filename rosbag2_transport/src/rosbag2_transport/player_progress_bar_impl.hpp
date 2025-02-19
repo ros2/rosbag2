@@ -53,15 +53,14 @@ public:
       std::max(static_cast<double>(ending_time - starting_time), 0.0));
     progress_current_time_secs_ = starting_time_secs_;
     progress_secs_from_start_ = progress_current_time_secs_ - starting_time_secs_;
-    std::ostringstream oss_clear_and_move_cursor_down;
+    std::ostringstream oss_move_cursor_down;
 
     for (uint32_t i = 0; i < progress_bar_separation_lines_; i++) {
-      // The ANSI control code "\033[2K" is used to clear an entire line in the terminal.
-      // Cleanup current line and jump down to one new line with "\n"
-      oss_clear_and_move_cursor_down << "\033[2K\n";
+      // Jump down to one new line with "\n"
+      oss_move_cursor_down << "\n";
     }
 
-    progress_bar_helper_clear_and_move_cursor_down_ = oss_clear_and_move_cursor_down.str();
+    progress_bar_helper_move_cursor_down_ = oss_move_cursor_down.str();
     std::ostringstream oss_move_cursor_up;
     // Move cursor up by a specific number of lines using "Cursor Up" '\033[<N>A' ANSI control code
     oss_move_cursor_up << "\033[" <<
@@ -138,7 +137,7 @@ public:
     std::stringstream ss;
     ss <<
         // Clear and print newlines
-      progress_bar_helper_clear_and_move_cursor_down_ <<
+      progress_bar_helper_move_cursor_down_ <<
       // Print progress bar
       // Use "\033[2K" ANSI control code to clear an entire line in the terminal before output.
       "\033[2K====== Playback Progress ======\n\033[2K" <<
@@ -156,7 +155,7 @@ private:
   std::ostream & o_stream_;
   double starting_time_secs_ = 0.0;
   double duration_secs_ = 0.0;
-  std::string progress_bar_helper_clear_and_move_cursor_down_;
+  std::string progress_bar_helper_move_cursor_down_;
   std::string progress_bar_helper_move_cursor_up_;
   bool enable_progress_bar_;
   uint16_t progress_bar_update_period_ms_;
