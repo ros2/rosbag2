@@ -73,8 +73,8 @@ TEST_F(TestPlayerProgressBar, can_dtor_after_output) {
   }
   EXPECT_THAT(oss.str(),
     MatchesRegex(
-      "====== Playback Progress ======\n"
-      "\\[1000000000.000000000\\] Duration 0\\.00/1000000000\\.00 \\[D\\].*"
+      "\033\\[2K====== Playback Progress ======\n\033\\[2K"
+      "\\[1000000000.000000000\\] Duration 0\\.00/1000000000\\.00 \\[D\\]\n.*"
     )
   );
 }
@@ -124,10 +124,10 @@ TEST_F(TestPlayerProgressBar, update_status_with_enabled_progress_bar) {
     progress_bar->update(PlayerProgressBar::PlayerStatus::STOPPED);
     EXPECT_THAT(oss.str(),
       MatchesRegex(
-        ".*====== Playback Progress ======\n"
+        ".*\033\\[2K====== Playback Progress ======\n\033\\[2K"
         "\\[0\\.000000000\\] Duration 0\\.00/0\\.00 \\[R\\].*"
-        ".*====== Playback Progress ======\n"
-        "\\[0\\.000000000\\] Duration 0\\.00/0\\.00 \\[S\\].*"
+        ".*\033\\[2K====== Playback Progress ======\n\033\\[2K"
+        "\\[0\\.000000000\\] Duration 0\\.00/0\\.00 \\[S\\]\n.*"
       )
     );
   }
@@ -257,11 +257,11 @@ TEST_F(TestPlayerProgressBar, update_with_limited_rate_respect_update_rate) {
   // Check if the progress bar is updated at the correct 3 timestamps
   EXPECT_THAT(oss.str(),
     MatchesRegex(
-      ".*====== Playback Progress ======\n"
+      ".*\033\\[2K====== Playback Progress ======\n\033\\[2K"
       "\\[1\\.000000000\\] Duration 0\\.00/5\\.00"
-      ".*====== Playback Progress ======\n"
+      ".*\033\\[2K====== Playback Progress ======\n\033\\[2K"
       "\\[1\\.325000000\\] Duration 0\\.32/5\\.00"
-      ".*====== Playback Progress ======\n"
+      ".*\033\\[2K====== Playback Progress ======\n\033\\[2K"
       "\\[1\\.700000000\\] Duration 0\\.70/5\\.00.*"
     )
   );
@@ -317,7 +317,7 @@ TEST_F(TestPlayerProgressBar, update_with_limited_rate_with_zero_timestamp) {
 
   EXPECT_THAT(oss.str(),
     MatchesRegex(
-      ".*====== Playback Progress ======\n"
+      ".*\033\\[2K====== Playback Progress ======\n\033\\[2K"
       "\\[0\\.000000000\\] Duration -1\\.00/5\\.00.*"
     )
   );

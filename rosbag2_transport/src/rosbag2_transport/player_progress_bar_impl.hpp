@@ -134,13 +134,12 @@ public:
     ss <<
         // Clear and print newlines
       progress_bar_helper_clear_and_move_cursor_down_ <<
-        // Print progress bar
-      "====== Playback Progress ======\n" <<
+      // Print progress bar
+      // Use "\033[2K" ANSI control code to clear an entire line in the terminal before output.
+      "\033[2K====== Playback Progress ======\n\033[2K" <<
       "[" << std::fixed << std::setprecision(9) << progress_current_time_secs_ <<
       "] Duration " << std::setprecision(2) << progress_secs_from_start_ <<
-        // Spaces at the end are used to clear any previous progress bar in case the new one is
-        // shorter, which can happen when the playback starts a new loop.
-      "/" << duration_secs_ << " [" << static_cast<char>(status) << "]      \n" <<
+      "/" << duration_secs_ << " [" << static_cast<char>(status) << "]\n" <<
         // Go up to the beginning of the blank lines
       progress_bar_helper_move_cursor_up_;
     o_stream_ << ss.rdbuf() << std::flush;
