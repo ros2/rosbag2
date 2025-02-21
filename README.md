@@ -136,7 +136,7 @@ $ ros2 bag play <bag>
 ```
 
 The bag argument can be a directory containing `metadata.yaml` and one or more storage files, or to a single storage file such as `.mcap` or `.db3`.
-The Player will automatically detect which storage implementation to use for playing.
+The Player will automatically detect which storage implementation to use for playing. A progress bar to track the playback progress will be displayed in the terminal by default.
 
 To play back multiple bags:
 
@@ -164,6 +164,8 @@ Options:
   The reference to use for bag message chronological ordering.
   Choices: reception timestamp (`received`), publication timestamp (`sent`).
   Default: reception timestamp.
+* `--progress-bar [ProgressBarRate]`
+  Print a progress bar of the playback player at a specific rate in Hz. Negative values mark an update for every published message, while a zero value disables the progress bar. Default to 3 Hz.
 
 For more options, run with `--help`.
 
