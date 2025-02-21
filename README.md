@@ -2,7 +2,18 @@
 ![License](https://img.shields.io/github/license/ros2/rosbag2)
 [![GitHub Action Status](https://github.com/ros2/rosbag2/workflows/Test%20rosbag2/badge.svg)](https://github.com/ros2/rosbag2/actions)
 
-Repository for implementing rosbag2 as described in its corresponding [design article](https://github.com/ros2/design/blob/ros2bags/articles/rosbags.md).
+Rosbag2 - the tool for recording and playback of messages from ROS 2 topics.
+
+This is the ROS 2 successor of https://wiki.ros.org/rosbag.
+
+A "rosbag" is simply a file full of timestamped messages. The first goal of the tool is efficient recording, to support complex systems in real time. Its second goal is efficent playback, to allow for viewing and using recorded data.
+
+For historical context, see the original [design article](https://github.com/ros2/design/blob/ros2bags/articles/rosbags.md) that kicked off the project.
+
+This README has a lot of information. You may want to jump directly to:
+- [Installation](#installation)
+- [Usage](#using-rosbag2)
+- [Tips and Tricks](#tips-and-tricks)
 
 ## Installation
 
@@ -217,7 +228,7 @@ Topic information: Topic: /chatter | Type: std_msgs/String | Count: 9 | Serializ
                    Topic: /my_chatter | Type: std_msgs/String | Count: 18 | Serialization Format: cdr
 ```
 
-### Converting bags
+### Converting bags (merge, split, etc.)
 
 Rosbag2 provides a tool `ros2 bag convert` (or, `rosbag2_transport::bag_rewrite` in the C++ API).
 This allows the user to take one or more input bags, and write them out to one or more output bags with new settings.
@@ -403,7 +414,7 @@ def generate_launch_description():
     ])
 ```
 
-## Using with composition
+### Using recorder and player as composable nodes
 
 Play and record are fundamental tasks of `rosbag2`. However, playing or recording data at high rates may have limitations (e.g. spurious packet drops) due to one of the following:
 - low network bandwidth
@@ -487,7 +498,7 @@ player:
       node_prefix: ""
       rate: 1.0
       loop: false
-      # Negative timestamps will make the playback to not stop.  
+      # Negative timestamps will make the playback to not stop.
       playback_duration:
         sec: -1
         nsec: 00000000
@@ -501,7 +512,9 @@ player:
 
 For a full list of available parameters, you can refer to [`player`](rosbag2_transport/test/resources/player_node_params.yaml) and [`recorder`](rosbag2_transport/test/resources/recorder_node_params.yaml) configurations from the `test` folder of `rosbag2_transport`.
 
-## Storage format plugin architecture
+## Plugin implementation
+
+### Storage format plugin architecture
 
 Looking at the output of the `ros2 bag info` command, we can see a field `Storage id:`.
 Rosbag2 was designed to support multiple storage formats to adapt to individual use cases.
@@ -521,7 +534,7 @@ Bag reading commands can detect the storage plugin automatically, but if for any
 To write your own Rosbag2 storage implementation, refer to [Storage Plugin Development](docs/storage_plugin_development.md)
 
 
-## Serialization format plugin architecture
+### Serialization format plugin architecture
 
 Looking further at the output of `ros2 bag info`, we can see another field attached to each topic called `Serialization Format`.
 By design, ROS 2 is middleware agnostic and thus can leverage multiple communication frameworks.
@@ -538,3 +551,48 @@ By default, rosbag2 can convert from and to CDR as it's the default serializatio
 
 [qos-override-tutorial]: https://docs.ros.org/en/rolling/Guides/Overriding-QoS-Policies-For-Recording-And-Playback.html
 [about-qos-settings]: https://docs.ros.org/en/rolling/Concepts/About-Quality-of-Service-Settings.html
+
+## Tips and Tricks
+
+### Record bags to a custom base directory
+
+If you want to send bagfiles to a different directory than the current working directory, like so
+
+```plaintext
+/my/bag/base_dir
+├── rosbag2_2025_02_21-15_35_35
+|   ├── metadata.yaml
+│   └── rosbag2_2025_02_21-15_35_35_0.mcap
+└── rosbag2_2025_02_21-15_37_17
+    ├── metadata.yaml
+    └── rosbag2_2025_02_21-15_37_17_0.mcap
+```
+
+This can be accomplished without features in `rosbag2` itself.
+
+In shell:
+
+```bash
+pushd $MY_BASE_DIR && ros2 bag record ...
+```
+
+In launch:
+
+```python
+ExecuteProcess(
+  cmd=['ros2', 'bag', 'record', ...],
+  cwd=my_base_dir,
+),
+```
+
+
+### Custom name with timestamp for bag directory
+
+You can fully customize the output bag name, without any `rosbag2` special features.
+
+For example, you want a timestamp on the bag directory name, but want a custom prefix instead of `rosbag2_`.
+
+```bash
+$ ros2 bag record -a -o mybag_"$(date +"%Y_%m_%d-%H_%M_%S")"
+... creates e.g. mybag_2025_02_21-15_35_35
+```
