@@ -181,14 +181,15 @@ class PlayVerb(VerbExtension):
             '--log-level', type=str, default='info',
             choices=['debug', 'info', 'warn', 'error', 'fatal'],
             help='Logging level.')
-        parser.add_argument(
-            '--progress-bar', type=int, metavar='Hz', default=3,
+        progress_bar_group = parser.add_argument_group('Progress bar', 'Settings for progress bar')
+        progress_bar_group.add_argument(
+            '--progress-bar-update-rate', type=int, metavar='Hz', default=3,
             help='Print a progress bar for the playback with a specified maximum update rate in '
                  'times per second (Hz). '
                  'Default is %(default)d Hz. '
                  'Negative values mark an update for every published message, while '
                  ' a zero value disables the progress bar.')
-        parser.add_argument(
+        progress_bar_group.add_argument(
             '--progress-bar-separation-lines', type=check_not_negative_int, default=2,
             metavar='NUM_SEPARATION_LINES',
             help=' Then number of lines to separate the progress bar from the rest of the '

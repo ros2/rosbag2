@@ -167,11 +167,11 @@ Options:
   The reference to use for bag message chronological ordering.
   Choices: reception timestamp (`received`), publication timestamp (`sent`).
   Default: reception timestamp.
-* `--progress-bar [ProgressBarUpdateRate]`
+* `--progress-bar-update-rate [Hz]`:
   Print a progress bar for the playback with a specified maximum update rate in times per second
   (Hz). Negative values mark an update for every published message, while a zero value disables
   the progress bar. Default is 3 Hz.
-* `--progress-bar-separation-lines [ProgressBarSeparationLines]`
+* `--progress-bar-separation-lines`:
   The number of lines to separate the progress bar from the rest of the playback player output.
   It prevents mixing external log messages with the progress bar string. Default to 2.
 
