@@ -53,14 +53,15 @@ public:
       std::max(static_cast<double>(ending_time - starting_time), 0.0));
     progress_current_time_secs_ = starting_time_secs_;
     progress_secs_from_start_ = progress_current_time_secs_ - starting_time_secs_;
-    std::ostringstream oss_move_cursor_down;
+    std::ostringstream oss_clear_and_move_cursor_down;
 
     for (uint32_t i = 0; i < progress_bar_separation_lines_; i++) {
-      // Jump down to one new line with "\n"
-      oss_move_cursor_down << "\n";
+      // The ANSI control code "\033[2K" is used to clear an entire line in the terminal.
+      // Cleanup current line and jump down to one new line with "\n"
+      oss_clear_and_move_cursor_down << "\033[2K\n";
     }
 
-    progress_bar_helper_move_cursor_down_ = oss_move_cursor_down.str();
+    progress_bar_helper_move_cursor_down_ = oss_clear_and_move_cursor_down.str();
     std::ostringstream oss_move_cursor_up;
     // Move cursor up by a specific number of lines using "Cursor Up" '\033[<N>A' ANSI control code
     oss_move_cursor_up << "\033[" <<

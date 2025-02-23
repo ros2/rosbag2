@@ -30,8 +30,9 @@ public:
   {
     std::ostringstream oss;
     for (uint32_t i = 0; i < num_lines; i++) {
-      // Jump down to one new line with "\n"
-      oss << "\n";
+      // The ANSI control code "\033[2K" is used to clear an entire line in the terminal.
+      // Cleanup current line and jump down to one new line with "\n"
+      oss << "\033\\[2K\n";
     }
     return oss.str();
   }
