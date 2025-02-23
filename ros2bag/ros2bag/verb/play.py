@@ -182,22 +182,22 @@ class PlayVerb(VerbExtension):
             choices=['debug', 'info', 'warn', 'error', 'fatal'],
             help='Logging level.')
         parser.add_argument(
-            '--progress-bar', type=int, default=3,
-            help='Print a progress bar for the playback at a specific rate in times per second. '
-                 'Default is %(default)d. '
+            '--progress-bar', type=int, metavar='Hz', default=3,
+            help='Print a progress bar for the playback with a specified maximum update rate in '
+                 'times per second (Hz). '
+                 'Default is %(default)d Hz. '
                  'Negative values mark an update for every published message, while '
-                 ' a zero value disables the progress bar.',
-            metavar='PROGRESS_BAR_UPDATE_RATE')
+                 ' a zero value disables the progress bar.')
         parser.add_argument(
             '--progress-bar-separation-lines', type=check_not_negative_int, default=2,
-            help='Number of lines to separate the progress bar from the rest of the '
+            metavar='NUM_SEPARATION_LINES',
+            help=' Then number of lines to separate the progress bar from the rest of the '
                  'playback player output. Negative values are invalid. Default is %(default)d. '
                  'This option makes sense only if the progress bar is enabled. '
                  'Large values are useful if external log messages from other nodes are shorter '
                  'than the progress bar string and are printed at a rate higher than the '
                  'progress bar update rate. In these cases, a larger value will avoid '
-                 'the external log message to be mixed with the progress bar string.',
-            metavar='NUM_SEPARATION_LINES')
+                 'the external log message to be mixed with the progress bar string.')
 
     def get_playback_until_from_arg_group(self, playback_until_sec, playback_until_nsec) -> int:
         nano_scale = 1000 * 1000 * 1000
