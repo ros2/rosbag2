@@ -310,7 +310,7 @@ class PlayVerb(VerbExtension):
             'sent': MessageOrder.SENT_TIMESTAMP,
         }.get(args.message_order)
 
-        play_options.progress_bar_update_rate = args.progress_bar
+        play_options.progress_bar_update_rate = args.progress_bar_update_rate
         play_options.progress_bar_separation_lines = args.progress_bar_separation_lines
 
         player = Player(args.log_level)
