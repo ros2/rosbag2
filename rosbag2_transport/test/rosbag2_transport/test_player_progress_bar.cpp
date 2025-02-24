@@ -74,7 +74,7 @@ TEST_F(TestPlayerProgressBar, can_dtor_after_output) {
   EXPECT_THAT(oss.str(),
     MatchesRegex(
       "\033\\[2K====== Playback Progress ======\n\033\\[2K"
-      "\\[1000000000.000000000\\] Duration 0\\.00/1000000000\\.00 \\[D\\]\n.*"
+      "\\[1000000000\\.000000000\\] Duration 0\\.00/1000000000\\.00 \\[D\\]\n.*"
     )
   );
 }
@@ -119,13 +119,13 @@ TEST_F(TestPlayerProgressBar, update_status_with_enabled_progress_bar) {
   {
     // Test Playback Progress header and status update with update rate 1 Hz
     std::ostringstream oss;
-    auto progress_bar = std::make_unique<PlayerProgressBar>(oss, 0, 0, 1);
+    auto progress_bar = std::make_unique<PlayerProgressBar>(oss, 0, 0, 1, 0);
     progress_bar->update(PlayerProgressBar::PlayerStatus::RUNNING);
     progress_bar->update(PlayerProgressBar::PlayerStatus::STOPPED);
     EXPECT_THAT(oss.str(),
       MatchesRegex(
         ".*\033\\[2K====== Playback Progress ======\n\033\\[2K"
-        "\\[0\\.000000000\\] Duration 0\\.00/0\\.00 \\[R\\].*"
+        "\\[0\\.000000000\\] Duration 0\\.00/0\\.00 \\[R\\]\n.*"
         ".*\033\\[2K====== Playback Progress ======\n\033\\[2K"
         "\\[0\\.000000000\\] Duration 0\\.00/0\\.00 \\[S\\]\n.*"
       )
@@ -135,13 +135,14 @@ TEST_F(TestPlayerProgressBar, update_status_with_enabled_progress_bar) {
   {
     // Test status update on all statuses
     std::ostringstream oss;
-    auto progress_bar = std::make_unique<PlayerProgressBar>(oss, 0, 0, 1);
+    auto progress_bar = std::make_unique<PlayerProgressBar>(oss, 0, 0, 1, 0);
     for (const auto & status : status_list_) {
       progress_bar->update(PlayerProgressBar::PlayerStatus::RUNNING);
       progress_bar->update(status);
       std::string status_str(1, static_cast<char>(status));
       EXPECT_THAT(oss.str(), MatchesRegex(
-        ".*\\[R\\].*\n.*\\[" + status_str + "\\].*"));
+        "\033\\[2K====== Playback Progress ======\n\033\\[2K"
+        ".*\\[R\\]\n.*\n.*\\[" + status_str + "\\]\n.*"));
       oss.clear();
       oss.str("");
     }
@@ -161,9 +162,11 @@ TEST_F(TestPlayerProgressBar, update_status_with_separation_lines) {
     progress_bar->update(PlayerProgressBar::PlayerStatus::RUNNING);
     EXPECT_THAT(oss.str(), MatchesRegex(
       expected_pre_line_separator +
-      ".*\\[D\\].*" + cursor_up_regex_string +
+      "\033\\[2K====== Playback Progress ======\n\033\\[2K"
+      ".*\\[D\\]\n.*" + cursor_up_regex_string +
       expected_pre_line_separator +
-      ".*\\[R\\].*" + cursor_up_regex_string));
+      "\033\\[2K====== Playback Progress ======\n\033\\[2K"
+      ".*\\[R\\]\n.*" + cursor_up_regex_string));
   }
 
   {
@@ -185,13 +188,16 @@ TEST_F(TestPlayerProgressBar, update_status_with_separation_lines) {
     progress_bar->update(PlayerProgressBar::PlayerStatus::PAUSED);
     EXPECT_THAT(oss.str(), MatchesRegex(
       expected_pre_line_separator +
-      ".*\\[D\\].*" + cursor_up_regex_string +
+      "\033\\[2K====== Playback Progress ======\n\033\\[2K"
+      ".*\\[D\\]\n.*" + cursor_up_regex_string +
       "log msg 1\nlog msg 2\nlog msg 3\nlog msg 4\n" +
       expected_pre_line_separator +
-      ".*\\[R\\].*" + cursor_up_regex_string +
+      "\033\\[2K====== Playback Progress ======\n\033\\[2K"
+      ".*\\[R\\]\n.*" + cursor_up_regex_string +
       "log msg 5\nlog msg 6\n" +
       expected_pre_line_separator +
-      ".*\\[P\\].*" + cursor_up_regex_string));
+      "\033\\[2K====== Playback Progress ======\n\033\\[2K"
+      ".*\\[P\\]\n.*" + cursor_up_regex_string));
   }
 }
 
@@ -203,12 +209,15 @@ TEST_F(TestPlayerProgressBar, update_status_without_separation_lines) {
   auto progress_bar = std::make_unique<PlayerProgressBar>(oss, 0, 0, 1, num_separation_lines);
   progress_bar->update(PlayerProgressBar::PlayerStatus::DELAYED);
   EXPECT_THAT(oss.str(), MatchesRegex(
-    ".*\\[D\\].*" + cursor_up_regex_string));
+    "\033\\[2K====== Playback Progress ======\n\033\\[2K"
+    ".*\\[D\\]\n.*" + cursor_up_regex_string));
 
   progress_bar->update(PlayerProgressBar::PlayerStatus::RUNNING);
   EXPECT_THAT(oss.str(), MatchesRegex(
-    ".*\\[D\\].*" + cursor_up_regex_string +
-    ".*\\[R\\].*" + cursor_up_regex_string));
+    "\033\\[2K====== Playback Progress ======\n\033\\[2K"
+    ".*\\[D\\]\n.*" + cursor_up_regex_string +
+    "\033\\[2K====== Playback Progress ======\n\033\\[2K"
+    ".*\\[R\\]\n.*" + cursor_up_regex_string));
 }
 
 TEST_F(TestPlayerProgressBar, update_with_limited_rate_respect_update_rate) {
@@ -257,12 +266,12 @@ TEST_F(TestPlayerProgressBar, update_with_limited_rate_respect_update_rate) {
   // Check if the progress bar is updated at the correct 3 timestamps
   EXPECT_THAT(oss.str(),
     MatchesRegex(
-      ".*\033\\[2K====== Playback Progress ======\n\033\\[2K"
-      "\\[1\\.000000000\\] Duration 0\\.00/5\\.00"
-      ".*\033\\[2K====== Playback Progress ======\n\033\\[2K"
-      "\\[1\\.325000000\\] Duration 0\\.32/5\\.00"
-      ".*\033\\[2K====== Playback Progress ======\n\033\\[2K"
-      "\\[1\\.700000000\\] Duration 0\\.70/5\\.00.*"
+      "\033\\[2K====== Playback Progress ======\n\033\\[2K"
+      "\\[1\\.000000000\\] Duration 0\\.00/5\\.00 \\[R\\]\n.*"
+      "\033\\[2K====== Playback Progress ======\n\033\\[2K"
+      "\\[1\\.325000000\\] Duration 0\\.32/5\\.00 \\[R\\]\n.*"
+      "\033\\[2K====== Playback Progress ======\n\033\\[2K"
+      "\\[1\\.700000000\\] Duration 0\\.70/5\\.00 \\[R\\]\n.*"
     )
   );
 }
@@ -283,9 +292,12 @@ TEST_F(TestPlayerProgressBar, update_with_limited_rate_with_negative_update_rate
   progress_bar->update_with_limited_rate(PlayerProgressBar::PlayerStatus::STOPPED, timestamp_2);
   progress_bar->update_with_limited_rate(PlayerProgressBar::PlayerStatus::RUNNING, timestamp_3);
   EXPECT_THAT(oss.str(), MatchesRegex(
-    ".*\\[1000000000\\.000000000\\] Duration 0\\.00/5\\.00"
-    ".*\\[1000000000\\.0009.*\\] Duration 0\\.00/5\\.00"
-    ".*\\[1000000000\\.0019.*\\] Duration 0\\.00/5\\.00.*"));
+    "\033\\[2K====== Playback Progress ======\n\033\\[2K"
+    "\\[1000000000\\.000000000\\] Duration 0\\.00/5\\.00 \\[R\\]\n.*"
+    "\033\\[2K====== Playback Progress ======\n\033\\[2K"
+    "\\[1000000000\\.0009.*\\] Duration 0\\.00/5\\.00 \\[S\\]\n.*"
+    "\033\\[2K====== Playback Progress ======\n\033\\[2K"
+    "\\[1000000000\\.0019.*\\] Duration 0\\.00/5\\.00 \\[R\\]\n.*"));
 }
 
 TEST_F(TestPlayerProgressBar, update_with_limited_rate_with_zero_update_rate) {
@@ -317,8 +329,8 @@ TEST_F(TestPlayerProgressBar, update_with_limited_rate_with_zero_timestamp) {
 
   EXPECT_THAT(oss.str(),
     MatchesRegex(
-      ".*\033\\[2K====== Playback Progress ======\n\033\\[2K"
-      "\\[0\\.000000000\\] Duration -1\\.00/5\\.00.*"
+      "\033\\[2K====== Playback Progress ======\n\033\\[2K"
+      "\\[0\\.000000000\\] Duration -1\\.00/5\\.00 \\[R\\]\n.*"
     )
   );
 }
