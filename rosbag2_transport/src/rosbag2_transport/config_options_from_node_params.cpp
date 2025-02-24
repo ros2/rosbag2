@@ -254,10 +254,10 @@ PlayOptions get_play_options_from_node_params(rclcpp::Node & node)
 
   play_options.progress_bar_update_rate = param_utils::declare_integer_node_params<int32_t>(
     node, "play.progress_bar_update_rate", std::numeric_limits<int32_t>::min(),
-    std::numeric_limits<int32_t>::max(), 0);
+    std::numeric_limits<int32_t>::max(), 3);
 
   play_options.progress_bar_separation_lines = param_utils::declare_integer_node_params<uint32_t>(
-    node, "play.progress_bar_separation_lines", 0, std::numeric_limits<uint32_t>::max(), 3);
+    node, "play.progress_bar_separation_lines", 0, std::numeric_limits<uint32_t>::max(), 2);
 
   return play_options;
 }
