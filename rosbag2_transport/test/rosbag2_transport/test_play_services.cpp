@@ -172,7 +172,7 @@ public:
   void expect_messages(bool messages_should_arrive, bool reset_message_counter = true)
   {
     // Not too worried about the exact timing in this test, give a lot of leeway
-    const auto condition_clear_time = std::chrono::milliseconds(ms_between_msgs_ * 10);
+    const auto condition_clear_time = std::chrono::milliseconds(ms_between_msgs_ * 100);
     std::unique_lock<std::mutex> lock(got_msg_mutex_);
     if (reset_message_counter) {
       message_counter_ = 0;
@@ -217,6 +217,7 @@ private:
     player_->pause();  // Start playing in pause mode. Require for play_next test. For all other
     // tests we will resume playback via explicit call to start_playback().
     player_->play();
+    player_->wait_for_playback_to_start();
   }
 
   void topic_callback(std::shared_ptr<const test_msgs::msg::BasicTypes>/* msg */)
