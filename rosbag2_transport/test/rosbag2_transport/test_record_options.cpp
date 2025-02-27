@@ -13,6 +13,7 @@
 // limitations under the License.
 
 #include <gmock/gmock.h>
+#include <string>
 
 #include "rosbag2_transport/record_options.hpp"
 

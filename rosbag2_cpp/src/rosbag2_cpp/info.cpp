@@ -17,8 +17,11 @@
 #include <filesystem>
 #include <unordered_map>
 #include <unordered_set>
+#include <vector>
+#include <memory>
 #include <stdexcept>
 #include <string>
+#include <utility>
 
 #include "rmw/rmw.h"
 #include "rosidl_typesupport_cpp/message_type_support.hpp"

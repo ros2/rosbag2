@@ -15,6 +15,7 @@
 #include <iostream>
 #include <memory>
 #include <string>
+#include <vector>
 #include <algorithm>
 
 #include "info_sorting_method.hpp"

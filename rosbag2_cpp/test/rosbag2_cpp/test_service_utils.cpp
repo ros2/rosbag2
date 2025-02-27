@@ -16,6 +16,7 @@
 #include <string>
 #include <tuple>
 #include <vector>
+#include <utility>
 
 #include "rosbag2_cpp/service_utils.hpp"
 #include "rosbag2_test_common/memory_management.hpp"
