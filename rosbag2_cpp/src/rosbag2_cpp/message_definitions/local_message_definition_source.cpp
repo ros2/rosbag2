@@ -192,7 +192,8 @@ const LocalMessageDefinitionSource::MessageSpec & LocalMessageDefinitionSource::
   try {
     share_dir = ament_index_cpp::get_package_share_directory(package);
   } catch (const ament_index_cpp::PackageNotFoundError & e) {
-    ROSBAG2_CPP_LOG_WARN("'%s'", e.what());
+    ROSBAG2_CPP_LOG_WARN(
+      "get_package_share_directory(%s) failed with error: '%s'", package.c_str(), e.what());
     throw DefinitionNotFoundError(definition_identifier.topic_type());
   }
   std::string dir;
@@ -265,7 +266,7 @@ rosbag2_storage::MessageDefinition LocalMessageDefinitionSource::get_full_text(
       result = (delimiter(root_definition_identifier) +
         append_recursive(root_definition_identifier, max_recursion_depth));
     } catch (const TypenameNotUnderstoodError & err) {
-      ROSBAG2_CPP_LOG_ERROR(
+      ROSBAG2_CPP_LOG_WARN(
         "Message type name '%s' not understood by type definition search, "
         "definition will be left empty in bag.", err.what());
       format = Format::UNKNOWN;
@@ -305,7 +306,7 @@ rosbag2_storage::MessageDefinition LocalMessageDefinitionSource::get_full_text(
             format = Format::IDL;
           }
         } catch (const TypenameNotUnderstoodError & err) {
-          ROSBAG2_CPP_LOG_ERROR(
+          ROSBAG2_CPP_LOG_WARN(
             "Message type name '%s' not understood by type definition search, "
             "definition will be left empty in bag.", err.what());
           format = Format::UNKNOWN;
