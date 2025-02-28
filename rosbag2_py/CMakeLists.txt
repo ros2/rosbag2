@@ -47,21 +47,21 @@ find_package(pybind11 REQUIRED)
 
 ament_python_install_package(${PROJECT_NAME})
 
-pybind11_add_module(_compression_options SHARED
+pybind11_add_module(_compression_options
   src/rosbag2_py/_compression_options.cpp
 )
 target_link_libraries(_compression_options PUBLIC
   rosbag2_compression::rosbag2_compression
 )
 
-pybind11_add_module(_message_definitions SHARED
+pybind11_add_module(_message_definitions
   src/rosbag2_py/_message_definitions.cpp
 )
 target_link_libraries(_message_definitions PUBLIC
   rosbag2_cpp::rosbag2_cpp
 )
 
-pybind11_add_module(_reader SHARED
+pybind11_add_module(_reader
   src/rosbag2_py/_reader.cpp
 )
 target_link_libraries(_reader PUBLIC
@@ -70,7 +70,7 @@ target_link_libraries(_reader PUBLIC
   rosbag2_storage::rosbag2_storage
 )
 
-pybind11_add_module(_storage SHARED
+pybind11_add_module(_storage
   src/rosbag2_py/_storage.cpp
   src/rosbag2_py/format_bag_metadata.cpp
   src/rosbag2_py/info_sorting_method.cpp
@@ -80,7 +80,7 @@ target_link_libraries(_storage PUBLIC
   rosbag2_storage::rosbag2_storage
 )
 
-pybind11_add_module(_writer SHARED
+pybind11_add_module(_writer
   src/rosbag2_py/_writer.cpp
 )
 target_link_libraries(_writer PUBLIC
@@ -89,7 +89,7 @@ target_link_libraries(_writer PUBLIC
   rosbag2_storage::rosbag2_storage
 )
 
-pybind11_add_module(_info SHARED
+pybind11_add_module(_info
   src/rosbag2_py/_info.cpp
   src/rosbag2_py/format_bag_metadata.cpp
   src/rosbag2_py/format_service_info.cpp
@@ -100,7 +100,7 @@ target_link_libraries(_info PUBLIC
   rosbag2_storage::rosbag2_storage
 )
 
-pybind11_add_module(_transport SHARED
+pybind11_add_module(_transport
   src/rosbag2_py/_transport.cpp
 )
 target_link_libraries(_transport PUBLIC
@@ -110,7 +110,7 @@ target_link_libraries(_transport PUBLIC
   rosbag2_transport::rosbag2_transport
 )
 
-pybind11_add_module(_reindexer SHARED
+pybind11_add_module(_reindexer
   src/rosbag2_py/_reindexer.cpp
 )
 target_link_libraries(_reindexer PUBLIC
