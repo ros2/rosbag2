@@ -226,10 +226,10 @@ TEST_F(TestPlayerProgressBar, update_with_limited_rate_respect_update_rate) {
 
   // Test if update rate of the progress bar is respected
   std::ostringstream oss;
-  const size_t update_rate = 4;
+  const int32_t update_rate = 4;
   const rcutils_duration_value_t update_period_ns = RCUTILS_S_TO_NS(1) / update_rate;
   auto progress_bar =
-    std::make_unique<PlayerProgressBar>(oss, starting_time, ending_time, update_rate, 0);
+    std::make_unique<PlayerProgressBar>(oss, starting_time, ending_time, update_rate, 0U);
 
   std::vector<rcutils_time_point_value_t> timestamps;
   timestamps.push_back(starting_time);  // 1st update of the progress bar
