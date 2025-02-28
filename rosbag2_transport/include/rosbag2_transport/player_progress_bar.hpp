@@ -21,6 +21,20 @@
 #include "rcutils/time.h"
 #include "rosbag2_transport/visibility_control.hpp"
 
+#ifdef _WIN32
+#  pragma warning(push)
+// Suppress warning "rosbag2_transport::PlayerProgressBar::pimpl_': class 'std::unique_ptr>' needs
+// to have dll-interface to be used by clients of class 'rosbag2_transport::PlayerProgressBar'"
+// Justification:
+// 1. We never inline code in the header that actually calls methods on PlayerProgressBarImpl.
+// 2. While the `PlayerProgressBarImpl` is defined in the `player_progress_bar_impl.hpp` file, we
+// include it only in the `player_progress_bar.cpp` file, and it does not leak into the external
+// API.
+// 3. The pimpl design pattern imply that implementation details are hidden and shouldn't be
+// exposed with the dll-interface.
+#  pragma warning(disable:4251)
+#endif
+
 namespace rosbag2_transport
 {
 class PlayerProgressBarImpl;
@@ -92,5 +106,9 @@ private:
 };
 
 }  // namespace rosbag2_transport
+
+#ifdef _WIN32
+#  pragma warning(pop)
+#endif
 
 #endif  // ROSBAG2_TRANSPORT__PLAYER_PROGRESS_BAR_HPP_
