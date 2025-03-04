@@ -163,10 +163,10 @@ TEST_F(PlayerTestFixture, playing_rate_negative)
 
 TEST_F(PlayerTestFixture, playing_respects_delay)
 {
-  rclcpp::Duration delay_margin(1, 0);
+  rclcpp::Duration delay_margin(0, static_cast<uint32_t>(RCUTILS_S_TO_NS(0.5)));
 
-  // Sleep 5.0 seconds before play
-  play_options_.delay = rclcpp::Duration(5, 0);
+  // Sleep 1.0 seconds before play
+  play_options_.delay = rclcpp::Duration(1, 0);
   auto lower_expected_duration = message_time_difference + play_options_.delay;
   auto upper_expected_duration = message_time_difference + play_options_.delay + delay_margin;
   auto player = std::make_shared<rosbag2_transport::Player>(
