@@ -31,8 +31,6 @@ MessageCacheCircularBuffer::MessageCacheCircularBuffer(
 : max_bytes_size_(max_cache_size), max_cache_duration_(max_cache_duration_ns)
 {
   if (max_bytes_size_ == 0 && max_cache_duration_ == 0) {
-    ROSBAG2_CPP_LOG_ERROR_STREAM("Invalid arguments for the MessageCacheCircularBuffer. "
-                                 "Both max_bytes_size and max_cache_duration are zero.");
     throw std::invalid_argument("Invalid arguments for the MessageCacheCircularBuffer. "
                                 "Both max_bytes_size and max_cache_duration are zero.");
   }

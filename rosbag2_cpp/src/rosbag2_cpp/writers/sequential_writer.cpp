@@ -147,8 +147,9 @@ void SequentialWriter::open(
     throw std::runtime_error{error.str()};
   }
 
-  use_cache_ = storage_options.max_cache_size > 0u ||
-    (storage_options.snapshot_mode && storage_options.snapshot_duration.nanoseconds() > 0);
+  use_cache_ =
+    storage_options.max_cache_size > 0u || storage_options.snapshot_duration.nanoseconds() > 0;
+
   if (storage_options.snapshot_mode && !use_cache_) {
     throw std::runtime_error(
             "Either the max cache size or the maximum snapshot duration must be greater than 0"
