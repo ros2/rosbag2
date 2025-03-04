@@ -37,7 +37,7 @@
 
 namespace rosbag2_transport
 {
-class PlayerProgressBarImpl;
+class ROSBAG2_TRANSPORT_PUBLIC PlayerProgressBarImpl;
 
 class ROSBAG2_TRANSPORT_PUBLIC PlayerProgressBar
 {
