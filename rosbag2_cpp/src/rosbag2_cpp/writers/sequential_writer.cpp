@@ -333,10 +333,8 @@ void SequentialWriter::switch_to_next_storage()
     metadata_.relative_file_paths.size());
   storage_ = storage_factory_->open_read_write(storage_options_);
   if (!storage_) {
-    std::stringstream errmsg;
-    errmsg << "Failed to rollover bagfile to new file: \"" << storage_options_.uri << "\"!";
-
-    throw std::runtime_error(errmsg.str());
+    ROSBAG2_CPP_LOG_ERROR_STREAM("Failed to rollover bagfile to new file: \"" <<
+          storage_options_.uri << "\"! Nothing will be written until the next split.");
   }
 
   rosbag2_storage::FileInformation file_info{};
