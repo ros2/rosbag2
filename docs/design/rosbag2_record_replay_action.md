@@ -2,7 +2,7 @@
 
 ## Context
 
-This design describe how to implement this feature based on current architecture and how to extend current command parameter.
+This design describes how to implement this feature based on current architecture and how to extend current command parameter.
 
 ## How to record action message
 
