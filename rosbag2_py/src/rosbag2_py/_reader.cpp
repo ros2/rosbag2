@@ -86,6 +86,7 @@ PYBIND11_MODULE(_reader, m) {
     pybind11::overload_cast<
       const rosbag2_storage::StorageOptions &, const rosbag2_cpp::ConverterOptions &
     >(&PyReader::open))
+  .def("close", &PyReader::close)
   .def("set_read_order", &PyReader::set_read_order)
   .def("read_next", &PyReader::read_next)
   .def("has_next", &PyReader::has_next)
@@ -109,6 +110,7 @@ PYBIND11_MODULE(_reader, m) {
     pybind11::overload_cast<
       const rosbag2_storage::StorageOptions &, const rosbag2_cpp::ConverterOptions &
     >(&PyCompressionReader::open))
+  .def("close", &PyCompressionReader::close)
   .def("set_read_order", &PyCompressionReader::set_read_order)
   .def("read_next", &PyCompressionReader::read_next)
   .def("has_next", &PyCompressionReader::has_next)
