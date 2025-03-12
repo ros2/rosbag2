@@ -23,6 +23,7 @@
 #include <utility>
 
 #include "rclcpp/rclcpp.hpp"
+#include "rmw/rmw.h"
 
 #include "rosbag2_test_common/subscription_manager.hpp"
 #include "rosbag2_test_common/service_manager.hpp"
@@ -1244,8 +1245,14 @@ TEST_F(RosBag2PlayQosOverrideTestFixture, topic_qos_profiles_overridden_incompat
     topic_name_, num_msgs_to_wait_for_, qos_request);
   play_options_.topic_qos_profile_overrides = topic_qos_profile_overrides;
 
+  // QoS incompatibilities are not expected with rmw_zenoh_cpp.
+  bool expect_timeout = true;
+  if (std::strcmp(rmw_get_implementation_identifier(), "rmw_zenoh_cpp") == 0) {
+    expect_timeout = false;
+  }
+
   // Fails if it doesn't time out
-  play_and_wait(timeout, true /* expect timeout */);
+  play_and_wait(timeout, expect_timeout /* expect timeout */);
 }
 
 TEST_F(RosBag2PlayQosOverrideTestFixture, playback_uses_recorded_transient_local_profile)
