@@ -9,7 +9,7 @@ This design describes how to implement this feature based on current architectur
 The implementation of the action uses three services and two topics. For the services, when service introspection is enabled, rosbag2 can record service data through the service event topic (refer to [rosbag2_record_replay_service.md](./rosbag2_record_replay_service.md)). So all data related to the action can be recorded.
 
 
-## Which topics should be focused on for an action
+## Topics to be recorded for an action
 
 - goal service
 
@@ -68,9 +68,9 @@ Without `-v` or `--verbose` parameter, info command shows as below example.
     Topic information: Topic: /events/write_split | Type: rosbag2_interfaces/msg/WriteSplitEvent | Count: 0 | Serialization Format: cdr
                        Topic: /parameter_events | Type: rcl_interfaces/msg/ParameterEvent | Count: 0 | Serialization Format: cdr
                        Topic: /rosout | Type: rcl_interfaces/msg/Log | Count: 39 | Serialization Format: cdr
-    Service:           1
+    Services:          1
     Service information: Service: /add_two_ints | Type: example_interfaces/srv/AddTwoInts | Event Count: 42 | Serialization Format: cdr
-    Action: 2
+    Actions:           2
     Action information:
       Action: /fibonacci | Type: action_tutorials_interfaces/action/Fibonacci | Topics: 2 | Services: 3 | Serialization Format: cdr
         Topic: feedback | Count: 1
@@ -99,9 +99,9 @@ With `-v` or `--verbose` parameter, info command shows as below example.
     Topic information: Topic: /events/write_split | Type: rosbag2_interfaces/msg/WriteSplitEvent | Count: 0 | Serialization Format: cdr
                        Topic: /parameter_events | Type: rcl_interfaces/msg/ParameterEvent | Count: 0 | Serialization Format: cdr
                        Topic: /rosout | Type: rcl_interfaces/msg/Log | Count: 39 | Serialization Format: cdr
-    Service:           1
+    Services:          1
     Service information: Service: /add_two_ints | Type: example_interfaces/srv/AddTwoInts | Request Count: 20 | Response Count: 22 | Serialization Format: cdr
-    Action: 2
+    Actions:           2
     Action information:
       Action: /fibonacci | Type: action_tutorials_interfaces/action/Fibonacci | Topics: 2 | Services: 3 | Serialization Format: cdr
         Topic: feedback | Count: 1
