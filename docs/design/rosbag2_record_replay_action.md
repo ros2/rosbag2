@@ -13,15 +13,18 @@ The implementation of the action uses three services and two topics. For the ser
 
 - goal service
 
-  [NameSpace/]ActionName/_action/send_goal  (Service Event Topic: [NameSpace/]ActionName/_action/send_goal/_service_event)
+  [NameSpace/]ActionName/_action/send_goal  
+  Service Event Topic: [NameSpace/]ActionName/_action/send_goal/_service_event
 
 - result service
 
-  [NameSpace/]ActionName/_action/get_result  (Service Event Topic: [NameSpace/]ActionName/_action/get_result/_service_event)
+  [NameSpace/]ActionName/_action/get_result  
+  Service Event Topic: [NameSpace/]ActionName/_action/get_result/_service_event
 
 - cancel service
 
-  [NameSpace/]ActionName/_action/cancel_goal  (Service Event Topic: [NameSpace/]ActionName/_action/cancel_goal/_service_event)
+  [NameSpace/]ActionName/_action/cancel_goal  
+  Service Event Topic: [NameSpace/]ActionName/_action/cancel_goal/_service_event
 
 - status topic
 
