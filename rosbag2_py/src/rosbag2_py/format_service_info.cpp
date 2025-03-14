@@ -52,7 +52,7 @@ format_service_info(
   std::stringstream info_stream;
   const std::string service_info_string = "Service information: ";
   auto indentation_spaces = service_info_string.size();
-  info_stream << "Service:           " << service_info_list.size() << std::endl;
+  info_stream << "Services:          " << service_info_list.size() << std::endl;
   info_stream << service_info_string;
 
   if (service_info_list.empty()) {
@@ -76,7 +76,6 @@ format_service_info(
         info_stream << "Size Contribution: " << format_file_size(service_size) << " | ";
       }
       info_stream << "Serialization Format: " << si->serialization_format;
-      info_stream << std::endl;
     };
 
   std::vector<size_t> sorted_idx = generate_sorted_idx(service_info_list, sort_method);
@@ -84,6 +83,7 @@ format_service_info(
   print_service_info(service_info_list[sorted_idx[0]]);
   auto number_of_services = service_info_list.size();
   for (size_t j = 1; j < number_of_services; ++j) {
+    info_stream << std::endl;
     info_stream << std::string(indentation_spaces, ' ');
     print_service_info(service_info_list[sorted_idx[j]]);
   }

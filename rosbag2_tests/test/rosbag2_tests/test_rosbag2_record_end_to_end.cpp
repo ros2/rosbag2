@@ -532,7 +532,7 @@ TEST_P(RecordFixture, record_fails_gracefully_if_bag_already_exists) {
   EXPECT_THAT(error_output, HasSubstr("Output folder 'empty_dir' already exists"));
 }
 
-TEST_P(RecordFixture, record_if_topic_list_service_list_and_all_are_specified) {
+TEST_P(RecordFixture, record_if_topic_list_service_list_action_list_and_all_are_specified) {
   auto message = get_messages_strings()[0];
   message->string_value = "test";
 
@@ -542,7 +542,8 @@ TEST_P(RecordFixture, record_if_topic_list_service_list_and_all_are_specified) {
   internal::CaptureStdout();
   auto process_handle = start_execution(
     get_base_record_command() +
-    " -a --all-topics --all-services --topics /test_topic --services /service1");
+    " -a --all-topics --all-services --all-actions --topics /test_topic --services /service1 "
+    "--actions /action1");
   auto cleanup_process_handle = rcpputils::make_scope_exit(
     [process_handle]() {
       stop_execution(process_handle);
@@ -556,6 +557,7 @@ TEST_P(RecordFixture, record_if_topic_list_service_list_and_all_are_specified) {
 
   EXPECT_THAT(output, HasSubstr("--all or --all-topics will override --topics"));
   EXPECT_THAT(output, HasSubstr("--all or --all-services will override --services"));
+  EXPECT_THAT(output, HasSubstr("--all or --all-actions will override --actions"));
 }
 
 TEST_P(RecordFixture, record_fails_if_neither_all_nor_topic_list_are_specified) {

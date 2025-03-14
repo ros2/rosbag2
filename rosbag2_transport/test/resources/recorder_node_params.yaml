@@ -6,11 +6,13 @@ recorder_params_node:
     record:
       all_topics: true
       all_services: true
+      all_actions: true
       is_discovery_disabled: true
       topics: ["topic", "other_topic"]
       topic_types: ["std_msgs/msg/Header", "geometry_msgs/msg/Pose"]
       exclude_topic_types: ["sensor_msgs/msg/Image"]
       services: ["service", "other_service"]
+      actions: ["action", "other_action"]
       rmw_serialization_format: "cdr"
       topic_polling_interval:
         sec: 0
@@ -19,6 +21,7 @@ recorder_params_node:
       exclude_regex: "(.*)"
       exclude_topics: ["exclude_topic", "other_exclude_topic"]
       exclude_services: ["exclude_service", "other_exclude_service"]
+      exclude_actions: ["exclude_action", "other_exclude_action"]
       node_prefix: "prefix"
       compression_mode: "file"
       compression_format: "zstd"

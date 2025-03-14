@@ -22,8 +22,9 @@
 
 #include "rclcpp/node_interfaces/node_graph_interface.hpp"
 #include "rcpputils/split.hpp"
-#include "rosbag2_cpp/typesupport_helpers.hpp"
+#include "rosbag2_cpp/action_utils.hpp"
 #include "rosbag2_cpp/service_utils.hpp"
+#include "rosbag2_cpp/typesupport_helpers.hpp"
 
 #include "logging.hpp"
 #include "rosbag2_transport/topic_filter.hpp"
@@ -127,10 +128,15 @@ bool TopicFilter::take_topic(
   }
 
   const std::string & topic_type = topic_types[0];
-  bool is_service_event_topic = rosbag2_cpp::is_service_event_topic(topic_name, topic_type);
 
+  bool is_action_topic = rosbag2_cpp::is_topic_related_to_action(topic_name, topic_type);
+  bool is_service_event_topic = false;
+  if (!is_action_topic) {
+    is_service_event_topic = rosbag2_cpp::is_service_event_topic(topic_name, topic_type);
+  }
 
-  if (!is_service_event_topic) {
+  if (!is_service_event_topic && !is_action_topic) {
+    // Regular topic
     if (!record_options_.all_topics &&
       record_options_.topics.empty() &&
       record_options_.topic_types.empty() &&
@@ -180,7 +186,8 @@ bool TopicFilter::take_topic(
         "Hidden topics are not recorded. Enable them with --include-hidden-topics");
       return false;
     }
-  } else {
+  } else if (is_service_event_topic) {
+    // Service event topic
     if (!record_options_.all_services &&
       record_options_.services.empty() &&
       record_options_.regex.empty())
@@ -215,6 +222,45 @@ bool TopicFilter::take_topic(
     if (!record_options_.exclude_regex.empty()) {
       std::regex exclude_regex(record_options_.exclude_regex);
       if (std::regex_search(service_name, exclude_regex)) {
+        return false;
+      }
+    }
+  } else {
+    // action topic
+
+    // Check if topics for action need to be recorded
+    if (!record_options_.all_actions &&
+      record_options_.actions.empty() &&
+      record_options_.regex.empty())
+    {
+      return false;
+    }
+
+    // Convert topic name to action name
+    auto action_name = rosbag2_cpp::action_topic_name_to_action_name(topic_name);
+
+    if (!record_options_.all_actions) {
+      // Not in include action list
+      if (!topic_in_list(topic_name, record_options_.actions)) {
+        // Not match include regex
+        if (!record_options_.regex.empty()) {
+          std::regex include_regex(record_options_.regex);
+          if (!std::regex_search(action_name, include_regex)) {
+            return false;
+          }
+        } else {
+          return false;
+        }
+      }
+    }
+
+    if (topic_in_list(topic_name, record_options_.exclude_actions)) {
+      return false;
+    }
+
+    if (!record_options_.exclude_regex.empty()) {
+      std::regex exclude_regex(record_options_.exclude_regex);
+      if (std::regex_search(action_name, exclude_regex)) {
         return false;
       }
     }

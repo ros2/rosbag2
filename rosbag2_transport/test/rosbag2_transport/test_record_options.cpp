@@ -23,11 +23,14 @@ TEST(record_options, test_yaml_serialization)
   rosbag2_transport::RecordOptions original;
   original.all_topics = true;
   original.all_services = true;
+  original.all_actions = true;
   original.is_discovery_disabled = true;
   original.topics = {"topic", "other_topic"};
   original.services = {"service", "other_service"};
+  original.actions = {"action", "other_action"};
   original.exclude_topics = {"exclude_topic1", "exclude_topic2"};
   original.exclude_service_events = {"exclude_service1", "exclude_service2"};
+  original.exclude_actions = {"exclude_action1", "exclude_action2"};
   original.rmw_serialization_format = "cdr";
   original.topic_polling_interval = std::chrono::milliseconds{200};
   original.regex = "[xyz]/topic";
@@ -51,11 +54,14 @@ TEST(record_options, test_yaml_serialization)
   #define CHECK(field) ASSERT_EQ(original.field, reconstructed.field)
   CHECK(all_topics);
   CHECK(all_services);
+  CHECK(all_actions);
   CHECK(is_discovery_disabled);
   CHECK(topics);
   CHECK(services);
+  CHECK(actions);
   CHECK(exclude_topics);
   CHECK(exclude_service_events);
+  CHECK(exclude_actions);
   CHECK(rmw_serialization_format);
   #undef CHECK
 }
@@ -74,6 +80,7 @@ TEST(record_options, test_yaml_decode_for_all_and_exclude)
   auto record_options = loaded_node.as<rosbag2_transport::RecordOptions>();
   ASSERT_EQ(record_options.all_topics, true);
   ASSERT_EQ(record_options.all_services, true);
+  ASSERT_EQ(record_options.all_actions, true);
   ASSERT_EQ(record_options.regex, "[xyz]/topic");
   ASSERT_EQ(record_options.exclude_regex, "[x]/topic");
 }

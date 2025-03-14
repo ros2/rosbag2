@@ -29,6 +29,7 @@
 
 #include "rosbag2_cpp/info.hpp"
 #include "rosbag2_cpp/logging.hpp"
+#include "rosbag2_cpp/action_utils.hpp"
 #include "rosbag2_cpp/service_utils.hpp"
 
 #include "rosbag2_storage/default_storage_id.hpp"
@@ -224,18 +225,28 @@ void SequentialWriter::create_topic(const rosbag2_storage::TopicMetadata & topic
   rosbag2_storage::MessageDefinition definition;
 
   std::string topic_type;
-  if (is_service_event_topic(topic_with_type.name, topic_with_type.type)) {
-    // change service event type to service type for next step to get message definition
-    topic_type = service_event_topic_type_to_service_type(topic_with_type.type);
+  if (is_topic_related_to_action(topic_with_type.name, topic_with_type.type)) {
+    // The following two action topic types cannot retrieve the action type.
+    // - xxx/_action/cancel_goal/_service_event (action_msgs/srv/CancelGoal_Event)
+    // - xxx/_action/status (action_msgs/msg/GoalStatusArray)
+    topic_type = action_topic_type_to_action_type(topic_with_type.type);
+
+    definition = rosbag2_storage::MessageDefinition::empty_message_definition_for(topic_type);
   } else {
-    topic_type = topic_with_type.type;
+    if (is_service_event_topic(topic_with_type.name, topic_with_type.type)) {
+      // change service event type to service type for next step to get message definition
+      topic_type = service_event_topic_type_to_service_type(topic_with_type.type);
+    } else {
+      topic_type = topic_with_type.type;
+    }
+
+    try {
+      definition = message_definitions_.get_full_text(topic_type);
+    } catch (DefinitionNotFoundError &) {
+      definition = rosbag2_storage::MessageDefinition::empty_message_definition_for(topic_type);
+    }
   }
 
-  try {
-    definition = message_definitions_.get_full_text(topic_type);
-  } catch (DefinitionNotFoundError &) {
-    definition = rosbag2_storage::MessageDefinition::empty_message_definition_for(topic_type);
-  }
   create_topic(topic_with_type, definition);
 }
 

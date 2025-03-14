@@ -22,12 +22,14 @@
 
 #include "rclcpp/rclcpp.hpp"
 
+#include "rosbag2_test_common/action_client_manager.hpp"
+#include "rosbag2_test_common/client_manager.hpp"
 #include "rosbag2_test_common/publication_manager.hpp"
 #include "rosbag2_test_common/wait_for.hpp"
-#include "rosbag2_test_common/client_manager.hpp"
 
 #include "rosbag2_transport/recorder.hpp"
 
+#include "test_msgs/action/fibonacci.hpp"
 #include "test_msgs/msg/arrays.hpp"
 #include "test_msgs/msg/basic_types.hpp"
 #include "test_msgs/message_fixtures.hpp"
@@ -62,7 +64,7 @@ TEST_F(RecordIntegrationTestFixture, regex_topics_recording)
   ASSERT_FALSE(std::regex_match(b4, re));
 
   rosbag2_transport::RecordOptions record_options =
-  {false, false, false, {}, {}, {}, {}, {}, {}, "rmw_format", 10ms};
+  {false, false, false, false, {}, {}, {}, {}, {}, {}, {}, {}, "rmw_format", 10ms};
   record_options.regex = regex;
 
   // TODO(karsten1987) Refactor this into publication manager
@@ -135,7 +137,7 @@ TEST_F(RecordIntegrationTestFixture, regex_and_exclude_regex_topic_recording)
   ASSERT_TRUE(std::regex_match(e1, exclude));
 
   rosbag2_transport::RecordOptions record_options =
-  {false, false, false, {}, {}, {}, {}, {}, {}, "rmw_format", 10ms};
+  {false, false, false, false, {}, {}, {}, {}, {}, {}, {}, {}, "rmw_format", 10ms};
   record_options.regex = regex;
   record_options.exclude_regex = topics_regex_to_exclude;
 
@@ -211,7 +213,7 @@ TEST_F(RecordIntegrationTestFixture, regex_and_exclude_topic_topic_recording)
   ASSERT_TRUE(e1 == topics_exclude);
 
   rosbag2_transport::RecordOptions record_options =
-  {false, false, false, {}, {}, {}, {}, {}, {}, "rmw_format", 10ms};
+  {false, false, false, false, {}, {}, {}, {}, {}, {}, {}, {}, "rmw_format", 10ms};
   record_options.regex = regex;
   record_options.exclude_topics.emplace_back(topics_exclude);
 
@@ -274,7 +276,7 @@ TEST_F(RecordIntegrationTestFixture, regex_and_exclude_regex_service_recording)
   std::string b2 = "/namespace_before/not_nice";
 
   rosbag2_transport::RecordOptions record_options =
-  {false, false, false, {}, {}, {}, {}, {}, {}, "rmw_format", 10ms};
+  {false, false, false, false, {}, {}, {}, {}, {}, {}, {}, {}, "rmw_format", 10ms};
   record_options.regex = regex;
   record_options.exclude_regex = services_regex_to_exclude;
 
@@ -356,7 +358,7 @@ TEST_F(RecordIntegrationTestFixture, regex_and_exclude_service_service_recording
   std::string b2 = "/namespace_before/not_nice";
 
   rosbag2_transport::RecordOptions record_options =
-  {false, false, false, {}, {}, {}, {}, {}, {}, "rmw_format", 10ms};
+  {false, false, false, false, {}, {}, {}, {}, {}, {}, {}, {}, "rmw_format", 10ms};
   record_options.regex = regex;
   record_options.exclude_service_events.emplace_back(services_exclude);
 
@@ -419,4 +421,174 @@ TEST_F(RecordIntegrationTestFixture, regex_and_exclude_service_service_recording
   EXPECT_THAT(recorded_topics, SizeIs(2));
   EXPECT_TRUE(recorded_topics.find(v1 + "/_service_event") != recorded_topics.end());
   EXPECT_TRUE(recorded_topics.find(v2 + "/_service_event") != recorded_topics.end());
+}
+
+TEST_F(RecordIntegrationTestFixture, regex_and_exclude_regex_action_recording)
+{
+  std::string regex = "/[a-z]+_nice(_.*)";
+  std::string services_regex_to_exclude = "/[a-z]+_nice_[a-z]+/(.*)";
+
+  // matching service
+  std::string v1 = "/awesome_nice_action";
+  std::string v2 = "/still_nice_action";
+
+  // excluded service
+  std::string e1 = "/quite_nice_namespace/but_it_is_excluded";
+
+  // service that shouldn't match
+  std::string b1 = "/numberslike1arenot_nice";
+  std::string b2 = "/namespace_before/not_nice";
+
+  rosbag2_transport::RecordOptions record_options =
+  {false, false, false, false, {}, {}, {}, {}, {}, {}, {}, {}, "rmw_format", 10ms};
+  record_options.regex = regex;
+  record_options.exclude_regex = services_regex_to_exclude;
+
+  auto action_manager_v1 =
+    std::make_shared<rosbag2_test_common::ActionClientManager<test_msgs::action::Fibonacci>>(v1);
+
+  auto action_manager_v2 =
+    std::make_shared<rosbag2_test_common::ActionClientManager<test_msgs::action::Fibonacci>>(v2);
+
+  auto action_manager_e1 =
+    std::make_shared<rosbag2_test_common::ActionClientManager<test_msgs::action::Fibonacci>>(e1);
+
+  auto action_manager_b1 =
+    std::make_shared<rosbag2_test_common::ActionClientManager<test_msgs::action::Fibonacci>>(b1);
+
+  auto action_manager_b2 =
+    std::make_shared<rosbag2_test_common::ActionClientManager<test_msgs::action::Fibonacci>>(b2);
+
+  auto recorder = std::make_shared<MockRecorder>(
+    std::move(writer_), storage_options_, record_options);
+  recorder->record();
+
+  start_async_spin(recorder);
+  auto cleanup_process_handle = rcpputils::make_scope_exit([&]() {stop_spinning();});
+
+  ASSERT_TRUE(action_manager_v1->wait_for_action_server_to_be_ready());
+  ASSERT_TRUE(action_manager_v2->wait_for_action_server_to_be_ready());
+  ASSERT_TRUE(action_manager_e1->wait_for_action_server_to_be_ready());
+  ASSERT_TRUE(action_manager_b1->wait_for_action_server_to_be_ready());
+  ASSERT_TRUE(action_manager_b2->wait_for_action_server_to_be_ready());
+
+  // Ensure that the introspection service event topic already exists.
+  ASSERT_TRUE(
+    recorder->wait_for_topic_to_be_discovered(v1 + "/_action/get_result/_service_event"));
+  ASSERT_TRUE(
+    recorder->wait_for_topic_to_be_discovered(v2 + "/_action/get_result/_service_event"));
+
+  auto & writer = recorder->get_writer_handle();
+  auto & mock_writer = dynamic_cast<MockSequentialWriter &>(writer.get_implementation_handle());
+
+  ASSERT_TRUE(action_manager_v1->send_goal());
+  ASSERT_TRUE(action_manager_v2->send_goal());
+  ASSERT_TRUE(action_manager_e1->send_goal());
+  ASSERT_TRUE(action_manager_b1->send_goal());
+  ASSERT_TRUE(action_manager_b2->send_goal());
+
+  constexpr size_t expected_messages = 16;
+  auto ret = rosbag2_test_common::wait_until_condition(
+    [ =, &mock_writer]() {
+      return mock_writer.get_messages().size() >= expected_messages;
+    },
+    std::chrono::seconds(5));
+  EXPECT_TRUE(ret) << "failed to capture expected messages in time";
+  auto recorded_messages = mock_writer.get_messages();
+  EXPECT_THAT(recorded_messages, SizeIs(expected_messages));
+
+  auto recorded_topics = mock_writer.get_topics();
+  EXPECT_EQ(recorded_topics.size(), 10);  // One action is related to 5 topics
+  EXPECT_TRUE(
+    recorded_topics.find(v1 + "/_action/get_result/_service_event") != recorded_topics.end());
+  EXPECT_TRUE(
+    recorded_topics.find(v2 + "/_action/get_result/_service_event") != recorded_topics.end());
+}
+
+TEST_F(RecordIntegrationTestFixture, regex_and_exclude_actions_action_recording)
+{
+  std::string regex = "/[a-z]+_nice(_.*)";
+  std::vector<std::string> action_exclude = {
+    "/quite_nice_namespace/but_it_is_excluded/_action/send_goal/_service_event",
+    "/quite_nice_namespace/but_it_is_excluded/_action/get_result/_service_event",
+    "/quite_nice_namespace/but_it_is_excluded/_action/cancel_goal/_service_event",
+    "/quite_nice_namespace/but_it_is_excluded/_action/feedback",
+    "/quite_nice_namespace/but_it_is_excluded/_action/status",
+  };
+
+  // matching service
+  std::string v1 = "/awesome_nice_action";
+  std::string v2 = "/still_nice_action";
+
+  // excluded topics
+  std::string e1 = "/quite_nice_namespace/but_it_is_excluded";
+
+  // service that shouldn't match
+  std::string b1 = "/numberslike1arenot_nice";
+  std::string b2 = "/namespace_before/not_nice";
+
+  rosbag2_transport::RecordOptions record_options =
+  {false, false, false, false, {}, {}, {}, {}, {}, {}, {}, {}, "rmw_format", 10ms};
+  record_options.regex = regex;
+  record_options.exclude_actions = action_exclude;
+
+  auto action_manager_v1 =
+    std::make_shared<rosbag2_test_common::ActionClientManager<test_msgs::action::Fibonacci>>(v1);
+
+  auto action_manager_v2 =
+    std::make_shared<rosbag2_test_common::ActionClientManager<test_msgs::action::Fibonacci>>(v2);
+
+  auto action_manager_e1 =
+    std::make_shared<rosbag2_test_common::ActionClientManager<test_msgs::action::Fibonacci>>(e1);
+
+  auto action_manager_b1 =
+    std::make_shared<rosbag2_test_common::ActionClientManager<test_msgs::action::Fibonacci>>(b1);
+
+  auto action_manager_b2 =
+    std::make_shared<rosbag2_test_common::ActionClientManager<test_msgs::action::Fibonacci>>(b2);
+
+  auto recorder = std::make_shared<MockRecorder>(
+    std::move(writer_), storage_options_, record_options);
+  recorder->record();
+
+  start_async_spin(recorder);
+  auto cleanup_process_handle = rcpputils::make_scope_exit([&]() {stop_spinning();});
+
+  ASSERT_TRUE(action_manager_v1->wait_for_action_server_to_be_ready());
+  ASSERT_TRUE(action_manager_v2->wait_for_action_server_to_be_ready());
+  ASSERT_TRUE(action_manager_e1->wait_for_action_server_to_be_ready());
+  ASSERT_TRUE(action_manager_b1->wait_for_action_server_to_be_ready());
+  ASSERT_TRUE(action_manager_b2->wait_for_action_server_to_be_ready());
+
+  // Ensure that the introspection service event topic already exists.
+  ASSERT_TRUE(
+    recorder->wait_for_topic_to_be_discovered(v1 + "/_action/get_result/_service_event"));
+  ASSERT_TRUE(
+    recorder->wait_for_topic_to_be_discovered(v2 + "/_action/get_result/_service_event"));
+
+  auto & writer = recorder->get_writer_handle();
+  auto & mock_writer = dynamic_cast<MockSequentialWriter &>(writer.get_implementation_handle());
+
+  ASSERT_TRUE(action_manager_v1->send_goal());
+  ASSERT_TRUE(action_manager_v2->send_goal());
+  ASSERT_TRUE(action_manager_e1->send_goal());
+  ASSERT_TRUE(action_manager_b1->send_goal());
+  ASSERT_TRUE(action_manager_b2->send_goal());
+
+  constexpr size_t expected_messages = 16;
+  auto ret = rosbag2_test_common::wait_until_condition(
+    [ =, &mock_writer]() {
+      return mock_writer.get_messages().size() >= expected_messages;
+    },
+    std::chrono::seconds(5));
+  EXPECT_TRUE(ret) << "failed to capture expected messages in time";
+  auto recorded_messages = mock_writer.get_messages();
+  EXPECT_THAT(recorded_messages, SizeIs(expected_messages));
+
+  auto recorded_topics = mock_writer.get_topics();
+  EXPECT_EQ(recorded_topics.size(), 10);  // One action is related to 5 topics
+  EXPECT_TRUE(
+    recorded_topics.find(v1 + "/_action/get_result/_service_event") != recorded_topics.end());
+  EXPECT_TRUE(
+    recorded_topics.find(v2 + "/_action/get_result/_service_event") != recorded_topics.end());
 }

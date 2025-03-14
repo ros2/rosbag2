@@ -29,17 +29,20 @@ Node convert<rosbag2_transport::RecordOptions>::encode(
   Node node;
   node["all_topics"] = record_options.all_topics;
   node["all_services"] = record_options.all_services;
+  node["all_actions"] = record_options.all_actions;
   node["is_discovery_disabled"] = record_options.is_discovery_disabled;
   node["topics"] = record_options.topics;
   node["topic_types"] = record_options.topic_types;
   node["exclude_topic_types"] = record_options.exclude_topic_types;
   node["services"] = record_options.services;
+  node["actions"] = record_options.actions;
   node["rmw_serialization_format"] = record_options.rmw_serialization_format;
   node["topic_polling_interval"] = record_options.topic_polling_interval;
   node["regex"] = record_options.regex;
   node["exclude_regex"] = record_options.exclude_regex;
   node["exclude_topics"] = record_options.exclude_topics;
   node["exclude_services"] = record_options.exclude_service_events;
+  node["exclude_actions"] = record_options.exclude_actions;
   node["node_prefix"] = record_options.node_prefix;
   node["compression_mode"] = record_options.compression_mode;
   node["compression_format"] = record_options.compression_format;
@@ -60,17 +63,20 @@ bool convert<rosbag2_transport::RecordOptions>::decode(
 {
   optional_assign<bool>(node, "all_topics", record_options.all_topics);
   optional_assign<bool>(node, "all_services", record_options.all_services);
+  optional_assign<bool>(node, "all_actions", record_options.all_actions);
   bool record_options_all{false};  // Parse `all` for backward compatability and convenient usage
   optional_assign<bool>(node, "all", record_options_all);
   if (record_options_all) {
     record_options.all_topics = true;
     record_options.all_services = true;
+    record_options.all_actions = true;
   }
 
   optional_assign<bool>(node, "is_discovery_disabled", record_options.is_discovery_disabled);
   optional_assign<std::vector<std::string>>(node, "topics", record_options.topics);
   optional_assign<std::vector<std::string>>(node, "topic_types", record_options.topic_types);
   optional_assign<std::vector<std::string>>(node, "services", record_options.services);
+  optional_assign<std::vector<std::string>>(node, "actions", record_options.actions);
   optional_assign<std::string>(
     node, "rmw_serialization_format", record_options.rmw_serialization_format);
 
@@ -87,6 +93,8 @@ bool convert<rosbag2_transport::RecordOptions>::decode(
     record_options.exclude_topic_types);
   optional_assign<std::vector<std::string>>(
     node, "exclude_services", record_options.exclude_service_events);
+  optional_assign<std::vector<std::string>>(
+    node, "exclude_actions", record_options.exclude_actions);
   optional_assign<std::string>(node, "node_prefix", record_options.node_prefix);
   optional_assign<std::string>(node, "compression_mode", record_options.compression_mode);
   optional_assign<std::string>(node, "compression_format", record_options.compression_format);

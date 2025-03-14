@@ -39,8 +39,47 @@ protected:
     {"/status", {"status_topic_type"}},
     {"/invalid_service/_service_event", {"service/srv/invalid_service_Event"}},
     {"/invalidated_service/_service_event", {"service/srv/invalidated_service_Event"}},
-    {"/planning_service/_service_event", {"service/srv/planning_service_Event"}}
+    {"/planning_service/_service_event", {"service/srv/planning_service_Event"}},
+    // invalid_action
+    {"/invalid_action/_action/send_goal/_service_event",
+      {"test_msgs/action/Invalid_SendGoal_Event"}},
+    {"/invalid_action/_action/get_result/_service_event",
+      {"test_msgs/action/Invalid_GetResult_Event"}},
+    {"/invalid_action/_action/cancel_goal/_service_event", {"action_msgs/srv/CancelGoal_Event"}},
+    {"/invalid_action/_action/feedback", {"test_msgs/action/Invalid_FeedbackMessage"}},
+    {"/invalid_action/_action/status", {"action_msgs/msg/GoalStatusArray"}},
+    // invalidated_action
+    {"/invalidated_action/_action/send_goal/_service_event",
+      {"test_msgs/action/Invalidated_SendGoal_Event"}},
+    {"/invalidated_action/_action/get_result/_service_event",
+      {"test_msgs/action/Invalidated_GetResult_Event"}},
+    {"/invalidated_action/_action/cancel_goal/_service_event",
+      {"action_msgs/srv/CancelGoal_Event"}},
+    {"/invalidated_action/_action/feedback", {"test_msgs/action/Invalidated_FeedbackMessage"}},
+    {"/invalidated_action/_action/status", {"action_msgs/msg/GoalStatusArray"}},
+    // planning_action
+    {"/planning_action/_action/send_goal/_service_event",
+      {"unknown_pkg/action/Planning_SendGoal_Event"}},
+    {"/planning_action/_action/get_result/_service_event",
+      {"unknown_pkg/action/Planning_GetResult_Event"}},
+    {"/planning_action/_action/cancel_goal/_service_event", {"action_msgs/srv/CancelGoal_Event"}},
+    {"/planning_action/_action/feedback", {"unknown_pkg/action/Planning_FeedbackMessage"}},
+    {"/planning_action/_action/status", {"action_msgs/msg/GoalStatusArray"}},
   };
+
+  void check_action_topics_exist(
+    std::unordered_map<std::string, std::string> & filtered_topics,
+    const std::string action_name)
+  {
+    EXPECT_TRUE(filtered_topics.find(action_name + "/_action/send_goal/_service_event") !=
+      filtered_topics.end());
+    EXPECT_TRUE(filtered_topics.find(action_name + "/_action/get_result/_service_event") !=
+      filtered_topics.end());
+    EXPECT_TRUE(filtered_topics.find(action_name + "/_action/cancel_goal/_service_event") !=
+      filtered_topics.end());
+    EXPECT_TRUE(filtered_topics.find(action_name + "/_action/feedback") != filtered_topics.end());
+    EXPECT_TRUE(filtered_topics.find(action_name + "/_action/status") != filtered_topics.end());
+  }
 };
 
 TEST_F(TestTopicFilter, filter_hidden_topics) {
@@ -201,6 +240,96 @@ TEST_F(TestTopicFilter, filter_services) {
   }
 }
 
+TEST_F(TestTopicFilter, filter_actions) {
+  std::map<std::string, std::vector<std::string>> topics_and_types{
+    {"topic/a", {"type_a"}},
+    // action/a
+    {"/action/a/_action/send_goal/_service_event", {"test_msgs/action/TypeA_SendGoal_Event"}},
+    {"/action/a/_action/get_result/_service_event", {"test_msgs/action/TypeA_GetResult_Event"}},
+    {"/action/a/_action/cancel_goal/_service_event", {"action_msgs/srv/CancelGoal_Event"}},
+    {"/action/a/_action/feedback", {"test_msgs/action/TypeA_FeedbackMessage"}},
+    {"/action/a/_action/status", {"action_msgs/msg/GoalStatusArray"}},
+    // action/b
+    {"/action/b/_action/send_goal/_service_event", {"test_msgs/action/TypeB_SendGoal_Event"}},
+    {"/action/b/_action/get_result/_service_event", {"test_msgs/action/TypeB_GetResult_Event"}},
+    {"/action/b/_action/cancel_goal/_service_event", {"action_msgs/srv/CancelGoal_Event"}},
+    {"/action/b/_action/feedback", {"test_msgs/action/TypeB_FeedbackMessage"}},
+    {"/action/b/_action/status", {"action_msgs/msg/GoalStatusArray"}},
+    // action/c
+    {"/action/c/_action/send_goal/_service_event", {"test_msgs/action/TypeC_SendGoal_Event"}},
+    {"/action/c/_action/get_result/_service_event", {"test_msgs/action/TypeC_GetResult_Event"}},
+    {"/action/c/_action/cancel_goal/_service_event", {"action_msgs/srv/CancelGoal_Event"}},
+    {"/action/c/_action/feedback", {"test_msgs/action/TypeC_FeedbackMessage"}},
+    {"/action/c/_action/status", {"action_msgs/msg/GoalStatusArray"}},
+  };
+
+  {
+    rosbag2_transport::RecordOptions record_options;
+
+    // action name /action/a
+    record_options.actions = {
+      "/action/a/_action/send_goal/_service_event",
+      "/action/a/_action/get_result/_service_event",
+      "/action/a/_action/cancel_goal/_service_event",
+      "/action/a/_action/feedback",
+      "/action/a/_action/status",
+    };
+    rosbag2_transport::TopicFilter filter{record_options, nullptr, true};
+    auto filtered_topics = filter.filter_topics(topics_and_types);
+    ASSERT_EQ(5u, filtered_topics.size());
+    for (auto & topic : record_options.services) {
+      EXPECT_TRUE(filtered_topics.find(topic) != filtered_topics.end()) <<
+        "Expected topic:" << topic;
+    }
+  }
+
+  {
+    rosbag2_transport::RecordOptions record_options;
+    record_options.actions = {
+      // action/a
+      "/action/a/_action/send_goal/_service_event",
+      "/action/a/_action/get_result/_service_event",
+      "/action/a/_action/cancel_goal/_service_event",
+      "/action/a/_action/feedback",
+      "/action/a/_action/status",
+      // action/b
+      "/action/b/_action/send_goal/_service_event",
+      "/action/b/_action/get_result/_service_event",
+      "/action/b/_action/cancel_goal/_service_event",
+      "/action/b/_action/feedback",
+      "/action/b/_action/status",
+      // action/d
+      "/action/d/_action/send_goal/_service_event",
+      "/action/d/_action/get_result/_service_event",
+      "/action/d/_action/cancel_goal/_service_event",
+      "/action/d/_action/feedback",
+      "/action/d/_action/status",
+    };
+    rosbag2_transport::TopicFilter filter{record_options, nullptr, true};
+    auto filtered_topics = filter.filter_topics(topics_and_types);
+    ASSERT_EQ(10u, filtered_topics.size());
+
+    std::vector<std::string> expected_action_topics = {
+      // action/a
+      "/action/a/_action/send_goal/_service_event",
+      "/action/a/_action/get_result/_service_event",
+      "/action/a/_action/cancel_goal/_service_event",
+      "/action/a/_action/feedback",
+      "/action/a/_action/status",
+      // action/b
+      "/action/b/_action/send_goal/_service_event",
+      "/action/b/_action/get_result/_service_event",
+      "/action/b/_action/cancel_goal/_service_event",
+      "/action/b/_action/feedback",
+      "/action/b/_action/status",
+    };
+    for (auto & topic : expected_action_topics) {
+      EXPECT_TRUE(filtered_topics.find(topic) != filtered_topics.end()) <<
+        "Expected topic:" << topic;
+    }
+  }
+}
+
 TEST_F(TestTopicFilter, all_topics_and_exclude_regex)
 {
   rosbag2_transport::RecordOptions record_options;
@@ -257,7 +386,9 @@ TEST_F(TestTopicFilter, all_services_and_exclude_regex)
 {
   rosbag2_transport::RecordOptions record_options;
   record_options.exclude_regex = "/inv.*";
+  record_options.all_topics = false;
   record_options.all_services = true;
+  record_options.all_actions = false;
   rosbag2_transport::TopicFilter filter{record_options, nullptr, true};
   auto filtered_topics = filter.filter_topics(topics_and_types_with_services_);
 
@@ -301,13 +432,17 @@ TEST_F(TestTopicFilter, regex_and_exclude_regex)
 {
   rosbag2_transport::RecordOptions record_options;
   record_options.regex = "/invalid.*";
-  record_options.exclude_regex = ".invalidated.*";  // Only affect topics
+  record_options.exclude_regex = ".invalidated.*";
   rosbag2_transport::TopicFilter filter{record_options, nullptr, true};
   auto filtered_topics = filter.filter_topics(topics_and_types_with_services_);
 
-  EXPECT_THAT(filtered_topics, SizeIs(2));
+  EXPECT_THAT(filtered_topics, SizeIs(7));
+  // Matched topic
   EXPECT_TRUE(filtered_topics.find("/invalid_topic") != filtered_topics.end());
+  // Matched service
   EXPECT_TRUE(filtered_topics.find("/invalid_service/_service_event") != filtered_topics.end());
+  // Matched action
+  check_action_topics_exist(filtered_topics, "/invalid_action");
 }
 
 TEST_F(TestTopicFilter, regex_and_exclude_topics)
@@ -318,10 +453,15 @@ TEST_F(TestTopicFilter, regex_and_exclude_topics)
   rosbag2_transport::TopicFilter filter{record_options, nullptr, true};
   auto filtered_topics = filter.filter_topics(topics_and_types_with_services_);
 
-  EXPECT_THAT(filtered_topics, SizeIs(3));
+  EXPECT_THAT(filtered_topics, SizeIs(13));
+  // Matched topic
   EXPECT_TRUE(filtered_topics.find("/invalid_topic") != filtered_topics.end());
+  // Matched service
   EXPECT_TRUE(filtered_topics.find("/invalid_service/_service_event") != filtered_topics.end());
   EXPECT_TRUE(filtered_topics.find("/invalidated_service/_service_event") != filtered_topics.end());
+  // Matched action
+  check_action_topics_exist(filtered_topics, "/invalid_action");
+  check_action_topics_exist(filtered_topics, "/invalidated_action");
 }
 
 TEST_F(TestTopicFilter, regex_and_exclude_service_events)
@@ -332,10 +472,40 @@ TEST_F(TestTopicFilter, regex_and_exclude_service_events)
   rosbag2_transport::TopicFilter filter{record_options, nullptr, true};
   auto filtered_topics = filter.filter_topics(topics_and_types_with_services_);
 
-  EXPECT_THAT(filtered_topics, SizeIs(3));
+  EXPECT_THAT(filtered_topics, SizeIs(13));
+  // Matched topic
   EXPECT_TRUE(filtered_topics.find("/invalid_topic") != filtered_topics.end());
   EXPECT_TRUE(filtered_topics.find("/invalidated_topic") != filtered_topics.end());
+  // Matched service
   EXPECT_TRUE(filtered_topics.find("/invalid_service/_service_event") != filtered_topics.end());
+  // Matched action
+  check_action_topics_exist(filtered_topics, "/invalid_action");
+  check_action_topics_exist(filtered_topics, "/invalidated_action");
+}
+
+TEST_F(TestTopicFilter, regex_and_exclude_actions)
+{
+  rosbag2_transport::RecordOptions record_options;
+  record_options.regex = "/invalid.*";
+  record_options.exclude_actions = {
+    "/invalidated_action/_action/send_goal/_service_event",
+    "/invalidated_action/_action/get_result/_service_event",
+    "/invalidated_action/_action/cancel_goal/_service_event",
+    "/invalidated_action/_action/feedback",
+    "/invalidated_action/_action/status"
+  };
+  rosbag2_transport::TopicFilter filter{record_options, nullptr, true};
+  auto filtered_topics = filter.filter_topics(topics_and_types_with_services_);
+
+  EXPECT_THAT(filtered_topics, SizeIs(9));
+  // Matched topic
+  EXPECT_TRUE(filtered_topics.find("/invalid_topic") != filtered_topics.end());
+  EXPECT_TRUE(filtered_topics.find("/invalidated_topic") != filtered_topics.end());
+  // Matched service
+  EXPECT_TRUE(filtered_topics.find("/invalid_service/_service_event") != filtered_topics.end());
+  EXPECT_TRUE(filtered_topics.find("/invalidated_service/_service_event") != filtered_topics.end());
+  // Matched action
+  check_action_topics_exist(filtered_topics, "/invalid_action");
 }
 
 TEST_F(TestTopicFilter, regex_filter)
@@ -345,13 +515,19 @@ TEST_F(TestTopicFilter, regex_filter)
   rosbag2_transport::TopicFilter filter{record_options, nullptr, true};
   auto filtered_topics = filter.filter_topics(topics_and_types_with_services_);
 
-  EXPECT_THAT(filtered_topics, SizeIs(4));
+  EXPECT_THAT(filtered_topics, SizeIs(14));
+
+  // Matched topic and service
   for (const auto & topic :
     {"/invalid_topic", "/invalidated_topic", "/invalid_service/_service_event",
       "/invalidated_service/_service_event"})
   {
     EXPECT_TRUE(filtered_topics.find(topic) != filtered_topics.end()) << "Expected topic:" << topic;
   }
+
+  // Matched action
+  check_action_topics_exist(filtered_topics, "/invalid_action");
+  check_action_topics_exist(filtered_topics, "/invalidated_action");
 }
 
 TEST_F(TestTopicFilter, all_topics_overrides_regex)
@@ -437,6 +613,8 @@ TEST_F(TestTopicFilter, do_not_print_warning_about_unknown_types_if_topic_is_not
     // Select only one topic with name "/planning1" via topic list
     record_options.topics = {"/planning1"};
     record_options.all_topics = false;
+    record_options.all_services = false;
+    record_options.all_actions = false;
     rosbag2_transport::TopicFilter filter{record_options, nullptr, false};
     testing::internal::CaptureStderr();
     auto filtered_topics = filter.filter_topics(topics_and_types_with_services_);
@@ -455,11 +633,20 @@ TEST_F(TestTopicFilter, do_not_print_warning_about_unknown_types_if_topic_is_not
     // Select topics wth name starting from "/planning" via regex
     record_options.regex = "^/planning";
     record_options.all_topics = false;
+    record_options.all_services = false;
+    record_options.all_actions = false;
     rosbag2_transport::TopicFilter filter{record_options, nullptr, false};
     testing::internal::CaptureStderr();
     auto filtered_topics = filter.filter_topics(topics_and_types_with_services_);
     std::string test_output = testing::internal::GetCapturedStderr();
-    ASSERT_EQ(0u, filtered_topics.size());
+
+    ASSERT_EQ(2u, filtered_topics.size());
+    EXPECT_TRUE(
+      filtered_topics.find("/planning_action/_action/cancel_goal/_service_event") !=
+      filtered_topics.end());
+    EXPECT_TRUE(
+        filtered_topics.find("/planning_action/_action/status") != filtered_topics.end());
+
     EXPECT_TRUE(
       test_output.find(
         "Topic '/invalid_topic' has unknown type 'invalid_topic_type'") == std::string::npos);
@@ -470,10 +657,18 @@ TEST_F(TestTopicFilter, do_not_print_warning_about_unknown_types_if_topic_is_not
     EXPECT_TRUE(
       test_output.find(
         "Topic '/planning2' has unknown type 'planning_topic_type'") == std::string::npos);
+
     EXPECT_TRUE(
       test_output.find(
         "Topic '/planning_service/_service_event' has unknown type "
         "'service/srv/planning_service_Event'") != std::string::npos);
+
+    EXPECT_TRUE(test_output.find("'/planning_action/_action/feedback' has unknown type "
+      "'unknown_pkg/action/Planning_FeedbackMessage'") != std::string::npos);
+    EXPECT_TRUE(test_output.find("'/planning_action/_action/get_result/_service_event' has "
+      "unknown type 'unknown_pkg/action/Planning_GetResult_Event'") != std::string::npos);
+    EXPECT_TRUE(test_output.find("'/planning_action/_action/send_goal/_service_event'"
+      " has unknown type 'unknown_pkg/action/Planning_SendGoal_Event'") != std::string::npos);
   }
 }
 

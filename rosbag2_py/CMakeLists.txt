@@ -92,6 +92,7 @@ target_link_libraries(_writer PUBLIC
 pybind11_add_module(_info
   src/rosbag2_py/_info.cpp
   src/rosbag2_py/format_bag_metadata.cpp
+  src/rosbag2_py/format_action_info.cpp
   src/rosbag2_py/format_service_info.cpp
   src/rosbag2_py/info_sorting_method.cpp
 )

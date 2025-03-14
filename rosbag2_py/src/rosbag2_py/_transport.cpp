@@ -606,6 +606,9 @@ PYBIND11_MODULE(_transport, m) {
   .def_readwrite("services", &RecordOptions::services)
   .def_readwrite("all_services", &RecordOptions::all_services)
   .def_readwrite("disable_keyboard_controls", &RecordOptions::disable_keyboard_controls)
+  .def_readwrite("actions", &RecordOptions::actions)
+  .def_readwrite("all_actions", &RecordOptions::all_actions)
+  .def_readwrite("exclude_actions", &RecordOptions::exclude_actions)
   ;
 
   py::class_<rosbag2_py::Player>(m, "Player")

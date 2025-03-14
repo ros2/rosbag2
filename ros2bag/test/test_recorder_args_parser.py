@@ -63,6 +63,16 @@ def test_recorder_services_list_argument(test_arguments_parser):
     assert output_path.as_posix() == args.output
 
 
+def test_recorder_actions_list_argument(test_arguments_parser):
+    """Test recorder --actions list argument parser."""
+    output_path = RESOURCES_PATH / 'ros2bag_tmp_file'
+    args = test_arguments_parser.parse_args(
+        ['--actions', 'action1', 'action2', '--output', output_path.as_posix()]
+    )
+    assert ['action1', 'action2'] == args.actions
+    assert output_path.as_posix() == args.output
+
+
 def test_recorder_services_and_positional_topics_list_arguments(test_arguments_parser):
     """Test recorder --services list and positional topics list arguments parser."""
     output_path = RESOURCES_PATH / 'ros2bag_tmp_file'
@@ -74,6 +84,17 @@ def test_recorder_services_and_positional_topics_list_arguments(test_arguments_p
     assert output_path.as_posix() == args.output
 
 
+def test_recorder_actions_and_positional_topics_list_arguments(test_arguments_parser):
+    """Test recorder --actions list and positional topics list arguments parser."""
+    output_path = RESOURCES_PATH / 'ros2bag_tmp_file'
+    args = test_arguments_parser.parse_args(
+        ['--output', output_path.as_posix(),
+         '--actions', 'action1', 'action2', '--', 'topic1', 'topic2'])
+    assert ['action1', 'action2'] == args.actions
+    assert ['topic1', 'topic2'] == args.topics_positional
+    assert output_path.as_posix() == args.output
+
+
 def test_recorder_services_and_optional_topics_list_arguments(test_arguments_parser):
     """Test recorder --services list and optional --topics list arguments parser."""
     output_path = RESOURCES_PATH / 'ros2bag_tmp_file'
@@ -81,6 +102,41 @@ def test_recorder_services_and_optional_topics_list_arguments(test_arguments_par
         ['--output', output_path.as_posix(),
          '--services', 'service1', 'service2', '--topics', 'topic1', 'topic2'])
     assert ['service1', 'service2'] == args.services
+    assert ['topic1', 'topic2'] == args.topics
+    assert output_path.as_posix() == args.output
+
+
+def test_recorder_actions_and_optional_topics_list_arguments(test_arguments_parser):
+    """Test recorder --actions list and optional --topics list arguments parser."""
+    output_path = RESOURCES_PATH / 'ros2bag_tmp_file'
+    args = test_arguments_parser.parse_args(
+        ['--output', output_path.as_posix(),
+         '--actions', 'action1', 'action2', '--topics', 'topic1', 'topic2'])
+    assert ['action1', 'action2'] == args.actions
+    assert ['topic1', 'topic2'] == args.topics
+    assert output_path.as_posix() == args.output
+
+
+def test_recorder_services_and_actions_list_arguments(test_arguments_parser):
+    """Test recorder --services list and --actions list arguments parser."""
+    output_path = RESOURCES_PATH / 'ros2bag_tmp_file'
+    args = test_arguments_parser.parse_args(
+        ['--output', output_path.as_posix(),
+         '--services', 'service1', 'service2', '--actions', 'action1', 'action2'])
+    assert ['service1', 'service2'] == args.services
+    assert ['action1', 'action2'] == args.actions
+    assert output_path.as_posix() == args.output
+
+
+def test_recorder_services_actions_and_topics_list_arguments(test_arguments_parser):
+    """Test recorder --services list, --actions list and --topics list arguments parser."""
+    output_path = RESOURCES_PATH / 'ros2bag_tmp_file'
+    args = test_arguments_parser.parse_args(
+        ['--output', output_path.as_posix(),
+         '--services', 'service1', 'service2', '--actions', 'action1', 'action2',
+         '--topics', 'topic1', 'topic2'])
+    assert ['service1', 'service2'] == args.services
+    assert ['action1', 'action2'] == args.actions
     assert ['topic1', 'topic2'] == args.topics
     assert output_path.as_posix() == args.output
 
@@ -124,6 +180,16 @@ def test_recorder_exclude_services_list_argument(test_arguments_parser):
     assert output_path.as_posix() == args.output
 
 
+def test_recorder_exclude_actions_list_argument(test_arguments_parser):
+    """Test recorder --exclude-actions list argument parser."""
+    output_path = RESOURCES_PATH / 'ros2bag_tmp_file'
+    args = test_arguments_parser.parse_args(
+        ['--exclude-actions', 'action1', 'action2', '--output', output_path.as_posix()]
+    )
+    assert ['action1', 'action2'] == args.exclude_actions
+    assert output_path.as_posix() == args.output
+
+
 def test_recorder_custom_data_list_argument(test_arguments_parser):
     """Test recorder --custom-data list argument parser."""
     output_path = RESOURCES_PATH / 'ros2bag_tmp_file'
@@ -138,21 +204,22 @@ def test_recorder_validate_exclude_regex_needs_inclusive_args(test_arguments_par
     """Test that --exclude-regex needs inclusive arguments."""
     output_path = RESOURCES_PATH / 'ros2bag_tmp_file'
     args = test_arguments_parser.parse_args(
-        ['--exclude-regex', '%s-%s', '--services', 'service1', '--topics', 'topic1',
-         '--output', output_path.as_posix()]
+        ['--exclude-regex', '%s-%s', '--services', 'service1', '--topics', 'topic1', '--actions',
+         'action1', '--output', output_path.as_posix()]
     )
     assert '%s-%s' == args.exclude_regex
     assert args.all is False
     assert args.all_topics is False
     assert [] == args.topic_types
     assert args.all_services is False
+    assert args.all_actions is False
     assert '' == args.regex
 
     uri = args.output or datetime.datetime.now().strftime('rosbag2_%Y_%m_%d-%H_%M_%S')
     error_str = validate_parsed_arguments(args, uri)
     assert error_str is not None
     expected_output = '--exclude-regex argument requires either --all, ' \
-                      '--all-topics, --topic-types, --all-services or --regex'
+                      '--all-topics, --topic-types, --all-services, --all-actions or --regex'
     matches = expected_output in error_str
     assert matches, ERROR_STRING_MSG.format(expected_output, error_str)
 
@@ -225,5 +292,28 @@ def test_recorder_validate_exclude_services_needs_inclusive_args(test_arguments_
     assert error_str is not None
     expected_output = '--exclude-services argument requires either --all, --all-services '
     'or --regex'
+    matches = expected_output in error_str
+    assert matches, ERROR_STRING_MSG.format(expected_output, error_str)
+
+
+def test_recorder_validate_exclude_actions_needs_inclusive_args(test_arguments_parser):
+    """Test that --exclude-actions needs at least --all, --all-actions or --regex arguments."""
+    output_path = RESOURCES_PATH / 'ros2bag_tmp_file'
+    args = test_arguments_parser.parse_args(
+        ['--exclude-actions', 'action1', '--actions', 'action1', '--all-topics',
+         '--output', output_path.as_posix()]
+    )
+    assert ['action1'] == args.exclude_actions
+    assert args.all is False
+    assert args.all_topics is True
+    assert [] == args.topic_types
+    assert args.all_services is False
+    assert '' == args.regex
+    assert '' == args.exclude_regex
+
+    uri = args.output or datetime.datetime.now().strftime('rosbag2_%Y_%m_%d-%H_%M_%S')
+    error_str = validate_parsed_arguments(args, uri)
+    assert error_str is not None
+    expected_output = '--exclude-actions argument requires either --all, --all-actions or --regex'
     matches = expected_output in error_str
     assert matches, ERROR_STRING_MSG.format(expected_output, error_str)

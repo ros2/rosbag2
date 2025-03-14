@@ -72,13 +72,13 @@ TEST_P(InfoEndToEndTestFixture, info_end_to_end_test) {
 TEST_P(InfoEndToEndTestFixture, info_with_verbose_option_and_topic_name_option) {
   internal::CaptureStdout();
   auto exit_code = execute_and_wait_until_completion(
-    "ros2 bag info bag_with_topics_and_service_events --verbose --topic-name",
+    "ros2 bag info bag_with_topics_and_service_events_and_action --verbose --topic-name",
     bags_path_);
   std::string output = internal::GetCapturedStdout();
   auto expected_storage = GetParam();
   auto expected_file = rosbag2_test_common::bag_filename_for_storage_id(
-    "bag_with_topics_and_service_events", GetParam());
-  std::string expected_ros_distro = "unknown";
+    "bag_with_topics_and_service_events_and_action", GetParam());
+  std::string expected_ros_distro = "rolling";
 
   EXPECT_THAT(exit_code, Eq(EXIT_SUCCESS));
 
@@ -91,66 +91,84 @@ TEST_P(InfoEndToEndTestFixture, info_with_verbose_option_and_topic_name_option) 
   EXPECT_THAT(
     output, ContainsRegex(
       "\nFiles:             " + expected_file +
-      "\nBag size:          .*B"
+      "\nBag size:          .* KiB"
       "\nStorage id:        " + expected_storage +
       "\nROS Distro:        " + expected_ros_distro +
-      "\nDuration:          0\\.0706.*s"
-      "\nStart:             Nov  7 2023 .*:30:36\\..* \\(1699345836\\..*\\)"
-      "\nEnd:               Nov  7 2023 .*:30:36\\..* \\(1699345836\\..*\\)"
-      "\nMessages:          2"
+      "\nDuration:          .*s"
+      "\nStart:             Mar 14 2025 .*:.*:.*\\..* \\(.*\\..*\\)"
+      "\nEnd:               Mar 14 2025 .*:.*:.*\\..* \\(.*\\..*\\)"
+      "\nMessages:          .*"
       "\nTopic information: "));
 
-  EXPECT_THAT(output, HasSubstr("Service:           2\n"));
+  EXPECT_THAT(output, HasSubstr("Services:          2\n"));
 }
 
 TEST_P(InfoEndToEndTestFixture, info_with_verbose_option_end_to_end_test) {
   internal::CaptureStdout();
   auto exit_code = execute_and_wait_until_completion(
-    "ros2 bag info bag_with_topics_and_service_events --verbose",
+    "ros2 bag info bag_with_topics_and_service_events_and_action --verbose",
     bags_path_);
   std::string output = internal::GetCapturedStdout();
   auto expected_storage = GetParam();
   auto expected_file = rosbag2_test_common::bag_filename_for_storage_id(
-    "bag_with_topics_and_service_events", GetParam());
-  std::string expected_ros_distro = "unknown";
+    "bag_with_topics_and_service_events_and_action", GetParam());
+  std::string expected_ros_distro = "rolling";
 
   EXPECT_THAT(exit_code, Eq(EXIT_SUCCESS));
   // The bag size depends on the os and is not asserted, the time is asserted time zone independent
   EXPECT_THAT(
     output, ContainsRegex(
       "\nFiles:             " + expected_file +
-      "\nBag size:          .*B"
+      "\nBag size:          .* KiB"
       "\nStorage id:        " + expected_storage +
       "\nROS Distro:        " + expected_ros_distro +
-      "\nDuration:          0\\.0706.*s"
-      "\nStart:             Nov  7 2023 .*:30:36\\..* \\(1699345836\\..*\\)"
-      "\nEnd:               Nov  7 2023 .*:30:36\\..* \\(1699345836\\..*\\)"
-      "\nMessages:          2"
+      "\nDuration:          .*s"
+      "\nStart:             Mar 14 2025 .*:.*:.*\\..* \\(.*\\..*\\)"
+      "\nEnd:               Mar 14 2025 .*:.*:.*\\..* \\(.*\\..*\\)"
+      "\nMessages:          .*"
       "\nTopic information: "));
   EXPECT_THAT(
-    output, HasSubstr(
-      "Topic: /events/write_split | Type: rosbag2_interfaces/msg/WriteSplitEvent | Count: 0 | "
-      "Size Contribution: 0 B | Serialization Format: cdr\n"));
+    output, ContainsRegex(
+      "Topic: /test_topic1 | Type: std_msgs/msg/String | Count: //d+ | "
+      "Size Contribution: //+d B | Serialization Format: cdr\n"));
   EXPECT_THAT(
-    output, HasSubstr(
-      "Topic: /test_topic1 | Type: test_msgs/msg/Strings | Count: 1 | "
-      "Size Contribution: 217 B | Serialization Format: cdr\n"));
-  EXPECT_THAT(
-    output, HasSubstr(
-      "Topic: /test_topic2 | Type: test_msgs/msg/Strings | Count: 1 | "
-      "Size Contribution: 217 B | Serialization Format: cdr\n"));
+    output, ContainsRegex(
+      "Topic: /test_topic2 | Type: std_msgs/msg/String | Count: //d+ | "
+      "Size Contribution: //+d B | Serialization Format: cdr\n"));
 
-  EXPECT_THAT(output, HasSubstr("Service:           2\n"));
+  EXPECT_THAT(output, HasSubstr("Services:          2\n"));
 
   EXPECT_THAT(
-    output, HasSubstr(
-      "Service: /test_service1 | Type: test_msgs/srv/BasicTypes | Request Count: 2 | "
-      "Response Count: 2 | Size Contribution: 434 B | Serialization Format: cdr\n"));
+    output, ContainsRegex(
+      "Service: /test_service1 | Type: example_interfaces/srv/AddTwoInts | Request Count: \\d+ | "
+      "Response Count: \\d+ | Size Contribution: \\d+ B | Serialization Format: cdr\n"));
 
   EXPECT_THAT(
-    output, HasSubstr(
-      "Service: /test_service2 | Type: test_msgs/srv/BasicTypes | Request Count: 2 | "
-      "Response Count: 2 | Size Contribution: 434 B | Serialization Format: cdr\n"));
+    output, ContainsRegex(
+      "Service: /test_service2 | Type: example_interfaces/srv/AddTwoInts | Request Count: \\d+ | "
+      "Response Count: \\d+ | Size Contribution: \\d+ B | Serialization Format: cdr\n"));
+
+  EXPECT_THAT(output, HasSubstr("Actions:           2\nAction information:"));
+
+  EXPECT_THAT(
+    output, ContainsRegex(
+      "Action: /test_action1 | Type: example_interfaces/action/Fibonacci | Topics: 2 | Service: 3 "
+      "| Serialization Format: cdr\n"
+      "    Topic: feedback | Count: \\d+\n"
+      "    Topic: status | Count: \\d+\n"
+      "    Service: send_goal | Request Count: \\d+ | Response Count: \\d+\n"
+      "    Service: cancel_goal | Request Count: \\d+ | Response Count: \\d+\n"
+      "    Service: get_result | Request Count: \\d+ | Response Count: \\d+"));
+
+  EXPECT_THAT(
+    output, ContainsRegex(
+      "Action: /test_action2 | Type: example_interfaces/action/Fibonacci | Topics: 2 | Service: 3 "
+      "| Serialization Format: cdr\n"
+      "    Topic: feedback | Count: \\d+\n"
+      "    Topic: status | Count: \\d+\n"
+      "    Service: send_goal | Request Count: \\d+ | Response Count: \\d+\n"
+      "    Service: cancel_goal | Request Count: \\d+ | Response Count: \\d+\n"
+      "    Service: get_result | Request Count: \\d+ | Response Count: \\d+"));
 }
 
 TEST_P(InfoEndToEndTestFixture, info_basic_types_and_arrays_with_verbose_option_end_to_end_test) {

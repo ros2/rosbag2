@@ -23,10 +23,12 @@
 #include "test_msgs/msg/basic_types.hpp"
 #include "test_msgs/message_fixtures.hpp"
 #include "test_msgs/srv/basic_types.hpp"
+#include "test_msgs/action/fibonacci.hpp"
 
+#include "rosbag2_test_common/action_client_manager.hpp"
+#include "rosbag2_test_common/client_manager.hpp"
 #include "rosbag2_test_common/publication_manager.hpp"
 #include "rosbag2_test_common/wait_for.hpp"
-#include "rosbag2_test_common/client_manager.hpp"
 
 #include "rosbag2_transport/recorder.hpp"
 
@@ -51,7 +53,8 @@ TEST_F(RecordIntegrationTestFixture, published_messages_from_multiple_topics_are
   pub_manager.setup_publisher(string_topic, string_message, 2);
 
   rosbag2_transport::RecordOptions record_options =
-  {true, false, false, {}, {}, {}, {"/rosout"}, {}, {}, "rmw_format", 100ms};
+  {true, false, false, false, {}, {}, {}, {}, {"/rosout", "/events/write_split"},
+    {}, {}, {}, "rmw_format", 100ms};
   auto recorder = std::make_shared<rosbag2_transport::Recorder>(
     std::move(writer_), storage_options_, record_options);
   recorder->record();
@@ -99,7 +102,7 @@ TEST_F(RecordIntegrationTestFixture, published_messages_from_multiple_services_a
     "test_service_2");
 
   rosbag2_transport::RecordOptions record_options =
-  {false, true, false, {}, {}, {}, {"/rosout"}, {}, {}, "rmw_format", 100ms};
+  {false, true, false, false, {}, {}, {}, {}, {}, {}, {}, {}, "rmw_format", 100ms};
   auto recorder = std::make_shared<MockRecorder>(
     std::move(writer_), storage_options_, record_options);
   recorder->record();
@@ -136,11 +139,61 @@ TEST_F(RecordIntegrationTestFixture, published_messages_from_multiple_services_a
   EXPECT_EQ(recorded_messages.size(), expected_messages);
 }
 
-TEST_F(RecordIntegrationTestFixture, published_messages_from_topic_and_service_are_recorded)
+TEST_F(RecordIntegrationTestFixture, published_messages_from_multiple_actions_are_recorded)
+{
+  auto action_client_manager_1 =
+    std::make_shared<rosbag2_test_common::ActionClientManager<test_msgs::action::Fibonacci>>(
+    "test_action_1");
+
+  auto action_client_manager_2 =
+    std::make_shared<rosbag2_test_common::ActionClientManager<test_msgs::action::Fibonacci>>(
+    "test_action_2");
+
+  rosbag2_transport::RecordOptions record_options =
+  {false, false, true, false, {}, {}, {}, {}, {}, {}, {}, {}, "rmw_format", 100ms};
+  auto recorder = std::make_shared<MockRecorder>(
+    std::move(writer_), storage_options_, record_options);
+  recorder->record();
+
+  start_async_spin(recorder);
+  auto cleanup_process_handle = rcpputils::make_scope_exit([&]() {stop_spinning();});
+
+  ASSERT_TRUE(action_client_manager_1->wait_for_action_server_to_be_ready());
+  ASSERT_TRUE(action_client_manager_2->wait_for_action_server_to_be_ready());
+
+  // Ensure that the introspection service event topic already exists.
+  ASSERT_TRUE(recorder->wait_for_topic_to_be_discovered(
+    "/test_action_1/_action/get_result/_service_event"));
+  ASSERT_TRUE(recorder->wait_for_topic_to_be_discovered(
+    "/test_action_2/_action/get_result/_service_event"));
+
+  ASSERT_TRUE(action_client_manager_1->send_goal());
+  ASSERT_TRUE(action_client_manager_2->send_goal());
+
+  auto & writer = recorder->get_writer_handle();
+  auto & mock_writer = dynamic_cast<MockSequentialWriter &>(writer.get_implementation_handle());
+
+  // For one action, 2 send_goal msgs, 2 feedback msgs, 2 status msgs, 2 get_result msgs
+  constexpr size_t expected_messages = 16;
+  auto ret = rosbag2_test_common::wait_until_condition(
+    [ =, &mock_writer]() {
+      return mock_writer.get_messages().size() >= expected_messages;
+    },
+    std::chrono::seconds(5));
+  EXPECT_TRUE(ret) << "failed to capture expected messages in time";
+  auto recorded_messages = mock_writer.get_messages();
+  EXPECT_EQ(recorded_messages.size(), expected_messages);
+}
+
+TEST_F(RecordIntegrationTestFixture, published_messages_from_topic_service_action_are_recorded)
 {
   auto client_manager_1 =
     std::make_shared<rosbag2_test_common::ClientManager<test_msgs::srv::BasicTypes>>(
     "test_service");
+
+  auto action_manager_1 =
+    std::make_shared<rosbag2_test_common::ActionClientManager<test_msgs::action::Fibonacci>>(
+      "test_action_1");
 
   auto string_message = get_messages_strings()[0];
   string_message->string_value = "Hello World";
@@ -149,7 +202,8 @@ TEST_F(RecordIntegrationTestFixture, published_messages_from_topic_and_service_a
   pub_manager.setup_publisher(string_topic, string_message, 1);
 
   rosbag2_transport::RecordOptions record_options =
-  {true, true, false, {}, {}, {}, {"/rosout"}, {}, {}, "rmw_format", 100ms};
+  {true, true, true, false, {}, {}, {}, {}, {"/rosout", "/events/write_split"},
+    {}, {}, {}, "rmw_format", 100ms};
   auto recorder = std::make_shared<MockRecorder>(
     std::move(writer_), storage_options_, record_options);
   recorder->record();
@@ -161,6 +215,8 @@ TEST_F(RecordIntegrationTestFixture, published_messages_from_topic_and_service_a
 
   ASSERT_TRUE(client_manager_1->wait_for_service_to_be_ready());
 
+  ASSERT_TRUE(action_manager_1->wait_for_action_server_to_be_ready());
+
   // At this point, we expect that the service /test_service_1, along with the topic /string_topic,
   // along with the event topic /test_service_1, along with the split topic /events/write_split are
   // available to be recorded.  However, wait_for_matched() and wait_for_service_to_be_ready() only
@@ -168,16 +224,23 @@ TEST_F(RecordIntegrationTestFixture, published_messages_from_topic_and_service_a
   // make sure it has successfully subscribed to all.
   ASSERT_TRUE(recorder->wait_for_topic_to_be_discovered("/test_service/_service_event"));
 
+  // Ensure that the introspection service event topic already exists.
+  ASSERT_TRUE(recorder->wait_for_topic_to_be_discovered(
+    "/test_action_1/_action/get_result/_service_event"));
+
   pub_manager.run_publishers();
 
   // By default, only client introspection is enabled.
   // For one request, service event topic get 2 messages.
   ASSERT_TRUE(client_manager_1->send_request());
 
+  // For one action, 2 send_goal msgs, 2 feedback msgs, 2 status msgs, 2 get_result msgs
+  ASSERT_TRUE(action_manager_1->send_goal());
+
   auto & writer = recorder->get_writer_handle();
   auto & mock_writer = dynamic_cast<MockSequentialWriter &>(writer.get_implementation_handle());
 
-  constexpr size_t expected_messages = 3;
+  constexpr size_t expected_messages = 1 + 2 + 8;
   auto ret = rosbag2_test_common::wait_until_condition(
     [ =, &mock_writer]() {
       return mock_writer.get_messages().size() >= expected_messages;

@@ -28,7 +28,8 @@ class InfoVerb(VerbExtension):
         )
         parser.add_argument(
             '-v', '--verbose', action='store_true',
-            help='Display request/response information for services'
+            help='Display request/response information for services. Display request/response '
+            'information for action internal services'
         )
         available_sorting_methods = Info().get_sorting_methods()
         parser.add_argument(

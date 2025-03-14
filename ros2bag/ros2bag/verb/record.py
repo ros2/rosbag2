@@ -18,6 +18,7 @@ import os
 
 from rclpy.qos import InvalidQoSProfileException
 from ros2bag.api import add_writer_storage_plugin_extensions
+from ros2bag.api import convert_action_to_all_related_topics
 from ros2bag.api import convert_service_to_service_event_topic
 from ros2bag.api import convert_yaml_to_qos_profile
 from ros2bag.api import print_error
@@ -71,11 +72,14 @@ def add_recorder_arguments(parser: ArgumentParser) -> None:
         '--services', type=str, metavar='ServiceName', nargs='+',
         help='Space-delimited list of services to record.')
     parser.add_argument(
+        '--actions', type=str, metavar='ActionName', nargs='+',
+        help='Space-delimited list of actions to record.')
+    parser.add_argument(
         '--topic-types', nargs='+', default=[], metavar='TopicType',
         help='Space-delimited list of topic types to record.')
     parser.add_argument(
         '-a', '--all', action='store_true',
-        help='Record all topics and services (Exclude hidden topic).')
+        help='Record all topics, services and actions (Exclude hidden topic).')
     parser.add_argument(
         '--all-topics', action='store_true',
         help='Record all topics (Exclude hidden topic).')
@@ -83,14 +87,18 @@ def add_recorder_arguments(parser: ArgumentParser) -> None:
         '--all-services', action='store_true',
         help='Record all services via service event topics.')
     parser.add_argument(
+        '--all-actions', action='store_true',
+        help='Record all actions via internal topics and service event topics.')
+    parser.add_argument(
         '-e', '--regex', default='',
         help='Record only topics and services containing provided regular expression. '
-             'Note:  --all, --all-topics or --all-services will override --regex.')
+             'Note:  --all, --all-topics, --all-services or --all-actions will override --regex.')
     parser.add_argument(
         '--exclude-regex', default='',
         help='Exclude topics and services containing provided regular expression. '
              'Works on top of '
-             '--all, --all-topics, --all-services, --topics, --services or --regex.')
+             '--all, --all-topics, --all-services, --all-actions, --topics, --services, --actions '
+             'or --regex.')
     parser.add_argument(
         '--exclude-topic-types', type=str, default=[], metavar='ExcludeTopicTypes', nargs='+',
         help='Space-delimited list of topic types not being recorded. '
@@ -103,6 +111,10 @@ def add_recorder_arguments(parser: ArgumentParser) -> None:
         '--exclude-services', type=str, metavar='ServiceName', nargs='+',
         help='Space-delimited list of services not being recorded. '
              'Works on top of --all, --all-services, --services or --regex.')
+    parser.add_argument(
+        '--exclude-actions', type=str, metavar='ActionName', nargs='+',
+        help='Space-delimited list of actions not being recorded. '
+             'Works on top of --all, --all-actions, --actions or --regex.')
 
     # Discovery behavior
     parser.add_argument(
@@ -217,10 +229,11 @@ def add_recorder_arguments(parser: ArgumentParser) -> None:
 
 
 def check_necessary_argument(args):
-    # At least one options out of --all, --all-topics, --all-services, --services, --topics,
-    # --topic-types or --regex must be used
-    if not (args.all or args.all_topics or args.all_services or
+    # At least one options out of --all, --all-topics, --all-services, --all-actions, --services,
+    # --actions --topics, --topic-types or --regex must be used
+    if not (args.all or args.all_topics or args.all_services or args.all_actions or
             (args.services and len(args.services) > 0) or
+            (args.actions and len(args.actions) > 0) or
             (args.topics and len(args.topics) > 0) or
             (args.topic_types and len(args.topic_types) > 0) or args.regex):
         return False
@@ -239,9 +252,9 @@ def validate_parsed_arguments(args, uri) -> str:
 
     if args.exclude_regex and not \
             (args.all or args.all_topics or args.topic_types or args.all_services or
-             args.regex):
+             args.all_actions or args.regex):
         return print_error('--exclude-regex argument requires either --all, '
-                           '--all-topics, --topic-types, --all-services or --regex')
+                           '--all-topics, --topic-types, --all-services, --all-actions or --regex')
 
     if args.exclude_topics and not \
             (args.all or args.all_topics or args.topic_types or args.regex):
@@ -257,14 +270,22 @@ def validate_parsed_arguments(args, uri) -> str:
         return print_error('--exclude-services argument requires either --all, --all-services '
                            'or --regex')
 
+    if args.exclude_actions and not (args.all or args.all_actions or args.regex):
+        return print_error('--exclude-actions argument requires either --all, --all-actions '
+                           'or --regex')
+
     if (args.all or args.all_services) and args.services:
         print(print_warn('--all or --all-services will override --services'))
 
     if (args.all or args.all_topics) and args.topics:
         print(print_warn('--all or --all-topics will override --topics'))
 
-    if (args.all or args.all_topics or args.all_services) and args.regex:
-        print(print_warn('--all, --all-topics or --all-services will override --regex'))
+    if (args.all or args.all_actions) and args.actions:
+        print(print_warn('--all or --all-actions will override --actions'))
+
+    if (args.all or args.all_topics or args.all_services or args.all_actions) and args.regex:
+        print(print_warn('--all, --all-topics --all-services or --all-actions will override '
+                         '--regex'))
 
     if os.path.isdir(uri):
         return print_error("Output folder '{}' already exists.".format(uri))
@@ -280,6 +301,8 @@ def validate_parsed_arguments(args, uri) -> str:
 
     if args.compression_queue_size < 0:
         return print_error('Compression queue size must be at least 0.')
+
+    return ''
 
 
 class RecordVerb(VerbExtension):
@@ -330,11 +353,15 @@ class RecordVerb(VerbExtension):
         record_options = RecordOptions()
         record_options.all_topics = args.all_topics or args.all
         record_options.all_services = args.all_services or args.all
+        record_options.all_actions = args.all_actions or args.all
         record_options.is_discovery_disabled = args.no_discovery
         record_options.topics = args.topics
         record_options.topic_types = args.topic_types
         # Convert service name to service event topic name
         record_options.services = convert_service_to_service_event_topic(args.services)
+        # Covert action name to internal topic name and internal service event topic name
+        record_options.actions = convert_action_to_all_related_topics(args.actions)
+
         record_options.exclude_topic_types = args.exclude_topic_types
         record_options.rmw_serialization_format = args.serialization_format
         record_options.topic_polling_interval = datetime.timedelta(
@@ -344,6 +371,7 @@ class RecordVerb(VerbExtension):
         record_options.exclude_topics = args.exclude_topics if args.exclude_topics else []
         record_options.exclude_service_events = \
             convert_service_to_service_event_topic(args.exclude_services)
+        record_options.exclude_actions = convert_action_to_all_related_topics(args.exclude_actions)
         record_options.node_prefix = NODE_NAME_PREFIX
         record_options.compression_mode = args.compression_mode
         record_options.compression_format = args.compression_format

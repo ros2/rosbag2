@@ -27,6 +27,8 @@
 #include "rosbag2_storage/topic_metadata.hpp"
 #include "rosbag2_storage/bag_metadata.hpp"
 #include "rosbag2_cpp/info.hpp"
+
+#include "action_info.hpp"
 #include "service_event_info.hpp"
 
 namespace rosbag2_py
@@ -59,6 +61,13 @@ std::vector<size_t> generate_sorted_idx(
   const std::vector<std::shared_ptr<ServiceEventInformation>> & services,
   InfoSortingMethod sort_method = InfoSortingMethod::NAME);
 
+std::vector<size_t> generate_sorted_idx(
+  const std::vector<std::shared_ptr<rosbag2_cpp::rosbag2_action_info_t>> & actions,
+  const InfoSortingMethod sort_method);
+
+std::vector<size_t> generate_sorted_idx(
+  const std::vector<std::shared_ptr<ActionInformation>> & services,
+  InfoSortingMethod sort_method = InfoSortingMethod::NAME);
 }  // namespace rosbag2_py
 
 #endif  // ROSBAG2_PY__INFO_SORTING_METHOD_HPP_

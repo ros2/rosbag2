@@ -47,7 +47,8 @@ TEST_F(RecordIntegrationTestFixture, published_messages_from_multiple_topics_are
   pub_manager.setup_publisher(string_topic, string_message, 2);
 
   rosbag2_transport::RecordOptions record_options =
-  {false, false, false, {string_topic, array_topic}, {}, {}, {}, {}, {}, "rmw_format", 50ms};
+  {false, false, false, false, {string_topic, array_topic},
+    {}, {}, {}, {}, {}, {}, {}, "rmw_format", 50ms};
   auto recorder = std::make_shared<rosbag2_transport::Recorder>(
     std::move(writer_), storage_options_, record_options);
   recorder->record();
@@ -134,7 +135,7 @@ TEST_F(RecordIntegrationTestFixture, can_record_again_after_stop)
     test_topic, basic_type_message, num_messages_to_publish, rclcpp::QoS{rclcpp::KeepAll()}, 50ms);
 
   rosbag2_transport::RecordOptions record_options =
-  {false, false, false, {test_topic}, {}, {}, {}, {}, {}, "rmw_format", 50ms};
+  {false, false, false, false, {test_topic}, {}, {}, {}, {}, {}, {}, {}, "rmw_format", 50ms};
   auto recorder = std::make_shared<rosbag2_transport::Recorder>(
     std::move(writer_), storage_options_, record_options);
   recorder->record();
@@ -218,7 +219,7 @@ TEST_F(RecordIntegrationTestFixture, qos_is_stored_in_metadata)
   pub_manager.setup_publisher(topic, string_message, 2);
 
   rosbag2_transport::RecordOptions record_options =
-  {false, false, false, {topic}, {}, {}, {}, {}, {}, "rmw_format", 100ms};
+  {false, false, false, false, {topic}, {}, {}, {}, {}, {}, {}, {}, "rmw_format", 100ms};
   auto recorder = std::make_shared<rosbag2_transport::Recorder>(
     std::move(writer_), storage_options_, record_options);
   recorder->record();
@@ -283,7 +284,7 @@ TEST_F(RecordIntegrationTestFixture, records_sensor_data)
   pub_manager.setup_publisher(topic, string_message, 2, rclcpp::SensorDataQoS());
 
   rosbag2_transport::RecordOptions record_options =
-  {false, false, false, {topic}, {}, {}, {}, {}, {}, "rmw_format", 100ms};
+  {false, false, false, false, {topic}, {}, {}, {}, {}, {}, {}, {}, "rmw_format", 100ms};
   auto recorder = std::make_shared<rosbag2_transport::Recorder>(
     std::move(writer_), storage_options_, record_options);
   recorder->record();
@@ -327,7 +328,7 @@ TEST_F(RecordIntegrationTestFixture, receives_latched_messages)
   pub_manager.run_publishers();
 
   rosbag2_transport::RecordOptions record_options =
-  {false, false, false, {topic}, {}, {}, {}, {}, {}, "rmw_format", 100ms};
+  {false, false, false, false, {topic}, {}, {}, {}, {}, {}, {}, {}, "rmw_format", 100ms};
   auto recorder = std::make_shared<rosbag2_transport::Recorder>(
     std::move(writer_), storage_options_, record_options);
   recorder->record();
@@ -373,7 +374,7 @@ TEST_F(RecordIntegrationTestFixture, mixed_qos_subscribes) {
     topic, profile_transient_local);
 
   rosbag2_transport::RecordOptions record_options =
-  {false, false, false, {topic}, {}, {}, {}, {}, {}, "rmw_format", 100ms};
+  {false, false, false, false, {topic}, {}, {}, {}, {}, {}, {}, {}, "rmw_format", 100ms};
   auto recorder = std::make_shared<rosbag2_transport::Recorder>(
     std::move(writer_), storage_options_, record_options);
   recorder->record();
@@ -422,7 +423,7 @@ TEST_F(RecordIntegrationTestFixture, duration_and_noncompatibility_policies_mixe
   auto publisher_liveliness = create_pub(profile_liveliness);
 
   rosbag2_transport::RecordOptions record_options =
-  {false, false, false, {topic}, {}, {}, {}, {}, {}, "rmw_format", 100ms};
+  {false, false, false, false, {topic}, {}, {}, {}, {}, {}, {}, {}, "rmw_format", 100ms};
   auto recorder = std::make_shared<rosbag2_transport::Recorder>(
     std::move(writer_), storage_options_, record_options);
   recorder->record();
@@ -462,7 +463,7 @@ TEST_F(RecordIntegrationTestFixture, write_split_callback_is_called)
   mock_writer.set_max_messages_per_file(5);
 
   rosbag2_transport::RecordOptions record_options =
-  {false, false, false, {string_topic}, {}, {}, {}, {}, {}, "rmw_format", 100ms};
+  {false, false, false, false, {string_topic}, {}, {}, {}, {}, {}, {}, {}, "rmw_format", 100ms};
   auto recorder = std::make_shared<rosbag2_transport::Recorder>(
     std::move(writer_), storage_options_, record_options);
   recorder->record();

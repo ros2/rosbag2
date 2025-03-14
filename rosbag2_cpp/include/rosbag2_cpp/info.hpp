@@ -19,6 +19,7 @@
 #include <string>
 #include <vector>
 #include <unordered_map>
+#include <utility>
 
 #include "rosbag2_cpp/visibility_control.hpp"
 
@@ -36,6 +37,20 @@ typedef ROSBAG2_CPP_PUBLIC_TYPE struct rosbag2_service_info_t
   size_t response_count;
 } rosbag2_service_info_t;
 
+typedef ROSBAG2_CPP_PUBLIC_TYPE struct rosbag2_action_info_t
+{
+  std::string name;
+  std::string type;
+  std::string serialization_format;
+  // request_count and response_count
+  std::pair<size_t, size_t> send_goal_service_msg_count;
+  std::pair<size_t, size_t> cancel_goal_service_msg_count;
+  std::pair<size_t, size_t> get_result_service_msg_count;
+  // message count
+  size_t feedback_topic_msg_count;
+  size_t status_topic_msg_count;
+} rosbag2_action_info_t;
+
 class ROSBAG2_CPP_PUBLIC Info
 {
 public:
@@ -44,7 +59,9 @@ public:
   virtual rosbag2_storage::BagMetadata read_metadata(
     const std::string & uri, const std::string & storage_id = "");
 
-  virtual std::vector<std::shared_ptr<rosbag2_service_info_t>> read_service_info(
+  virtual void read_service_action_info(
+    std::vector<std::shared_ptr<rosbag2_service_info_t>> & output_service_info,
+    std::vector<std::shared_ptr<rosbag2_action_info_t>> & output_action_info,
     const std::string & uri, const std::string & storage_id = "");
 
   virtual std::unordered_map<std::string, uint64_t> compute_messages_size_contribution(

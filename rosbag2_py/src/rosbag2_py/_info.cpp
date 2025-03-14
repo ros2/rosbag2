@@ -19,7 +19,9 @@
 
 #include "info_sorting_method.hpp"
 #include "format_bag_metadata.hpp"
+#include "format_action_info.hpp"
 #include "format_service_info.hpp"
+#include "rosbag2_cpp/action_utils.hpp"
 #include "rosbag2_cpp/info.hpp"
 #include "rosbag2_cpp/service_utils.hpp"
 #include "rosbag2_storage/bag_metadata.hpp"
@@ -64,7 +66,10 @@ public:
       const auto & topic_info = metadata_info.topics_with_message_count[idx];
       if (!rosbag2_cpp::is_service_event_topic(
           topic_info.topic_metadata.name,
-          topic_info.topic_metadata.type))
+          topic_info.topic_metadata.type) &&
+        !rosbag2_cpp::is_topic_related_to_action(
+              topic_info.topic_metadata.name,
+              topic_info.topic_metadata.type))
       {
         std::cout << topic_info.topic_metadata.name << std::endl;
       }
@@ -77,15 +82,62 @@ public:
     const std::string & sorting_method)
   {
     std::vector<std::shared_ptr<rosbag2_cpp::rosbag2_service_info_t>> all_services_info;
+    std::vector<std::shared_ptr<rosbag2_cpp::rosbag2_action_info_t>> all_actions_info;
+
     for (auto & file_info : metadata_info.files) {
-      auto services_info = info_->read_service_info(
+      std::vector<std::shared_ptr<rosbag2_cpp::rosbag2_service_info_t>> output_service_info;
+      std::vector<std::shared_ptr<rosbag2_cpp::rosbag2_action_info_t>> output_action_info;
+      info_->read_service_action_info(
+        output_service_info,
+        output_action_info,
         uri + "/" + file_info.path,
         metadata_info.storage_identifier);
-      if (!services_info.empty()) {
+      if (!output_service_info.empty()) {
         all_services_info.insert(
           all_services_info.end(),
-          services_info.begin(),
-          services_info.end());
+          output_service_info.begin(),
+          output_service_info.end());
+      }
+      if (!output_action_info.empty()) {
+        all_actions_info.insert(
+          all_actions_info.end(),
+          output_action_info.begin(),
+          output_action_info.end());
+      }
+    }
+
+    // Fill in the number of feedback and status messages for the action info from
+    // metadata_info.topics_with_message_count
+    if (!all_actions_info.empty()) {
+      for (auto & [topic_metadata, message_count] : metadata_info.topics_with_message_count) {
+        if (rosbag2_cpp::is_topic_related_to_action(topic_metadata.name, topic_metadata.type)) {
+          auto action_interface_type =
+            rosbag2_cpp::get_action_topic_type_from_topic_name(topic_metadata.name);
+          switch (action_interface_type) {
+            case rosbag2_cpp::TopicsInAction::Feedback:
+            case rosbag2_cpp::TopicsInAction::Status:
+              {
+                auto action_info_iter = std::find_if(all_actions_info.begin(),
+                  all_actions_info.end(),
+                    [topic_name = topic_metadata.name](const auto & action_info){
+                      return action_info->name ==
+                             rosbag2_cpp::action_topic_name_to_action_name(topic_name);
+                  });
+                if (action_info_iter == all_actions_info.end()) {
+                  break;
+                }
+
+                if (action_interface_type == rosbag2_cpp::TopicsInAction::Feedback) {
+                  (*action_info_iter)->feedback_topic_msg_count = message_count;
+                } else {
+                  (*action_info_iter)->status_topic_msg_count = message_count;
+                }
+                break;
+              }
+            default:
+              break;
+          }
+        }
       }
     }
 
@@ -100,10 +152,12 @@ public:
     }
 
     rosbag2_py::InfoSortingMethod sort_method = info_sorting_method_from_string(sorting_method);
-    // Output formatted metadata and service info
+    // Output formatted metadata, service info and action info
     std::cout << format_bag_meta_data(metadata_info, messages_size, true, true, sort_method);
     std::cout <<
       format_service_info(all_services_info, messages_size, true, sort_method) << std::endl;
+    std::cout <<
+      format_action_info(all_actions_info, sort_method) << std::endl;
   }
 
   std::unordered_set<std::string> get_sorting_methods()

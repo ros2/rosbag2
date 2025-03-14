@@ -126,4 +126,87 @@ std::vector<size_t> generate_sorted_idx(
   return sorted_idx;
 }
 
+std::vector<size_t> generate_sorted_idx(
+  const std::vector<std::shared_ptr<ActionInformation>> & actions,
+  const InfoSortingMethod sort_method)
+{
+  std::vector<size_t> sorted_idx(actions.size());
+  std::iota(sorted_idx.begin(), sorted_idx.end(), 0);
+  std::sort(
+    sorted_idx.begin(),
+    sorted_idx.end(),
+    [&actions, sort_method](size_t i1, size_t i2) {
+      bool is_greater = false;
+      switch (sort_method) {
+        case InfoSortingMethod::NAME:
+          is_greater = actions[i1]->action_metadata.name < actions[i2]->action_metadata.name;
+          break;
+        case InfoSortingMethod::TYPE:
+          is_greater = actions[i1]->action_metadata.type < actions[i2]->action_metadata.type;
+          break;
+        case InfoSortingMethod::COUNT:
+          size_t total_count_action1 = actions[i1]->send_goal_event_message_count +
+          actions[i1]->cancel_goal_event_message_count +
+          actions[i1]->get_result_event_message_count +
+          actions[i1]->feedback_message_count +
+          actions[i1]->status_message_count;
+          size_t total_count_action2 = actions[i2]->send_goal_event_message_count +
+          actions[i2]->cancel_goal_event_message_count +
+          actions[i2]->get_result_event_message_count +
+          actions[i2]->feedback_message_count +
+          actions[i2]->status_message_count;
+          is_greater = total_count_action1 < total_count_action2;
+          break;
+      }
+      return is_greater;
+    }
+  );
+  return sorted_idx;
+}
+
+std::vector<size_t> generate_sorted_idx(
+  const std::vector<std::shared_ptr<rosbag2_cpp::rosbag2_action_info_t>> & actions,
+  const InfoSortingMethod sort_method)
+{
+  std::vector<size_t> sorted_idx(actions.size());
+  std::iota(sorted_idx.begin(), sorted_idx.end(), 0);
+  std::sort(
+    sorted_idx.begin(),
+    sorted_idx.end(),
+    [&actions, sort_method](size_t i1, size_t i2) {
+      bool is_greater = false;
+      switch (sort_method) {
+        case InfoSortingMethod::NAME:
+          is_greater = actions[i1]->name < actions[i2]->name;
+          break;
+        case InfoSortingMethod::TYPE:
+          is_greater = actions[i1]->type < actions[i2]->type;
+          break;
+        case InfoSortingMethod::COUNT:
+          size_t total_count_action1 =
+          actions[i1]->send_goal_service_msg_count.first +
+          actions[i1]->send_goal_service_msg_count.second +
+          actions[i1]->cancel_goal_service_msg_count.first +
+          actions[i1]->cancel_goal_service_msg_count.second +
+          actions[i1]->get_result_service_msg_count.first +
+          actions[i1]->get_result_service_msg_count.second +
+          actions[i1]->feedback_topic_msg_count + actions[i1]->status_topic_msg_count;
+
+          size_t total_count_action2 =
+          actions[i2]->send_goal_service_msg_count.first +
+          actions[i2]->send_goal_service_msg_count.second +
+          actions[i2]->cancel_goal_service_msg_count.first +
+          actions[i2]->cancel_goal_service_msg_count.second +
+          actions[i2]->get_result_service_msg_count.first +
+          actions[i2]->get_result_service_msg_count.second +
+          actions[i2]->feedback_topic_msg_count + actions[i2]->status_topic_msg_count;
+          is_greater = total_count_action1 < total_count_action2;
+          break;
+      }
+      return is_greater;
+    }
+  );
+  return sorted_idx;
+}
+
 }  // namespace rosbag2_py

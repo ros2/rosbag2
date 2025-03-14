@@ -25,9 +25,11 @@
 #include <time.h>
 #endif
 
+#include "rosbag2_cpp/action_utils.hpp"
 #include "rosbag2_cpp/service_utils.hpp"
 #include "rosbag2_storage/bag_metadata.hpp"
 
+#include "action_info.hpp"
 #include "format_bag_metadata.hpp"
 #include "service_event_info.hpp"
 
@@ -147,9 +149,12 @@ void format_topics_with_type(
   size_t i = 0;
   // Find first topic which isn't service event topic
   while (i < number_of_topics &&
-    rosbag2_cpp::is_service_event_topic(
+    (rosbag2_cpp::is_service_event_topic(
       topics[sorted_idx[i]].topic_metadata.name,
-      topics[sorted_idx[i]].topic_metadata.type))
+      topics[sorted_idx[i]].topic_metadata.type) ||
+    rosbag2_cpp::is_topic_related_to_action(
+      topics[sorted_idx[i]].topic_metadata.name,
+      topics[sorted_idx[i]].topic_metadata.type)))
   {
     i++;
   }
@@ -162,6 +167,8 @@ void format_topics_with_type(
   print_topic_info(topics[sorted_idx[i]]);
   for (size_t j = ++i; j < number_of_topics; ++j) {
     if (rosbag2_cpp::is_service_event_topic(
+        topics[sorted_idx[j]].topic_metadata.name, topics[sorted_idx[j]].topic_metadata.type) ||
+      rosbag2_cpp::is_topic_related_to_action(
         topics[sorted_idx[j]].topic_metadata.name, topics[sorted_idx[j]].topic_metadata.type))
     {
       continue;
@@ -171,15 +178,66 @@ void format_topics_with_type(
   }
 }
 
+using ServiceInfoList = std::vector<std::shared_ptr<rosbag2_py::ServiceEventInformation>>;
+using ActionInfoList = std::vector<std::shared_ptr<rosbag2_py::ActionInformation>>;
+using ActionInfoMap =
+  std::unordered_map<std::string, std::shared_ptr<rosbag2_py::ActionInformation>>;
 
-std::vector<std::shared_ptr<rosbag2_py::ServiceEventInformation>> filter_service_event_topic(
+void filter_service_and_action_info(
   const std::vector<rosbag2_storage::TopicInformation> & topics_with_message_count,
-  size_t & total_service_event_msg_count)
+  ServiceInfoList & service_info_list,
+  size_t & total_service_event_msg_count,
+  ActionInfoList & action_info_list,
+  size_t & total_action_msg_count)
 {
   total_service_event_msg_count = 0;
-  std::vector<std::shared_ptr<rosbag2_py::ServiceEventInformation>> service_info_list;
+  total_action_msg_count = 0;
+
+  ActionInfoMap action_info_map;
 
   for (auto & topic : topics_with_message_count) {
+    if (rosbag2_cpp::is_topic_related_to_action(
+      topic.topic_metadata.name, topic.topic_metadata.type))
+    {
+      auto action_name = rosbag2_cpp::action_topic_name_to_action_name(topic.topic_metadata.name);
+
+      if (action_info_map.find(action_name) == action_info_map.end()) {
+        action_info_map[action_name] = std::make_shared<rosbag2_py::ActionInformation>();
+        action_info_map[action_name]->action_metadata.name = action_name;
+        action_info_map[action_name]->action_metadata.serialization_format =
+          topic.topic_metadata.serialization_format;
+      }
+
+      // If the cancel_goal or status message is processed first, it can result in the type
+      // being empty. So If the type is empty, it will be updated with subsequent messages.
+      if (action_info_map[action_name]->action_metadata.type.empty()) {
+        action_info_map[action_name]->action_metadata.type =
+          rosbag2_cpp::action_topic_type_to_action_type(topic.topic_metadata.type);
+      }
+
+      switch (rosbag2_cpp::get_action_topic_type_from_topic_name(topic.topic_metadata.name)) {
+        case rosbag2_cpp::TopicsInAction::SendGoalEvent:
+          action_info_map[action_name]->send_goal_event_message_count = topic.message_count;
+          break;
+        case rosbag2_cpp::TopicsInAction::CancelGoalEvent:
+          action_info_map[action_name]->cancel_goal_event_message_count = topic.message_count;
+          break;
+        case rosbag2_cpp::TopicsInAction::GetResultEvent:
+          action_info_map[action_name]->get_result_event_message_count = topic.message_count;
+          break;
+        case rosbag2_cpp::TopicsInAction::Feedback:
+          action_info_map[action_name]->feedback_message_count = topic.message_count;
+          break;
+        case rosbag2_cpp::TopicsInAction::Status:
+          action_info_map[action_name]->status_message_count = topic.message_count;
+          break;
+        default:  // Never go here
+          break;
+      }
+      total_action_msg_count += topic.message_count;
+      continue;
+    }
+
     if (rosbag2_cpp::is_service_event_topic(
         topic.topic_metadata.name, topic.topic_metadata.type))
     {
@@ -196,7 +254,12 @@ std::vector<std::shared_ptr<rosbag2_py::ServiceEventInformation>> filter_service
     }
   }
 
-  return service_info_list;
+  // Convert action_info_map to action_info_list
+  for (auto & action_info : action_info_map) {
+    action_info_list.emplace_back(action_info.second);
+  }
+
+  return;
 }
 
 void format_service_with_type(
@@ -241,6 +304,44 @@ void format_service_with_type(
   }
 }
 
+void format_action_with_type(
+  const std::vector<std::shared_ptr<rosbag2_py::ActionInformation>> & actions,
+  std::stringstream & info_stream,
+  const rosbag2_py::InfoSortingMethod sort_method = rosbag2_py::InfoSortingMethod::NAME)
+{
+  info_stream << std::endl;
+  if (actions.empty()) {
+    return;
+  }
+
+  auto print_action_info =
+    [&info_stream](const std::shared_ptr<rosbag2_py::ActionInformation> & ai) -> void {
+      info_stream << "  Action: " << ai->action_metadata.name << " | ";
+      info_stream << "Type: " << ai->action_metadata.type << " | ";
+      info_stream << "Topics: 2" << " | ";
+      info_stream << "Service: 3" << " | ";
+      info_stream << "Serialization Format: "
+                  << ai->action_metadata.serialization_format << std::endl;
+      info_stream << "    Topic: feedback | Count: " << ai->feedback_message_count << std::endl;
+      info_stream << "    Topic: status | Count: " << ai->status_message_count << std::endl;
+      info_stream << "    Service: send_goal | Event Count: "
+                  << ai->get_result_event_message_count << std::endl;
+      info_stream << "    Service: cancel_goal | Event Count: "
+                  << ai->cancel_goal_event_message_count << std::endl;
+      info_stream << "    Service: get_result | Event Count: "
+                  << ai->get_result_event_message_count;
+    };
+
+  std::vector<size_t> sorted_idx = rosbag2_py::generate_sorted_idx(actions, sort_method);
+
+  print_action_info(actions[sorted_idx[0]]);
+  auto number_of_services = actions.size();
+  for (size_t j = 1; j < number_of_services; ++j) {
+    info_stream << std::endl;
+    print_action_info(actions[sorted_idx[j]]);
+  }
+}
+
 }  // namespace
 
 namespace rosbag2_py
@@ -262,9 +363,17 @@ std::string format_bag_meta_data(
     ros_distro = "unknown";
   }
 
+  ServiceInfoList service_info_list;
   size_t total_service_event_msg_count = 0;
-  std::vector<std::shared_ptr<ServiceEventInformation>> service_info_list =
-    filter_service_event_topic(metadata.topics_with_message_count, total_service_event_msg_count);
+  ActionInfoList action_info_list;
+  size_t total_action_msg_count = 0;
+
+  filter_service_and_action_info(
+    metadata.topics_with_message_count,
+    service_info_list,
+    total_service_event_msg_count,
+    action_info_list,
+    total_action_msg_count);
 
   info_stream << std::endl;
   info_stream << "Files:             ";
@@ -278,8 +387,9 @@ std::string format_bag_meta_data(
   info_stream << "Start:             " << format_time_point(start_time) <<
     std::endl;
   info_stream << "End:               " << format_time_point(end_time) << std::endl;
-  info_stream << "Messages:          " << metadata.message_count - total_service_event_msg_count <<
-    std::endl;
+  info_stream << "Messages:          "
+              << metadata.message_count - total_service_event_msg_count - total_action_msg_count
+              << std::endl;
   info_stream << "Topic information: ";
   format_topics_with_type(
     metadata.topics_with_message_count,
@@ -288,7 +398,7 @@ std::string format_bag_meta_data(
     sort_method);
 
   if (!only_topic) {
-    info_stream << "Service:           " << service_info_list.size() << std::endl;
+    info_stream << "Services:          " << service_info_list.size() << std::endl;
     info_stream << "Service information: ";
     if (!service_info_list.empty()) {
       format_service_with_type(
@@ -297,6 +407,14 @@ std::string format_bag_meta_data(
         verbose,
         info_stream,
         indentation_spaces + 2,
+        sort_method);
+    }
+    info_stream << "Actions:           " << action_info_list.size() << std::endl;
+    info_stream << "Action information: ";
+    if (!action_info_list.empty()) {
+      format_action_with_type(
+        action_info_list,
+        info_stream,
         sort_method);
     }
   }

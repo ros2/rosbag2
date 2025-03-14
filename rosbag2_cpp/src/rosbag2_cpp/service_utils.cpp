@@ -31,6 +31,11 @@ bool is_service_event_topic(const std::string & topic_name, const std::string & 
   if (topic_name.length() <= kServiceEventTopicPostfixLen) {
     return false;
   } else {
+    // Not services for action
+    if (topic_name.find("/_action/") != std::string::npos) {
+      return false;
+    }
+
     // The end of the topic name should be "/_service_event"
     if (topic_name.substr(topic_name.length() - kServiceEventTopicPostfixLen) !=
       RCL_SERVICE_INTROSPECTION_TOPIC_POSTFIX)

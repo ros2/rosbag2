@@ -73,7 +73,8 @@ add_library(${PROJECT_NAME} SHARED
   src/rosbag2_cpp/writer.cpp
   src/rosbag2_cpp/writers/sequential_writer.cpp
   src/rosbag2_cpp/reindexer.cpp
-  src/rosbag2_cpp/service_utils.cpp)
+  src/rosbag2_cpp/service_utils.cpp
+  src/rosbag2_cpp/action_utils.cpp)
 
 target_link_libraries(${PROJECT_NAME} PUBLIC
   pluginlib::pluginlib
@@ -307,6 +308,16 @@ if(BUILD_TESTING)
     test/rosbag2_cpp/test_service_utils.cpp)
   if(TARGET test_service_utils)
     target_link_libraries(test_service_utils
+      ${PROJECT_NAME}
+      rosbag2_test_common::rosbag2_test_common
+      ${test_msgs_TARGETS}
+    )
+  endif()
+
+  ament_add_gmock(test_action_utils
+    test/rosbag2_cpp/test_action_utils.cpp)
+  if(TARGET test_action_utils)
+    target_link_libraries(test_action_utils
       ${PROJECT_NAME}
       rosbag2_test_common::rosbag2_test_common
       ${test_msgs_TARGETS}
