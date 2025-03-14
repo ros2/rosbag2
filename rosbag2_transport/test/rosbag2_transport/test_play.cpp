@@ -1216,8 +1216,11 @@ TEST_F(RosBag2PlayQosOverrideTestFixture, topic_qos_profiles_overridden_incompat
     topic_name_, num_msgs_to_wait_for_, qos_request);
   play_options_.topic_qos_profile_overrides = topic_qos_profile_overrides;
 
-  // Fails if it doesn't time out
-  play_and_wait(timeout, true /* expect timeout */);
+  // A timeout is expected if QoS is incompatible.
+  bool expect_timeout = (rclcpp::qos_check_compatible(
+    qos_playback_override, qos_request).compatibility != rclcpp::QoSCompatibility::Ok);
+
+  play_and_wait(timeout, expect_timeout);
 }
 
 TEST_F(RosBag2PlayQosOverrideTestFixture, playback_uses_recorded_transient_local_profile)
