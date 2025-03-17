@@ -128,7 +128,7 @@ Newly added arguments:
 | :-- | :-- |
 | --actions action [action ...] | Space-delimited list of actions to play. |
 | --exclude-actions action [action ...] | Space-delimited list of actions not to play. |
-| --send-action-goal | Send recorded action goal instead of recorded service events and action internal topics. |
+| --send-actions-as-client | Send the send_goal request, cancel_goal request, and get_result request respectively based on the recorded send_goal, cancel_goal, and get_result event messages. |
 
 Updated arguments:
 
@@ -136,4 +136,4 @@ Updated arguments:
 | :-- | :-- |
 | -e REGEX, --regex REGEX | Play only topics, services and **actions** matches with regular expression. |
 | -x EXCLUDE_REGEX, --exclude-regex EXCLUDE_REGEX | regular expressions to exclude topics, services  and **actions** from replay. |
-| --service-requests-source {service_introspection,client_introspection} | Determine the source of the service requests to be replayed. This option only makes sense if the "--publish-service-requests" or **"--send-action-goal"** option is set. By default, the service requests replaying from recorded service introspection message. |
+| --service-requests-source {service_introspection,client_introspection} | Determine the source of the service requests to be replayed. This option only makes sense if the "--publish-service-requests" or **"--send-actions-as-client"** option is set. By default, the service requests replaying from recorded service introspection message. |
