@@ -128,7 +128,7 @@ Newly added arguments:
 | :-- | :-- |
 | --actions action [action ...] | Space-delimited list of actions to play. |
 | --exclude-actions action [action ...] | Space-delimited list of actions not to play. |
-| --send-actions-as-client | Send the send_goal request, cancel_goal request, and get_result request respectively based on the recorded send_goal, cancel_goal, and get_result event messages. |
+| --send-actions-as-client | Send the send_goal request, cancel_goal request, and get_result request respectively based on the recorded send_goal, cancel_goal, and get_result event messages. Note that the messages from action's "status topic" [NameSpace/]ActionName/_action/status and "feedback topic" [NameSpace/]ActionName/_action/feedback will not be sent because they are expected to be sent from the action server side. |
 
 Updated arguments:
 
