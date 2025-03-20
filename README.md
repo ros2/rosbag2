@@ -573,7 +573,7 @@ This can be accomplished without features in `rosbag2` itself.
 In shell:
 
 ```bash
-pushd $MY_BASE_DIR && ros2 bag record ...
+pushd /my/bag/base_dir && ros2 bag record ...
 ```
 
 In launch:
