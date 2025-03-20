@@ -568,7 +568,7 @@ If you want to send bagfiles to a different directory than the current working d
     └── rosbag2_2025_02_21-15_37_17_0.mcap
 ```
 
-This can be accomplished without features in `rosbag2` itself.
+This can be accomplished without features in rosbag2 itself.
 
 In shell:
 
