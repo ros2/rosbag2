@@ -583,10 +583,6 @@ ExecuteProcess(
   cmd=['ros2', 'bag', 'record', ...],
   cwd=my_base_dir,
 ),
-```
-
-
-### Custom name with timestamp for bag directory
 
 You can fully customize the output bag name, without any `rosbag2` special features.
 
