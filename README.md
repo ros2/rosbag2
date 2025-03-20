@@ -2,7 +2,7 @@
 ![License](https://img.shields.io/github/license/ros2/rosbag2)
 [![GitHub Action Status](https://github.com/ros2/rosbag2/workflows/Test%20rosbag2/badge.svg)](https://github.com/ros2/rosbag2/actions)
 
-Rosbag2 -- the tool for recording and playback of communications in ROS 2 systems.
+Rosbag2 — the tool for recording and playback of communications in ROS 2 systems.
 
 This is the ROS 2 successor of https://wiki.ros.org/rosbag.
 
