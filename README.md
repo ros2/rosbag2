@@ -584,7 +584,7 @@ ExecuteProcess(
   cwd=my_base_dir,
 ),
 
-You can fully customize the output bag name, without any `rosbag2` special features.
+You can fully customize the output bag name, without any rosbag2 special features.
 
 For example, you want a timestamp on the bag directory name, but want a custom prefix instead of `rosbag2_`.
 
