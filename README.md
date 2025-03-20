@@ -1,8 +1,8 @@
-# rosbag2
+# Rosbag2
 ![License](https://img.shields.io/github/license/ros2/rosbag2)
 [![GitHub Action Status](https://github.com/ros2/rosbag2/workflows/Test%20rosbag2/badge.svg)](https://github.com/ros2/rosbag2/actions)
 
-Rosbag2 - the tool for recording and playback of messages from ROS 2 topics.
+Rosbag2 -- the tool for recording and playback of communications in ROS 2 systems.
 
 This is the ROS 2 successor of https://wiki.ros.org/rosbag.
 
@@ -12,14 +12,14 @@ For historical context, see the original [design article](https://github.com/ros
 
 This README has a lot of information. You may want to jump directly to:
 - [Installation](#installation)
-- [Usage](#using-rosbag2)
+- [Usage](#usage)
 - [Tips and Tricks](#tips-and-tricks)
 
 ## Installation
 
 ### Debian packages
 
-rosbag2 packages are available via debian packages, and will already be included with any `-ros-base` installation (which is included within `-desktop`)
+Rosbag2 packages are available via debian packages, and will already be included with any `-ros-base` installation (which is included within `-desktop`)
 
 ```
 $ export ROS_DISTRO=humble
@@ -34,25 +34,26 @@ You can follow the instructions at http://docs.ros.org/en/humble/Installation/Al
 
 To build from source, follow the instructions in [DEVELOPING.md](DEVELOPING.md)
 
-## Using rosbag2
+## Using rosbag2 <a id="usage"></a>
 
 rosbag2 is part of the ROS 2 command line interface as `ros2 bag`.
 These verbs are available for `ros2 bag`:
 
 * `ros2 bag burst`
-* [`ros2 bag convert`](#converting-bags)
-* [`ros2 bag info`](#analyzing-data)
+* [`ros2 bag convert`](#convert)
+* [`ros2 bag info`](#info)
 * `ros2 bag list`
-* [`ros2 bag play`](#replaying-data)
-* [`ros2 bag record`](#recording-data)
+* [`ros2 bag play`](#play)
+* [`ros2 bag record`](#record)
 * `ros2 bag reindex`
 
 For up-to-date information on the available options for each, use `ros2 bag <verb> --help`.
 
 Moreover, `rosbag2_transport::Player` and `rosbag2_transport::Recorder` components can be instantiated in `rclcpp` component containers, which makes possible to use intra-process communication for greater efficiency.
-See [composition](#using-with-composition) section for details.
+See [composition](#composition) section for details.
 
-### Recording data
+
+### Recording data <a id="record"></a>
 
 In order to record all topics currently available in the system:
 
@@ -105,9 +106,9 @@ Currently, the only `compression-format` available is `zstd`. Both the mode and 
 
 It is recommended to use this feature with the splitting options.
 
-**Note**: Some storage plugins may have their own compression methods, which are separate from the rosbag2 compression specified by the CLI options `--compression-mode` and `--compression-format`. Notably, the MCAP file format offered by the `rosbag2_storage_mcap` storage plugin supports compression in a way that produces files that are still indexable (whereas using the rosbag2 compression will not). To utilize storage plugin specific compression or other options, see [Recording with a storage configuration](#Recording-with-a-storage-configuration).
+**Note**: Some storage plugins may have their own compression methods, which are separate from the rosbag2 compression specified by the CLI options `--compression-mode` and `--compression-format`. Notably, the MCAP file format offered by the `rosbag2_storage_mcap` storage plugin supports compression in a way that produces files that are still indexable (whereas using the rosbag2 compression will not). To utilize storage plugin specific compression or other options, see [Recording with a storage configuration](#record-storage-config).
 
-#### Recording with a storage configuration
+#### Recording with a storage configuration <a id="record-storage-config"></a>
 
 Storage configuration can be specified in a YAML file passed through the `--storage-config-file` option.
 This can be used to optimize performance for specific use cases.
@@ -138,7 +139,7 @@ This entire buffer can be dumped to disk on request, saving data only in specifi
 
 The snapshot is taken by calling the `~/snapshot` service on the recorder, described previously.
 
-### Replaying data
+### Replaying data <a id="play"></a>
 
 When you have a recorded bag, you can use Rosbag2 to play it back:
 
@@ -206,7 +207,7 @@ The Rosbag2 player provides the following services for remote control, which can
   * Pause if playing, resume if paused.
 
 
-### Analyzing data
+### Analyzing data <a id="info"></a>
 
 The recorded data can be analyzed by displaying some meta information about it:
 
@@ -228,7 +229,7 @@ Topic information: Topic: /chatter | Type: std_msgs/String | Count: 9 | Serializ
                    Topic: /my_chatter | Type: std_msgs/String | Count: 18 | Serialization Format: cdr
 ```
 
-### Converting bags (merge, split, etc.)
+### Converting bags (merge, split, etc.) <a id="convert"></a>
 
 Rosbag2 provides a tool `ros2 bag convert` (or, `rosbag2_transport::bag_rewrite` in the C++ API).
 This allows the user to take one or more input bags, and write them out to one or more output bags with new settings.
@@ -414,7 +415,7 @@ def generate_launch_description():
     ])
 ```
 
-### Using recorder and player as composable nodes
+### Using recorder and player as composable nodes <a id="composition"></a>
 
 Play and record are fundamental tasks of `rosbag2`. However, playing or recording data at high rates may have limitations (e.g. spurious packet drops) due to one of the following:
 - low network bandwidth
