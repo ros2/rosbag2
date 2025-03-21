@@ -171,7 +171,7 @@ RecorderImpl::RecorderImpl(
   storage_options_(storage_options),
   record_options_(record_options),
   node(owner),
-  paused_(record_options_.start_paused),
+  paused_(record_options.start_paused),
   keyboard_handler_(std::move(keyboard_handler))
 {
   if (record_options_.use_sim_time && record_options_.is_discovery_disabled) {
