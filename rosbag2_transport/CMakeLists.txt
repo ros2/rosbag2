@@ -131,6 +131,14 @@ if(BUILD_TESTING)
   function(test_play_for_rmw_implementation)
     set(rmw_implementation_env_var RMW_IMPLEMENTATION=${rmw_implementation})
 
+    # If the rmw_implementation is rmw_zenoh_cpp, run the tests with multicast discovery enabled.
+    if(rmw_implementation STREQUAL "rmw_zenoh_cpp")
+      list(APPEND rmw_implementation_env_var
+        ZENOH_ROUTER_CHECK_ATTEMPTS=-1
+        ZENOH_CONFIG_OVERRIDE=scouting/multicast/enabled=true
+        RUST_LOG=z=error
+      )
+    endif()
     # disable the following tests for connext
     # due to slower discovery of nodes
     set(SKIP_TEST "")
@@ -157,6 +165,14 @@ if(BUILD_TESTING)
   function(test_composable_player_for_rmw_implementation)
     set(rmw_implementation_env_var RMW_IMPLEMENTATION=${rmw_implementation})
 
+    # If the rmw_implementation is rmw_zenoh_cpp, run the tests with multicast discovery enabled.
+    if(rmw_implementation STREQUAL "rmw_zenoh_cpp")
+      list(APPEND rmw_implementation_env_var
+        ZENOH_ROUTER_CHECK_ATTEMPTS=-1
+        ZENOH_CONFIG_OVERRIDE=scouting/multicast/enabled=true
+        RUST_LOG=z=error
+      )
+    endif()
     ament_add_gmock_test(test_composable_player
       TEST_NAME test_composable_player${target_suffix}
       ENV ${rmw_implementation_env_var}
@@ -169,6 +185,14 @@ if(BUILD_TESTING)
   function(test_play_loop_for_rmw_implementation)
     set(rmw_implementation_env_var RMW_IMPLEMENTATION=${rmw_implementation})
 
+    # If the rmw_implementation is rmw_zenoh_cpp, run the tests with multicast discovery enabled.
+    if(rmw_implementation STREQUAL "rmw_zenoh_cpp")
+      list(APPEND rmw_implementation_env_var
+        ZENOH_ROUTER_CHECK_ATTEMPTS=-1
+        ZENOH_CONFIG_OVERRIDE=scouting/multicast/enabled=true
+        RUST_LOG=z=error
+      )
+    endif()
     # disable the following tests for connext
     # due to slower discovery of nodes
     set(SKIP_TEST "")
@@ -189,6 +213,14 @@ if(BUILD_TESTING)
   function(test_play_publish_clock_for_rmw_implementation)
     set(rmw_implementation_env_var RMW_IMPLEMENTATION=${rmw_implementation})
 
+    # If the rmw_implementation is rmw_zenoh_cpp, run the tests with multicast discovery enabled.
+    if(rmw_implementation STREQUAL "rmw_zenoh_cpp")
+      list(APPEND rmw_implementation_env_var
+        ZENOH_ROUTER_CHECK_ATTEMPTS=-1
+        ZENOH_CONFIG_OVERRIDE=scouting/multicast/enabled=true
+        RUST_LOG=z=error
+      )
+    endif()
     # disable the following tests for connext
     # due to slower discovery of nodes
     set(SKIP_TEST "")
@@ -209,6 +241,14 @@ if(BUILD_TESTING)
   function(test_play_timing_for_rmw_implementation)
     set(rmw_implementation_env_var RMW_IMPLEMENTATION=${rmw_implementation})
 
+    # If the rmw_implementation is rmw_zenoh_cpp, run the tests with multicast discovery enabled.
+    if(rmw_implementation STREQUAL "rmw_zenoh_cpp")
+      list(APPEND rmw_implementation_env_var
+        ZENOH_ROUTER_CHECK_ATTEMPTS=-1
+        ZENOH_CONFIG_OVERRIDE=scouting/multicast/enabled=true
+        RUST_LOG=z=error
+      )
+    endif()
     ament_add_gmock_test(test_play_timing
       TEST_NAME test_play_timing${target_suffix}
       ENV ${rmw_implementation_env_var}
@@ -221,6 +261,14 @@ if(BUILD_TESTING)
   function(test_play_callbacks_for_rmw_implementation)
     set(rmw_implementation_env_var RMW_IMPLEMENTATION=${rmw_implementation})
 
+    # If the rmw_implementation is rmw_zenoh_cpp, run the tests with multicast discovery enabled.
+    if(rmw_implementation STREQUAL "rmw_zenoh_cpp")
+      list(APPEND rmw_implementation_env_var
+        ZENOH_ROUTER_CHECK_ATTEMPTS=-1
+        ZENOH_CONFIG_OVERRIDE=scouting/multicast/enabled=true
+        RUST_LOG=z=error
+      )
+    endif()
     ament_add_gmock_test(test_play_callbacks
       TEST_NAME test_play_callbacks${target_suffix}
       ENV ${rmw_implementation_env_var}
@@ -233,6 +281,14 @@ if(BUILD_TESTING)
   function(test_player_stop_for_rmw_implementation)
     set(rmw_implementation_env_var RMW_IMPLEMENTATION=${rmw_implementation})
 
+    # If the rmw_implementation is rmw_zenoh_cpp, run the tests with multicast discovery enabled.
+    if(rmw_implementation STREQUAL "rmw_zenoh_cpp")
+      list(APPEND rmw_implementation_env_var
+        ZENOH_ROUTER_CHECK_ATTEMPTS=-1
+        ZENOH_CONFIG_OVERRIDE=scouting/multicast/enabled=true
+        RUST_LOG=z=error
+      )
+    endif()
     ament_add_gmock_test(test_player_stop
       TEST_NAME test_player_stop${target_suffix}
       ENV ${rmw_implementation_env_var}
@@ -245,6 +301,14 @@ if(BUILD_TESTING)
   function(test_play_seek_for_rmw_implementation)
     set(rmw_implementation_env_var RMW_IMPLEMENTATION=${rmw_implementation})
 
+    # If the rmw_implementation is rmw_zenoh_cpp, run the tests with multicast discovery enabled.
+    if(rmw_implementation STREQUAL "rmw_zenoh_cpp")
+      list(APPEND rmw_implementation_env_var
+        ZENOH_ROUTER_CHECK_ATTEMPTS=-1
+        ZENOH_CONFIG_OVERRIDE=scouting/multicast/enabled=true
+        RUST_LOG=z=error
+      )
+    endif()
     ament_add_gmock_test(test_play_seek
       TEST_NAME test_play_seek${target_suffix}
       ENV ${rmw_implementation_env_var}
@@ -257,6 +321,14 @@ if(BUILD_TESTING)
   function(test_play_services_for_rmw_implementation)
     set(rmw_implementation_env_var RMW_IMPLEMENTATION=${rmw_implementation})
 
+    # If the rmw_implementation is rmw_zenoh_cpp, run the tests with multicast discovery enabled.
+    if(rmw_implementation STREQUAL "rmw_zenoh_cpp")
+      list(APPEND rmw_implementation_env_var
+        ZENOH_ROUTER_CHECK_ATTEMPTS=-1
+        ZENOH_CONFIG_OVERRIDE=scouting/multicast/enabled=true
+        RUST_LOG=z=error
+      )
+    endif()
     ament_add_gmock_test(test_play_services
       TEST_NAME test_play_services${target_suffix}
       ENV ${rmw_implementation_env_var}
@@ -269,6 +341,14 @@ if(BUILD_TESTING)
   function(test_play_topic_remap_for_rmw_implementation)
     set(rmw_implementation_env_var RMW_IMPLEMENTATION=${rmw_implementation})
 
+    # If the rmw_implementation is rmw_zenoh_cpp, run the tests with multicast discovery enabled.
+    if(rmw_implementation STREQUAL "rmw_zenoh_cpp")
+      list(APPEND rmw_implementation_env_var
+        ZENOH_ROUTER_CHECK_ATTEMPTS=-1
+        ZENOH_CONFIG_OVERRIDE=scouting/multicast/enabled=true
+        RUST_LOG=z=error
+      )
+    endif()
     # disable the following tests for connext
     # due to slower discovery of nodes
     set(SKIP_TEST "")
@@ -290,6 +370,14 @@ if(BUILD_TESTING)
   function(test_play_duration_for_rmw_implementation)
     set(rmw_implementation_env_var RMW_IMPLEMENTATION=${rmw_implementation})
 
+    # If the rmw_implementation is rmw_zenoh_cpp, run the tests with multicast discovery enabled.
+    if(rmw_implementation STREQUAL "rmw_zenoh_cpp")
+      list(APPEND rmw_implementation_env_var
+        ZENOH_ROUTER_CHECK_ATTEMPTS=-1
+        ZENOH_CONFIG_OVERRIDE=scouting/multicast/enabled=true
+        RUST_LOG=z=error
+      )
+    endif()
     ament_add_gmock_test(test_play_duration
       TEST_NAME test_play_duration${target_suffix}
       ENV ${rmw_implementation_env_var}
@@ -303,6 +391,14 @@ if(BUILD_TESTING)
   function(test_play_next_for_rmw_implementation)
     set(rmw_implementation_env_var RMW_IMPLEMENTATION=${rmw_implementation})
 
+    # If the rmw_implementation is rmw_zenoh_cpp, run the tests with multicast discovery enabled.
+    if(rmw_implementation STREQUAL "rmw_zenoh_cpp")
+      list(APPEND rmw_implementation_env_var
+        ZENOH_ROUTER_CHECK_ATTEMPTS=-1
+        ZENOH_CONFIG_OVERRIDE=scouting/multicast/enabled=true
+        RUST_LOG=z=error
+      )
+    endif()
     ament_add_gmock_test(test_play_next
       TEST_NAME test_play_next${target_suffix}
       ENV ${rmw_implementation_env_var}
@@ -316,6 +412,14 @@ if(BUILD_TESTING)
   function(test_play_until_for_rmw_implementation)
     set(rmw_implementation_env_var RMW_IMPLEMENTATION=${rmw_implementation})
 
+    # If the rmw_implementation is rmw_zenoh_cpp, run the tests with multicast discovery enabled.
+    if(rmw_implementation STREQUAL "rmw_zenoh_cpp")
+      list(APPEND rmw_implementation_env_var
+        ZENOH_ROUTER_CHECK_ATTEMPTS=-1
+        ZENOH_CONFIG_OVERRIDE=scouting/multicast/enabled=true
+        RUST_LOG=z=error
+      )
+    endif()
     ament_add_gmock_test(test_play_until
       TEST_NAME test_play_until${target_suffix}
       ENV ${rmw_implementation_env_var}
@@ -329,6 +433,14 @@ if(BUILD_TESTING)
   function(test_burst_for_rmw_implementation)
     set(rmw_implementation_env_var RMW_IMPLEMENTATION=${rmw_implementation})
 
+    # If the rmw_implementation is rmw_zenoh_cpp, run the tests with multicast discovery enabled.
+    if(rmw_implementation STREQUAL "rmw_zenoh_cpp")
+      list(APPEND rmw_implementation_env_var
+        ZENOH_ROUTER_CHECK_ATTEMPTS=-1
+        ZENOH_CONFIG_OVERRIDE=scouting/multicast/enabled=true
+        RUST_LOG=z=error
+      )
+    endif()
     ament_add_gmock_test(test_burst
       TEST_NAME test_burst${target_suffix}
       ENV ${rmw_implementation_env_var}
@@ -342,6 +454,14 @@ if(BUILD_TESTING)
   function(test_record_for_rmw_implementation)
     set(rmw_implementation_env_var RMW_IMPLEMENTATION=${rmw_implementation})
 
+    # If the rmw_implementation is rmw_zenoh_cpp, run the tests with multicast discovery enabled.
+    if(rmw_implementation STREQUAL "rmw_zenoh_cpp")
+      list(APPEND rmw_implementation_env_var
+        ZENOH_ROUTER_CHECK_ATTEMPTS=-1
+        ZENOH_CONFIG_OVERRIDE=scouting/multicast/enabled=true
+        RUST_LOG=z=error
+      )
+    endif()
     # disable the following tests for connext
     # due to slower discovery of nodes
     set(SKIP_TEST "")
@@ -362,6 +482,14 @@ if(BUILD_TESTING)
   function(test_record_all_for_rmw_implementation)
     set(rmw_implementation_env_var RMW_IMPLEMENTATION=${rmw_implementation})
 
+    # If the rmw_implementation is rmw_zenoh_cpp, run the tests with multicast discovery enabled.
+    if(rmw_implementation STREQUAL "rmw_zenoh_cpp")
+      list(APPEND rmw_implementation_env_var
+        ZENOH_ROUTER_CHECK_ATTEMPTS=-1
+        ZENOH_CONFIG_OVERRIDE=scouting/multicast/enabled=true
+        RUST_LOG=z=error
+      )
+    endif()
     ament_add_gmock_test(test_record_all
       TEST_NAME test_record_all${target_suffix}
       ENV ${rmw_implementation_env_var}
@@ -374,6 +502,14 @@ if(BUILD_TESTING)
   function(test_record_all_ignore_leaf_topics_for_rmw_implementation)
     set(rmw_implementation_env_var RMW_IMPLEMENTATION=${rmw_implementation})
 
+    # If the rmw_implementation is rmw_zenoh_cpp, run the tests with multicast discovery enabled.
+    if(rmw_implementation STREQUAL "rmw_zenoh_cpp")
+      list(APPEND rmw_implementation_env_var
+        ZENOH_ROUTER_CHECK_ATTEMPTS=-1
+        ZENOH_CONFIG_OVERRIDE=scouting/multicast/enabled=true
+        RUST_LOG=z=error
+      )
+    endif()
     ament_add_gmock_test(test_record_all_ignore_leaf_topics
       TEST_NAME test_record_all_ignore_leaf_topics${target_suffix}
       ENV ${rmw_implementation_env_var}
@@ -391,6 +527,14 @@ if(BUILD_TESTING)
   function(test_record_all_include_unpublished_topics_for_rmw_implementation)
     set(rmw_implementation_env_var RMW_IMPLEMENTATION=${rmw_implementation})
 
+    # If the rmw_implementation is rmw_zenoh_cpp, run the tests with multicast discovery enabled.
+    if(rmw_implementation STREQUAL "rmw_zenoh_cpp")
+      list(APPEND rmw_implementation_env_var
+        ZENOH_ROUTER_CHECK_ATTEMPTS=-1
+        ZENOH_CONFIG_OVERRIDE=scouting/multicast/enabled=true
+        RUST_LOG=z=error
+      )
+    endif()
     ament_add_gmock_test(test_record_all_include_unpublished_topics
       TEST_NAME test_record_all_include_unpublished_topics${target_suffix}
       ENV ${rmw_implementation_env_var}
@@ -403,6 +547,14 @@ if(BUILD_TESTING)
   function(test_record_all_no_discovery_for_rmw_implementation)
     set(rmw_implementation_env_var RMW_IMPLEMENTATION=${rmw_implementation})
 
+    # If the rmw_implementation is rmw_zenoh_cpp, run the tests with multicast discovery enabled.
+    if(rmw_implementation STREQUAL "rmw_zenoh_cpp")
+      list(APPEND rmw_implementation_env_var
+        ZENOH_ROUTER_CHECK_ATTEMPTS=-1
+        ZENOH_CONFIG_OVERRIDE=scouting/multicast/enabled=true
+        RUST_LOG=z=error
+      )
+    endif()
     ament_add_gmock_test(test_record_all_no_discovery
       TEST_NAME test_record_all_no_discovery${target_suffix}
       ENV ${rmw_implementation_env_var}
@@ -415,6 +567,14 @@ if(BUILD_TESTING)
   function(test_record_all_use_sim_time_for_rmw_implementation)
     set(rmw_implementation_env_var RMW_IMPLEMENTATION=${rmw_implementation})
 
+    # If the rmw_implementation is rmw_zenoh_cpp, run the tests with multicast discovery enabled.
+    if(rmw_implementation STREQUAL "rmw_zenoh_cpp")
+      list(APPEND rmw_implementation_env_var
+        ZENOH_ROUTER_CHECK_ATTEMPTS=-1
+        ZENOH_CONFIG_OVERRIDE=scouting/multicast/enabled=true
+        RUST_LOG=z=error
+      )
+    endif()
     ament_add_gmock_test(test_record_all_use_sim_time
       TEST_NAME test_record_all_use_sim_time${target_suffix}
       ENV ${rmw_implementation_env_var}
@@ -427,6 +587,14 @@ if(BUILD_TESTING)
   function(test_keyboard_controls_for_rmw_implementation)
     set(rmw_implementation_env_var RMW_IMPLEMENTATION=${rmw_implementation})
 
+    # If the rmw_implementation is rmw_zenoh_cpp, run the tests with multicast discovery enabled.
+    if(rmw_implementation STREQUAL "rmw_zenoh_cpp")
+      list(APPEND rmw_implementation_env_var
+        ZENOH_ROUTER_CHECK_ATTEMPTS=-1
+        ZENOH_CONFIG_OVERRIDE=scouting/multicast/enabled=true
+        RUST_LOG=z=error
+      )
+    endif()
     ament_add_gmock_test(test_keyboard_controls
       TEST_NAME test_keyboard_controls${target_suffix}
       ENV ${rmw_implementation_env_var}
@@ -439,6 +607,14 @@ if(BUILD_TESTING)
   function(test_record_regex_for_rmw_implementation)
     set(rmw_implementation_env_var RMW_IMPLEMENTATION=${rmw_implementation})
 
+    # If the rmw_implementation is rmw_zenoh_cpp, run the tests with multicast discovery enabled.
+    if(rmw_implementation STREQUAL "rmw_zenoh_cpp")
+      list(APPEND rmw_implementation_env_var
+        ZENOH_ROUTER_CHECK_ATTEMPTS=-1
+        ZENOH_CONFIG_OVERRIDE=scouting/multicast/enabled=true
+        RUST_LOG=z=error
+      )
+    endif()
     # disable the following tests for connext
     # due to slower discovery of nodes
     set(SKIP_TEST "")
@@ -459,6 +635,14 @@ if(BUILD_TESTING)
   function(test_record_services_for_rmw_implementation)
     set(rmw_implementation_env_var RMW_IMPLEMENTATION=${rmw_implementation})
 
+    # If the rmw_implementation is rmw_zenoh_cpp, run the tests with multicast discovery enabled.
+    if(rmw_implementation STREQUAL "rmw_zenoh_cpp")
+      list(APPEND rmw_implementation_env_var
+        ZENOH_ROUTER_CHECK_ATTEMPTS=-1
+        ZENOH_CONFIG_OVERRIDE=scouting/multicast/enabled=true
+        RUST_LOG=z=error
+      )
+    endif()
     ament_add_gmock_test(test_record_services
       TEST_NAME test_record_services${target_suffix}
       ENV ${rmw_implementation_env_var}
@@ -477,6 +661,14 @@ if(BUILD_TESTING)
   function(test_composable_recorder_for_rmw_implementation)
     set(rmw_implementation_env_var RMW_IMPLEMENTATION=${rmw_implementation})
 
+    # If the rmw_implementation is rmw_zenoh_cpp, run the tests with multicast discovery enabled.
+    if(rmw_implementation STREQUAL "rmw_zenoh_cpp")
+      list(APPEND rmw_implementation_env_var
+        ZENOH_ROUTER_CHECK_ATTEMPTS=-1
+        ZENOH_CONFIG_OVERRIDE=scouting/multicast/enabled=true
+        RUST_LOG=z=error
+      )
+    endif()
     ament_add_gmock_test(test_composable_recorder
       TEST_NAME test_composable_recorder${target_suffix}
       ENV ${rmw_implementation_env_var}
@@ -494,6 +686,14 @@ if(BUILD_TESTING)
   function(test_load_composable_components_for_rmw_implementation)
     set(rmw_implementation_env_var RMW_IMPLEMENTATION=${rmw_implementation})
 
+    # If the rmw_implementation is rmw_zenoh_cpp, run the tests with multicast discovery enabled.
+    if(rmw_implementation STREQUAL "rmw_zenoh_cpp")
+      list(APPEND rmw_implementation_env_var
+        ZENOH_ROUTER_CHECK_ATTEMPTS=-1
+        ZENOH_CONFIG_OVERRIDE=scouting/multicast/enabled=true
+        RUST_LOG=z=error
+      )
+    endif()
     ament_add_gmock_test(test_load_composable_components
       TEST_NAME test_load_composable_components${target_suffix}
       ENV ${rmw_implementation_env_var}
