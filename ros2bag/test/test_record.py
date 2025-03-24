@@ -57,7 +57,7 @@ class TestRecord(unittest.TestCase):
             process=record_all_process
         )
         proc_output.assertWaitFor(
-            "Subscribed to topic '/rosout'",
+            'Recording...',
             process=record_all_process
         )
 
