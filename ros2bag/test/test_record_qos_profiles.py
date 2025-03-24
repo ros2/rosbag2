@@ -72,7 +72,7 @@ class TestRos2BagRecord(unittest.TestCase):
     def tearDownClass(cls):
         try:
             cls.tmpdir.cleanup()
-        except (OSError, PermissionError):
+        except OSError:
             if sys.platform != 'win32':
                 raise
             # HACK to allow Windows to close pending file handles
