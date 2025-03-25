@@ -2,6 +2,11 @@
 Changelog for package ros2bag
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.15.14 (2025-03-25)
+--------------------
+* CLI - play verb metavar (backport `#1906 <https://github.com/ros2/rosbag2/issues/1906>`_) (`#1912 <https://github.com/ros2/rosbag2/issues/1912>`_)
+* Contributors: mergify[bot]
+
 0.15.13 (2024-11-25)
 --------------------
 * Prevent using message compression mode with mcap storage (`#1782 <https://github.com/ros2/rosbag2/issues/1782>`_)

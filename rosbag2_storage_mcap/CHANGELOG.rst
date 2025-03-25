@@ -2,6 +2,11 @@
 Changelog for package rosbag2_storage_mcap
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.15.14 (2025-03-25)
+--------------------
+* fix RHEL CI warning for rosbag2_storage_mcap. (`#1883 <https://github.com/ros2/rosbag2/issues/1883>`_)
+* Contributors: Tomoya Fujita
+
 0.15.13 (2024-11-25)
 --------------------
 * Suppress mcap warnings. (`#1854 <https://github.com/ros2/rosbag2/issues/1854>`_)
