@@ -15,6 +15,7 @@
 import contextlib
 from pathlib import Path
 import re
+import shutil
 import sys
 import tempfile
 import time
@@ -66,26 +67,31 @@ class TestRos2BagRecord(unittest.TestCase):
             ) as pkg_command:
                 yield pkg_command
         cls.launch_bag_command = launch_bag_command
-        cls.tmpdir = tempfile.TemporaryDirectory()
+        cls.tmp_dir_name = tempfile.mkdtemp()
 
     @classmethod
     def tearDownClass(cls):
         try:
-            cls.tmpdir.cleanup()
+            # Cleanup
+            shutil.rmtree(cls.tmp_dir_name, ignore_errors=False)
         except OSError:
             if sys.platform != 'win32':
                 raise
             # HACK to allow Windows to close pending file handles
             time.sleep(3)
-            cls.tmpdir.cleanup()
+            shutil.rmtree(cls.tmp_dir_name, ignore_errors=True)
 
     def test_qos_simple(self):
         profile_path = PROFILE_PATH / 'qos_profile.yaml'
-        output_path = Path(self.tmpdir.name) / 'ros2bag_test_basic'
+        output_path = Path(self.tmp_dir_name) / 'ros2bag_test_basic'
         arguments = ['record', '-a', '--qos-profile-overrides-path', profile_path.as_posix(),
                      '--output', output_path.as_posix()]
+<<<<<<< HEAD
         expected_string_regex = re.compile(
             r'\[rosbag2_storage]: Opened database .* for READ_WRITE')
+=======
+        expected_output = 'Recording...'
+>>>>>>> d8f99a7 (Fix for failing test_record_qos_profiles on Windows (#1949))
         with self.launch_bag_command(arguments=arguments) as bag_command:
             bag_command.wait_for_output(
                 condition=lambda output: expected_string_regex.search(output) is not None,
@@ -97,11 +103,15 @@ class TestRos2BagRecord(unittest.TestCase):
 
     def test_incomplete_qos_profile(self):
         profile_path = PROFILE_PATH / 'incomplete_qos_profile.yaml'
-        output_path = Path(self.tmpdir.name) / 'ros2bag_test_incomplete'
+        output_path = Path(self.tmp_dir_name) / 'ros2bag_test_incomplete'
         arguments = ['record', '-a', '--qos-profile-overrides-path', profile_path.as_posix(),
                      '--output', output_path.as_posix()]
+<<<<<<< HEAD
         expected_string_regex = re.compile(
             r'\[rosbag2_storage]: Opened database .* for READ_WRITE')
+=======
+        expected_output = 'Recording...'
+>>>>>>> d8f99a7 (Fix for failing test_record_qos_profiles on Windows (#1949))
         with self.launch_bag_command(arguments=arguments) as bag_command:
             bag_command.wait_for_output(
                 condition=lambda output: expected_string_regex.search(output) is not None,
@@ -113,7 +123,7 @@ class TestRos2BagRecord(unittest.TestCase):
 
     def test_incomplete_qos_duration(self):
         profile_path = PROFILE_PATH / 'incomplete_qos_duration.yaml'
-        output_path = Path(self.tmpdir.name) / 'ros2bag_test_incomplete_duration'
+        output_path = Path(self.tmp_dir_name) / 'ros2bag_test_incomplete_duration'
         arguments = ['record', '-a', '--qos-profile-overrides-path', profile_path.as_posix(),
                      '--output', output_path.as_posix()]
         expected_string_regex = re.compile(
@@ -130,7 +140,7 @@ class TestRos2BagRecord(unittest.TestCase):
 
     def test_nonexistent_qos_profile(self):
         profile_path = PROFILE_PATH / 'foobar.yaml'
-        output_path = Path(self.tmpdir.name) / 'ros2bag_test_nonexistent'
+        output_path = Path(self.tmp_dir_name) / 'ros2bag_test_nonexistent'
         arguments = ['record', '-a', '--qos-profile-overrides-path', profile_path.as_posix(),
                      '--output', output_path.as_posix()]
         expected_string_regex = re.compile(
