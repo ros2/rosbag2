@@ -27,6 +27,7 @@
 #include "rosbag2_test_common/publication_manager.hpp"
 #include "rosbag2_test_common/wait_for.hpp"
 
+#include "rosbag2_cpp/action_utils.hpp"
 #include "rosbag2_transport/recorder.hpp"
 
 #include "test_msgs/action/fibonacci.hpp"
@@ -426,23 +427,23 @@ TEST_F(RecordIntegrationTestFixture, regex_and_exclude_service_service_recording
 TEST_F(RecordIntegrationTestFixture, regex_and_exclude_regex_action_recording)
 {
   std::string regex = "/[a-z]+_nice(_.*)";
-  std::string services_regex_to_exclude = "/[a-z]+_nice_[a-z]+/(.*)";
+  std::string actions_regex_to_exclude = "/[a-z]+_nice_[a-z]+/(.*)";
 
-  // matching service
+  // matching action
   std::string v1 = "/awesome_nice_action";
   std::string v2 = "/still_nice_action";
 
-  // excluded service
+  // excluded action
   std::string e1 = "/quite_nice_namespace/but_it_is_excluded";
 
-  // service that shouldn't match
+  // action that shouldn't match
   std::string b1 = "/numberslike1arenot_nice";
   std::string b2 = "/namespace_before/not_nice";
 
   rosbag2_transport::RecordOptions record_options =
   {false, false, false, false, {}, {}, {}, {}, {}, {}, {}, {}, "rmw_format", 10ms};
   record_options.regex = regex;
-  record_options.exclude_regex = services_regex_to_exclude;
+  record_options.exclude_regex = actions_regex_to_exclude;
 
   auto action_manager_v1 =
     std::make_shared<rosbag2_test_common::ActionClientManager<test_msgs::action::Fibonacci>>(v1);
@@ -487,43 +488,55 @@ TEST_F(RecordIntegrationTestFixture, regex_and_exclude_regex_action_recording)
   ASSERT_TRUE(action_manager_b1->send_goal());
   ASSERT_TRUE(action_manager_b2->send_goal());
 
-  constexpr size_t expected_messages = 16;
+  // One action include at least 8 messages
+  // Goal request received, Goal response sent, 3 feedback, Result request received
+  // Result response sent, status
+  constexpr size_t expected_at_least_messages_size = 16;
   auto ret = rosbag2_test_common::wait_until_condition(
     [ =, &mock_writer]() {
-      return mock_writer.get_messages().size() >= expected_messages;
+      return mock_writer.get_messages().size() >= expected_at_least_messages_size;
     },
     std::chrono::seconds(5));
   EXPECT_TRUE(ret) << "failed to capture expected messages in time";
   auto recorded_messages = mock_writer.get_messages();
-  EXPECT_THAT(recorded_messages, SizeIs(expected_messages));
+  EXPECT_THAT(recorded_messages, SizeIs(Ge(expected_at_least_messages_size)));
 
   auto recorded_topics = mock_writer.get_topics();
   EXPECT_EQ(recorded_topics.size(), 10);  // One action is related to 5 topics
-  EXPECT_TRUE(
-    recorded_topics.find(v1 + "/_action/get_result/_service_event") != recorded_topics.end());
-  EXPECT_TRUE(
-    recorded_topics.find(v2 + "/_action/get_result/_service_event") != recorded_topics.end());
+
+  std::vector<std::string> expected_action_interface_names;
+  auto expected_action_v1_interface_names =
+    rosbag2_cpp::action_name_to_action_interface_names(v1);
+  auto expected_action_v2_interface_names =
+    rosbag2_cpp::action_name_to_action_interface_names(v2);
+  std::copy(expected_action_v1_interface_names.begin(),
+    expected_action_v1_interface_names.end(),
+    std::back_inserter(expected_action_interface_names));
+  std::copy(expected_action_v2_interface_names.begin(),
+    expected_action_v2_interface_names.end(),
+    std::back_inserter(expected_action_interface_names));
+
+  for (const auto & topic : expected_action_interface_names) {
+    EXPECT_TRUE(recorded_topics.find(topic) != recorded_topics.end()) <<
+      "Expected topic:" << topic;
+  }
 }
 
 TEST_F(RecordIntegrationTestFixture, regex_and_exclude_actions_action_recording)
 {
   std::string regex = "/[a-z]+_nice(_.*)";
   std::vector<std::string> action_exclude = {
-    "/quite_nice_namespace/but_it_is_excluded/_action/send_goal/_service_event",
-    "/quite_nice_namespace/but_it_is_excluded/_action/get_result/_service_event",
-    "/quite_nice_namespace/but_it_is_excluded/_action/cancel_goal/_service_event",
-    "/quite_nice_namespace/but_it_is_excluded/_action/feedback",
-    "/quite_nice_namespace/but_it_is_excluded/_action/status",
+    "/quite_nice_namespace/but_it_is_excluded",
   };
 
-  // matching service
+  // matching actions
   std::string v1 = "/awesome_nice_action";
   std::string v2 = "/still_nice_action";
 
-  // excluded topics
+  // excluded action
   std::string e1 = "/quite_nice_namespace/but_it_is_excluded";
 
-  // service that shouldn't match
+  // action that shouldn't match
   std::string b1 = "/numberslike1arenot_nice";
   std::string b2 = "/namespace_before/not_nice";
 
@@ -575,20 +588,36 @@ TEST_F(RecordIntegrationTestFixture, regex_and_exclude_actions_action_recording)
   ASSERT_TRUE(action_manager_b1->send_goal());
   ASSERT_TRUE(action_manager_b2->send_goal());
 
-  constexpr size_t expected_messages = 16;
+  // One action include at least 8 messages
+  // Goal request received, Goal response sent, 3 feedback, Result request received
+  // Result response sent, status
+  constexpr size_t expected_at_least_messages_size = 16;
   auto ret = rosbag2_test_common::wait_until_condition(
     [ =, &mock_writer]() {
-      return mock_writer.get_messages().size() >= expected_messages;
+      return mock_writer.get_messages().size() >= expected_at_least_messages_size;
     },
     std::chrono::seconds(5));
   EXPECT_TRUE(ret) << "failed to capture expected messages in time";
   auto recorded_messages = mock_writer.get_messages();
-  EXPECT_THAT(recorded_messages, SizeIs(expected_messages));
+  EXPECT_THAT(recorded_messages, SizeIs(Ge(expected_at_least_messages_size)));
 
   auto recorded_topics = mock_writer.get_topics();
   EXPECT_EQ(recorded_topics.size(), 10);  // One action is related to 5 topics
-  EXPECT_TRUE(
-    recorded_topics.find(v1 + "/_action/get_result/_service_event") != recorded_topics.end());
-  EXPECT_TRUE(
-    recorded_topics.find(v2 + "/_action/get_result/_service_event") != recorded_topics.end());
+
+  std::vector<std::string> expected_action_interface_names;
+  auto expected_action_v1_interface_names =
+    rosbag2_cpp::action_name_to_action_interface_names(v1);
+  auto expected_action_v2_interface_names =
+    rosbag2_cpp::action_name_to_action_interface_names(v2);
+  std::copy(expected_action_v1_interface_names.begin(),
+    expected_action_v1_interface_names.end(),
+    std::back_inserter(expected_action_interface_names));
+  std::copy(expected_action_v2_interface_names.begin(),
+    expected_action_v2_interface_names.end(),
+    std::back_inserter(expected_action_interface_names));
+
+  for (const auto & topic : expected_action_interface_names) {
+    EXPECT_TRUE(recorded_topics.find(topic) != recorded_topics.end()) <<
+      "Expected topic:" << topic;
+  }
 }

@@ -321,19 +321,3 @@ def convert_service_to_service_event_topic(services):
         services_event_topics.append(service + '/_service_event')
 
     return services_event_topics
-
-
-def convert_action_to_all_related_topics(actions):
-    action_topics = []
-
-    if not actions:
-        return action_topics
-
-    for action in actions:
-        action_topics.append(action + '/_action/send_goal/_service_event')
-        action_topics.append(action + '/_action/get_result/_service_event')
-        action_topics.append(action + '/_action/cancel_goal/_service_event')
-        action_topics.append(action + '/_action/status')
-        action_topics.append(action + '/_action/feedback')
-
-    return action_topics

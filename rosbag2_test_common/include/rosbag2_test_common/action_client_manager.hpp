@@ -216,30 +216,15 @@ private:
     rclcpp::Rate loop_rate(1);
     const auto goal = goal_handle->get_goal();
     auto feedback = std::make_shared<Fibonacci::Feedback>();
-    auto & sequence = feedback->sequence;
-    sequence.push_back(0);
-    sequence.push_back(1);
     auto result = std::make_shared<Fibonacci::Result>();
 
     for (int i = 1; (i < goal->order) && rclcpp::ok(); ++i) {
-      // Check if there is a cancel request
-      if (goal_handle->is_canceling()) {
-        result->sequence = sequence;
-        goal_handle->canceled(result);
-        return;
-      }
-      // Update sequence
-      sequence.push_back(sequence[i] + sequence[i - 1]);
-      // Publish feedback
       goal_handle->publish_feedback(feedback);
-
-      // loop_rate.sleep();
     }
 
     loop_rate.sleep();
 
     // goal is done
-    result->sequence = sequence;
     goal_handle->succeed(result);
   }
 };

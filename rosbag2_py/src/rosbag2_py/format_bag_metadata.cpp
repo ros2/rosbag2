@@ -152,7 +152,7 @@ void format_topics_with_type(
     (rosbag2_cpp::is_service_event_topic(
       topics[sorted_idx[i]].topic_metadata.name,
       topics[sorted_idx[i]].topic_metadata.type) ||
-    rosbag2_cpp::is_topic_related_to_action(
+    rosbag2_cpp::is_topic_belong_to_action(
       topics[sorted_idx[i]].topic_metadata.name,
       topics[sorted_idx[i]].topic_metadata.type)))
   {
@@ -168,7 +168,7 @@ void format_topics_with_type(
   for (size_t j = ++i; j < number_of_topics; ++j) {
     if (rosbag2_cpp::is_service_event_topic(
         topics[sorted_idx[j]].topic_metadata.name, topics[sorted_idx[j]].topic_metadata.type) ||
-      rosbag2_cpp::is_topic_related_to_action(
+      rosbag2_cpp::is_topic_belong_to_action(
         topics[sorted_idx[j]].topic_metadata.name, topics[sorted_idx[j]].topic_metadata.type))
     {
       continue;
@@ -196,10 +196,11 @@ void filter_service_and_action_info(
   ActionInfoMap action_info_map;
 
   for (auto & topic : topics_with_message_count) {
-    if (rosbag2_cpp::is_topic_related_to_action(
-      topic.topic_metadata.name, topic.topic_metadata.type))
-    {
-      auto action_name = rosbag2_cpp::action_topic_name_to_action_name(topic.topic_metadata.name);
+    const auto action_interface_type =
+      rosbag2_cpp::get_action_interface_type(topic.topic_metadata.name);
+    if (rosbag2_cpp::is_topic_belong_to_action(action_interface_type, topic.topic_metadata.type)) {
+      auto action_name =
+        rosbag2_cpp::action_interface_name_to_action_name(topic.topic_metadata.name);
 
       if (action_info_map.find(action_name) == action_info_map.end()) {
         action_info_map[action_name] = std::make_shared<rosbag2_py::ActionInformation>();
@@ -212,27 +213,27 @@ void filter_service_and_action_info(
       // being empty. So If the type is empty, it will be updated with subsequent messages.
       if (action_info_map[action_name]->action_metadata.type.empty()) {
         action_info_map[action_name]->action_metadata.type =
-          rosbag2_cpp::action_topic_type_to_action_type(topic.topic_metadata.type);
+          rosbag2_cpp::action_interface_type_to_action_type(topic.topic_metadata.type);
       }
 
-      switch (rosbag2_cpp::get_action_topic_type_from_topic_name(topic.topic_metadata.name)) {
-        case rosbag2_cpp::TopicsInAction::SendGoalEvent:
+      switch (action_interface_type) {
+        case rosbag2_cpp::ActionInterfaceType::SendGoalEvent:
           action_info_map[action_name]->send_goal_event_message_count = topic.message_count;
           break;
-        case rosbag2_cpp::TopicsInAction::CancelGoalEvent:
+        case rosbag2_cpp::ActionInterfaceType::CancelGoalEvent:
           action_info_map[action_name]->cancel_goal_event_message_count = topic.message_count;
           break;
-        case rosbag2_cpp::TopicsInAction::GetResultEvent:
+        case rosbag2_cpp::ActionInterfaceType::GetResultEvent:
           action_info_map[action_name]->get_result_event_message_count = topic.message_count;
           break;
-        case rosbag2_cpp::TopicsInAction::Feedback:
+        case rosbag2_cpp::ActionInterfaceType::Feedback:
           action_info_map[action_name]->feedback_message_count = topic.message_count;
           break;
-        case rosbag2_cpp::TopicsInAction::Status:
+        case rosbag2_cpp::ActionInterfaceType::Status:
           action_info_map[action_name]->status_message_count = topic.message_count;
           break;
         default:  // Never go here
-          break;
+          throw std::out_of_range("Invalid action interface type");
       }
       total_action_msg_count += topic.message_count;
       continue;

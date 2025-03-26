@@ -62,6 +62,14 @@ private:
   bool allow_unknown_types_ = false;
   std::unordered_set<std::string> already_warned_unknown_types_;
   rclcpp::node_interfaces::NodeGraphInterface::SharedPtr node_graph_;
+
+  /// The action name in record_options.include_action will be converted into the action interface
+  ///  name and saved in this set
+  std::unordered_set<std::string> include_action_interface_names_;
+
+  /// The action name in record_options.exclude_action will be converted into the action interface
+  ///  name and saved in this set
+  std::unordered_set<std::string> exclude_action_interface_names_;
 };
 }  // namespace rosbag2_transport
 

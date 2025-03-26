@@ -153,7 +153,7 @@ TEST_P(InfoEndToEndTestFixture, info_with_verbose_option_end_to_end_test) {
   EXPECT_THAT(
     output, ContainsRegex(
       "Action: /test_action1 | Type: example_interfaces/action/Fibonacci | Topics: 2 | Service: 3 "
-      "| Serialization Format: cdr\n"
+      "| Size Contribution: \\d+ B | Serialization Format: cdr\n"
       "    Topic: feedback | Count: \\d+\n"
       "    Topic: status | Count: \\d+\n"
       "    Service: send_goal | Request Count: \\d+ | Response Count: \\d+\n"
@@ -163,7 +163,7 @@ TEST_P(InfoEndToEndTestFixture, info_with_verbose_option_end_to_end_test) {
   EXPECT_THAT(
     output, ContainsRegex(
       "Action: /test_action2 | Type: example_interfaces/action/Fibonacci | Topics: 2 | Service: 3 "
-      "| Serialization Format: cdr\n"
+      "| Size Contribution: \\d+ B | Serialization Format: cdr\n"
       "    Topic: feedback | Count: \\d+\n"
       "    Topic: status | Count: \\d+\n"
       "    Service: send_goal | Request Count: \\d+ | Response Count: \\d+\n"

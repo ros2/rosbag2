@@ -182,14 +182,15 @@ TEST_P(Rosbag2CPPGetServiceInfoTest, get_service_info_for_bag_with_topics_only) 
   }
 
   rosbag2_cpp::Info info;
-  std::vector<std::shared_ptr<rosbag2_cpp::rosbag2_service_info_t>> ret_service_infos;
-  std::vector<std::shared_ptr<rosbag2_cpp::rosbag2_action_info_t>> ret_action_infos;
+  std::pair<std::vector<std::shared_ptr<rosbag2_cpp::rosbag2_service_info_t>>,
+    std::vector<std::shared_ptr<rosbag2_cpp::rosbag2_action_info_t>>>
+    ret_service_action_infos;
   const std::string recorded_bag_uri = bag_path_str + "/" + get_bag_file_name();
   ASSERT_NO_THROW(
-    info.read_service_action_info(
-      ret_service_infos, ret_action_infos, recorded_bag_uri, storage_id)) << recorded_bag_uri;
+    ret_service_action_infos = info.read_service_and_action_info(
+      recorded_bag_uri, storage_id)) << recorded_bag_uri;
 
-  EXPECT_TRUE(ret_service_infos.empty());
+  EXPECT_TRUE(ret_service_action_infos.first.empty());
 }
 
 TEST_P(Rosbag2CPPGetServiceInfoTest, get_service_info_for_bag_with_services_only) {
@@ -245,20 +246,21 @@ TEST_P(Rosbag2CPPGetServiceInfoTest, get_service_info_for_bag_with_services_only
   }
 
   rosbag2_cpp::Info info;
-  std::vector<std::shared_ptr<rosbag2_cpp::rosbag2_service_info_t>> ret_service_infos;
-  std::vector<std::shared_ptr<rosbag2_cpp::rosbag2_action_info_t>> ret_action_infos;
+  std::pair<std::vector<std::shared_ptr<rosbag2_cpp::rosbag2_service_info_t>>,
+    std::vector<std::shared_ptr<rosbag2_cpp::rosbag2_action_info_t>>>
+    ret_service_action_infos;
 
   const std::string recorded_bag_uri = bag_path_str + "/" + get_bag_file_name();
   ASSERT_NO_THROW(
-    info.read_service_action_info(
-      ret_service_infos, ret_action_infos, recorded_bag_uri, storage_id)) << recorded_bag_uri;
+    ret_service_action_infos = info.read_service_and_action_info(
+    recorded_bag_uri, storage_id)) << recorded_bag_uri;
 
-  ASSERT_EQ(ret_service_infos.size(), 1);
-  EXPECT_EQ(ret_service_infos[0]->name, "/test_service");
-  EXPECT_EQ(ret_service_infos[0]->type, "test_msgs/srv/BasicTypes");
-  EXPECT_EQ(ret_service_infos[0]->request_count, num_service_requests);
-  EXPECT_EQ(ret_service_infos[0]->response_count, num_service_requests);
-  EXPECT_EQ(ret_service_infos[0]->serialization_format, "cdr");
+  ASSERT_EQ(ret_service_action_infos.first.size(), 1);
+  EXPECT_EQ(ret_service_action_infos.first[0]->name, "/test_service");
+  EXPECT_EQ(ret_service_action_infos.first[0]->type, "test_msgs/srv/BasicTypes");
+  EXPECT_EQ(ret_service_action_infos.first[0]->request_count, num_service_requests);
+  EXPECT_EQ(ret_service_action_infos.first[0]->response_count, num_service_requests);
+  EXPECT_EQ(ret_service_action_infos.first[0]->serialization_format, "cdr");
 }
 
 TEST_P(Rosbag2CPPGetServiceInfoTest, get_service_info_for_bag_with_topics_and_services) {
@@ -334,21 +336,22 @@ TEST_P(Rosbag2CPPGetServiceInfoTest, get_service_info_for_bag_with_topics_and_se
   }
 
   rosbag2_cpp::Info info;
-  std::vector<std::shared_ptr<rosbag2_cpp::rosbag2_service_info_t>> ret_service_infos;
-  std::vector<std::shared_ptr<rosbag2_cpp::rosbag2_action_info_t>> ret_action_infos;
+  std::pair<std::vector<std::shared_ptr<rosbag2_cpp::rosbag2_service_info_t>>,
+    std::vector<std::shared_ptr<rosbag2_cpp::rosbag2_action_info_t>>>
+    ret_service_action_infos;
 
   const std::string recorded_bag_uri = bag_path_str + "/" + get_bag_file_name();
   ASSERT_NO_THROW(
-    info.read_service_action_info(
-      ret_service_infos, ret_action_infos, recorded_bag_uri, storage_id)) << recorded_bag_uri;
-  ASSERT_EQ(ret_service_infos.size(), 2);
-  if (ret_service_infos[0]->name == "/test_service2") {
-    EXPECT_EQ(ret_service_infos[1]->name, "/test_service1");
+    ret_service_action_infos = info.read_service_and_action_info(
+      recorded_bag_uri, storage_id)) << recorded_bag_uri;
+  ASSERT_EQ(ret_service_action_infos.first.size(), 2);
+  if (ret_service_action_infos.first[0]->name == "/test_service2") {
+    EXPECT_EQ(ret_service_action_infos.first[1]->name, "/test_service1");
   } else {
-    EXPECT_EQ(ret_service_infos[0]->name, "/test_service1");
-    EXPECT_EQ(ret_service_infos[1]->name, "/test_service2");
+    EXPECT_EQ(ret_service_action_infos.first[0]->name, "/test_service1");
+    EXPECT_EQ(ret_service_action_infos.first[1]->name, "/test_service2");
   }
-  for (const auto & service_info : ret_service_infos) {
+  for (const auto & service_info : ret_service_action_infos.first) {
     EXPECT_EQ(service_info->request_count, num_service_requests);
     EXPECT_EQ(service_info->response_count, num_service_requests);
     EXPECT_EQ(service_info->type, "test_msgs/srv/BasicTypes");

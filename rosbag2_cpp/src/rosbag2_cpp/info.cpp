@@ -76,11 +76,81 @@ struct action_service_req_resp_info
   service_req_resp_info cancel_goal_service;
   service_req_resp_info get_result_service;
 };
+
+inline void calculate_message_counts(
+  std::unordered_map<client_id, sequence_set, client_id_hash> & message_map,
+  size_t & count)
+{
+  count = 0;
+  for (auto & [client_id, message_list] : message_map) {
+    count += message_list.size();
+  }
+}
+
+using action_analysis =
+  std::unordered_map<std::string, std::shared_ptr<action_service_req_resp_info>>;
+
+inline void summary_action_service_info(
+  action_analysis & action_process_info,
+  std::unordered_map<std::string, std::shared_ptr<rosbag2_action_info_t>> & all_action_info)
+{
+  for (auto & [action_name, action_info] : action_process_info) {
+    size_t count = 0;
+    // Get the number of request from all clients for send_goal
+    calculate_message_counts(action_info->send_goal_service.request, count);
+    all_action_info[action_name]->send_goal_service_msg_count.first = count;
+
+    // Get the number of request from all clients for cancel_goal
+    count = 0;
+    calculate_message_counts(action_info->cancel_goal_service.request, count);
+    all_action_info[action_name]->cancel_goal_service_msg_count.first = count;
+
+    // Get the number of request from all clients for get_result
+    count = 0;
+    calculate_message_counts(action_info->get_result_service.request, count);
+    all_action_info[action_name]->get_result_service_msg_count.first = count;
+
+    // Get the number of response from all clients for send_goal
+    count = 0;
+    calculate_message_counts(action_info->send_goal_service.response, count);
+    all_action_info[action_name]->send_goal_service_msg_count.second = count;
+
+    // Get the number of response from all clients for cancel_goal
+    count = 0;
+    calculate_message_counts(action_info->cancel_goal_service.response, count);
+    all_action_info[action_name]->cancel_goal_service_msg_count.second = count;
+
+    // Get the number of response from all clients for get_result
+    count = 0;
+    calculate_message_counts(action_info->get_result_service.response, count);
+    all_action_info[action_name]->get_result_service_msg_count.second = count;
+  }
+}
+
+using service_analysis =
+  std::unordered_map<std::string, std::shared_ptr<service_req_resp_info>>;
+
+inline void summary_service_info(
+  service_analysis & service_process_info,
+  std::unordered_map<std::string, std::shared_ptr<rosbag2_service_info_t>> & all_service_info)
+{
+  for (auto & [topic_name, service_info] : service_process_info) {
+    size_t count = 0;
+    // Get the number of request from all clients
+    calculate_message_counts(service_info->request, count);
+    all_service_info[topic_name]->request_count = count;
+
+    count = 0;
+    // Get the number of response from all clients
+    calculate_message_counts(service_info->response, count);
+    all_service_info[topic_name]->response_count = count;
+  }
+}
 }  // namespace
 
-void Info::read_service_action_info(
-  std::vector<std::shared_ptr<rosbag2_service_info_t>> & output_service_info,
-  std::vector<std::shared_ptr<rosbag2_action_info_t>> & output_action_info,
+std::pair<std::vector<std::shared_ptr<rosbag2_service_info_t>>,
+  std::vector<std::shared_ptr<rosbag2_action_info_t>>>
+Info::read_service_and_action_info(
   const std::string & uri, const std::string & storage_id)
 {
   rosbag2_storage::StorageFactory factory;
@@ -95,22 +165,24 @@ void Info::read_service_action_info(
   }
 
   // Service event topic name as key
-  using service_analysis =
-    std::unordered_map<std::string, std::shared_ptr<service_req_resp_info>>;
   service_analysis service_process_info;
   std::unordered_map<std::string, std::shared_ptr<rosbag2_service_info_t>> all_service_info;
 
   // Action name as key
-  using action_analysis =
-    std::unordered_map<std::string, std::shared_ptr<action_service_req_resp_info>>;
   action_analysis action_process_info;
   std::unordered_map<std::string, std::shared_ptr<rosbag2_action_info_t>> all_action_info;
 
+  std::vector<std::shared_ptr<rosbag2_action_info_t>> output_action_info;
+  std::vector<std::shared_ptr<rosbag2_service_info_t>> output_service_info;
+
+  std::unordered_map<std::string, std::string> action_interface_name_to_action_name_map;
+  std::unordered_map<std::string, std::string> service_event_name_to_service_name_map;
+
   auto all_topics_types = storage->get_all_topics_and_types();
   for (auto & t : all_topics_types) {
-    if (is_topic_related_to_action(t.name, t.type)) {
+    if (is_topic_belong_to_action(t.name, t.type)) {
       std::shared_ptr<rosbag2_action_info_t> action_info;
-      std::string action_name = action_topic_name_to_action_name(t.name);
+      std::string action_name = action_interface_name_to_action_name(t.name);
       if (all_action_info.find(action_name) == all_action_info.end()) {
         action_info = std::make_shared<rosbag2_action_info_t>();
         action_info->name = action_name;
@@ -121,20 +193,27 @@ void Info::read_service_action_info(
         action_info = all_action_info[action_name];
       }
 
-      // cancel_goal event topic and status topic cannot get type
+      // Update action type. Note: cancel_goal event topic and status topic cannot get type
       if (action_info->type.empty()) {
-        action_info->type = action_topic_type_to_action_type(t.type);
+        action_info->type = action_interface_type_to_action_type(t.type);
       }
-      continue;
-    }
 
-    if (is_service_event_topic(t.name, t.type)) {
+      // Update action_interface_name_to_action_name_map to speed up following code.
+      if (action_interface_name_to_action_name_map.find(t.name) ==
+        action_interface_name_to_action_name_map.end())
+      {
+        action_interface_name_to_action_name_map[t.name] = action_name;
+      }
+    } else if (is_service_event_topic(t.name, t.type)) {
       auto service_info = std::make_shared<rosbag2_cpp::rosbag2_service_info_t>();
       service_info->name = service_event_topic_name_to_service_name(t.name);
       service_info->type = service_event_topic_type_to_service_type(t.type);
       service_info->serialization_format = t.serialization_format;
       all_service_info.emplace(t.name, service_info);
       service_process_info[t.name] = std::make_shared<service_req_resp_info>();
+
+      // Update service_event_name_to_service_name_map to speed up following code.
+      service_event_name_to_service_name_map[t.name] = service_info->name;
     }
   }
 
@@ -147,17 +226,15 @@ void Info::read_service_action_info(
     while (storage->has_next()) {
       auto bag_msg = storage->read_next();
 
-      auto action_topic_type = get_action_topic_type_from_topic_name(bag_msg->topic_name);
-      if (action_topic_type == TopicsInAction::Unknown) {
-        // Check if topic is service event topic
-        auto one_service_info = all_service_info.find(bag_msg->topic_name);
-        if (one_service_info == all_service_info.end()) {
-          continue;  // Skip the regular topics
-        }
+      if (action_interface_name_to_action_name_map.count(bag_msg->topic_name) == 0 &&
+        service_event_name_to_service_name_map.count(bag_msg->topic_name) == 0)
+      {
+        continue;  // Skip the regular topics
       }
 
-      if (action_topic_type == TopicsInAction::Feedback ||
-        action_topic_type == TopicsInAction::Status)
+      auto action_interface_type = get_action_interface_type(bag_msg->topic_name);
+      if (action_interface_type == ActionInterfaceType::Feedback ||
+        action_interface_type == ActionInterfaceType::Status)
       {
         continue;  // Skip the feedback and status topic for action
       }
@@ -171,23 +248,24 @@ void Info::read_service_action_info(
                 "Failed to deserialize message from " + bag_msg->topic_name + " !");
       }
 
-      if (action_topic_type != TopicsInAction::Unknown) {
-        auto action_name = action_topic_name_to_action_name(bag_msg->topic_name);
+      if (action_interface_type != ActionInterfaceType::Unknown) {
+        auto action_name = action_interface_name_to_action_name_map[bag_msg->topic_name];
+        auto action_service_info = action_process_info[action_name];
 
         // Handle action service event topic
         switch (msg.event_type) {
           case service_msgs::msg::ServiceEventInfo::REQUEST_SENT:
           case service_msgs::msg::ServiceEventInfo::REQUEST_RECEIVED:
             {
-              if (action_topic_type == TopicsInAction::SendGoalEvent) {
-                action_process_info[action_name]->
+              if (action_interface_type == ActionInterfaceType::SendGoalEvent) {
+                action_service_info->
                 send_goal_service.request[msg.client_gid].emplace(msg.sequence_number);
-              } else if (action_topic_type == TopicsInAction::GetResultEvent) {
-                action_process_info[action_name]->
+              } else if (action_interface_type == ActionInterfaceType::GetResultEvent) {
+                action_service_info->
                 get_result_service.request[msg.client_gid].emplace(msg.sequence_number);
               } else {
                 // TopicsInAction::CancelGoalEvent
-                action_process_info[action_name]->
+                action_service_info->
                 cancel_goal_service.request[msg.client_gid].emplace(msg.sequence_number);
               }
               break;
@@ -195,19 +273,22 @@ void Info::read_service_action_info(
           case service_msgs::msg::ServiceEventInfo::RESPONSE_SENT:
           case service_msgs::msg::ServiceEventInfo::RESPONSE_RECEIVED:
             {
-              if (action_topic_type == TopicsInAction::SendGoalEvent) {
-                action_process_info[action_name]->
+              if (action_interface_type == ActionInterfaceType::SendGoalEvent) {
+                action_service_info->
                 send_goal_service.response[msg.client_gid].emplace(msg.sequence_number);
-              } else if (action_topic_type == TopicsInAction::GetResultEvent) {
-                action_process_info[action_name]->
+              } else if (action_interface_type == ActionInterfaceType::GetResultEvent) {
+                action_service_info->
                 get_result_service.response[msg.client_gid].emplace(msg.sequence_number);
               } else {
                 // TopicsInAction::CancelGoalEvent
-                action_process_info[action_name]->
+                action_service_info->
                 cancel_goal_service.response[msg.client_gid].emplace(msg.sequence_number);
               }
               break;
             }
+          default:
+            throw std::range_error("Invalid service event type " +
+              std::to_string(msg.event_type) + " !");
         }
       } else {
         // Handle service event topic
@@ -222,54 +303,15 @@ void Info::read_service_action_info(
             service_process_info[bag_msg->topic_name]->response[msg.client_gid].emplace(
               msg.sequence_number);
             break;
+          default:
+            throw std::range_error("Invalid service event type " +
+              std::to_string(msg.event_type) + " !");
         }
       }
     }
 
     // Process action_process_info to get the number of request and response
-    for (auto & [action_name, action_info] : action_process_info) {
-      size_t count = 0;
-      // Get the number of request from all clients for send_goal
-      for (auto &[client_id, request_list] : action_info->send_goal_service.request) {
-        count += request_list.size();
-      }
-      all_action_info[action_name]->send_goal_service_msg_count.first = count;
-
-      // Get the number of request from all clients for cancel_goal
-      count = 0;
-      for (auto &[client_id, request_list] : action_info->cancel_goal_service.request) {
-        count += request_list.size();
-      }
-      all_action_info[action_name]->cancel_goal_service_msg_count.first = count;
-
-      // Get the number of request from all clients for get_result
-      count = 0;
-      for (auto &[client_id, request_list] : action_info->get_result_service.request) {
-        count += request_list.size();
-      }
-      all_action_info[action_name]->get_result_service_msg_count.first = count;
-
-      // Get the number of response from all clients for send_goal
-      count = 0;
-      for (auto &[client_id, response_list] : action_info->send_goal_service.response) {
-        count += response_list.size();
-      }
-      all_action_info[action_name]->send_goal_service_msg_count.second = count;
-
-      // Get the number of response from all clients for cancel_goal
-      count = 0;
-      for (auto &[client_id, response_list] : action_info->cancel_goal_service.response) {
-        count += response_list.size();
-      }
-      all_action_info[action_name]->cancel_goal_service_msg_count.second = count;
-
-      // Get the number of response from all clients for get_result
-      count = 0;
-      for (auto &[client_id, response_list] : action_info->get_result_service.response) {
-        count += response_list.size();
-      }
-      all_action_info[action_name]->get_result_service_msg_count.second = count;
-    }
+    summary_action_service_info(action_process_info, all_action_info);
 
     // Covert all_action_info to output_action_info
     for (auto & [action_name, action_info] : all_action_info) {
@@ -277,21 +319,7 @@ void Info::read_service_action_info(
     }
 
     // Process service_process_info to get the number of request and response
-    for (auto & [topic_name, service_info] : service_process_info) {
-      size_t count = 0;
-      // Get the number of request from all clients
-      for (auto &[client_id, request_list] : service_info->request) {
-        count += request_list.size();
-      }
-      all_service_info[topic_name]->request_count = count;
-
-      count = 0;
-      // Get the number of response from all clients
-      for (auto &[client_id, response_list] : service_info->response) {
-        count += response_list.size();
-      }
-      all_service_info[topic_name]->response_count = count;
-    }
+    summary_service_info(service_process_info, all_service_info);
 
     // Convert all_service_info to output_service_info
     for (auto & [topic_name, service_info] : all_service_info) {
@@ -299,7 +327,7 @@ void Info::read_service_action_info(
     }
   }
 
-  return;
+  return std::make_pair(std::move(output_service_info), std::move(output_action_info));
 }
 
 std::unordered_map<std::string, uint64_t> Info::compute_messages_size_contribution(

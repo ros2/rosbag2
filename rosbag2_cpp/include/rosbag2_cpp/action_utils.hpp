@@ -22,7 +22,7 @@
 
 namespace rosbag2_cpp
 {
-enum class TopicsInAction
+enum class ActionInterfaceType
 {
   SendGoalEvent,
   CancelGoalEvent,
@@ -34,26 +34,31 @@ enum class TopicsInAction
 
 ROSBAG2_CPP_PUBLIC
 bool
-is_topic_related_to_action(const std::string & topic_name, const std::string & topic_type);
+is_topic_belong_to_action(const std::string & topic_name, const std::string & topic_type);
 
-// Call this function after is_topic_related_to_action() return true
+ROSBAG2_CPP_PUBLIC
+bool
+is_topic_belong_to_action(
+  ActionInterfaceType action_interface_type, const std::string & topic_type);
+
+// Call this function after is_topic_belong_to_action() return true
 ROSBAG2_CPP_PUBLIC
 std::string
-action_topic_name_to_action_name(const std::string & topic_name);
+action_interface_name_to_action_name(const std::string & topic_name);
 
-// Call this function after is_topic_related_to_action() return true
+// Call this function after is_topic_belong_to_action() return true
 // Note that cancel_goal event topic and status topic return ""
 ROSBAG2_CPP_PUBLIC
 std::string
-action_topic_type_to_action_type(const std::string & topic_type);
+action_interface_type_to_action_type(const std::string & topic_type);
 
 ROSBAG2_CPP_PUBLIC
-TopicsInAction
-get_action_topic_type_from_topic_name(const std::string & topic_name);
+ActionInterfaceType
+get_action_interface_type(const std::string & topic_name);
 
 ROSBAG2_CPP_PUBLIC
 std::vector<std::string>
-action_name_to_action_topic_name(const std::string & action_name);
+action_name_to_action_interface_names(const std::string & action_name);
 }  // namespace rosbag2_cpp
 
 #endif  // ROSBAG2_CPP__ACTION_UTILS_HPP_

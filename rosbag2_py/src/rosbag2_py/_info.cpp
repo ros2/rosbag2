@@ -67,7 +67,7 @@ public:
       if (!rosbag2_cpp::is_service_event_topic(
           topic_info.topic_metadata.name,
           topic_info.topic_metadata.type) &&
-        !rosbag2_cpp::is_topic_related_to_action(
+        !rosbag2_cpp::is_topic_belong_to_action(
               topic_info.topic_metadata.name,
               topic_info.topic_metadata.type))
       {
@@ -85,11 +85,7 @@ public:
     std::vector<std::shared_ptr<rosbag2_cpp::rosbag2_action_info_t>> all_actions_info;
 
     for (auto & file_info : metadata_info.files) {
-      std::vector<std::shared_ptr<rosbag2_cpp::rosbag2_service_info_t>> output_service_info;
-      std::vector<std::shared_ptr<rosbag2_cpp::rosbag2_action_info_t>> output_action_info;
-      info_->read_service_action_info(
-        output_service_info,
-        output_action_info,
+      auto [output_service_info, output_action_info] = info_->read_service_and_action_info(
         uri + "/" + file_info.path,
         metadata_info.storage_identifier);
       if (!output_service_info.empty()) {
@@ -110,24 +106,24 @@ public:
     // metadata_info.topics_with_message_count
     if (!all_actions_info.empty()) {
       for (auto & [topic_metadata, message_count] : metadata_info.topics_with_message_count) {
-        if (rosbag2_cpp::is_topic_related_to_action(topic_metadata.name, topic_metadata.type)) {
-          auto action_interface_type =
-            rosbag2_cpp::get_action_topic_type_from_topic_name(topic_metadata.name);
+        auto action_interface_type =
+          rosbag2_cpp::get_action_interface_type(topic_metadata.name);
+        if (rosbag2_cpp::is_topic_belong_to_action(action_interface_type, topic_metadata.type)) {
           switch (action_interface_type) {
-            case rosbag2_cpp::TopicsInAction::Feedback:
-            case rosbag2_cpp::TopicsInAction::Status:
+            case rosbag2_cpp::ActionInterfaceType::Feedback:
+            case rosbag2_cpp::ActionInterfaceType::Status:
               {
                 auto action_info_iter = std::find_if(all_actions_info.begin(),
                   all_actions_info.end(),
                     [topic_name = topic_metadata.name](const auto & action_info){
                       return action_info->name ==
-                             rosbag2_cpp::action_topic_name_to_action_name(topic_name);
+                             rosbag2_cpp::action_interface_name_to_action_name(topic_name);
                   });
                 if (action_info_iter == all_actions_info.end()) {
                   break;
                 }
 
-                if (action_interface_type == rosbag2_cpp::TopicsInAction::Feedback) {
+                if (action_interface_type == rosbag2_cpp::ActionInterfaceType::Feedback) {
                   (*action_info_iter)->feedback_topic_msg_count = message_count;
                 } else {
                   (*action_info_iter)->status_topic_msg_count = message_count;
@@ -157,7 +153,7 @@ public:
     std::cout <<
       format_service_info(all_services_info, messages_size, true, sort_method) << std::endl;
     std::cout <<
-      format_action_info(all_actions_info, sort_method) << std::endl;
+      format_action_info(all_actions_info, messages_size, true, sort_method) << std::endl;
   }
 
   std::unordered_set<std::string> get_sorting_methods()

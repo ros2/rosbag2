@@ -308,6 +308,8 @@ def test_recorder_validate_exclude_actions_needs_inclusive_args(test_arguments_p
     assert args.all_topics is True
     assert [] == args.topic_types
     assert args.all_services is False
+    assert args.all_actions is False
+    assert ['action1'] == args.actions
     assert '' == args.regex
     assert '' == args.exclude_regex
 

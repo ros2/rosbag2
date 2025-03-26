@@ -104,7 +104,25 @@ TopicFilter::TopicFilter(
 : record_options_(std::move(record_options)),
   allow_unknown_types_(allow_unknown_types),
   node_graph_(node_graph)
-{}
+{
+  if (record_options_.actions.size() > 0) {
+    for ( auto & action_name : record_options_.actions ) {
+      auto action_interface_names =
+        rosbag2_cpp::action_name_to_action_interface_names(action_name);
+      include_action_interface_names_.insert(
+        action_interface_names.begin(), action_interface_names.end());
+    }
+  }
+
+  if (record_options_.exclude_actions.size() > 0) {
+    for ( auto & action_name : record_options_.exclude_actions ) {
+      auto action_interface_names =
+        rosbag2_cpp::action_name_to_action_interface_names(action_name);
+      exclude_action_interface_names_.insert(
+        action_interface_names.begin(), action_interface_names.end());
+    }
+  }
+}
 
 TopicFilter::~TopicFilter() = default;
 
@@ -129,7 +147,7 @@ bool TopicFilter::take_topic(
 
   const std::string & topic_type = topic_types[0];
 
-  bool is_action_topic = rosbag2_cpp::is_topic_related_to_action(topic_name, topic_type);
+  bool is_action_topic = rosbag2_cpp::is_topic_belong_to_action(topic_name, topic_type);
   bool is_service_event_topic = false;
   if (!is_action_topic) {
     is_service_event_topic = rosbag2_cpp::is_service_event_topic(topic_name, topic_type);
@@ -225,7 +243,7 @@ bool TopicFilter::take_topic(
         return false;
       }
     }
-  } else {
+  } else if (is_action_topic) {
     // action topic
 
     // Check if topics for action need to be recorded
@@ -237,11 +255,13 @@ bool TopicFilter::take_topic(
     }
 
     // Convert topic name to action name
-    auto action_name = rosbag2_cpp::action_topic_name_to_action_name(topic_name);
+    auto action_name = rosbag2_cpp::action_interface_name_to_action_name(topic_name);
 
     if (!record_options_.all_actions) {
-      // Not in include action list
-      if (!topic_in_list(topic_name, record_options_.actions)) {
+      // Not in include action interface list
+      if (include_action_interface_names_.find(topic_name) ==
+        include_action_interface_names_.end())
+      {
         // Not match include regex
         if (!record_options_.regex.empty()) {
           std::regex include_regex(record_options_.regex);
@@ -254,7 +274,9 @@ bool TopicFilter::take_topic(
       }
     }
 
-    if (topic_in_list(topic_name, record_options_.exclude_actions)) {
+    if (exclude_action_interface_names_.find(topic_name) !=
+      exclude_action_interface_names_.end())
+    {
       return false;
     }
 

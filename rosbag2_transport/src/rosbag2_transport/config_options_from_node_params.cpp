@@ -291,7 +291,7 @@ RecordOptions get_record_options_from_node_params(rclcpp::Node & node)
   auto action_list = node.declare_parameter<std::vector<std::string>>(
     "record.actions", std::vector<std::string>());
   for (auto & action : action_list) {
-    auto one_action_topic_list = rosbag2_cpp::action_name_to_action_topic_name(action);
+    auto one_action_topic_list = rosbag2_cpp::action_name_to_action_interface_names(action);
     std::move(one_action_topic_list.begin(), one_action_topic_list.end(),
               std::back_inserter(record_options.actions));
   }
@@ -314,7 +314,7 @@ RecordOptions get_record_options_from_node_params(rclcpp::Node & node)
   auto exclude_action_list = node.declare_parameter<std::vector<std::string>>(
     "record.exclude_actions", std::vector<std::string>());
   for (auto & action : exclude_action_list) {
-    auto one_action_topic_list = rosbag2_cpp::action_name_to_action_topic_name(action);
+    auto one_action_topic_list = rosbag2_cpp::action_name_to_action_interface_names(action);
     std::move(one_action_topic_list.begin(), one_action_topic_list.end(),
               std::back_inserter(record_options.exclude_actions));
   }

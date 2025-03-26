@@ -62,7 +62,7 @@ TEST_F(ActionUtilsTest, check_is_topic_related_to_action)
 
   for (const auto & test_data : all_test_data) {
     EXPECT_TRUE(
-      rosbag2_cpp::is_topic_related_to_action(
+      rosbag2_cpp::is_topic_belong_to_action(
         std::get<0>(test_data.first), std::get<1>(test_data.first)) == test_data.second);
   }
 }
@@ -82,7 +82,7 @@ TEST_F(ActionUtilsTest, check_action_topic_name_to_action_name)
 
   for (const auto & test_data : all_test_data) {
     EXPECT_TRUE(
-      rosbag2_cpp::action_topic_name_to_action_name(test_data.first) == test_data.second);
+      rosbag2_cpp::action_interface_name_to_action_name(test_data.first) == test_data.second);
   }
 }
 
@@ -99,30 +99,27 @@ TEST_F(ActionUtilsTest, check_action_topic_type_to_action_type)
 
   for (const auto & test_data : all_test_data) {
     EXPECT_EQ(
-      rosbag2_cpp::action_topic_type_to_action_type(test_data.first),
+      rosbag2_cpp::action_interface_type_to_action_type(test_data.first),
       test_data.second
     );
   }
 }
 
-TEST_F(ActionUtilsTest, check_get_action_topic_type_from_topic_name)
+TEST_F(ActionUtilsTest, check_get_action_interface_type)
 {
-  std::vector<std::pair<std::string, rosbag2_cpp::TopicsInAction>> all_test_data =
+  std::vector<std::pair<std::string, rosbag2_cpp::ActionInterfaceType>> all_test_data =
   {
-    {"/abc/_action/feedback", rosbag2_cpp::TopicsInAction::Feedback},
-    {"/abc/_action/get_result/_service_event", rosbag2_cpp::TopicsInAction::GetResultEvent},
-    {"/abc/_action/send_goal/_service_event", rosbag2_cpp::TopicsInAction::SendGoalEvent},
-    {"/abc/_action/cancel_goal/_service_event", rosbag2_cpp::TopicsInAction::CancelGoalEvent},
-    {"/abc/_action/status", rosbag2_cpp::TopicsInAction::Status},
-    {"/_action/status", rosbag2_cpp::TopicsInAction::Unknown},
-    {"/abc/action/status", rosbag2_cpp::TopicsInAction::Unknown}
+    {"/abc/_action/feedback", rosbag2_cpp::ActionInterfaceType::Feedback},
+    {"/abc/_action/get_result/_service_event", rosbag2_cpp::ActionInterfaceType::GetResultEvent},
+    {"/abc/_action/send_goal/_service_event", rosbag2_cpp::ActionInterfaceType::SendGoalEvent},
+    {"/abc/_action/cancel_goal/_service_event", rosbag2_cpp::ActionInterfaceType::CancelGoalEvent},
+    {"/abc/_action/status", rosbag2_cpp::ActionInterfaceType::Status},
+    {"/_action/status", rosbag2_cpp::ActionInterfaceType::Unknown},
+    {"/abc/action/status", rosbag2_cpp::ActionInterfaceType::Unknown}
   };
 
   for (const auto & test_data : all_test_data) {
-    EXPECT_EQ(
-      rosbag2_cpp::get_action_topic_type_from_topic_name(test_data.first),
-      test_data.second
-    );
+    EXPECT_EQ(rosbag2_cpp::get_action_interface_type(test_data.first), test_data.second);
   }
 }
 
@@ -138,7 +135,7 @@ TEST_F(ActionUtilsTest, check_action_name_to_action_topic_name)
     "abc/_action/status"
   };
 
-  auto output_action_topics = rosbag2_cpp::action_name_to_action_topic_name(action_name);
+  auto output_action_topics = rosbag2_cpp::action_name_to_action_interface_names(action_name);
 
   for (auto & topic : output_action_topics) {
     EXPECT_TRUE(std::find(

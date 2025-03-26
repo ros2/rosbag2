@@ -17,6 +17,7 @@
 
 #include <memory>
 #include <string>
+#include <unordered_map>
 #include <vector>
 
 #include "info_sorting_method.hpp"
@@ -27,6 +28,8 @@ namespace rosbag2_py
 
 std::string format_action_info(
   std::vector<std::shared_ptr<rosbag2_cpp::rosbag2_action_info_t>> & action_info,
+  const std::unordered_map<std::string, uint64_t> & messages_size,
+  bool verbose = false,
   const InfoSortingMethod sort_method = InfoSortingMethod::NAME);
 
 }  // namespace rosbag2_py
