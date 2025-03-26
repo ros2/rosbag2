@@ -101,9 +101,8 @@ format_action_info(
 
   std::vector<size_t> sorted_idx = generate_sorted_idx(action_info_list, sort_method);
 
-  print_action_info(action_info_list[sorted_idx[0]]);
   auto number_of_actions = action_info_list.size();
-  for (size_t j = 1; j < number_of_actions; ++j) {
+  for (size_t j = 0; j < number_of_actions; ++j) {
     print_action_info(action_info_list[sorted_idx[j]]);
   }
 

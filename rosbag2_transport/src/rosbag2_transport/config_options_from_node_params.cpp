@@ -287,14 +287,8 @@ RecordOptions get_record_options_from_node_params(rclcpp::Node & node)
   }
   record_options.services = service_list;
 
-  // Covert action name to related topic name
-  auto action_list = node.declare_parameter<std::vector<std::string>>(
+  record_options.actions = node.declare_parameter<std::vector<std::string>>(
     "record.actions", std::vector<std::string>());
-  for (auto & action : action_list) {
-    auto one_action_topic_list = rosbag2_cpp::action_name_to_action_interface_names(action);
-    std::move(one_action_topic_list.begin(), one_action_topic_list.end(),
-              std::back_inserter(record_options.actions));
-  }
 
   record_options.exclude_topics = node.declare_parameter<std::vector<std::string>>(
     "record.exclude_topics", std::vector<std::string>());
@@ -310,14 +304,8 @@ RecordOptions get_record_options_from_node_params(rclcpp::Node & node)
   }
   record_options.exclude_service_events = exclude_service_list;
 
-  // Covert action name to related topic name
-  auto exclude_action_list = node.declare_parameter<std::vector<std::string>>(
+  record_options.exclude_actions = node.declare_parameter<std::vector<std::string>>(
     "record.exclude_actions", std::vector<std::string>());
-  for (auto & action : exclude_action_list) {
-    auto one_action_topic_list = rosbag2_cpp::action_name_to_action_interface_names(action);
-    std::move(one_action_topic_list.begin(), one_action_topic_list.end(),
-              std::back_inserter(record_options.exclude_actions));
-  }
 
   record_options.rmw_serialization_format =
     node.declare_parameter<std::string>("record.rmw_serialization_format", "cdr");

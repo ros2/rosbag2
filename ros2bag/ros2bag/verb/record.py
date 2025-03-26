@@ -301,7 +301,7 @@ def validate_parsed_arguments(args, uri) -> str:
     if args.compression_queue_size < 0:
         return print_error('Compression queue size must be at least 0.')
 
-    return ''
+    return None
 
 
 class RecordVerb(VerbExtension):

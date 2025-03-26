@@ -147,7 +147,7 @@ void format_topics_with_type(
 
   size_t number_of_topics = topics.size();
   size_t i = 0;
-  // Find first topic which isn't service event topic
+  // Find first topic which is unrelated to service or action.
   while (i < number_of_topics &&
     (rosbag2_cpp::is_service_event_topic(
       topics[sorted_idx[i]].topic_metadata.name,

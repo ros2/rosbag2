@@ -42,6 +42,7 @@ public:
 
   explicit ActionClientManager(
     std::string action_name,
+    std::chrono::seconds exec_goal_time = 1s,
     size_t number_of_clients = 1,
     bool enable_action_server_introspection = true,
     bool enable_action_client_introspection = false)
@@ -53,7 +54,7 @@ public:
     enable_action_server_introspection_(enable_action_server_introspection),
     enable_action_client_introspection_(enable_action_client_introspection)
   {
-    create_action_server();
+    create_action_server(exec_goal_time);
 
     create_action_client(number_of_clients);
 
@@ -78,7 +79,7 @@ public:
     }
   }
 
-  void create_action_server()
+  void create_action_server(std::chrono::seconds exec_goal_time)
   {
     auto handle_goal = [this](
       const rclcpp_action::GoalUUID & uuid,
@@ -95,12 +96,15 @@ public:
         return rclcpp_action::CancelResponse::ACCEPT;
       };
 
-    auto handle_accepted = [this](
+    auto handle_accepted = [this, exec_goal_time](
       const std::shared_ptr<ServerGoalHandleFibonacci> goal_handle)
       {
         // this needs to return quickly to avoid blocking the executor,
         // so we declare a lambda function to be called inside a new thread
-        auto execute_in_thread = [this, goal_handle]() {return this->execute(goal_handle);};
+        auto execute_in_thread =
+          [this, goal_handle, exec_goal_time]() {
+            return this->execute(goal_handle, exec_goal_time);
+          };
         std::thread{execute_in_thread}.detach();
       };
 
@@ -147,7 +151,9 @@ public:
     return check_action_server_ready();
   }
 
-  bool send_goal(std::chrono::duration<double> timeout = std::chrono::seconds(10))
+  bool send_goal(
+    bool cancel_goal_after_accept = false,
+    std::chrono::duration<double> timeout = std::chrono::seconds(10))
   {
     if (!check_action_server_ready()) {
       return false;
@@ -158,10 +164,14 @@ public:
       goal_msg.order = 3;
       auto send_goal_options = rclcpp_action::Client<Fibonacci>::SendGoalOptions();
 
-      send_goal_options.goal_response_callback = [this](
+      send_goal_options.goal_response_callback = [this, action_client, cancel_goal_after_accept](
         const ClientGoalHandleFibonacci::SharedPtr & goal_handle)
         {
-          (void)goal_handle;
+          if (goal_handle) {
+            if (cancel_goal_after_accept) {
+              action_client->async_cancel_goal(goal_handle);
+            }
+          }
         };
 
       send_goal_options.feedback_callback = [this](
@@ -211,9 +221,10 @@ private:
   bool enable_action_server_introspection_;
   bool enable_action_client_introspection_;
 
-  void execute(const std::shared_ptr<ServerGoalHandleFibonacci> goal_handle)
+  void execute(
+    const std::shared_ptr<ServerGoalHandleFibonacci> goal_handle,
+    std::chrono::seconds exec_goal_time)
   {
-    rclcpp::Rate loop_rate(1);
     const auto goal = goal_handle->get_goal();
     auto feedback = std::make_shared<Fibonacci::Feedback>();
     auto result = std::make_shared<Fibonacci::Result>();
@@ -222,7 +233,11 @@ private:
       goal_handle->publish_feedback(feedback);
     }
 
-    loop_rate.sleep();
+    std::this_thread::sleep_for(exec_goal_time);
+    if (goal_handle->is_canceling()) {
+      goal_handle->canceled(result);
+      return;
+    }
 
     // goal is done
     goal_handle->succeed(result);

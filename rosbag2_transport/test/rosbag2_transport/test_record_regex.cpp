@@ -489,8 +489,8 @@ TEST_F(RecordIntegrationTestFixture, regex_and_exclude_regex_action_recording)
   ASSERT_TRUE(action_manager_b2->send_goal());
 
   // One action include at least 8 messages
-  // Goal request received, Goal response sent, 3 feedback, Result request received
-  // Result response sent, status
+  // Goal request received, Goal response sent, 2 feedback, Result request received
+  // Result response sent, 2 status
   constexpr size_t expected_at_least_messages_size = 16;
   auto ret = rosbag2_test_common::wait_until_condition(
     [ =, &mock_writer]() {
@@ -499,7 +499,7 @@ TEST_F(RecordIntegrationTestFixture, regex_and_exclude_regex_action_recording)
     std::chrono::seconds(5));
   EXPECT_TRUE(ret) << "failed to capture expected messages in time";
   auto recorded_messages = mock_writer.get_messages();
-  EXPECT_THAT(recorded_messages, SizeIs(Ge(expected_at_least_messages_size)));
+  EXPECT_THAT(recorded_messages, SizeIs(expected_at_least_messages_size));
 
   auto recorded_topics = mock_writer.get_topics();
   EXPECT_EQ(recorded_topics.size(), 10);  // One action is related to 5 topics
@@ -589,8 +589,8 @@ TEST_F(RecordIntegrationTestFixture, regex_and_exclude_actions_action_recording)
   ASSERT_TRUE(action_manager_b2->send_goal());
 
   // One action include at least 8 messages
-  // Goal request received, Goal response sent, 3 feedback, Result request received
-  // Result response sent, status
+  // Goal request received, Goal response sent, 2 feedback, Result request received
+  // Result response sent, 2 status
   constexpr size_t expected_at_least_messages_size = 16;
   auto ret = rosbag2_test_common::wait_until_condition(
     [ =, &mock_writer]() {
@@ -599,7 +599,7 @@ TEST_F(RecordIntegrationTestFixture, regex_and_exclude_actions_action_recording)
     std::chrono::seconds(5));
   EXPECT_TRUE(ret) << "failed to capture expected messages in time";
   auto recorded_messages = mock_writer.get_messages();
-  EXPECT_THAT(recorded_messages, SizeIs(Ge(expected_at_least_messages_size)));
+  EXPECT_THAT(recorded_messages, SizeIs(expected_at_least_messages_size));
 
   auto recorded_topics = mock_writer.get_topics();
   EXPECT_EQ(recorded_topics.size(), 10);  // One action is related to 5 topics

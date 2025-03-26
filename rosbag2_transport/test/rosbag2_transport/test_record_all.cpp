@@ -250,3 +250,52 @@ TEST_F(RecordIntegrationTestFixture, published_messages_from_topic_service_actio
   auto recorded_messages = mock_writer.get_messages();
   EXPECT_EQ(recorded_messages.size(), expected_messages);
 }
+
+TEST_F(RecordIntegrationTestFixture, cancel_event_messages_from_action_are_recorded)
+{
+  auto action_manager_1 =
+    std::make_shared<rosbag2_test_common::ActionClientManager<test_msgs::action::Fibonacci>>(
+      "test_action_1", 2s);
+
+  rosbag2_transport::RecordOptions record_options =
+  {false, false, true, false, {}, {}, {}, {}, {"/rosout", "/events/write_split"},
+    {}, {}, {}, "rmw_format", 100ms};
+  auto recorder = std::make_shared<MockRecorder>(
+    std::move(writer_), storage_options_, record_options);
+  recorder->record();
+
+  start_async_spin(recorder);
+  auto cleanup_process_handle = rcpputils::make_scope_exit([&]() {stop_spinning();});
+
+  ASSERT_TRUE(action_manager_1->wait_for_action_server_to_be_ready());
+
+  // Ensure that the introspection service event topic already exists.
+  ASSERT_TRUE(recorder->wait_for_topic_to_be_discovered(
+    "/test_action_1/_action/cancel_goal/_service_event"));
+
+  ASSERT_TRUE(action_manager_1->send_goal(true));
+
+  auto & writer = recorder->get_writer_handle();
+  auto & mock_writer = dynamic_cast<MockSequentialWriter &>(writer.get_implementation_handle());
+
+  // 2 send_goal msgs, 2 cancel goal msgs , 2 status msgs, 2 get_result msgs
+  // feedback msgs (Not sure)
+  constexpr size_t expected_messages = 8;
+  auto ret = rosbag2_test_common::wait_until_condition(
+    [ =, &mock_writer]() {
+      return mock_writer.get_messages().size() > expected_messages;
+    },
+    std::chrono::seconds(5));
+  EXPECT_TRUE(ret) << "failed to capture expected messages in time";
+  auto recorded_messages = mock_writer.get_messages();
+  EXPECT_GT(recorded_messages.size(), expected_messages);
+
+  // Confirm cancel goal messages are recorded
+  size_t cancel_goal_msg_count = 0;
+  for (auto & msg : recorded_messages) {
+    if (msg->topic_name == "/test_action_1/_action/cancel_goal/_service_event") {
+      cancel_goal_msg_count++;
+    }
+  }
+  EXPECT_EQ(cancel_goal_msg_count, 2);
+}
