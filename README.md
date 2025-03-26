@@ -40,19 +40,11 @@ Rosbag2 is part of the ROS 2 command line interface as `ros2 bag`.
 These verbs are available for `ros2 bag`:
 
 * `ros2 bag burst`
-<<<<<<< HEAD
-* `ros2 bag convert`
-* `ros2 bag info`
-* `ros2 bag list`
-* `ros2 bag play`
-* `ros2 bag record`
-=======
 * [`ros2 bag convert`](#convert)
 * [`ros2 bag info`](#info)
 * `ros2 bag list`
 * [`ros2 bag play`](#play)
 * [`ros2 bag record`](#record)
->>>>>>> 500f9ac (Add some introductory material to the README, and a Tips and Tricks section (#1916))
 * `ros2 bag reindex`
 
 For up-to-date information on the available options for each, use `ros2 bag <verb> --help`.
