@@ -1,14 +1,25 @@
-# rosbag2
+# Rosbag2
 ![License](https://img.shields.io/github/license/ros2/rosbag2)
 [![GitHub Action Status](https://github.com/ros2/rosbag2/workflows/Test%20rosbag2/badge.svg)](https://github.com/ros2/rosbag2/actions)
 
-Repository for implementing rosbag2 as described in its corresponding [design article](https://github.com/ros2/design/blob/ros2bags/articles/rosbags.md).
+Rosbag2 — the tool for recording and playback of communications in ROS 2 systems.
+
+This is the ROS 2 successor of https://wiki.ros.org/rosbag.
+
+A "rosbag" is simply a file full of timestamped messages. The first goal of the tool is efficient recording, to support complex systems in real time. Its second goal is efficent playback, to allow for viewing and using recorded data.
+
+For historical context, see the original [design article](https://github.com/ros2/design/blob/ros2bags/articles/rosbags.md) that kicked off the project.
+
+This README has a lot of information. You may want to jump directly to:
+- [Installation](#installation)
+- [Usage](#usage)
+- [Tips and Tricks](#tips-and-tricks)
 
 ## Installation
 
 ### Debian packages
 
-rosbag2 packages are available via debian packages, and will already be included with any `-ros-base` installation (which is included within `-desktop`)
+Rosbag2 packages are available via debian packages, and will already be included with any `-ros-base` installation (which is included within `-desktop`)
 
 ```
 $ export ROS_DISTRO=humble
@@ -23,25 +34,26 @@ You can follow the instructions at http://docs.ros.org/en/humble/Installation/Al
 
 To build from source, follow the instructions in [DEVELOPING.md](DEVELOPING.md)
 
-## Using rosbag2
+## Using rosbag2 <a id="usage"></a>
 
-rosbag2 is part of the ROS 2 command line interface as `ros2 bag`.
+Rosbag2 is part of the ROS 2 command line interface as `ros2 bag`.
 These verbs are available for `ros2 bag`:
 
 * `ros2 bag burst`
-* `ros2 bag convert`
-* `ros2 bag info`
+* [`ros2 bag convert`](#convert)
+* [`ros2 bag info`](#info)
 * `ros2 bag list`
-* `ros2 bag play`
-* `ros2 bag record`
+* [`ros2 bag play`](#play)
+* [`ros2 bag record`](#record)
 * `ros2 bag reindex`
 
 For up-to-date information on the available options for each, use `ros2 bag <verb> --help`.
 
 Moreover, `rosbag2_transport::Player` and `rosbag2_transport::Recorder` components can be instantiated in `rclcpp` component containers, which makes possible to use intra-process communication for greater efficiency.
-See [composition](#using-with-composition) section for details.
+See [composition](#composition) section for details.
 
-### Recording data
+
+### Recording data <a id="record"></a>
 
 In order to record all topics currently available in the system:
 
@@ -76,7 +88,7 @@ Before that message is received, the time is 0, which leads to a significant tim
 
 #### Splitting files during recording
 
-rosbag2 offers the capability to split bag files when they reach a maximum size or after a specified duration. By default rosbag2 will record all data into a single bag file, but this can be changed using the CLI options.
+Rosbag2 offers the capability to split bag files when they reach a maximum size or after a specified duration. By default Rosbag2 will record all data into a single bag file, but this can be changed using the CLI options.
 
 _Splitting by size_: `ros2 bag record -a -b 100000` will split the bag files when they become greater than 100 kilobytes. Note: the batch size's units are in bytes and must be greater than `86016`. This option defaults to `0`, which means data is written to a single file.
 
@@ -86,7 +98,7 @@ If both splitting by size and duration are enabled, the bag will split at whiche
 
 #### Recording with compression
 
-By default rosbag2 does not record with compression enabled. However, compression can be specified using the following CLI options.
+By default Rosbag2 does not record with compression enabled. However, compression can be specified using the following CLI options.
 
 For example, `ros2 bag record -a --compression-mode file --compression-format zstd` will record all topics and compress each file using the [zstd](https://github.com/facebook/zstd) compressor.
 
@@ -94,9 +106,9 @@ Currently, the only `compression-format` available is `zstd`. Both the mode and 
 
 It is recommended to use this feature with the splitting options.
 
-**Note**: Some storage plugins may have their own compression methods, which are separate from the rosbag2 compression specified by the CLI options `--compression-mode` and `--compression-format`. Notably, the MCAP file format offered by the `rosbag2_storage_mcap` storage plugin supports compression in a way that produces files that are still indexable (whereas using the rosbag2 compression will not). To utilize storage plugin specific compression or other options, see [Recording with a storage configuration](#Recording-with-a-storage-configuration).
+**Note**: Some storage plugins may have their own compression methods, which are separate from the Rosbag2 compression specified by the CLI options `--compression-mode` and `--compression-format`. Notably, the MCAP file format offered by the `rosbag2_storage_mcap` storage plugin supports compression in a way that produces files that are still indexable (whereas using the Rosbag2 compression will not). To utilize storage plugin specific compression or other options, see [Recording with a storage configuration](#record-storage-config).
 
-#### Recording with a storage configuration
+#### Recording with a storage configuration <a id="record-storage-config"></a>
 
 Storage configuration can be specified in a YAML file passed through the `--storage-config-file` option.
 This can be used to optimize performance for specific use cases.
@@ -107,7 +119,7 @@ See storage plugin documentation for more detail:
 
 #### Controlling recordings via services
 
-The rosbag2 recorder provides the following services for remote control, which can be called via `ros2 service` commandline, or from your nodes:
+The Rosbag2 recorder provides the following services for remote control, which can be called via `ros2 service` commandline, or from your nodes:
 
 * `~/is_paused [rosbag2_interfaces/srv/IsPaused]`
   * Returns whether recording is currently paused.
@@ -127,7 +139,7 @@ This entire buffer can be dumped to disk on request, saving data only in specifi
 
 The snapshot is taken by calling the `~/snapshot` service on the recorder, described previously.
 
-### Replaying data
+### Replaying data <a id="play"></a>
 
 When you have a recorded bag, you can use Rosbag2 to play it back:
 
@@ -174,7 +186,7 @@ The Rosbag2 player provides the following services for remote control, which can
   * Pause if playing, resume if paused.
 
 
-### Analyzing data
+### Analyzing data <a id="info"></a>
 
 The recorded data can be analyzed by displaying some meta information about it:
 
@@ -196,7 +208,7 @@ Topic information: Topic: /chatter | Type: std_msgs/String | Count: 9 | Serializ
                    Topic: /my_chatter | Type: std_msgs/String | Count: 18 | Serialization Format: cdr
 ```
 
-### Converting bags
+### Converting bags (merge, split, etc.) <a id="convert"></a>
 
 Rosbag2 provides a tool `ros2 bag convert` (or, `rosbag2_transport::bag_rewrite` in the C++ API).
 This allows the user to take one or more input bags, and write them out to one or more output bags with new settings.
@@ -217,7 +229,7 @@ ros2 bag convert --input /path/to/bag1 --input /path/to/bag2 storage_id --output
 The `--input` argument may be specified any number of times, and takes 1 or 2 values.
 The first value is the URI of the input bag.
 If a second value is supplied, it specifies the storage implementation of the bag.
-If no storage implementation is specified, rosbag2 will try to determine it automatically from the bag.
+If no storage implementation is specified, Rosbag2 will try to determine it automatically from the bag.
 
 The `--output-options` argument must point to the URI of a YAML file specifying the full recording configuration for each bag to output (`StorageOptions` + `RecordOptions`).
 This file must contain a top-level key `output_bags`, which contains a list of these objects.
@@ -382,9 +394,9 @@ def generate_launch_description():
     ])
 ```
 
-## Using with composition
+### Using recorder and player as composable nodes <a id="composition"></a>
 
-Play and record are fundamental tasks of `rosbag2`. However, playing or recording data at high rates may have limitations (e.g. spurious packet drops) due to one of the following:
+Play and record are fundamental tasks of Rosbag2. However, playing or recording data at high rates may have limitations (e.g. spurious packet drops) due to one of the following:
 - low network bandwidth
 - high CPU load
 - slow mass memory
@@ -466,7 +478,7 @@ player:
       node_prefix: ""
       rate: 1.0
       loop: false
-      # Negative timestamps will make the playback to not stop.  
+      # Negative timestamps will make the playback to not stop.
       playback_duration:
         sec: -1
         nsec: 00000000
@@ -480,16 +492,18 @@ player:
 
 For a full list of available parameters, you can refer to [`player`](rosbag2_transport/test/resources/player_node_params.yaml) and [`recorder`](rosbag2_transport/test/resources/recorder_node_params.yaml) configurations from the `test` folder of `rosbag2_transport`.
 
-## Storage format plugin architecture
+## Plugin implementation
+
+### Storage format plugin architecture
 
 Looking at the output of the `ros2 bag info` command, we can see a field `Storage id:`.
 Rosbag2 was designed to support multiple storage formats to adapt to individual use cases.
 This repository provides two storage plugins, `mcap` and `sqlite3`.
 The default is `mcap`, which is provided to code by [`rosbag2_storage::get_default_storage_id()`](rosbag2_storage/include/rosbag2_storage/default_storage_id.hpp) and defined in [`default_storage_id.cpp`](rosbag2_storage/src/rosbag2_storage/default_storage_id.cpp#L21)
 
-If not specified otherwise, rosbag2 will write data using the default plugin.
+If not specified otherwise, Rosbag2 will write data using the default plugin.
 
-In order to use a specified (non-default) storage format plugin, rosbag2 has a command line argument `--storage`:
+In order to use a specified (non-default) storage format plugin, Rosbag2 has a command line argument `--storage`:
 
 ```
 $ ros2 bag record --storage <storage_id>
@@ -500,7 +514,7 @@ Bag reading commands can detect the storage plugin automatically, but if for any
 To write your own Rosbag2 storage implementation, refer to [Storage Plugin Development](docs/storage_plugin_development.md)
 
 
-## Serialization format plugin architecture
+### Serialization format plugin architecture
 
 Looking further at the output of `ros2 bag info`, we can see another field attached to each topic called `Serialization Format`.
 By design, ROS 2 is middleware agnostic and thus can leverage multiple communication frameworks.
@@ -509,11 +523,52 @@ However, other middleware implementation might have different formats.
 If not specified, `ros2 bag record -a` will record all data in the middleware specific format.
 This however also means that such a bag file can't easily be replayed with another middleware format.
 
-rosbag2 implements a serialization format plugin architecture which allows the user the specify a certain serialization format.
-When specified, rosbag2 looks for a suitable converter to transform the native middleware protocol to the target format.
+Rosbag2 implements a serialization format plugin architecture which allows the user the specify a certain serialization format.
+When specified, Rosbag2 looks for a suitable converter to transform the native middleware protocol to the target format.
 This also allows to record data in a native format to optimize for speed, but to convert or transform the recorded data into a middleware agnostic serialization format.
 
-By default, rosbag2 can convert from and to CDR as it's the default serialization format for ROS 2.
+By default, Rosbag2 can convert from and to CDR as it's the default serialization format for ROS 2.
 
 [qos-override-tutorial]: https://docs.ros.org/en/rolling/Guides/Overriding-QoS-Policies-For-Recording-And-Playback.html
 [about-qos-settings]: https://docs.ros.org/en/rolling/Concepts/About-Quality-of-Service-Settings.html
+
+## Tips and Tricks
+
+### Record bags to a custom base directory
+
+If you want to send bagfiles to a different directory than the current working directory, like so
+
+```plaintext
+/my/bag/base_dir
+├── rosbag2_2025_02_21-15_35_35
+|   ├── metadata.yaml
+│   └── rosbag2_2025_02_21-15_35_35_0.mcap
+└── rosbag2_2025_02_21-15_37_17
+    ├── metadata.yaml
+    └── rosbag2_2025_02_21-15_37_17_0.mcap
+```
+
+This can be accomplished without features in Rosbag2 itself.
+
+In shell:
+
+```bash
+pushd /my/bag/base_dir && ros2 bag record ...
+```
+
+In launch:
+
+```python
+ExecuteProcess(
+  cmd=['ros2', 'bag', 'record', ...],
+  cwd=my_base_dir,
+),
+
+You can fully customize the output bag name, without any Rosbag2 special features.
+
+For example, you want a timestamp on the bag directory name, but want a custom prefix instead of `rosbag2_`.
+
+```bash
+$ ros2 bag record -a -o mybag_"$(date +"%Y_%m_%d-%H_%M_%S")"
+... creates e.g. mybag_2025_02_21-15_35_35
+```
