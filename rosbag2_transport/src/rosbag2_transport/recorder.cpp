@@ -179,7 +179,7 @@ RecorderImpl::RecorderImpl(
             "use_sim_time and is_discovery_disabled both set, but are incompatible settings. "
             "The /clock topic needs to be discovered to record with sim time.");
   }
-  if (!record_options.disable_keyboard_controls) {
+  if (!record_options_.disable_keyboard_controls) {
     std::string key_str = enum_key_code_to_str(Recorder::kPauseResumeToggleKey);
     toggle_paused_key_callback_handle_ =
       keyboard_handler_->add_key_press_callback(
@@ -191,7 +191,6 @@ RecorderImpl::RecorderImpl(
       node->get_logger(),
       "Press " << key_str << " for pausing/resuming");
   }
-  topic_filter_ = std::make_unique<TopicFilter>(record_options, node->get_node_graph_interface());
 
   for (auto & topic : record_options_.topics) {
     topic = rclcpp::expand_topic_or_service_name(
@@ -216,6 +215,8 @@ RecorderImpl::RecorderImpl(
       exclude_service_event_topic, node->get_name(),
       node->get_namespace(), false);
   }
+
+  topic_filter_ = std::make_unique<TopicFilter>(record_options_, node->get_node_graph_interface());
 }
 
 RecorderImpl::~RecorderImpl()
