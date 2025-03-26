@@ -2,6 +2,12 @@
 Changelog for package rosbag2_py
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.15.14 (2025-03-25)
+--------------------
+* [humble] Expose more Writer methods in python interface (backport `#1220 <https://github.com/ros2/rosbag2/issues/1220>`_ and `#1339 <https://github.com/ros2/rosbag2/issues/1339>`_) (`#1829 <https://github.com/ros2/rosbag2/issues/1829>`_)
+* Add in python3-dev build dependency. (`#1863 <https://github.com/ros2/rosbag2/issues/1863>`_) (`#1866 <https://github.com/ros2/rosbag2/issues/1866>`_)
+* Contributors: Jannik Jose, mergify[bot]
+
 0.15.13 (2024-11-25)
 --------------------
 * Fixes clang compiler error introduced by `#1404 <https://github.com/ros2/rosbag2/issues/1404>`_. (`#1769 <https://github.com/ros2/rosbag2/issues/1769>`_)

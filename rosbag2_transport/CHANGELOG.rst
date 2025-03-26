@@ -2,6 +2,9 @@
 Changelog for package rosbag2_transport
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.15.14 (2025-03-25)
+--------------------
+
 0.15.13 (2024-11-25)
 --------------------
 * [humble] Allow unknown types in bag rewrite (backport `#1812 <https://github.com/ros2/rosbag2/issues/1812>`_) (`#1819 <https://github.com/ros2/rosbag2/issues/1819>`_)
