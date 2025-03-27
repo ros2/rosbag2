@@ -64,6 +64,8 @@ class Player:
     def play(self, storage_options: List[rosbag2_py._storage.StorageOptions], play_options: PlayOptions) -> None: ...
 
 class RecordOptions:
+    actions: List[str]
+    all_actions: bool
     all_services: bool
     all_topics: bool
     compression_format: str
@@ -72,6 +74,7 @@ class RecordOptions:
     compression_threads: int
     compression_threads_priority: int
     disable_keyboard_controls: bool
+    exclude_actions: List[str]
     exclude_regex: str
     exclude_service_events: List[str]
     exclude_topic_types: List[str]
