@@ -16,29 +16,10 @@
 #include <unordered_map>
 
 #include "format_action_info.hpp"
+#include "format_utils.hpp"
+
 #include "rosbag2_cpp/action_utils.hpp"
 
-namespace
-{
-
-std::string format_file_size(uint64_t file_size)
-{
-  double size = static_cast<double>(file_size);
-  static const char * units[] = {"B", "KiB", "MiB", "GiB", "TiB"};
-  double reference_number_bytes = 1024;
-  int index = 0;
-  while (size >= reference_number_bytes && index < 4) {
-    size /= reference_number_bytes;
-    index++;
-  }
-
-  std::stringstream rounded_size;
-  int size_format_precision = index == 0 ? 0 : 1;
-  rounded_size << std::setprecision(size_format_precision) << std::fixed << size;
-  return rounded_size.str() + " " + units[index];
-}
-
-}  // namespace
 namespace rosbag2_py
 {
 
