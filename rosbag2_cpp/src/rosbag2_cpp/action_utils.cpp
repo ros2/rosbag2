@@ -82,7 +82,7 @@ bool is_topic_belong_to_action(
   return std::regex_search(topic_type, pattern);
 }
 
-std::string action_interface_type_to_action_type(const std::string & topic_type)
+std::string get_action_type(const std::string & topic_type)
 {
   std::string action_type;
 

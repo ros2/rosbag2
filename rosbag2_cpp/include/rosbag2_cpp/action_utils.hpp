@@ -50,7 +50,7 @@ action_interface_name_to_action_name(const std::string & topic_name);
 // Note that cancel_goal event topic and status topic return ""
 ROSBAG2_CPP_PUBLIC
 std::string
-action_interface_type_to_action_type(const std::string & topic_type);
+get_action_type(const std::string & topic_type);
 
 ROSBAG2_CPP_PUBLIC
 ActionInterfaceType

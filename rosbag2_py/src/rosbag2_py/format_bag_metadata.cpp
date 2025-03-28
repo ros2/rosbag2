@@ -213,7 +213,7 @@ void filter_service_and_action_info(
       // being empty. So If the type is empty, it will be updated with subsequent messages.
       if (action_info_map[action_name]->action_metadata.type.empty()) {
         action_info_map[action_name]->action_metadata.type =
-          rosbag2_cpp::action_interface_type_to_action_type(topic.topic_metadata.type);
+          rosbag2_cpp::get_action_type(topic.topic_metadata.type);
       }
 
       switch (action_interface_type) {

@@ -99,7 +99,7 @@ TEST_F(ActionUtilsTest, check_action_topic_type_to_action_type)
 
   for (const auto & test_data : all_test_data) {
     EXPECT_EQ(
-      rosbag2_cpp::action_interface_type_to_action_type(test_data.first),
+      rosbag2_cpp::get_action_type(test_data.first),
       test_data.second
     );
   }

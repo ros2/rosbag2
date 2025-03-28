@@ -226,12 +226,13 @@ void SequentialWriter::create_topic(const rosbag2_storage::TopicMetadata & topic
 
   std::string topic_type;
   if (is_topic_belong_to_action(topic_with_type.name, topic_with_type.type)) {
-    // The following two action topic types cannot retrieve the action type.
+    // The following two action types cannot be retrieved from the topic type.
     // - xxx/_action/cancel_goal/_service_event (action_msgs/srv/CancelGoal_Event)
     // - xxx/_action/status (action_msgs/msg/GoalStatusArray)
-    topic_type = action_interface_type_to_action_type(topic_with_type.type);
+    topic_type = get_action_type(topic_with_type.type);
 
-    // TODO(Barry.Xu): get_full_text() not support action type. Need to implement it.
+    // TODO(Barry.Xu): LocalMessageDefinitionSource::get_full_text(topic_type) doesn't support
+    // action type. Need to implement it.
     // Now action type return empty message definition.
     definition = rosbag2_storage::MessageDefinition::empty_message_definition_for(topic_type);
   } else {

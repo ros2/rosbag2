@@ -195,7 +195,7 @@ Info::read_service_and_action_info(
 
       // Update action type. Note: cancel_goal event topic and status topic cannot get type
       if (action_info->type.empty()) {
-        action_info->type = action_interface_type_to_action_type(t.type);
+        action_info->type = get_action_type(t.type);
       }
 
       // Update action_interface_name_to_action_name_map to speed up following code.
