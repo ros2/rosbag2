@@ -409,6 +409,8 @@ std::string format_bag_meta_data(
         info_stream,
         indentation_spaces + 2,
         sort_method);
+    } else {
+      info_stream << std::endl;
     }
     info_stream << "Actions:           " << action_info_list.size() << std::endl;
     info_stream << "Action information: ";
