@@ -85,56 +85,11 @@ public:
     std::vector<std::shared_ptr<rosbag2_cpp::rosbag2_action_info_t>> all_actions_info;
 
     for (auto & file_info : metadata_info.files) {
-      auto [output_service_info, output_action_info] = info_->read_service_and_action_info(
-        uri + "/" + file_info.path,
-        metadata_info.storage_identifier);
-      if (!output_service_info.empty()) {
-        all_services_info.insert(
-          all_services_info.end(),
-          output_service_info.begin(),
-          output_service_info.end());
-      }
-      if (!output_action_info.empty()) {
-        all_actions_info.insert(
-          all_actions_info.end(),
-          output_action_info.begin(),
-          output_action_info.end());
-      }
-    }
+      auto [service_info, action_info] = info_->read_service_and_action_info(
+        uri + "/" + file_info.path, metadata_info.storage_identifier);
 
-    // Fill in the number of feedback and status messages for the action info from
-    // metadata_info.topics_with_message_count
-    if (!all_actions_info.empty()) {
-      for (auto & [topic_metadata, message_count] : metadata_info.topics_with_message_count) {
-        auto action_interface_type =
-          rosbag2_cpp::get_action_interface_type(topic_metadata.name);
-        if (rosbag2_cpp::is_topic_belong_to_action(action_interface_type, topic_metadata.type)) {
-          switch (action_interface_type) {
-            case rosbag2_cpp::ActionInterfaceType::Feedback:
-            case rosbag2_cpp::ActionInterfaceType::Status:
-              {
-                auto action_info_iter = std::find_if(all_actions_info.begin(),
-                  all_actions_info.end(),
-                    [topic_name = topic_metadata.name](const auto & action_info){
-                      return action_info->name ==
-                             rosbag2_cpp::action_interface_name_to_action_name(topic_name);
-                  });
-                if (action_info_iter == all_actions_info.end()) {
-                  break;
-                }
-
-                if (action_interface_type == rosbag2_cpp::ActionInterfaceType::Feedback) {
-                  (*action_info_iter)->feedback_topic_msg_count = message_count;
-                } else {
-                  (*action_info_iter)->status_topic_msg_count = message_count;
-                }
-                break;
-              }
-            default:
-              break;
-          }
-        }
-      }
+      all_services_info.insert(all_services_info.end(), service_info.begin(), service_info.end());
+      all_actions_info.insert(all_actions_info.end(), action_info.begin(), action_info.end());
     }
 
     std::unordered_map<std::string, uint64_t> messages_size = {};

@@ -229,7 +229,13 @@ Info::read_service_and_action_info(
       if (action_interface_type == ActionInterfaceType::Feedback ||
         action_interface_type == ActionInterfaceType::Status)
       {
-        continue;  // Skip the feedback and status topic for action
+        auto action_name = action_interface_name_to_action_name_map[bag_msg->topic_name];
+        if (action_interface_type == ActionInterfaceType::Feedback) {
+          all_action_info[action_name]->feedback_topic_msg_count++;
+        } else {
+          all_action_info[action_name]->status_topic_msg_count++;
+        }
+        continue;
       }
 
       auto ret = rmw_deserialize(
