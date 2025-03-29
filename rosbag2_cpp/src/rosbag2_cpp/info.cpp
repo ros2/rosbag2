@@ -250,7 +250,7 @@ Info::read_service_and_action_info(
 
       if (action_interface_type != ActionInterfaceType::Unknown) {
         auto action_name = action_interface_name_to_action_name_map[bag_msg->topic_name];
-        auto action_service_info = action_process_info[action_name];
+        auto action = action_process_info[action_name];
 
         // Handle action service event topic
         switch (msg.event_type) {
@@ -258,15 +258,12 @@ Info::read_service_and_action_info(
           case service_msgs::msg::ServiceEventInfo::REQUEST_RECEIVED:
             {
               if (action_interface_type == ActionInterfaceType::SendGoalEvent) {
-                action_service_info->
-                send_goal_service.request[msg.client_gid].emplace(msg.sequence_number);
+                action->send_goal_service.request[msg.client_gid].emplace(msg.sequence_number);
               } else if (action_interface_type == ActionInterfaceType::GetResultEvent) {
-                action_service_info->
-                get_result_service.request[msg.client_gid].emplace(msg.sequence_number);
+                action->get_result_service.request[msg.client_gid].emplace(msg.sequence_number);
               } else {
                 // TopicsInAction::CancelGoalEvent
-                action_service_info->
-                cancel_goal_service.request[msg.client_gid].emplace(msg.sequence_number);
+                action->cancel_goal_service.request[msg.client_gid].emplace(msg.sequence_number);
               }
               break;
             }
@@ -274,15 +271,12 @@ Info::read_service_and_action_info(
           case service_msgs::msg::ServiceEventInfo::RESPONSE_RECEIVED:
             {
               if (action_interface_type == ActionInterfaceType::SendGoalEvent) {
-                action_service_info->
-                send_goal_service.response[msg.client_gid].emplace(msg.sequence_number);
+                action->send_goal_service.response[msg.client_gid].emplace(msg.sequence_number);
               } else if (action_interface_type == ActionInterfaceType::GetResultEvent) {
-                action_service_info->
-                get_result_service.response[msg.client_gid].emplace(msg.sequence_number);
+                action->get_result_service.response[msg.client_gid].emplace(msg.sequence_number);
               } else {
                 // TopicsInAction::CancelGoalEvent
-                action_service_info->
-                cancel_goal_service.response[msg.client_gid].emplace(msg.sequence_number);
+                action->cancel_goal_service.response[msg.client_gid].emplace(msg.sequence_number);
               }
               break;
             }
