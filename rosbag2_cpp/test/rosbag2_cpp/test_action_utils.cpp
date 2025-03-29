@@ -60,10 +60,9 @@ TEST_F(ActionUtilsTest, check_is_topic_related_to_action)
     {{"/abc/_action/status", "action_msgs/msg/GoalStatus"}, false}
   };
 
-  for (const auto & test_data : all_test_data) {
-    EXPECT_TRUE(
-      rosbag2_cpp::is_topic_belong_to_action(
-        std::get<0>(test_data.first), std::get<1>(test_data.first)) == test_data.second);
+  for (const auto & [topic_name_and_type, expected_result] : all_test_data) {
+    const auto & [topic_name, topic_type] = topic_name_and_type;
+    EXPECT_TRUE(rosbag2_cpp::is_topic_belong_to_action(topic_name, topic_type) == expected_result);
   }
 }
 
@@ -80,9 +79,8 @@ TEST_F(ActionUtilsTest, check_action_topic_name_to_action_name)
     {"/abc/action/status", ""}
   };
 
-  for (const auto & test_data : all_test_data) {
-    EXPECT_TRUE(
-      rosbag2_cpp::action_interface_name_to_action_name(test_data.first) == test_data.second);
+  for (const auto & [topic_name, action_name] : all_test_data) {
+    EXPECT_TRUE(rosbag2_cpp::action_interface_name_to_action_name(topic_name) == action_name);
   }
 }
 
@@ -97,11 +95,8 @@ TEST_F(ActionUtilsTest, check_action_topic_type_to_action_type)
     {"action_msgs/msg/GoalStatusArray", ""}
   };
 
-  for (const auto & test_data : all_test_data) {
-    EXPECT_EQ(
-      rosbag2_cpp::get_action_type_for_info(test_data.first),
-      test_data.second
-    );
+  for (const auto & [topic_type, action_type] : all_test_data) {
+    EXPECT_EQ(rosbag2_cpp::get_action_type_for_info(topic_type), action_type);
   }
 }
 
@@ -118,8 +113,8 @@ TEST_F(ActionUtilsTest, check_get_action_interface_type)
     {"/abc/action/status", rosbag2_cpp::ActionInterfaceType::Unknown}
   };
 
-  for (const auto & test_data : all_test_data) {
-    EXPECT_EQ(rosbag2_cpp::get_action_interface_type(test_data.first), test_data.second);
+  for (const auto & [topic_name, action_interface_type] : all_test_data) {
+    EXPECT_EQ(rosbag2_cpp::get_action_interface_type(topic_name), action_interface_type);
   }
 }
 
