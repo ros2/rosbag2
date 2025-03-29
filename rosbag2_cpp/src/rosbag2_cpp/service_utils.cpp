@@ -28,11 +28,11 @@ const size_t kServiceEventTypePostfixLen = strlen(kServiceEventTopicTypePostfix)
 
 bool is_service_event_topic(const std::string & topic_name, const std::string & topic_type)
 {
-  if (topic_name.find("/_action/") != std::string::npos) {
+  if (topic_name.length() <= kServiceEventTopicPostfixLen) {
     return false;
   }
 
-  if (topic_name.length() <= kServiceEventTopicPostfixLen) {
+  if (topic_name.find("/_action/") != std::string::npos) {
     return false;
   }
 

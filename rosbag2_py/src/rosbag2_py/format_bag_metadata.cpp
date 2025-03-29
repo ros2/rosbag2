@@ -259,8 +259,6 @@ void filter_service_and_action_info(
   for (auto & action_info : action_info_map) {
     action_info_list.emplace_back(action_info.second);
   }
-
-  return;
 }
 
 void format_service_with_type(

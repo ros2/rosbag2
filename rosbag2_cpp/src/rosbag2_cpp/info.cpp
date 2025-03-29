@@ -141,10 +141,11 @@ inline void update_service_info_with_num_req_resp(
 }
 }  // namespace
 
-std::pair<std::vector<std::shared_ptr<rosbag2_service_info_t>>,
-  std::vector<std::shared_ptr<rosbag2_action_info_t>>>
-Info::read_service_and_action_info(
-  const std::string & uri, const std::string & storage_id)
+std::pair<
+  std::vector<std::shared_ptr<rosbag2_service_info_t>>,
+  std::vector<std::shared_ptr<rosbag2_action_info_t>>
+>
+Info::read_service_and_action_info(const std::string & uri, const std::string & storage_id)
 {
   rosbag2_storage::StorageFactory factory;
   auto storage = factory.open_read_only({uri, storage_id});
@@ -192,11 +193,7 @@ Info::read_service_and_action_info(
       }
 
       // Update action_interface_name_to_action_name_map to speed up following code.
-      if (action_interface_name_to_action_name_map.find(t.name) ==
-        action_interface_name_to_action_name_map.end())
-      {
-        action_interface_name_to_action_name_map[t.name] = action_name;
-      }
+      action_interface_name_to_action_name_map[t.name] = action_name;
     } else if (is_service_event_topic(t.name, t.type)) {
       auto service_info = std::make_shared<rosbag2_cpp::rosbag2_service_info_t>();
       service_info->name = service_event_topic_name_to_service_name(t.name);
@@ -212,7 +209,7 @@ Info::read_service_and_action_info(
 
   if (!all_service_info.empty() || !all_action_info.empty()) {
     auto msg = service_msgs::msg::ServiceEventInfo();
-    const rosidl_message_type_support_t * type_support_info =
+    const rosidl_message_type_support_t * service_event_type_support_info =
       rosidl_typesupport_cpp::
       get_message_type_support_handle<service_msgs::msg::ServiceEventInfo>();
 
@@ -240,8 +237,9 @@ Info::read_service_and_action_info(
 
       auto ret = rmw_deserialize(
         bag_msg->serialized_data.get(),
-        type_support_info,
-        reinterpret_cast<void *>(&msg));
+        service_event_type_support_info,
+        reinterpret_cast<void *>(&msg)
+      );
       if (ret != RMW_RET_OK) {
         throw std::runtime_error(
                 "Failed to deserialize message from " + bag_msg->topic_name + " !");

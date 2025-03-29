@@ -36,12 +36,12 @@ public:
   bool is_discovery_disabled = false;
   std::vector<std::string> topics;
   std::vector<std::string> topic_types;
-  std::vector<std::string> services;  // service event topic
-  std::vector<std::string> actions;  // action name list
+  std::vector<std::string> services;  // service event topics list
+  std::vector<std::string> actions;   // actions name list
   std::vector<std::string> exclude_topics;
   std::vector<std::string> exclude_topic_types;
-  std::vector<std::string> exclude_service_events;  // service event topic
-  std::vector<std::string> exclude_actions;  // action name list
+  std::vector<std::string> exclude_service_events;  // service event topics list
+  std::vector<std::string> exclude_actions;         // actions name list
   std::string rmw_serialization_format;
   std::chrono::milliseconds topic_polling_interval{100};
   std::string regex = "";

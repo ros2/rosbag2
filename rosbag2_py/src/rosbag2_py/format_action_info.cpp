@@ -31,9 +31,8 @@ format_action_info(
   const InfoSortingMethod sort_method)
 {
   std::stringstream info_stream;
-  const std::string action_info_string = "Action information: ";
   info_stream << "Actions:           " << action_info_list.size() << std::endl;
-  info_stream << action_info_string;
+  info_stream << "Action information: ";
 
   if (action_info_list.empty()) {
     return info_stream.str();
@@ -82,8 +81,7 @@ format_action_info(
 
   std::vector<size_t> sorted_idx = generate_sorted_idx(action_info_list, sort_method);
 
-  auto number_of_actions = action_info_list.size();
-  for (size_t j = 0; j < number_of_actions; ++j) {
+  for (size_t j = 0; j < action_info_list.size(); ++j) {
     print_action_info(action_info_list[sorted_idx[j]]);
   }
 

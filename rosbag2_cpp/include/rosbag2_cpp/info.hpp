@@ -59,11 +59,11 @@ public:
   virtual rosbag2_storage::BagMetadata read_metadata(
     const std::string & uri, const std::string & storage_id = "");
 
-  virtual
-  std::pair<std::vector<std::shared_ptr<rosbag2_service_info_t>>,
-    std::vector<std::shared_ptr<rosbag2_action_info_t>>>
-  read_service_and_action_info(
-    const std::string & uri, const std::string & storage_id = "");
+  std::pair<
+    std::vector<std::shared_ptr<rosbag2_service_info_t>>,
+    std::vector<std::shared_ptr<rosbag2_action_info_t>>
+  >
+  read_service_and_action_info(const std::string & uri, const std::string & storage_id = "");
 
   virtual std::unordered_map<std::string, uint64_t> compute_messages_size_contribution(
     const std::string & uri, const std::string & storage_id = "");

@@ -53,6 +53,16 @@ bool is_topic_belong_to_action(const std::string & topic_name, const std::string
   return std::regex_search(topic_type, pattern);
 }
 
+bool is_topic_belong_to_action(
+  ActionInterfaceType action_interface_type, const std::string & topic_type)
+{
+  if (action_interface_type == ActionInterfaceType::Unknown) {
+    return false;
+  }
+  std::regex pattern(action_topic_type_to_regex_map.at(action_interface_type));
+  return std::regex_search(topic_type, pattern);
+}
+
 std::string action_interface_name_to_action_name(const std::string & topic_name)
 {
   std::string action_name;
@@ -70,16 +80,6 @@ std::string action_interface_name_to_action_name(const std::string & topic_name)
   }
 
   return action_name;
-}
-
-bool is_topic_belong_to_action(
-  ActionInterfaceType action_interface_type, const std::string & topic_type)
-{
-  if (action_interface_type == ActionInterfaceType::Unknown) {
-    return false;
-  }
-  std::regex pattern(action_topic_type_to_regex_map.at(action_interface_type));
-  return std::regex_search(topic_type, pattern);
 }
 
 std::string get_action_type_for_info(const std::string & interface_type)
