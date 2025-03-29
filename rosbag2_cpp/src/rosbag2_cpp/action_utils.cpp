@@ -107,7 +107,9 @@ std::string get_action_type_for_info(const std::string & interface_type)
           break;
         case ActionInterfaceType::CancelGoalEvent:
         case ActionInterfaceType::Status:
+          break;
         default:
+          throw std::runtime_error("Can't get action type. Unknown action interface type");
           break;
       }
       return action_type;
