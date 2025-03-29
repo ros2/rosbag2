@@ -279,16 +279,15 @@ Info::read_service_and_action_info(
         }
       } else {
         // Handle service event topic
+        auto service_info = service_process_info[bag_msg->topic_name];
         switch (msg.event_type) {
           case service_msgs::msg::ServiceEventInfo::REQUEST_SENT:
           case service_msgs::msg::ServiceEventInfo::REQUEST_RECEIVED:
-            service_process_info[bag_msg->topic_name]->request[msg.client_gid].emplace(
-              msg.sequence_number);
+            service_info->request[msg.client_gid].emplace(msg.sequence_number);
             break;
           case service_msgs::msg::ServiceEventInfo::RESPONSE_SENT:
           case service_msgs::msg::ServiceEventInfo::RESPONSE_RECEIVED:
-            service_process_info[bag_msg->topic_name]->response[msg.client_gid].emplace(
-              msg.sequence_number);
+            service_info->response[msg.client_gid].emplace(msg.sequence_number);
             break;
           default:
             throw std::range_error("Invalid service event type " +
