@@ -229,7 +229,7 @@ void SequentialWriter::create_topic(const rosbag2_storage::TopicMetadata & topic
     // The following two action types cannot be retrieved from the topic type.
     // - xxx/_action/cancel_goal/_service_event (action_msgs/srv/CancelGoal_Event)
     // - xxx/_action/status (action_msgs/msg/GoalStatusArray)
-    topic_type = get_action_type(topic_with_type.type);
+    topic_type = get_action_type_for_info(topic_with_type.type);
 
     // TODO(Barry.Xu): LocalMessageDefinitionSource::get_full_text(topic_type) doesn't support
     // action type. Need to implement it.

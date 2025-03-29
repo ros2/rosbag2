@@ -46,11 +46,12 @@ ROSBAG2_CPP_PUBLIC
 std::string
 action_interface_name_to_action_name(const std::string & topic_name);
 
+// Get the action type from action interface type for display info
 // Call this function after is_topic_belong_to_action() return true
 // Note that cancel_goal event topic and status topic return ""
 ROSBAG2_CPP_PUBLIC
 std::string
-get_action_type(const std::string & topic_type);
+get_action_type_for_info(const std::string & interface_type);
 
 ROSBAG2_CPP_PUBLIC
 ActionInterfaceType

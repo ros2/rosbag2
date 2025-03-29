@@ -82,28 +82,28 @@ bool is_topic_belong_to_action(
   return std::regex_search(topic_type, pattern);
 }
 
-std::string get_action_type(const std::string & topic_type)
+std::string get_action_type_for_info(const std::string & interface_type)
 {
   std::string action_type;
 
   for (auto &[topic_type_enum, regex] : action_topic_type_to_regex_map) {
     std::regex pattern(regex);
-    if (std::regex_search(topic_type, pattern)) {
+    if (std::regex_search(interface_type, pattern)) {
       switch (topic_type_enum) {
         case ActionInterfaceType::SendGoalEvent:
           // Remove the postfix "_SendGoal_Event"
           action_type =
-            topic_type.substr(0, topic_type.length() - std::strlen("_SendGoal_Event"));
+            interface_type.substr(0, interface_type.length() - std::strlen("_SendGoal_Event"));
           break;
         case ActionInterfaceType::GetResultEvent:
           // Remove the postfix "_GetResult_Event"
           action_type =
-            topic_type.substr(0, topic_type.length() - std::strlen("_GetResult_Event"));
+            interface_type.substr(0, interface_type.length() - std::strlen("_GetResult_Event"));
           break;
         case ActionInterfaceType::Feedback:
           // Remove the postfix "_FeedbackMessage"
           action_type =
-            topic_type.substr(0, topic_type.length() - std::strlen("_FeedbackMessage"));
+            interface_type.substr(0, interface_type.length() - std::strlen("_FeedbackMessage"));
           break;
         case ActionInterfaceType::CancelGoalEvent:
         case ActionInterfaceType::Status:

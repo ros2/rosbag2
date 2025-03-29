@@ -77,73 +77,66 @@ struct action_service_req_resp_info
   service_req_resp_info get_result_service;
 };
 
-inline void calculate_message_counts(
-  std::unordered_map<client_id, sequence_set, client_id_hash> & message_map,
-  size_t & count)
+inline size_t calculate_number_of_messages(
+  std::unordered_map<client_id, sequence_set, client_id_hash> & message_map)
 {
-  count = 0;
+  size_t message_count = 0;
   for (auto & [client_id, message_list] : message_map) {
-    count += message_list.size();
+    message_count += message_list.size();
   }
+
+  return message_count;
 }
 
 using action_analysis =
   std::unordered_map<std::string, std::shared_ptr<action_service_req_resp_info>>;
 
-inline void summary_action_service_info(
+inline void update_action_service_info_with_num_req_resp(
   action_analysis & action_process_info,
   std::unordered_map<std::string, std::shared_ptr<rosbag2_action_info_t>> & all_action_info)
 {
   for (auto & [action_name, action_info] : action_process_info) {
-    size_t count = 0;
     // Get the number of request from all clients for send_goal
-    calculate_message_counts(action_info->send_goal_service.request, count);
-    all_action_info[action_name]->send_goal_service_msg_count.first = count;
+    all_action_info[action_name]->send_goal_service_msg_count.first =
+      calculate_number_of_messages(action_info->send_goal_service.request);
 
     // Get the number of request from all clients for cancel_goal
-    count = 0;
-    calculate_message_counts(action_info->cancel_goal_service.request, count);
-    all_action_info[action_name]->cancel_goal_service_msg_count.first = count;
+    all_action_info[action_name]->cancel_goal_service_msg_count.first =
+      calculate_number_of_messages(action_info->cancel_goal_service.request);
 
     // Get the number of request from all clients for get_result
-    count = 0;
-    calculate_message_counts(action_info->get_result_service.request, count);
-    all_action_info[action_name]->get_result_service_msg_count.first = count;
+    all_action_info[action_name]->get_result_service_msg_count.first =
+      calculate_number_of_messages(action_info->get_result_service.request);
 
     // Get the number of response from all clients for send_goal
-    count = 0;
-    calculate_message_counts(action_info->send_goal_service.response, count);
-    all_action_info[action_name]->send_goal_service_msg_count.second = count;
+    all_action_info[action_name]->send_goal_service_msg_count.second =
+      calculate_number_of_messages(action_info->send_goal_service.response);
 
     // Get the number of response from all clients for cancel_goal
-    count = 0;
-    calculate_message_counts(action_info->cancel_goal_service.response, count);
-    all_action_info[action_name]->cancel_goal_service_msg_count.second = count;
+    all_action_info[action_name]->cancel_goal_service_msg_count.second =
+      calculate_number_of_messages(action_info->cancel_goal_service.response);
 
     // Get the number of response from all clients for get_result
-    count = 0;
-    calculate_message_counts(action_info->get_result_service.response, count);
-    all_action_info[action_name]->get_result_service_msg_count.second = count;
+    all_action_info[action_name]->get_result_service_msg_count.second =
+      calculate_number_of_messages(action_info->get_result_service.response);
   }
 }
 
 using service_analysis =
   std::unordered_map<std::string, std::shared_ptr<service_req_resp_info>>;
 
-inline void summary_service_info(
+inline void update_service_info_with_num_req_resp(
   service_analysis & service_process_info,
   std::unordered_map<std::string, std::shared_ptr<rosbag2_service_info_t>> & all_service_info)
 {
   for (auto & [topic_name, service_info] : service_process_info) {
-    size_t count = 0;
     // Get the number of request from all clients
-    calculate_message_counts(service_info->request, count);
-    all_service_info[topic_name]->request_count = count;
+    all_service_info[topic_name]->request_count =
+      calculate_number_of_messages(service_info->request);
 
-    count = 0;
     // Get the number of response from all clients
-    calculate_message_counts(service_info->response, count);
-    all_service_info[topic_name]->response_count = count;
+    all_service_info[topic_name]->response_count =
+      calculate_number_of_messages(service_info->response);
   }
 }
 }  // namespace
@@ -195,7 +188,7 @@ Info::read_service_and_action_info(
 
       // Update action type. Note: cancel_goal event topic and status topic cannot get type
       if (action_info->type.empty()) {
-        action_info->type = get_action_type(t.type);
+        action_info->type = get_action_type_for_info(t.type);
       }
 
       // Update action_interface_name_to_action_name_map to speed up following code.
@@ -305,7 +298,7 @@ Info::read_service_and_action_info(
     }
 
     // Process action_process_info to get the number of request and response
-    summary_action_service_info(action_process_info, all_action_info);
+    update_action_service_info_with_num_req_resp(action_process_info, all_action_info);
 
     // Covert all_action_info to output_action_info
     for (auto & [action_name, action_info] : all_action_info) {
@@ -313,7 +306,7 @@ Info::read_service_and_action_info(
     }
 
     // Process service_process_info to get the number of request and response
-    summary_service_info(service_process_info, all_service_info);
+    update_service_info_with_num_req_resp(service_process_info, all_service_info);
 
     // Convert all_service_info to output_service_info
     for (auto & [topic_name, service_info] : all_service_info) {
