@@ -28,9 +28,11 @@
 #include "rcl/graph.h"
 
 #include "rclcpp/rclcpp.hpp"
+#include "rclcpp_action/create_generic_client.hpp"
 #include "rcpputils/unique_lock.hpp"
 #include "rcutils/time.h"
 
+#include "rosbag2_cpp/action_utils.hpp"
 #include "rosbag2_cpp/clocks/time_controller_clock.hpp"
 #include "rosbag2_cpp/reader.hpp"
 #include "rosbag2_cpp/service_utils.hpp"
@@ -38,6 +40,7 @@
 #include "rosbag2_storage/storage_filter.hpp"
 #include "rosbag2_storage/qos.hpp"
 #include "rosbag2_transport/config_options_from_node_params.hpp"
+#include "rosbag2_transport/player_action_client.hpp"
 #include "rosbag2_transport/player_service_client.hpp"
 #include "rosbag2_transport/player_progress_bar.hpp"
 #include "rosbag2_transport/reader_writer_factory.hpp"
@@ -194,6 +197,16 @@ public:
   /// \return Hashtable representing service name to client map
   std::unordered_map<std::string, std::shared_ptr<rclcpp::GenericClient>> get_service_clients();
 
+  /// \brief Getter for clients corresponding to actions
+  /// \return Hashtable representing action name to client map
+  std::unordered_map<std::string, std::shared_ptr<rclcpp_action::GenericClient>>
+  get_action_clients();
+
+  /// \brief Goal handle for action client is in processing.
+  /// \return true if goal handle is in processing, otherwise false.
+  bool
+  goal_handle_in_process(std::string action_name, const rclcpp_action::GoalUUID & goal_id);
+
   /// \brief Getter for inner clock_publisher
   /// \return Shared pointer to the inner clock_publisher
   rclcpp::Publisher<rosgraph_msgs::msg::Clock>::SharedPtr get_clock_publisher();
@@ -284,8 +297,10 @@ private:
   rclcpp::Publisher<rosgraph_msgs::msg::Clock>::SharedPtr clock_publisher_;
   using PlayerPublisherSharedPtr = std::shared_ptr<PlayerPublisher>;
   using PlayerServiceClientSharedPtr = std::shared_ptr<PlayerServiceClient>;
+  using PlayerActionClientSharedPtr = std::shared_ptr<PlayerActionClient>;
   std::unordered_map<std::string, PlayerPublisherSharedPtr> publishers_;
   std::unordered_map<std::string, PlayerServiceClientSharedPtr> service_clients_;
+  std::unordered_map<std::string, PlayerActionClientSharedPtr> action_clients_;
 
 private:
   rosbag2_storage::SerializedBagMessageSharedPtr take_next_message_from_queue();
@@ -298,6 +313,16 @@ private:
   void play_messages_from_queue();
   void prepare_publishers();
   bool publish_message(rosbag2_storage::SerializedBagMessageSharedPtr message);
+  bool publish_message_by_player_publisher(
+    PlayerPublisherSharedPtr & player_publisher,
+    rosbag2_storage::SerializedBagMessageSharedPtr & message);
+  bool publish_message_by_player_service_client(
+    PlayerServiceClientSharedPtr & service_client,
+    rosbag2_storage::SerializedBagMessageSharedPtr & message);
+  bool publish_message_by_play_action_client(
+    PlayerActionClientSharedPtr & action_client,
+    rosbag2_cpp::ActionInterfaceType action_interface_type,
+    rosbag2_storage::SerializedBagMessageSharedPtr & message);
   static callback_handle_t get_new_on_play_msg_callback_handle();
   void add_key_callback(
     KeyboardHandler::KeyCode key,
@@ -452,6 +477,18 @@ PlayerImpl::PlayerImpl(
   for (auto & exclude_service_event_topic : play_options_.exclude_services_to_filter) {
     exclude_service_event_topic = rclcpp::expand_topic_or_service_name(
       exclude_service_event_topic, owner_->get_name(),
+      owner_->get_namespace(), false);
+  }
+
+  for (auto & action_topic : play_options_.actions_to_filter) {
+    action_topic = rclcpp::expand_topic_or_service_name(
+      action_topic, owner_->get_name(),
+      owner_->get_namespace(), false);
+  }
+
+  for (auto & exclude_action_topic : play_options_.exclude_actions_to_filter) {
+    exclude_action_topic = rclcpp::expand_topic_or_service_name(
+      exclude_action_topic, owner_->get_name(),
       owner_->get_namespace(), false);
   }
 
@@ -951,6 +988,27 @@ std::unordered_map<std::string,
   return topic_to_client_map;
 }
 
+std::unordered_map<std::string, std::shared_ptr<rclcpp_action::GenericClient>>
+PlayerImpl::get_action_clients()
+{
+  std::unordered_map<std::string, std::shared_ptr<rclcpp_action::GenericClient>>
+  topic_to_action_client_map;
+  for (const auto & [action_name, action_client] : action_clients_) {
+    topic_to_action_client_map[action_name] = action_client->generic_client();
+  }
+  return topic_to_action_client_map;
+}
+
+bool
+PlayerImpl::goal_handle_in_process(std::string action_name, const rclcpp_action::GoalUUID & goal_id)
+{
+  if (action_name.empty() || action_clients_.find(action_name) == action_clients_.end()) {
+    throw(std::invalid_argument("Action client for action '" + action_name + "' does not exist."));
+  }
+
+  return action_clients_[action_name]->gold_handle_in_processing(goal_id);
+}
+
 rclcpp::Publisher<rosgraph_msgs::msg::Clock>::SharedPtr PlayerImpl::get_clock_publisher()
 {
   return clock_publisher_;
@@ -1169,8 +1227,15 @@ rcutils_time_point_value_t PlayerImpl::get_message_order_timestamp(
 
 namespace
 {
+enum class TopicKind
+{
+  TOPIC,
+  SERVICE_EVENT_TOPIC,
+  ACTION_INTERFACE_TOPIC
+};
+
 bool allow_topic(
-  bool is_service,
+  TopicKind topic_type,
   const std::string & topic_name,
   const rosbag2_storage::StorageFilter & storage_filter)
 {
@@ -1178,25 +1243,46 @@ bool allow_topic(
   auto & exclude_topics = storage_filter.exclude_topics;
   auto & include_services = storage_filter.services_events;
   auto & exclude_services = storage_filter.exclude_service_events;
+  auto & include_actions = storage_filter.actions_interfaces;
+  auto & exclude_actions = storage_filter.exclude_actions_interfaces;
   auto & regex = storage_filter.regex;
   auto & regex_to_exclude = storage_filter.regex_to_exclude;
 
-  if (is_service) {
-    if (!exclude_services.empty()) {
-      auto it = std::find(exclude_services.begin(), exclude_services.end(), topic_name);
-      if (it != exclude_services.end()) {
-        return false;
+  // Check if topic is in the exclude list
+  switch (topic_type) {
+    case TopicKind::TOPIC:
+      {
+        if (!exclude_topics.empty()) {
+          auto it = std::find(exclude_topics.begin(), exclude_topics.end(), topic_name);
+          if (it != exclude_topics.end()) {
+            return false;
+          }
+        }
+        break;
       }
-    }
-  } else {
-    if (!exclude_topics.empty()) {
-      auto it = std::find(exclude_topics.begin(), exclude_topics.end(), topic_name);
-      if (it != exclude_topics.end()) {
-        return false;
+    case TopicKind::SERVICE_EVENT_TOPIC:
+      {
+        if (!exclude_services.empty()) {
+          auto it = std::find(exclude_services.begin(), exclude_services.end(), topic_name);
+          if (it != exclude_services.end()) {
+            return false;
+          }
+        }
+        break;
       }
-    }
+    case TopicKind::ACTION_INTERFACE_TOPIC:
+      {
+        if (!exclude_topics.empty()) {
+          auto it = std::find(exclude_actions.begin(), exclude_actions.end(), topic_name);
+          if (it != exclude_actions.end()) {
+            return false;
+          }
+        }
+        break;
+      }
   }
 
+  // Check if topic match the regex to exclude
   if (!regex_to_exclude.empty()) {
     std::smatch m;
     std::regex re(regex_to_exclude);
@@ -1206,30 +1292,67 @@ bool allow_topic(
     }
   }
 
-  bool set_include = is_service ? !include_services.empty() : !include_topics.empty();
+  bool set_include = false;
+  switch (topic_type) {
+    case TopicKind::TOPIC:
+      {
+        set_include = !include_topics.empty();
+        break;
+      }
+    case TopicKind::SERVICE_EVENT_TOPIC:
+      {
+        set_include = !include_services.empty();
+        break;
+      }
+    case TopicKind::ACTION_INTERFACE_TOPIC:
+      {
+        set_include = !include_actions.empty();
+        break;
+      }
+  }
   bool set_regex = !regex.empty();
 
   if (set_include || set_regex) {
-    if (is_service) {
-      auto iter = std::find(include_services.begin(), include_services.end(), topic_name);
-      if (iter == include_services.end()) {
-        // If include_service is set and regex isn't set, service must be in include_service.
-        if (!set_regex) {
-          return false;
+    switch (topic_type) {
+      case TopicKind::TOPIC:
+        {
+          auto iter = std::find(include_topics.begin(), include_topics.end(), topic_name);
+          if (iter == include_topics.end()) {
+            // If include_topics is set and regex isn't set, topic must be in include_topics.
+            if (!set_regex) {
+              return false;
+            }
+          } else {
+            return true;
+          }
+          break;
         }
-      } else {
-        return true;
-      }
-    } else {
-      auto iter = std::find(include_topics.begin(), include_topics.end(), topic_name);
-      if (iter == include_topics.end()) {
-        // If include_service is set and regex isn't set, service must be in include_service.
-        if (!set_regex) {
-          return false;
+      case TopicKind::SERVICE_EVENT_TOPIC:
+        {
+          auto iter = std::find(include_services.begin(), include_services.end(), topic_name);
+          if (iter == include_services.end()) {
+            // If include_service is set and regex isn't set, topic must be in include_service.
+            if (!set_regex) {
+              return false;
+            }
+          } else {
+            return true;
+          }
+          break;
         }
-      } else {
-        return true;
-      }
+      case TopicKind::ACTION_INTERFACE_TOPIC:
+        {
+          auto iter = std::find(include_actions.begin(), include_actions.end(), topic_name);
+          if (iter == include_actions.end()) {
+            // If include_actions is set and regex isn't set, topic must be in include_actions.
+            if (!set_regex) {
+              return false;
+            }
+          } else {
+            return true;
+          }
+          break;
+        }
     }
 
     if (set_regex) {
@@ -1251,10 +1374,28 @@ void PlayerImpl::prepare_publishers()
   rosbag2_storage::StorageFilter storage_filter;
   storage_filter.topics = play_options_.topics_to_filter;
   storage_filter.services_events = play_options_.services_to_filter;
+  if (!play_options_.actions_to_filter.empty()) {
+    for (const auto & action : play_options_.actions_to_filter) {
+      auto action_interfaces = rosbag2_cpp::action_name_to_action_interface_names(action);
+      storage_filter.actions_interfaces.insert(
+        storage_filter.actions_interfaces.end(),
+        std::make_move_iterator(action_interfaces.begin()),
+        std::make_move_iterator(action_interfaces.end()));
+    }
+  }
   storage_filter.regex = play_options_.regex_to_filter;
   storage_filter.regex_to_exclude = play_options_.exclude_regex_to_filter;
   storage_filter.exclude_topics = play_options_.exclude_topics_to_filter;
   storage_filter.exclude_service_events = play_options_.exclude_services_to_filter;
+  if (!play_options_.exclude_actions_to_filter.empty()) {
+    for (const auto & action : play_options_.exclude_actions_to_filter) {
+      auto action_interfaces = rosbag2_cpp::action_name_to_action_interface_names(action);
+      storage_filter.exclude_actions_interfaces.insert(
+        storage_filter.exclude_actions_interfaces.end(),
+        std::make_move_iterator(action_interfaces.begin()),
+        std::make_move_iterator(action_interfaces.end()));
+    }
+  }
   for (const auto & [reader, _] : readers_with_options_) {
     reader->set_filter(storage_filter);
   }
@@ -1302,15 +1443,55 @@ void PlayerImpl::prepare_publishers()
   }
   std::string topic_without_support_acked;
   for (const auto & topic : topics) {
-    const bool is_service_event_topic = rosbag2_cpp::is_service_event_topic(topic.name, topic.type);
-    if (play_options_.publish_service_requests && is_service_event_topic) {
+    TopicKind topic_kind;
+    if (rosbag2_cpp::is_topic_belong_to_action(topic.name, topic.type)) {
+      topic_kind = TopicKind::ACTION_INTERFACE_TOPIC;
+    } else if (rosbag2_cpp::is_service_event_topic(topic.name, topic.type)) {
+      topic_kind = TopicKind::SERVICE_EVENT_TOPIC;
+    } else {
+      topic_kind = TopicKind::TOPIC;
+    }
+
+    if (topic_kind == TopicKind::ACTION_INTERFACE_TOPIC && play_options_.send_actions_as_client) {
+      // Check if action client was created
+      auto action_name = rosbag2_cpp::action_interface_name_to_action_name(topic.name);
+      if (action_clients_.find(action_name) != action_clients_.end()) {
+        continue;
+      }
+
+      // filter action topics to add clients if necessary
+      if (!allow_topic(topic_kind, topic.name, storage_filter)) {
+        continue;
+      }
+
+      auto action_type = rosbag2_cpp::get_action_type_for_info(topic.type);
+      if (action_type.empty()) {
+        // Skip cancel_goal event topics and status topics since these topic types cannot be
+        // converted to action type.
+        continue;
+      }
+
+      try {
+        auto generic_client = rclcpp_action::create_generic_client(
+          owner_, action_name, action_type);
+        auto player_client = std::make_shared<PlayerActionClient>(
+          std::move(generic_client), action_name, action_type, owner_->get_logger());
+        action_clients_.insert(std::make_pair(action_name, player_client));
+      } catch (const std::runtime_error & e) {
+        RCLCPP_WARN(
+          owner_->get_logger(),
+          "Ignoring a action '%s', reason: %s.", action_name.c_str(), e.what());
+      }
+    } else if (topic_kind == TopicKind::SERVICE_EVENT_TOPIC && // NOLINT: conflict with uncrustify
+      play_options_.publish_service_requests)
+    {
       // Check if sender was created
       if (service_clients_.find(topic.name) != service_clients_.end()) {
         continue;
       }
 
       // filter service event topic to add client if necessary
-      if (!allow_topic(true, topic.name, storage_filter)) {
+      if (!allow_topic(topic_kind, topic.name, storage_filter)) {
         continue;
       }
 
@@ -1334,7 +1515,7 @@ void PlayerImpl::prepare_publishers()
       }
 
       // filter topics to add publishers if necessary
-      if (!allow_topic(is_service_event_topic, topic.name, storage_filter)) {
+      if (!allow_topic(topic_kind, topic.name, storage_filter)) {
         continue;
       }
 
@@ -1414,31 +1595,223 @@ void PlayerImpl::run_play_msg_post_callbacks(
   }
 }
 
-bool PlayerImpl::publish_message(rosbag2_storage::SerializedBagMessageSharedPtr message)
+bool PlayerImpl::publish_message_by_player_publisher(
+  PlayerPublisherSharedPtr & player_publisher,
+  rosbag2_storage::SerializedBagMessageSharedPtr & message)
 {
-  auto pub_iter = publishers_.find(message->topic_name);
-  if (pub_iter != publishers_.end()) {
-    bool message_published = false;
-    bool pre_callbacks_failed = true;
+  bool message_published = false;
+  bool pre_callbacks_failed = true;
+  try {
+    // Calling on play message pre-callbacks
+    run_play_msg_pre_callbacks(message);
+    pre_callbacks_failed = false;
+  } catch (const std::exception & e) {
+    RCLCPP_ERROR_STREAM(owner_->get_logger(),
+      "Failed to call on play message pre-callback on '" << message->topic_name <<
+      "' topic. \nError: " << e.what());
+  }
+
+  if (!pre_callbacks_failed) {
+    try {
+      player_publisher->publish(rclcpp::SerializedMessage(*message->serialized_data));
+      message_published = true;
+    } catch (const std::exception & e) {
+      RCLCPP_ERROR_STREAM(owner_->get_logger(),
+        "Failed to publish message on '" << message->topic_name <<
+        "' topic. \nError: " << e.what());
+    }
+  }
+
+  try {
+    // Calling on play message post-callbacks
+    run_play_msg_post_callbacks(message);
+  } catch (const std::exception & e) {
+    RCLCPP_ERROR_STREAM(owner_->get_logger(),
+      "Failed to call on play message post-callback on '" << message->topic_name <<
+      "' topic. \nError: " << e.what());
+  }
+  return message_published;
+}
+
+bool PlayerImpl::publish_message_by_player_service_client(
+  PlayerServiceClientSharedPtr & service_client,
+  rosbag2_storage::SerializedBagMessageSharedPtr & message)
+{
+  auto service_event = service_client->deserialize_service_event(*message->serialized_data);
+  if (!service_event) {
+    RCLCPP_ERROR_STREAM(
+      owner_->get_logger(), "Failed to deserialize service event message for '" <<
+        service_client->get_service_name() << "' service!\n");
+    return false;
+  }
+
+  try {
+    auto [service_event_type, client_gid] =
+      service_client->get_service_event_type_and_client_gid(service_event);
+    // Ignore response message
+    if (service_event_type == service_msgs::msg::ServiceEventInfo::RESPONSE_SENT ||
+      service_event_type == service_msgs::msg::ServiceEventInfo::RESPONSE_RECEIVED)
+    {
+      return false;
+    }
+
+    if (play_options_.service_requests_source == ServiceRequestsSource::SERVER_INTROSPECTION &&
+      service_event_type != service_msgs::msg::ServiceEventInfo::REQUEST_RECEIVED)
+    {
+      return false;
+    }
+
+    if (play_options_.service_requests_source == ServiceRequestsSource::CLIENT_INTROSPECTION &&
+      service_event_type != service_msgs::msg::ServiceEventInfo::REQUEST_SENT)
+    {
+      return false;
+    }
+
+    if (!service_client->generic_client()->service_is_ready()) {
+      RCLCPP_ERROR(
+        owner_->get_logger(), "Service request hasn't been sent. The '%s' service isn't ready !",
+        service_client->get_service_name().c_str());
+      return false;
+    }
+
+    if (!service_client->is_service_event_include_request_message(service_event)) {
+      if (service_event_type == service_msgs::msg::ServiceEventInfo::REQUEST_RECEIVED) {
+        RCUTILS_LOG_WARN_ONCE_NAMED(
+          ROSBAG2_TRANSPORT_PACKAGE_NAME,
+          "Can't send service request. "
+          "The configuration of introspection for '%s' was metadata only on service side!",
+          service_client->get_service_name().c_str());
+      } else if (service_event_type == service_msgs::msg::ServiceEventInfo::REQUEST_SENT) {
+        RCUTILS_LOG_WARN_ONCE_NAMED(
+          ROSBAG2_TRANSPORT_PACKAGE_NAME,
+          "Can't send service request. "
+          "The configuration of introspection for '%s' client [ID: %s]` was metadata only!",
+          service_client->get_service_name().c_str(),
+          rosbag2_cpp::client_id_to_string(client_gid).c_str());
+      }
+      return false;
+    }
+  } catch (const std::exception & e) {
+    RCLCPP_ERROR_STREAM(
+      owner_->get_logger(), "Failed to send request on '" <<
+        rosbag2_cpp::service_event_topic_name_to_service_name(message->topic_name) <<
+        "' service. \nError: " << e.what());
+    return false;
+  }
+
+  // Calling on play message pre-callbacks
+  run_play_msg_pre_callbacks(message);
+
+  bool message_published = false;
+  try {
+    service_client->async_send_request(service_event);
+    message_published = true;
+  } catch (const std::exception & e) {
+    RCLCPP_ERROR_STREAM(
+      owner_->get_logger(), "Failed to send request on '" <<
+        rosbag2_cpp::service_event_topic_name_to_service_name(message->topic_name) <<
+        "' service. \nError: " << e.what());
+  }
+
+  // Calling on play message post-callbacks
+  run_play_msg_post_callbacks(message);
+  return message_published;
+}
+
+bool PlayerImpl::publish_message_by_play_action_client(
+  PlayerActionClientSharedPtr & action_client,
+  rosbag2_cpp::ActionInterfaceType action_interface_type,
+  rosbag2_storage::SerializedBagMessageSharedPtr & message)
+{
+  std::shared_ptr<uint8_t[]> type_erased_service_event;
+  PlayerActionClient::ServiceEventType service_event_type;
+  switch (action_interface_type) {
+    case rosbag2_cpp::ActionInterfaceType::SendGoalEvent:
+      type_erased_service_event =
+        action_client->deserialize_send_goal_service_event(*message->serialized_data);
+      service_event_type = action_client->get_service_event_type(
+        type_erased_service_event,
+        PlayerActionClient::ServiceInterfaceInAction::SEND_GOAL_SERVICE);
+      break;
+    case rosbag2_cpp::ActionInterfaceType::CancelGoalEvent:
+      type_erased_service_event =
+        action_client->deserialize_cancel_goal_service_event(*message->serialized_data);
+      service_event_type = action_client->get_service_event_type(
+        type_erased_service_event,
+        PlayerActionClient::ServiceInterfaceInAction::CANCEL_GOAL_SERVICE);
+      break;
+    case rosbag2_cpp::ActionInterfaceType::GetResultEvent:
+      type_erased_service_event =
+        action_client->deserialize_get_result_service_event(*message->serialized_data);
+      service_event_type = action_client->get_service_event_type(
+        type_erased_service_event,
+        PlayerActionClient::ServiceInterfaceInAction::GET_RESULT_SERVICE);
+      break;
+    default:
+      // Never go here
+      break;
+  }
+
+  if (!type_erased_service_event) {
+    return false;
+  }
+
+  // Ignore all response messages
+  if (service_event_type == PlayerActionClient::ServiceEventType::RESPONSE_SENT ||
+    service_event_type == PlayerActionClient::ServiceEventType::RESPONSE_RECEIVED)
+  {
+    return true;
+  }
+
+  // The request sent comes from the server or client side matches the user setting.
+  if (play_options_.service_requests_source == ServiceRequestsSource::SERVER_INTROSPECTION) {
+    if (service_event_type == PlayerActionClient::ServiceEventType::REQUEST_SENT) {
+      // Ignore request message from service client
+      return true;
+    }
+  } else {
+    // ServiceRequestsSource::CLIENT_INTROSPECTION
+    if (service_event_type == PlayerActionClient::ServiceEventType::REQUEST_RECEIVED) {
+      // Ignore request message from service server
+      return true;
+    }
+  }
+
+  try {
+    if (!action_client->generic_client()->wait_for_action_server(
+        std::chrono::milliseconds(300)))
+    {
+      RCLCPP_ERROR(
+        owner_->get_logger(), "The action server '%s' isn't ready !",
+        action_client->get_action_name().c_str());
+      return false;
+    }
+
     try {
       // Calling on play message pre-callbacks
       run_play_msg_pre_callbacks(message);
-      pre_callbacks_failed = false;
     } catch (const std::exception & e) {
       RCLCPP_ERROR_STREAM(owner_->get_logger(),
-        "Failed to call on play message pre-callback on '" << message->topic_name <<
+        "Failed to call on play action request pre-callback on '" << message->topic_name <<
         "' topic. \nError: " << e.what());
     }
 
-    if (!pre_callbacks_failed) {
-      try {
-        pub_iter->second->publish(rclcpp::SerializedMessage(*message->serialized_data));
-        message_published = true;
-      } catch (const std::exception & e) {
-        RCLCPP_ERROR_STREAM(owner_->get_logger(),
-          "Failed to publish message on '" << message->topic_name <<
-          "' topic. \nError: " << e.what());
-      }
+    switch (action_interface_type) {
+      case rosbag2_cpp::ActionInterfaceType::SendGoalEvent:
+        action_client->async_send_goal_request(type_erased_service_event);
+        break;
+      case rosbag2_cpp::ActionInterfaceType::CancelGoalEvent:
+        action_client->async_send_cancel_request(type_erased_service_event);
+        break;
+      case rosbag2_cpp::ActionInterfaceType::GetResultEvent:
+        action_client->async_send_result_request(type_erased_service_event);
+        break;
+
+      // Never go here
+      case rosbag2_cpp::ActionInterfaceType::Feedback:
+      case rosbag2_cpp::ActionInterfaceType::Status:
+      default:
+        throw std::logic_error("Wrong action interface type.");
     }
 
     try {
@@ -1449,92 +1822,48 @@ bool PlayerImpl::publish_message(rosbag2_storage::SerializedBagMessageSharedPtr 
         "Failed to call on play message post-callback on '" << message->topic_name <<
         "' topic. \nError: " << e.what());
     }
-    return message_published;
+  } catch (const std::exception & e) {
+    RCLCPP_ERROR_STREAM(
+      owner_->get_logger(), "Failed to send action request for '" <<
+        action_client->get_action_name() << "' action. \nError: " << e.what());
+    return false;
+  }
+
+  return true;
+}
+
+bool PlayerImpl::publish_message(rosbag2_storage::SerializedBagMessageSharedPtr message)
+{
+  auto pub_iter = publishers_.find(message->topic_name);
+  if (pub_iter != publishers_.end()) {
+    return publish_message_by_player_publisher(pub_iter->second, message);
   }
 
   // Try to publish message as service request
   auto client_iter = service_clients_.find(message->topic_name);
   if (play_options_.publish_service_requests && client_iter != service_clients_.end()) {
-    const auto & service_client = client_iter->second;
-    auto service_event = service_client->deserialize_service_event(*message->serialized_data);
-    if (!service_event) {
-      RCLCPP_ERROR_STREAM(
-        owner_->get_logger(), "Failed to deserialize service event message for '" <<
-          service_client->get_service_name() << "' service!\n");
-      return false;
+    return publish_message_by_player_service_client(client_iter->second, message);
+  }
+
+  // Try to publish message as action request
+  auto action_interface_type = rosbag2_cpp::get_action_interface_type(message->topic_name);
+  if (action_interface_type != rosbag2_cpp::ActionInterfaceType::Unknown) {
+    if (action_interface_type == rosbag2_cpp::ActionInterfaceType::Feedback ||
+      action_interface_type == rosbag2_cpp::ActionInterfaceType::Status)
+    {
+      // Ignore messages for feedback and status
+      return true;
     }
 
-    try {
-      auto [service_event_type, client_gid] =
-        service_client->get_service_event_type_and_client_gid(service_event);
-      // Ignore response message
-      if (service_event_type == service_msgs::msg::ServiceEventInfo::RESPONSE_SENT ||
-        service_event_type == service_msgs::msg::ServiceEventInfo::RESPONSE_RECEIVED)
-      {
-        return false;
-      }
-
-      if (play_options_.service_requests_source == ServiceRequestsSource::SERVICE_INTROSPECTION &&
-        service_event_type != service_msgs::msg::ServiceEventInfo::REQUEST_RECEIVED)
-      {
-        return false;
-      }
-
-      if (play_options_.service_requests_source == ServiceRequestsSource::CLIENT_INTROSPECTION &&
-        service_event_type != service_msgs::msg::ServiceEventInfo::REQUEST_SENT)
-      {
-        return false;
-      }
-
-      if (!service_client->generic_client()->service_is_ready()) {
-        RCLCPP_ERROR(
-          owner_->get_logger(), "Service request hasn't been sent. The '%s' service isn't ready !",
-          service_client->get_service_name().c_str());
-        return false;
-      }
-
-      if (!service_client->is_service_event_include_request_message(service_event)) {
-        if (service_event_type == service_msgs::msg::ServiceEventInfo::REQUEST_RECEIVED) {
-          RCUTILS_LOG_WARN_ONCE_NAMED(
-            ROSBAG2_TRANSPORT_PACKAGE_NAME,
-            "Can't send service request. "
-            "The configuration of introspection for '%s' was metadata only on service side!",
-            service_client->get_service_name().c_str());
-        } else if (service_event_type == service_msgs::msg::ServiceEventInfo::REQUEST_SENT) {
-          RCUTILS_LOG_WARN_ONCE_NAMED(
-            ROSBAG2_TRANSPORT_PACKAGE_NAME,
-            "Can't send service request. "
-            "The configuration of introspection for '%s' client [ID: %s]` was metadata only!",
-            service_client->get_service_name().c_str(),
-            rosbag2_cpp::client_id_to_string(client_gid).c_str());
-        }
-        return false;
-      }
-    } catch (const std::exception & e) {
-      RCLCPP_ERROR_STREAM(
-        owner_->get_logger(), "Failed to send request on '" <<
-          rosbag2_cpp::service_event_topic_name_to_service_name(message->topic_name) <<
-          "' service. \nError: " << e.what());
-      return false;
+    auto action_name = rosbag2_cpp::action_interface_name_to_action_name(message->topic_name);
+    auto action_client_iter = action_clients_.find(action_name);
+    if (action_client_iter != action_clients_.end()) {
+      return publish_message_by_play_action_client(action_client_iter->second,
+          action_interface_type, message);
+    } else {
+      // Ignored action message
+      return true;
     }
-
-    // Calling on play message pre-callbacks
-    run_play_msg_pre_callbacks(message);
-
-    bool message_published = false;
-    try {
-      service_client->async_send_request(service_event);
-      message_published = true;
-    } catch (const std::exception & e) {
-      RCLCPP_ERROR_STREAM(
-        owner_->get_logger(), "Failed to send request on '" <<
-          rosbag2_cpp::service_event_topic_name_to_service_name(message->topic_name) <<
-          "' service. \nError: " << e.what());
-    }
-
-    // Calling on play message post-callbacks
-    run_play_msg_post_callbacks(message);
-    return message_published;
   }
 
   RCUTILS_LOG_WARN_ONCE_NAMED(
@@ -1970,6 +2299,17 @@ std::unordered_map<std::string,
   return pimpl_->get_service_clients();
 }
 
+std::unordered_map<std::string, std::shared_ptr<rclcpp_action::GenericClient>>
+Player::get_action_clients()
+{
+  return pimpl_->get_action_clients();
+}
+
+bool
+Player::goal_handle_in_process(std::string action_name, const rclcpp_action::GoalUUID & goal_id)
+{
+  return pimpl_->goal_handle_in_process(action_name, goal_id);
+}
 rclcpp::Publisher<rosgraph_msgs::msg::Clock>::SharedPtr Player::get_clock_publisher()
 {
   return pimpl_->get_clock_publisher();

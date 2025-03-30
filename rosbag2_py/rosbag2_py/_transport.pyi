@@ -20,12 +20,14 @@ class MessageOrder:
     def value(self) -> int: ...
 
 class PlayOptions:
+    actions_to_filter: List[str]
     clock_publish_frequency: float
     clock_publish_on_topic_publish: bool
     clock_topics: List[str]
     delay: float
     disable_keyboard_controls: bool
     disable_loan_message: bool
+    exclude_actions_to_filter: List[str]
     exclude_regex_to_filter: str
     exclude_service_events_to_filter: List[str]
     exclude_topics_to_filter: List[str]
@@ -40,6 +42,7 @@ class PlayOptions:
     rate: float
     read_ahead_queue_size: int
     regex_to_filter: str
+    send_actions_as_client: bool
     service_requests_source: Incomplete
     services_to_filter: List[str]
     start_offset: float

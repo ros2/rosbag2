@@ -235,8 +235,6 @@ private:
                  rosbag2_storage::storage_interfaces::IOFlag io_flag,
                  const std::string & storage_config_uri);
 
-  static bool is_topic_name_a_service_event(const std::string_view topic_name);
-
   /// \brief Check if topic match with the selection criteria by the white list or regex during
   /// data read.
   /// \details There is assumption that by default all topics shall be selected if none of the
@@ -566,7 +564,9 @@ bool MCAPStorage::read_and_enqueue_message()
   return true;
 }
 
-bool MCAPStorage::is_topic_name_a_service_event(const std::string_view topic_name)
+namespace
+{
+bool is_topic_name_a_service_event(const std::string_view topic_name)
 {
   // The origin definition is RCL_SERVICE_INTROSPECTION_TOPIC_POSTFIX
   static const char * service_event_topic_postfix = "/_service_event";
@@ -581,6 +581,24 @@ bool MCAPStorage::is_topic_name_a_service_event(const std::string_view topic_nam
   }
   return true;
 }
+
+// The postfix of the action internal topics and service event topics
+const std::vector<std::string> ActionInterfacePostfix = {
+  "/_action/send_goal/_service_event", "/_action/cancel_goal/_service_event",
+  "/_action/get_result/_service_event", "/_action/feedback", "/_action/status"};
+
+bool is_topic_name_related_to_action(const std::string_view topic_name)
+{
+  for (const auto & postfix : ActionInterfacePostfix) {
+    if (topic_name.length() > postfix.length() &&
+        topic_name.compare(topic_name.length() - postfix.length(), postfix.length(), postfix) ==
+          0) {
+      return true;
+    }
+  }
+  return false;
+}
+}  // namespace
 
 template <typename T>
 bool MCAPStorage::is_topic_selected_by_white_list_or_regex(const std::string_view topic_name,
@@ -644,18 +662,25 @@ void MCAPStorage::reset_iterator()
   options.readOrder = read_order_;
 
   auto topic_filter = [this](std::string_view topic) {
-    bool topic_a_service_event = is_topic_name_a_service_event(topic);
+    std::vector<std::string> * include_list = nullptr;
+    std::vector<std::string> * exclude_list = nullptr;
 
-    const auto & include_list =
-      topic_a_service_event ? storage_filter_.services_events : storage_filter_.topics;
+    if (is_topic_name_related_to_action(topic)) {
+      include_list = &storage_filter_.actions_interfaces;
+      exclude_list = &storage_filter_.exclude_actions_interfaces;
+    } else if (is_topic_name_a_service_event(topic)) {
+      include_list = &storage_filter_.services_events;
+      exclude_list = &storage_filter_.exclude_service_events;
+    } else {
+      include_list = &storage_filter_.topics;
+      exclude_list = &storage_filter_.exclude_topics;
+    }
 
-    const auto & exclude_list = topic_a_service_event ? storage_filter_.exclude_service_events
-                                                      : storage_filter_.exclude_topics;
     // if topic not found in exclude list or regex_to_exclude
-    if (!is_topic_in_black_list_or_exclude_regex(topic, exclude_list,
+    if (!is_topic_in_black_list_or_exclude_regex(topic, *exclude_list,
                                                  storage_filter_.regex_to_exclude)) {
       // if topic selected by include list or regex
-      if (is_topic_selected_by_white_list_or_regex(topic, include_list, storage_filter_.regex)) {
+      if (is_topic_selected_by_white_list_or_regex(topic, *include_list, storage_filter_.regex)) {
         return true;
       }
     }

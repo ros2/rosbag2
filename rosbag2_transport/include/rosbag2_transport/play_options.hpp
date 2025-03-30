@@ -30,7 +30,7 @@ namespace rosbag2_transport
 {
 enum class ServiceRequestsSource : int8_t
 {
-  SERVICE_INTROSPECTION = 0,
+  SERVER_INTROSPECTION = 0,
   CLIENT_INTROSPECTION = 1
 };
 
@@ -59,6 +59,11 @@ public:
   // If list is empty, the filter is ignored and all messages of services are played.
   std::vector<std::string> services_to_filter = {};
 
+  // Action names to whitelist when playing a bag.
+  // Only messages matching these specified actions will be played. If list is empty,
+  // the filter is ignored and all messages of actions are played.
+  std::vector<std::string> actions_to_filter = {};
+
   // Regular expression of topic names and service name to whitelist when playing a bag.
   // Only messages matching these specified topics and services will be played.
   // If list is empty, the filter is ignored and all messages are played.
@@ -71,6 +76,10 @@ public:
   // List of service names (service event topic names) to exclude when playing a bag.
   // Only messages not matching these specified services will be played.
   std::vector<std::string> exclude_services_to_filter = {};
+
+  // List of action names to exclude when playing a bag.
+  // Only messages not matching these specified actions will be played.
+  std::vector<std::string> exclude_actions_to_filter = {};
 
   // Regular expression of topic names and service name to exclude when playing a bag.
   // Only messages not matching these specified topics and services will be played.
@@ -129,8 +138,11 @@ public:
   // Publish service requests instead of service events
   bool publish_service_requests = false;
 
+  // Publish the send_goal request, cancel_goal request, and get_result request
+  bool send_actions_as_client = false;
+
   // The source of the service request
-  ServiceRequestsSource service_requests_source = ServiceRequestsSource::SERVICE_INTROSPECTION;
+  ServiceRequestsSource service_requests_source = ServiceRequestsSource::SERVER_INTROSPECTION;
 
   // The reference to use for bag message chronological ordering.
   // If messages are significantly disordered (within a single bag or across multiple bags),

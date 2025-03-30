@@ -20,6 +20,8 @@
 #include <vector>
 #include <string>
 
+#include "rclcpp_action/rclcpp_action.hpp"
+
 #include "rosbag2_cpp/reader.hpp"
 #include "rosbag2_storage/storage_options.hpp"
 #include "rosbag2_transport/player.hpp"
@@ -63,7 +65,7 @@ public:
     return pub_list;
   }
 
-  std::vector<rclcpp::ClientBase *> get_list_of_clients()
+  std::vector<rclcpp::ClientBase *> get_list_of_service_clients()
   {
     std::vector<rclcpp::ClientBase *> cli_list;
     for (const auto & client : this->get_service_clients()) {
@@ -73,6 +75,26 @@ public:
     }
 
     return cli_list;
+  }
+
+  std::vector<rclcpp_action::ClientBase *> get_list_of_action_clients()
+  {
+    std::vector<rclcpp_action::ClientBase *> action_cli_list;
+    for (const auto & client : this->get_action_clients()) {
+      action_cli_list.push_back(
+        static_cast<rclcpp_action::ClientBase *>(
+          client.second.get()));
+    }
+
+    return action_cli_list;
+  }
+
+  // Before calling this function, make sure that goal has been accepted by the action server.
+  // Call this function to confirm whether the result response has been received or if a cancel
+  // request has been sent.
+  bool goal_handle_complete(std::string action_name, const rclcpp_action::GoalUUID & goal_id)
+  {
+    return !this->goal_handle_in_process(action_name, goal_id);
   }
 
   size_t get_number_of_registered_pre_callbacks()

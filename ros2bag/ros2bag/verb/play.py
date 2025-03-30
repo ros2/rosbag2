@@ -61,17 +61,23 @@ class PlayVerb(VerbExtension):
             '--services', type=str, default=[], metavar='service', nargs='+',
             help='Space-delimited list of services to play.')
         parser.add_argument(
+            '--actions', type=str, default=[], metavar='action', nargs='+',
+            help='Space-delimited list of actions to play.')
+        parser.add_argument(
             '-e', '--regex', default='',
-            help='Play only topics and services matches with regular expression.')
+            help='Play only topics, services and actions matches with regular expression.')
         parser.add_argument(
             '-x', '--exclude-regex', default='',
-            help='regular expressions to exclude topics and services from replay.')
+            help='regular expressions to exclude topics, services and actions from replay.')
         parser.add_argument(
             '--exclude-topics', type=str, default=[], metavar='topic', nargs='+',
             help='Space-delimited list of topics not to play.')
         parser.add_argument(
             '--exclude-services', type=str, default=[], metavar='service', nargs='+',
             help='Space-delimited list of services not to play.')
+        parser.add_argument(
+            '--exclude-actions', type=str, default=[], metavar='action', nargs='+',
+            help='Space-delimited list of actions not to play.')
         parser.add_argument(
             '--qos-profile-overrides-path', type=FileType('r'),
             help='Path to a yaml file defining overrides of the QoS profile for specific topics.')
@@ -163,11 +169,19 @@ class PlayVerb(VerbExtension):
             '--publish-service-requests', action='store_true', default=False,
             help='Publish recorded service requests instead of recorded service events')
         parser.add_argument(
+            '--send-actions-as-client', action='store_true', default=False,
+            help='Send the send_goal request, cancel_goal request, and get_result request '
+                 'respectively based on the recorded send_goal, cancel_goal, and get_result '
+                 'event messages. Note that the messages from action\'s "status topic" and '
+                 '"feedback topic" will not be sent because they are expected to be sent from '
+                 'the action server side.')
+        parser.add_argument(
             '--service-requests-source', default='service_introspection',
             choices=['service_introspection', 'client_introspection'],
             help='Determine the source of the service requests to be replayed. This option only '
-                 'makes sense if the "--publish-service-requests" option is set. By default,'
-                 ' the service requests replaying from recorded service introspection message.')
+                 'makes sense if the "--publish-service-requests" or "--send-actions-as-client" '
+                 'option is set. By default, the service requests replaying from recorded '
+                 'service introspection message.')
         parser.add_argument(
             '--message-order', default='received',
             choices=['received', 'sent'],
@@ -271,12 +285,17 @@ class PlayVerb(VerbExtension):
         # Convert service name to service event topic name
         play_options.services_to_filter = convert_service_to_service_event_topic(args.services)
 
+        play_options.actions_to_filter = args.actions
+
         play_options.regex_to_filter = args.regex
 
         play_options.exclude_regex_to_filter = args.exclude_regex
 
         play_options.exclude_service_events_to_filter = \
             convert_service_to_service_event_topic(args.exclude_services)
+
+        play_options.exclude_actions_to_filter = \
+            args.exclude_actions if args.exclude_actions else []
 
         play_options.topic_qos_profile_overrides = qos_profile_overrides
         play_options.loop = args.loop
@@ -299,6 +318,7 @@ class PlayVerb(VerbExtension):
         play_options.wait_acked_timeout = args.wait_for_all_acked
         play_options.disable_loan_message = args.disable_loan_message
         play_options.publish_service_requests = args.publish_service_requests
+        play_options.send_actions_as_client = args.send_actions_as_client
         if not args.service_requests_source or \
                 args.service_requests_source == 'service_introspection':
             play_options.service_requests_source = ServiceRequestsSource.SERVICE_INTROSPECTION
