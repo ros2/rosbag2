@@ -167,6 +167,8 @@ Options:
   Space-delimited list of topics to play.
 * `--services`:
   Space-delimited list of services to play.
+* `--actions`:
+  Space-delimited list of actions to play.
 * `-e,--regex`:
   Play only topics and services matches with regular expression.
 * `-x,--exclude-regex`:
@@ -175,6 +177,8 @@ Options:
   Space-delimited list of topics not to play.
 * `--exclude-services`:
   Space-delimited list of services not to play.
+* `--exclude-actions`:
+  Space-delimited list of actions not to play.
 * `--message-order {received,sent}`:
   The reference to use for bag message chronological ordering.
   Choices: reception timestamp (`received`), publication timestamp (`sent`).
@@ -282,12 +286,15 @@ output_bags:
   topic_types: []
   all_services: false
   services: []
+  all_actions: false
+  actions: []
   rmw_serialization_format: ""  # defaults to using the format of the input topic
   regex: ""
   exclude_regex: ""
   exclude_topics: []
   exclude_topic_types: []
   exclude_services: []
+  exclude_actions: []
   compression_mode: ""
   compression_format: ""
   compression_queue_size: 1

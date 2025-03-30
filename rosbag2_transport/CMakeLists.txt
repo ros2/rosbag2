@@ -30,6 +30,7 @@ find_package(ament_cmake_ros REQUIRED)
 find_package(keyboard_handler REQUIRED)
 find_package(rcl REQUIRED)
 find_package(rclcpp REQUIRED)
+find_package(rclcpp_action REQUIRED)
 find_package(rclcpp_components REQUIRED)
 find_package(rcpputils REQUIRED)
 find_package(rcutils REQUIRED)
@@ -48,6 +49,7 @@ add_library(${PROJECT_NAME} SHARED
   src/rosbag2_transport/play_options.cpp
   src/rosbag2_transport/player_progress_bar.cpp
   src/rosbag2_transport/player_service_client.cpp
+  src/rosbag2_transport/player_action_client.cpp
   src/rosbag2_transport/reader_writer_factory.cpp
   src/rosbag2_transport/recorder.cpp
   src/rosbag2_transport/record_options.cpp
@@ -59,6 +61,7 @@ target_include_directories(${PROJECT_NAME} PUBLIC
 target_link_libraries(${PROJECT_NAME} PUBLIC
   keyboard_handler::keyboard_handler
   rclcpp::rclcpp
+  rclcpp_action::rclcpp_action
   rosbag2_cpp::rosbag2_cpp
   ${rosbag2_interfaces_TARGETS}
   rosbag2_storage::rosbag2_storage
@@ -105,6 +108,7 @@ ament_export_targets(export_${PROJECT_NAME})
 ament_export_dependencies(
   keyboard_handler
   rclcpp
+  rclcpp_action
   rosbag2_cpp
   rosbag2_interfaces
   rosbag2_storage

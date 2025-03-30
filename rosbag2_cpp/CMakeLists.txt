@@ -79,6 +79,7 @@ add_library(${PROJECT_NAME} SHARED
 target_link_libraries(${PROJECT_NAME} PUBLIC
   pluginlib::pluginlib
   rclcpp::rclcpp
+  rclcpp_action::rclcpp_action
   rcpputils::rcpputils
   rcutils::rcutils
   rmw::rmw

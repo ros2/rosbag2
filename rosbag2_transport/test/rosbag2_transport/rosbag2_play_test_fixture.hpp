@@ -17,6 +17,7 @@
 
 #include <memory>
 
+#include "rosbag2_test_common/action_server_manager.hpp"
 #include "rosbag2_test_common/subscription_manager.hpp"
 #include "rosbag2_test_common/service_manager.hpp"
 #include "rosbag2_transport_test_fixture.hpp"
@@ -30,6 +31,7 @@ public:
     rclcpp::init(0, nullptr);
     sub_ = std::make_shared<SubscriptionManager>();
     srv_ = std::make_shared<ServiceManager>();
+    action_server_ = std::make_shared<ActionServerManager>();
   }
 
   ~RosBag2PlayTestFixture() override
@@ -39,6 +41,7 @@ public:
 
   std::shared_ptr<SubscriptionManager> sub_;
   std::shared_ptr<ServiceManager> srv_;
+  std::shared_ptr<ActionServerManager> action_server_;
 };
 
 #endif  //  ROSBAG2_TRANSPORT__ROSBAG2_PLAY_TEST_FIXTURE_HPP_

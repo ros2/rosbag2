@@ -141,6 +141,9 @@ PlayOptions get_play_options_from_node_params(rclcpp::Node & node)
   }
   play_options.services_to_filter = service_list;
 
+  play_options.actions_to_filter = node.declare_parameter<std::vector<std::string>>(
+    "play.actions_to_filter", std::vector<std::string>());
+
   play_options.regex_to_filter =
     node.declare_parameter<std::string>("play.regex_to_filter", "");
 
@@ -157,6 +160,9 @@ PlayOptions get_play_options_from_node_params(rclcpp::Node & node)
     service = rosbag2_cpp::service_name_to_service_event_topic_name(service);
   }
   play_options.exclude_services_to_filter = exclude_service_list;
+
+  play_options.exclude_actions_to_filter = node.declare_parameter<std::vector<std::string>>(
+    "play.exclude_actions_to_filter", std::vector<std::string>());
 
   std::string qos_profile_overrides_path =
     node.declare_parameter<std::string>("play.qos_profile_overrides_path", "");
@@ -223,11 +229,11 @@ PlayOptions get_play_options_from_node_params(rclcpp::Node & node)
   auto service_requests_source =
     node.declare_parameter<std::string>("play.service_requests_source", "SERVICE_INTROSPECTION");
   if (service_requests_source == "SERVICE_INTROSPECTION") {
-    play_options.service_requests_source = ServiceRequestsSource::SERVICE_INTROSPECTION;
+    play_options.service_requests_source = ServiceRequestsSource::SERVER_INTROSPECTION;
   } else if (service_requests_source == "CLIENT_INTROSPECTION") {
     play_options.service_requests_source = ServiceRequestsSource::CLIENT_INTROSPECTION;
   } else {
-    play_options.service_requests_source = ServiceRequestsSource::SERVICE_INTROSPECTION;
+    play_options.service_requests_source = ServiceRequestsSource::SERVER_INTROSPECTION;
     RCLCPP_ERROR(
       node.get_logger(),
       "play.service_requests_source doesn't support %s. It must be one of SERVICE_INTROSPECTION"
@@ -237,6 +243,9 @@ PlayOptions get_play_options_from_node_params(rclcpp::Node & node)
 
   play_options.publish_service_requests =
     node.declare_parameter<bool>("play.publish_service_request", false);
+
+  play_options.send_actions_as_client =
+    node.declare_parameter<bool>("play.send_actions_as_client", false);
 
   auto message_order =
     node.declare_parameter<std::string>("play.message_order", "RECEIVED_TIMESTAMP");

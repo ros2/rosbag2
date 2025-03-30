@@ -147,6 +147,9 @@ TEST_P(ComposablePlayerTests, player_can_parse_parameters_from_file) {
     "/service1/_service_event",
     "/service2/_service_event"};
   EXPECT_EQ(play_options.services_to_filter, services_to_filter);
+  std::vector<std::string> actions_to_filter {
+    "/action1",
+    "/action2"};
   EXPECT_EQ(play_options.regex_to_filter, "[xyz]/topic_service");
   std::vector<std::string> exclude_topics_to_filter {"/exclude_foo", "/exclude_bar"};
   EXPECT_EQ(play_options.exclude_topics_to_filter, exclude_topics_to_filter);
@@ -154,6 +157,10 @@ TEST_P(ComposablePlayerTests, player_can_parse_parameters_from_file) {
     "/exclude_service1/_service_event",
     "/exclude_service2/_service_event"};
   EXPECT_EQ(play_options.exclude_services_to_filter, exclude_services_to_filter);
+  std::vector<std::string> exclude_actions_to_filter {
+    "/exclude_action1",
+    "/exclude_action2"};
+  EXPECT_EQ(play_options.exclude_actions_to_filter, exclude_actions_to_filter);
   EXPECT_EQ(play_options.exclude_regex_to_filter, "[abc]/topic_service");
 
   std::unordered_map<std::string, rclcpp::QoS> topic_qos_profile_overrides{
@@ -174,6 +181,7 @@ TEST_P(ComposablePlayerTests, player_can_parse_parameters_from_file) {
   EXPECT_EQ(play_options.wait_acked_timeout, -999999999);
   EXPECT_EQ(play_options.disable_loan_message, false);
   EXPECT_EQ(play_options.publish_service_requests, false);
+  EXPECT_EQ(play_options.send_actions_as_client, false);
   EXPECT_EQ(
     play_options.service_requests_source,
     rosbag2_transport::ServiceRequestsSource::CLIENT_INTROSPECTION);

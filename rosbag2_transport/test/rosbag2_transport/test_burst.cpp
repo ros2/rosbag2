@@ -22,6 +22,7 @@
 
 #include "mock_player.hpp"
 #include "rosbag2_play_test_fixture.hpp"
+#include "test_msgs/action/fibonacci.hpp"
 #include "test_msgs/message_fixtures.hpp"
 #include "test_msgs/msg/arrays.hpp"
 #include "test_msgs/msg/basic_types.hpp"
@@ -55,6 +56,62 @@ get_service_event_message_basic_types()
     test_msgs::srv::BasicTypes_Request request;
     request.int32_value = 456;
     request.int64_value = 789;
+    msg->request.emplace_back(request);
+    messages.push_back(msg);
+  }
+
+  return messages;
+}
+
+// SendGoal Service Event
+static inline std::vector<test_msgs::action::Fibonacci_SendGoal_Event::SharedPtr>
+get_action_event_message_fibonacci_send_goal()
+{
+  std::vector<test_msgs::action::Fibonacci_SendGoal_Event::SharedPtr> messages;
+
+  {
+    auto msg = std::make_shared<test_msgs::action::Fibonacci_SendGoal_Event>();
+    msg->info.event_type = service_msgs::msg::ServiceEventInfo::REQUEST_RECEIVED;
+    test_msgs::action::Fibonacci_SendGoal_Request request;
+    request.goal_id.uuid = {1, 15, 147, 28, 42, 149, 174, 3, 0, 0, 0, 0, 0, 0, 20, 4};
+    request.goal.order = 10;
+    msg->request.emplace_back(request);
+    messages.push_back(msg);
+  }
+
+  {
+    auto msg = std::make_shared<test_msgs::action::Fibonacci_SendGoal_Event>();
+    msg->info.event_type = service_msgs::msg::ServiceEventInfo::REQUEST_RECEIVED;
+    test_msgs::action::Fibonacci_SendGoal_Request request;
+    request.goal_id.uuid = {1, 15, 147, 28, 42, 149, 174, 3, 0, 0, 0, 0, 0, 0, 20, 5};
+    request.goal.order = 20;
+    msg->request.emplace_back(request);
+    messages.push_back(msg);
+  }
+
+  return messages;
+}
+
+// GetResult Service Event
+static inline std::vector<test_msgs::action::Fibonacci_GetResult_Event::SharedPtr>
+get_action_event_message_fibonacci_get_result()
+{
+  std::vector<test_msgs::action::Fibonacci_GetResult_Event::SharedPtr> messages;
+
+  {
+    auto msg = std::make_shared<test_msgs::action::Fibonacci_GetResult_Event>();
+    msg->info.event_type = service_msgs::msg::ServiceEventInfo::REQUEST_RECEIVED;
+    test_msgs::action::Fibonacci_GetResult_Request request;
+    request.goal_id.uuid = {1, 15, 147, 28, 42, 149, 174, 3, 0, 0, 0, 0, 0, 0, 20, 4};
+    msg->request.emplace_back(request);
+    messages.push_back(msg);
+  }
+
+  {
+    auto msg = std::make_shared<test_msgs::action::Fibonacci_GetResult_Event>();
+    msg->info.event_type = service_msgs::msg::ServiceEventInfo::REQUEST_RECEIVED;
+    test_msgs::action::Fibonacci_GetResult_Request request;
+    request.goal_id.uuid = {1, 15, 147, 28, 42, 149, 174, 3, 0, 0, 0, 0, 0, 0, 20, 5};
     msg->request.emplace_back(request);
     messages.push_back(msg);
   }
@@ -464,4 +521,109 @@ TEST_F(RosBag2PlayTestFixture, burst_bursting_only_filtered_services) {
 
   EXPECT_EQ(service1_receive_requests.size(), 0);
   EXPECT_EQ(service2_receive_requests.size(), 2);
+}
+
+TEST_F(RosBag2PlayTestFixture, burst_bursting_only_filtered_actions) {
+  const std::string action_name1 = "/test_action1";
+  const std::string action_name2 = "/test_action2";
+
+  size_t action1_request_count = 0;
+  size_t action1_cancel_count = 0;
+  action_server_->setup_action<test_msgs::action::Fibonacci>(
+    action_name1, action1_request_count, action1_cancel_count);
+
+  size_t action2_request_count = 0;
+  size_t action2_cancel_count = 0;
+  action_server_->setup_action<test_msgs::action::Fibonacci>(
+    action_name2, action2_request_count, action2_cancel_count);
+
+  action_server_->run_action_servers();
+
+  const std::vector<std::string> service_event_name1 = {
+    action_name1 + "/_action/send_goal/_service_event",
+    action_name1 + "/_action/get_result/_service_event",
+    action_name1 + "/_action/cancel/_service_event",
+    action_name1 + "/_action/feedback",
+    action_name1 + "/_action/status"
+  };
+  const std::vector<std::string> service_event_name2 = {
+    action_name2 + "/_action/send_goal/_service_event",
+    action_name2 + "/_action/get_result/_service_event",
+    action_name2 + "/_action/cancel/_service_event",
+    action_name2 + "/_action/feedback",
+    action_name2 + "/_action/status"
+  };
+
+  auto actions_types = std::vector<rosbag2_storage::TopicMetadata>{
+    {1u, service_event_name1[0], "test_msgs/action/Fibonacci_SendGoal_Event", "", {}, ""},
+    {2u, service_event_name1[1], "test_msgs/action/Fibonacci_GetResult_Event", "", {}, ""},
+    {3u, service_event_name2[0], "test_msgs/action/Fibonacci_SendGoal_Event", "", {}, ""},
+    {4u, service_event_name2[1], "test_msgs/action/Fibonacci_GetResult_Event", "", {}, ""}
+  };
+
+  std::vector<std::shared_ptr<rosbag2_storage::SerializedBagMessage>> messages =
+  {
+    serialize_test_message(
+      service_event_name1[0], 500, get_action_event_message_fibonacci_send_goal()[0]),
+    serialize_test_message(
+      service_event_name2[0], 600, get_action_event_message_fibonacci_send_goal()[1]),
+    serialize_test_message(
+      service_event_name2[1], 700, get_action_event_message_fibonacci_get_result()[1]),
+    serialize_test_message(
+      service_event_name1[1], 800, get_action_event_message_fibonacci_get_result()[0])
+  };
+
+  // Filter allows action2, blocks action1
+  play_options_.actions_to_filter = {action_name2};
+  play_options_.send_actions_as_client = true;
+  auto prepared_mock_reader = std::make_unique<MockSequentialReader>();
+  prepared_mock_reader->prepare(messages, actions_types);
+  auto reader = std::make_unique<rosbag2_cpp::Reader>(std::move(prepared_mock_reader));
+  auto player = std::make_shared<MockPlayer>(std::move(reader), storage_options_, play_options_);
+
+  player->pause();
+  ASSERT_TRUE(player->is_paused());
+
+  // Check action servers are ready
+  ASSERT_TRUE(action_server_->all_action_servers_ready());
+
+  rclcpp::executors::SingleThreadedExecutor exec;
+  exec.add_node(player);
+  auto spin_thread = std::thread([&exec]() {exec.spin();});
+  player->play();
+
+  const size_t EXPECTED_BURST_COUNT = 2;
+  ASSERT_EQ(player->burst(EXPECTED_BURST_COUNT), EXPECTED_BURST_COUNT);
+
+  ASSERT_TRUE(player->is_paused());
+  player->resume();
+
+  player->wait_for_playback_to_finish();
+
+  // Wait for getting the result response from action server
+  std::this_thread::sleep_for(1s);
+
+  exec.cancel();
+  spin_thread.join();
+
+  EXPECT_EQ(action1_request_count, 0);
+  EXPECT_EQ(action1_cancel_count, 0);
+  EXPECT_EQ(action2_request_count, 1);
+  EXPECT_EQ(action2_cancel_count, 0);
+
+  // Check if only one action client was created.
+  auto action_client_list = player->get_list_of_action_clients();
+  ASSERT_THAT(action_client_list, SizeIs(1));
+
+  // There is no direct interface to confirm that rosbag2 received the get_result response.
+  // Here, the logic of handling actions in rosbag2 is used to make this determination. If
+  // the action server receives a goal, the corresponding goal_handle in rosbag will be cleared
+  // in two scenarios: one is after a cancel request is sent, and the other is when the get_result
+  // is received.
+  // In this testcase, the cancel request is not sent, so the goal_handle should be cleared after
+  // the get_result is received.
+  EXPECT_TRUE(
+    player->goal_handle_complete(
+      action_name2,
+      get_action_event_message_fibonacci_send_goal()[1]->request[0].goal_id.uuid));
 }
