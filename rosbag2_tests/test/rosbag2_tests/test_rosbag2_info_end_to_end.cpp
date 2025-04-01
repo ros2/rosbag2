@@ -16,6 +16,7 @@
 
 #include <cstdlib>
 #include <filesystem>
+#include <regex>
 #include <string>
 #include <thread>
 
@@ -127,48 +128,52 @@ TEST_P(InfoEndToEndTestFixture, info_with_verbose_option_end_to_end_test) {
       "\nEnd:               Mar 14 2025 .*:.*:.*\\..* \\(.*\\..*\\)"
       "\nMessages:          .*"
       "\nTopic information: "));
-  EXPECT_THAT(
-    output, ContainsRegex(
-      "Topic: /test_topic1 | Type: std_msgs/msg/String | Count: //d+ | "
-      "Size Contribution: //+d B | Serialization Format: cdr\n"));
-  EXPECT_THAT(
-    output, ContainsRegex(
-      "Topic: /test_topic2 | Type: std_msgs/msg/String | Count: //d+ | "
-      "Size Contribution: //+d B | Serialization Format: cdr\n"));
+
+  // On the Windows platform, ContainsRegex cannot correctly handle the "|" character,
+  // so replace it with std::regex to check.
+  std::regex topic_1_info_pattern(
+    R"(Topic: /test_topic1 | Type: std_msgs/msg/String | Count: \d+"
+    " | Size Contribution: \d+ B | Serialization Format: cdr\n)");
+  EXPECT_TRUE(std::regex_search(output, topic_1_info_pattern));
+
+  std::regex topic_2_info_pattern(
+    R"(Topic: /test_topic2 | Type: std_msgs/msg/String | Count: \d+"
+    " | Size Contribution: \\+d B \\| Serialization Format: cdr\n)");
+  EXPECT_TRUE(std::regex_search(output, topic_2_info_pattern));
 
   EXPECT_THAT(output, HasSubstr("Services:          2\n"));
 
-  EXPECT_THAT(
-    output, ContainsRegex(
-      "Service: /test_service1 | Type: example_interfaces/srv/AddTwoInts | Request Count: \\d+ | "
-      "Response Count: \\d+ | Size Contribution: \\d+ B | Serialization Format: cdr\n"));
+  std::regex service_1_info_pattern(
+    R"(Service: /test_service1 | Type: example_interfaces/srv/AddTwoInts | Request Count: \d+ "
+    "| Response Count: \d+ | Size Contribution: \d+ B | Serialization Format: cdr\n)");
+  EXPECT_TRUE(std::regex_search(output, service_1_info_pattern));
 
-  EXPECT_THAT(
-    output, ContainsRegex(
-      "Service: /test_service2 | Type: example_interfaces/srv/AddTwoInts | Request Count: \\d+ | "
-      "Response Count: \\d+ | Size Contribution: \\d+ B | Serialization Format: cdr\n"));
+  std::regex service_2_info_pattern(
+    R"(Service: /test_service2 | Type: example_interfaces/srv/AddTwoInts | Request Count: \d+ "
+    "| Response Count: \d+ | Size Contribution: \d+ B | Serialization Format: cdr\n)");
+  EXPECT_TRUE(std::regex_search(output, service_2_info_pattern));
 
   EXPECT_THAT(output, HasSubstr("Actions:           2\nAction information:"));
 
-  EXPECT_THAT(
-    output, ContainsRegex(
-      "Action: /test_action1 | Type: example_interfaces/action/Fibonacci | Topics: 2 | Service: 3 "
-      "| Size Contribution: \\d+ B | Serialization Format: cdr\n"
-      "    Topic: feedback | Count: \\d+\n"
-      "    Topic: status | Count: \\d+\n"
-      "    Service: send_goal | Request Count: \\d+ | Response Count: \\d+\n"
-      "    Service: cancel_goal | Request Count: \\d+ | Response Count: \\d+\n"
-      "    Service: get_result | Request Count: \\d+ | Response Count: \\d+"));
+  std::regex action_1_info_pattern(
+    R"(Action: /test_action1 | Type: example_interfaces/action/Fibonacci | Topics: 2 | Service: 3"
+    " | Size Contribution: \d+ B | Serialization Format: cdr\n"
+    "    Topic: feedback | Count: \d+\n"
+    "    Topic: status | Count: \d+\n"
+    "    Service: send_goal | Request Count: \d+ | Response Count: \d+\n"
+    "    Service: cancel_goal | Request Count: \d+ | Response Count: \d+\n"
+    "    Service: get_result | Request Count: \d+ | Response Count: \d+)");
+  EXPECT_TRUE(std::regex_search(output, action_1_info_pattern));
 
-  EXPECT_THAT(
-    output, ContainsRegex(
-      "Action: /test_action2 | Type: example_interfaces/action/Fibonacci | Topics: 2 | Service: 3 "
-      "| Size Contribution: \\d+ B | Serialization Format: cdr\n"
-      "    Topic: feedback | Count: \\d+\n"
-      "    Topic: status | Count: \\d+\n"
-      "    Service: send_goal | Request Count: \\d+ | Response Count: \\d+\n"
-      "    Service: cancel_goal | Request Count: \\d+ | Response Count: \\d+\n"
-      "    Service: get_result | Request Count: \\d+ | Response Count: \\d+"));
+  std::regex action_2_info_pattern(
+    R"(Action: /test_action2 | Type: example_interfaces/action/Fibonacci | Topics: 2 | Service: 3"
+    " | Size Contribution: \d+ B | Serialization Format: cdr\n"
+    "    Topic: feedback | Count: \d+\n"
+    "    Topic: status | Count: \d+\n"
+    "    Service: send_goal | Request Count: \d+ | Response Count: \d+\n"
+    "    Service: cancel_goal | Request Count: \d+ | Response Count: \d+\n"
+    "    Service: get_result | Request Count: \d+ | Response Count: \d+)");
+  EXPECT_TRUE(std::regex_search(output, action_2_info_pattern));
 }
 
 TEST_P(InfoEndToEndTestFixture, info_basic_types_and_arrays_with_verbose_option_end_to_end_test) {
