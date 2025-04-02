@@ -87,13 +87,15 @@ class ReadOrderSortBy:
     def value(self) -> int: ...
 
 class StorageFilter:
+    actions: List[str]
+    exclude_actions: List[str]
     exclude_service_events: List[str]
     exclude_topics: List[str]
     regex: str
     regex_to_exclude: str
     services_events: List[str]
     topics: List[str]
-    def __init__(self, topics: List[str] = ..., services_events: List[str] = ..., regex: str = ..., exclude_topics: List[str] = ..., exclude_service_events: List[str] = ..., regex_to_exclude: str = ...) -> None: ...
+    def __init__(self, topics: List[str] = ..., services_events: List[str] = ..., actions: List[str] = ..., regex: str = ..., exclude_topics: List[str] = ..., exclude_service_events: List[str] = ..., exclude_actions: List[str] = ..., regex_to_exclude: str = ...) -> None: ...
 
 class StorageOptions:
     custom_data: Dict[str, str]
