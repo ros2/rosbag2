@@ -8,6 +8,7 @@
   <license>Apache License 2.0</license>
 
   <depend>rclpy</depend>
+  <depend>rosbag2_compression</depend>
   <depend>rosbag2_py</depend>
   <depend>example_interfaces</depend>
   <depend>std_msgs</depend>

@@ -24,6 +24,7 @@ setup(
             'simple_bag_reader = rosbag2_examples_py.simple_bag_reader:main',
             'data_generator_node = rosbag2_examples_py.data_generator_node:main',
             'data_generator_executable = rosbag2_examples_py.data_generator_executable:main',
+            'compressed_bag_recorder = rosbag2_examples_py.compressed_bag_recorder:main',
         ],
     },
 )
