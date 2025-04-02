@@ -49,6 +49,17 @@ install(TARGETS
   DESTINATION lib/${PROJECT_NAME}
 )
 
+add_executable(compressed_bag_rewriter src/compressed_bag_rewriter.cpp)
+target_link_libraries(compressed_bag_rewriter
+  rosbag2_transport::rosbag2_transport
+  ${example_interfaces_TARGETS}
+)
+
+install(TARGETS
+  compressed_bag_rewriter
+  DESTINATION lib/${PROJECT_NAME}
+)
+
 add_executable(simple_bag_reader src/simple_bag_reader.cpp)
 target_link_libraries(simple_bag_reader
   rclcpp::rclcpp
