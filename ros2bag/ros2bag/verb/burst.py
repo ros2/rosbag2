@@ -101,7 +101,6 @@ class BurstVerb(VerbExtension):
         play_options.topics_to_filter = args.topics
         # Convert service name to service event topic name
         play_options.services_to_filter = convert_service_to_service_event_topic(args.services)
-        # Covert action name to action related topic names
         play_options.actions_to_filter = args.actions
         play_options.topic_qos_profile_overrides = qos_profile_overrides
         play_options.loop = False

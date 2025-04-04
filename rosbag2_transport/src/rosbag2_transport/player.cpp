@@ -202,8 +202,8 @@ public:
   std::unordered_map<std::string, std::shared_ptr<rclcpp_action::GenericClient>>
   get_action_clients();
 
-  /// \brief Goal handle for action client is in processing.
-  /// \return true if goal handle is in processing, otherwise false.
+  /// \brief Check if goal id is in processing.
+  /// \return true if goal id is in processing, otherwise false.
   bool
   goal_handle_in_process(std::string action_name, const rclcpp_action::GoalUUID & goal_id);
 
@@ -1002,8 +1002,15 @@ PlayerImpl::get_action_clients()
 bool
 PlayerImpl::goal_handle_in_process(std::string action_name, const rclcpp_action::GoalUUID & goal_id)
 {
-  if (action_name.empty() || action_clients_.find(action_name) == action_clients_.end()) {
-    throw(std::invalid_argument("Action client for action '" + action_name + "' does not exist."));
+  if (action_name.empty()) {
+    throw(std::invalid_argument("Action name is empty."));
+  }
+
+  if (action_clients_.find(action_name) == action_clients_.end()) {
+    RCLCPP_WARN(
+      owner_->get_logger(),
+      "Action client for action '%s' does not exist.", action_name.c_str());
+    return false;
   }
 
   return action_clients_[action_name]->gold_handle_in_processing(goal_id);
@@ -1229,7 +1236,7 @@ namespace
 {
 enum class TopicKind
 {
-  TOPIC,
+  GENERIC_TOPIC,
   SERVICE_EVENT_TOPIC,
   ACTION_INTERFACE_TOPIC
 };
@@ -1250,7 +1257,7 @@ bool allow_topic(
 
   // Check if topic is in the exclude list
   switch (topic_type) {
-    case TopicKind::TOPIC:
+    case TopicKind::GENERIC_TOPIC:
       {
         if (!exclude_topics.empty()) {
           auto it = std::find(exclude_topics.begin(), exclude_topics.end(), topic_name);
@@ -1294,7 +1301,7 @@ bool allow_topic(
 
   bool set_include = false;
   switch (topic_type) {
-    case TopicKind::TOPIC:
+    case TopicKind::GENERIC_TOPIC:
       {
         set_include = !include_topics.empty();
         break;
@@ -1314,7 +1321,7 @@ bool allow_topic(
 
   if (set_include || set_regex) {
     switch (topic_type) {
-      case TopicKind::TOPIC:
+      case TopicKind::GENERIC_TOPIC:
         {
           auto iter = std::find(include_topics.begin(), include_topics.end(), topic_name);
           if (iter == include_topics.end()) {
@@ -1449,7 +1456,7 @@ void PlayerImpl::prepare_publishers()
     } else if (rosbag2_cpp::is_service_event_topic(topic.name, topic.type)) {
       topic_kind = TopicKind::SERVICE_EVENT_TOPIC;
     } else {
-      topic_kind = TopicKind::TOPIC;
+      topic_kind = TopicKind::GENERIC_TOPIC;
     }
 
     if (topic_kind == TopicKind::ACTION_INTERFACE_TOPIC && play_options_.send_actions_as_client) {

@@ -102,12 +102,6 @@ public:
   void async_send_result_request(
     const std::shared_ptr<uint8_t[]> & type_erased_get_result_service_event);
 
-  /// Wait until sent service requests will receive responses from service servers.
-  /// \param timeout - Timeout in fraction of seconds to wait for.
-  /// \return true if service requests successfully finished, otherwise false.
-  bool wait_for_sent_requests_to_finish(
-    std::chrono::duration<double> timeout = std::chrono::seconds(5));
-
   ServiceEventType get_service_event_type(
     const std::shared_ptr<uint8_t[]> & type_erased_service_event,
     ServiceInterfaceInAction service_type_in_action);
@@ -125,7 +119,7 @@ private:
   std::string action_type_;
   const rclcpp::Logger logger_;
 
-  // Warning output once exceeding this value
+  // Warning output when exceeding this value
   const size_t maximum_goal_handle_size_ = 100;
 
   // Note: The action_ts_lib_ shall be a member variable to make sure that library loaded
