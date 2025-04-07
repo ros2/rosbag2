@@ -283,7 +283,6 @@ PlayerActionClient::async_send_goal_request(
       [this](rclcpp_action::GenericClientGoalHandle::SharedPtr goal_handle) {
         // Only goal is accepted, then register the goal handle
         if (goal_handle) {
-          std::lock_guard<std::mutex> lock(goal_id_to_goal_handle_map_mutex_);
           auto goal_id = goal_handle->get_goal_id();
 
           // Check if the Goal ID needs to be canceled.
@@ -323,12 +322,15 @@ PlayerActionClient::async_send_goal_request(
             return;
           }
 
-          goal_id_to_goal_handle_map_[goal_id] = goal_handle;
-          if (goal_id_to_goal_handle_map_.size() > maximum_goal_handle_size_) {
-            RCLCPP_WARN(
-              logger_,
-              "For action \"%s\", the number of goal handles is over %lu, which may "
-              "cause memory leak.", action_name_.c_str(), maximum_goal_handle_size_);
+          {
+            std::lock_guard<std::mutex> lock(goal_id_to_goal_handle_map_mutex_);
+            goal_id_to_goal_handle_map_[goal_id] = goal_handle;
+            if (goal_id_to_goal_handle_map_.size() > maximum_goal_handle_size_) {
+              RCLCPP_WARN(
+                logger_,
+                "For action \"%s\", the number of goal handles is over %lu, which may "
+                "cause memory leak.", action_name_.c_str(), maximum_goal_handle_size_);
+            }
           }
         }
       };
