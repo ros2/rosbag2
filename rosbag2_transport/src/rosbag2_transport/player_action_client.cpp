@@ -411,6 +411,7 @@ PlayerActionClient::async_send_cancel_request(
       logger_,
       "Can't send cancel goal request since the configuration of introspection for '%s' "
       "action was metadata !", action_name_.c_str());
+    return;
   }
 
   rclcpp_action::GenericClientGoalHandle::SharedPtr goal_handle;
@@ -431,6 +432,7 @@ PlayerActionClient::async_send_cancel_request(
         logger_,
         "For action \"%s\", postpone sending cancel_goal request since the goal "
         "may not be accepted yet.", action_name_.c_str());
+      return;
     }
   }
 
@@ -454,6 +456,7 @@ PlayerActionClient::async_send_result_request(
       logger_,
       "Can't send result request since the configuration of introspection for '%s' "
       "action was metadata !", action_name_.c_str());
+    return;
   }
 
   rclcpp_action::GenericClientGoalHandle::SharedPtr goal_handle;
@@ -472,6 +475,7 @@ PlayerActionClient::async_send_result_request(
         logger_,
         "For action \"%s\", postpone sending get result request since the goal "
         "may not be accepted yet.", action_name_.c_str());
+      return;
     }
   }
 
