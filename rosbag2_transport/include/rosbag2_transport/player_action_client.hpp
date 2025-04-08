@@ -18,10 +18,11 @@
 #include <chrono>
 #include <memory>
 #include <mutex>
+#include <random>
+#include <string>
 #include <unordered_map>
 #include <unordered_set>
 #include <utility>
-#include <string>
 
 #include "rcl/types.h"
 #include "rclcpp_action/generic_client.hpp"
@@ -140,16 +141,27 @@ private:
 
   rcutils_allocator_t allocator_ = rcutils_get_default_allocator();
 
+  // Map to store recorded goal ID to goal ID mapping
+  // If recorded_goal_to_goal_id_id_map_ has recorded the goal ID, it means the goal request has
+  // already been sent.
+  std::unordered_map<
+    GoalID, GoalID, std::hash<GoalID>> recorded_goal_to_goal_id_id_map_;
+  // Map to store goal ID to goal handle mapping
+  // If goal_id_to_goal_handle_map_ has recorded the goal handle, it means the goal has been
+  // accepted by the action server.
   std::unordered_map<
     GoalID, rclcpp_action::GenericClientGoalHandle::SharedPtr, std::hash<GoalID>>
   goal_id_to_goal_handle_map_;
-  std::mutex goal_id_to_goal_handle_map_mutex_;
+  std::mutex goal_id_maps_mutex_;  // This mutex is used to protect above 2 maps.
 
   std::unordered_set<GoalID, std::hash<GoalID>> goal_ids_to_postpone_send_cancel_;
   std::mutex goal_ids_to_postpone_send_cancel_mutex_;
 
   std::unordered_set<GoalID, std::hash<GoalID>> goal_ids_to_postpone_send_result_;
   std::mutex goal_ids_to_postpone_send_result_mutex_;
+
+  std::independent_bits_engine<
+    std::default_random_engine, 8, unsigned int> random_bytes_generator_;
 
   std::shared_ptr<uint8_t[]>
   deserialize_service_event(
@@ -167,6 +179,8 @@ private:
 
   bool get_goal_id_from_get_result_service_event(
     const std::shared_ptr<uint8_t[]> & type_erased_get_result_service_event, GoalID & goal_id);
+
+  rclcpp_action::GoalUUID generate_goal_id();
 };
 }  // namespace rosbag2_transport
 
