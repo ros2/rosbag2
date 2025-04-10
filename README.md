@@ -193,6 +193,15 @@ Options:
 
 For more options, run with `--help`.
 
+#### Playback action messages as action client
+
+If you want Rosbag2 to replay recorded action messages in the role of an action client, you need to specify the --send-actions-as-client parameter.
+```
+$ ros2 bag play --send-actions-as-client <bag>
+```
+Rosbag2 will send recorded goal request, cancel request and result request to action server.  
+For more information, please refer to https://github.com/ros2/rosbag2/blob/rolling/docs/design/rosbag2_record_replay_action.md.
+
 #### Controlling playback via services
 
 The Rosbag2 player provides the following services for remote control, which can be called via `ros2 service` commandline or from your nodes,

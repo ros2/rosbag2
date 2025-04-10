@@ -352,7 +352,7 @@ protected:
   /// \exception std::exception No action client is created for this action name.
   ROSBAG2_TRANSPORT_PUBLIC
   bool
-  goal_handle_in_process(std::string action_name, const rclcpp_action::GoalUUID & goal_id);
+  is_goal_handle_in_processing(std::string action_name, const rclcpp_action::GoalUUID & goal_id);
 
   /// \brief Getter for inner clock_publisher
   /// \return Shared pointer to the inner clock_publisher

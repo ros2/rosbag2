@@ -538,7 +538,7 @@ PlayerActionClient::async_send_result_request(
   }
 }
 
-bool PlayerActionClient::gold_handle_in_processing(const GoalID & goal_id)
+bool PlayerActionClient::goal_handle_in_processing(const GoalID & goal_id)
 {
   std::lock_guard<std::mutex> lock(goal_id_maps_mutex_);
   return goal_id_to_goal_handle_map_.count(goal_id) > 0;

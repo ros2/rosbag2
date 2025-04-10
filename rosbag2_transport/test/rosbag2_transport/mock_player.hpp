@@ -94,7 +94,7 @@ public:
   // request has been sent.
   bool goal_handle_complete(std::string action_name, const rclcpp_action::GoalUUID & goal_id)
   {
-    return !this->goal_handle_in_process(action_name, goal_id);
+    return !this->is_goal_handle_in_processing(action_name, goal_id);
   }
 
   size_t get_number_of_registered_pre_callbacks()

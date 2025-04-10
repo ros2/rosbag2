@@ -112,7 +112,7 @@ public:
     return client_;
   }
 
-  bool gold_handle_in_processing(const GoalID & goal_id);
+  bool goal_handle_in_processing(const GoalID & goal_id);
 
 private:
   rclcpp_action::GenericClient::SharedPtr client_;
