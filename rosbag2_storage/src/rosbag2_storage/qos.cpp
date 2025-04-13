@@ -306,6 +306,14 @@ bool convert<std::unordered_map<std::string, rclcpp::QoS>>::decode(
 
 namespace rosbag2_storage
 {
+
+std::string Rosbag2QoS::to_string() const
+{
+  YAML::Node yaml_qos_node = YAML::convert<rosbag2_storage::Rosbag2QoS>::encode(*this);
+  std::string serialized_qos = YAML::Dump(yaml_qos_node);
+  return serialized_qos;
+}
+
 Rosbag2QoS Rosbag2QoS::adapt_request_to_offers(
   const std::string & topic_name, const std::vector<rclcpp::TopicEndpointInfo> & endpoints)
 {
