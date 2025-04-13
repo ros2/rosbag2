@@ -315,6 +315,7 @@ Rosbag2QoS Rosbag2QoS::adapt_request_to_offers(
   size_t num_endpoints = endpoints.size();
   size_t reliability_reliable_endpoints_count = 0;
   size_t durability_transient_local_endpoints_count = 0;
+  size_t max_history_depth = 0;
   for (const auto & endpoint : endpoints) {
     const auto & profile = endpoint.qos_profile().get_rmw_qos_profile();
     if (profile.reliability == RMW_QOS_POLICY_RELIABILITY_RELIABLE) {
@@ -323,12 +324,20 @@ Rosbag2QoS Rosbag2QoS::adapt_request_to_offers(
     if (profile.durability == RMW_QOS_POLICY_DURABILITY_TRANSIENT_LOCAL) {
       durability_transient_local_endpoints_count++;
     }
+    if (profile.depth > max_history_depth) {
+      max_history_depth = profile.depth;
+    }
   }
 
   // We set policies in order as defined in rmw_qos_profile_t
   Rosbag2QoS request_qos{};
   // Policy: history, depth
-  // History does not affect compatibility
+  // History does not affect compatibility. However, it could affect messages drop on the DDS side.
+  if (max_history_depth > 0) {
+    request_qos.keep_last(max_history_depth);
+  } else {
+    request_qos.keep_all();
+  }
 
   // Policy: reliability
   if (reliability_reliable_endpoints_count == num_endpoints) {
