@@ -46,15 +46,16 @@ public:
   /// Write a serialized message to a bag file
   void write(
     const std::string & topic_name, const std::string & message,
-    const rcutils_time_point_value_t & time_stamp)
+    const rcutils_time_point_value_t & time_stamp, uint32_t sequence_number)
   {
-    write(topic_name, message, time_stamp, time_stamp);
+    write(topic_name, message, time_stamp, time_stamp, sequence_number);
   }
 
   void write(
     const std::string & topic_name, const std::string & message,
     const rcutils_time_point_value_t & recv_timestamp,
-    const rcutils_time_point_value_t & send_timestamp)
+    const rcutils_time_point_value_t & send_timestamp,
+    uint32_t sequence_number)
   {
     auto bag_message =
       std::make_shared<rosbag2_storage::SerializedBagMessage>();
@@ -64,6 +65,7 @@ public:
       rosbag2_storage::make_serialized_message(message.c_str(), message.length());
     bag_message->recv_timestamp = recv_timestamp;
     bag_message->send_timestamp = send_timestamp;
+    bag_message->sequence_number = sequence_number;
 
     rosbag2_cpp::Writer::write(bag_message);
   }
@@ -107,11 +109,33 @@ PYBIND11_MODULE(_writer, m) {
       const rosbag2_storage::StorageOptions &, const rosbag2_cpp::ConverterOptions &
     >(&PyWriter::open))
   .def(
-    "write", pybind11::overload_cast<const std::string &, const std::string &,
-    const rcutils_time_point_value_t &>(&PyWriter::write))
+      "write",
+    (void (PyWriter::*)(
+        const std::string &,
+        const std::string &,
+        const rcutils_time_point_value_t &,
+        uint32_t
+    )) & PyWriter::write,
+      pybind11::arg("topic_name"),
+      pybind11::arg("message"),
+      pybind11::arg("time_stamp"),
+      pybind11::arg("sequence_number") = 0
+  )
   .def(
-    "write", pybind11::overload_cast<const std::string &, const std::string &,
-    const rcutils_time_point_value_t &, const rcutils_time_point_value_t &>(&PyWriter::write))
+      "write",
+    (void (PyWriter::*)(
+        const std::string &,
+        const std::string &,
+        const rcutils_time_point_value_t &,
+        const rcutils_time_point_value_t &,
+        uint32_t
+    )) & PyWriter::write,
+      pybind11::arg("topic_name"),
+      pybind11::arg("message"),
+      pybind11::arg("recv_timestamp"),
+      pybind11::arg("send_timestamp"),
+      pybind11::arg("sequence_number") = 0
+  )
   .def("close", &PyWriter::close)
   .def("remove_topic", &PyWriter::remove_topic)
   .def(
@@ -129,12 +153,33 @@ PYBIND11_MODULE(_writer, m) {
       const rosbag2_storage::StorageOptions &, const rosbag2_cpp::ConverterOptions &
     >(&PyCompressionWriter::open))
   .def(
-    "write", pybind11::overload_cast<const std::string &, const std::string &,
-    const rcutils_time_point_value_t &>(&PyCompressionWriter::write))
+      "write",
+    (void (PyCompressionWriter::*)(
+        const std::string &,
+        const std::string &,
+        const rcutils_time_point_value_t &,
+        uint32_t
+    )) & PyCompressionWriter::write,
+      pybind11::arg("topic_name"),
+      pybind11::arg("message"),
+      pybind11::arg("time_stamp"),
+      pybind11::arg("sequence_number") = 0
+  )
   .def(
-    "write", pybind11::overload_cast<const std::string &, const std::string &,
-    const rcutils_time_point_value_t &,
-    const rcutils_time_point_value_t &>(&PyCompressionWriter::write))
+      "write",
+    (void (PyCompressionWriter::*)(
+        const std::string &,
+        const std::string &,
+        const rcutils_time_point_value_t &,
+        const rcutils_time_point_value_t &,
+        uint32_t
+    )) & PyCompressionWriter::write,
+      pybind11::arg("topic_name"),
+      pybind11::arg("message"),
+      pybind11::arg("recv_timestamp"),
+      pybind11::arg("send_timestamp"),
+      pybind11::arg("sequence_number") = 0
+  )
   .def("remove_topic", &PyCompressionWriter::remove_topic)
   .def(
     "create_topic",
