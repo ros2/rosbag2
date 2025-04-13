@@ -893,7 +893,7 @@ void MCAPStorage::write_lock_free(std::shared_ptr<const rosbag2_storage::Seriali
 
   mcap::Message mcap_msg;
   mcap_msg.channelId = channel_it->second;
-  mcap_msg.sequence = 0;
+  mcap_msg.sequence = msg->sequence_number;
   if (msg->recv_timestamp < 0) {
     RCUTILS_LOG_WARN_NAMED(LOG_NAME, "Invalid message timestamp %ld", msg->recv_timestamp);
   }

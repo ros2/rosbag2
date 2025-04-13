@@ -169,13 +169,17 @@ public:
    * \param topic_name the string of the topic this messages belongs to
    * \param type_name the string of the type associated with this message
    * \param time The time stamp of the message
+   * \param sequence_number An optional sequence number of the message. If non-zero,
+   * sequence numbers should be unique per channel (per topic and per publisher) and increasing
+   * over time.
    * \throws runtime_error if the Writer is not open.
    */
   void write(
     std::shared_ptr<const rclcpp::SerializedMessage> message,
     const std::string & topic_name,
     const std::string & type_name,
-    const rclcpp::Time & time);
+    const rclcpp::Time & time,
+    uint32_t sequence_number = 0);
 
   /**
    * Write a serialized message to a bagfile.
@@ -188,6 +192,9 @@ public:
    * \param type_name the string of the type associated with this message
    * \param recv_time The time stamp when the message was received
    * \param send_time The time stamp when the message was send
+   * \param sequence_number An optional sequence number of the message. If non-zero,
+   * sequence numbers should be unique per channel (per topic and per publisher) and increasing
+   * over time.
    * \throws runtime_error if the Writer is not open.
    */
   void write(
@@ -195,7 +202,9 @@ public:
     const std::string & topic_name,
     const std::string & type_name,
     const rcutils_time_point_value_t & recv_timestamp,
-    const rcutils_time_point_value_t & send_timestamp);
+    const rcutils_time_point_value_t & send_timestamp,
+    uint32_t sequence_number = 0);
+
   /**
    * Write a non-serialized message to a bagfile.
    * The topic will be created if it has not been created already.
@@ -204,19 +213,24 @@ public:
    * \param topic_name the string of the topic this messages belongs to
    * \param type_name the string of the type associated with this message
    * \param time The time stamp of the message
+   * \param sequence_number An optional sequence number of the message. If non-zero,
+   * sequence numbers should be unique per channel (per topic and per publisher) and increasing
+   * over time.
    * \throws runtime_error if the Writer is not open.
    */
   template<class MessageT>
   void write(
     const MessageT & message,
     const std::string & topic_name,
-    const rclcpp::Time & time)
+    const rclcpp::Time & time,
+    uint32_t sequence_number = 0)
   {
     auto serialized_msg = std::make_shared<rclcpp::SerializedMessage>();
 
     rclcpp::Serialization<MessageT> serialization;
     serialization.serialize_message(&message, serialized_msg.get());
-    return write(serialized_msg, topic_name, rosidl_generator_traits::name<MessageT>(), time);
+    return write(
+      serialized_msg, topic_name, rosidl_generator_traits::name<MessageT>(), time, sequence_number);
   }
 
   writer_interfaces::BaseWriterInterface & get_implementation_handle() const

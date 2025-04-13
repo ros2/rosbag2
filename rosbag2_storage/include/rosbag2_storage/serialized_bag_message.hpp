@@ -24,22 +24,31 @@
 namespace rosbag2_storage
 {
 
+/// \brief A serialized message that is stored in a bag file.
 struct SerializedBagMessage
 {
+  /// \brief Serialized data of the message.
   std::shared_ptr<rcutils_uint8_array_t> serialized_data;
-  /**
-   * @brief Nanosecond timestamp when this message was received.
-   */
+
+  /// \brief Nanosecond timestamp when this message was received.
   rcutils_time_point_value_t recv_timestamp;
-  /**
-   * @brief Nanosecond timestamp when this message was initially published. If
-   * not available, this will be set to recv_timestamp.
-   */
+
+  /// \brief Nanosecond timestamp when this message was published. If not available,
+  /// this will be set to recv_timestamp.
   rcutils_time_point_value_t send_timestamp;
+
+  /// \brief Name of the topic this message was published on.
   std::string topic_name;
+
+  /// \brief An optional sequence number of the message. If non-zero, sequence numbers should be
+  /// unique per channel (per topic and per publisher) and increasing over time.
+  uint32_t sequence_number = 0;
 };
 
+/// \brief A shared pointer to a SerializedBagMessage.
 typedef std::shared_ptr<SerializedBagMessage> SerializedBagMessageSharedPtr;
+
+/// \brief A const shared pointer to a SerializedBagMessage.
 typedef std::shared_ptr<const SerializedBagMessage> SerializedBagMessageConstSharedPtr;
 
 }  // namespace rosbag2_storage
