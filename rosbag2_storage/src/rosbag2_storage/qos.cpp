@@ -341,9 +341,15 @@ Rosbag2QoS Rosbag2QoS::adapt_request_to_offers(
   Rosbag2QoS request_qos{};
   // Policy: history, depth
   // History does not affect compatibility. However, it could affect messages drop on the DDS side.
-  if (max_history_depth > 0) {
+  if (max_history_depth > 1) {
     request_qos.keep_last(max_history_depth);
   } else {
+    if (max_history_depth == 1) {
+      ROSBAG2_STORAGE_LOG_DEBUG_STREAM(
+        "Publishers on topic \"" << topic_name << "\" are offering "
+          "RMW_QOS_POLICY_HISTORY_KEEP_LAST with depth = 1. There is a high probability that "
+          "messages will be dropped. Falling back to the RMW_QOS_POLICY_HISTORY_KEEP_ALL.");
+    }
     request_qos.keep_all();
   }
 
