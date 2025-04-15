@@ -167,6 +167,11 @@ TEST_F(RecordIntegrationTestFixture, published_messages_from_multiple_actions_ar
   ASSERT_TRUE(recorder->wait_for_topic_to_be_discovered(
     "/test_action_2/_action/get_result/_service_event"));
 
+  ASSERT_TRUE(recorder->wait_for_topic_to_be_discovered(
+    "/test_action_1/_action/send_goal/_service_event"));
+  ASSERT_TRUE(recorder->wait_for_topic_to_be_discovered(
+    "/test_action_2/_action/send_goal/_service_event"));
+
   ASSERT_TRUE(action_client_manager_1->send_goal());
   ASSERT_TRUE(action_client_manager_2->send_goal());
 
@@ -183,6 +188,12 @@ TEST_F(RecordIntegrationTestFixture, published_messages_from_multiple_actions_ar
   EXPECT_TRUE(ret) << "failed to capture expected messages in time";
   auto recorded_messages = mock_writer.get_messages();
   EXPECT_EQ(recorded_messages.size(), expected_messages);
+  if (!ret) {
+    std::cout << "Recorded messages: " << std::endl;
+    for (const auto & message : recorded_messages) {
+      std::cout << message->topic_name << std::endl;
+    }
+  }
 }
 
 TEST_F(RecordIntegrationTestFixture, published_messages_from_topic_service_action_are_recorded)
