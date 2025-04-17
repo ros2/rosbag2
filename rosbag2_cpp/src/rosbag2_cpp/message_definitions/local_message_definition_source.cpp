@@ -49,9 +49,11 @@ public:
 };
 
 // Match datatype names (foo_msgs/Bar or foo_msgs/msg/Bar)
-static const std::regex PACKAGE_TYPENAME_REGEX{R"(^([a-zA-Z0-9_]+)/(?:msg/|srv/)?([a-zA-Z0-9_]+)$)"};
+static const std::regex PACKAGE_TYPENAME_REGEX{
+  R"(^([a-zA-Z0-9_]+)/(?:msg/|srv/|action/)?([a-zA-Z0-9_]+)$)"};
 
-// Match field types from .msg and .srv definitions ("foo_msgs/Bar" in "foo_msgs/Bar[] bar")
+// Match field types from .msg, .srv and .action definitions
+// ("foo_msgs/Bar" in "foo_msgs/Bar[] bar")
 static const std::regex MSG_FIELD_TYPE_REGEX{R"((?:^|\n)\s*([a-zA-Z0-9_/]+)(?:\[[^\]]*\])?\s+)"};
 
 // match field types from `.idl` definitions ("foo_msgs/msg/bar" in #include <foo_msgs/msg/Bar.idl>)
@@ -107,6 +109,7 @@ std::set<std::string> parse_definition_dependencies(
     case LocalMessageDefinitionSource::Format::IDL:
       return parse_idl_dependencies(text);
     case LocalMessageDefinitionSource::Format::SRV:
+    case LocalMessageDefinitionSource::Format::ACT:
       {
         auto dep = parse_msg_dependencies(text, package_context);
         if (!dep.empty()) {
@@ -129,6 +132,8 @@ static const char * extension_for_format(LocalMessageDefinitionSource::Format fo
       return ".idl";
     case LocalMessageDefinitionSource::Format::SRV:
       return ".srv";
+    case LocalMessageDefinitionSource::Format::ACT:
+      return ".action";
     default:
       throw std::runtime_error("switch is not exhaustive");
   }
@@ -148,6 +153,9 @@ std::string LocalMessageDefinitionSource::delimiter(
       break;
     case Format::SRV:
       result += "SRV: ";
+      break;
+    case Format::ACT:
+      result += "ACT: ";
       break;
     default:
       throw std::runtime_error("switch is not exhaustive");
@@ -187,8 +195,18 @@ const LocalMessageDefinitionSource::MessageSpec & LocalMessageDefinitionSource::
     ROSBAG2_CPP_LOG_WARN("'%s'", e.what());
     throw DefinitionNotFoundError(definition_identifier.topic_type());
   }
-  std::string dir = definition_identifier.format() == Format::MSG ||
-    definition_identifier.format() == Format::IDL ? "/msg/" : "/srv/";
+  std::string dir;
+  if (definition_identifier.format() == Format::MSG ||
+    definition_identifier.format() == Format::IDL)
+  {
+    dir = "/msg/";
+  } else if (definition_identifier.format() == Format::SRV) {
+    dir = "/srv/";
+  } else if (definition_identifier.format() == Format::ACT) {
+    dir = "/action/";
+  } else {
+    throw std::runtime_error("Unknown format type");
+  }
   std::ifstream file{share_dir + dir + match[2].str() +
     extension_for_format(definition_identifier.format())};
   if (!file.good()) {
@@ -234,7 +252,9 @@ rosbag2_storage::MessageDefinition LocalMessageDefinitionSource::get_full_text(
   Format format = Format::UNKNOWN;
   int32_t max_recursion_depth = ROSBAG2_CPP_LOCAL_MESSAGE_DEFINITION_SOURCE_MAX_RECURSION_DEPTH;
 
-  if (root_type.find("/srv/") == std::string::npos) {  // Not a service
+  if (root_type.find("/srv/") == std::string::npos &&
+    root_type.find("/action/") == std::string::npos)
+  {  // Neither srv nor action
     try {
       format = Format::MSG;
       result = append_recursive(DefinitionIdentifier(root_type, format), max_recursion_depth);
@@ -251,11 +271,16 @@ rosbag2_storage::MessageDefinition LocalMessageDefinitionSource::get_full_text(
       format = Format::UNKNOWN;
     }
   } else {
-    // The service dependencies could be either in the msg or idl files. Therefore, will try to
-    // search service dependencies in MSG files first then in IDL files via two separate recursive
-    // searches for each dependency.
+    // The service and action dependencies could be either in the msg or idl files.
+    // Therefore, will try to search dependencies in MSG files first then in IDL files
+    // via two separate recursive searches for each dependency.
     format = Format::UNKNOWN;
-    DefinitionIdentifier def_identifier{root_type, Format::SRV};
+    if (root_type.find("/srv/") != std::string::npos) {
+      format = Format::SRV;
+    } else if (root_type.find("/action/") != std::string::npos) {
+      format = Format::ACT;
+    }
+    DefinitionIdentifier def_identifier{root_type, format};
     (void)seen_deps.insert(def_identifier).second;
     result = delimiter(def_identifier);
     const MessageSpec & spec = load_message_spec(def_identifier);
@@ -304,6 +329,7 @@ rosbag2_storage::MessageDefinition LocalMessageDefinitionSource::get_full_text(
       throw std::runtime_error("switch is not exhaustive");
   }
 
+  ROSBAG2_CPP_LOG_INFO("Message result '%s'", result.c_str());
   out.encoded_message_definition = result;
   out.topic_type = root_type;
   return out;

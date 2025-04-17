@@ -107,6 +107,55 @@ TEST(test_local_message_definition_source, can_find_srv_deps_in_idl)
     "};\n") << result.encoded_message_definition << std::endl;
 }
 
+TEST(test_local_message_definition_source, can_find_action_deps_in_msg)
+{
+  LocalMessageDefinitionSource source;
+  auto result = source.get_full_text("rosbag2_test_msgdefs/action/ComplexActionMsg");
+  ASSERT_EQ(result.encoding, "ros2msg");
+  ASSERT_EQ(
+    result.encoded_message_definition,
+    "================================================================================\n"
+    "ACT: rosbag2_test_msgdefs/action/ComplexActionMsg\n"
+    "rosbag2_test_msgdefs/BasicMsg goal\n"
+    "---\n"
+    "rosbag2_test_msgdefs/BasicMsg result\n"
+    "---\n"
+    "rosbag2_test_msgdefs/BasicMsg feedback\n"
+    "\n"
+    "================================================================================\n"
+    "MSG: rosbag2_test_msgdefs/BasicMsg\n"
+    "float32 c\n") << result.encoded_message_definition << std::endl;
+}
+
+TEST(test_local_message_definition_source, can_find_action_deps_in_idl)
+{
+  LocalMessageDefinitionSource source;
+  auto result = source.get_full_text("rosbag2_test_msgdefs/action/ComplexActionIdl");
+  ASSERT_EQ(result.encoding, "ros2idl");
+  ASSERT_EQ(
+    result.encoded_message_definition,
+    "================================================================================\n"
+    "ACT: rosbag2_test_msgdefs/action/ComplexActionIdl\n"
+    "rosbag2_test_msgdefs/BasicIdl goal\n"
+    "---\n"
+    "rosbag2_test_msgdefs/BasicIdl result\n"
+    "---\n"
+    "rosbag2_test_msgdefs/BasicIdl feedback\n"
+    "\n"
+    "================================================================================\n"
+    "MSG: rosbag2_test_msgdefs/BasicIdl\n"
+    "\n"
+    "================================================================================\n"
+    "IDL: rosbag2_test_msgdefs/BasicIdl\n"
+    "module rosbag2_test_msgdefs {\n"
+    "  module msg {\n"
+    "    struct BasicIdl {\n"
+    "        float x;\n"
+    "    };\n"
+    "  };\n"
+    "};\n") << result.encoded_message_definition << std::endl;
+}
+
 TEST(test_local_message_definition_source, can_find_idl_deps)
 {
   LocalMessageDefinitionSource source;
