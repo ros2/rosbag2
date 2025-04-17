@@ -329,7 +329,6 @@ rosbag2_storage::MessageDefinition LocalMessageDefinitionSource::get_full_text(
       throw std::runtime_error("switch is not exhaustive");
   }
 
-  ROSBAG2_CPP_LOG_INFO("Message result '%s'", result.c_str());
   out.encoded_message_definition = result;
   out.topic_type = root_type;
   return out;
