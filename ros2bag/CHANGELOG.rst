@@ -2,6 +2,15 @@
 Changelog for package ros2bag
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.32.0 (2025-04-18)
+-------------------
+* Add actions replay feature (`#1955 <https://github.com/ros2/rosbag2/issues/1955>`_)
+* Implement actions recording and displaying information about recorded actions features (`#1939 <https://github.com/ros2/rosbag2/issues/1939>`_)
+* Fix for failing test_record_qos_profiles on Windows (`#1949 <https://github.com/ros2/rosbag2/issues/1949>`_)
+* Progress bar for ros2 bag play (`#1836 <https://github.com/ros2/rosbag2/issues/1836>`_)
+* Update CLI play verb metavar (`#1906 <https://github.com/ros2/rosbag2/issues/1906>`_)
+* Contributors: Barry Xu, Michael Orlov, Nicola Loi, Patrick Roncagliolo
+
 0.31.0 (2025-02-02)
 -------------------
 * Add test_xmllint.py to python packages. (`#1879 <https://github.com/ros2/rosbag2/issues/1879>`_)

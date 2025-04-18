@@ -2,6 +2,13 @@
 Changelog for package rosbag2_test_common
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.32.0 (2025-04-18)
+-------------------
+* Add actions replay feature (`#1955 <https://github.com/ros2/rosbag2/issues/1955>`_)
+* Implement actions recording and displaying information about recorded actions features (`#1939 <https://github.com/ros2/rosbag2/issues/1939>`_)
+* Upstream quality changes from Apex.AI part 1 (`#1903 <https://github.com/ros2/rosbag2/issues/1903>`_)
+* Contributors: Barry Xu, Michael Orlov
+
 0.31.0 (2025-02-02)
 -------------------
 * Use tmpfs in rosbag2 temporary_directory_fixture (`#1901 <https://github.com/ros2/rosbag2/issues/1901>`_)

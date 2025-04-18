@@ -2,6 +2,15 @@
 Changelog for package rosbag2_cpp
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.32.0 (2025-04-18)
+-------------------
+* Add support for finding action types message definitions in the `LocalMessageDefinitionSource`
+  class to be able to store actions message definitions during recording. (`#1965 <https://github.com/ros2/rosbag2/issues/1965>`_)
+* Add message sequence number to the messages write API (`#1961 <https://github.com/ros2/rosbag2/issues/1961>`_)
+* Implement actions recording and displaying information about recorded actions features (`#1939 <https://github.com/ros2/rosbag2/issues/1939>`_)
+* Set environment variables to run tests with `rmw_zenoh_cpp` with multicast discovery (`#1946 <https://github.com/ros2/rosbag2/issues/1946>`_)
+* Contributors: Alejandro Hernández Cordero, Barry Xu, Michael Orlov, Tomoya Fujita, Yadunund
+
 0.31.0 (2025-02-02)
 -------------------
 * Add more logging info to storage and reader/writer open operations (`#1881 <https://github.com/ros2/rosbag2/issues/1881>`_)

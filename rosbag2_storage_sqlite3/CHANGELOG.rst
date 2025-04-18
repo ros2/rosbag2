@@ -2,6 +2,11 @@
 Changelog for package rosbag2_storage_default_plugins
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.32.0 (2025-04-18)
+-------------------
+* Add actions replay feature (`#1955 <https://github.com/ros2/rosbag2/issues/1955>`_)
+* Contributors: Barry Xu
+
 0.31.0 (2025-02-02)
 -------------------
 

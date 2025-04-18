@@ -2,6 +2,12 @@
 Changelog for package rosbag2_test_msgdefs
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.32.0 (2025-04-18)
+-------------------
+* Add support for finding action types message definitions in the `LocalMessageDefinitionSource`
+  class to be able to store actions message definitions during recording. (`#1965 <https://github.com/ros2/rosbag2/issues/1965>`_)
+* Contributors: Tomoya Fujita
+
 0.31.0 (2025-02-02)
 -------------------
 

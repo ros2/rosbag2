@@ -2,6 +2,9 @@
 Changelog for package rosbag2_examples_py
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.32.0 (2025-04-18)
+-------------------
+
 0.31.0 (2025-02-02)
 -------------------
 * avoid using internal modules for examples. (`#1905 <https://github.com/ros2/rosbag2/issues/1905>`_)

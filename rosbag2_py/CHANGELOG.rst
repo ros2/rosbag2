@@ -2,6 +2,17 @@
 Changelog for package rosbag2_py
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.32.0 (2025-04-18)
+-------------------
+* Add message sequence number to the messages write API (`#1961 <https://github.com/ros2/rosbag2/issues/1961>`_)
+* Add actions replay feature (`#1955 <https://github.com/ros2/rosbag2/issues/1955>`_)
+* Implement actions recording and displaying information about recorded actions features (`#1939 <https://github.com/ros2/rosbag2/issues/1939>`_)
+* Add bindings to close method in PyReader and PyCompressionReader (`#1935 <https://github.com/ros2/rosbag2/issues/1935>`_)
+* Remove SHARED from pybind11_add_module (`#1929 <https://github.com/ros2/rosbag2/issues/1929>`_)
+* Progress bar for ros2 bag play (`#1836 <https://github.com/ros2/rosbag2/issues/1836>`_)
+* Upstream quality changes from Apex.AI part 1 (`#1903 <https://github.com/ros2/rosbag2/issues/1903>`_)
+* Contributors: Barry Xu, Michael Orlov, Nicola Loi, Silvio Traversaro, Øystein Sture
+
 0.31.0 (2025-02-02)
 -------------------
 * Add support for replaying based on publication timestamp (`#1876 <https://github.com/ros2/rosbag2/issues/1876>`_)

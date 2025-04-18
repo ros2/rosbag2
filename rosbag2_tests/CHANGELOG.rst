@@ -2,6 +2,12 @@
 Changelog for package rosbag2_tests
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.32.0 (2025-04-18)
+-------------------
+* Implement actions recording and displaying information about recorded actions features (`#1939 <https://github.com/ros2/rosbag2/issues/1939>`_)
+* Upstream quality changes from Apex.AI part 1 (`#1903 <https://github.com/ros2/rosbag2/issues/1903>`_)
+* Contributors: Barry Xu, Michael Orlov
+
 0.31.0 (2025-02-02)
 -------------------
 * Increase timeout to 180s for test_rosbag2_record_end_to_end (`#1889 <https://github.com/ros2/rosbag2/issues/1889>`_)

@@ -2,6 +2,19 @@
 Changelog for package rosbag2_transport
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.32.0 (2025-04-18)
+-------------------
+* Add actions replay feature (`#1955 <https://github.com/ros2/rosbag2/issues/1955>`_)
+* Implement actions recording and displaying information about recorded actions features (`#1939 <https://github.com/ros2/rosbag2/issues/1939>`_)
+* Set environment variables to run tests with `rmw_zenoh_cpp` with multicast discovery (`#1946 <https://github.com/ros2/rosbag2/issues/1946>`_)
+* Initialize filter with namespaced updated topics and services.  (rolling) (`#1944 <https://github.com/ros2/rosbag2/issues/1944>`_)
+* Fix: QoS incompatibilities are not expected with rmw_zenoh_cpp (`#1936 <https://github.com/ros2/rosbag2/issues/1936>`_)
+* Address windows warnings in the progress bar class (`#1927 <https://github.com/ros2/rosbag2/issues/1927>`_)
+* Don't delete existing subscription if failed to create a new one (`#1923 <https://github.com/ros2/rosbag2/issues/1923>`_)
+* Progress bar for ros2 bag play (`#1836 <https://github.com/ros2/rosbag2/issues/1836>`_)
+* Upstream quality changes from Apex.AI part 1 (`#1903 <https://github.com/ros2/rosbag2/issues/1903>`_)
+* Contributors: Alejandro Hernández Cordero, Barry Xu, Michael Orlov, Nicola Loi, Roderick Taylor, Yuyuan Yuan
+
 0.31.0 (2025-02-02)
 -------------------
 * Use tmpfs in rosbag2 temporary_directory_fixture (`#1901 <https://github.com/ros2/rosbag2/issues/1901>`_)
