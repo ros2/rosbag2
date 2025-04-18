@@ -115,7 +115,7 @@ TEST(test_local_message_definition_source, can_find_action_deps_in_msg)
   ASSERT_EQ(
     result.encoded_message_definition,
     "================================================================================\n"
-    "ACT: rosbag2_test_msgdefs/action/ComplexActionMsg\n"
+    "ACTION: rosbag2_test_msgdefs/action/ComplexActionMsg\n"
     "rosbag2_test_msgdefs/BasicMsg goal\n"
     "---\n"
     "rosbag2_test_msgdefs/BasicMsg result\n"
@@ -135,7 +135,7 @@ TEST(test_local_message_definition_source, can_find_action_deps_in_idl)
   ASSERT_EQ(
     result.encoded_message_definition,
     "================================================================================\n"
-    "ACT: rosbag2_test_msgdefs/action/ComplexActionIdl\n"
+    "ACTION: rosbag2_test_msgdefs/action/ComplexActionIdl\n"
     "rosbag2_test_msgdefs/BasicIdl goal\n"
     "---\n"
     "rosbag2_test_msgdefs/BasicIdl result\n"

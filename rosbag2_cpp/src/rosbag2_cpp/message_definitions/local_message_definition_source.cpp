@@ -109,7 +109,7 @@ std::set<std::string> parse_definition_dependencies(
     case LocalMessageDefinitionSource::Format::IDL:
       return parse_idl_dependencies(text);
     case LocalMessageDefinitionSource::Format::SRV:
-    case LocalMessageDefinitionSource::Format::ACT:
+    case LocalMessageDefinitionSource::Format::ACTION:
       {
         auto dep = parse_msg_dependencies(text, package_context);
         if (!dep.empty()) {
@@ -132,7 +132,7 @@ static const char * extension_for_format(LocalMessageDefinitionSource::Format fo
       return ".idl";
     case LocalMessageDefinitionSource::Format::SRV:
       return ".srv";
-    case LocalMessageDefinitionSource::Format::ACT:
+    case LocalMessageDefinitionSource::Format::ACTION:
       return ".action";
     default:
       throw std::runtime_error("switch is not exhaustive");
@@ -154,8 +154,8 @@ std::string LocalMessageDefinitionSource::delimiter(
     case Format::SRV:
       result += "SRV: ";
       break;
-    case Format::ACT:
-      result += "ACT: ";
+    case Format::ACTION:
+      result += "ACTION: ";
       break;
     default:
       throw std::runtime_error("switch is not exhaustive");
@@ -202,7 +202,7 @@ const LocalMessageDefinitionSource::MessageSpec & LocalMessageDefinitionSource::
     dir = "/msg/";
   } else if (definition_identifier.format() == Format::SRV) {
     dir = "/srv/";
-  } else if (definition_identifier.format() == Format::ACT) {
+  } else if (definition_identifier.format() == Format::ACTION) {
     dir = "/action/";
   } else {
     throw std::runtime_error("Unknown format type");
@@ -254,7 +254,7 @@ rosbag2_storage::MessageDefinition LocalMessageDefinitionSource::get_full_text(
 
   if (root_type.find("/srv/") == std::string::npos &&
     root_type.find("/action/") == std::string::npos)
-  {  // Neither srv nor action
+  {  // Only msg and idl files
     try {
       format = Format::MSG;
       result = append_recursive(DefinitionIdentifier(root_type, format), max_recursion_depth);
@@ -278,7 +278,7 @@ rosbag2_storage::MessageDefinition LocalMessageDefinitionSource::get_full_text(
     if (root_type.find("/srv/") != std::string::npos) {
       format = Format::SRV;
     } else if (root_type.find("/action/") != std::string::npos) {
-      format = Format::ACT;
+      format = Format::ACTION;
     }
     DefinitionIdentifier def_identifier{root_type, format};
     (void)seen_deps.insert(def_identifier).second;
