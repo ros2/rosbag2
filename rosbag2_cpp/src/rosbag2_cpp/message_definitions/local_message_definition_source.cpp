@@ -228,6 +228,8 @@ rosbag2_storage::MessageDefinition LocalMessageDefinitionSource::get_full_text(
 {
   std::unordered_set<DefinitionIdentifier, DefinitionIdentifierHash> seen_deps;
 
+  std::string real_root_type = root_type;
+
   std::function<std::string(const DefinitionIdentifier &, int32_t)> append_recursive =
     [&](const DefinitionIdentifier & definition_identifier, int32_t depth) {
       if (depth <= 0) {
@@ -277,10 +279,17 @@ rosbag2_storage::MessageDefinition LocalMessageDefinitionSource::get_full_text(
     format = Format::UNKNOWN;
     if (root_type.find("/srv/") != std::string::npos) {
       format = Format::SRV;
+
+      // Convert service event type to service type
+      std::regex srv_event_type_postfix_regex{R"(_Event$)"};
+      if (std::regex_search(root_type, srv_event_type_postfix_regex)) {
+        real_root_type = std::regex_replace(
+          root_type, srv_event_type_postfix_regex, "");
+      }
     } else if (root_type.find("/action/") != std::string::npos) {
       format = Format::ACTION;
     }
-    DefinitionIdentifier def_identifier{root_type, format};
+    DefinitionIdentifier def_identifier{real_root_type, format};
     (void)seen_deps.insert(def_identifier).second;
     result = delimiter(def_identifier);
     const MessageSpec & spec = load_message_spec(def_identifier);
@@ -330,7 +339,7 @@ rosbag2_storage::MessageDefinition LocalMessageDefinitionSource::get_full_text(
   }
 
   out.encoded_message_definition = result;
-  out.topic_type = root_type;
+  out.topic_type = real_root_type;
   return out;
 }
 }  // namespace rosbag2_cpp
