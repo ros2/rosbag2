@@ -211,6 +211,8 @@ rosbag2_storage::MessageDefinition LocalMessageDefinitionSource::get_full_text(
 {
   std::unordered_set<DefinitionIdentifier, DefinitionIdentifierHash> seen_deps;
 
+  std::string real_root_type = root_type;
+
   std::function<std::string(const DefinitionIdentifier &, int32_t)> append_recursive =
     [&](const DefinitionIdentifier & definition_identifier, int32_t depth) {
       if (depth <= 0) {
@@ -235,14 +237,14 @@ rosbag2_storage::MessageDefinition LocalMessageDefinitionSource::get_full_text(
   Format format = Format::UNKNOWN;
   int32_t max_recursion_depth = ROSBAG2_CPP_LOCAL_MESSAGE_DEFINITION_SOURCE_MAX_RECURSION_DEPTH;
 
-  if (root_type.find("/srv/") == std::string::npos) {  // Not a service
+  if (root_type.find("/srv/") == std::string::npos) {  // Normal topic type
     try {
       format = Format::MSG;
-      result = append_recursive(DefinitionIdentifier(root_type, format), max_recursion_depth);
+      result = append_recursive(DefinitionIdentifier(real_root_type, format), max_recursion_depth);
     } catch (const DefinitionNotFoundError & err) {
       ROSBAG2_CPP_LOG_WARN("No .msg definition for %s, falling back to IDL", err.what());
       format = Format::IDL;
-      DefinitionIdentifier root_definition_identifier(root_type, format);
+      DefinitionIdentifier root_definition_identifier(real_root_type, format);
       result = (delimiter(root_definition_identifier) +
         append_recursive(root_definition_identifier, max_recursion_depth));
     } catch (const TypenameNotUnderstoodError & err) {
@@ -251,12 +253,20 @@ rosbag2_storage::MessageDefinition LocalMessageDefinitionSource::get_full_text(
         "definition will be left empty in bag.", err.what());
       format = Format::UNKNOWN;
     }
-  } else {
+  } else {  // Service event topic type
     // The service dependencies could be either in the msg or idl files. Therefore, will try to
     // search service dependencies in MSG files first then in IDL files via two separate recursive
     // searches for each dependency.
-    format = Format::UNKNOWN;
-    DefinitionIdentifier def_identifier{root_type, Format::SRV};
+    format = Format::SRV;
+
+    // Convert service event type to service type
+    std::regex srv_event_type_postfix_regex{R"(_Event$)"};
+    if (std::regex_search(root_type, srv_event_type_postfix_regex)) {
+      real_root_type = std::regex_replace(
+        root_type, srv_event_type_postfix_regex, "");
+    }
+
+    DefinitionIdentifier def_identifier{real_root_type, format};
     (void)seen_deps.insert(def_identifier).second;
     result = delimiter(def_identifier);
     const MessageSpec & spec = load_message_spec(def_identifier);
@@ -306,7 +316,7 @@ rosbag2_storage::MessageDefinition LocalMessageDefinitionSource::get_full_text(
   }
 
   out.encoded_message_definition = result;
-  out.topic_type = root_type;
+  out.topic_type = real_root_type;
   return out;
 }
 }  // namespace rosbag2_cpp
