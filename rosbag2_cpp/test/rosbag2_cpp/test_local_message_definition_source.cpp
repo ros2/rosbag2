@@ -65,7 +65,7 @@ TEST(test_local_message_definition_source, can_find_msg_deps)
 TEST(test_local_message_definition_source, can_find_srv_deps_in_msg)
 {
   LocalMessageDefinitionSource source;
-  auto result = source.get_full_text("rosbag2_test_msgdefs/srv/ComplexSrvMsg");
+  auto result = source.get_full_text("rosbag2_test_msgdefs/srv/ComplexSrvMsg_Event");
   ASSERT_EQ(result.encoding, "ros2msg");
   ASSERT_EQ(
     result.encoded_message_definition,
@@ -83,7 +83,7 @@ TEST(test_local_message_definition_source, can_find_srv_deps_in_msg)
 TEST(test_local_message_definition_source, can_find_srv_deps_in_idl)
 {
   LocalMessageDefinitionSource source;
-  auto result = source.get_full_text("rosbag2_test_msgdefs/srv/ComplexSrvIdl");
+  auto result = source.get_full_text("rosbag2_test_msgdefs/srv/ComplexSrvIdl_Event");
   ASSERT_EQ(result.encoding, "ros2idl");
   ASSERT_EQ(
     result.encoded_message_definition,
