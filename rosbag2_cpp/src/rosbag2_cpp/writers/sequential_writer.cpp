@@ -221,7 +221,7 @@ void SequentialWriter::create_topic(const rosbag2_storage::TopicMetadata & topic
   }
   rosbag2_storage::MessageDefinition definition;
   try {
-    definition = message_definitions_.get_full_text(topic_with_type.type);
+    definition = message_definitions_.get_full_text(topic_with_type.name, topic_with_type.type);
   } catch (DefinitionNotFoundError &) {
     definition =
       rosbag2_storage::MessageDefinition::empty_message_definition_for(topic_with_type.type);

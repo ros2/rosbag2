@@ -68,7 +68,9 @@ public:
    * Throws DefinitionNotFoundError if one or more definition files are missing for the given
    * package resource name.
    */
-  rosbag2_storage::MessageDefinition get_full_text(const std::string & root_type);
+  rosbag2_storage::MessageDefinition get_full_text(
+    const std::string & topic_name,
+    const std::string & root_type);
 
   enum struct Format
   {

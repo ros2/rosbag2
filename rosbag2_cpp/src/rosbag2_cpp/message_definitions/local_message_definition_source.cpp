@@ -26,6 +26,7 @@
 #include <ament_index_cpp/get_package_share_directory.hpp>
 #include <ament_index_cpp/get_package_prefix.hpp>
 
+#include "rosbag2_cpp/action_utils.hpp"
 #include "rosbag2_cpp/logging.hpp"
 
 namespace rosbag2_cpp
@@ -225,6 +226,7 @@ const LocalMessageDefinitionSource::MessageSpec & LocalMessageDefinitionSource::
 }
 
 rosbag2_storage::MessageDefinition LocalMessageDefinitionSource::get_full_text(
+  const std::string & topic_name,
   const std::string & root_type)
 {
   std::unordered_set<DefinitionIdentifier, DefinitionIdentifierHash> seen_deps;
@@ -255,9 +257,9 @@ rosbag2_storage::MessageDefinition LocalMessageDefinitionSource::get_full_text(
   Format format = Format::UNKNOWN;
   int32_t max_recursion_depth = ROSBAG2_CPP_LOCAL_MESSAGE_DEFINITION_SOURCE_MAX_RECURSION_DEPTH;
 
-  if (root_type.find("/srv/") == std::string::npos &&
-    root_type.find("/action/") == std::string::npos)
-  {  // Only msg and idl files
+  bool is_action_type = is_topic_belong_to_action(topic_name, root_type);
+
+  if (root_type.find("/srv/") == std::string::npos && !is_action_type) {  // Only msg and idl files
     try {
       format = Format::MSG;
       result = append_recursive(DefinitionIdentifier(root_type, format), max_recursion_depth);
@@ -278,7 +280,9 @@ rosbag2_storage::MessageDefinition LocalMessageDefinitionSource::get_full_text(
     // Therefore, will try to search dependencies in MSG files first then in IDL files
     // via two separate recursive searches for each dependency.
     format = Format::UNKNOWN;
-    if (root_type.find("/srv/") != std::string::npos) {
+    if (root_type.find("/srv/") != std::string::npos &&
+      !is_action_type)
+    {
       format = Format::SRV;
 
       // Convert service event type to service type
@@ -287,8 +291,9 @@ rosbag2_storage::MessageDefinition LocalMessageDefinitionSource::get_full_text(
         real_root_type = std::regex_replace(
           root_type, srv_event_type_postfix_regex, "");
       }
-    } else if (root_type.find("/action/") != std::string::npos) {
+    } else if (is_action_type) {
       format = Format::ACTION;
+      real_root_type = action_interface_name_to_action_name(topic_name);
     }
     DefinitionIdentifier def_identifier{real_root_type, format};
     (void)seen_deps.insert(def_identifier).second;

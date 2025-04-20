@@ -51,7 +51,7 @@ module rosbag2_test_msgdefs {
 TEST(test_local_message_definition_source, can_find_msg_deps)
 {
   LocalMessageDefinitionSource source;
-  auto result = source.get_full_text("rosbag2_test_msgdefs/ComplexMsg");
+  auto result = source.get_full_text("/complex_msg_topic", "rosbag2_test_msgdefs/ComplexMsg");
   ASSERT_EQ(result.encoding, "ros2msg");
   ASSERT_EQ(
     result.encoded_message_definition,
@@ -65,7 +65,8 @@ TEST(test_local_message_definition_source, can_find_msg_deps)
 TEST(test_local_message_definition_source, can_find_srv_deps_in_msg)
 {
   LocalMessageDefinitionSource source;
-  auto result = source.get_full_text("rosbag2_test_msgdefs/srv/ComplexSrvMsg_Event");
+  auto result = source.get_full_text("/complex_srv_msg_topic/_service_event",
+    "rosbag2_test_msgdefs/srv/ComplexSrvMsg_Event");
   ASSERT_EQ(result.encoding, "ros2msg");
   ASSERT_EQ(
     result.encoded_message_definition,
@@ -83,7 +84,8 @@ TEST(test_local_message_definition_source, can_find_srv_deps_in_msg)
 TEST(test_local_message_definition_source, can_find_srv_deps_in_idl)
 {
   LocalMessageDefinitionSource source;
-  auto result = source.get_full_text("rosbag2_test_msgdefs/srv/ComplexSrvIdl_Event");
+  auto result = source.get_full_text("/complex_srv_idl_topic/_service_event",
+    "rosbag2_test_msgdefs/srv/ComplexSrvIdl_Event");
   ASSERT_EQ(result.encoding, "ros2idl");
   ASSERT_EQ(
     result.encoded_message_definition,
