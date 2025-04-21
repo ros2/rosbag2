@@ -200,8 +200,10 @@ bool TimeControllerClock::is_sleeping()
 
 void TimeControllerClock::wakeup()
 {
-  std::lock_guard<std::mutex> lock(impl_->state_mutex);
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wthread-safety-analysis"
   impl_->cv.notify_all();
+#pragma clang diagnostic pop
 }
 
 bool TimeControllerClock::set_rate(double rate)
