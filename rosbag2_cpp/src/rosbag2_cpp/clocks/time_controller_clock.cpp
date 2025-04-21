@@ -200,10 +200,16 @@ bool TimeControllerClock::is_sleeping()
 
 void TimeControllerClock::wakeup()
 {
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wthread-safety-analysis"
-  impl_->cv.notify_all();
-#pragma clang diagnostic pop
+#if defined(__clang__)
+    #pragma clang diagnostic push
+    #pragma clang diagnostic ignored "-Wthread-safety-analysis"
+#endif
+    // Note. We shall not lock mutex before notify_all since the notified thread would immediately
+    // block again, waiting for the notifying thread to release the lock
+    impl_->cv.notify_all();
+#if defined(__clang__)
+    #pragma clang diagnostic pop
+#endif
 }
 
 bool TimeControllerClock::set_rate(double rate)
