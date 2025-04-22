@@ -2,6 +2,18 @@
 Changelog for package rosbag2_py
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Add bindings to close method in PyReader and PyCompressionReader (`#1935 <https://github.com/ros2/rosbag2/issues/1935>`_) (`#1937 <https://github.com/ros2/rosbag2/issues/1937>`_)
+  (cherry picked from commit d3cb4e3b91de9616d59b3a2e66cf5c1e4cf36177)
+  Co-authored-by: Øystein Sture <oysstu@users.noreply.github.com>
+* Remove SHARED from pybind11_add_module (`#1929 <https://github.com/ros2/rosbag2/issues/1929>`_) (`#1931 <https://github.com/ros2/rosbag2/issues/1931>`_)
+  (cherry picked from commit 5fedfd092d93992c9e0a20ebbccc8f1f4ced58eb)
+  Co-authored-by: Silvio Traversaro <silvio@traversaro.it>
+* [jazzy] Upstream quality changes from Apex.AI part 1 (backport `#1903 <https://github.com/ros2/rosbag2/issues/1903>`_) (`#1909 <https://github.com/ros2/rosbag2/issues/1909>`_)
+  Co-authored-by: Michael Orlov <michael.orlov@apex.ai>
+* Contributors: mergify[bot]
+
 0.26.6 (2024-12-18)
 -------------------
 * [jazzy] Add support for replaying multiple bags (backport `#1848 <https://github.com/ros2/rosbag2/issues/1848>`_) (`#1873 <https://github.com/ros2/rosbag2/issues/1873>`_)

@@ -2,6 +2,17 @@
 Changelog for package ros2bag
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Fix for failing test_record_qos_profiles on Windows (`#1949 <https://github.com/ros2/rosbag2/issues/1949>`_) (`#1951 <https://github.com/ros2/rosbag2/issues/1951>`_)
+  (cherry picked from commit d8f99a778183fc6ce9711a4743cb2c11e6b1756d)
+  Co-authored-by: Michael Orlov <morlovmr@gmail.com>
+* CLI - play verb metavar (`#1906 <https://github.com/ros2/rosbag2/issues/1906>`_) (`#1911 <https://github.com/ros2/rosbag2/issues/1911>`_)
+  better show `--clock [Hz]` than `--clock [CLOCK]`
+  (cherry picked from commit 323ebbfdf737234224e70e6edd9b4d0c6667dfe6)
+  Co-authored-by: Patrick Roncagliolo <ronca.pat@gmail.com>
+* Contributors: mergify[bot]
+
 0.26.6 (2024-12-18)
 -------------------
 * Publish clock after delay is over and disable delay on next loops (`#1861 <https://github.com/ros2/rosbag2/issues/1861>`_) (`#1878 <https://github.com/ros2/rosbag2/issues/1878>`_)
