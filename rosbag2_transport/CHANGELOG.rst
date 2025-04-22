@@ -2,8 +2,8 @@
 Changelog for package rosbag2_transport
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.26.7 (2025-04-22)
+-------------------
 * Initialize filter with namespaced updated topics and services.  (rolling) (`#1944 <https://github.com/ros2/rosbag2/issues/1944>`_) (`#1948 <https://github.com/ros2/rosbag2/issues/1948>`_)
   (cherry picked from commit f41a6168fa2e382e93327d09a977ab928cf096c1)
   Co-authored-by: Roderick Taylor <Rod.Taylor@csiro.au>

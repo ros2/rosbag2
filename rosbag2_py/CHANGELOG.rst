@@ -2,8 +2,8 @@
 Changelog for package rosbag2_py
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.26.7 (2025-04-22)
+-------------------
 * Add bindings to close method in PyReader and PyCompressionReader (`#1935 <https://github.com/ros2/rosbag2/issues/1935>`_) (`#1937 <https://github.com/ros2/rosbag2/issues/1937>`_)
   (cherry picked from commit d3cb4e3b91de9616d59b3a2e66cf5c1e4cf36177)
   Co-authored-by: Øystein Sture <oysstu@users.noreply.github.com>

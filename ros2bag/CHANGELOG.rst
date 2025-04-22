@@ -2,8 +2,8 @@
 Changelog for package ros2bag
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.26.7 (2025-04-22)
+-------------------
 * Fix for failing test_record_qos_profiles on Windows (`#1949 <https://github.com/ros2/rosbag2/issues/1949>`_) (`#1951 <https://github.com/ros2/rosbag2/issues/1951>`_)
   (cherry picked from commit d8f99a778183fc6ce9711a4743cb2c11e6b1756d)
   Co-authored-by: Michael Orlov <morlovmr@gmail.com>
