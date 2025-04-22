@@ -5,27 +5,13 @@ Changelog for package rosbag2_transport
 0.26.7 (2025-04-22)
 -------------------
 * Initialize filter with namespaced updated topics and services.  (rolling) (`#1944 <https://github.com/ros2/rosbag2/issues/1944>`_) (`#1948 <https://github.com/ros2/rosbag2/issues/1948>`_)
-  (cherry picked from commit f41a6168fa2e382e93327d09a977ab928cf096c1)
-  Co-authored-by: Roderick Taylor <Rod.Taylor@csiro.au>
-* fix: QoS incompatibilites are not expected with rmw_zenoh_cpp (`#1936 <https://github.com/ros2/rosbag2/issues/1936>`_) (`#1938 <https://github.com/ros2/rosbag2/issues/1938>`_)
-  (cherry picked from commit a378beb45867005c49c4101b94a2aba2fa0fd227)
-  Co-authored-by: Yuyuan Yuan <az6980522@gmail.com>
+* Fix: QoS incompatibilities are not expected with rmw_zenoh_cpp (`#1936 <https://github.com/ros2/rosbag2/issues/1936>`_) (`#1938 <https://github.com/ros2/rosbag2/issues/1938>`_)
 * Don't delete existing subscription if failed to create a new one (`#1923 <https://github.com/ros2/rosbag2/issues/1923>`_) (`#1930 <https://github.com/ros2/rosbag2/issues/1930>`_)
-  (cherry picked from commit 94969bde2ac1ad37ed51ae25cb1c54b3de8bd27e)
-  Co-authored-by: Michael Orlov <morlovmr@gmail.com>
 * [jazzy] Upstream quality changes from Apex.AI part 1 (backport `#1903 <https://github.com/ros2/rosbag2/issues/1903>`_) (`#1909 <https://github.com/ros2/rosbag2/issues/1909>`_)
-  (cherry picked from commit 871a4477ee0dd714b2694e33fcc32abe436dbf15)
-  Co-authored-by: Michael Orlov <michael.orlov@apex.ai>
 * [jazzy] Use tmpfs in rosbag2 temporary_directory_fixture (backport `#1901 <https://github.com/ros2/rosbag2/issues/1901>`_) (`#1904 <https://github.com/ros2/rosbag2/issues/1904>`_)
-  (cherry picked from commit 1d60d7b38cb9492e51136cb27ad59a25c700c6c6)
-  Co-authored-by: Michael Orlov <michael.orlov@apex.ai>
 * Bugfix: Recorder discovery does not restart after being stopped (`#1894 <https://github.com/ros2/rosbag2/issues/1894>`_) (`#1900 <https://github.com/ros2/rosbag2/issues/1900>`_)
-  (cherry picked from commit b48354198038fd4e8966035cafc46a7c6e6cb4c9)
-  Co-authored-by: Øystein Sture <oysstu@users.noreply.github.com>
 * Bugfix. Event publisher not starting for second run after stop (`#1888 <https://github.com/ros2/rosbag2/issues/1888>`_) (`#1890 <https://github.com/ros2/rosbag2/issues/1890>`_)
-  (cherry picked from commit ffd8c7da4ebd5aca9a1a5d860c9a10db28576e31)
-  Co-authored-by: Michael Orlov <michael.orlov@apex.ai>
-* Contributors: mergify[bot]
+* Contributors: mergify[bot], Roderick Taylor, Yuyuan Yuan, Øystein Sture, Michael Orlov
 
 0.26.6 (2024-12-18)
 -------------------
