@@ -29,6 +29,7 @@
 
 #include "rosbag2_transport_test_fixture.hpp"
 
+using namespace std::chrono_literals;  // NOLINT
 using namespace ::testing;  // NOLINT
 using namespace rosbag2_transport;  // NOLINT
 
@@ -163,7 +164,7 @@ TEST_F(PlayerTestFixture, playing_rate_negative)
 
 TEST_F(PlayerTestFixture, playing_respects_delay)
 {
-  rclcpp::Duration delay_margin(0, static_cast<uint32_t>(RCUTILS_S_TO_NS(0.5)));
+  rclcpp::Duration delay_margin(0.5s);
 
   // Sleep 1.0 seconds before play
   play_options_.delay = rclcpp::Duration(1, 0);
