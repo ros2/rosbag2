@@ -58,7 +58,6 @@ void WriterBenchmark::start_benchmark()
   RCLCPP_INFO(get_logger(), "Starting the WriterBenchmark");
   start_producers();
   while (rclcpp::ok()) {
-    int count = 0;
     unsigned int complete_count = 0;
 
     // TODO(adamdbrw) Performance can be improved. Use conditional variables
@@ -121,7 +120,6 @@ void WriterBenchmark::start_benchmark()
         } catch (const std::runtime_error & e) {
           RCLCPP_ERROR_STREAM(get_logger(), "Failed to record: " << e.what());
         }
-        ++count;
       }
     }
     if (complete_count == queues_.size()) {
