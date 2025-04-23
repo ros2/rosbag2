@@ -47,7 +47,7 @@ def read_messages(input_bag: str):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
-        '-i', '--input', help="input bag path (folder or filepath) to read from"
+        '-i', '--input', help='input bag path (folder or filepath) to read from'
     )
 
     args = parser.parse_args()
@@ -56,10 +56,10 @@ def main():
         # Workaround for Bazel to support the relative path's for input and output files
         os.chdir(os.environ['BUILD_WORKING_DIRECTORY'])
 
-    with open(f"{args.input}.csv", "w", newline="") as f_out:
+    with open(f'{args.input}.csv', 'w', newline='') as f_out:
         csv_writer = csv.writer(f_out)
         # Write header
-        csv_writer.writerow(["topic_name", "topic_type", "timestamp_ns", "data"])
+        csv_writer.writerow(['topic_name', 'topic_type', 'timestamp_ns', 'data'])
 
         for topic_name, msg, timestamp_ns in read_messages(args.input):
             # Convert to YAML
@@ -69,5 +69,5 @@ def main():
             # print(f"{topic_name} ({type(msg).__name__}) [{timestamp_ns}]: '{yaml_str}'")
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     main()
