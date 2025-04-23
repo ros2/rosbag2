@@ -2,6 +2,9 @@
 Changelog for package rosbag2
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.26.7 (2025-04-22)
+-------------------
+
 0.26.6 (2024-12-18)
 -------------------
 * [jazzy] Add support for replaying multiple bags (backport `#1848 <https://github.com/ros2/rosbag2/issues/1848>`_) (`#1873 <https://github.com/ros2/rosbag2/issues/1873>`_)

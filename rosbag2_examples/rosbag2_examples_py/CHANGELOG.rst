@@ -2,6 +2,11 @@
 Changelog for package rosbag2_examples_py
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.26.7 (2025-04-22)
+-------------------
+* Avoid using internal modules for examples. (backport `#1905 <https://github.com/ros2/rosbag2/issues/1905>`_) (`#1907 <https://github.com/ros2/rosbag2/issues/1907>`_)
+* Contributors: Tomoya Fujita, Alejandro Hernandez Cordero
+
 0.26.6 (2024-12-18)
 -------------------
 

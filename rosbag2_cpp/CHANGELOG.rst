@@ -2,6 +2,9 @@
 Changelog for package rosbag2
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.26.7 (2025-04-22)
+-------------------
+
 0.26.6 (2024-12-18)
 -------------------
 * Add more logging info to storage and reader/writer open operations (`#1881 <https://github.com/ros2/rosbag2/issues/1881>`_) (`#1882 <https://github.com/ros2/rosbag2/issues/1882>`_)

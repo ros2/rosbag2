@@ -2,6 +2,17 @@
 Changelog for package rosbag2_transport
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.26.7 (2025-04-22)
+-------------------
+* Initialize filter with namespaced updated topics and services.  (rolling) (`#1944 <https://github.com/ros2/rosbag2/issues/1944>`_) (`#1948 <https://github.com/ros2/rosbag2/issues/1948>`_)
+* Fix: QoS incompatibilities are not expected with rmw_zenoh_cpp (`#1936 <https://github.com/ros2/rosbag2/issues/1936>`_) (`#1938 <https://github.com/ros2/rosbag2/issues/1938>`_)
+* Don't delete existing subscription if failed to create a new one (`#1923 <https://github.com/ros2/rosbag2/issues/1923>`_) (`#1930 <https://github.com/ros2/rosbag2/issues/1930>`_)
+* [jazzy] Upstream quality changes from Apex.AI part 1 (backport `#1903 <https://github.com/ros2/rosbag2/issues/1903>`_) (`#1909 <https://github.com/ros2/rosbag2/issues/1909>`_)
+* [jazzy] Use tmpfs in rosbag2 temporary_directory_fixture (backport `#1901 <https://github.com/ros2/rosbag2/issues/1901>`_) (`#1904 <https://github.com/ros2/rosbag2/issues/1904>`_)
+* Bugfix: Recorder discovery does not restart after being stopped (`#1894 <https://github.com/ros2/rosbag2/issues/1894>`_) (`#1900 <https://github.com/ros2/rosbag2/issues/1900>`_)
+* Bugfix. Event publisher not starting for second run after stop (`#1888 <https://github.com/ros2/rosbag2/issues/1888>`_) (`#1890 <https://github.com/ros2/rosbag2/issues/1890>`_)
+* Contributors: mergify[bot], Roderick Taylor, Yuyuan Yuan, Øystein Sture, Michael Orlov
+
 0.26.6 (2024-12-18)
 -------------------
 * Publish clock after delay is over and disable delay on next loops (`#1861 <https://github.com/ros2/rosbag2/issues/1861>`_) (`#1878 <https://github.com/ros2/rosbag2/issues/1878>`_)

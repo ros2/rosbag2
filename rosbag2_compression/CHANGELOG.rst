@@ -2,6 +2,9 @@
 Changelog for package rosbag2_compression
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.26.7 (2025-04-22)
+-------------------
+
 0.26.6 (2024-12-18)
 -------------------
 * Bugfix: Update metadata with new file_info before saving it first time (`#1843 <https://github.com/ros2/rosbag2/issues/1843>`_) (`#1853 <https://github.com/ros2/rosbag2/issues/1853>`_)
