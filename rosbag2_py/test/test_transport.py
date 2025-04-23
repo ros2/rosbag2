@@ -29,7 +29,7 @@ from rosbag2_test_common import TESTED_STORAGE_IDS
 from std_msgs.msg import String
 
 
-RESOURCES_PATH = Path(__file__).parent / 'resources'
+RESOURCES_PATH = Path(os.environ['ROSBAG2_PY_TEST_RESOURCES_DIR'])
 PLAYBACK_UNTIL_TIMESTAMP_REGEX_STRING = r'\[rosbag2_player]: Playback until timestamp: -1'
 
 
