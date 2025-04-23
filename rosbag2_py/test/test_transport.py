@@ -12,8 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import os
 import datetime
+import os
 from pathlib import Path
 import re
 import threading
@@ -136,19 +136,19 @@ def test_play_cancel(storage_id, capfd):
 
     def check_playback_start_output(cap_streams):
         out, err = capfd.readouterr()
-        cap_streams["err"] += err
-        cap_streams["out"] += out
+        cap_streams['err'] += err
+        cap_streams['out'] += out
         expected_string_regex = re.compile(PLAYBACK_UNTIL_TIMESTAMP_REGEX_STRING)
-        matches = expected_string_regex.search(cap_streams["err"])
+        matches = expected_string_regex.search(cap_streams['err'])
         return matches is not None
 
-    captured_streams = {"out": '', "err": ''}
+    captured_streams = {'out': '', 'err': ''}
 
     if not wait_for(lambda: check_playback_start_output(captured_streams),
                     timeout=rclpy.duration.Duration(seconds=5)):
         with capfd.disabled():
-            print("\nCaptured stdout:", captured_streams["out"])
-            print("\nCaptured stderr:", captured_streams["err"])
+            print('\nCaptured stdout:', captured_streams['out'])
+            print('\nCaptured stderr:', captured_streams['err'])
         player.cancel()
         player_thread.join()
         assert False
