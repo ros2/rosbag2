@@ -427,6 +427,12 @@ void SequentialCompressionWriter::write(
     while (compressor_message_queue_.size() > compression_options_.compression_queue_size &&
       compression_options_.compression_queue_size > 0u)
     {
+      // Drop the message if the queue is full and the compression queue size is set.
+      message = compressor_message_queue_.front();
+      ROSBAG2_COMPRESSION_LOG_WARN_STREAM(
+        "Dropping message on topic:" << message->topic_name <<
+          "from compression queue because it is full. Queue size: " <<
+          compressor_message_queue_.size());
       compressor_message_queue_.pop();
     }
 
