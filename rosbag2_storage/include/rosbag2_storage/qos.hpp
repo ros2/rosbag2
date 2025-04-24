@@ -53,9 +53,14 @@ public:
     return *this;
   }
 
+  /// \brief Convert this QoS profile to a string representation.
+  /// \return string representation of this QoS profile.
+  [[nodiscard]] std::string to_string() const;
+
   // Create an adaptive QoS profile to use for subscribing to a set of offers from publishers.
   /**
-    * - Uses rosbag2_storage defaults for History since they do not affect compatibility.
+    * - Uses history keep last with the maximum depth from all publishers. If depth is 0, it
+    * falls back to the history keep_all.
     * - Adapts Durability and Reliability, falling back to the least strict publisher when there
     * is a mixed offer. This behavior errs on the side of forming connections with all publishers.
     * - Does not specify Lifespan, Deadline, or Liveliness to be maximally compatible, because

@@ -95,10 +95,15 @@ public:
 
     auto server = rclcpp_action::create_server<ActionT>(
       action_server_node_, action_name, handle_goal, handle_cancel, handle_accepted);
+    server->configure_introspection(
+      action_server_node_->get_clock(), rclcpp::ServicesQoS(), RCL_SERVICE_INTROSPECTION_CONTENTS);
     action_servers_.emplace(action_name, server);
 
     auto client = rclcpp_action::create_client<ActionT>(
       check_action_server_ready_node_, action_name);
+    client->configure_introspection(
+      action_server_node_->get_clock(), rclcpp::ServicesQoS(), RCL_SERVICE_INTROSPECTION_CONTENTS);
+
     action_clients_.emplace_back(client);
   }
 

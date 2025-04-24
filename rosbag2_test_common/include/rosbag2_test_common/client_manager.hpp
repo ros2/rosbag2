@@ -66,7 +66,7 @@ public:
       introspection_state = RCL_SERVICE_INTROSPECTION_OFF;
     }
     service_->configure_introspection(
-      get_clock(), rclcpp::SystemDefaultsQoS(), introspection_state);
+      get_clock(), rclcpp::ServicesQoS(), introspection_state);
 
     if (enable_client_event_contents_) {
       introspection_state = RCL_SERVICE_INTROSPECTION_CONTENTS;
@@ -77,7 +77,7 @@ public:
     for (size_t i = 0; i < number_of_clients_; i++) {
       auto client = create_client<ServiceT>(service_name_);
       client->configure_introspection(
-        get_clock(), rclcpp::SystemDefaultsQoS(), introspection_state);
+        get_clock(), rclcpp::ServicesQoS(), introspection_state);
       clients_.emplace_back(client);
     }
   }

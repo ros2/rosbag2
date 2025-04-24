@@ -65,7 +65,7 @@ public:
       introspection_state = RCL_SERVICE_INTROSPECTION_OFF;
     }
     action_server_->configure_introspection(
-      get_clock(), rclcpp::SystemDefaultsQoS(), introspection_state);
+      get_clock(), rclcpp::ServicesQoS(), introspection_state);
 
     if (enable_action_client_introspection_) {
       introspection_state = RCL_SERVICE_INTROSPECTION_CONTENTS;
@@ -75,7 +75,7 @@ public:
 
     for (auto & action_client : action_clients_) {
       action_client->configure_introspection(
-        get_clock(), rclcpp::SystemDefaultsQoS(), introspection_state);
+        get_clock(), rclcpp::ServicesQoS(), introspection_state);
     }
   }
 
