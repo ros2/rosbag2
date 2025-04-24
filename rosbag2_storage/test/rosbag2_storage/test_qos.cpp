@@ -187,6 +187,7 @@ TEST_F(AdaptiveQoSTest, adapt_request_single_offer_returns_same_values)
   // Set up this offer to use nondefault reliability and durability,
   // expect to see those values in the output
   auto nondefault_offer = Rosbag2QoS{}.best_effort().transient_local();
+  nondefault_offer.keep_last(115);
   add_endpoint(nondefault_offer);
 
   auto adapted_request = Rosbag2QoS::adapt_request_to_offers(topic_name_, endpoints_);
@@ -195,6 +196,7 @@ TEST_F(AdaptiveQoSTest, adapt_request_single_offer_returns_same_values)
   auto actual = adapted_request.get_rmw_qos_profile();
   EXPECT_EQ(expected.reliability, actual.reliability);
   EXPECT_EQ(expected.durability, actual.durability);
+  EXPECT_EQ(expected.depth, actual.depth);
 }
 
 TEST_F(AdaptiveQoSTest, adapt_request_multiple_similar_offers_returns_same_values)
@@ -279,4 +281,20 @@ TEST_F(AdaptiveQoSTest, adapt_offer_mixed_non_compatibility_returns_first)
   };
   auto adapted_offer = Rosbag2QoS::adapt_offer_to_recorded_offers(topic_name_, offers);
   EXPECT_EQ(adapted_offer, offers[0]);
+}
+
+TEST_F(AdaptiveQoSTest, adapt_request_uses_maximum_depth)
+{
+  add_endpoint(Rosbag2QoS{}.keep_last(10));
+  add_endpoint(Rosbag2QoS{}.keep_last(20));
+  auto adapted_request = Rosbag2QoS::adapt_request_to_offers(topic_name_, endpoints_);
+  EXPECT_EQ(adapted_request.get_rmw_qos_profile().depth, 20u);
+}
+
+TEST_F(AdaptiveQoSTest, adapt_request_uses_keep_all_if_depth_zero)
+{
+  add_endpoint(Rosbag2QoS{}.keep_last(0));
+  add_endpoint(Rosbag2QoS{}.keep_last(0));
+  auto adapted_request = Rosbag2QoS::adapt_request_to_offers(topic_name_, endpoints_);
+  EXPECT_EQ(adapted_request.get_rmw_qos_profile().history, RMW_QOS_POLICY_HISTORY_KEEP_ALL);
 }

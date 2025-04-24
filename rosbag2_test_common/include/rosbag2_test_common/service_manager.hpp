@@ -68,9 +68,13 @@ public:
 
     auto service = service_node_->create_service<ServiceT>(
       service_name, std::forward<decltype(callback)>(callback));
+    service->configure_introspection(
+      service_node_->get_clock(), rclcpp::ServicesQoS(), RCL_SERVICE_INTROSPECTION_CONTENTS);
     services_.emplace(service_name, service);
 
     auto client = check_service_ready_node_->create_client<ServiceT>(service_name);
+    client->configure_introspection(
+      service_node_->get_clock(), rclcpp::ServicesQoS(), RCL_SERVICE_INTROSPECTION_CONTENTS);
     clients_.emplace_back(client);
   }
 
