@@ -220,11 +220,8 @@ PlayerActionClient::get_service_event_type(
     case ServiceInterfaceInAction::GET_RESULT_SERVICE:
       service_event_type_members = result_service_event_type_members_;
       break;
-  }
-
-  // We should never get here, but to prevent maybe-uninitialized warnings.
-  if (service_event_type_members->member_count_ == 0) {
-    throw std::out_of_range("Invalid service introspection");
+    default:
+      throw std::invalid_argument("Unknown service type in action");
   }
 
   // members_[0]: service_info, members_[1]: request[<=1], members_[2]: response[<=1]
