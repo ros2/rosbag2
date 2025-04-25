@@ -209,7 +209,7 @@ PlayerActionClient::get_service_event_type(
   const std::shared_ptr<uint8_t[]> & type_erased_service_event,
   ServiceInterfaceInAction service_type_in_action)
 {
-  IntrospectionMessageMembersPtr service_event_type_members;
+  IntrospectionMessageMembersPtr service_event_type_members{nullptr};
   switch (service_type_in_action) {
     case ServiceInterfaceInAction::SEND_GOAL_SERVICE:
       service_event_type_members = goal_service_event_type_members_;
