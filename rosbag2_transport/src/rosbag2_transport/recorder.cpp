@@ -566,7 +566,13 @@ void RecorderImpl::subscribe_topic(const rosbag2_storage::TopicMetadata & topic)
   auto subscription = create_subscription(topic.name, topic.type, subscription_qos);
   if (subscription) {
     subscriptions_.insert({topic.name, subscription});
-    RCLCPP_INFO_STREAM(node->get_logger(), "Subscribed to topic '" << topic.name << "'");
+    if (node->get_logger().get_effective_level() == rclcpp::Logger::Level::Debug) {
+      RCLCPP_DEBUG_STREAM(node->get_logger(),
+        "Subscribed to topic '" << topic.name << "' with QoS:\n" << subscription_qos.to_string());
+    } else {
+      RCLCPP_INFO_STREAM(node->get_logger(), "Subscribed to topic '" << topic.name << "'");
+    }
+
   } else {
     writer_->remove_topic(topic);
   }
