@@ -283,8 +283,15 @@ void bag_rewrite(
   std::vector<
     std::pair<rosbag2_storage::StorageOptions, rosbag2_transport::RecordOptions>> output_options;
   for (const auto & bag_node : bag_nodes) {
+<<<<<<< HEAD
     auto storage_options = bag_node.as<rosbag2_storage::StorageOptions>();
     auto record_options = bag_node.as<rosbag2_transport::RecordOptions>();
+=======
+    rosbag2_storage::StorageOptions storage_options{};
+    YAML::convert<rosbag2_storage::StorageOptions>::decode(bag_node, storage_options);
+    rosbag2_transport::RecordOptions record_options = bag_rewrite_default_record_options();
+    YAML::convert<rosbag2_transport::RecordOptions>::decode(bag_node, record_options);
+>>>>>>> 9f4a2c5 (Bugfix: `ros2 bag convert` dropping messages with compression mode message (#1975))
     output_options.push_back(std::make_pair(storage_options, record_options));
   }
   rosbag2_transport::bag_rewrite(input_options, output_options);
