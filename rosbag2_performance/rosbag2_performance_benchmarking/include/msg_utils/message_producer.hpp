@@ -33,7 +33,7 @@ public:
 };
 
 template<typename T>
-class MessageProducer : public ProducerBase
+class MessageProducer final : public ProducerBase
 {
 public:
   MessageProducer(rclcpp::Node & node, std::string topic, const PublisherGroupConfig & config);

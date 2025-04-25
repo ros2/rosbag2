@@ -13,6 +13,7 @@
 // limitations under the License.
 
 #include <cstring>
+#include <string>
 
 #include "rcl/service_introspection.h"
 

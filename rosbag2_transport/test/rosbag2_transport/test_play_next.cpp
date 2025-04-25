@@ -200,8 +200,8 @@ TEST_F(RosBag2PlayTestFixture, play_respect_messages_timing_after_play_next) {
   ASSERT_TRUE(player->play_next());
   ASSERT_TRUE(player->play_next());
   ASSERT_TRUE(player->is_paused());
-  player->resume();
   auto start = std::chrono::steady_clock::now();
+  player->resume();
   player->wait_for_playback_to_finish();
   auto replay_time = std::chrono::steady_clock::now() - start;
 

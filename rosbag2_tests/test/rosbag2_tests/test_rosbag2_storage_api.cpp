@@ -75,8 +75,8 @@ public:
       for (size_t msg_idx = 0; msg_idx < num_msgs_per_topic; msg_idx++) {
         auto std_string_msg = std::make_shared<std_msgs::msg::String>();
         std::stringstream ss;
-        for (int i = 0; i < 100; i++) {
-          ss << topic << "_long_long_string_message_" << msg_idx + 1 << "_repeat_";
+        for (int i = 0; i < 5; i++) {
+          ss << topic << "_long_string_message_" << msg_idx + 1 << "_repeat_";
         }
         std_string_msg->data = ss.str();
 
@@ -133,7 +133,7 @@ TEST_P(Rosbag2StorageAPITests, get_bagfile_size_read_write_interface)
     factory.open_read_write(options);
 
   std::vector<std::string> topics = {"topic1_topic1", "topic2_topic2"};
-  auto serialized_messages = prepare_serialized_messages(topics, 500);
+  auto serialized_messages = prepare_serialized_messages(topics, 500 * 20);
   create_topics(rw_storage, topics);
 
   rw_storage->write(serialized_messages);

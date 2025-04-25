@@ -16,10 +16,14 @@ This set of definitions with all field types recursively included can be called 
 
 ## `ros2msg` encoding
 
-This encoding consists of definitions in [.msg](https://docs.ros.org/en/rolling/Concepts/Basic/About-Interfaces.html#messages) and [.srv](https://docs.ros.org/en/rolling/Concepts/Basic/About-Interfaces.html#services) format, concatenated together in human-readable form with
+This encoding consists of definitions in
+[.msg](https://docs.ros.org/en/rolling/Concepts/Basic/About-Interfaces.html#messages) and
+[.srv](https://docs.ros.org/en/rolling/Concepts/Basic/About-Interfaces.html#services) format,
+concatenated together in human-readable form with
 a delimiter.
 
-The top-level message definition is present first, with no delimiter. All dependent .msg definitions are preceded by a two-line delimiter:
+The top-level message definition is present first, with no delimiter. All dependent .msg definitions
+are preceded by a two-line delimiter:
 
 * One line containing exactly 80 `=` characters
 * One line containing `MSG: <package resource name>` for that type. The space between MSG: and the
@@ -29,7 +33,7 @@ The top-level message definition is present first, with no delimiter. All depend
 
 For example, the complete message definition for `my_msgs/msg/ExampleMsg` in `ros2msg` form is:
 
-```
+```ini
 # defines a message that includes a field of a custom message type
 my_msgs/BasicMsg my_basic_field
 ================================================================================
@@ -40,7 +44,7 @@ float32 my_float
 
 Another example is a service message definition for `my_msgs/srv/ExampleSrv` in `ros2msg` form
 
-```
+```ini
 # defines a service message that includes a field of a custom message type
 my_msgs/BasicMsg request
 ---
@@ -53,16 +57,20 @@ float32 my_float
 
 ## `ros2idl` encoding
 
-The IDL definition of the type specified by name along with all dependent types are stored together. The IDL definitions can be stored in any order. Every definition is preceded by a two-line delimiter:
+The IDL definition of the type specified by name along with all dependent types are stored together.
+The IDL definitions can be stored in any order. Every definition is preceded by a two-line
+delimiter:
 
 * a line containing exactly 80 `=` characters, then
-* A line containing only `IDL: <package resource name>` for that definition. The space between IDL: and the package resource name is mandatory. The package resource name does not include a file extension.
+* A line containing only `IDL: <package resource name>` for that definition. The space between IDL:
+  and the package resource name is mandatory. The package resource name does not include a file
+  extension.
 
 ### `ros2idl` example
 
 For example, the complete message definition for `my_msgs/msg/ComplexMsg` in `ros2idl` form is:
 
-```
+```idl
 ================================================================================
 IDL: my_msgs/msg/ComplexMsg
 // generated from rosidl_adapter/resource/msg.idl.em

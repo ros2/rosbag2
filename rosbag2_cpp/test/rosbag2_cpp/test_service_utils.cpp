@@ -15,6 +15,7 @@
 
 #include <string>
 #include <tuple>
+#include <utility>
 #include <vector>
 
 #include "rosbag2_cpp/service_utils.hpp"
