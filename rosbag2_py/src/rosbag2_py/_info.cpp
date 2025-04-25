@@ -12,10 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <algorithm>
 #include <iostream>
 #include <memory>
 #include <string>
-#include <algorithm>
+#include <vector>
 
 #include "info_sorting_method.hpp"
 #include "format_bag_metadata.hpp"

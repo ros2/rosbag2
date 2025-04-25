@@ -456,7 +456,8 @@ void RecorderImpl::stop_discovery()
   std::lock_guard<std::mutex> state_lock(discovery_mutex_);
   if (discovery_running_.exchange(false)) {
     if (discovery_future_.valid()) {
-      auto status = discovery_future_.wait_for(2 * record_options_.topic_polling_interval);
+      auto status = discovery_future_.wait_for(
+        std::chrono::milliseconds(500) + record_options_.topic_polling_interval);
       if (status != std::future_status::ready) {
         RCLCPP_ERROR_STREAM(
           node->get_logger(),

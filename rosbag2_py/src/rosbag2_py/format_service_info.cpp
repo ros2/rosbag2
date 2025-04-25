@@ -12,7 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <vector>
+#include <memory>
 #include <sstream>
+#include <string>
 
 #include "format_service_info.hpp"
 #include "format_utils.hpp"

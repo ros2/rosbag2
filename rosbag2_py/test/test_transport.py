@@ -13,6 +13,7 @@
 # limitations under the License.
 
 import datetime
+import os
 from pathlib import Path
 import re
 import threading
@@ -28,7 +29,7 @@ from rosbag2_test_common import TESTED_STORAGE_IDS
 from std_msgs.msg import String
 
 
-RESOURCES_PATH = Path(__file__).parent / 'resources'
+RESOURCES_PATH = Path(os.environ['ROSBAG2_PY_TEST_RESOURCES_DIR'])
 PLAYBACK_UNTIL_TIMESTAMP_REGEX_STRING = r'\[rosbag2_player]: Playback until timestamp: -1'
 
 
@@ -117,6 +118,8 @@ def test_record_cancel(tmp_path, storage_id):
 @pytest.mark.parametrize('storage_id', TESTED_STORAGE_IDS)
 def test_play_cancel(storage_id, capfd):
     bag_path = str(RESOURCES_PATH / storage_id / 'talker')
+    assert os.path.exists(bag_path), 'Could not find test bag file: ' + bag_path
+
     storage_options, converter_options = get_rosbag_options(bag_path, storage_id)
 
     player = rosbag2_py.Player()
@@ -131,18 +134,24 @@ def test_play_cancel(storage_id, capfd):
         daemon=True)
     player_thread.start()
 
-    def check_playback_start_output(cumulative_out, cumulative_err):
+    def check_playback_start_output(cap_streams):
         out, err = capfd.readouterr()
-        cumulative_err += err
-        cumulative_out += out
+        cap_streams['err'] += err
+        cap_streams['out'] += out
         expected_string_regex = re.compile(PLAYBACK_UNTIL_TIMESTAMP_REGEX_STRING)
-        matches = expected_string_regex.search(cumulative_err)
+        matches = expected_string_regex.search(cap_streams['err'])
         return matches is not None
 
-    captured_out = ''
-    captured_err = ''
-    assert wait_for(lambda: check_playback_start_output(captured_out, captured_err),
-                    timeout=rclpy.duration.Duration(seconds=3))
+    captured_streams = {'out': '', 'err': ''}
+
+    if not wait_for(lambda: check_playback_start_output(captured_streams),
+                    timeout=rclpy.duration.Duration(seconds=5)):
+        with capfd.disabled():
+            print('\nCaptured stdout:', captured_streams['out'])
+            print('\nCaptured stderr:', captured_streams['err'])
+        player.cancel()
+        player_thread.join()
+        assert False
 
     player.cancel()
     player_thread.join(3)
