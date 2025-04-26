@@ -290,6 +290,9 @@ output_bags:
   max_bagfile_duration: 0
   storage_preset_profile: ""
   storage_config_uri: ""
+  # optional filter for msg time t [nsec since epoch]:  start_time_ns <= t <= end_time_ns
+  # start_time_ns: 1744227144744197147
+  # end_time_ns: 1744227145734665546
   all_topics: false
   topics: []
   topic_types: []
