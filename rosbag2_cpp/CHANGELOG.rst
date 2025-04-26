@@ -2,8 +2,8 @@
 Changelog for package rosbag2_cpp
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.33.0 (2025-04-25)
+-------------------
 * Upstream quality changes from Apex.AI part-2 (`#1924 <https://github.com/ros2/rosbag2/issues/1924>`_)
 * Address clang warning in the `TimeControllerClock::wakeup()` (`#1962 <https://github.com/ros2/rosbag2/issues/1962>`_)
 * Contributors: Alejandro Hernández Cordero, Michael Orlov, Christophe Bedard
