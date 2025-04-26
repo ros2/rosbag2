@@ -20,7 +20,7 @@
 #include <cstdio>
 #include <cstring>
 #include <iostream>
-#include <filesystem>
+#include <filesystem>  // NOLINT cpplint: FP, filesystem is a C++17 system header
 #include <fstream>
 #include <memory>
 #include <string>

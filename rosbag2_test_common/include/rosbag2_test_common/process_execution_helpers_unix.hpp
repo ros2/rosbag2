@@ -116,9 +116,13 @@ bool wait_until_completion(
     // WNOHANG - wait for processes without causing the caller to be blocked
     wait_ret_code = waitpid(process_id, &status, WNOHANG);
   }
+  EXPECT_NE(wait_ret_code, 0) << "Testing process " << process_id << " hangout.\n";
   EXPECT_NE(wait_ret_code, -1);
   EXPECT_EQ(wait_ret_code, process_id) << "status = " << status;
-  return wait_ret_code != 0;
+  EXPECT_EQ(WIFEXITED(status), true) << "status = " << status;
+  EXPECT_EQ(WIFSIGNALED(status), false) << "Process terminated by signal: " << WTERMSIG(status);
+  EXPECT_EQ(WEXITSTATUS(status), EXIT_SUCCESS) << "status = " << status;
+  return WIFSIGNALED(status) != true && WEXITSTATUS(status) == EXIT_SUCCESS;
 }
 
 /// @brief Force to stop process with signal if it's currently running

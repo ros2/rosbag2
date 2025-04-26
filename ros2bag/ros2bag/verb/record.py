@@ -229,6 +229,8 @@ def check_necessary_argument(args):
 
 def validate_parsed_arguments(args, uri) -> str:
     if args.topics_positional:
+        print(print_warn('Positional "topics" argument deprecated. '
+                         'Please use optional "--topics" argument instead.'), flush=True)
         args.topics = args.topics_positional
 
     if not check_necessary_argument(args):
@@ -256,13 +258,14 @@ def validate_parsed_arguments(args, uri) -> str:
                            'or --regex')
 
     if (args.all or args.all_services) and args.services:
-        print(print_warn('--all or --all-services will override --services'))
+        print(print_warn('--all or --all-services will override --services'), flush=True)
 
     if (args.all or args.all_topics) and args.topics:
-        print(print_warn('--all or --all-topics will override --topics'))
+        print(print_warn('--all or --all-topics will override --topics'), flush=True)
 
     if (args.all or args.all_topics or args.all_services) and args.regex:
-        print(print_warn('--all, --all-topics or --all-services will override --regex'))
+        print(print_warn('--all, --all-topics or --all-services will override --regex'),
+              flush=True)
 
     if os.path.isdir(uri):
         return print_error("Output folder '{}' already exists.".format(uri))
