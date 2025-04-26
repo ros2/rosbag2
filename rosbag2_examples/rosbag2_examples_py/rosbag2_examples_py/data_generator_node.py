@@ -29,7 +29,7 @@ class DataGeneratorNode(Node):
 
         storage_options = rosbag2_py.StorageOptions(
             uri='timed_synthetic_bag',
-            storage_id='sqlite3')
+            storage_id='mcap')
         converter_options = rosbag2_py.ConverterOptions('', '')
         self.writer.open(storage_options, converter_options)
 

@@ -43,6 +43,8 @@ def main(args=None):
             serialize_message(data),
             time_stamp.nanoseconds)
         time_stamp += Duration(seconds=1)
+    writer.close()
+    print("Generated data saved into the '%s'" % storage_options.uri)
 
 
 if __name__ == '__main__':

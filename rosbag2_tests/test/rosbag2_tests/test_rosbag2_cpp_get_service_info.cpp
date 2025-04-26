@@ -14,11 +14,13 @@
 
 #include <gmock/gmock.h>
 
-#include <atomic>
 #include <chrono>
 #include <filesystem>
+#include <memory>
 #include <stdexcept>
 #include <string>
+#include <utility>
+#include <vector>
 
 #include "rosbag2_cpp/info.hpp"
 #include "rosbag2_cpp/writer.hpp"

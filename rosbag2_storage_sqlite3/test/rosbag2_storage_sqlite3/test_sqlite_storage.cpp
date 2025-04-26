@@ -15,7 +15,7 @@
 #include <gmock/gmock.h>
 
 #include <algorithm>
-#include <filesystem>
+#include <filesystem>  // NOLINT cpplint: FP, filesystem is a C++17 system header
 #include <limits>
 #include <memory>
 #include <string>
