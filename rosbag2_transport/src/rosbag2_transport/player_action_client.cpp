@@ -220,7 +220,10 @@ PlayerActionClient::get_service_event_type(
     case ServiceInterfaceInAction::GET_RESULT_SERVICE:
       service_event_type_members = result_service_event_type_members_;
       break;
+    default:
+      throw std::invalid_argument("Unknown service type in action");
   }
+
   // members_[0]: service_info, members_[1]: request[<=1], members_[2]: response[<=1]
   const auto & service_info_member = service_event_type_members->members_[0];
   auto service_event_info_ptr =
