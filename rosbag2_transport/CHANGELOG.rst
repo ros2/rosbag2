@@ -2,6 +2,14 @@
 Changelog for package rosbag2_transport
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Fix a maybe-uninitialized warning in player_action_client.cpp (`#1969 <https://github.com/ros2/rosbag2/issues/1969>`_)
+* Upstream quality changes from Apex.AI part-2 (`#1924 <https://github.com/ros2/rosbag2/issues/1924>`_)
+* Bugfix: `ros2 bag convert` dropping messages with compression mode message (`#1975 <https://github.com/ros2/rosbag2/issues/1975>`_)
+* Use DDS queue depth for subscriptions as a maximum value across publishers (`#1960 <https://github.com/ros2/rosbag2/issues/1960>`_)
+* Contributors: DangitBen, Michael Carroll, Michael Orlov, Christophe Bedard
+
 0.32.0 (2025-04-18)
 -------------------
 * Add actions replay feature (`#1955 <https://github.com/ros2/rosbag2/issues/1955>`_)

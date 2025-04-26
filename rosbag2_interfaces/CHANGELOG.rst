@@ -2,6 +2,9 @@
 Changelog for package rosbag2_interfaces
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+
 0.32.0 (2025-04-18)
 -------------------
 

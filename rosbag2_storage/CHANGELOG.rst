@@ -2,6 +2,11 @@
 Changelog for package rosbag2_storage
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Use DDS queue depth for subscriptions as a maximum value across publishers (`#1960 <https://github.com/ros2/rosbag2/issues/1960>`_)
+* Contributors: Michael Orlov
+
 0.32.0 (2025-04-18)
 -------------------
 * Add message sequence number to the messages write API (`#1961 <https://github.com/ros2/rosbag2/issues/1961>`_)

@@ -2,6 +2,12 @@
 Changelog for package rosbag2_py
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Upstream quality changes from Apex.AI part-2 (`#1924 <https://github.com/ros2/rosbag2/issues/1924>`_)
+* Bugfix: `ros2 bag convert` dropping messages with compression mode message (`#1975 <https://github.com/ros2/rosbag2/issues/1975>`_)
+* Contributors: DangitBen, Michael Orlov, Christophe Bedard
+
 0.32.0 (2025-04-18)
 -------------------
 * Add message sequence number to the messages write API (`#1961 <https://github.com/ros2/rosbag2/issues/1961>`_)

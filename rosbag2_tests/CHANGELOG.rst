@@ -2,6 +2,11 @@
 Changelog for package rosbag2_tests
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Upstream quality changes from Apex.AI part-2 (`#1924 <https://github.com/ros2/rosbag2/issues/1924>`_)
+* Contributors: Michael Orlov, Christophe Bedard
+
 0.32.0 (2025-04-18)
 -------------------
 * Implement actions recording and displaying information about recorded actions features (`#1939 <https://github.com/ros2/rosbag2/issues/1939>`_)
