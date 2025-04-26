@@ -229,11 +229,8 @@ def check_necessary_argument(args):
 
 def validate_parsed_arguments(args, uri) -> str:
     if args.topics_positional:
-<<<<<<< HEAD
-=======
         print(print_warn('Positional "topics" argument deprecated. '
                          'Please use optional "--topics" argument instead.'), flush=True)
->>>>>>> 6f44ee0 (Upstream quality changes from Apex.AI part-2 (#1924))
         args.topics = args.topics_positional
 
     if not check_necessary_argument(args):
@@ -266,17 +263,9 @@ def validate_parsed_arguments(args, uri) -> str:
     if (args.all or args.all_topics) and args.topics:
         print(print_warn('--all or --all-topics will override --topics'), flush=True)
 
-<<<<<<< HEAD
     if (args.all or args.all_topics or args.all_services) and args.regex:
-        print(print_warn('--all, --all-topics or --all-services will override --regex'))
-=======
-    if (args.all or args.all_actions) and args.actions:
-        print(print_warn('--all or --all-actions will override --actions'))
-
-    if (args.all or args.all_topics or args.all_services or args.all_actions) and args.regex:
-        print(print_warn('--all, --all-topics --all-services or --all-actions will override '
-                         '--regex'),  flush=True)
->>>>>>> 6f44ee0 (Upstream quality changes from Apex.AI part-2 (#1924))
+        print(print_warn('--all, --all-topics or --all-services will override --regex'),
+              flush=True)
 
     if os.path.isdir(uri):
         return print_error("Output folder '{}' already exists.".format(uri))

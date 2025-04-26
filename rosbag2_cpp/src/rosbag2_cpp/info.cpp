@@ -22,14 +22,8 @@
 #include <vector>
 
 #include "rmw/rmw.h"
-<<<<<<< HEAD
-#include "rosidl_typesupport_cpp/message_type_support.hpp"
-#include "service_msgs/msg/service_event_info.hpp"
 
-=======
-#include "rosbag2_cpp/action_utils.hpp"
 #include "rosbag2_cpp/info.hpp"
->>>>>>> 6f44ee0 (Upstream quality changes from Apex.AI part-2 (#1924))
 #include "rosbag2_cpp/service_utils.hpp"
 #include "rosbag2_storage/metadata_io.hpp"
 #include "rosbag2_storage/storage_factory.hpp"
