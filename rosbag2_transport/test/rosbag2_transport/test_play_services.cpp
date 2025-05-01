@@ -95,6 +95,18 @@ public:
         exec_.spin();
       });
 
+    // Wait for the executor to start spinning in the newly spawned thread to avoid race conditions
+    using clock = std::chrono::steady_clock;
+    auto start = clock::now();
+    while (!exec_.is_spinning() && (clock::now() - start) < std::chrono::seconds(5)) {
+      std::this_thread::sleep_for(std::chrono::milliseconds(20));
+    }
+    if (!exec_.is_spinning()) {
+      std::cerr << "Failed to start spinning nodes: '" <<
+        player_->get_name() << ", " << client_node_->get_name() << "'" << std::endl;
+      throw std::runtime_error("Failed to start spinning nodes");
+    }
+
     // Make sure all expected services are present before starting any test
     ASSERT_TRUE(cli_resume_->wait_for_service(service_wait_timeout_));
     ASSERT_TRUE(cli_pause_->wait_for_service(service_wait_timeout_));
