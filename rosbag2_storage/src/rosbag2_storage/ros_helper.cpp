@@ -29,8 +29,11 @@ std::shared_ptr<rcutils_uint8_array_t>
 make_serialized_message(const void * data, size_t size)
 {
   auto serialized_message = make_empty_serialized_message(size);
-  memcpy(serialized_message->buffer, data, size);
-  serialized_message->buffer_length = size;
+  // Note: // It will be undefined behavior to call memcpy with nullptr even if size is 0
+  if (data != nullptr) {
+    memcpy(serialized_message->buffer, data, size);
+    serialized_message->buffer_length = size;
+  }
 
   return serialized_message;
 }
