@@ -168,7 +168,8 @@ void SqliteStatementWrapper::obtain_column_value(size_t index, double & value) c
 
 void SqliteStatementWrapper::obtain_column_value(size_t index, std::string & value) const
 {
-  value = reinterpret_cast<const char *>(sqlite3_column_text(statement_, static_cast<int>(index)));
+  auto col_text_ptr = sqlite3_column_text(statement_, static_cast<int>(index));
+  value = col_text_ptr ? reinterpret_cast<const char *>(col_text_ptr) : "";
 }
 
 void SqliteStatementWrapper::obtain_column_value(
