@@ -164,19 +164,32 @@ TEST_F(PlayerTestFixture, playing_rate_negative)
 
 TEST_F(PlayerTestFixture, playing_respects_delay)
 {
-  rclcpp::Duration delay_margin(0.5s);
+  rclcpp::Duration upper_bound_tolerance(1s);
+  rclcpp::Duration lower_bound_tolerance(2us);
 
-  // Sleep 1.0 seconds before play
-  play_options_.delay = rclcpp::Duration(1, 0);
-  auto lower_expected_duration = message_time_difference + play_options_.delay;
-  auto upper_expected_duration = message_time_difference + play_options_.delay + delay_margin;
+  // Sleep 5.0 seconds before play
+  play_options_.delay = rclcpp::Duration(5, 0);
+  // Don't expect accuracy more than a few microseconds
+  auto lower_expected_duration = (message_time_difference + play_options_.delay -
+    lower_bound_tolerance).to_chrono<std::chrono::microseconds>();
+  auto upper_expected_duration = (message_time_difference + play_options_.delay +
+    upper_bound_tolerance).to_chrono<std::chrono::microseconds>();
+
+  // Sanity check for steady clock accuracy
+  ASSERT_TRUE(std::chrono::duration_cast<std::chrono::microseconds>(
+      typename std::chrono::steady_clock::duration(1)).count() <= 1) <<
+    "C++ compiler doesn't provide a precise enough steady_clock.";
+  static_assert(std::ratio_less_equal_v<std::chrono::steady_clock::period, std::micro>,
+    "C++ compiler doesn't provide a precise enough steady_clock.");
+
   auto player = std::make_shared<rosbag2_transport::Player>(
     std::move(reader), storage_options_, play_options_);
 
-  auto start = clock.now();
+  auto start = std::chrono::steady_clock::now();
   player->play();
   player->wait_for_playback_to_finish();
-  auto replay_time = clock.now() - start;
+  auto replay_time =
+    std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now() - start);
 
   EXPECT_THAT(replay_time, Gt(lower_expected_duration));
   EXPECT_THAT(replay_time, Lt(upper_expected_duration));
