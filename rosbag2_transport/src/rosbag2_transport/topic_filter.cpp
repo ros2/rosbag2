@@ -24,7 +24,7 @@
 #include "rcpputils/split.hpp"
 #include "rosbag2_cpp/action_utils.hpp"
 #include "rosbag2_cpp/service_utils.hpp"
-#include "rosbag2_cpp/typesupport_helpers.hpp"
+#include "rclcpp/typesupport_helpers.hpp"
 
 #include "logging.hpp"
 #include "rosbag2_transport/topic_filter.hpp"
@@ -310,8 +310,8 @@ bool TopicFilter::take_topic(
 bool TopicFilter::type_is_known(const std::string & topic_name, const std::string & topic_type)
 {
   try {
-    auto package_name = std::get<0>(rosbag2_cpp::extract_type_identifier(topic_type));
-    rosbag2_cpp::get_typesupport_library_path(package_name, "rosidl_typesupport_cpp");
+    auto package_name = std::get<0>(rclcpp::extract_type_identifier(topic_type));
+    rclcpp::get_typesupport_library_path(package_name, "rosidl_typesupport_cpp");
   } catch (std::runtime_error & e) {
     if (already_warned_unknown_types_.find(topic_type) == already_warned_unknown_types_.end()) {
       already_warned_unknown_types_.emplace(topic_type);

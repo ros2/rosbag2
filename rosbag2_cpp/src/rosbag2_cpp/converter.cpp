@@ -21,7 +21,7 @@
 #include <vector>
 
 #include "rosbag2_cpp/info.hpp"
-#include "rosbag2_cpp/typesupport_helpers.hpp"
+#include "rclcpp/typesupport_helpers.hpp"
 
 #include "rosbag2_storage/metadata_io.hpp"
 #include "rosbag2_storage/ros_helper.hpp"
@@ -92,17 +92,17 @@ void Converter::add_topic(const std::string & topic, const std::string & type)
 {
   ConverterTypeSupport type_support;
 
-  type_support.type_support_library = get_typesupport_library(
+  type_support.type_support_library = rclcpp::get_typesupport_library(
     type, "rosidl_typesupport_cpp");
-  type_support.rmw_type_support = get_typesupport_handle(
+  type_support.rmw_type_support = rclcpp::get_message_typesupport_handle(
     type, "rosidl_typesupport_cpp",
-    type_support.type_support_library);
+    *type_support.type_support_library);
 
-  type_support.introspection_type_support_library = get_typesupport_library(
+  type_support.introspection_type_support_library = rclcpp::get_typesupport_library(
     type, "rosidl_typesupport_introspection_cpp");
-  type_support.introspection_type_support = get_typesupport_handle(
+  type_support.introspection_type_support = rclcpp::get_message_typesupport_handle(
     type, "rosidl_typesupport_introspection_cpp",
-    type_support.introspection_type_support_library);
+    *type_support.introspection_type_support_library);
 
   topics_and_types_.insert({topic, type_support});
 }
