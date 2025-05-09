@@ -136,25 +136,42 @@ and during post-processing.
 
   Will need to add a new metadata fields to the bag file that will store the statistics about the 
   number of lost messages and bytes written on a per-topic basis when closing the current bag file.
-   - To facilitate this, the `rosbag2_cpp::writer` class should be extended to include a new
-     `RecorderStatistics` class that will keep track of the number of lost messages on DDS
-     transport layer and internally in the `rosbag2_cpp::writer` as well as number of bytes
-     written on a per-topic basis. The `RecorderStatistics` class internally will have a two
-     `std::unordered_map` with the keys as the topic names and the values as the `TopicStatistics`
-     struct containing the following fields:
-       - `messages_lost_in_transport` (uint64_t): The number of messages lost on the DDS
-         transport layer for the topic.
-       - `messages_lost_in_recorder` (uint64_t): The number of messages lost in the
-         Rosbag2 recorder for the topic i.e. in the `rosbag2_cpp::writer` class.
-       - `messages_recorded` (uint64_t): The number of messages recorded for the topic.
-       - `bytes_written` (uint64_t): The number of bytes written to the bag file for the topic.
-       - `messages_rate` (float): The average messages rate on the topic in Hz.
-   - One `std::unordered_map` with possible name `total_topics_stat_` will be used to keep 
+  To facilitate this the following shall be done:
+  1. Will need to add a new `rosbag2_storage::TopicStatistics` struct to the `rosbag2_storage` 
+     package. The `rosbag2_storage::TopicStatistics` struct will contain the following fields:
+     - `topic_name` (string): The name of the topic.
+     - `messages_recorded` (uint64_t): The number of messages recorded for the topic.
+     - `messages_lost_in_transport` (uint64_t): The number of messages lost on the DDS transport
+    layer for the topic.
+     - `messages_lost_in_recorder` (uint64_t): The number of messages lost in the Rosbag2
+    recorder for the topic.
+     - `bytes_written` (uint64_t): The number of bytes written to the bag file for the topic.
+     - `messages_rate` (float): The average messages rate on the topic in Hz.
+  2. The `rosbag2_storage::TopicInformation` struct shall be changed to include the new 
+     `rosbag2_storage::TopicStatistics` struct. The `size_t message_count` field shall be 
+     removed, since it is superseded by the `rosbag2_storage::TopicStatistics::messages_recorded`.
+  3. The `rosbag2_storage::FileInformation` struct shall be changed to include the new field named
+     as `topics_statistics` that will be a vector of the `rosbag2_storage::TopicStatistics` struct.
+     The `size_t message_count` field shall be removed, since it is superseded by the
+     `rosbag2_storage::TopicStatistics::messages_recorded`.
+  4. The `rosbag2_storage::BagMetadata::version` shall be incremented to `10` since we are 
+     changing content of the data structure. It will give us a possibility to have a backward
+     compatibility with the previous versions in the metadata yaml parser.
+  5. To be able to accumulate required statistics the `rosbag2_cpp::writers::SequentialWriter` 
+     class should be extended to include a two `std::unordered_map` with the keys as the `topic_id`
+     and the values as the `rosbag2_storage::TopicStatistics` struct.
+  6. One `std::unordered_map` with a possible name `total_topics_stat_` will be used to keep 
      track of the number of lost messages since the recording started and the other
      `std::unordered_map` with a possible name `bag_topics_stat_` will be used to keep track of 
      the number of lost messages since the recording in the current bag file started.
      Note that we can have multiple bag files in the same recording session.
-   - To keep `messages_lost_in_transport` up to date will need to add a new
+  7. The `total_topics_stat_` shall replace the `topics_names_to_info_` map in the 
+     `rosbag2_cpp::writers::SequentialWriter` class. The `TopicMetadata` shall be stored separately
+     as an `std::unordered_map` with the keys as the `topic_id` and the values as the 
+     `TopicMetadata`.
+  8. The `rosbag2_storage::FileInformation::topics_statistics` field shall be filled with the 
+     data from the `bag_topics_stat_` map when closing the current bag file.
+  9. To keep `messages_lost_in_transport` up to date will need to add a new
      `on_messages_lost_in_transport` method to the `rosbag2_cpp::writer` class that will be
      called when the `message_lost_callback` is triggered. The method will take a const reference
      to the `rclcpp::QOSMessageLostInfo` struct and `topic_name` and will update the
