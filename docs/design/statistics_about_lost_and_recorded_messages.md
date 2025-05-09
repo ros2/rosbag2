@@ -183,3 +183,23 @@ and during post-processing.
   Will need to extend the `ros2 bag info` command to include the statistics about the number of
   lost messages on a per-topic basis by reading this information from saved metadata.
   The statistics shall be available with the `--verbose` CLI option.
+
+## Implementation Staging
+
+This should not be implemented monolithically. Implementation should focus on small incremental PRs
+with solid testing that are easy to review. This is a proposed order of operations.
+
+1. 
+   - [[1. DDS Transport Layer Messages Loss Tracking]](#1-dds-transport-layer-messages-loss-tracking)
+   - [[2. Recorder-Side Messages Loss Tracking]](#2-recorder-side-messages-loss-tracking)
+2. [[4. Messages Lost Notifier]](#4-messages-lost-notifier)
+3. [[3. CLI Option for Statistics Update Rate]](#3-cli-option-for-statistics-update-rate)
+4. [[6. Store Statistics in Metadata]](#6-store-statistics-in-metadata)
+5. [[5. New Service Request To Get Statistics]](#5-new-service-request-to-get-statistics)
+6. [[7. ros2 bag info Command Extension]](#7-ros2-bag-info-command-extension)
+
+Note: step 2 is independent of the 4-6 steps and can be implemented independently or in parallel. 
+Also, implementation of the step 1 and 2 up to the "Messages Lost Notifier" likely will be 
+possible to backport to the Kilted and Jazzy ROS 2 distros since it is unlikely will require any
+API/ABI breaking changes. The steps 5 and 6 is independent of each other and can be implemented in 
+parallel. However, they are dependent on the step 4.
