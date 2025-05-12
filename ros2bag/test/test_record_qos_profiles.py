@@ -86,40 +86,30 @@ class TestRos2BagRecord(unittest.TestCase):
         output_path = Path(self.tmp_dir_name) / 'ros2bag_test_basic'
         arguments = ['record', '-a', '--qos-profile-overrides-path', profile_path.as_posix(),
                      '--output', output_path.as_posix()]
-<<<<<<< HEAD
-        expected_string_regex = re.compile(
-            r'\[rosbag2_storage]: Opened database .* for READ_WRITE')
-=======
         expected_output = 'Recording...'
->>>>>>> d8f99a7 (Fix for failing test_record_qos_profiles on Windows (#1949))
         with self.launch_bag_command(arguments=arguments) as bag_command:
             bag_command.wait_for_output(
-                condition=lambda output: expected_string_regex.search(output) is not None,
+                condition=lambda output: expected_output in output,
                 timeout=OUTPUT_WAIT_TIMEOUT)
         bag_command.wait_for_shutdown(timeout=SHUTDOWN_TIMEOUT)
         assert bag_command.terminated
-        matches = expected_string_regex.search(bag_command.output)
-        assert matches, ERROR_STRING_MSG.format(expected_string_regex.pattern, bag_command.output)
+        matches = expected_output in bag_command.output
+        assert matches, ERROR_STRING_MSG.format(expected_output, bag_command.output)
 
     def test_incomplete_qos_profile(self):
         profile_path = PROFILE_PATH / 'incomplete_qos_profile.yaml'
         output_path = Path(self.tmp_dir_name) / 'ros2bag_test_incomplete'
         arguments = ['record', '-a', '--qos-profile-overrides-path', profile_path.as_posix(),
                      '--output', output_path.as_posix()]
-<<<<<<< HEAD
-        expected_string_regex = re.compile(
-            r'\[rosbag2_storage]: Opened database .* for READ_WRITE')
-=======
         expected_output = 'Recording...'
->>>>>>> d8f99a7 (Fix for failing test_record_qos_profiles on Windows (#1949))
         with self.launch_bag_command(arguments=arguments) as bag_command:
             bag_command.wait_for_output(
-                condition=lambda output: expected_string_regex.search(output) is not None,
+                condition=lambda output: expected_output in output,
                 timeout=OUTPUT_WAIT_TIMEOUT)
         bag_command.wait_for_shutdown(timeout=SHUTDOWN_TIMEOUT)
         assert bag_command.terminated
-        matches = expected_string_regex.search(bag_command.output)
-        assert matches, ERROR_STRING_MSG.format(expected_string_regex.pattern, bag_command.output)
+        matches = expected_output in bag_command.output
+        assert matches, ERROR_STRING_MSG.format(expected_output, bag_command.output)
 
     def test_incomplete_qos_duration(self):
         profile_path = PROFILE_PATH / 'incomplete_qos_duration.yaml'
