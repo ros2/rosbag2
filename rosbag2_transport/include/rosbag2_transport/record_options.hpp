@@ -40,7 +40,8 @@ public:
   std::string node_prefix = "";
   std::string compression_mode = "";
   std::string compression_format = "";
-  uint64_t compression_queue_size = 1;
+  uint64_t compression_queue_size = 0;
+  /// \brief // The number of compression threads
   uint64_t compression_threads = 0;
   std::unordered_map<std::string, rclcpp::QoS> topic_qos_profile_overrides{};
   bool include_hidden_topics = false;
