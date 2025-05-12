@@ -40,12 +40,8 @@ public:
   std::string node_prefix = "";
   std::string compression_mode = "";
   std::string compression_format = "";
-<<<<<<< HEAD
-  uint64_t compression_queue_size = 1;
-=======
   uint64_t compression_queue_size = 0;
   /// \brief // The number of compression threads
->>>>>>> 9f4a2c5 (Bugfix: `ros2 bag convert` dropping messages with compression mode message (#1975))
   uint64_t compression_threads = 0;
   std::unordered_map<std::string, rclcpp::QoS> topic_qos_profile_overrides{};
   bool include_hidden_topics = false;
