@@ -141,7 +141,6 @@ PlayerActionClient::~PlayerActionClient()
     recorded_goal_to_goal_id_id_map_.clear();
     goal_id_to_goal_handle_map_.clear();
   }
-  client_->async_cancel_all_goals();
 
   {
     std::lock_guard<std::mutex> lock(goal_ids_to_postpone_send_cancel_mutex_);
