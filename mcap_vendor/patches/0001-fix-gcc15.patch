@@ -1,0 +1,12 @@
+diff --git a/cpp/mcap/include/mcap/types.hpp b/cpp/mcap/include/mcap/types.hpp
+index ffd8f4e..5352702 100644
+--- a/_deps/mcap-src/cpp/mcap/include/mcap/types.hpp
++++ b/_deps/mcap-src/cpp/mcap/include/mcap/types.hpp
+@@ -3,6 +3,7 @@
+ #include "errors.hpp"
+ #include "visibility.hpp"
+ #include <cstddef>
++#include <cstdint>
+ #include <functional>
+ #include <limits>
+ #include <memory>
