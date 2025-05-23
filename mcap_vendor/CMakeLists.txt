@@ -39,6 +39,14 @@ macro(build_mcap_vendor)
   )
   fetchcontent_makeavailable(mcap)
 
+  file(GLOB PATCHES
+    "${CMAKE_CURRENT_SOURCE_DIR}/patches/*.patch"
+  )
+
+  foreach(PATCH ${PATCHES})
+    execute_process(COMMAND git apply --whitespace=nowarn -p1 ${PATCH})
+  endforeach()
+
   add_library(mcap SHARED
     src/main.cpp
   )
