@@ -19,6 +19,7 @@ endif()
 # find dependencies
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
+find_package(rosbag2_compression REQUIRED)
 find_package(rosbag2_cpp REQUIRED)
 find_package(rosbag2_transport REQUIRED)
 find_package(example_interfaces REQUIRED)
@@ -32,6 +33,30 @@ target_link_libraries(simple_bag_recorder
 
 install(TARGETS
   simple_bag_recorder
+  DESTINATION lib/${PROJECT_NAME}
+)
+
+add_executable(compressed_bag_recorder src/compressed_bag_recorder.cpp)
+target_link_libraries(compressed_bag_recorder
+  rclcpp::rclcpp
+  rosbag2_cpp::rosbag2_cpp
+  rosbag2_compression::rosbag2_compression
+  ${example_interfaces_TARGETS}
+)
+
+install(TARGETS
+  compressed_bag_recorder
+  DESTINATION lib/${PROJECT_NAME}
+)
+
+add_executable(compressed_bag_rewriter src/compressed_bag_rewriter.cpp)
+target_link_libraries(compressed_bag_rewriter
+  rosbag2_transport::rosbag2_transport
+  ${example_interfaces_TARGETS}
+)
+
+install(TARGETS
+  compressed_bag_rewriter
   DESTINATION lib/${PROJECT_NAME}
 )
 
