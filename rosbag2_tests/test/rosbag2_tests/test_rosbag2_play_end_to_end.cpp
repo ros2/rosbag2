@@ -26,6 +26,7 @@
 #include "rosbag2_test_common/process_execution_helpers.hpp"
 #include "rosbag2_test_common/subscription_manager.hpp"
 #include "rosbag2_test_common/tested_storage_ids.hpp"
+#include "rosbag2_test_common/wait_for.hpp"
 
 #include "test_msgs/msg/arrays.hpp"
 #include "test_msgs/msg/basic_types.hpp"
@@ -58,13 +59,8 @@ public:
       });
 
     // Wait for the executor to start spinning in the newly spawned thread to avoid race conditions
-    using clock = std::chrono::steady_clock;
-    auto start = clock::now();
-    while (!exec_->is_spinning() && (clock::now() - start) < std::chrono::seconds(5)) {
-      std::this_thread::sleep_for(std::chrono::milliseconds(20));
-    }
-    if (!exec_->is_spinning()) {
-      std::cerr << "Failed to start spinning node" << std::endl;
+    if (!wait_until_condition([this]() {return exec_->is_spinning();}, std::chrono::seconds(5))) {
+      std::cerr << "Failed to start spinning node" << client_node_->get_name() << std::endl;
       throw std::runtime_error("Failed to start spinning node");
     }
   }
