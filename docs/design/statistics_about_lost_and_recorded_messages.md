@@ -29,10 +29,10 @@ post-processing.
 
 ## Design proposals and implementation details consideration
 
-### 1. DDS Transport Layer Messages Loss Tracking
+### 1. Transport Layer Messages Loss Tracking
 
    To facilitate functionality for gathering statistics about the number of messages lost on the
-   DDS transport layer, we can specify `message_lost_callback` in the 
+   RMW transport layer, we can specify `message_lost_callback` in the 
    `rclcpp::SubscriptionOptions::event_callbacks` when creating the subscription in the
    `rosbag2_transport::recorder` by providing `rclcpp::SubscriptionOptions` parameter when
    creating `GenericSubscription`. The `message_lost_callback` will provide a reference to the
@@ -60,6 +60,9 @@ post-processing.
    - `num_messages_lost` (uint64_t): The number of messages lost.
   The `messages_lost_callback` shall be defined in the `rosbag2_cpp::bag_events` namespace and
   added to the `WriterEventCallbacks` struct, similar to the `write_split_callback`.
+  Also, will need to add a new storage write method i.e.,
+  `storage->write(std::vector<SerializedBagMessage>)` that returns a vector or unordered_map with 
+  number of unwritten messages per each topic.
 
 ### 3. CLI Option for Statistics Update Rate
 
@@ -79,8 +82,8 @@ post-processing.
       1. The messages lost event shall be published from the Rosbag2 recorder on a dedicated topic.
       e.g., `/events/rosbag2_messages_lost`
       2. The messages lost event shall include per-topic statistics with the number of lost 
-        messages. The message type could be named as `rosbag2_interfaces::msg::MessagesLostEvent` and 
-        defined in the `rosbag2_interfaces` package. The message type will be similar to the 
+        messages. The message type could be named as `rosbag2_interfaces::msg::MessagesLostEvent`
+        and defined in the `rosbag2_interfaces` package. The message type will be similar to the 
         `rosbag2_interfaces::msg::WriteSplitEvent` message type and shall contain the following 
          fields:
          - `node_name` (string): The name of the node that is recording.
@@ -92,8 +95,7 @@ post-processing.
            event in the Rosbag2 recorder.
          - `bytes_written` (uint64_t): The total number of bytes written on this topic.
       3. The messages lost event shall not be published more often than the user-specified event 
-         update 
-         rate to avoid excessive resource usage.
+         update rate to avoid excessive resource usage.
       4. The Messages lost event shall **not** include topics with zero number of lost messages.
          To get full statistics about the number of recorded and lost messages, the user shall use
          the service request `GetRecorderStatistics` described in the
