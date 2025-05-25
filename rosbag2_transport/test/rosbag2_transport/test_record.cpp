@@ -462,11 +462,7 @@ TEST_F(RecordIntegrationTestFixture, write_split_callback_is_called)
   mock_writer.set_max_messages_per_file(5);
 
   rosbag2_transport::RecordOptions record_options =
-<<<<<<< HEAD
-  {false, false, false, {string_topic}, {}, {}, {}, {}, {}, "rmw_format", 100ms};
-=======
-  {false, false, false, false, {string_topic}, {}, {}, {}, {}, {}, {}, {}, "rmw_format", 10ms};
->>>>>>> aee5ae1 (Address flakiness in tests where need to spin a node (#2001))
+  {false, false, false, {string_topic}, {}, {}, {}, {}, {}, "rmw_format", 10ms};
   auto recorder = std::make_shared<rosbag2_transport::Recorder>(
     std::move(writer_), storage_options_, record_options);
 
