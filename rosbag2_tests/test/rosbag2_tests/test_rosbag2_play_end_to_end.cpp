@@ -17,6 +17,7 @@
 #include <cstdlib>
 #include <filesystem>
 #include <future>
+#include <iostream>
 #include <memory>
 #include <string>
 #include <vector>
@@ -25,6 +26,7 @@
 #include "rosbag2_test_common/process_execution_helpers.hpp"
 #include "rosbag2_test_common/subscription_manager.hpp"
 #include "rosbag2_test_common/tested_storage_ids.hpp"
+#include "rosbag2_test_common/wait_for.hpp"
 
 #include "test_msgs/msg/arrays.hpp"
 #include "test_msgs/msg/basic_types.hpp"
@@ -55,6 +57,12 @@ public:
       [this]() {
         exec_->spin();
       });
+
+    // Wait for the executor to start spinning in the newly spawned thread to avoid race conditions
+    if (!wait_until_condition([this]() {return exec_->is_spinning();}, std::chrono::seconds(5))) {
+      std::cerr << "Failed to start spinning node" << client_node_->get_name() << std::endl;
+      throw std::runtime_error("Failed to start spinning node");
+    }
   }
 
   ~PlayEndToEndTestFixture() override

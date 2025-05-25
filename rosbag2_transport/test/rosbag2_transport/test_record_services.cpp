@@ -29,6 +29,7 @@
 #include "rosbag2_transport/recorder.hpp"
 
 #include "rosbag2_test_common/publication_manager.hpp"
+#include "rosbag2_test_common/wait_for.hpp"
 
 #include "test_msgs/message_fixtures.hpp"
 
@@ -93,6 +94,13 @@ public:
       [this]() {
         exec_->spin();
       });
+
+    // Wait for the executor to start spinning in the newly spawned thread to avoid race conditions
+    if (!wait_until_condition([this]() {return exec_->is_spinning();}, std::chrono::seconds(5))) {
+      std::cerr << "Failed to start spinning nodes: '" <<
+        recorder_->get_name() << ", " << client_node_->get_name() << "'" << std::endl;
+      throw std::runtime_error("Failed to start spinning nodes");
+    }
 
     ASSERT_TRUE(pub_manager.wait_for_matched(test_topic_.c_str()));
     pub_manager.run_publishers();

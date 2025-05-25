@@ -32,6 +32,7 @@
 #include "rosbag2_interfaces/srv/resume.hpp"
 #include "rosbag2_interfaces/srv/stop.hpp"
 #include "rosbag2_interfaces/srv/toggle_paused.hpp"
+#include "rosbag2_test_common/wait_for.hpp"
 #include "rosbag2_transport/player.hpp"
 #include "test_msgs/msg/basic_types.hpp"
 #include "test_msgs/message_fixtures.hpp"
@@ -94,6 +95,13 @@ public:
       [this]() {
         exec_.spin();
       });
+
+    // Wait for the executor to start spinning in the newly spawned thread to avoid race conditions
+    if (!wait_until_condition([this]() {return exec_.is_spinning();}, std::chrono::seconds(5))) {
+      std::cerr << "Failed to start spinning nodes: '" <<
+        player_->get_name() << ", " << client_node_->get_name() << "'" << std::endl;
+      throw std::runtime_error("Failed to start spinning nodes");
+    }
 
     // Make sure all expected services are present before starting any test
     ASSERT_TRUE(cli_resume_->wait_for_service(service_wait_timeout_));
