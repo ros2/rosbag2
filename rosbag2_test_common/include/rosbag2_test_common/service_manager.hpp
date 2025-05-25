@@ -23,6 +23,8 @@
 
 #include "rclcpp/rclcpp.hpp"
 
+#include "rosbag2_test_common/wait_for.hpp"
+
 namespace rosbag2_test_common
 {
 class ServiceManager
@@ -85,6 +87,12 @@ public:
       [this]() {
         exec_.spin();
       });
+
+    // Wait for the executor to start spinning in the newly spawned thread to avoid race conditions
+    if (!wait_until_condition([this]() {return exec_.is_spinning();}, std::chrono::seconds(5))) {
+      std::cerr << "Failed to start spinning node:" << service_node_->get_name() << std::endl;
+      throw std::runtime_error("Failed to start spinning node");
+    }
   }
 
   bool all_services_ready()

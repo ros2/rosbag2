@@ -58,6 +58,12 @@ public:
       [this]() {
         exec_.spin();
       });
+
+    // Wait for the executor to start spinning in the newly spawned thread to avoid race conditions
+    if (!wait_until_condition([this]() {return exec_.is_spinning();}, std::chrono::seconds(5))) {
+      std::cerr << "Failed to start spinning node: " << node_->get_name() << std::endl;
+      throw std::runtime_error("Failed to start spinning node");
+    }
   }
 
   ~ClockPublisher()
