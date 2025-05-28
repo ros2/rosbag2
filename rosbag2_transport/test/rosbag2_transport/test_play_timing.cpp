@@ -178,9 +178,11 @@ TEST_F(PlayerTestFixture, playing_respects_delay)
   // Sanity check for steady clock accuracy
   ASSERT_TRUE(std::chrono::duration_cast<std::chrono::microseconds>(
       typename std::chrono::steady_clock::duration(1)).count() <= 1) <<
-    "C++ compiler doesn't provide a precise enough steady_clock.";
+    "The C++ compiler doesn't provide a precise enough steady_clock. The steady_clock duration"
+    " shall have a resolution of at least 1 microsecond.";
   static_assert(std::ratio_less_equal_v<std::chrono::steady_clock::period, std::micro>,
-    "C++ compiler doesn't provide a precise enough steady_clock.");
+    "The C++ compiler doesn't provide a precise enough steady_clock. The steady_clock period shall"
+    " be at least 1 microsecond.");
 
   auto player = std::make_shared<rosbag2_transport::Player>(
     std::move(reader), storage_options_, play_options_);
