@@ -124,6 +124,7 @@ public:
   double rate RCPPUTILS_TSA_GUARDED_BY(state_mutex) = 1.0;
   bool paused RCPPUTILS_TSA_GUARDED_BY(state_mutex) = false;
   bool is_sleeping RCPPUTILS_TSA_GUARDED_BY(state_mutex) = false;
+  bool wake_up_ RCPPUTILS_TSA_GUARDED_BY(state_mutex) = false;
   TimeReference reference RCPPUTILS_TSA_GUARDED_BY(state_mutex);
 };
 
@@ -174,7 +175,8 @@ bool TimeControllerClock::sleep_until(rcutils_time_point_value_t until)
       // wait only if necessary for performance
       if (steady_until > impl_->now_fn()) {
         impl_->is_sleeping = true;
-        impl_->cv.wait_until(lock, steady_until);
+        impl_->wake_up_ = false;
+        impl_->cv.wait_until(lock, steady_until, [&]() {return impl_->wake_up_;});
         impl_->is_sleeping = false;
       }
     }
@@ -204,6 +206,10 @@ void TimeControllerClock::wakeup()
   #pragma clang diagnostic push
   #pragma clang diagnostic ignored "-Wthread-safety-analysis"
 #endif
+  {
+    std::lock_guard<std::mutex> lock(impl_->state_mutex);
+    impl_->wake_up_ = true;
+  }
   // Note. We shall not lock mutex before notify_all since the notified thread would immediately
   // block again, waiting for the notifying thread to release the lock
   impl_->cv.notify_all();
