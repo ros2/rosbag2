@@ -538,14 +538,7 @@ bool PlayerImpl::play()
               reader->seek(starting_time_);
             }
           }
-<<<<<<< HEAD
-          if (clock_publish_timer_ != nullptr) {
-            clock_publish_timer_->reset();
-          }
-=======
-          progress_bar_->update(clock_->is_paused() ? PlayerStatus::PAUSED : PlayerStatus::RUNNING);
 
->>>>>>> 72c0898 (Improvements in message publishing timings (#2025))
           load_storage_content_ = true;
           storage_loading_future_ = std::async(
             std::launch::async, [this]() {
