@@ -135,7 +135,7 @@ protected:
       bag_message->recv_timestamp = time_stamp;
       bag_message->send_timestamp = time_stamp;
       bag_message->topic_name = topic_metadata.name;
-      rw_storage->write(bag_message);
+      EXPECT_TRUE(rw_storage->write_message(bag_message));
     }
   }
 

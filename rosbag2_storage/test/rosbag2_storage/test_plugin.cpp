@@ -95,6 +95,14 @@ void TestPlugin::write(
   std::cout << "\nwriting multiple\n";
 }
 
+bool TestPlugin::write_message(
+  const std::shared_ptr<const rosbag2_storage::SerializedBagMessage> msg)
+{
+  (void) msg;
+  std::cout << "\nwriting message\n";
+  return true;
+}
+
 std::vector<size_t>
 TestPlugin::write_messages(const rosbag2_storage::SerializedBagMessages & messages)
 {

@@ -43,12 +43,15 @@ public:
   /// \brief Writes one serialized message to the storage.
   /// \throws std::runtime_error if the storage is not open, or if create_topic(..) was not called
   /// previously for the topic associated with the message being written.
+  [[deprecated("Use write_message(std::shared_ptr<const SerializedBagMessage> msg) instead.")]]
   virtual void write(std::shared_ptr<const SerializedBagMessage> msg) = 0;
 
   // This method is deprecated, use
   // std::vector<size_t> write_messages(const SerializedBagMessages & messages) instead.
   [[deprecated("Use write_messages(const SerializedBagMessages & messages) instead.")]]
   virtual void write(const std::vector<std::shared_ptr<const SerializedBagMessage>> & msg) = 0;
+
+  virtual bool write_message(std::shared_ptr<const SerializedBagMessage> msg) = 0;
 
   /// \brief Write a batch of messages to the storage.
   /// \param messages - List of serialized messages to write.

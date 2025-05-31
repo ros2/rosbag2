@@ -69,6 +69,8 @@ public:
     const std::vector<std::shared_ptr<const rosbag2_storage::SerializedBagMessage>> & messages)
   override;
 
+  bool write_message(std::shared_ptr<const rosbag2_storage::SerializedBagMessage> message) override;
+
   std::vector<size_t>
   write_messages(const rosbag2_storage::SerializedBagMessages & messages) override;
 

@@ -103,12 +103,15 @@ public:
             output.close();
           }),
         Return(storage_)));
-    ON_CALL(
-      *storage_,
-      write(An<std::shared_ptr<const rosbag2_storage::SerializedBagMessage>>())).WillByDefault(
-      [this](std::shared_ptr<const rosbag2_storage::SerializedBagMessage>) {
+    ON_CALL(*storage_,
+            write_message(An<std::shared_ptr<const rosbag2_storage::SerializedBagMessage>>()))
+    .WillByDefault(
+      [this](std::shared_ptr<const rosbag2_storage::SerializedBagMessage> serialized_message) {
+        (void)serialized_message;
         fake_storage_size_.fetch_add(1);
-      });
+        return true;
+      }
+    );
     ON_CALL(*storage_, get_bagfile_size).WillByDefault(
       [this]() {
         return fake_storage_size_.load();

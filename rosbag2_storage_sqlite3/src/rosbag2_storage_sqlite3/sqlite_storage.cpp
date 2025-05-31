@@ -282,9 +282,16 @@ void SqliteStorage::commit_transaction()
 
 void SqliteStorage::write(std::shared_ptr<const rosbag2_storage::SerializedBagMessage> message)
 {
+  (void)write_message(message);
+}
+
+bool
+SqliteStorage::write_message(std::shared_ptr<const rosbag2_storage::SerializedBagMessage> message)
+{
   std::lock_guard<std::mutex> db_lock(db_read_write_mutex_);
-  (void)write_locked(message);
+  bool is_message_written = write_locked(message);
   db_file_size_ = db_page_size_ * read_total_page_count_locked();
+  return is_message_written;
 }
 
 bool SqliteStorage::write_locked(

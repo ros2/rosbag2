@@ -427,7 +427,7 @@ void SequentialWriter::write(std::shared_ptr<const rosbag2_storage::SerializedBa
   metadata_.files.back().message_count++;
   if (storage_options_.max_cache_size == 0u) {
     // If cache size is set to zero, we write to storage directly
-    storage_->write(converted_msg);
+    (void)storage_->write_message(converted_msg);
     ++topic_information->message_count;
   } else {
     // Otherwise, use cache buffer

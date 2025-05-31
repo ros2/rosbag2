@@ -576,7 +576,7 @@ TEST_F(StorageTestFixture, does_not_throw_on_message_too_big) {
     this->write_messages_to_sqlite(
     {
       {msg, 0, "/too_big_message", "some_type", "some_rmw"}
-    }, writable_storage);
+    }, writable_storage, true /* expect_write_to_fail */);
   });
 }
 
