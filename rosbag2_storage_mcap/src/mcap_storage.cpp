@@ -221,6 +221,8 @@ public:
   void write(std::shared_ptr<const rosbag2_storage::SerializedBagMessage> msg) override;
   void write(
     const std::vector<std::shared_ptr<const rosbag2_storage::SerializedBagMessage>> & msg) override;
+  std::vector<size_t> write_messages(
+    const rosbag2_storage::SerializedBagMessages & messages) override;
   void create_topic(const rosbag2_storage::TopicMetadata & topic,
                     const rosbag2_storage::MessageDefinition & message_definition) override;
   void remove_topic(const rosbag2_storage::TopicMetadata & topic) override;
@@ -230,7 +232,7 @@ public:
 
 private:
   void read_metadata();
-  void write_lock_free(std::shared_ptr<const rosbag2_storage::SerializedBagMessage> msg);
+  bool write_lock_free(std::shared_ptr<const rosbag2_storage::SerializedBagMessage> msg);
   void open_impl(const std::string & uri, const std::string & preset_profile,
                  rosbag2_storage::storage_interfaces::IOFlag io_flag,
                  const std::string & storage_config_uri);
@@ -865,7 +867,11 @@ uint64_t MCAPStorage::get_minimum_split_file_size() const
 void MCAPStorage::write(std::shared_ptr<const rosbag2_storage::SerializedBagMessage> msg)
 {
   std::lock_guard<std::mutex> lock(mcap_storage_mutex_);
-  write_lock_free(msg);
+  if (!write_lock_free(msg)) {
+    throw std::runtime_error{std::string{"Message on topic '"} + msg->topic_name + "' of size '" +
+                             std::to_string(msg->serialized_data->buffer_length) +
+                             "' bytes failed to write to MCAP file. It will be lost."};
+  }
 }
 
 void MCAPStorage::write(
@@ -873,11 +879,30 @@ void MCAPStorage::write(
 {
   std::lock_guard<std::mutex> lock(mcap_storage_mutex_);
   for (const auto & msg : msgs) {
-    write_lock_free(msg);
+    if (!write_lock_free(msg)) {
+      throw std::runtime_error{std::string{"Message on topic '"} + msg->topic_name + "' of size '" +
+                               std::to_string(msg->serialized_data->buffer_length) +
+                               "' bytes failed to write to MCAP file. It will be lost."};
+    }
   }
 }
 
-void MCAPStorage::write_lock_free(std::shared_ptr<const rosbag2_storage::SerializedBagMessage> msg)
+std::vector<size_t> MCAPStorage::write_messages(
+  const rosbag2_storage::SerializedBagMessages & messages)
+{
+  std::vector<size_t> lost_messages;
+  std::lock_guard<std::mutex> lock(mcap_storage_mutex_);
+  size_t current_message_index = 0;
+  for (const auto & msg : messages) {
+    if (!write_lock_free(msg)) {
+      lost_messages.push_back(current_message_index);
+    }
+    current_message_index++;
+  }
+  return lost_messages;
+}
+
+bool MCAPStorage::write_lock_free(std::shared_ptr<const rosbag2_storage::SerializedBagMessage> msg)
 {
   const auto topic_it = topics_.find(msg->topic_name);
   if (topic_it == topics_.end()) {
@@ -903,9 +928,12 @@ void MCAPStorage::write_lock_free(std::shared_ptr<const rosbag2_storage::Seriali
   mcap_msg.data = reinterpret_cast<const std::byte *>(msg->serialized_data->buffer);
   const auto status = mcap_writer_->write(mcap_msg);
   if (!status.ok()) {
-    throw std::runtime_error{std::string{"Failed to write "} +
-                             std::to_string(msg->serialized_data->buffer_length) +
-                             " byte message to MCAP file: " + status.message};
+    RCUTILS_LOG_DEBUG_NAMED(LOG_NAME,
+                            "Message on topic '%s' of size %zu bytes failed to write to MCAP file:"
+                            " %s",
+                            msg->topic_name.c_str(), msg->serialized_data->buffer_length,
+                            status.message.c_str());
+    return false;
   }
 
   /// Update metadata
@@ -916,6 +944,7 @@ void MCAPStorage::write_lock_free(std::shared_ptr<const rosbag2_storage::Seriali
   // Determine recording duration
   const auto message_time = time_point(std::chrono::nanoseconds(msg->recv_timestamp));
   metadata_.duration = std::max(metadata_.duration, message_time - metadata_.starting_time);
+  return true;
 }
 
 void MCAPStorage::create_topic(const rosbag2_storage::TopicMetadata & topic,

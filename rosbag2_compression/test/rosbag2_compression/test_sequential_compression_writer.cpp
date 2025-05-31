@@ -632,11 +632,9 @@ TEST_F(SequentialCompressionWriterTest, snapshot_writes_to_new_file_with_file_co
   tmp_dir_storage_options_.snapshot_mode = true;
 
   initializeFakeFileStorage();
-  // Expect a single write call when the snapshot is triggered
-  EXPECT_CALL(
-    *storage_, write(
-      An<const std::vector<std::shared_ptr<const rosbag2_storage::SerializedBagMessage>> &>())
-  ).Times(1);
+  // Expect a single write_messages call when the snapshot is triggered
+  EXPECT_CALL(*storage_,
+              write_messages(An<const rosbag2_storage::SerializedBagMessages &>())).Times(1);
 
   rosbag2_compression::CompressionOptions compression_options {
     DefaultTestCompressor,

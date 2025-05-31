@@ -74,10 +74,8 @@ public:
         mock_storage_data_.push_back(serialized_message);
       });
 
-    using VectorSharedBagMessages =
-      std::vector<std::shared_ptr<const rosbag2_storage::SerializedBagMessage>>;
-
-    EXPECT_CALL(*storage_, write(An<const VectorSharedBagMessages &>())).Times(0);
+    EXPECT_CALL(*storage_,
+                write_messages(An<const rosbag2_storage::SerializedBagMessages &>())).Times(0);
 
     EXPECT_CALL(*storage_, get_bagfile_size()).Times(0);
   }

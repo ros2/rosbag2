@@ -283,11 +283,11 @@ void SqliteStorage::commit_transaction()
 void SqliteStorage::write(std::shared_ptr<const rosbag2_storage::SerializedBagMessage> message)
 {
   std::lock_guard<std::mutex> db_lock(db_read_write_mutex_);
-  write_locked(message);
+  (void)write_locked(message);
   db_file_size_ = db_page_size_ * read_total_page_count_locked();
 }
 
-void SqliteStorage::write_locked(
+bool SqliteStorage::write_locked(
   std::shared_ptr<const rosbag2_storage::SerializedBagMessage> message)
 {
   if (!write_statement_) {
@@ -304,6 +304,7 @@ void SqliteStorage::write_locked(
     write_statement_->bind(
       message->recv_timestamp, topic_entry->second,
       message->serialized_data);
+    write_statement_->execute_and_reset();
   } catch (const SqliteException & exc) {
     if (SQLITE_TOOBIG == exc.get_sqlite_return_code()) {
       // Get the sqlite string/blob limit.
@@ -317,17 +318,24 @@ void SqliteStorage::write_locked(
           "' bytes failed to write because it exceeds the maximum size sqlite can store ('" <<
           sqlite_limit << "' bytes): " <<
           exc.what());
-      return;
     } else {
-      // Rethrow.
-      throw;
+      ROSBAG2_STORAGE_DEFAULT_PLUGINS_LOG_DEBUG_STREAM(
+        "Message on topic '" << message->topic_name << "' of size '" <<
+          message->serialized_data->buffer_length << "' bytes failed to write. It will be lost.");
     }
+    return false;
   }
-  write_statement_->execute_and_reset();
+  return true;
 }
 
 void SqliteStorage::write(
   const std::vector<std::shared_ptr<const rosbag2_storage::SerializedBagMessage>> & messages)
+{
+  (void)write_messages(messages);
+}
+
+std::vector<size_t>
+SqliteStorage::write_messages(const rosbag2_storage::SerializedBagMessages & messages)
 {
   std::lock_guard<std::mutex> db_lock(db_read_write_mutex_);
   if (!write_statement_) {
@@ -336,16 +344,24 @@ void SqliteStorage::write(
 
   activate_transaction();
 
+  std::vector<size_t> lost_messages;
+  size_t current_message_index = 0;
   for (auto & message : messages) {
-    write_locked(message);
+    if (write_locked(message)) {
     // Update db_file_size_ with the estimated data size written to the DB
     // + 3 * sizeof(int64_t) This is for storing timestamp, topic_id and index for messages table
-    db_file_size_ += message->serialized_data->buffer_length + 3 * sizeof(int64_t);
+      db_file_size_ += message->serialized_data->buffer_length + 3 * sizeof(int64_t);
+    } else {
+      // If the message was not written, we assume it was lost.
+      lost_messages.push_back(current_message_index);
+    }
+    current_message_index++;
   }
 
   commit_transaction();
   // Correct db_file_size_ by reading out the exact numbers from the DB
   db_file_size_ = db_page_size_ * read_total_page_count_locked();
+  return lost_messages;
 }
 
 bool SqliteStorage::set_read_order(const rosbag2_storage::ReadOrder & read_order)

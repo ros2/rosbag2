@@ -27,6 +27,9 @@
 
 namespace rosbag2_storage
 {
+
+using SerializedBagMessages = std::vector<std::shared_ptr<const SerializedBagMessage>>;
+
 namespace storage_interfaces
 {
 
@@ -38,6 +41,8 @@ public:
   virtual void write(std::shared_ptr<const SerializedBagMessage> msg) = 0;
 
   virtual void write(const std::vector<std::shared_ptr<const SerializedBagMessage>> & msg) = 0;
+
+  virtual std::vector<size_t> write_messages(const SerializedBagMessages & messages) = 0;
 
   virtual void update_metadata(const BagMetadata & bag_metadata) = 0;
 

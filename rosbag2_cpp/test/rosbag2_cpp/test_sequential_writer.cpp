@@ -369,14 +369,14 @@ TEST_F(
   fake_storage_size_ = 0;
   size_t written_messages = 0;
 
-  using VectorSharedBagMessages =
-    std::vector<std::shared_ptr<const rosbag2_storage::SerializedBagMessage>>;
-
-  ON_CALL(*storage_, write(An<const VectorSharedBagMessages &>())).WillByDefault(
-    [this, &written_messages](const VectorSharedBagMessages & msgs)
+  ON_CALL(*storage_, write_messages(An<const rosbag2_storage::SerializedBagMessages &>()))
+  .WillByDefault(
+    [this, &written_messages](const rosbag2_storage::SerializedBagMessages & msgs)
     {
       written_messages += msgs.size();
       fake_storage_size_.fetch_add(static_cast<uint32_t>(msgs.size()));
+      std::vector<size_t> lost_messages;
+      return lost_messages;
     });
 
   ON_CALL(*storage_, get_bagfile_size).WillByDefault(
@@ -463,10 +463,9 @@ TEST_F(SequentialWriterTest, do_not_use_cache_if_cache_size_is_zero) {
   const size_t counter = 1000;
   const uint64_t max_cache_size = 0;
 
-  EXPECT_CALL(
-    *storage_,
-    write(An<const std::vector<std::shared_ptr<const rosbag2_storage::SerializedBagMessage>> &>())).
-  Times(0);
+  EXPECT_CALL(*storage_,
+              write_messages(An<const rosbag2_storage::SerializedBagMessages &>())).Times(0);
+
   EXPECT_CALL(
     *storage_,
     write(An<std::shared_ptr<const rosbag2_storage::SerializedBagMessage>>())).Times(counter);
@@ -503,11 +502,8 @@ TEST_F(SequentialWriterTest, snapshot_mode_write_on_trigger)
   storage_options_.snapshot_mode = true;
 
   // Expect a single write call when the snapshot is triggered
-  EXPECT_CALL(
-    *storage_, write(
-      An
-      <const std::vector<std::shared_ptr<const rosbag2_storage::SerializedBagMessage>> &>())
-  ).Times(1);
+  EXPECT_CALL(*storage_,
+              write_messages(An<const rosbag2_storage::SerializedBagMessages &>())).Times(1);
 
   auto sequential_writer = std::make_unique<rosbag2_cpp::writers::SequentialWriter>(
     std::move(storage_factory_), converter_factory_, std::move(metadata_io_));
@@ -539,11 +535,8 @@ TEST_F(SequentialWriterTest, snapshot_mode_not_triggered_no_storage_write)
 
   // Storage should never be written to when snapshot mode is enabled
   // but a snapshot is never triggered
-  EXPECT_CALL(
-    *storage_, write(
-      An
-      <const std::vector<std::shared_ptr<const rosbag2_storage::SerializedBagMessage>> &>())
-  ).Times(0);
+  EXPECT_CALL(*storage_,
+              write_messages(An<const rosbag2_storage::SerializedBagMessages &>())).Times(0);
 
   auto sequential_writer = std::make_unique<rosbag2_cpp::writers::SequentialWriter>(
     std::move(storage_factory_), converter_factory_, std::move(metadata_io_));
@@ -607,11 +600,8 @@ TEST_F(SequentialWriterTest, snapshot_writes_to_new_file_with_bag_split)
   }
 
   // Expect a single write call when the snapshot is triggered
-  EXPECT_CALL(
-    *storage_, write(
-    An<const std::vector<std::shared_ptr<const rosbag2_storage::SerializedBagMessage>> &>())
-  ).Times(1);
-
+  EXPECT_CALL(*storage_,
+              write_messages(An<const rosbag2_storage::SerializedBagMessages &>())).Times(1);
   ON_CALL(
     *storage_,
     write(An<std::shared_ptr<const rosbag2_storage::SerializedBagMessage>>())).WillByDefault(
@@ -711,10 +701,8 @@ TEST_F(SequentialWriterTest, snapshot_can_be_called_twice)
   const size_t num_msgs_to_write = 100;
 
   // Expect to call write method twice. Once per each snapshot.
-  EXPECT_CALL(
-    *storage_, write(
-    An<const std::vector<std::shared_ptr<const rosbag2_storage::SerializedBagMessage>> &>())
-  ).Times(2);
+  EXPECT_CALL(*storage_,
+              write_messages(An<const rosbag2_storage::SerializedBagMessages &>())).Times(2);
 
   ON_CALL(*storage_, get_relative_file_path).WillByDefault(
     [this]() {
