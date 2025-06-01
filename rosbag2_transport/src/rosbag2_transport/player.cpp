@@ -537,17 +537,20 @@ bool PlayerImpl::play()
             for (const auto & [reader, _] : readers_with_options_) {
               reader->seek(starting_time_);
             }
-            clock_->jump(starting_time_);
           }
-          if (clock_publish_timer_ != nullptr) {
-            clock_publish_timer_->reset();
-          }
+
           load_storage_content_ = true;
           storage_loading_future_ = std::async(
             std::launch::async, [this]() {
               load_storage_content();
             });
           wait_for_filled_queue();
+
+          if (clock_publish_timer_ != nullptr) {
+            clock_publish_timer_->reset();
+          }
+          clock_->jump(starting_time_);
+
           play_messages_from_queue();
 
           load_storage_content_ = false;
