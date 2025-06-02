@@ -38,6 +38,8 @@ enum class BagEvent
   WRITE_SPLIT,
   /// Reading of the input bag file has gone over a split, opening the next file.
   READ_SPLIT,
+  /// The recording has reached a predetermined stopping condition.
+  STOP_RECORDING
 };
 
 /**
@@ -51,7 +53,19 @@ struct BagSplitInfo
   std::string opened_file;
 };
 
+/**
+ * \brief The information structure passed to callbacks for the STOP_RECORDING event.
+ */
+struct StopRecordingInfo
+{
+  /// The base folder where the recording was taking place.
+  std::string base_folder;
+  /// The reason for stopping the recording.
+  std::string reason;
+};
+
 using BagSplitCallbackType = std::function<void (BagSplitInfo &)>;
+using BagStopRecordingCallbackType = std::function<void (StopRecordingInfo &)>;
 
 /**
  * \brief Use this structure to register callbacks with Writers.
@@ -60,6 +74,8 @@ struct WriterEventCallbacks
 {
   /// The callback to call for the WRITE_SPLIT event.
   BagSplitCallbackType write_split_callback;
+  /// The callback to call for the STOP_RECORDING event.
+  BagStopRecordingCallbackType stop_recording_callback;
 };
 
 /**

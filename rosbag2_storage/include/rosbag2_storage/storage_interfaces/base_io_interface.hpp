@@ -40,6 +40,18 @@ ROSBAG2_STORAGE_PUBLIC extern const uint64_t MAX_BAGFILE_SIZE_NO_SPLIT;
 // use 0 as the default maximum bagfile duration value.
 ROSBAG2_STORAGE_PUBLIC extern const uint64_t MAX_BAGFILE_DURATION_NO_SPLIT;
 
+// When recording stopping feature is not enabled or applicable,
+// use 0 as the default maximum recording size value.
+ROSBAG2_STORAGE_PUBLIC extern const uint64_t MAX_RECORDING_SIZE_NO_STOP;
+
+// When recording stopping feature is not enabled or applicable,
+// use 0 as the default maximum recording duration value.
+ROSBAG2_STORAGE_PUBLIC extern const uint64_t MAX_RECORDING_DURATION_NO_STOP;
+
+// When recording stopping feature is not enabled or applicable,
+// use 0 as the default maximum recording number of messages value.
+ROSBAG2_STORAGE_PUBLIC extern const uint64_t MAX_RECORDING_MESSAGES_NO_STOP;
+
 class ROSBAG2_STORAGE_PUBLIC BaseIOInterface
 {
 public:

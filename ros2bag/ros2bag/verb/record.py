@@ -157,6 +157,18 @@ def add_recorder_arguments(parser: ArgumentParser) -> None:
              'is disabled. If both splitting by size and duration are enabled, '
              'the bag will split at whichever threshold is reached first.')
     parser.add_argument(
+        '--max-recording-size', type=int, default=0,
+        help='Maximum size in bytes before the recording will be stopped. '
+             'Default: %(default)d, recording will not stop based on size.')
+    parser.add_argument(
+        '--max-recording-duration', type=int, default=0,
+        help='Maximum duration in seconds before the recording will be stopped. '
+             'Default: %(default)d, recording will not stop based on duration.')
+    parser.add_argument(
+        '--max-recording-messages', type=int, default=0,
+        help='Maximum number of messages before the recording will be stopped. '
+             'Default: %(default)d, recording will not stop based on number of messages.')
+    parser.add_argument(
         '--max-cache-size', type=int, default=100 * 1024 * 1024,
         help='Maximum size (in bytes) of messages to hold in each buffer of cache. '
              'Default: %(default)d. The cache is handled through double buffering, '
@@ -347,7 +359,10 @@ class RecordVerb(VerbExtension):
             storage_preset_profile=args.storage_preset_profile,
             storage_config_uri=storage_config_file,
             snapshot_mode=args.snapshot_mode,
-            custom_data=custom_data
+            custom_data=custom_data,
+            max_recording_size=args.max_recording_size,
+            max_recording_duration=args.max_recording_duration,
+            max_recording_messages=args.max_recording_messages,
         )
         record_options = RecordOptions()
         record_options.all_topics = args.all_topics or args.all

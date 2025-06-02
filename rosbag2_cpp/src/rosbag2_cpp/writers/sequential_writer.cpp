@@ -318,6 +318,9 @@ void SequentialWriter::switch_to_next_storage()
     message_cache_->log_dropped();
   }
 
+  previous_bags_size_ += storage_->get_bagfile_size();
+  previous_bags_num_messages_ += metadata_.files.back().message_count;
+
   storage_->update_metadata(metadata_);
   storage_options_.uri = format_storage_uri(
     base_folder_,
@@ -376,8 +379,30 @@ void SequentialWriter::split_bagfile()
   (void)split_bagfile_local();
 }
 
+void SequentialWriter::signal_stop_recording(const std::string & reason)
+{
+  if (signaled_stop_recording_) {
+    return;
+  }
+  execute_signal_stop_recording_callbacks(reason);
+  signaled_stop_recording_ = true;
+}
+
+void SequentialWriter::execute_signal_stop_recording_callbacks(
+  const std::string & reason)
+{
+  auto info = std::make_shared<bag_events::StopRecordingInfo>();
+  info->base_folder = base_folder_;
+  info->reason = reason;
+  callback_manager_.execute_callbacks(bag_events::BagEvent::STOP_RECORDING, info);
+}
+
 void SequentialWriter::write(std::shared_ptr<const rosbag2_storage::SerializedBagMessage> message)
 {
+  if (signaled_stop_recording_) {
+    return;
+  }
+
   if (!is_open_) {
     throw std::runtime_error("Bag is not open. Call open() before writing.");
   }
@@ -406,6 +431,12 @@ void SequentialWriter::write(std::shared_ptr<const rosbag2_storage::SerializedBa
     is_first_message_ = false;
   }
 
+  std::string out_stop_reason;
+  if (should_stop_recording_pre_write(message_timestamp, out_stop_reason)) {
+    signal_stop_recording(out_stop_reason);
+    return;
+  }
+
   if (!storage_options_.snapshot_mode && should_split_bagfile(message_timestamp)) {
     split_bagfile();
     metadata_.files.back().starting_time = message_timestamp;
@@ -432,6 +463,11 @@ void SequentialWriter::write(std::shared_ptr<const rosbag2_storage::SerializedBa
   } else {
     // Otherwise, use cache buffer
     message_cache_->push(converted_msg);
+  }
+
+  if (should_stop_recording_post_write(out_stop_reason)) {
+    signal_stop_recording(out_stop_reason);
+    return;
   }
 }
 
@@ -499,6 +535,52 @@ bool SequentialWriter::message_within_accepted_time_range(
   return true;
 }
 
+bool SequentialWriter::should_stop_recording_pre_write(
+  const std::chrono::time_point<std::chrono::high_resolution_clock> & current_time,
+  std::string & out_stop_reason) const
+{
+  // Stopping by time
+  if (storage_options_.max_recording_duration !=
+    rosbag2_storage::storage_interfaces::MAX_RECORDING_DURATION_NO_STOP)
+  {
+    auto max_duration_ns = std::chrono::duration_cast<std::chrono::nanoseconds>(
+      std::chrono::seconds(storage_options_.max_recording_duration));
+    if ((current_time - metadata_.starting_time) > max_duration_ns) {
+      out_stop_reason = "max duration";
+      return true;
+    }
+  }
+
+  return false;
+}
+
+bool SequentialWriter::should_stop_recording_post_write(std::string & out_stop_reason) const
+{
+  // Stopping by size
+  if (storage_options_.max_recording_size !=
+    rosbag2_storage::storage_interfaces::MAX_RECORDING_SIZE_NO_STOP)
+  {
+    if (previous_bags_size_ + storage_->get_bagfile_size() >= storage_options_.max_recording_size) {
+      out_stop_reason = "max size";
+      return true;
+    }
+  }
+
+  // Stopping by number of messages
+  if (storage_options_.max_recording_messages !=
+    rosbag2_storage::storage_interfaces::MAX_RECORDING_MESSAGES_NO_STOP)
+  {
+    if (previous_bags_num_messages_ + metadata_.files.back().message_count >=
+      storage_options_.max_recording_messages)
+    {
+      out_stop_reason = "max messages";
+      return true;
+    }
+  }
+
+  return false;
+}
+
 void SequentialWriter::finalize_metadata()
 {
   metadata_.bag_size = 0;
@@ -553,6 +635,11 @@ void SequentialWriter::add_event_callbacks(const bag_events::WriterEventCallback
     callback_manager_.add_event_callback(
       callbacks.write_split_callback,
       bag_events::BagEvent::WRITE_SPLIT);
+  }
+  if (callbacks.stop_recording_callback) {
+    callback_manager_.add_event_callback(
+      callbacks.stop_recording_callback,
+      bag_events::BagEvent::STOP_RECORDING);
   }
 }
 

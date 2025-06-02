@@ -62,6 +62,18 @@ public:
 
   // Stores the custom data
   std::unordered_map<std::string, std::string> custom_data{};
+
+  // The maximum size the recording can be, in bytes, before the recording is stopped.
+  // A value of 0 indicates that the recording will not be stopped based on size.
+  uint64_t max_recording_size = 0;
+
+  // The maximum duration the recording can be, in seconds, before the recording is stopped.
+  // A value of 0 indicates that the recording will not be stopped based on duration.
+  uint64_t max_recording_duration = 0;
+
+  // The maximum number of messages before the recording is stopped.
+  // A value of 0 indicates that the recording will not be stopped based on number of messages.
+  uint64_t max_recording_messages = 0;
 };
 
 }  // namespace rosbag2_storage

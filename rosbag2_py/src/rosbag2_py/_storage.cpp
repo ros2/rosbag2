@@ -83,7 +83,7 @@ PYBIND11_MODULE(_storage, m) {
   .def(
     pybind11::init<
       std::string, std::string, uint64_t, uint64_t, uint64_t, std::string, std::string, bool,
-      int64_t, int64_t, KEY_VALUE_MAP>(),
+      int64_t, int64_t, KEY_VALUE_MAP, uint64_t, uint64_t, uint64_t>(),
     pybind11::arg("uri"),
     pybind11::arg("storage_id") = "",
     pybind11::arg("max_bagfile_size") = 0,
@@ -94,7 +94,10 @@ PYBIND11_MODULE(_storage, m) {
     pybind11::arg("snapshot_mode") = false,
     pybind11::arg("start_time_ns") = -1,
     pybind11::arg("end_time_ns") = -1,
-    pybind11::arg("custom_data") = KEY_VALUE_MAP{})
+    pybind11::arg("custom_data") = KEY_VALUE_MAP{},
+    pybind11::arg("max_recording_size") = 0,
+    pybind11::arg("max_recording_duration") = 0,
+    pybind11::arg("max_recording_messages") = 0)
   .def_readwrite("uri", &rosbag2_storage::StorageOptions::uri)
   .def_readwrite("storage_id", &rosbag2_storage::StorageOptions::storage_id)
   .def_readwrite(
@@ -123,7 +126,16 @@ PYBIND11_MODULE(_storage, m) {
     &rosbag2_storage::StorageOptions::end_time_ns)
   .def_readwrite(
     "custom_data",
-    &rosbag2_storage::StorageOptions::custom_data);
+    &rosbag2_storage::StorageOptions::custom_data)
+  .def_readwrite(
+    "max_recording_size",
+    &rosbag2_storage::StorageOptions::max_recording_size)
+  .def_readwrite(
+    "max_recording_duration",
+    &rosbag2_storage::StorageOptions::max_recording_duration)
+  .def_readwrite(
+    "max_recording_messages",
+    &rosbag2_storage::StorageOptions::max_recording_messages);
 
   pybind11::class_<rosbag2_storage::StorageFilter>(m, "StorageFilter")
   .def(
