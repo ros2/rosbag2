@@ -23,5 +23,7 @@ PYBIND11_MODULE(_message_definitions, m) {
     m, "LocalMessageDefinitionSource")
   .def(pybind11::init<>())
   .def(
-    "get_full_text", &rosbag2_cpp::LocalMessageDefinitionSource::get_full_text);
+    "get_full_text", &rosbag2_cpp::LocalMessageDefinitionSource::get_full_text)
+  .def(
+    "get_full_text_ext", &rosbag2_cpp::LocalMessageDefinitionSource::get_full_text_ext);
 }
