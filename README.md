@@ -155,7 +155,7 @@ A progress bar to track the playback progress will be displayed in the terminal 
 To play back multiple bags:
 
 ```
-$ ros2 bag play <bag1> -i <bag2> -i <bag3>
+$ ros2 bag play -i <bag1> -i <bag2> -i <bag3>
 ```
 
 Messages from all provided bags will be played in order, based on their original recording
