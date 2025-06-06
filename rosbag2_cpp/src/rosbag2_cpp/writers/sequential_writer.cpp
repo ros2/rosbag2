@@ -424,11 +424,12 @@ void SequentialWriter::write(std::shared_ptr<const rosbag2_storage::SerializedBa
 
   auto converted_msg = get_writeable_message(message);
 
-  metadata_.files.back().message_count++;
   if (storage_options_.max_cache_size == 0u) {
     // If cache size is set to zero, we write to storage directly
-    (void)storage_->write_message(converted_msg);
-    ++topic_information->message_count;
+    if (storage_->write_message(converted_msg)) {
+      metadata_.files.back().message_count++;
+      topic_information->message_count++;
+    }
   } else {
     // Otherwise, use cache buffer
     message_cache_->push(converted_msg);
@@ -573,6 +574,7 @@ void SequentialWriter::write_messages(
         continue;  // Skip lost messages
       }
     }
+    metadata_.files.back().message_count++;
     auto topic_info_it = topics_names_to_info_.find(messages[i]->topic_name);
     if (topic_info_it != topics_names_to_info_.end()) {
       topic_info_it->second.message_count++;
