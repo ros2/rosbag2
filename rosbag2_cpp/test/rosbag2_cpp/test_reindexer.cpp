@@ -88,8 +88,8 @@ public:
     auto metadata_io = std::make_unique<NiceMock<MockMetadataIo>>();
     EXPECT_CALL(*metadata_io, write_metadata)
     .WillRepeatedly([this](const std::string &, const rosbag2_storage::BagMetadata & metadata)
-    {
-      last_bag_metadata = metadata;
+      {
+        last_bag_metadata = metadata;
     });
     EXPECT_CALL(*metadata_io, metadata_file_exists(_)).WillRepeatedly(Return(true));
 
@@ -102,7 +102,8 @@ public:
     .WillOnce(Return(path_3_metadata_));
     EXPECT_CALL(*storage_factory, open_read_only(_)).WillRepeatedly(Return(storage_));
 
-    reindexer_ = std::make_unique<rosbag2_cpp::Reindexer>(std::move(storage_factory), std::move(metadata_io));
+    reindexer_ = std::make_unique<rosbag2_cpp::Reindexer>(std::move(storage_factory),
+      std::move(metadata_io));
   }
 
   ~ReindexerTest() override = default;
