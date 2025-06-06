@@ -234,7 +234,7 @@ void Reindexer::aggregate_metadata(
 
     bag_reader->close();
   }
-  metadata_.duration += ending_time - metadata_.starting_time;
+  metadata_.duration = ending_time - metadata_.starting_time;
 
   // Convert the topic map into topic metadata
   for (auto & topic : temp_topic_info) {
