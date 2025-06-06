@@ -51,6 +51,11 @@ public:
   [[deprecated("Use write_messages(const SerializedBagMessages & messages) instead.")]]
   virtual void write(const std::vector<std::shared_ptr<const SerializedBagMessage>> & msg) = 0;
 
+  /// \brief Writes one serialized message to the storage.
+  /// \param msg - The serialized message to write.
+  /// \return Returns true if the message was written successfully, false otherwise.
+  /// \throws std::runtime_error if the storage is not open, or if create_topic(..) was not called
+  /// previously for the topic associated with the message being written.
   virtual bool write_message(std::shared_ptr<const SerializedBagMessage> msg) = 0;
 
   /// \brief Write a batch of messages to the storage.
