@@ -40,10 +40,13 @@ CircularMessageCache::~CircularMessageCache()
   cache_condition_var_.notify_one();
 }
 
-void CircularMessageCache::push(std::shared_ptr<const rosbag2_storage::SerializedBagMessage> msg)
+bool CircularMessageCache::push(std::shared_ptr<const rosbag2_storage::SerializedBagMessage> msg)
 {
   std::lock_guard<std::mutex> cache_lock(producer_buffer_mutex_);
   producer_buffer_->push(msg);
+  // Always return true since circular message cache drops old messages by design and it
+  // shouldn't be counted as a lost messages.
+  return true;
 }
 
 std::shared_ptr<CacheBufferInterface> CircularMessageCache::get_consumer_buffer()

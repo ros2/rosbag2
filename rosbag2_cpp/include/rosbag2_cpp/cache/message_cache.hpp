@@ -76,7 +76,8 @@ public:
   ~MessageCache() override;
 
   /// Puts msg into primary buffer. With full cache, msg is ignored and counted as lost
-  void push(std::shared_ptr<const rosbag2_storage::SerializedBagMessage> msg) override;
+  /// \return True if message was successfully pushed, false if the buffer is full.
+  bool push(std::shared_ptr<const rosbag2_storage::SerializedBagMessage> msg) override;
 
   /// Gets a consumer buffer.
   /// In this greedy implementation, swap buffers before providing the buffer.

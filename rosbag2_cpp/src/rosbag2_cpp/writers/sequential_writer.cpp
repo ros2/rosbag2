@@ -424,15 +424,25 @@ void SequentialWriter::write(std::shared_ptr<const rosbag2_storage::SerializedBa
 
   auto converted_msg = get_writeable_message(message);
 
+  bool message_lost = false;
   if (storage_options_.max_cache_size == 0u) {
     // If cache size is set to zero, we write to storage directly
     if (storage_->write_message(converted_msg)) {
       metadata_.files.back().message_count++;
       topic_information->message_count++;
+    } else {
+      message_lost = true;
     }
   } else {
     // Otherwise, use cache buffer
-    message_cache_->push(converted_msg);
+    message_lost = !message_cache_->push(converted_msg);
+  }
+
+  if (message_lost) {
+    // Process message lost event
+    auto msgs_lost_info = std::make_shared<std::vector<bag_events::MessagesLostInfo>>();
+    msgs_lost_info->emplace_back(bag_events::MessagesLostInfo{message->topic_name, 1});
+    on_messages_lost(std::move(msgs_lost_info));
   }
 }
 
@@ -579,6 +589,32 @@ void SequentialWriter::write_messages(
       topic_info_it->second.message_count++;
     }
   }
+
+  // Notify about lost messages via callback
+  if (!lost_messages_idx.empty()) {
+    std::unordered_map<std::string, size_t> lost_messages_count;
+    for (const auto & lost_message_index : lost_messages_idx) {
+      const auto & topic_name = messages[lost_message_index]->topic_name;
+      lost_messages_count[topic_name]++;
+    }
+    auto msgs_lost_info = std::make_shared<std::vector<bag_events::MessagesLostInfo>>();
+    msgs_lost_info->reserve(lost_messages_count.size());
+    for (const auto & [topic_name, count] : lost_messages_count) {
+      msgs_lost_info->emplace_back(bag_events::MessagesLostInfo{topic_name, count});
+    }
+    on_messages_lost(std::move(msgs_lost_info));
+  }
+}
+
+void SequentialWriter::on_messages_lost(
+  std::shared_ptr<std::vector<bag_events::MessagesLostInfo>> msgs_lost_info)
+{
+  if (!msgs_lost_info->empty()) {
+    std::lock_guard<std::mutex> lock(lost_messages_callbacks_mutex_);
+    callback_manager_.execute_callbacks(
+      bag_events::BagEvent::MESSAGES_LOST,
+      std::move(msgs_lost_info));
+  }
 }
 
 void SequentialWriter::add_event_callbacks(const bag_events::WriterEventCallbacks & callbacks)
@@ -587,6 +623,12 @@ void SequentialWriter::add_event_callbacks(const bag_events::WriterEventCallback
     callback_manager_.add_event_callback(
       callbacks.write_split_callback,
       bag_events::BagEvent::WRITE_SPLIT);
+  } else if (callbacks.messages_lost_callback) {
+    callback_manager_.add_event_callback(
+      callbacks.messages_lost_callback,
+      bag_events::BagEvent::MESSAGES_LOST);
+  } else {
+    throw std::runtime_error("No valid callback provided");
   }
 }
 

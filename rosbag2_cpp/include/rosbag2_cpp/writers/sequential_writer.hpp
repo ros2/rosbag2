@@ -200,10 +200,22 @@ protected:
   get_writeable_message(
     std::shared_ptr<const rosbag2_storage::SerializedBagMessage> message);
 
+  /**
+   * \brief Helper method to process lost messages events.
+   * \note This method is expected to be called from a multiple threads.
+   * \param msgs_lost_info The information about lost messages to be processed.
+   */
+  void on_messages_lost(std::shared_ptr<std::vector<bag_events::MessagesLostInfo>> msgs_lost_info);
+
 private:
-  /// Helper method to write messages while also updating tracked metadata.
+  /**
+   * \brief Helper method to write messages while also updating tracked metadata.
+   * \param messages The list of messages to write.
+   */
   void write_messages(
     const std::vector<std::shared_ptr<const rosbag2_storage::SerializedBagMessage>> & messages);
+
+  std::mutex lost_messages_callbacks_mutex_;
   bool is_first_message_ {true};
   std::atomic_bool is_open_{false};
 
