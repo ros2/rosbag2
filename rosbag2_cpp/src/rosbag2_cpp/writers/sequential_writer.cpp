@@ -528,16 +528,16 @@ void SequentialWriter::write_messages(
   if (messages.empty()) {
     return;
   }
-  auto lost_messages = storage_->write_messages(messages);
-  auto written_messages_count = messages.size() - lost_messages.size();
+  auto lost_messages_idx = storage_->write_messages(messages);
+  auto written_messages_count = messages.size() - lost_messages_idx.size();
   if (storage_options_.snapshot_mode && written_messages_count > 0) {
     // Update FileInformation about the last file in metadata in case of snapshot mode
     size_t first_msg_index = 0;
     // If some messages were lost, we need to find the first message that was written
-    if (!lost_messages.empty()) {
+    if (!lost_messages_idx.empty()) {
       for (size_t i = 0; i < messages.size(); ++i) {
-        auto is_current_lost = std::binary_search(lost_messages.begin(), lost_messages.end(), i);
-        if (!is_current_lost) {
+        auto is_lost = std::binary_search(lost_messages_idx.begin(), lost_messages_idx.end(), i);
+        if (!is_lost) {
           first_msg_index = i;
           break;
         }
@@ -545,10 +545,10 @@ void SequentialWriter::write_messages(
     }
     size_t last_msg_index = messages.size() - 1;
     // If some messages were lost, we need to find the last message that was written
-    if (!lost_messages.empty()) {
+    if (!lost_messages_idx.empty()) {
       for (size_t i = messages.size() - 1; i >= first_msg_index; i--) {
-        auto is_current_lost = std::binary_search(lost_messages.begin(), lost_messages.end(), i);
-        if (!is_current_lost) {
+        auto is_lost = std::binary_search(lost_messages_idx.begin(), lost_messages_idx.end(), i);
+        if (!is_lost) {
           last_msg_index = i;
           break;
         }
@@ -568,8 +568,8 @@ void SequentialWriter::write_messages(
   // Update message count for each topic in metadata
   for (size_t i = 0; i < messages.size(); i++) {
     // If some messages were lost, we need to skip them
-    if (!lost_messages.empty()) {
-      auto is_lost = std::binary_search(lost_messages.begin(), lost_messages.end(), i);
+    if (!lost_messages_idx.empty()) {
+      auto is_lost = std::binary_search(lost_messages_idx.begin(), lost_messages_idx.end(), i);
       if (is_lost) {
         continue;  // Skip lost messages
       }
