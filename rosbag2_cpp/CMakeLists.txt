@@ -323,6 +323,16 @@ if(BUILD_TESTING)
       ${test_msgs_TARGETS}
     )
   endif()
+
+  ament_add_gmock(test_reindexer
+          test/rosbag2_cpp/test_reindexer.cpp)
+  if(TARGET test_multifile_reader)
+    target_link_libraries(test_reindexer
+            ${PROJECT_NAME}
+            rosbag2_storage::rosbag2_storage
+    )
+  endif()
+
 endif()
 
 ament_package()
