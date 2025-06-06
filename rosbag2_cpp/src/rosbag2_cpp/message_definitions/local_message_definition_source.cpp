@@ -264,7 +264,10 @@ rosbag2_storage::MessageDefinition LocalMessageDefinitionSource::get_full_text_e
   Format format = Format::UNKNOWN;
   int32_t max_recursion_depth = ROSBAG2_CPP_LOCAL_MESSAGE_DEFINITION_SOURCE_MAX_RECURSION_DEPTH;
 
-  bool is_action_type = root_type.find("/action/") != std::string::npos;
+  bool is_action_type =
+    root_type.find("/action/") != std::string::npos ||
+    root_type == "action_msgs/msg/GoalStatusArray" ||
+    root_type == "action_msgs/srv/CancelGoal_Event";
   bool is_service_type = (!is_action_type && root_type.find("/srv/") != std::string::npos);
 
   if (!is_service_type && !is_action_type) {  // Only msg and idl files
