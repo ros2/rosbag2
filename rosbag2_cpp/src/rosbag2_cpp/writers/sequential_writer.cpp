@@ -561,8 +561,8 @@ void SequentialWriter::write_messages(
       std::chrono::nanoseconds(messages[last_msg_index]->recv_timestamp));
     metadata_.files.back().starting_time = first_msg_timestamp;
     metadata_.files.back().duration = last_msg_timestamp - first_msg_timestamp;
-    metadata_.files.back().message_count = written_messages_count;
   }
+  metadata_.files.back().message_count += written_messages_count;
   metadata_.message_count += written_messages_count;
   std::lock_guard<std::mutex> lock(topics_info_mutex_);
   // Update message count for each topic in metadata
@@ -574,7 +574,6 @@ void SequentialWriter::write_messages(
         continue;  // Skip lost messages
       }
     }
-    metadata_.files.back().message_count++;
     auto topic_info_it = topics_names_to_info_.find(messages[i]->topic_name);
     if (topic_info_it != topics_names_to_info_.end()) {
       topic_info_it->second.message_count++;

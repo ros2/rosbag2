@@ -73,6 +73,25 @@ public:
         v_intercepted_update_metadata_.emplace_back(metadata);
       });
     ON_CALL(*storage_, set_read_order).WillByDefault(Return(true));
+
+    ON_CALL(*storage_,
+            write_message(An<std::shared_ptr<const rosbag2_storage::SerializedBagMessage>>()))
+    .WillByDefault(
+      [this](std::shared_ptr<const rosbag2_storage::SerializedBagMessage>) {
+        fake_storage_size_ += 1;
+        return true;
+        }
+    );
+
+    ON_CALL(*storage_, write_messages(An<const rosbag2_storage::SerializedBagMessages &>()))
+    .WillByDefault(
+      [this](const rosbag2_storage::SerializedBagMessages & msgs)
+      {
+        fake_storage_size_.fetch_add(static_cast<uint32_t>(msgs.size()));
+        std::vector<size_t> lost_messages;
+        return lost_messages;
+        }
+    );
   }
 
   ~SequentialWriterTest() override
@@ -296,17 +315,6 @@ TEST_F(SequentialWriterTest, writer_splits_when_storage_bagfile_size_gt_max_bagf
   const int max_bagfile_size = 5;
   const auto expected_splits = message_count / max_bagfile_size;
   fake_storage_size_ = 0;
-
-  ON_CALL(*storage_,
-          write_message(An<std::shared_ptr<const rosbag2_storage::SerializedBagMessage>>()))
-  .WillByDefault(
-    [this](std::shared_ptr<const rosbag2_storage::SerializedBagMessage> serialized_message)
-    {
-      (void)serialized_message;
-      fake_storage_size_++;
-      return true;
-    }
-  );
 
   ON_CALL(*storage_, get_bagfile_size).WillByDefault(
     [this]() {
@@ -606,14 +614,9 @@ TEST_F(SequentialWriterTest, snapshot_writes_to_new_file_with_bag_split)
   // Expect a single write call when the snapshot is triggered
   EXPECT_CALL(*storage_,
               write_messages(An<const rosbag2_storage::SerializedBagMessages &>())).Times(1);
-  ON_CALL(*storage_,
-    write_message(An<std::shared_ptr<const rosbag2_storage::SerializedBagMessage>>()))
-  .WillByDefault(
-    [this](std::shared_ptr<const rosbag2_storage::SerializedBagMessage>) {
-      fake_storage_size_ += 1;
-      return true;
-    }
-  );
+  EXPECT_CALL(*storage_,
+              write_message(An<std::shared_ptr<const rosbag2_storage::SerializedBagMessage>>()))
+  .Times(0);
 
   ON_CALL(*storage_, get_bagfile_size).WillByDefault(
     [this]() {
@@ -780,15 +783,6 @@ TEST_F(SequentialWriterTest, split_event_calls_callback)
   const size_t num_splits = 2;
   const int message_count = max_bagfile_size * num_splits + max_bagfile_size - 1;  // 8
 
-  ON_CALL(*storage_,
-          write_message(An<std::shared_ptr<const rosbag2_storage::SerializedBagMessage>>()))
-  .WillByDefault(
-    [this](std::shared_ptr<const rosbag2_storage::SerializedBagMessage> serialized_message) {
-      (void)serialized_message;
-      fake_storage_size_ += 1;
-      return true;
-    });
-
   ON_CALL(*storage_, get_bagfile_size).WillByDefault(
     [this]() {
       return fake_storage_size_.load();
@@ -858,15 +852,6 @@ TEST_F(SequentialWriterTest, split_event_calls_callback)
 TEST_F(SequentialWriterTest, split_event_calls_on_writer_close)
 {
   const int message_count = 7;
-
-  ON_CALL(*storage_,
-    write_message(An<std::shared_ptr<const rosbag2_storage::SerializedBagMessage>>()))
-  .WillByDefault(
-    [this](std::shared_ptr<const rosbag2_storage::SerializedBagMessage>) {
-      fake_storage_size_ += 1;
-      return true;
-    }
-  );
 
   ON_CALL(*storage_, get_bagfile_size).WillByDefault(
     [this]() {
