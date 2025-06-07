@@ -36,6 +36,24 @@ public:
   }
 
   MOCK_METHOD0(log_dropped, void());
+  MOCK_METHOD1(mock_push, bool(std::shared_ptr<const rosbag2_storage::SerializedBagMessage>));
+
+  bool push(std::shared_ptr<const rosbag2_storage::SerializedBagMessage> msg) override
+  {
+    if (use_mock_push_) {
+      return mock_push(msg);
+    } else {
+      return rosbag2_cpp::cache::MessageCache::push(msg);
+    }
+  }
+
+  void use_mock_push(bool enable_mock_push)
+  {
+    use_mock_push_ = enable_mock_push;
+  }
+
+private:
+  bool use_mock_push_ = false;
 };
 
 #endif  // ROSBAG2_CPP__MOCK_MESSAGE_CACHE_HPP_
