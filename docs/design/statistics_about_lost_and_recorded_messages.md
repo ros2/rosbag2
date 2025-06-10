@@ -93,7 +93,6 @@ post-processing.
            event on a DDS transport layer.
          - `messages_lost_in_recorder` (uint64_t): The number of messages lost since the last 
            event in the Rosbag2 recorder.
-         - `bytes_written` (uint64_t): The total number of bytes written on this topic.
       3. The messages lost event shall not be published more often than the user-specified event 
          update rate to avoid excessive resource usage.
       4. The Messages lost event shall **not** include topics with zero number of lost messages.
