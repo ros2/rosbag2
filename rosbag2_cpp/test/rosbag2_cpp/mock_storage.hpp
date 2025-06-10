@@ -48,6 +48,11 @@ public:
   MOCK_METHOD1(
     write,
     void(const std::vector<std::shared_ptr<const rosbag2_storage::SerializedBagMessage>> &));
+  MOCK_METHOD1(write_message, bool(std::shared_ptr<const rosbag2_storage::SerializedBagMessage>));
+  MOCK_METHOD1(
+    write_messages,
+    std::vector<size_t>(const rosbag2_storage::SerializedBagMessages &)
+  );
   MOCK_METHOD0(get_all_topics_and_types, std::vector<rosbag2_storage::TopicMetadata>());
   MOCK_METHOD1(
     get_all_message_definitions,

@@ -93,7 +93,8 @@ public:
   std::shared_ptr<rosbag2_storage_plugins::SqliteStorage>
   write_messages_to_sqlite(
     std::vector<std::tuple<std::string, int64_t, std::string, std::string, std::string>> messages,
-    std::shared_ptr<rosbag2_storage_plugins::SqliteStorage> writable_storage = nullptr)
+    std::shared_ptr<rosbag2_storage_plugins::SqliteStorage> writable_storage = nullptr,
+    bool expect_write_to_fail = false)
   {
     if (nullptr == writable_storage) {
       writable_storage = std::make_shared<rosbag2_storage_plugins::SqliteStorage>();
@@ -114,7 +115,11 @@ public:
       bag_message->serialized_data = make_serialized_message(std::get<0>(msg));
       bag_message->recv_timestamp = std::get<1>(msg);
       bag_message->topic_name = topic_name;
-      rw_storage.write(bag_message);
+      if (expect_write_to_fail) {
+        EXPECT_FALSE(rw_storage.write_message(bag_message));
+      } else {
+        EXPECT_TRUE(rw_storage.write_message(bag_message));
+      }
     }
 
     metadata_io_.write_metadata(temporary_dir_path_, rw_storage.get_metadata());

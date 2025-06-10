@@ -56,7 +56,7 @@ TEST_F(StorageFactoryTest, load_test_plugin) {
     read_write_storage->get_bagfile_size());
 
   auto msg = read_write_storage->read_next();
-  read_write_storage->write(msg);
+  EXPECT_TRUE(read_write_storage->write_message(msg));
 
   // Load plugin for read only even though it provides read and write interfaces
   auto read_only_storage = factory.open_read_only(

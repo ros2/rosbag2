@@ -73,6 +73,43 @@ public:
         v_intercepted_update_metadata_.emplace_back(metadata);
       });
     ON_CALL(*storage_, set_read_order).WillByDefault(Return(true));
+
+    ON_CALL(*storage_,
+            write_message(An<std::shared_ptr<const rosbag2_storage::SerializedBagMessage>>()))
+    .WillByDefault(
+      [this](std::shared_ptr<const rosbag2_storage::SerializedBagMessage>) {
+        fake_storage_size_ += 1;
+        return true;
+      }
+    );
+
+    ON_CALL(*storage_, write_messages(An<const rosbag2_storage::SerializedBagMessages &>()))
+    .WillByDefault(
+      [this](const rosbag2_storage::SerializedBagMessages & msgs) {
+        fake_storage_size_.fetch_add(static_cast<uint32_t>(msgs.size()));
+        std::vector<size_t> lost_messages;
+        return lost_messages;
+      }
+    );
+
+    // intercept the metadata write so we can analyze it.
+    ON_CALL(*metadata_io_, write_metadata).WillByDefault(
+      [this](const std::string &, const rosbag2_storage::BagMetadata & metadata) {
+        fake_metadata_ = metadata;
+      }
+    );
+
+    ON_CALL(*storage_, get_bagfile_size).WillByDefault(
+      [this]() {
+        return fake_storage_size_.load();
+      }
+    );
+
+    ON_CALL(*storage_, get_relative_file_path).WillByDefault(
+      [this]() {
+        return fake_storage_uri_;
+      }
+    );
   }
 
   ~SequentialWriterTest() override
@@ -297,30 +334,7 @@ TEST_F(SequentialWriterTest, writer_splits_when_storage_bagfile_size_gt_max_bagf
   const auto expected_splits = message_count / max_bagfile_size;
   fake_storage_size_ = 0;
 
-  ON_CALL(
-    *storage_,
-    write(An<std::shared_ptr<const rosbag2_storage::SerializedBagMessage>>())).WillByDefault(
-    [this](std::shared_ptr<const rosbag2_storage::SerializedBagMessage>) {
-      fake_storage_size_++;
-    });
-
-  ON_CALL(*storage_, get_bagfile_size).WillByDefault(
-    [this]() {
-      return fake_storage_size_.load();
-    });
-
-  ON_CALL(*storage_, get_relative_file_path).WillByDefault(
-    [this]() {
-      return fake_storage_uri_;
-    });
-
   EXPECT_CALL(*metadata_io_, write_metadata).Times(1);
-
-  // intercept the metadata write so we can analyze it.
-  ON_CALL(*metadata_io_, write_metadata).WillByDefault(
-    [this](const std::string &, const rosbag2_storage::BagMetadata & metadata) {
-      fake_metadata_ = metadata;
-    });
 
   auto sequential_writer = std::make_unique<rosbag2_cpp::writers::SequentialWriter>(
     std::move(storage_factory_), converter_factory_, std::move(metadata_io_));
@@ -369,35 +383,19 @@ TEST_F(
   fake_storage_size_ = 0;
   size_t written_messages = 0;
 
-  using VectorSharedBagMessages =
-    std::vector<std::shared_ptr<const rosbag2_storage::SerializedBagMessage>>;
-
-  ON_CALL(*storage_, write(An<const VectorSharedBagMessages &>())).WillByDefault(
-    [this, &written_messages](const VectorSharedBagMessages & msgs)
+  ON_CALL(*storage_, write_messages(An<const rosbag2_storage::SerializedBagMessages &>()))
+  .WillByDefault(
+    [this, &written_messages](const rosbag2_storage::SerializedBagMessages & msgs)
     {
       written_messages += msgs.size();
       fake_storage_size_.fetch_add(static_cast<uint32_t>(msgs.size()));
-    });
-
-  ON_CALL(*storage_, get_bagfile_size).WillByDefault(
-    [this]() {
-      return fake_storage_size_.load();
-    });
-
-  ON_CALL(*storage_, get_relative_file_path).WillByDefault(
-    [this]() {
-      return fake_storage_uri_;
+      std::vector<size_t> lost_messages;
+      return lost_messages;
     });
 
   EXPECT_CALL(*metadata_io_, write_metadata).Times(1);
 
   EXPECT_CALL(*storage_factory_, open_read_write(_)).Times(3);
-
-  // intercept the metadata write so we can analyze it.
-  ON_CALL(*metadata_io_, write_metadata).WillByDefault(
-    [this](const std::string &, const rosbag2_storage::BagMetadata & metadata) {
-      fake_metadata_ = metadata;
-    });
 
   auto sequential_writer = std::make_unique<rosbag2_cpp::writers::SequentialWriter>(
     std::move(storage_factory_), converter_factory_, std::move(metadata_io_));
@@ -463,13 +461,12 @@ TEST_F(SequentialWriterTest, do_not_use_cache_if_cache_size_is_zero) {
   const size_t counter = 1000;
   const uint64_t max_cache_size = 0;
 
-  EXPECT_CALL(
-    *storage_,
-    write(An<const std::vector<std::shared_ptr<const rosbag2_storage::SerializedBagMessage>> &>())).
-  Times(0);
-  EXPECT_CALL(
-    *storage_,
-    write(An<std::shared_ptr<const rosbag2_storage::SerializedBagMessage>>())).Times(counter);
+  EXPECT_CALL(*storage_,
+              write_messages(An<const rosbag2_storage::SerializedBagMessages &>())).Times(0);
+
+  EXPECT_CALL(*storage_,
+              write_message(An<std::shared_ptr<const rosbag2_storage::SerializedBagMessage>>()))
+  .Times(counter);
 
   auto sequential_writer = std::make_unique<rosbag2_cpp::writers::SequentialWriter>(
     std::move(storage_factory_), converter_factory_, std::move(metadata_io_));
@@ -503,11 +500,8 @@ TEST_F(SequentialWriterTest, snapshot_mode_write_on_trigger)
   storage_options_.snapshot_mode = true;
 
   // Expect a single write call when the snapshot is triggered
-  EXPECT_CALL(
-    *storage_, write(
-      An
-      <const std::vector<std::shared_ptr<const rosbag2_storage::SerializedBagMessage>> &>())
-  ).Times(1);
+  EXPECT_CALL(*storage_,
+              write_messages(An<const rosbag2_storage::SerializedBagMessages &>())).Times(1);
 
   auto sequential_writer = std::make_unique<rosbag2_cpp::writers::SequentialWriter>(
     std::move(storage_factory_), converter_factory_, std::move(metadata_io_));
@@ -539,11 +533,8 @@ TEST_F(SequentialWriterTest, snapshot_mode_not_triggered_no_storage_write)
 
   // Storage should never be written to when snapshot mode is enabled
   // but a snapshot is never triggered
-  EXPECT_CALL(
-    *storage_, write(
-      An
-      <const std::vector<std::shared_ptr<const rosbag2_storage::SerializedBagMessage>> &>())
-  ).Times(0);
+  EXPECT_CALL(*storage_,
+              write_messages(An<const rosbag2_storage::SerializedBagMessages &>())).Times(0);
 
   auto sequential_writer = std::make_unique<rosbag2_cpp::writers::SequentialWriter>(
     std::move(storage_factory_), converter_factory_, std::move(metadata_io_));
@@ -607,32 +598,11 @@ TEST_F(SequentialWriterTest, snapshot_writes_to_new_file_with_bag_split)
   }
 
   // Expect a single write call when the snapshot is triggered
-  EXPECT_CALL(
-    *storage_, write(
-    An<const std::vector<std::shared_ptr<const rosbag2_storage::SerializedBagMessage>> &>())
-  ).Times(1);
-
-  ON_CALL(
-    *storage_,
-    write(An<std::shared_ptr<const rosbag2_storage::SerializedBagMessage>>())).WillByDefault(
-    [this](std::shared_ptr<const rosbag2_storage::SerializedBagMessage>) {
-      fake_storage_size_ += 1;
-    });
-
-  ON_CALL(*storage_, get_bagfile_size).WillByDefault(
-    [this]() {
-      return fake_storage_size_.load();
-    });
-
-  ON_CALL(*metadata_io_, write_metadata).WillByDefault(
-    [this](const std::string &, const rosbag2_storage::BagMetadata & metadata) {
-      fake_metadata_ = metadata;
-    });
-
-  ON_CALL(*storage_, get_relative_file_path).WillByDefault(
-    [this]() {
-      return fake_storage_uri_;
-    });
+  EXPECT_CALL(*storage_,
+              write_messages(An<const rosbag2_storage::SerializedBagMessages &>())).Times(1);
+  EXPECT_CALL(*storage_,
+              write_message(An<std::shared_ptr<const rosbag2_storage::SerializedBagMessage>>()))
+  .Times(0);
 
   auto sequential_writer = std::make_unique<rosbag2_cpp::writers::SequentialWriter>(
     std::move(storage_factory_), converter_factory_, std::move(metadata_io_));
@@ -711,15 +681,8 @@ TEST_F(SequentialWriterTest, snapshot_can_be_called_twice)
   const size_t num_msgs_to_write = 100;
 
   // Expect to call write method twice. Once per each snapshot.
-  EXPECT_CALL(
-    *storage_, write(
-    An<const std::vector<std::shared_ptr<const rosbag2_storage::SerializedBagMessage>> &>())
-  ).Times(2);
-
-  ON_CALL(*storage_, get_relative_file_path).WillByDefault(
-    [this]() {
-      return fake_storage_uri_;
-    });
+  EXPECT_CALL(*storage_,
+              write_messages(An<const rosbag2_storage::SerializedBagMessages &>())).Times(2);
 
   auto sequential_writer = std::make_unique<rosbag2_cpp::writers::SequentialWriter>(
     std::move(storage_factory_), converter_factory_, std::move(metadata_io_));
@@ -786,28 +749,6 @@ TEST_F(SequentialWriterTest, split_event_calls_callback)
   const size_t num_splits = 2;
   const int message_count = max_bagfile_size * num_splits + max_bagfile_size - 1;  // 8
 
-  ON_CALL(
-    *storage_,
-    write(An<std::shared_ptr<const rosbag2_storage::SerializedBagMessage>>())).WillByDefault(
-    [this](std::shared_ptr<const rosbag2_storage::SerializedBagMessage>) {
-      fake_storage_size_ += 1;
-    });
-
-  ON_CALL(*storage_, get_bagfile_size).WillByDefault(
-    [this]() {
-      return fake_storage_size_.load();
-    });
-
-  ON_CALL(*metadata_io_, write_metadata).WillByDefault(
-    [this](const std::string &, const rosbag2_storage::BagMetadata & metadata) {
-      fake_metadata_ = metadata;
-    });
-
-  ON_CALL(*storage_, get_relative_file_path).WillByDefault(
-    [this]() {
-      return fake_storage_uri_;
-    });
-
   auto sequential_writer = std::make_unique<rosbag2_cpp::writers::SequentialWriter>(
     std::move(storage_factory_), converter_factory_, std::move(metadata_io_));
   writer_ = std::make_unique<rosbag2_cpp::Writer>(std::move(sequential_writer));
@@ -862,28 +803,6 @@ TEST_F(SequentialWriterTest, split_event_calls_callback)
 TEST_F(SequentialWriterTest, split_event_calls_on_writer_close)
 {
   const int message_count = 7;
-
-  ON_CALL(
-    *storage_,
-    write(An<std::shared_ptr<const rosbag2_storage::SerializedBagMessage>>())).WillByDefault(
-    [this](std::shared_ptr<const rosbag2_storage::SerializedBagMessage>) {
-      fake_storage_size_ += 1;
-    });
-
-  ON_CALL(*storage_, get_bagfile_size).WillByDefault(
-    [this]() {
-      return fake_storage_size_.load();
-    });
-
-  ON_CALL(*metadata_io_, write_metadata).WillByDefault(
-    [this](const std::string &, const rosbag2_storage::BagMetadata & metadata) {
-      fake_metadata_ = metadata;
-    });
-
-  ON_CALL(*storage_, get_relative_file_path).WillByDefault(
-    [this]() {
-      return fake_storage_uri_;
-    });
 
   auto sequential_writer = std::make_unique<rosbag2_cpp::writers::SequentialWriter>(
     std::move(storage_factory_), converter_factory_, std::move(metadata_io_));

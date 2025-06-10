@@ -95,6 +95,23 @@ void TestPlugin::write(
   std::cout << "\nwriting multiple\n";
 }
 
+bool TestPlugin::write_message(
+  const std::shared_ptr<const rosbag2_storage::SerializedBagMessage> msg)
+{
+  (void) msg;
+  std::cout << "\nwriting message\n";
+  return true;
+}
+
+std::vector<size_t>
+TestPlugin::write_messages(const rosbag2_storage::SerializedBagMessages & messages)
+{
+  (void)messages;
+  std::cout << "\nwriting multiple messages\n";
+  std::vector<size_t> ret_value;
+  return ret_value;
+}
+
 std::vector<rosbag2_storage::TopicMetadata> TestPlugin::get_all_topics_and_types()
 {
   std::cout << "\nreading topics and types\n";
