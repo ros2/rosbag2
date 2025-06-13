@@ -172,6 +172,18 @@ private:
 
   std::unordered_map<DefinitionIdentifier,
     MessageSpec, DefinitionIdentifierHash> msg_specs_by_definition_identifier_;
+
+  /**
+   * \brief Topic name to inner action interface type cache.
+   *
+   * \note This cache is used to store the inner action interface type for a given topic name,
+   * because we can't convert CancelGoalEvent or Status action introspection interface types to
+   * action type directly. Therefore, we will use cache to try to determine the original action
+   * type for CancelGoalEvent, Status action introspection interface types by storing the action
+   * type from other action interface types corresponding to the same topic name and original
+   * action type.
+   */
+  std::unordered_map<std::string, std::string> topic_name_to_inner_action_interface_type_cache_;
 };
 
 ROSBAG2_CPP_PUBLIC
