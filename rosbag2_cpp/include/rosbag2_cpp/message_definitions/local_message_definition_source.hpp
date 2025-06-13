@@ -73,19 +73,20 @@ public:
   rosbag2_storage::MessageDefinition get_full_text(const std::string & root_type);
 
   /**
-   * \brief Concatenate the message definition with its dependencies into a self-contained schema.
+   * \brief Try to get the message definition and concatenate it with its dependencies into a
+   * self-contained schema.
    * \details The format is different for MSG/SRV/ACTION and IDL definitions, and is described
    * fully in the docs/message_definition_encoding.md.
    * For SRV type, root_type must include a string '/srv/'.
    * For ACTION type, root_type must include a string '/action/'.
-   * Note: that for service or action introspection topics, the topic type will be extended to the
+   * \note That for service or action introspection topics, the topic type will be extended to the
    * inner original service or action type, respectively, before trying to find the
    * message definition.
    * \param[in] topic_name The topic name, which is used to determine the message definition format.
    * \param[in] root_type The root type of the message definition, which should be a fully qualified
    * datatype name.
-   * \throws DefinitionNotFoundError if one or more definition files are missing for the given
-   * package resource name.
+   * \throws DefinitionNotFoundError if one or more definition files are missing for the
+   * corresponding package resource name or if the package resource name cannot be determined.
    * \return A MessageDefinition object containing the encoded message definition and its
    * dependencies.
    */
