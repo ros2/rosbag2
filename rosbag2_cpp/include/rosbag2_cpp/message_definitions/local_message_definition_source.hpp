@@ -70,7 +70,6 @@ public:
    */
   [[deprecated("Use get_full_text_ext() instead, which allows specifying the topic name and "
      "provides more flexibility in how the message definition is constructed.")]]
-   // TODO(Barry-Xu): Replace all calls to this function with get_full_text_ext()
   rosbag2_storage::MessageDefinition get_full_text(const std::string & root_type);
 
   /**
@@ -90,10 +89,9 @@ public:
    * \return A MessageDefinition object containing the encoded message definition and its
    * dependencies.
    */
-  // TODO(Barry-Xu): Change the order of parameters to match the order in get_full_text()
   rosbag2_storage::MessageDefinition get_full_text_ext(
-    const std::string & topic_name,
-    const std::string & root_type);
+    const std::string & root_type,
+    const std::string & topic_name);
 
   enum struct Format
   {

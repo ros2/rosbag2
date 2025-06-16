@@ -51,7 +51,7 @@ module rosbag2_test_msgdefs {
 TEST(test_local_message_definition_source, can_find_msg_deps)
 {
   LocalMessageDefinitionSource source;
-  auto result = source.get_full_text_ext("/complex_msg_topic", "rosbag2_test_msgdefs/ComplexMsg");
+  auto result = source.get_full_text_ext("rosbag2_test_msgdefs/ComplexMsg", "/complex_msg_topic");
   ASSERT_EQ(result.encoding, "ros2msg");
   ASSERT_EQ(
     result.encoded_message_definition,
@@ -65,8 +65,8 @@ TEST(test_local_message_definition_source, can_find_msg_deps)
 TEST(test_local_message_definition_source, can_find_srv_deps_in_msg)
 {
   LocalMessageDefinitionSource source;
-  auto result = source.get_full_text_ext("/complex_srv_msg_topic/_service_event",
-    "rosbag2_test_msgdefs/srv/ComplexSrvMsg_Event");
+  auto result = source.get_full_text_ext("rosbag2_test_msgdefs/srv/ComplexSrvMsg_Event",
+    "/complex_srv_msg_topic/_service_event");
   ASSERT_EQ(result.encoding, "ros2msg");
   ASSERT_EQ(
     result.encoded_message_definition,
@@ -84,8 +84,8 @@ TEST(test_local_message_definition_source, can_find_srv_deps_in_msg)
 TEST(test_local_message_definition_source, can_find_srv_deps_in_idl)
 {
   LocalMessageDefinitionSource source;
-  auto result = source.get_full_text_ext("/complex_srv_idl_topic/_service_event",
-    "rosbag2_test_msgdefs/srv/ComplexSrvIdl_Event");
+  auto result = source.get_full_text_ext("rosbag2_test_msgdefs/srv/ComplexSrvIdl_Event",
+    "/complex_srv_idl_topic/_service_event");
   ASSERT_EQ(result.encoding, "ros2idl");
   ASSERT_EQ(
     result.encoded_message_definition,
@@ -132,22 +132,25 @@ TEST(test_local_message_definition_source, can_find_action_deps_in_msg)
 
   // Check action interface send_goal
   {
-    auto result = source.get_full_text_ext("/complex_action_msg/_action/send_goal/_service_event",
-      "rosbag2_test_msgdefs/action/ComplexActionMsg_SendGoal_Event");
+    auto result = source.get_full_text_ext(
+      "rosbag2_test_msgdefs/action/ComplexActionMsg_SendGoal_Event",
+      "/complex_action_msg/_action/send_goal/_service_event");
     check_result(result);
   }
 
   // Check action interface get_result
   {
-    auto result = source.get_full_text_ext("/complex_action_msg/_action/get_result/_service_event",
-      "rosbag2_test_msgdefs/action/ComplexActionMsg_GetResult_Event");
+    auto result = source.get_full_text_ext(
+      "rosbag2_test_msgdefs/action/ComplexActionMsg_GetResult_Event",
+      "/complex_action_msg/_action/get_result/_service_event");
     check_result(result);
   }
 
   // Check action interface feedback
   {
-    auto result = source.get_full_text_ext("/complex_action_msg/_action/feedback",
-      "rosbag2_test_msgdefs/action/ComplexActionMsg_FeedbackMessage");
+    auto result = source.get_full_text_ext(
+      "rosbag2_test_msgdefs/action/ComplexActionMsg_FeedbackMessage",
+      "/complex_action_msg/_action/feedback");
     check_result(result);
   }
 
@@ -189,22 +192,25 @@ TEST(test_local_message_definition_source, can_find_action_deps_in_idl)
 
   // Check action interface send_goal
   {
-    auto result = source.get_full_text_ext("/complex_action_idl/_action/send_goal/_service_event",
-      "rosbag2_test_msgdefs/action/ComplexActionIdl_SendGoal_Event");
+    auto result = source.get_full_text_ext(
+      "rosbag2_test_msgdefs/action/ComplexActionIdl_SendGoal_Event",
+      "/complex_action_idl/_action/send_goal/_service_event");
     check_result(result);
   }
 
   // Check action interface get_result
   {
-    auto result = source.get_full_text_ext("/complex_action_idl/_action/get_result/_service_event",
-      "rosbag2_test_msgdefs/action/ComplexActionIdl_GetResult_Event");
+    auto result = source.get_full_text_ext(
+      "rosbag2_test_msgdefs/action/ComplexActionIdl_GetResult_Event",
+      "/complex_action_idl/_action/get_result/_service_event");
     check_result(result);
   }
 
   // Check action interface feedback
   {
-    auto result = source.get_full_text_ext("/complex_action_idl/_action/feedback",
-      "rosbag2_test_msgdefs/action/ComplexActionIdl_FeedbackMessage");
+    auto result = source.get_full_text_ext(
+      "rosbag2_test_msgdefs/action/ComplexActionIdl_FeedbackMessage",
+      "/complex_action_idl/_action/feedback");
     check_result(result);
   }
 
@@ -218,7 +224,7 @@ TEST(test_local_message_definition_source, can_find_idl_deps)
 {
   LocalMessageDefinitionSource source;
   auto result = source.get_full_text_ext(
-    "/complex_idl_topic", "rosbag2_test_msgdefs/msg/ComplexIdl");
+    "rosbag2_test_msgdefs/msg/ComplexIdl", "/complex_idl_topic");
   ASSERT_EQ(result.encoding, "ros2idl");
   ASSERT_EQ(
     result.encoded_message_definition,
@@ -249,7 +255,7 @@ TEST(test_local_message_definition_source, can_resolve_msg_with_idl_deps)
 {
   LocalMessageDefinitionSource source;
   auto result = source.get_full_text_ext(
-    "/complex_msg_depends_on_idl_topic", "rosbag2_test_msgdefs/msg/ComplexMsgDependsOnIdl");
+    "rosbag2_test_msgdefs/msg/ComplexMsgDependsOnIdl", "/complex_msg_depends_on_idl_topic");
   ASSERT_EQ(result.encoding, "ros2idl");
   ASSERT_EQ(
     result.encoded_message_definition,
@@ -286,7 +292,7 @@ TEST(test_local_message_definition_source, no_crash_on_bad_name)
   rosbag2_storage::MessageDefinition result;
   ASSERT_NO_THROW(
   {
-    result = source.get_full_text_ext("/basic_srv", "rosbag2_test_msgdefs/idl/BasicSrv_Request");
+    result = source.get_full_text_ext("rosbag2_test_msgdefs/idl/BasicSrv_Request", "/basic_srv");
   });
   ASSERT_EQ(result.encoding, "unknown");
 }
@@ -296,13 +302,13 @@ TEST(test_local_message_definition_source, throw_definition_not_found_for_unknow
   LocalMessageDefinitionSource source;
   ASSERT_THROW(
   {
-    source.get_full_text_ext("/unknown_msg_topic", "rosbag2_test_msgdefs/msg/UnknownMessage");
+    source.get_full_text_ext("rosbag2_test_msgdefs/msg/UnknownMessage", "/unknown_msg_topic");
   }, rosbag2_cpp::DefinitionNotFoundError);
 
   // Throw DefinitionNotFoundError for not found message definition package name
   ASSERT_THROW(
   {
     source.get_full_text_ext(
-      "/not_found_msgdefs_pkg_topic", "not_found_msgdefs_pkg/msg/UnknownMessage");
+      "not_found_msgdefs_pkg/msg/UnknownMessage", "/not_found_msgdefs_pkg_topic");
   }, rosbag2_cpp::DefinitionNotFoundError);
 }
