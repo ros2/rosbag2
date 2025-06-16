@@ -111,57 +111,114 @@ TEST(test_local_message_definition_source, can_find_srv_deps_in_idl)
 
 TEST(test_local_message_definition_source, can_find_action_deps_in_msg)
 {
+  auto check_result = [](const rosbag2_storage::MessageDefinition & result) {
+      ASSERT_EQ(result.encoding, "ros2msg");
+      ASSERT_EQ(
+        result.encoded_message_definition,
+        "================================================================================\n"
+        "ACTION: rosbag2_test_msgdefs/action/ComplexActionMsg\n"
+        "rosbag2_test_msgdefs/BasicMsg goal\n"
+        "---\n"
+        "rosbag2_test_msgdefs/BasicMsg result\n"
+        "---\n"
+        "rosbag2_test_msgdefs/BasicMsg feedback\n"
+        "\n"
+        "================================================================================\n"
+        "MSG: rosbag2_test_msgdefs/BasicMsg\n"
+        "float32 c\n") << result.encoded_message_definition << std::endl;
+    };
+
   LocalMessageDefinitionSource source;
-  auto result = source.get_full_text("rosbag2_test_msgdefs/action/ComplexActionMsg");
-  ASSERT_EQ(result.encoding, "ros2msg");
-  ASSERT_EQ(
-    result.encoded_message_definition,
-    "================================================================================\n"
-    "ACTION: rosbag2_test_msgdefs/action/ComplexActionMsg\n"
-    "rosbag2_test_msgdefs/BasicMsg goal\n"
-    "---\n"
-    "rosbag2_test_msgdefs/BasicMsg result\n"
-    "---\n"
-    "rosbag2_test_msgdefs/BasicMsg feedback\n"
-    "\n"
-    "================================================================================\n"
-    "MSG: rosbag2_test_msgdefs/BasicMsg\n"
-    "float32 c\n") << result.encoded_message_definition << std::endl;
+
+  // Check action interface send_goal
+  {
+    auto result = source.get_full_text_ext("/complex_action_msg/_action/send_goal/_service_event",
+      "rosbag2_test_msgdefs/action/ComplexActionMsg_SendGoal_Event");
+    check_result(result);
+  }
+
+  // Check action interface get_result
+  {
+    auto result = source.get_full_text_ext("/complex_action_msg/_action/get_result/_service_event",
+      "rosbag2_test_msgdefs/action/ComplexActionMsg_GetResult_Event");
+    check_result(result);
+  }
+
+  // Check action interface feedback
+  {
+    auto result = source.get_full_text_ext("/complex_action_msg/_action/feedback",
+      "rosbag2_test_msgdefs/action/ComplexActionMsg_FeedbackMessage");
+    check_result(result);
+  }
+
+  // Known limitation
+  // get_full_text_ext() cannot return action definition for action interface 'cancel_goal' and
+  // 'status'.
+  // This issue will be resolved in future versions.
 }
 
 TEST(test_local_message_definition_source, can_find_action_deps_in_idl)
 {
+  auto check_result = [](const rosbag2_storage::MessageDefinition & result) {
+      ASSERT_EQ(result.encoding, "ros2idl");
+      ASSERT_EQ(
+        result.encoded_message_definition,
+        "================================================================================\n"
+        "ACTION: rosbag2_test_msgdefs/action/ComplexActionIdl\n"
+        "rosbag2_test_msgdefs/BasicIdl goal\n"
+        "---\n"
+        "rosbag2_test_msgdefs/BasicIdl result\n"
+        "---\n"
+        "rosbag2_test_msgdefs/BasicIdl feedback\n"
+        "\n"
+        "================================================================================\n"
+        "MSG: rosbag2_test_msgdefs/BasicIdl\n"
+        "\n"
+        "================================================================================\n"
+        "IDL: rosbag2_test_msgdefs/BasicIdl\n"
+        "module rosbag2_test_msgdefs {\n"
+        "  module msg {\n"
+        "    struct BasicIdl {\n"
+        "        float x;\n"
+        "    };\n"
+        "  };\n"
+        "};\n") << result.encoded_message_definition << std::endl;
+    };
+
   LocalMessageDefinitionSource source;
-  auto result = source.get_full_text("rosbag2_test_msgdefs/action/ComplexActionIdl");
-  ASSERT_EQ(result.encoding, "ros2idl");
-  ASSERT_EQ(
-    result.encoded_message_definition,
-    "================================================================================\n"
-    "ACTION: rosbag2_test_msgdefs/action/ComplexActionIdl\n"
-    "rosbag2_test_msgdefs/BasicIdl goal\n"
-    "---\n"
-    "rosbag2_test_msgdefs/BasicIdl result\n"
-    "---\n"
-    "rosbag2_test_msgdefs/BasicIdl feedback\n"
-    "\n"
-    "================================================================================\n"
-    "MSG: rosbag2_test_msgdefs/BasicIdl\n"
-    "\n"
-    "================================================================================\n"
-    "IDL: rosbag2_test_msgdefs/BasicIdl\n"
-    "module rosbag2_test_msgdefs {\n"
-    "  module msg {\n"
-    "    struct BasicIdl {\n"
-    "        float x;\n"
-    "    };\n"
-    "  };\n"
-    "};\n") << result.encoded_message_definition << std::endl;
+
+  // Check action interface send_goal
+  {
+    auto result = source.get_full_text_ext("/complex_action_idl/_action/send_goal/_service_event",
+      "rosbag2_test_msgdefs/action/ComplexActionIdl_SendGoal_Event");
+    check_result(result);
+  }
+
+  // Check action interface get_result
+  {
+    auto result = source.get_full_text_ext("/complex_action_idl/_action/get_result/_service_event",
+      "rosbag2_test_msgdefs/action/ComplexActionIdl_GetResult_Event");
+    check_result(result);
+  }
+
+  // Check action interface feedback
+  {
+    auto result = source.get_full_text_ext("/complex_action_idl/_action/feedback",
+      "rosbag2_test_msgdefs/action/ComplexActionIdl_FeedbackMessage");
+    check_result(result);
+  }
+
+  // Known limitation
+  // get_full_text_ext() cannot return action definition for action interface 'cancel_goal' and
+  // 'status'.
+  // This issue will be resolved in future versions.
 }
 
 TEST(test_local_message_definition_source, can_find_idl_deps)
 {
   LocalMessageDefinitionSource source;
-  auto result = source.get_full_text("rosbag2_test_msgdefs/msg/ComplexIdl");
+  auto result = source.get_full_text_ext(
+    "/complex_idl_topic", "rosbag2_test_msgdefs/msg/ComplexIdl");
   ASSERT_EQ(result.encoding, "ros2idl");
   ASSERT_EQ(
     result.encoded_message_definition,
@@ -191,7 +248,8 @@ TEST(test_local_message_definition_source, can_find_idl_deps)
 TEST(test_local_message_definition_source, can_resolve_msg_with_idl_deps)
 {
   LocalMessageDefinitionSource source;
-  auto result = source.get_full_text("rosbag2_test_msgdefs/msg/ComplexMsgDependsOnIdl");
+  auto result = source.get_full_text_ext(
+    "/complex_msg_depends_on_idl_topic", "rosbag2_test_msgdefs/msg/ComplexMsgDependsOnIdl");
   ASSERT_EQ(result.encoding, "ros2idl");
   ASSERT_EQ(
     result.encoded_message_definition,
@@ -228,7 +286,7 @@ TEST(test_local_message_definition_source, no_crash_on_bad_name)
   rosbag2_storage::MessageDefinition result;
   ASSERT_NO_THROW(
   {
-    result = source.get_full_text("rosbag2_test_msgdefs/idl/BasicSrv_Request");
+    result = source.get_full_text_ext("/basic_srv", "rosbag2_test_msgdefs/idl/BasicSrv_Request");
   });
   ASSERT_EQ(result.encoding, "unknown");
 }
@@ -238,12 +296,13 @@ TEST(test_local_message_definition_source, throw_definition_not_found_for_unknow
   LocalMessageDefinitionSource source;
   ASSERT_THROW(
   {
-    source.get_full_text("rosbag2_test_msgdefs/msg/UnknownMessage");
+    source.get_full_text_ext("/unknown_msg_topic", "rosbag2_test_msgdefs/msg/UnknownMessage");
   }, rosbag2_cpp::DefinitionNotFoundError);
 
   // Throw DefinitionNotFoundError for not found message definition package name
   ASSERT_THROW(
   {
-    source.get_full_text("not_found_msgdefs_pkg/msg/UnknownMessage");
+    source.get_full_text_ext(
+      "/not_found_msgdefs_pkg_topic", "not_found_msgdefs_pkg/msg/UnknownMessage");
   }, rosbag2_cpp::DefinitionNotFoundError);
 }
