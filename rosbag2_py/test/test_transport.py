@@ -62,7 +62,7 @@ def test_player_log_level(storage_id):
 
     invalid_log_level = 'xxx'
     with pytest.raises(RuntimeError):
-        rosbag2_py.Player(invalid_log_level)
+        rosbag2_py.Player(storage_options, play_options, invalid_log_level)
 
 
 @pytest.mark.parametrize('storage_id', TESTED_STORAGE_IDS)

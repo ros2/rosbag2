@@ -657,42 +657,122 @@ PYBIND11_MODULE(_transport, m) {
   ;
 
   py::class_<rosbag2_py::Player>(m, "Player")
-  .def(py::init<>())
-  .def(py::init<const std::string &>())
-  .def(
-    py::init<const rosbag2_storage::StorageOptions &, const PlayOptions &,
+    // Deprecated default constructor
+  .def(py::init([]()
+    {
+      PyErr_WarnEx(PyExc_DeprecationWarning, "Player() is deprecated. Use the constructor with "
+          "full configuration parameters instead.", 1);
+      return new rosbag2_py::Player();
+    }), "Deprecated: Use constructor with full options.")
+
+    // Deprecated constructor with log_level
+  .def(py::init([](const std::string & log_level)
+    {
+      PyErr_WarnEx(PyExc_DeprecationWarning, "Player(log_level) is deprecated. Use the "
+          "constructor with full configuration parameters instead.", 1);
+      return new rosbag2_py::Player(log_level);
+    }), py::arg("log_level"), "Deprecated: Use constructor with full options.")
+
+    // Recommended constructor with storage and play options
+  .def(py::init<const rosbag2_storage::StorageOptions &, const PlayOptions &,
     const std::string &, const std::string &>(),
     py::arg("storage_options"),
     py::arg("play_options"),
     py::arg("log_level") = "info",
-    py::arg("node_name") = "rosbag2_player")
-  .def(
-    py::init<const std::vector<rosbag2_storage::StorageOptions> &, const PlayOptions &,
+    py::arg("node_name") = "rosbag2_player",
+    R"pbdoc(
+      Initialize a Player with complete configuration.
+
+      Args:
+          storage_options (StorageOptions): Configuration for storage backend (e.g., URI, format).
+          play_options (PlayOptions): Options for playback (e.g., topics, QoS settings).
+          log_level (str, optional): Logging level, defaults to 'info'.
+          node_name (str, optional): Name of the player node, defaults to 'rosbag2_player'.
+    )pbdoc")
+
+    // Recommended constructor with multiple storage options
+  .def(py::init<const std::vector<rosbag2_storage::StorageOptions> &, const PlayOptions &,
     const std::string &, const std::string &>(),
     py::arg("storage_options"),
     py::arg("play_options"),
     py::arg("log_level") = "info",
-    py::arg("node_name") = "rosbag2_player")
-  .def("play", py::overload_cast<>(&rosbag2_py::Player::play))
-  .def(
-    "play",
-    py::overload_cast<const rosbag2_storage::StorageOptions &, PlayOptions &>(
-      &rosbag2_py::Player::play),
+    py::arg("node_name") = "rosbag2_player",
+    R"pbdoc(
+      Initialize a Player with multiple storage options.
+
+      Args:
+          storage_options (List[StorageOptions]): List of storage configurations.
+          play_options (PlayOptions): Options for playback (e.g., topics, QoS settings).
+          log_level (str, optional): Logging level, defaults to 'info'.
+          node_name (str, optional): Name of the player node, defaults to 'rosbag2_player'.
+    )pbdoc")
+
+    // Recommended play method
+  .def("play", py::overload_cast<>(&rosbag2_py::Player::play),
+    R"pbdoc(
+      Start playback based on the internal Player configuration.
+
+      This is the preferred method for starting playback.
+      All parameters should be configured via the constructor.
+    )pbdoc")
+
+    // Deprecated play method with storage and play options
+  .def("play",
+    [](rosbag2_py::Player & self, const rosbag2_storage::StorageOptions & storage_options,
+    PlayOptions & play_options)
+    {
+      PyErr_WarnEx(PyExc_DeprecationWarning, "Player.play(storage_options, play_options) is "
+          "deprecated. Use the parameterless play() instead.", 1);
+      return self.play(storage_options, play_options);
+    },
     py::arg("storage_options"),
-    py::arg("play_options"))
-  .def(
-    "play",
-    py::overload_cast<const std::vector<rosbag2_storage::StorageOptions> &, PlayOptions &>(
-      &rosbag2_py::Player::play),
+    py::arg("play_options"),
+    "Deprecated: use play() with preconfigured options instead.")
+
+    // Deprecated play method with multiple storage options
+  .def("play",
+    [](rosbag2_py::Player & self,
+    const std::vector<rosbag2_storage::StorageOptions> & storage_options,
+    PlayOptions & play_options)
+    {
+      PyErr_WarnEx(PyExc_DeprecationWarning, "Player.play(storage_options_list, play_options) is "
+          "deprecated. Use the parameterless play() instead.", 1);
+      return self.play(storage_options, play_options);
+    },
     py::arg("storage_options"),
-    py::arg("play_options"))
-  .def("burst", py::overload_cast<size_t>(&rosbag2_py::Player::burst), py::arg("num_messages"))
-  .def(
-    "burst",
-    py::overload_cast<const rosbag2_storage::StorageOptions &, PlayOptions &, size_t>(
-      &rosbag2_py::Player::burst),
-      py::arg("storage_options"), py::arg("play_options"), py::arg("num_messages"))
-  .def_static("cancel", &rosbag2_py::Player::cancel)
+    py::arg("play_options"),
+    "Deprecated: use play() with preconfigured options instead.")
+
+    // Recommended burst playback method
+  .def("burst", py::overload_cast<size_t>(&rosbag2_py::Player::burst), py::arg("num_messages"),
+    R"pbdoc(
+      Play a burst of messages.
+
+      Args:
+          num_messages (int): Number of messages to play in this burst.
+    )pbdoc")
+
+    // Deprecated burst method with storage and play options
+  .def("burst",
+    [](rosbag2_py::Player & self, const rosbag2_storage::StorageOptions & storage_options,
+    PlayOptions & play_options, size_t num_messages)
+    {
+      PyErr_WarnEx(PyExc_DeprecationWarning,
+          "Player.burst(storage_options, play_options, num_messages) is deprecated. "
+          "Use burst(num_messages) with preconfigured options instead.", 1);
+      return self.burst(storage_options, play_options, num_messages);
+    },
+    py::arg("storage_options"),
+    py::arg("play_options"),
+    py::arg("num_messages"),
+    "Deprecated: use burst(num_messages) with preconfigured options instead.")
+
+  .def_static("cancel", &rosbag2_py::Player::cancel,
+    R"pbdoc(
+      Cancel the ongoing playback session.
+
+      This is a static method and will affect any running Players globally.
+    )pbdoc")
   ;
 
   py::class_<rosbag2_py::Recorder>(m, "Recorder")
