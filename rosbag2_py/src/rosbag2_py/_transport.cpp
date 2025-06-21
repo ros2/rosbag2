@@ -357,6 +357,26 @@ public:
   {
     Arguments arguments({"--ros-args", "--log-level", log_level});
     rclcpp::init(arguments.argc(), arguments.argv());
+    // Intentionally not initializing recorder_ here, because default constructor is intended to be
+    // used for the composable node only since it will call Recorder::record() inside.
+  }
+
+  Recorder(
+    const rosbag2_storage::StorageOptions & storage_options,
+    RecordOptions & record_options,
+    const std::string & log_level,
+    const std::string & node_name)
+  {
+    Arguments arguments({"--ros-args", "--log-level", log_level});
+    rclcpp::init(arguments.argc(), arguments.argv());
+
+    if (record_options.rmw_serialization_format.empty()) {
+      record_options.rmw_serialization_format = std::string(rmw_get_serialization_format());
+    }
+    auto writer = rosbag2_transport::ReaderWriterFactory::make_writer(record_options);
+
+    recorder_ = std::make_shared<rosbag2_transport::Recorder>(
+      std::move(writer), storage_options, record_options, node_name);
   }
 
   virtual ~Recorder()
@@ -364,37 +384,39 @@ public:
     rclcpp::shutdown();
   }
 
+  void record()
+  {
+    record_impl();
+  }
+
   void record(
     const rosbag2_storage::StorageOptions & storage_options,
     RecordOptions & record_options,
-    std::string & node_name)
+    const std::string & node_name)
   {
+    if (record_options.rmw_serialization_format.empty()) {
+      record_options.rmw_serialization_format = std::string(rmw_get_serialization_format());
+    }
+    auto writer = rosbag2_transport::ReaderWriterFactory::make_writer(record_options);
+
+    recorder_ = std::make_shared<rosbag2_transport::Recorder>(
+      std::move(writer), storage_options, record_options, node_name);
+
+    record_impl();
+  }
+
+  void record_impl()
+  {
+    if (!recorder_) {
+      throw std::runtime_error("Recorder is not initialized. Please use constructor with "
+        "storage and record options.");
+    }
     install_signal_handlers();
     try {
       exit_ = false;
       auto exec = std::make_unique<rclcpp::executors::SingleThreadedExecutor>();
-      if (record_options.rmw_serialization_format.empty()) {
-        record_options.rmw_serialization_format = std::string(rmw_get_serialization_format());
-      }
-
-      auto writer = rosbag2_transport::ReaderWriterFactory::make_writer(record_options);
-      std::shared_ptr<KeyboardHandler> keyboard_handler;
-      if (!record_options.disable_keyboard_controls) {
-#ifndef _WIN32
-        // Instantiate KeyboardHandler explicitly with disabled signal handler inside,
-        // since we have already installed our own signal handler
-        keyboard_handler = std::make_shared<KeyboardHandler>(false);
-#else
-        // We don't have signal handler option in constructor for windows version
-        keyboard_handler = std::shared_ptr<KeyboardHandler>(new KeyboardHandler());
-#endif
-      }
-
-      auto recorder = std::make_shared<rosbag2_transport::Recorder>(
-        std::move(writer), std::move(keyboard_handler), storage_options, record_options, node_name);
-      recorder->record();
-
-      exec->add_node(recorder);
+      recorder_->record();
+      exec->add_node(recorder_);
       // Run exec->spin() in a separate thread, because we need to call exec->cancel() after
       // recorder->stop() to be able to send notifications about bag split and close.
       auto spin_thread = std::thread(
@@ -407,13 +429,13 @@ public:
         py::gil_scoped_release release;
         std::unique_lock<std::mutex> lock(wait_for_exit_mutex_);
         wait_for_exit_cv_.wait(lock, [] {return rosbag2_py::Recorder::exit_.load();});
-        recorder->stop();
+        recorder_->stop();
       }
       exec->cancel();
       if (spin_thread.joinable()) {
         spin_thread.join();
       }
-      exec->remove_node(recorder);
+      exec->remove_node(recorder_);
     } catch (...) {
       process_deferred_signal();
       uninstall_signal_handlers();
@@ -479,6 +501,8 @@ protected:
   static SignalHandlerType old_sigterm_handler_;
   static int deferred_sig_number_;
   std::mutex wait_for_exit_mutex_;
+
+  std::shared_ptr<rosbag2_transport::Recorder> recorder_;
 };
 
 Recorder::SignalHandlerType Recorder::old_sigint_handler_ {SIG_ERR};
@@ -675,7 +699,19 @@ PYBIND11_MODULE(_transport, m) {
   .def(py::init<>())
   .def(py::init<const std::string &>())
   .def(
-    "record", &rosbag2_py::Recorder::record, py::arg("storage_options"), py::arg("record_options"),
+    py::init<const rosbag2_storage::StorageOptions &, RecordOptions &,
+    const std::string &, const std::string &>(),
+    py::arg("storage_options"),
+    py::arg("record_options"),
+    py::arg("log_level") = "info",
+    py::arg("node_name") = "rosbag2_recorder")
+  .def("record", py::overload_cast<>(&rosbag2_py::Recorder::record))
+  .def(
+    "record",
+    py::overload_cast<
+      const rosbag2_storage::StorageOptions &, RecordOptions &, const std::string &
+    >(&rosbag2_py::Recorder::record),
+    py::arg("storage_options"), py::arg("record_options"),
     py::arg("node_name") = "rosbag2_recorder")
   .def_static("cancel", &rosbag2_py::Recorder::cancel)
   ;

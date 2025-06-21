@@ -65,10 +65,15 @@ def test_player_log_level(storage_id):
         rosbag2_py.Player(invalid_log_level)
 
 
-def test_recoder_log_level():
-    rosbag2_py.Recorder()  # Test for default constructor
+@pytest.mark.parametrize('storage_id', TESTED_STORAGE_IDS)
+def test_recoder_log_level(tmp_path, storage_id):
+    bag_path = tmp_path / 'test_record_cancel'
+    storage_options, converter_options = get_rosbag_options(str(bag_path), storage_id)
+    record_options = rosbag2_py.RecordOptions()
+
+    rosbag2_py.Recorder(storage_options, record_options)  # Test for default value
     valid_log_level = 'debug'
-    rosbag2_py.Recorder(valid_log_level)
+    rosbag2_py.Recorder(storage_options, record_options, valid_log_level)
 
     invalid_log_level = 'xxx'
     with pytest.raises(RuntimeError):
@@ -80,18 +85,17 @@ def test_record_cancel(tmp_path, storage_id):
     bag_path = tmp_path / 'test_record_cancel'
     storage_options, converter_options = get_rosbag_options(str(bag_path), storage_id)
 
-    recorder = rosbag2_py.Recorder()
-
     record_options = rosbag2_py.RecordOptions()
     record_options.all_topics = True
     record_options.is_discovery_disabled = False
     record_options.topic_polling_interval = datetime.timedelta(milliseconds=100)
 
+    recorder = rosbag2_py.Recorder(storage_options, record_options)
+
     ctx = rclpy.Context()
     ctx.init()
     record_thread = threading.Thread(
         target=recorder.record,
-        args=(storage_options, record_options),
         daemon=True)
     record_thread.start()
 
