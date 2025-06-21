@@ -77,7 +77,7 @@ def test_recoder_log_level(tmp_path, storage_id):
 
     invalid_log_level = 'xxx'
     with pytest.raises(RuntimeError):
-        rosbag2_py.Recorder(invalid_log_level)
+        rosbag2_py.Recorder(storage_options, record_options, invalid_log_level)
 
 
 @pytest.mark.parametrize('storage_id', TESTED_STORAGE_IDS)

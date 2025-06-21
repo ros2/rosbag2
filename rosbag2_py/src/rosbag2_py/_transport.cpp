@@ -696,24 +696,68 @@ PYBIND11_MODULE(_transport, m) {
   ;
 
   py::class_<rosbag2_py::Recorder>(m, "Recorder")
-  .def(py::init<>())
-  .def(py::init<const std::string &>())
+    // Deprecated default constructor
+  .def(py::init([]()
+    {
+      PyErr_WarnEx(PyExc_DeprecationWarning, "Recorder() is deprecated. Use the constructor with "
+        "full configuration parameters instead.", 1);
+      return new rosbag2_py::Recorder();
+    }), "Deprecated: Use constructor with full options.")
+
+    // Deprecated constructor with string argument
+  .def(py::init([](const std::string & arg)
+    {
+      PyErr_WarnEx(PyExc_DeprecationWarning, "Recorder(log_level) is deprecated. Use the"
+        " constructor with full configuration parameters instead.", 1);
+      return new rosbag2_py::Recorder(arg);
+    }), py::arg("arg"), "Deprecated: Use constructor with full options.")
+
+    // Recommended constructor with storage and record options
   .def(
     py::init<const rosbag2_storage::StorageOptions &, RecordOptions &,
     const std::string &, const std::string &>(),
     py::arg("storage_options"),
     py::arg("record_options"),
     py::arg("log_level") = "info",
-    py::arg("node_name") = "rosbag2_recorder")
-  .def("record", py::overload_cast<>(&rosbag2_py::Recorder::record))
-  .def(
-    "record",
-    py::overload_cast<
-      const rosbag2_storage::StorageOptions &, RecordOptions &, const std::string &
-    >(&rosbag2_py::Recorder::record),
-    py::arg("storage_options"), py::arg("record_options"),
-    py::arg("node_name") = "rosbag2_recorder")
-  .def_static("cancel", &rosbag2_py::Recorder::cancel)
+    py::arg("node_name") = "rosbag2_recorder",
+    R"pbdoc(
+      Initialize a Recorder with complete configuration.
+
+      Args:
+          storage_options (StorageOptions): Configuration for storage backend (e.g., URI, format).
+          record_options (RecordOptions): Options for recording (e.g., topics, QoS settings).
+          log_level (str, optional): Logging level, defaults to 'info'.
+          node_name (str, optional): Name of the recorder node, defaults to 'rosbag2_recorder'.
+    )pbdoc")
+
+  .def("record", py::overload_cast<>(&rosbag2_py::Recorder::record),
+    R"pbdoc(
+      Start recording based on the internal Recorder configuration.
+
+      This is the preferred method for starting a recording session.
+      All parameters should be configured via the constructor.
+    )pbdoc")
+
+    // (deprecated) record method
+  .def("record",
+    [](rosbag2_py::Recorder & self, const rosbag2_storage::StorageOptions & storage_options,
+    RecordOptions & record_options, const std::string & node_name)
+    {
+      PyErr_WarnEx(PyExc_DeprecationWarning, "Recorder.record(storage_options, record_options, "
+        "node_name) is deprecated. Use the parameterless record() instead.", 1);
+      return self.record(storage_options, record_options, node_name);
+    },
+    py::arg("storage_options"),
+    py::arg("record_options"),
+    py::arg("node_name") = "rosbag2_recorder",
+    "Deprecated: use record() with preconfigured options instead.")
+
+  .def_static("cancel", &rosbag2_py::Recorder::cancel,
+    R"pbdoc(
+      Cancel the ongoing recording session.
+
+      This is a static method and will affect any running Recorders globally.
+    )pbdoc")
   ;
 
   m.def(
