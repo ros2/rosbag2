@@ -74,7 +74,7 @@ public:
       bag_message->serialized_data = make_serialized_message(std::get<0>(msg));
       bag_message->recv_timestamp = std::get<1>(msg);
       bag_message->topic_name = topic_metadata.name;
-      rw_storage->write(bag_message);
+      EXPECT_TRUE(rw_storage->write_message(bag_message));
     }
     return rw_storage;
   }
@@ -213,7 +213,7 @@ TEST_F(TemporaryDirectoryFixture, can_write_and_read_basic_mcap_file)
       [](rcutils_uint8_array_t * /* data */) {});
     serialized_bag_msg->recv_timestamp = time_stamp;
     serialized_bag_msg->topic_name = topic_name;
-    writer->write(serialized_bag_msg);
+    EXPECT_TRUE(writer->write_message(serialized_bag_msg));
   }
   EXPECT_TRUE(std::filesystem::is_regular_file(expected_bag));
   {
@@ -300,8 +300,8 @@ TEST_F(TemporaryDirectoryFixture, can_write_mcap_with_zstd_configured_from_yaml)
       [](rcutils_uint8_array_t * /* data */) {});
     serialized_bag_msg->recv_timestamp = time_stamp;
     serialized_bag_msg->topic_name = topic_name;
-    writer->write(serialized_bag_msg);
-    writer->write(serialized_bag_msg);
+    EXPECT_TRUE(writer->write_message(serialized_bag_msg));
+    EXPECT_TRUE(writer->write_message(serialized_bag_msg));
     EXPECT_TRUE(std::filesystem::is_regular_file(expected_bag));
   }
   {

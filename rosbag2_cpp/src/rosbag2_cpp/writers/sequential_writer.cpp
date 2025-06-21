@@ -424,11 +424,12 @@ void SequentialWriter::write(std::shared_ptr<const rosbag2_storage::SerializedBa
 
   auto converted_msg = get_writeable_message(message);
 
-  metadata_.files.back().message_count++;
   if (storage_options_.max_cache_size == 0u) {
     // If cache size is set to zero, we write to storage directly
-    storage_->write(converted_msg);
-    ++topic_information->message_count;
+    if (storage_->write_message(converted_msg)) {
+      metadata_.files.back().message_count++;
+      topic_information->message_count++;
+    }
   } else {
     // Otherwise, use cache buffer
     message_cache_->push(converted_msg);
@@ -527,22 +528,55 @@ void SequentialWriter::write_messages(
   if (messages.empty()) {
     return;
   }
-  storage_->write(messages);
-  if (storage_options_.snapshot_mode) {
+  auto lost_messages_idx = storage_->write_messages(messages);
+  auto written_messages_count = messages.size() - lost_messages_idx.size();
+  if (storage_options_.snapshot_mode && written_messages_count > 0) {
     // Update FileInformation about the last file in metadata in case of snapshot mode
+    size_t first_msg_index = 0;
+    // If some messages were lost, we need to find the first message that was written
+    if (!lost_messages_idx.empty()) {
+      for (size_t i = 0; i < messages.size(); ++i) {
+        auto is_lost = std::binary_search(lost_messages_idx.begin(), lost_messages_idx.end(), i);
+        if (!is_lost) {
+          first_msg_index = i;
+          break;
+        }
+      }
+    }
+    size_t last_msg_index = messages.size() - 1;
+    // If some messages were lost, we need to find the last message that was written
+    if (!lost_messages_idx.empty()) {
+      for (size_t i = messages.size() - 1; i >= first_msg_index; i--) {
+        auto is_lost = std::binary_search(lost_messages_idx.begin(), lost_messages_idx.end(), i);
+        if (!is_lost) {
+          last_msg_index = i;
+          break;
+        }
+      }
+    }
+
     const auto first_msg_timestamp = std::chrono::time_point<std::chrono::high_resolution_clock>(
-      std::chrono::nanoseconds(messages.front()->recv_timestamp));
+      std::chrono::nanoseconds(messages[first_msg_index]->recv_timestamp));
     const auto last_msg_timestamp = std::chrono::time_point<std::chrono::high_resolution_clock>(
-      std::chrono::nanoseconds(messages.back()->recv_timestamp));
+      std::chrono::nanoseconds(messages[last_msg_index]->recv_timestamp));
     metadata_.files.back().starting_time = first_msg_timestamp;
     metadata_.files.back().duration = last_msg_timestamp - first_msg_timestamp;
-    metadata_.files.back().message_count = messages.size();
   }
-  metadata_.message_count += messages.size();
+  metadata_.files.back().message_count += written_messages_count;
+  metadata_.message_count += written_messages_count;
   std::lock_guard<std::mutex> lock(topics_info_mutex_);
-  for (const auto & msg : messages) {
-    if (topics_names_to_info_.find(msg->topic_name) != topics_names_to_info_.end()) {
-      topics_names_to_info_[msg->topic_name].message_count++;
+  // Update message count for each topic in metadata
+  for (size_t i = 0; i < messages.size(); i++) {
+    // If some messages were lost, we need to skip them
+    if (!lost_messages_idx.empty()) {
+      auto is_lost = std::binary_search(lost_messages_idx.begin(), lost_messages_idx.end(), i);
+      if (is_lost) {
+        continue;  // Skip lost messages
+      }
+    }
+    auto topic_info_it = topics_names_to_info_.find(messages[i]->topic_name);
+    if (topic_info_it != topics_names_to_info_.end()) {
+      topic_info_it->second.message_count++;
     }
   }
 }

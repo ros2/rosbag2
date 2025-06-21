@@ -136,7 +136,9 @@ TEST_P(Rosbag2StorageAPITests, get_bagfile_size_read_write_interface)
   auto serialized_messages = prepare_serialized_messages(topics, 500 * 20);
   create_topics(rw_storage, topics);
 
-  rw_storage->write(serialized_messages);
+  auto lost_messages = rw_storage->write_messages(serialized_messages);
+  EXPECT_TRUE(lost_messages.empty()) << "Lost messages during write: " << lost_messages.size();
+
   uint64_t storage_bagfile_size = rw_storage->get_bagfile_size();
 
   size_t fs_bagfile_size = fs::file_size(full_bagfile_path);
@@ -150,7 +152,8 @@ TEST_P(Rosbag2StorageAPITests, get_bagfile_size_read_write_interface)
     " bagfile_size_from_storage = " << storage_bagfile_size;
 
   // Write messages one more time to make sure that storage_bagfile_size updating with each write
-  rw_storage->write(serialized_messages);
+  lost_messages = rw_storage->write_messages(serialized_messages);
+  EXPECT_TRUE(lost_messages.empty()) << "Lost messages during write: " << lost_messages.size();
   storage_bagfile_size = rw_storage->get_bagfile_size();
 
   fs_bagfile_size = fs::file_size(full_bagfile_path);

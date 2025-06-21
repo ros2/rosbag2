@@ -67,17 +67,18 @@ public:
 
     ON_CALL(*storage_, set_read_order).WillByDefault(Return(true));
 
-    ON_CALL(
-      *storage_,
-      write(An<std::shared_ptr<const rosbag2_storage::SerializedBagMessage>>())).WillByDefault(
-      [this](std::shared_ptr<const rosbag2_storage::SerializedBagMessage> serialized_message) {
+    ON_CALL(*storage_,
+            write_message(An<std::shared_ptr<const rosbag2_storage::SerializedBagMessage>>()))
+    .WillByDefault(
+      [this](std::shared_ptr<const rosbag2_storage::SerializedBagMessage> serialized_message)
+      {
         mock_storage_data_.push_back(serialized_message);
-      });
+        return true;
+      }
+    );
 
-    using VectorSharedBagMessages =
-      std::vector<std::shared_ptr<const rosbag2_storage::SerializedBagMessage>>;
-
-    EXPECT_CALL(*storage_, write(An<const VectorSharedBagMessages &>())).Times(0);
+    EXPECT_CALL(*storage_,
+                write_messages(An<const rosbag2_storage::SerializedBagMessages &>())).Times(0);
 
     EXPECT_CALL(*storage_, get_bagfile_size()).Times(0);
   }
