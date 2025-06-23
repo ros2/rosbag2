@@ -17,7 +17,7 @@ from rosbag2_py import LocalMessageDefinitionSource
 
 def test_local_message_definition_source_no_crash_on_bad_name():
     source = LocalMessageDefinitionSource()
-    result = source.get_full_text('some_pkg')
+    result = source.get_full_text_ext('some_pkg', 'some_topic')
     assert result.encoding == 'unknown'
     assert result.encoded_message_definition == ''
     assert result.topic_type == 'some_pkg'
@@ -25,7 +25,7 @@ def test_local_message_definition_source_no_crash_on_bad_name():
 
 def test_local_message_definition_source_can_find_msg_deps():
     source = LocalMessageDefinitionSource()
-    result = source.get_full_text('rosbag2_test_msgdefs/ComplexMsg')
+    result = source.get_full_text_ext('rosbag2_test_msgdefs/ComplexMsg', '/complex_msg')
     assert result.encoding == 'ros2msg'
     assert result.encoded_message_definition == (
         'rosbag2_test_msgdefs/BasicMsg b\n'
@@ -38,7 +38,7 @@ def test_local_message_definition_source_can_find_msg_deps():
 
 def test_local_message_definition_source_can_find_srv_deps_in_msg():
     source = LocalMessageDefinitionSource()
-    result = source.get_full_text('rosbag2_test_msgdefs/srv/ComplexSrvMsg')
+    result = source.get_full_text_ext('rosbag2_test_msgdefs/srv/ComplexSrvMsg', '/complex_msg')
     assert result.encoding == 'ros2msg'
     assert result.topic_type == 'rosbag2_test_msgdefs/srv/ComplexSrvMsg'
     assert result.encoded_message_definition == (
@@ -56,7 +56,7 @@ def test_local_message_definition_source_can_find_srv_deps_in_msg():
 
 def test_local_message_definition_source_can_find_srv_deps_in_idl():
     source = LocalMessageDefinitionSource()
-    result = source.get_full_text('rosbag2_test_msgdefs/srv/ComplexSrvIdl')
+    result = source.get_full_text_ext('rosbag2_test_msgdefs/srv/ComplexSrvIdl', '/complex_msg')
     assert result.encoding == 'ros2idl'
     assert result.topic_type == 'rosbag2_test_msgdefs/srv/ComplexSrvIdl'
     assert result.encoded_message_definition == (
@@ -83,7 +83,7 @@ def test_local_message_definition_source_can_find_srv_deps_in_idl():
 
 def test_local_message_definition_source_can_find_idl_deps():
     source = LocalMessageDefinitionSource()
-    result = source.get_full_text('rosbag2_test_msgdefs/msg/ComplexIdl')
+    result = source.get_full_text_ext('rosbag2_test_msgdefs/msg/ComplexIdl', '/complex_idl')
     assert result.encoding == 'ros2idl'
     assert result.topic_type == 'rosbag2_test_msgdefs/msg/ComplexIdl'
     assert result.encoded_message_definition == (
@@ -113,8 +113,8 @@ def test_local_message_definition_source_can_find_idl_deps():
 
 def test_local_message_definition_source_can_resolve_msg_with_idl_deps():
     source = LocalMessageDefinitionSource()
-    result = source.get_full_text(
-        'rosbag2_test_msgdefs/msg/ComplexMsgDependsOnIdl')
+    result = source.get_full_text_ext(
+        'rosbag2_test_msgdefs/msg/ComplexMsgDependsOnIdl', '/complex_msg_depends_on_idl')
     assert result.encoding == 'ros2idl'
     assert result.topic_type == 'rosbag2_test_msgdefs/msg/ComplexMsgDependsOnIdl'
     assert result.encoded_message_definition == (

@@ -26,6 +26,8 @@
 #include <ament_index_cpp/get_package_share_directory.hpp>
 #include <ament_index_cpp/get_package_prefix.hpp>
 
+#include "rosbag2_cpp/action_utils.hpp"
+#include "rosbag2_cpp/service_utils.hpp"
 #include "rosbag2_cpp/logging.hpp"
 
 namespace rosbag2_cpp
@@ -227,7 +229,16 @@ const LocalMessageDefinitionSource::MessageSpec & LocalMessageDefinitionSource::
 rosbag2_storage::MessageDefinition LocalMessageDefinitionSource::get_full_text(
   const std::string & root_type)
 {
+  return get_full_text_ext(root_type, std::string{});
+}
+
+rosbag2_storage::MessageDefinition LocalMessageDefinitionSource::get_full_text_ext(
+  const std::string & root_type,
+  const std::string & topic_name)
+{
   std::unordered_set<DefinitionIdentifier, DefinitionIdentifierHash> seen_deps;
+
+  std::string real_root_type = root_type;
 
   std::function<std::string(const DefinitionIdentifier &, int32_t)> append_recursive =
     [&](const DefinitionIdentifier & definition_identifier, int32_t depth) {
@@ -253,9 +264,13 @@ rosbag2_storage::MessageDefinition LocalMessageDefinitionSource::get_full_text(
   Format format = Format::UNKNOWN;
   int32_t max_recursion_depth = ROSBAG2_CPP_LOCAL_MESSAGE_DEFINITION_SOURCE_MAX_RECURSION_DEPTH;
 
-  if (root_type.find("/srv/") == std::string::npos &&
-    root_type.find("/action/") == std::string::npos)
-  {  // Only msg and idl files
+  bool is_action_type =
+    root_type.find("/action/") != std::string::npos ||
+    root_type == "action_msgs/msg/GoalStatusArray" ||
+    root_type == "action_msgs/srv/CancelGoal_Event";
+  bool is_service_type = (!is_action_type && root_type.find("/srv/") != std::string::npos);
+
+  if (!is_service_type && !is_action_type) {  // Only msg and idl files
     try {
       format = Format::MSG;
       result = append_recursive(DefinitionIdentifier(root_type, format), max_recursion_depth);
@@ -276,12 +291,20 @@ rosbag2_storage::MessageDefinition LocalMessageDefinitionSource::get_full_text(
     // Therefore, will try to search dependencies in MSG files first then in IDL files
     // via two separate recursive searches for each dependency.
     format = Format::UNKNOWN;
-    if (root_type.find("/srv/") != std::string::npos) {
+    if (is_service_type) {
       format = Format::SRV;
-    } else if (root_type.find("/action/") != std::string::npos) {
+      if (!topic_name.empty() && is_service_event_topic(topic_name, root_type)) {
+        // Convert service event type to service type
+        real_root_type = service_event_topic_type_to_service_type(root_type);
+      }
+    } else if (is_action_type) {
       format = Format::ACTION;
+      if (!topic_name.empty() && is_topic_belong_to_action(topic_name, root_type)) {
+        // Convert action interface type to action type
+        real_root_type = rosbag2_cpp::get_action_type_for_info(root_type);
+      }
     }
-    DefinitionIdentifier def_identifier{root_type, format};
+    DefinitionIdentifier def_identifier{real_root_type, format};
     (void)seen_deps.insert(def_identifier).second;
     result = delimiter(def_identifier);
     const MessageSpec & spec = load_message_spec(def_identifier);
@@ -321,6 +344,7 @@ rosbag2_storage::MessageDefinition LocalMessageDefinitionSource::get_full_text(
       break;
     case Format::MSG:
     case Format::SRV:
+    case Format::ACTION:
       out.encoding = "ros2msg";
       break;
     case Format::IDL:
@@ -331,7 +355,7 @@ rosbag2_storage::MessageDefinition LocalMessageDefinitionSource::get_full_text(
   }
 
   out.encoded_message_definition = result;
-  out.topic_type = root_type;
+  out.topic_type = real_root_type;
   return out;
 }
 }  // namespace rosbag2_cpp
