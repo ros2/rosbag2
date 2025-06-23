@@ -306,8 +306,9 @@ rosbag2_storage::MessageDefinition LocalMessageDefinitionSource::get_full_text_e
         // action introspection interface types to the corresponding action type directly, we are
         // using cache to store the action type from other action introspection interface types
         // corresponding to the same topic name and original action type.
-        auto it = topic_name_to_inner_action_interface_type_cache_.find(topic_name);
-        if (it != topic_name_to_inner_action_interface_type_cache_.end() && !it->second.empty()) {
+        std::string action_name = action_interface_name_to_action_name(topic_name);
+        auto it = action_name_to_inner_action_interface_type_cache_.find(action_name);
+        if (it != action_name_to_inner_action_interface_type_cache_.end() && !it->second.empty()) {
           real_root_type = it->second;
         } else {
           // Convert action interface type to action type
@@ -316,7 +317,7 @@ rosbag2_storage::MessageDefinition LocalMessageDefinitionSource::get_full_text_e
           // type is CancelGoalEvent or Status.
           if (!action_type.empty()) {
             real_root_type = std::move(action_type);
-            topic_name_to_inner_action_interface_type_cache_[topic_name] = real_root_type;
+            action_name_to_inner_action_interface_type_cache_[action_name] = real_root_type;
           }
         }
       }
