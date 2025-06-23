@@ -25,6 +25,8 @@ PYBIND11_MODULE(_message_definitions, m) {
   .def(
     "get_full_text",
     [](rosbag2_cpp::LocalMessageDefinitionSource & self, const std::string & root_type) {
+      PyErr_WarnEx(PyExc_DeprecationWarning,
+        "get_full_text() is deprecated, use get_full_text_ext() instead.", 1);
       return self.get_full_text_ext(root_type, "");
     },
     pybind11::arg("root_type"),
