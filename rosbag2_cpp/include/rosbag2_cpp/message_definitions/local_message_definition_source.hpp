@@ -68,7 +68,30 @@ public:
    * Throws DefinitionNotFoundError if one or more definition files are missing for the given
    * package resource name.
    */
+  [[deprecated("Use get_full_text_ext() instead, which allows specifying the topic name and "
+     "provides more flexibility in how the message definition is constructed.")]]
   rosbag2_storage::MessageDefinition get_full_text(const std::string & root_type);
+
+  /**
+   * \brief Concatenate the message definition with its dependencies into a self-contained schema.
+   * \details The format is different for MSG/SRV/ACTION and IDL definitions, and is described
+   * fully in the docs/message_definition_encoding.md.
+   * For SRV type, root_type must include a string '/srv/'.
+   * For ACTION type, root_type must include a string '/action/'.
+   * Note: that for service or action introspection topics, the topic type will be extended to the
+   * inner original service or action type, respectively, before trying to find the
+   * message definition.
+   * \param[in] topic_name The topic name, which is used to determine the message definition format.
+   * \param[in] root_type The root type of the message definition, which should be a fully qualified
+   * datatype name.
+   * \throws DefinitionNotFoundError if one or more definition files are missing for the given
+   * package resource name.
+   * \return A MessageDefinition object containing the encoded message definition and its
+   * dependencies.
+   */
+  rosbag2_storage::MessageDefinition get_full_text_ext(
+    const std::string & root_type,
+    const std::string & topic_name);
 
   enum struct Format
   {
