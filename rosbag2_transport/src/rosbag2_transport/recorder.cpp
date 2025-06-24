@@ -166,6 +166,9 @@ private:
   std::mutex event_publisher_thread_mutex_;
   std::condition_variable event_publisher_thread_wake_cv_;
   std::thread event_publisher_thread_;
+
+  std::atomic<size_t> num_messages_lost_on_transport_{0};
+  std::atomic<size_t> num_messages_lost_in_recorder_{0};
 };
 
 RecorderImpl::RecorderImpl(
@@ -259,6 +262,17 @@ void RecorderImpl::stop()
   }
   in_recording_ = false;
   RCLCPP_INFO(node->get_logger(), "Recording stopped");
+
+  if (num_messages_lost_on_transport_.load() > 0) {
+    RCLCPP_INFO(node->get_logger(),
+      "Number of messages lost on the transport layer: %zu",
+        num_messages_lost_on_transport_.load());
+  }
+
+  if (num_messages_lost_in_recorder_.load() > 0) {
+    RCLCPP_INFO(node->get_logger(),
+      "Number of messages lost in the recorder: %zu", num_messages_lost_in_recorder_.load());
+  }
 }
 
 void RecorderImpl::record()
@@ -275,8 +289,9 @@ void RecorderImpl::record()
   if (record_options_.rmw_serialization_format.empty()) {
     throw std::runtime_error("No serialization format specified!");
   }
-
   subscriptions_.clear();
+  num_messages_lost_in_recorder_.store(0);
+  num_messages_lost_on_transport_.store(0);
   writer_->open(
     storage_options_,
     {rmw_get_serialization_format(), record_options_.rmw_serialization_format});
@@ -384,6 +399,7 @@ void RecorderImpl::on_messages_lost_in_recorder(
     // Log lost messages in recorder
     std::string log_text("Recorder lost messages per topic: ");
     for (const auto & info : msgs_lost_info) {
+      num_messages_lost_in_recorder_.fetch_add(info.num_messages_lost);
       log_text += "\n\t" + info.topic_name + ": " + std::to_string(info.num_messages_lost);
     }
     RCLCPP_DEBUG(node->get_logger(), "%s", log_text.c_str());
@@ -395,6 +411,7 @@ void RecorderImpl::on_messages_lost_in_transport(
   const std::string & topic_name,
   const rclcpp::QOSMessageLostInfo & msgs_lost_info)
 {
+  num_messages_lost_on_transport_.fetch_add(msgs_lost_info.total_count);
   RCLCPP_DEBUG(
     node->get_logger(),
     "Messages lost on transport layer for topic '%s'. Total lost: %lu",
