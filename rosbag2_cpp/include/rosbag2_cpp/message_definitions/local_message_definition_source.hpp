@@ -73,19 +73,20 @@ public:
   rosbag2_storage::MessageDefinition get_full_text(const std::string & root_type);
 
   /**
-   * \brief Concatenate the message definition with its dependencies into a self-contained schema.
+   * \brief Try to get the message definition and concatenate it with its dependencies into a
+   * self-contained schema.
    * \details The format is different for MSG/SRV/ACTION and IDL definitions, and is described
    * fully in the docs/message_definition_encoding.md.
    * For SRV type, root_type must include a string '/srv/'.
    * For ACTION type, root_type must include a string '/action/'.
-   * Note: that for service or action introspection topics, the topic type will be extended to the
+   * \note That for service or action introspection topics, the topic type will be extended to the
    * inner original service or action type, respectively, before trying to find the
    * message definition.
    * \param[in] topic_name The topic name, which is used to determine the message definition format.
    * \param[in] root_type The root type of the message definition, which should be a fully qualified
    * datatype name.
-   * \throws DefinitionNotFoundError if one or more definition files are missing for the given
-   * package resource name.
+   * \throws DefinitionNotFoundError if one or more definition files are missing for the
+   * corresponding package resource name or if the package resource name cannot be determined.
    * \return A MessageDefinition object containing the encoded message definition and its
    * dependencies.
    */
@@ -171,6 +172,20 @@ private:
 
   std::unordered_map<DefinitionIdentifier,
     MessageSpec, DefinitionIdentifierHash> msg_specs_by_definition_identifier_;
+
+  /**
+   * \brief Action name to inner action interface type cache.
+   *
+   * \note This cache is used to store the inner action interface type for a given action name,
+   * because we can't convert CancelGoalEvent or Status action introspection interface types to
+   * action type directly. Therefore, we will use cache to try to determine the original action
+   * type for CancelGoalEvent, Status action introspection interface types by storing the action
+   * type from other action interface types corresponding to the same action name and original
+   * action type.
+   * The action name is the topic name without the postfix, e.g. for
+   * `/fibonacci/_action/send_goal/_service_event` the action name is `/fibonacci`.
+   */
+  std::unordered_map<std::string, std::string> action_name_to_inner_action_interface_type_cache_;
 };
 
 ROSBAG2_CPP_PUBLIC

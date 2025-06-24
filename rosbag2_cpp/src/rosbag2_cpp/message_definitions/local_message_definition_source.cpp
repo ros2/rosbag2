@@ -238,8 +238,6 @@ rosbag2_storage::MessageDefinition LocalMessageDefinitionSource::get_full_text_e
 {
   std::unordered_set<DefinitionIdentifier, DefinitionIdentifierHash> seen_deps;
 
-  std::string real_root_type = root_type;
-
   std::function<std::string(const DefinitionIdentifier &, int32_t)> append_recursive =
     [&](const DefinitionIdentifier & definition_identifier, int32_t depth) {
       if (depth <= 0) {
@@ -270,7 +268,11 @@ rosbag2_storage::MessageDefinition LocalMessageDefinitionSource::get_full_text_e
     root_type == "action_msgs/srv/CancelGoal_Event";
   bool is_service_type = (!is_action_type && root_type.find("/srv/") != std::string::npos);
 
-  if (!is_service_type && !is_action_type) {  // Only msg and idl files
+  // Note: If the root_type is a service event type or one of the action interface types, we will
+  // try to convert it to the original service or action type respectively.
+  std::string real_root_type = root_type;
+
+  if (!is_service_type && !is_action_type) {  // Only for regular message types
     try {
       format = Format::MSG;
       result = append_recursive(DefinitionIdentifier(root_type, format), max_recursion_depth);
@@ -300,8 +302,24 @@ rosbag2_storage::MessageDefinition LocalMessageDefinitionSource::get_full_text_e
     } else if (is_action_type) {
       format = Format::ACTION;
       if (!topic_name.empty() && is_topic_belong_to_action(topic_name, root_type)) {
-        // Convert action interface type to action type
-        real_root_type = rosbag2_cpp::get_action_type_for_info(root_type);
+        // Search for action type in cache first. Since we can't convert CancelGoalEvent or Status
+        // action introspection interface types to the corresponding action type directly, we are
+        // using cache to store the action type from other action introspection interface types
+        // corresponding to the same topic name and original action type.
+        std::string action_name = action_interface_name_to_action_name(topic_name);
+        auto it = action_name_to_inner_action_interface_type_cache_.find(action_name);
+        if (it != action_name_to_inner_action_interface_type_cache_.end() && !it->second.empty()) {
+          real_root_type = it->second;
+        } else {
+          // Convert action interface type to action type
+          std::string action_type = rosbag2_cpp::get_action_type_for_info(root_type);
+          // Note: get_action_type_for_info(topic_type) will return empty string if the action
+          // type is CancelGoalEvent or Status.
+          if (!action_type.empty()) {
+            real_root_type = std::move(action_type);
+            action_name_to_inner_action_interface_type_cache_[action_name] = real_root_type;
+          }
+        }
       }
     }
     DefinitionIdentifier def_identifier{real_root_type, format};

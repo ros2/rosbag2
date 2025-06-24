@@ -138,6 +138,26 @@ TEST(test_local_message_definition_source, can_find_action_deps_in_msg)
     check_result(result);
   }
 
+  // Known limitation:
+  // The get_full_text_ext(..) can return action definition for action interface 'cancel_goal' and
+  // 'status' only if it was a prior successful call to the get_full_text_ext(..) for the same
+  // action name.
+  // Check action interface cancel_goal
+  {
+    auto result = source.get_full_text_ext(
+      "action_msgs/srv/CancelGoal_Event",
+      "/complex_action_msg/_action/cancel_goal/_service_event");
+    check_result(result);
+  }
+
+  // Check action interface status
+  {
+    auto result = source.get_full_text_ext(
+      "action_msgs/msg/GoalStatusArray",
+      "/complex_action_msg/_action/status");
+    check_result(result);
+  }
+
   // Check action interface get_result
   {
     auto result = source.get_full_text_ext(
@@ -153,11 +173,6 @@ TEST(test_local_message_definition_source, can_find_action_deps_in_msg)
       "/complex_action_msg/_action/feedback");
     check_result(result);
   }
-
-  // Known limitation
-  // get_full_text_ext() cannot return action definition for action interface 'cancel_goal' and
-  // 'status'.
-  // This issue will be resolved in future versions.
 }
 
 TEST(test_local_message_definition_source, can_find_action_deps_in_idl)
@@ -198,6 +213,26 @@ TEST(test_local_message_definition_source, can_find_action_deps_in_idl)
     check_result(result);
   }
 
+  // Known limitation:
+  // The get_full_text_ext(..) can return action definition for action interface 'cancel_goal' and
+  // 'status' only if it was a prior successful call to the get_full_text_ext(..) for the same
+  // action name.
+  // Check action interface cancel_goal
+  {
+    auto result = source.get_full_text_ext(
+      "action_msgs/srv/CancelGoal_Event",
+      "/complex_action_idl/_action/cancel_goal/_service_event");
+    check_result(result);
+  }
+
+  // Check action interface status
+  {
+    auto result = source.get_full_text_ext(
+      "action_msgs/msg/GoalStatusArray",
+      "/complex_action_idl/_action/status");
+    check_result(result);
+  }
+
   // Check action interface get_result
   {
     auto result = source.get_full_text_ext(
@@ -213,11 +248,6 @@ TEST(test_local_message_definition_source, can_find_action_deps_in_idl)
       "/complex_action_idl/_action/feedback");
     check_result(result);
   }
-
-  // Known limitation
-  // get_full_text_ext() cannot return action definition for action interface 'cancel_goal' and
-  // 'status'.
-  // This issue will be resolved in future versions.
 }
 
 TEST(test_local_message_definition_source, can_find_idl_deps)
