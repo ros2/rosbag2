@@ -67,7 +67,7 @@ def test_player_log_level(storage_id):
 
 @pytest.mark.parametrize('storage_id', TESTED_STORAGE_IDS)
 def test_recoder_log_level(tmp_path, storage_id):
-    bag_path = tmp_path / 'test_record_cancel'
+    bag_path = tmp_path / 'test_recoder_log_level'
     storage_options, converter_options = get_rosbag_options(str(bag_path), storage_id)
     record_options = rosbag2_py.RecordOptions()
 
