@@ -264,13 +264,13 @@ void RecorderImpl::stop()
   RCLCPP_INFO(node->get_logger(), "Recording stopped");
 
   if (num_messages_lost_on_transport_.load() > 0) {
-    RCLCPP_INFO(node->get_logger(),
+    RCLCPP_WARN(node->get_logger(),
       "Number of messages lost on the transport layer: %zu",
         num_messages_lost_on_transport_.load());
   }
 
   if (num_messages_lost_in_recorder_.load() > 0) {
-    RCLCPP_INFO(node->get_logger(),
+    RCLCPP_WARN(node->get_logger(),
       "Number of messages lost in the recorder: %zu", num_messages_lost_in_recorder_.load());
   }
 }
