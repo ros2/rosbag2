@@ -154,6 +154,7 @@ public:
   std::unique_ptr<rosbag2_cpp::Writer> writer_;
   std::string fake_storage_uri_;
   const std::string bag_base_dir_ = "test_bag";
+  size_t num_messages_to_lose_ = 0;
 };
 
 std::shared_ptr<rosbag2_storage::SerializedBagMessage> make_test_msg()
@@ -771,7 +772,7 @@ TEST_F(SequentialWriterTest, calls_callback_on_storage_message_lost_with_no_cach
   const size_t message_count = 10;
   const size_t expected_lost_messages = 4;
   const size_t expected_written_messages = message_count - expected_lost_messages;
-
+  num_messages_to_lose_ = expected_lost_messages;
   EXPECT_CALL(*storage_,
               write_message(An<std::shared_ptr<const rosbag2_storage::SerializedBagMessage>>()))
   .Times(message_count);
@@ -779,16 +780,18 @@ TEST_F(SequentialWriterTest, calls_callback_on_storage_message_lost_with_no_cach
   ON_CALL(*storage_,
     write_message(An<std::shared_ptr<const rosbag2_storage::SerializedBagMessage>>()))
   .WillByDefault(
-    [this](std::shared_ptr<const rosbag2_storage::SerializedBagMessage>) {
-      static size_t curr_number_of_lost_messages = 0;
-      if (curr_number_of_lost_messages < expected_lost_messages) {
-        curr_number_of_lost_messages++;
-        return false;  // Simulate message loss
-      } else {
-        fake_storage_size_++;
-        return true;  // Simulate successful write
+    Invoke(
+      [this](const std::shared_ptr<const rosbag2_storage::SerializedBagMessage> &) -> bool {
+        static size_t curr_number_of_lost_messages = 0;
+        if (curr_number_of_lost_messages < num_messages_to_lose_) {
+          curr_number_of_lost_messages++;
+          return false;  // Simulate message loss
+        } else {
+          fake_storage_size_++;
+          return true;  // Simulate successful write
+        }
       }
-    }
+    )
   );
 
   auto sequential_writer = std::make_unique<rosbag2_cpp::writers::SequentialWriter>(
@@ -832,6 +835,7 @@ TEST_F(SequentialWriterTest, calls_callback_on_storage_messages_lost_with_cache)
   const size_t message_count = 10;
   const size_t expected_lost_messages = 5;
   const size_t expected_written_messages = message_count - expected_lost_messages;
+  num_messages_to_lose_ = expected_lost_messages;
 
   EXPECT_CALL(*storage_,
               write_message(An<std::shared_ptr<const rosbag2_storage::SerializedBagMessage>>()))
@@ -839,20 +843,22 @@ TEST_F(SequentialWriterTest, calls_callback_on_storage_messages_lost_with_cache)
 
   ON_CALL(*storage_, write_messages(An<const rosbag2_storage::SerializedBagMessages &>()))
   .WillByDefault(
-    [this](const rosbag2_storage::SerializedBagMessages & msgs)
-    {
-      static size_t curr_number_of_lost_messages = 0;
-      std::vector<size_t> lost_messages;
-      for (size_t i = 0; i < msgs.size(); i++) {
-        if (curr_number_of_lost_messages < expected_lost_messages) {
-          lost_messages.push_back(i);    // Simulate message loss
-          curr_number_of_lost_messages++;
-        } else {
-          fake_storage_size_++;
+    Invoke(
+      [this](const rosbag2_storage::SerializedBagMessages & msgs)
+      {
+        static size_t curr_number_of_lost_messages = 0;
+        std::vector<size_t> lost_messages;
+        for (size_t i = 0; i < msgs.size(); i++) {
+          if (curr_number_of_lost_messages < num_messages_to_lose_) {
+            lost_messages.push_back(i);    // Simulate message loss
+            curr_number_of_lost_messages++;
+          } else {
+            fake_storage_size_++;
+          }
         }
+        return lost_messages;
       }
-      return lost_messages;
-    }
+    )
   );
 
   auto sequential_writer = std::make_unique<rosbag2_cpp::writers::SequentialWriter>(
@@ -898,6 +904,7 @@ TEST_F(SequentialWriterTest, calls_callback_on_messages_loss_in_writer_cache)
 {
   const size_t message_count = 10;
   const size_t expected_lost_messages = 5;
+  num_messages_to_lose_ = expected_lost_messages;
 
   auto sequential_writer = std::make_unique<SequentialWriterForTest>(
     std::move(storage_factory_), converter_factory_, std::move(metadata_io_));
@@ -928,18 +935,18 @@ TEST_F(SequentialWriterTest, calls_callback_on_messages_loss_in_writer_cache)
   ON_CALL(*mock_message_cache,
         mock_push(An<std::shared_ptr<const rosbag2_storage::SerializedBagMessage>>()))
   .WillByDefault(
-    [&expected_lost_messages]
-    (std::shared_ptr<const rosbag2_storage::SerializedBagMessage> serialized_message)
-    {
-      (void)serialized_message;  // Unused in this context
-      static size_t num_lost_messages_in_cache = 0;
-      if (num_lost_messages_in_cache < expected_lost_messages) {
-        num_lost_messages_in_cache++;
-        return false;
-      } else {
-        return true;
+    Invoke(
+      [this](const std::shared_ptr<const rosbag2_storage::SerializedBagMessage> &)-> bool
+      {
+        static size_t num_lost_messages_in_cache = 0;
+        if (num_lost_messages_in_cache < num_messages_to_lose_) {
+          num_lost_messages_in_cache++;
+          return false;
+        } else {
+          return true;
+        }
       }
-    }
+    )
   );
 
   auto mock_cache_consumer =
