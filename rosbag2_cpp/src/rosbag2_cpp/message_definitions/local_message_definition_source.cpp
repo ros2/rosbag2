@@ -234,8 +234,9 @@ rosbag2_storage::MessageDefinition LocalMessageDefinitionSource::get_full_text(
   std::string result;
   Format format = Format::UNKNOWN;
   int32_t max_recursion_depth = ROSBAG2_CPP_LOCAL_MESSAGE_DEFINITION_SOURCE_MAX_RECURSION_DEPTH;
+  std::string service_root_type;
 
-  if (root_type.find("/srv/") == std::string::npos) {  // Not a service
+  if (root_type.find("/srv/") == std::string::npos) {  // Normal topic type
     try {
       format = Format::MSG;
       result = append_recursive(DefinitionIdentifier(root_type, format), max_recursion_depth);
@@ -251,12 +252,21 @@ rosbag2_storage::MessageDefinition LocalMessageDefinitionSource::get_full_text(
         "definition will be left empty in bag.", err.what());
       format = Format::UNKNOWN;
     }
-  } else {
+  } else {  // Service event topic type
     // The service dependencies could be either in the msg or idl files. Therefore, will try to
     // search service dependencies in MSG files first then in IDL files via two separate recursive
     // searches for each dependency.
-    format = Format::UNKNOWN;
-    DefinitionIdentifier def_identifier{root_type, Format::SRV};
+    format = Format::SRV;
+
+    // Convert service event type to service type
+    std::regex srv_event_type_postfix_regex{R"(_Event$)"};
+    service_root_type = root_type;
+    if (std::regex_search(root_type, srv_event_type_postfix_regex)) {
+      service_root_type = std::regex_replace(
+        service_root_type, srv_event_type_postfix_regex, "");
+    }
+
+    DefinitionIdentifier def_identifier{service_root_type, format};
     (void)seen_deps.insert(def_identifier).second;
     result = delimiter(def_identifier);
     const MessageSpec & spec = load_message_spec(def_identifier);
@@ -306,7 +316,7 @@ rosbag2_storage::MessageDefinition LocalMessageDefinitionSource::get_full_text(
   }
 
   out.encoded_message_definition = result;
-  out.topic_type = root_type;
+  out.topic_type = (format == Format::SRV) ? service_root_type : root_type;
   return out;
 }
 }  // namespace rosbag2_cpp
