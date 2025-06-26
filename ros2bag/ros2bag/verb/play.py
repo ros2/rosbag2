@@ -333,8 +333,8 @@ class PlayVerb(VerbExtension):
         play_options.progress_bar_update_rate = args.progress_bar_update_rate
         play_options.progress_bar_separation_lines = args.progress_bar_separation_lines
 
-        player = Player(args.log_level)
+        player = Player(storage_options, play_options, args.log_level)
         try:
-            player.play(storage_options, play_options)
+            player.play()
         except KeyboardInterrupt:
             pass
