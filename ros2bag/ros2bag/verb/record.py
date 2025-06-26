@@ -359,10 +359,10 @@ class RecordVerb(VerbExtension):
         record_options.use_sim_time = args.use_sim_time
         record_options.disable_keyboard_controls = args.disable_keyboard_controls
 
-        recorder = Recorder(args.log_level)
+        recorder = Recorder(storage_options, record_options, args.log_level, args.node_name)
 
         try:
-            recorder.record(storage_options, record_options, args.node_name)
+            recorder.record()
         except KeyboardInterrupt:
             pass
 

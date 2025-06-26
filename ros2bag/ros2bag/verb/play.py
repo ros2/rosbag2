@@ -277,8 +277,8 @@ class PlayVerb(VerbExtension):
         else:
             play_options.service_requests_source = ServiceRequestsSource.CLIENT_INTROSPECTION
 
-        player = Player(args.log_level)
+        player = Player(storage_options, play_options, args.log_level)
         try:
-            player.play(storage_options, play_options)
+            player.play()
         except KeyboardInterrupt:
             pass

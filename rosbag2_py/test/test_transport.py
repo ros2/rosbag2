@@ -48,24 +48,36 @@ def test_options_qos_conversion():
     assert record_options.topic_qos_profile_overrides == simple_overrides
 
 
-def test_player_log_level():
-    rosbag2_py.Player()  # Test for default constructor
+@pytest.mark.parametrize('storage_id', TESTED_STORAGE_IDS)
+def test_player_log_level(storage_id):
+    bag_path = str(RESOURCES_PATH / storage_id / 'talker')
+    assert os.path.exists(bag_path), 'Could not find test bag file: ' + bag_path
+
+    storage_options, converter_options = get_rosbag_options(bag_path, storage_id)
+    play_options = rosbag2_py.PlayOptions()
+
+    rosbag2_py.Player(storage_options, play_options)  # Test for default value
     valid_log_level = 'debug'
-    rosbag2_py.Player(valid_log_level)
+    rosbag2_py.Player(storage_options, play_options, valid_log_level)
 
     invalid_log_level = 'xxx'
     with pytest.raises(RuntimeError):
-        rosbag2_py.Player(invalid_log_level)
+        rosbag2_py.Player(storage_options, play_options, invalid_log_level)
 
 
-def test_recoder_log_level():
-    rosbag2_py.Recorder()  # Test for default constructor
+@pytest.mark.parametrize('storage_id', TESTED_STORAGE_IDS)
+def test_recoder_log_level(tmp_path, storage_id):
+    bag_path = tmp_path / 'test_recoder_log_level'
+    storage_options, converter_options = get_rosbag_options(str(bag_path), storage_id)
+    record_options = rosbag2_py.RecordOptions()
+
+    rosbag2_py.Recorder(storage_options, record_options)  # Test for default value
     valid_log_level = 'debug'
-    rosbag2_py.Recorder(valid_log_level)
+    rosbag2_py.Recorder(storage_options, record_options, valid_log_level)
 
     invalid_log_level = 'xxx'
     with pytest.raises(RuntimeError):
-        rosbag2_py.Recorder(invalid_log_level)
+        rosbag2_py.Recorder(storage_options, record_options, invalid_log_level)
 
 
 @pytest.mark.parametrize('storage_id', TESTED_STORAGE_IDS)
@@ -73,18 +85,17 @@ def test_record_cancel(tmp_path, storage_id):
     bag_path = tmp_path / 'test_record_cancel'
     storage_options, converter_options = get_rosbag_options(str(bag_path), storage_id)
 
-    recorder = rosbag2_py.Recorder()
-
     record_options = rosbag2_py.RecordOptions()
     record_options.all_topics = True
     record_options.is_discovery_disabled = False
     record_options.topic_polling_interval = datetime.timedelta(milliseconds=100)
 
+    recorder = rosbag2_py.Recorder(storage_options, record_options)
+
     ctx = rclpy.Context()
     ctx.init()
     record_thread = threading.Thread(
         target=recorder.record,
-        args=(storage_options, record_options),
         daemon=True)
     record_thread.start()
 
@@ -122,15 +133,14 @@ def test_play_cancel(storage_id, capfd):
 
     storage_options, converter_options = get_rosbag_options(bag_path, storage_id)
 
-    player = rosbag2_py.Player()
-
     play_options = rosbag2_py.PlayOptions()
     play_options.loop = True
     play_options.start_paused = True
 
+    player = rosbag2_py.Player(storage_options, play_options)
+
     player_thread = threading.Thread(
         target=player.play,
-        args=(storage_options, play_options),
         daemon=True)
     player_thread.start()
 
