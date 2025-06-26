@@ -434,6 +434,10 @@ void SequentialCompressionWriter::write(
           "from compression queue because it is full. Queue size: " <<
           compressor_message_queue_.size());
       compressor_message_queue_.pop();
+      // Process message lost event
+      auto info = std::make_shared<std::vector<rosbag2_cpp::bag_events::MessagesLostInfo>>();
+      info->emplace_back(rosbag2_cpp::bag_events::MessagesLostInfo{message->topic_name, 1});
+      this->on_messages_lost(std::move(info));
     }
 
     // If no message should be dropped and the queue has still messages,

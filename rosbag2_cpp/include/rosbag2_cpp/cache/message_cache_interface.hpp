@@ -41,7 +41,8 @@ public:
   virtual ~MessageCacheInterface() {}
 
   /// Push a bag message into the producer buffer.
-  virtual void push(std::shared_ptr<const rosbag2_storage::SerializedBagMessage> msg) = 0;
+  /// \return True if message was successfully pushed, false if the buffer is full.
+  virtual bool push(std::shared_ptr<const rosbag2_storage::SerializedBagMessage> msg) = 0;
 
   /// \brief Get a pointer to the buffer that can be used for consuming the cached messages.
   /// This call locks access to the buffer, `swap_buffers` and `get_consumer_buffer` will block

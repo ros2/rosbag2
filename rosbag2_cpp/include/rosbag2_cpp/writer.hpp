@@ -238,9 +238,12 @@ public:
     return *writer_impl_;
   }
 
-  /*
+  /**
    * \brief Add callbacks for events that may occur during bag writing.
+   *
    * \param callbacks the structure containing the callback to add for each event.
+   * \throws std::runtime_error if none of the write_split_callback and messages_lost_callback
+   * callbacks are set.
    */
   void add_event_callbacks(bag_events::WriterEventCallbacks & callbacks);
 

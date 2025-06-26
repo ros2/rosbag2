@@ -38,7 +38,24 @@ enum class BagEvent
   WRITE_SPLIT,
   /// Reading of the input bag file has gone over a split, opening the next file.
   READ_SPLIT,
+  /// The Writer has lost messages on the storage side or due to a cache overflow.
+  MESSAGES_LOST,
 };
+
+
+/**
+ * \brief The information structure passed to callbacks for the MESSAGES_LOST event.
+ * \details This structure contains the topic name and the number of messages lost for that topic.
+ */
+struct MessagesLostInfo
+{
+  /// The name of the topic for which messages were lost.
+  std::string topic_name;
+  /// The number of messages lost for that topic.
+  uint64_t num_messages_lost;
+};
+
+using MessagesLostCallback = std::function<void(const std::vector<MessagesLostInfo> &)>;
 
 /**
  * \brief The information structure passed to callbacks for the WRITE_SPLIT and READ_SPLIT events.
@@ -60,6 +77,9 @@ struct WriterEventCallbacks
 {
   /// The callback to call for the WRITE_SPLIT event.
   BagSplitCallbackType write_split_callback;
+
+  /// The callback to call for the MESSAGES_LOST event.
+  MessagesLostCallback messages_lost_callback;
 };
 
 /**

@@ -44,7 +44,7 @@ MessageCache::~MessageCache()
   log_dropped();
 }
 
-void MessageCache::push(std::shared_ptr<const rosbag2_storage::SerializedBagMessage> msg)
+bool MessageCache::push(std::shared_ptr<const rosbag2_storage::SerializedBagMessage> msg)
 {
   // While pushing, we keep track of inserted and dropped messages as well
   bool pushed = false;
@@ -58,6 +58,8 @@ void MessageCache::push(std::shared_ptr<const rosbag2_storage::SerializedBagMess
   }
 
   notify_data_ready();
+
+  return pushed;
 }
 
 std::shared_ptr<CacheBufferInterface> MessageCache::get_consumer_buffer()

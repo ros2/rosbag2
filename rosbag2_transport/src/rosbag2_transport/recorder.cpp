@@ -130,6 +130,13 @@ private:
   void event_publisher_thread_main();
   bool event_publisher_thread_should_wake();
 
+  void on_messages_lost_in_recorder(
+    const std::vector<rosbag2_cpp::bag_events::MessagesLostInfo> & msgs_lost_info);
+
+  void on_messages_lost_in_transport(
+    const std::string & topic_name,
+    const rclcpp::QOSMessageLostInfo & msgs_lost_info);
+
   rclcpp::Node * node;
   std::unique_ptr<TopicFilter> topic_filter_;
   std::future<void> discovery_future_;
@@ -159,6 +166,9 @@ private:
   std::mutex event_publisher_thread_mutex_;
   std::condition_variable event_publisher_thread_wake_cv_;
   std::thread event_publisher_thread_;
+
+  std::atomic<size_t> num_messages_lost_on_transport_{0};
+  std::atomic<size_t> num_messages_lost_in_recorder_{0};
 };
 
 RecorderImpl::RecorderImpl(
@@ -252,6 +262,17 @@ void RecorderImpl::stop()
   }
   in_recording_ = false;
   RCLCPP_INFO(node->get_logger(), "Recording stopped");
+
+  if (num_messages_lost_on_transport_.load() > 0) {
+    RCLCPP_WARN(node->get_logger(),
+      "Number of messages lost on the transport layer: %zu",
+        num_messages_lost_on_transport_.load());
+  }
+
+  if (num_messages_lost_in_recorder_.load() > 0) {
+    RCLCPP_WARN(node->get_logger(),
+      "Number of messages lost in the recorder: %zu", num_messages_lost_in_recorder_.load());
+  }
 }
 
 void RecorderImpl::record()
@@ -268,8 +289,9 @@ void RecorderImpl::record()
   if (record_options_.rmw_serialization_format.empty()) {
     throw std::runtime_error("No serialization format specified!");
   }
-
   subscriptions_.clear();
+  num_messages_lost_in_recorder_.store(0);
+  num_messages_lost_on_transport_.store(0);
   writer_->open(
     storage_options_,
     {rmw_get_serialization_format(), record_options_.rmw_serialization_format});
@@ -347,6 +369,10 @@ void RecorderImpl::record()
       }
       event_publisher_thread_wake_cv_.notify_all();
     };
+  callbacks.messages_lost_callback =
+    [this](const std::vector<rosbag2_cpp::bag_events::MessagesLostInfo> & msgs_lost_info) {
+      on_messages_lost_in_recorder(msgs_lost_info);
+    };
   writer_->add_event_callbacks(callbacks);
 
   serialization_format_ = record_options_.rmw_serialization_format;
@@ -364,6 +390,33 @@ void RecorderImpl::record()
   } else {
     RCLCPP_INFO(node->get_logger(), "Recording...");
   }
+}
+
+void RecorderImpl::on_messages_lost_in_recorder(
+  const std::vector<rosbag2_cpp::bag_events::MessagesLostInfo> & msgs_lost_info)
+{
+  if (!msgs_lost_info.empty()) {
+    // Log lost messages in recorder
+    std::string log_text("Recorder lost messages per topic: ");
+    for (const auto & info : msgs_lost_info) {
+      num_messages_lost_in_recorder_.fetch_add(info.num_messages_lost);
+      log_text += "\n\t" + info.topic_name + ": " + std::to_string(info.num_messages_lost);
+    }
+    RCLCPP_DEBUG(node->get_logger(), "%s", log_text.c_str());
+    // TODO(morlov): Call EventNotifier->on_messages_lost_in_recorder(msgs_lost_info);
+  }
+}
+
+void RecorderImpl::on_messages_lost_in_transport(
+  const std::string & topic_name,
+  const rclcpp::QOSMessageLostInfo & msgs_lost_info)
+{
+  num_messages_lost_on_transport_.fetch_add(msgs_lost_info.total_count);
+  RCLCPP_DEBUG(
+    node->get_logger(),
+    "Messages lost on transport layer for topic '%s'. Total lost: %lu",
+    topic_name.c_str(), msgs_lost_info.total_count);
+  // TODO(morlov): Call EventNotifier->on_messages_lost_in_transport(topic_name, msgs_lost_info);
 }
 
 void RecorderImpl::event_publisher_thread_main()
@@ -583,6 +636,12 @@ std::shared_ptr<rclcpp::GenericSubscription>
 RecorderImpl::create_subscription(
   const std::string & topic_name, const std::string & topic_type, const rclcpp::QoS & qos)
 {
+  rclcpp::SubscriptionOptions sub_options;
+  sub_options.event_callbacks.message_lost_callback =
+    [this, topic_name](const rclcpp::QOSMessageLostInfo & msgs_lost_info) {
+      this->on_messages_lost_in_transport(topic_name, msgs_lost_info);
+    };
+
 #ifdef _WIN32
   if (std::string(rmw_get_implementation_identifier()).find("rmw_connextdds") !=
     std::string::npos)
@@ -598,7 +657,8 @@ RecorderImpl::create_subscription(
             std::move(message), topic_name, topic_type, node->now().nanoseconds(),
             0);
         }
-      });
+      },
+      sub_options);
   }
 #endif
 
@@ -614,7 +674,8 @@ RecorderImpl::create_subscription(
             std::move(message), topic_name, topic_type, node->now().nanoseconds(),
             mi.get_rmw_message_info().source_timestamp);
         }
-      });
+      },
+      sub_options);
   } else {
     return node->create_generic_subscription(
       topic_name,
@@ -628,7 +689,8 @@ RecorderImpl::create_subscription(
             mi.get_rmw_message_info().received_timestamp,
             mi.get_rmw_message_info().source_timestamp);
         }
-      });
+      },
+      sub_options);
   }
 }
 
