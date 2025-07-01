@@ -461,16 +461,20 @@ PlayerImpl::PlayerImpl(
 
 PlayerImpl::~PlayerImpl()
 {
-  // Force to stop playback to avoid hangout in case of unexpected exception or when smart
-  // pointer to the player object goes out of scope
-  stop();
-
-  // remove callbacks on key_codes to prevent race conditions
+  // Remove callbacks from keyboard_handler_ to prevent race conditions.
   // Note: keyboard_handler handles locks between removing & executing callbacks
   if (keyboard_handler_) {
     for (auto cb_handle : keyboard_callbacks_) {
       keyboard_handler_->delete_key_press_callback(cb_handle);
     }
+  }
+
+  // Force to stop playback to avoid hangout in case of unexpected exception or when smart
+  // pointer to the player object goes out of scope
+  stop();
+
+  if (playback_thread_.joinable()) {
+    playback_thread_.join();
   }
   // closes readers
   std::lock_guard<std::mutex> lk(reader_mutex_);
@@ -496,6 +500,7 @@ bool PlayerImpl::is_storage_completely_loaded() const
 
 bool PlayerImpl::play()
 {
+<<<<<<< HEAD
   {
     rcpputils::unique_lock<std::mutex> is_in_playback_lk(is_in_playback_mutex_);
     if (is_in_playback_.exchange(true)) {
@@ -504,8 +509,21 @@ bool PlayerImpl::play()
         "Trying to play() while in playback, dismissing request.");
       return false;
     }
+=======
+  rcpputils::unique_lock<std::mutex> is_in_playback_lk(is_in_playback_mutex_);
+  if (is_in_playback_.exchange(true)) {
+    RCLCPP_WARN_STREAM(
+      owner_->get_logger(),
+      "Trying to play() while in playback, dismissing request.");
+    progress_bar_->update(clock_->is_paused() ? PlayerStatus::PAUSED : PlayerStatus::RUNNING);
+    return false;
+>>>>>>> c9b86f8 (Bugfixes for deadlocks in Rosbag2 player when calling stop API (#2057))
   }
 
+  // May need to join the previous thread if we are calling play() a second time
+  if (playback_thread_.joinable()) {
+    playback_thread_.join();
+  }
   stop_playback_ = false;
 
   rclcpp::Duration delay(0, 0);
@@ -519,10 +537,6 @@ bool PlayerImpl::play()
 
   RCLCPP_INFO_STREAM(owner_->get_logger(), "Playback until timestamp: " << play_until_timestamp_);
 
-  // May need to join the previous thread if we are calling play() a second time
-  if (playback_thread_.joinable()) {
-    playback_thread_.join();
-  }
   playback_thread_ = std::thread(
     [&, delay]() {
       try {
@@ -604,7 +618,7 @@ bool PlayerImpl::play()
         playback_finished_cv_.notify_all();
       }
 
-      // If we get here and still have/just got a play next request, make sure to notify
+      // If we get here and still have/just got a play next request, make sure to notify play_next()
       // After that, requests will be automatically rejected since is_in_playback_ is false
       if (play_next_.exchange(false)) {
         std::lock_guard<std::mutex> lk(finished_play_next_mutex_);
@@ -632,11 +646,7 @@ bool PlayerImpl::wait_for_playback_to_finish(std::chrono::duration<double> timeo
 void PlayerImpl::stop()
 {
   rcpputils::unique_lock<std::mutex> is_in_playback_lk(is_in_playback_mutex_);
-  if (!is_in_playback_) {
-    if (playback_thread_.joinable()) {
-      playback_thread_.join();
-    }
-  } else {
+  if (is_in_playback_) {
     RCLCPP_INFO_STREAM(owner_->get_logger(), "Stopping playback.");
     stop_playback_ = true;
     // Temporary stop playback in play_messages_from_queue() and block play_next() and seek() or
@@ -658,9 +668,10 @@ void PlayerImpl::stop()
     // Wait for playback thread to finish. Make sure that we have unlocked
     // is_in_playback_mutex_, otherwise playback_thread_ will wait forever at the end
     is_in_playback_lk.unlock();
-    if (playback_thread_.joinable()) {
-      playback_thread_.join();
-    }
+    wait_for_playback_to_finish(std::chrono::seconds(-1));
+  } else {
+    RCLCPP_DEBUG_STREAM(owner_->get_logger(),
+      "Trying to stop when playback is not running. Dismissing stop request.");
   }
 }
 
@@ -723,6 +734,7 @@ rosbag2_storage::SerializedBagMessageSharedPtr PlayerImpl::take_next_message_fro
 
 bool PlayerImpl::play_next()
 {
+<<<<<<< HEAD
   if (!is_in_playback_) {
     RCLCPP_WARN_STREAM(owner_->get_logger(), "Called play next, but player is not playing.");
     return false;
@@ -731,16 +743,25 @@ bool PlayerImpl::play_next()
     RCLCPP_WARN_STREAM(owner_->get_logger(), "Called play next, but not in paused state.");
     return false;
   }
+=======
+  // First check if we can proceed with playing next message
+  {
+    rcpputils::unique_lock<std::mutex> is_in_playback_lk(is_in_playback_mutex_);
+    if (!is_in_playback_) {
+      RCLCPP_WARN_STREAM(owner_->get_logger(), "Called play next, but player is not playing.");
+      return false;
+    }
+    if (!clock_->is_paused()) {
+      RCLCPP_WARN_STREAM(owner_->get_logger(), "Called play next, but not in paused state.");
+      progress_bar_->update(PlayerStatus::RUNNING);
+      return false;
+    }
+  }  // Release is_in_playback_mutex_ before proceeding to avoid deadlock with
+     // playback_thread_ which is waiting for this mutex to be released at the end.
+>>>>>>> c9b86f8 (Bugfixes for deadlocks in Rosbag2 player when calling stop API (#2057))
 
   // Use RCLCPP_DEBUG_STREAM to avoid delays in the burst mode
   RCLCPP_DEBUG_STREAM(owner_->get_logger(), "Playing next message.");
-
-  // Wait for player to be ready for playback messages from queue i.e. wait for Player:play() to
-  // be called if not yet and queue to be filled with messages.
-  {
-    std::unique_lock<std::mutex> lk(ready_to_play_from_queue_mutex_);
-    ready_to_play_from_queue_cv_.wait(lk, [this] {return is_ready_to_play_from_queue_;});
-  }
 
   // Request to play next
   play_next_ = true;
