@@ -24,6 +24,7 @@ import pytest
 
 import rclpy
 from rclpy.qos import QoSProfile
+from rosbag2_interfaces.srv import Resume
 import rosbag2_py
 from rosbag2_test_common import TESTED_STORAGE_IDS
 from std_msgs.msg import String
@@ -124,6 +125,89 @@ def test_record_cancel(tmp_path, storage_id):
     storage_path = bag_path / metadata.relative_file_paths[0]
     assert wait_for(lambda: storage_path.is_file(),
                     timeout=rclpy.duration.Duration(seconds=3))
+
+
+def test_player_unconfigured():
+    # Test that using a constructor without full configuration raises an error when trying to use
+    # the player
+    player = rosbag2_py.Player()
+    with pytest.raises(RuntimeError):
+        player.play()
+    with pytest.raises(RuntimeError):
+        player.wait_for_playback_to_start()
+    with pytest.raises(RuntimeError):
+        player.wait_for_playback_to_finish()
+    with pytest.raises(RuntimeError):
+        player.stop()
+    with pytest.raises(RuntimeError):
+        player.pause()
+    with pytest.raises(RuntimeError):
+        player.resume()
+    with pytest.raises(RuntimeError):
+        player.play_next()
+    with pytest.raises(RuntimeError):
+        player.burst(1)
+    with pytest.raises(RuntimeError):
+        player.seek(0)
+
+
+@pytest.mark.parametrize('storage_id', TESTED_STORAGE_IDS)
+def test_player_api(storage_id):
+    bag_path = str(RESOURCES_PATH / storage_id / 'talker')
+    assert os.path.exists(bag_path), 'Could not find test bag file: ' + bag_path
+
+    storage_options, _ = get_rosbag_options(bag_path, storage_id)
+
+    play_options = rosbag2_py.PlayOptions()
+    play_options.start_paused = True
+    play_options.topics_to_filter = ['topic']
+
+    player = rosbag2_py.Player(storage_options, play_options, 'info', 'rosbag2_player_test')
+
+    ctx = rclpy.Context()
+    ctx.init()
+    node = rclpy.create_node('test_player_api', context=ctx)
+    msgs = []
+    sub = node.create_subscription(
+        String, '/topic', lambda msg: msgs.append(msg.data), QoSProfile(depth=15))
+    resume_client = node.create_client(Resume, '/rosbag2_player_test/resume')
+    executor = rclpy.executors.SingleThreadedExecutor(context=ctx)
+    executor.add_node(node)
+    executor_thread = threading.Thread(
+        target=executor.spin,
+        daemon=True)
+    executor_thread.start()
+
+    assert wait_for(
+        lambda: sub.get_publisher_count() == 1,
+        timeout=rclpy.duration.Duration(seconds=5),
+    ), sub.get_publisher_count()
+
+    player.play()
+    assert player.wait_for_playback_to_start()
+    assert player.play_next()
+    assert player.play_next()
+    assert 2 == player.burst(2)
+    player.seek(0)
+    # This requires that the player node be spun by an executor
+    resume_client.call(Resume.Request(), 5.0)
+    assert not player.play_next()
+    assert player.wait_for_playback_to_finish()
+    player.stop()
+
+    # 2 msgs with play_next, 2 msgs with burst, then seek to the beginning and play all 10 msgs
+    expected_number_of_messages = 14
+    assert wait_for(
+        lambda: len(msgs) == expected_number_of_messages,
+        timeout=rclpy.duration.Duration(seconds=10),
+    ), str(msgs)
+
+    executor.shutdown()
+    executor_thread.join(3)
+    assert not executor_thread.is_alive()
+    sub.destroy()
+    node.destroy_node()
+    ctx.shutdown()
 
 
 @pytest.mark.parametrize('storage_id', TESTED_STORAGE_IDS)

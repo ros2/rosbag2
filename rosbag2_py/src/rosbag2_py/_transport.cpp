@@ -190,27 +190,116 @@ public:
     Arguments arguments({"--ros-args", "--log-level", log_level});
     rclcpp::init(arguments.argc(), arguments.argv());
     player_ = std::make_shared<rosbag2_transport::Player>(storage_options, play_options, node_name);
+
+    exec_ = std::make_shared<rclcpp::executors::SingleThreadedExecutor>();
+    exec_->add_node(player_);
+    spin_thread_ = std::thread(
+      [this]() {
+        exec_->spin();
+      });
+    // Wait for the executor to start spinning to avoid race conditions
+    while (!exec_->is_spinning()) {
+      std::this_thread::sleep_for(std::chrono::milliseconds(1));
+    }
   }
 
   virtual ~Player()
   {
+    if (exec_) {
+      exec_->cancel();
+      if (spin_thread_.joinable()) {
+        spin_thread_.join();
+      }
+    }
+
     rclcpp::shutdown();
+  }
+
+  void play()
+  {
+    if (!player_) {
+      throw std::runtime_error("Player is not initialized. Please use constructor with "
+        "storage and play options.");
+    }
+    player_->play();
+  }
+
+  bool wait_for_playback_to_start(double timeout = -1.0)
+  {
+    if (!player_) {
+      throw std::runtime_error("Player is not initialized. Please use constructor with "
+        "storage and play options.");
+    }
+    return player_->wait_for_playback_to_start(std::chrono::duration<double>(timeout));
+  }
+
+  bool wait_for_playback_to_finish(double timeout = -1.0)
+  {
+    if (!player_) {
+      throw std::runtime_error("Player is not initialized. Please use constructor with "
+        "storage and play options.");
+    }
+    return player_->wait_for_playback_to_finish(std::chrono::duration<double>(timeout));
+  }
+
+  void stop()
+  {
+    if (!player_) {
+      throw std::runtime_error("Player is not initialized. Please use constructor with "
+        "storage and play options.");
+    }
+    player_->stop();
+  }
+
+  void pause()
+  {
+    if (!player_) {
+      throw std::runtime_error("Player is not initialized. Please use constructor with "
+        "storage and play options.");
+    }
+    player_->pause();
+  }
+
+  void resume()
+  {
+    if (!player_) {
+      throw std::runtime_error("Player is not initialized. Please use constructor with "
+        "storage and play options.");
+    }
+    player_->resume();
+  }
+
+  bool play_next()
+  {
+    if (!player_) {
+      throw std::runtime_error("Player is not initialized. Please use constructor with "
+        "storage and play options.");
+    }
+    return player_->play_next();
+  }
+
+  size_t burst(size_t num_messages)
+  {
+    if (!player_) {
+      throw std::runtime_error("Player is not initialized. Please use constructor with "
+        "storage and play options.");
+    }
+    return player_->burst(num_messages);
+  }
+
+  void seek(int64_t time_point)
+  {
+    if (!player_) {
+      throw std::runtime_error("Player is not initialized. Please use constructor with "
+        "storage and play options.");
+    }
+    player_->seek(static_cast<rcutils_time_point_value_t>(time_point));
   }
 
   static void cancel()
   {
     exit_ = true;
     wait_for_exit_cv_.notify_all();
-  }
-
-  void play()
-  {
-    play_impl(false);
-  }
-
-  void burst(size_t num_messages)
-  {
-    play_impl(true, num_messages);
   }
 
   void play(
@@ -341,6 +430,8 @@ protected:
   std::mutex wait_for_exit_mutex_;
 
   std::shared_ptr<rosbag2_transport::Player> player_;
+  std::shared_ptr<rclcpp::executors::SingleThreadedExecutor> exec_{nullptr};
+  std::thread spin_thread_;
 };
 
 Player::SignalHandlerType Player::old_sigint_handler_ {SIG_ERR};
@@ -716,6 +807,61 @@ PYBIND11_MODULE(_transport, m) {
       All parameters should be configured via the constructor.
     )pbdoc")
 
+  .def("wait_for_playback_to_start",
+    &rosbag2_py::Player::wait_for_playback_to_start,
+    py::arg("timeout") = -1.0,
+    R"pbdoc(
+      Wait for the playback to start and for the message queue to be filled.
+
+      Args:
+          timeout (float): Maximum time to wait in seconds. Default is -1 (wait indefinitely).
+      Returns:
+          bool: True if playback started successfully, False if timed out.
+    )pbdoc")
+
+  .def("wait_for_playback_to_finish",
+    &rosbag2_py::Player::wait_for_playback_to_finish,
+    py::arg("timeout") = -1.0,
+    R"pbdoc(
+      Wait for the playback to finish.
+
+      Args:
+          timeout (float): Maximum time to wait in seconds. Default is -1 (wait indefinitely).
+      Returns:
+          bool: True if playback finished successfully, False if timed out.
+    )pbdoc")
+
+  .def(
+    "stop",
+    &rosbag2_py::Player::stop,
+    "Unpause if in pause mode, stop playback and exit from play.")
+
+  .def(
+    "pause",
+    &rosbag2_py::Player::pause,
+    "Pause the flow of time for playback.")
+
+  .def(
+    "resume",
+    &rosbag2_py::Player::resume,
+    "Start the flow of time for playback.")
+
+  .def("play_next", &rosbag2_py::Player::play_next,
+    R"pbdoc(
+      Playing next message from queue when in pause.
+
+      Returns:
+          bool: True if a message was played, False if no more messages are available.
+    )pbdoc")
+
+  .def("seek", &rosbag2_py::Player::seek, py::arg("time_point"),
+    R"pbdoc(
+      Advance player to the message with closest timestamp >= time_point.
+
+      Args:
+          time_point (int): Time point in ROS playback timeline, in nanoseconds.
+    )pbdoc")
+
     // Deprecated play method with storage and play options
   .def("play",
     [](rosbag2_py::Player & self, const rosbag2_storage::StorageOptions & storage_options,
@@ -750,6 +896,8 @@ PYBIND11_MODULE(_transport, m) {
 
       Args:
           num_messages (int): Number of messages to play in this burst.
+      Returns:
+          size_t: Number of messages played in this burst.
     )pbdoc")
 
     // Deprecated burst method with storage and play options
