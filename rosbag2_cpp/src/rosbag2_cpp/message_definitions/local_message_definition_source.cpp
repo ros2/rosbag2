@@ -33,6 +33,8 @@
 namespace rosbag2_cpp
 {
 
+namespace fs = std::filesystem;
+
 /// A type name did not match expectations, so a definition could not be looked for.
 class TypenameNotUnderstoodError : public std::exception
 {
@@ -220,7 +222,7 @@ const LocalMessageDefinitionSource::MessageSpec & LocalMessageDefinitionSource::
   std::string package_name = match[1].str();
   const std::string file_name =
     match[2].str() + extension_for_format(definition_identifier.format());
-  std::string share_dir;
+  fs::path share_dir_path;
   std::string resource_content;
   std::string resource_prefix_path;
 
@@ -228,11 +230,10 @@ const LocalMessageDefinitionSource::MessageSpec & LocalMessageDefinitionSource::
   if (ament_index_cpp::get_resource("rosidl_interfaces", package_name, resource_content,
                                      &resource_prefix_path))
   {
-    share_dir = resource_prefix_path + std::filesystem::path::preferred_separator + "share" +
-      std::filesystem::path::preferred_separator + package_name;
+    share_dir_path = fs::path(resource_prefix_path) / "share" / package_name;
     ROSBAG2_CPP_LOG_DEBUG(
       "resource_content : \n%s for package: '%s' ,\n share_dir: '%s'\n, topic_type: '%s'",
-      resource_content.c_str(), package_name.c_str(), share_dir.c_str(), topic_type.c_str());
+      resource_content.c_str(), package_name.c_str(), share_dir_path.c_str(), topic_type.c_str());
   } else {
     ROSBAG2_CPP_LOG_WARN(
       "Failed to get information about rosidl_interfaces resources from ament_index for package "
@@ -246,10 +247,10 @@ const LocalMessageDefinitionSource::MessageSpec & LocalMessageDefinitionSource::
   std::string line;
   while (std::getline(ss, line, '\n')) {
     if (!line.empty()) {
-      std::filesystem::path filePath(line);
+      fs::path curr_relative_file_path(line);
       // Find the first line that ends with the filename we're looking for
-      if (filePath.filename() == file_name) {
-        relative_file_path_str = filePath.generic_string();
+      if (curr_relative_file_path.filename() == file_name) {
+        relative_file_path_str = curr_relative_file_path.generic_string();
         break;
       }
     }
@@ -261,8 +262,7 @@ const LocalMessageDefinitionSource::MessageSpec & LocalMessageDefinitionSource::
       file_name.c_str(), package_name.c_str());
     throw DefinitionNotFoundError(definition_identifier.topic_type());
   }
-  std::string msg_definition_path_str =
-    share_dir + std::filesystem::path::preferred_separator + relative_file_path_str;
+  std::string msg_definition_path_str = (share_dir_path / relative_file_path_str).generic_string();
   std::ifstream file{msg_definition_path_str};
   if (!file.good()) {
     ROSBAG2_CPP_LOG_WARN("Message definition not found in the %s for package: '%s'",
