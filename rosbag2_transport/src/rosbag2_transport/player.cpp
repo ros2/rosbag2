@@ -500,24 +500,12 @@ bool PlayerImpl::is_storage_completely_loaded() const
 
 bool PlayerImpl::play()
 {
-<<<<<<< HEAD
-  {
-    rcpputils::unique_lock<std::mutex> is_in_playback_lk(is_in_playback_mutex_);
-    if (is_in_playback_.exchange(true)) {
-      RCLCPP_WARN_STREAM(
-        owner_->get_logger(),
-        "Trying to play() while in playback, dismissing request.");
-      return false;
-    }
-=======
   rcpputils::unique_lock<std::mutex> is_in_playback_lk(is_in_playback_mutex_);
   if (is_in_playback_.exchange(true)) {
     RCLCPP_WARN_STREAM(
       owner_->get_logger(),
       "Trying to play() while in playback, dismissing request.");
-    progress_bar_->update(clock_->is_paused() ? PlayerStatus::PAUSED : PlayerStatus::RUNNING);
     return false;
->>>>>>> c9b86f8 (Bugfixes for deadlocks in Rosbag2 player when calling stop API (#2057))
   }
 
   // May need to join the previous thread if we are calling play() a second time
@@ -734,16 +722,6 @@ rosbag2_storage::SerializedBagMessageSharedPtr PlayerImpl::take_next_message_fro
 
 bool PlayerImpl::play_next()
 {
-<<<<<<< HEAD
-  if (!is_in_playback_) {
-    RCLCPP_WARN_STREAM(owner_->get_logger(), "Called play next, but player is not playing.");
-    return false;
-  }
-  if (!clock_->is_paused()) {
-    RCLCPP_WARN_STREAM(owner_->get_logger(), "Called play next, but not in paused state.");
-    return false;
-  }
-=======
   // First check if we can proceed with playing next message
   {
     rcpputils::unique_lock<std::mutex> is_in_playback_lk(is_in_playback_mutex_);
@@ -753,12 +731,10 @@ bool PlayerImpl::play_next()
     }
     if (!clock_->is_paused()) {
       RCLCPP_WARN_STREAM(owner_->get_logger(), "Called play next, but not in paused state.");
-      progress_bar_->update(PlayerStatus::RUNNING);
       return false;
     }
   }  // Release is_in_playback_mutex_ before proceeding to avoid deadlock with
      // playback_thread_ which is waiting for this mutex to be released at the end.
->>>>>>> c9b86f8 (Bugfixes for deadlocks in Rosbag2 player when calling stop API (#2057))
 
   // Use RCLCPP_DEBUG_STREAM to avoid delays in the burst mode
   RCLCPP_DEBUG_STREAM(owner_->get_logger(), "Playing next message.");
