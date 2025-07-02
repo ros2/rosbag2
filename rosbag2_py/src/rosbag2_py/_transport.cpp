@@ -190,7 +190,20 @@ public:
     Arguments arguments({"--ros-args", "--log-level", log_level});
     rclcpp::init(arguments.argc(), arguments.argv());
     player_ = std::make_shared<rosbag2_transport::Player>(storage_options, play_options, node_name);
+  }
 
+  virtual ~Player()
+  {
+    stop_spin();
+    rclcpp::shutdown();
+  }
+
+  void start_spin()
+  {
+    if (!player_) {
+      throw std::runtime_error("Player is not initialized. Please use constructor with "
+        "storage and play options.");
+    }
     exec_ = std::make_shared<rclcpp::executors::SingleThreadedExecutor>();
     exec_->add_node(player_);
     spin_thread_ = std::thread(
@@ -203,7 +216,7 @@ public:
     }
   }
 
-  virtual ~Player()
+  void stop_spin()
   {
     if (exec_) {
       exec_->cancel();
@@ -211,8 +224,6 @@ public:
         spin_thread_.join();
       }
     }
-
-    rclcpp::shutdown();
   }
 
   void play()
@@ -472,12 +483,72 @@ public:
 
   virtual ~Recorder()
   {
+    stop_spin();
     rclcpp::shutdown();
+  }
+
+  void start_spin()
+  {
+    if (!recorder_) {
+      throw std::runtime_error("Recorder is not initialized. Please use constructor with "
+        "storage and record options.");
+    }
+    exec_ = std::make_shared<rclcpp::executors::SingleThreadedExecutor>();
+    exec_->add_node(recorder_);
+    spin_thread_ = std::thread(
+      [this]() {
+        exec_->spin();
+      });
+    // Wait for the executor to start spinning to avoid race conditions
+    while (!exec_->is_spinning()) {
+      std::this_thread::sleep_for(std::chrono::milliseconds(1));
+    }
+  }
+
+  void stop_spin()
+  {
+    if (exec_) {
+      exec_->cancel();
+      if (spin_thread_.joinable()) {
+        spin_thread_.join();
+      }
+    }
   }
 
   void record()
   {
-    record_impl();
+    if (!recorder_) {
+      throw std::runtime_error("Recorder is not initialized. Please use constructor with "
+        "storage and record options.");
+    }
+    recorder_->record();
+  }
+
+  void stop()
+  {
+    if (!recorder_) {
+      throw std::runtime_error("Recorder is not initialized. Please use constructor with "
+        "storage and record options.");
+    }
+    recorder_->stop();
+  }
+
+  void pause()
+  {
+    if (!recorder_) {
+      throw std::runtime_error("Recorder is not initialized. Please use constructor with "
+        "storage and record options.");
+    }
+    recorder_->pause();
+  }
+
+  void resume()
+  {
+    if (!recorder_) {
+      throw std::runtime_error("Recorder is not initialized. Please use constructor with "
+        "storage and record options.");
+    }
+    recorder_->resume();
   }
 
   void record(
@@ -594,6 +665,8 @@ protected:
   std::mutex wait_for_exit_mutex_;
 
   std::shared_ptr<rosbag2_transport::Recorder> recorder_;
+  std::shared_ptr<rclcpp::executors::SingleThreadedExecutor> exec_{nullptr};
+  std::thread spin_thread_;
 };
 
 Recorder::SignalHandlerType Recorder::old_sigint_handler_ {SIG_ERR};
@@ -798,6 +871,18 @@ PYBIND11_MODULE(_transport, m) {
           node_name (str, optional): Name of the player node, defaults to 'rosbag2_player'.
     )pbdoc")
 
+  .def("start_spin", &rosbag2_py::Player::start_spin,
+    R"pbdoc(
+      Create and start a thread with an executor that spins the player node.
+
+      Waits for the executor to start spinning before returning.
+    )pbdoc")
+
+  .def("stop_spin", &rosbag2_py::Player::stop_spin,
+    R"pbdoc(
+      Stop the thread that spins the player node, if there is one.
+    )pbdoc")
+
     // Recommended play method
   .def("play", py::overload_cast<>(&rosbag2_py::Player::play),
     R"pbdoc(
@@ -958,6 +1043,18 @@ PYBIND11_MODULE(_transport, m) {
           node_name (str, optional): Name of the recorder node, defaults to 'rosbag2_recorder'.
     )pbdoc")
 
+  .def("start_spin", &rosbag2_py::Recorder::start_spin,
+    R"pbdoc(
+      Create and start a thread with an executor that spins the recorder node.
+
+      Waits for the executor to start spinning before returning.
+    )pbdoc")
+
+  .def("stop_spin", &rosbag2_py::Recorder::stop_spin,
+    R"pbdoc(
+      Stop the thread that spins the recorder node, if there is one.
+    )pbdoc")
+
   .def("record", py::overload_cast<>(&rosbag2_py::Recorder::record),
     R"pbdoc(
       Start recording based on the internal Recorder configuration.
@@ -965,6 +1062,21 @@ PYBIND11_MODULE(_transport, m) {
       This is the preferred method for starting a recording session.
       All parameters should be configured via the constructor.
     )pbdoc")
+
+  .def(
+    "stop",
+    &rosbag2_py::Recorder::stop,
+    "Stop recording.")
+
+  .def(
+    "pause",
+    &rosbag2_py::Recorder::pause,
+    "Pause the recording.")
+
+  .def(
+    "resume",
+    &rosbag2_py::Recorder::resume,
+    "Resume the recording.")
 
     // (deprecated) record method
   .def("record",
