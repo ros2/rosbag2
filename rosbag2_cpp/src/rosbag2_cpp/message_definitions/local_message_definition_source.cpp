@@ -12,8 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "rosbag2_cpp/message_definitions/local_message_definition_source.hpp"
-
+#include <filesystem>
 #include <fstream>
 #include <functional>
 #include <optional>
@@ -23,15 +22,18 @@
 #include <unordered_set>
 #include <utility>
 
-#include <ament_index_cpp/get_package_share_directory.hpp>
 #include <ament_index_cpp/get_package_prefix.hpp>
+#include "ament_index_cpp/get_resource.hpp"
 
 #include "rosbag2_cpp/action_utils.hpp"
 #include "rosbag2_cpp/service_utils.hpp"
 #include "rosbag2_cpp/logging.hpp"
+#include "rosbag2_cpp/message_definitions/local_message_definition_source.hpp"
 
 namespace rosbag2_cpp
 {
+
+namespace fs = std::filesystem;
 
 /// A type name did not match expectations, so a definition could not be looked for.
 class TypenameNotUnderstoodError : public std::exception
@@ -50,9 +52,37 @@ public:
   }
 };
 
-// Match datatype names (foo_msgs/Bar or foo_msgs/msg/Bar)
+/// \brief This regular expression is designed to parse ROS topic type strings into their package
+/// name and type name components.
+/// \details  The regex requires a format like package_name/[path/]TypeName or
+///  package_name/[path/][msg|srv|action]/TypeName where both package_name and TypeName consist of
+///  alphanumeric characters and underscores.
+/// Breaking down this regex:
+/// ^ - Ensures matching starts at beginning of string
+/// ([a-zA-Z0-9_]+) - First capture group: matches the package name
+/// (e.g., "std_msgs", "sensor_msgs")
+/// (?:/[a-zA-Z0-9_]+)* - Allows for any number of additional path segments (like /nested_sub_dir)
+/// / - Matches a literal forward slash
+/// (?:msg/|srv/|action/)? - Non-capturing group that optionally matches "msg/", "srv/", or
+/// "action/"
+/// ([a-zA-Z0-9_]+) - Second capture group: matches the type name (e.g., "String", "LaserScan")
+/// $ - Ensures matching ends at the end of string
+/// The regex processes ROS topic types in these formats:
+/// package_name/TypeName (e.g., "std_msgs/String")
+/// package_name/msg/TypeName (e.g., "std_msgs/msg/String")
+/// package_name/srv/TypeName (e.g., "std_srvs/srv/SetBool")
+/// package_name/action/TypeName (e.g., "nav2_msgs/action/NavigateToPose")
+/// package_name/nested_sub_dir/action/TypeName
+/// (e.g., "rosbag2_test_msgdefs/nested_sub_dir/action/BasicMsg")
+/// package_name/msg/nested_sub_dir/TypeName
+/// (e.g., "rosbag2_test_msgdefs/msg/nested_sub_dir/AnotherBasicMsg")
+/// \note Invalid topic type formats, such as those with
+///  std-msgs/String - hyphens are not allowed in package names
+///  std_msgs/String.msg - file extensions are not allowed
+///  std msgs/String - spaces are not allowed
+///  std_msgs/@String - special characters other than alphanumeric and underscore are not allowed
 static const std::regex PACKAGE_TYPENAME_REGEX{
-  R"(^([a-zA-Z0-9_]+)/(?:msg/|srv/|action/)?([a-zA-Z0-9_]+)$)"};
+  R"(^([a-zA-Z0-9_]+)(?:/[a-zA-Z0-9_]+)*/(?:msg/|srv/|action/)?([a-zA-Z0-9_]+)$)"};
 
 // Match field types from .msg, .srv and .action definitions
 // ("foo_msgs/Bar" in "foo_msgs/Bar[] bar")
@@ -185,41 +215,67 @@ const LocalMessageDefinitionSource::MessageSpec & LocalMessageDefinitionSource::
     return it->second;
   }
   std::smatch match;
-  const auto topic_type = definition_identifier.topic_type();
-  if (!std::regex_match(topic_type, match, PACKAGE_TYPENAME_REGEX)) {
+  const std::string topic_type = definition_identifier.topic_type();
+  if (!std::regex_match(topic_type, match, PACKAGE_TYPENAME_REGEX) || match.size() < 3) {
     throw TypenameNotUnderstoodError(topic_type);
   }
-  std::string package = match[1];
-  std::string share_dir;
-  try {
-    share_dir = ament_index_cpp::get_package_share_directory(package);
-  } catch (const ament_index_cpp::PackageNotFoundError & e) {
-    ROSBAG2_CPP_LOG_WARN(
-      "get_package_share_directory(%s) failed with error: '%s'", package.c_str(), e.what());
-    throw DefinitionNotFoundError(definition_identifier.topic_type());
-  }
-  std::string dir;
-  if (definition_identifier.format() == Format::MSG ||
-    definition_identifier.format() == Format::IDL)
+  std::string package_name = match[1].str();
+  const std::string file_name =
+    match[2].str() + extension_for_format(definition_identifier.format());
+  fs::path share_dir_path;
+  std::string resource_content;
+  std::string resource_prefix_path;
+
+  // Get the resource content and prefix path from ament_index
+  if (ament_index_cpp::get_resource("rosidl_interfaces", package_name, resource_content,
+                                     &resource_prefix_path))
   {
-    dir = "/msg/";
-  } else if (definition_identifier.format() == Format::SRV) {
-    dir = "/srv/";
-  } else if (definition_identifier.format() == Format::ACTION) {
-    dir = "/action/";
+    share_dir_path = fs::path(resource_prefix_path) / "share" / package_name;
+    ROSBAG2_CPP_LOG_DEBUG(
+      "resource_content : \n%s for package: '%s' ,\n share_dir: '%s'\n, topic_type: '%s'",
+      resource_content.c_str(), package_name.c_str(), share_dir_path.c_str(), topic_type.c_str());
   } else {
-    throw std::runtime_error("Unknown format type");
-  }
-  std::ifstream file{share_dir + dir + match[2].str() +
-    extension_for_format(definition_identifier.format())};
-  if (!file.good()) {
+    ROSBAG2_CPP_LOG_WARN(
+      "Failed to get information about rosidl_interfaces resources from ament_index for package "
+      "'%s'", package_name.c_str());
     throw DefinitionNotFoundError(definition_identifier.topic_type());
   }
+
+  // Parse the resource content to find the relative file path matching the file name.
+  std::string relative_file_path_str;
+  std::stringstream ss(resource_content);
+  std::string line;
+  while (std::getline(ss, line, '\n')) {
+    if (!line.empty()) {
+      fs::path curr_relative_file_path(line);
+      // Find the first line that ends with the filename we're looking for
+      if (curr_relative_file_path.filename() == file_name) {
+        relative_file_path_str = curr_relative_file_path.generic_string();
+        break;
+      }
+    }
+  }
+
+  if (relative_file_path_str.empty()) {
+    ROSBAG2_CPP_LOG_WARN(
+      "Message definition file '%s' not found in the resource content for package: '%s'",
+      file_name.c_str(), package_name.c_str());
+    throw DefinitionNotFoundError(definition_identifier.topic_type());
+  }
+  std::string msg_definition_path_str = (share_dir_path / relative_file_path_str).generic_string();
+  std::ifstream file{msg_definition_path_str};
+  if (!file.good()) {
+    ROSBAG2_CPP_LOG_WARN("Message definition not found in the %s for package: '%s'",
+      msg_definition_path_str.c_str(), package_name.c_str());
+    throw DefinitionNotFoundError(definition_identifier.topic_type());
+  }
+  ROSBAG2_CPP_LOG_DEBUG("Message definition found in the %s for package: '%s'",
+      msg_definition_path_str.c_str(), package_name.c_str());
 
   std::string contents{std::istreambuf_iterator(file), {}};
   const MessageSpec & spec = msg_specs_by_definition_identifier_.emplace(
     definition_identifier,
-    MessageSpec(definition_identifier.format(), std::move(contents), package)).first->second;
+    MessageSpec(definition_identifier.format(), std::move(contents), package_name)).first->second;
 
   // "References and pointers to data stored in the container are only invalidated by erasing that
   // element, even when the corresponding iterator is invalidated."
@@ -275,13 +331,22 @@ rosbag2_storage::MessageDefinition LocalMessageDefinitionSource::get_full_text_e
   if (!is_service_type && !is_action_type) {  // Only for regular message types
     try {
       format = Format::MSG;
+      // Note: By design The top-level message definition for MSG format is present first, with no
+      // delimiter. All dependent .msg definitions are preceded by a two-line delimiter:
       result = append_recursive(DefinitionIdentifier(root_type, format), max_recursion_depth);
     } catch (const DefinitionNotFoundError & err) {
       ROSBAG2_CPP_LOG_WARN("No .msg definition for %s, falling back to IDL", err.what());
       format = Format::IDL;
-      DefinitionIdentifier root_definition_identifier(root_type, format);
-      result = (delimiter(root_definition_identifier) +
-        append_recursive(root_definition_identifier, max_recursion_depth));
+      try {
+        DefinitionIdentifier root_definition_identifier(root_type, format);
+        result = (delimiter(root_definition_identifier) +
+          append_recursive(root_definition_identifier, max_recursion_depth));
+      } catch (const DefinitionNotFoundError & err) {
+        ROSBAG2_CPP_LOG_WARN("No .idl definition found for topic type %s, "
+          "definition will be left empty in bag", err.what());
+        format = Format::UNKNOWN;
+        throw;
+      }
     } catch (const TypenameNotUnderstoodError & err) {
       ROSBAG2_CPP_LOG_WARN(
         "Message type name '%s' not understood by type definition search, "
