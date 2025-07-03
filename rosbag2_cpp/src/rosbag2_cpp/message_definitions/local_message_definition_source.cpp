@@ -50,10 +50,6 @@ public:
   }
 };
 
-<<<<<<< HEAD
-// Match datatype names (foo_msgs/Bar or foo_msgs/msg/Bar)
-static const std::regex PACKAGE_TYPENAME_REGEX{R"(^([a-zA-Z0-9_]+)/(?:msg/|srv/)?([a-zA-Z0-9_]+)$)"};
-=======
 /// \brief This regular expression is designed to parse ROS topic type strings into their package
 /// name and type name components.
 /// \details  The regex requires a format like package_name/[path/]TypeName or
@@ -65,17 +61,15 @@ static const std::regex PACKAGE_TYPENAME_REGEX{R"(^([a-zA-Z0-9_]+)/(?:msg/|srv/)
 /// (e.g., "std_msgs", "sensor_msgs")
 /// (?:/[a-zA-Z0-9_]+)* - Allows for any number of additional path segments (like /nested_sub_dir)
 /// / - Matches a literal forward slash
-/// (?:msg/|srv/|action/)? - Non-capturing group that optionally matches "msg/", "srv/", or
-/// "action/"
+/// (?:msg/|srv/)? - Non-capturing group that optionally matches "msg/", "srv/"
 /// ([a-zA-Z0-9_]+) - Second capture group: matches the type name (e.g., "String", "LaserScan")
 /// $ - Ensures matching ends at the end of string
 /// The regex processes ROS topic types in these formats:
 /// package_name/TypeName (e.g., "std_msgs/String")
 /// package_name/msg/TypeName (e.g., "std_msgs/msg/String")
 /// package_name/srv/TypeName (e.g., "std_srvs/srv/SetBool")
-/// package_name/action/TypeName (e.g., "nav2_msgs/action/NavigateToPose")
 /// package_name/nested_sub_dir/action/TypeName
-/// (e.g., "rosbag2_test_msgdefs/nested_sub_dir/action/BasicMsg")
+/// (e.g., "rosbag2_test_msgdefs/nested_sub_dir/srv/BasicMsg")
 /// package_name/msg/nested_sub_dir/TypeName
 /// (e.g., "rosbag2_test_msgdefs/msg/nested_sub_dir/AnotherBasicMsg")
 /// \note Invalid topic type formats, such as those with
@@ -84,8 +78,7 @@ static const std::regex PACKAGE_TYPENAME_REGEX{R"(^([a-zA-Z0-9_]+)/(?:msg/|srv/)
 ///  std msgs/String - spaces are not allowed
 ///  std_msgs/@String - special characters other than alphanumeric and underscore are not allowed
 static const std::regex PACKAGE_TYPENAME_REGEX{
-  R"(^([a-zA-Z0-9_]+)(?:/[a-zA-Z0-9_]+)*/(?:msg/|srv/|action/)?([a-zA-Z0-9_]+)$)"};
->>>>>>> 943993a (Add support for searching message definitions in nested subdirectories (#2055))
+  R"(^([a-zA-Z0-9_]+)(?:/[a-zA-Z0-9_]+)*/(?:msg/|srv/)?([a-zA-Z0-9_]+)$)"};
 
 // Match field types from .msg and .srv definitions ("foo_msgs/Bar" in "foo_msgs/Bar[] bar")
 static const std::regex MSG_FIELD_TYPE_REGEX{R"((?:^|\n)\s*([a-zA-Z0-9_/]+)(?:\[[^\]]*\])?\s+)"};
@@ -215,22 +208,7 @@ const LocalMessageDefinitionSource::MessageSpec & LocalMessageDefinitionSource::
   if (!std::regex_match(topic_type, match, PACKAGE_TYPENAME_REGEX) || match.size() < 3) {
     throw TypenameNotUnderstoodError(topic_type);
   }
-<<<<<<< HEAD
-  std::string package = match[1];
-  std::string share_dir;
-  try {
-    share_dir = ament_index_cpp::get_package_share_directory(package);
-  } catch (const ament_index_cpp::PackageNotFoundError & e) {
-    ROSBAG2_CPP_LOG_WARN(
-      "get_package_share_directory(%s) failed with error: '%s'", package.c_str(), e.what());
-    throw DefinitionNotFoundError(definition_identifier.topic_type());
-  }
-  std::string dir = definition_identifier.format() == Format::MSG ||
-    definition_identifier.format() == Format::IDL ? "/msg/" : "/srv/";
-  std::ifstream file{share_dir + dir + match[2].str() +
-    extension_for_format(definition_identifier.format())};
-  if (!file.good()) {
-=======
+
   std::string package_name = match[1].str();
   const std::string file_name =
     match[2].str() + extension_for_format(definition_identifier.format());
@@ -250,7 +228,6 @@ const LocalMessageDefinitionSource::MessageSpec & LocalMessageDefinitionSource::
     ROSBAG2_CPP_LOG_WARN(
       "Failed to get information about rosidl_interfaces resources from ament_index for package "
       "'%s'", package_name.c_str());
->>>>>>> 943993a (Add support for searching message definitions in nested subdirectories (#2055))
     throw DefinitionNotFoundError(definition_identifier.topic_type());
   }
 
@@ -323,9 +300,16 @@ rosbag2_storage::MessageDefinition LocalMessageDefinitionSource::get_full_text(
   std::string result;
   Format format = Format::UNKNOWN;
   int32_t max_recursion_depth = ROSBAG2_CPP_LOCAL_MESSAGE_DEFINITION_SOURCE_MAX_RECURSION_DEPTH;
+
+  bool is_action_type =
+    root_type.find("/action/") != std::string::npos ||
+    root_type == "action_msgs/msg/GoalStatusArray" ||
+    root_type == "action_msgs/srv/CancelGoal_Event";
+  bool is_service_type = (!is_action_type && root_type.find("/srv/") != std::string::npos);
+
   std::string service_root_type;
 
-  if (root_type.find("/srv/") == std::string::npos) {  // Normal topic type
+  if (!is_service_type && !is_action_type) {  // Normal topic type
     try {
       format = Format::MSG;
       // Note: By design The top-level message definition for MSG format is present first, with no
@@ -350,7 +334,7 @@ rosbag2_storage::MessageDefinition LocalMessageDefinitionSource::get_full_text(
         "definition will be left empty in bag.", err.what());
       format = Format::UNKNOWN;
     }
-  } else {  // Service event topic type
+  } else if (is_service_type) {  // Service event topic type
     // The service dependencies could be either in the msg or idl files. Therefore, will try to
     // search service dependencies in MSG files first then in IDL files via two separate recursive
     // searches for each dependency.
@@ -396,7 +380,13 @@ rosbag2_storage::MessageDefinition LocalMessageDefinitionSource::get_full_text(
         }
       }
     }
+  } else {
+    ROSBAG2_CPP_LOG_WARN(
+      "Message type name '%s' not understood by type definition search, "
+      "definition will be left empty in bag.", root_type.c_str());
+    format = Format::UNKNOWN;
   }
+
   rosbag2_storage::MessageDefinition out;
   switch (format) {
     case Format::UNKNOWN:

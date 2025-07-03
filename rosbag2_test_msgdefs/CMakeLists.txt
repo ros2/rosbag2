@@ -18,13 +18,7 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "srv/BasicSrv.srv"
   "srv/ComplexSrvMsg.srv"
   "srv/ComplexSrvIdl.srv"
-<<<<<<< HEAD
-=======
-  "action/BasicAction.action"
   "nested_sub_dir/action/BasicMsg.action"
-  "action/ComplexActionMsg.action"
-  "action/ComplexActionIdl.action"
->>>>>>> 943993a (Add support for searching message definitions in nested subdirectories (#2055))
   ADD_LINTER_TESTS
 )
 
