@@ -23,6 +23,7 @@
 #include <vector>
 
 #include "rosbag2_interfaces/srv/resume.hpp"
+#include "rosbag2_interfaces/srv/stop.hpp"
 #include "rosbag2_test_common/process_execution_helpers.hpp"
 #include "rosbag2_test_common/subscription_manager.hpp"
 #include "rosbag2_test_common/tested_storage_ids.hpp"
@@ -40,6 +41,7 @@ class PlayEndToEndTestFixture : public Test, public WithParamInterface<std::stri
 {
 public:
   using Resume = rosbag2_interfaces::srv::Resume;
+  using Stop = rosbag2_interfaces::srv::Stop;
 
   PlayEndToEndTestFixture()
   : sub_qos_(rclcpp::QoS{10}
@@ -49,8 +51,9 @@ public:
     // _SRC_RESOURCES_DIR_PATH defined in CMakeLists.txt
     bags_path_ = (fs::path(_SRC_RESOURCES_DIR_PATH) / GetParam()).generic_string();
     sub_ = std::make_unique<SubscriptionManager>();
-    client_node_ = std::make_shared<rclcpp::Node>("test_record_client");
+    client_node_ = std::make_shared<rclcpp::Node>("test_player_client");
     cli_resume_ = client_node_->create_client<Resume>("/rosbag2_player/resume");
+    cli_stop_ = client_node_->create_client<Stop>("/rosbag2_player/stop");
     exec_ = std::make_shared<rclcpp::executors::SingleThreadedExecutor>();
     exec_->add_node(client_node_);
     spin_thread_ = std::thread(
@@ -109,6 +112,7 @@ public:
   std::unique_ptr<SubscriptionManager> sub_;
   rclcpp::Node::SharedPtr client_node_;
   rclcpp::Client<Resume>::SharedPtr cli_resume_;
+  rclcpp::Client<Stop>::SharedPtr cli_stop_;
   std::thread spin_thread_;
   std::shared_ptr<rclcpp::executors::SingleThreadedExecutor> exec_;
   const std::chrono::seconds service_call_timeout_ {10};
@@ -158,6 +162,31 @@ TEST_P(PlayEndToEndTestFixture, play_end_to_end_test) {
           &test_msgs::msg::Arrays::string_values,
           ElementsAre("Complex Hello1", "Complex Hello2", "Complex Hello3")))));
   EXPECT_TRUE(wait_until_completion(process_id));
+}
+
+TEST_P(PlayEndToEndTestFixture, player_gracefully_exit_with_stop_service_call) {
+  sub_->add_subscription<test_msgs::msg::Arrays>("/array_topic", 1, sub_qos_);
+  sub_->add_subscription<test_msgs::msg::BasicTypes>("/test_topic", 1, sub_qos_);
+
+  // Start ros2 bag play in pause and loop mode. Loop mode is needed to ensure that the player
+  // does not exit after playing the bag once, so we can test the stop service call.
+  auto process_id = start_execution("ros2 bag play -p -l " + bags_path_ + "/cdr_test");
+  auto cleanup_process_handle = rcpputils::make_scope_exit(
+    [process_id]() {
+      stop_execution(process_id);
+    });
+
+  EXPECT_TRUE(sub_->spin_and_wait_for_matched({"/test_topic", "/array_topic"}));
+  auto subscription_future = sub_->spin_subscriptions();
+
+  ASSERT_TRUE(cli_resume_->wait_for_service(service_call_timeout_));
+  ASSERT_TRUE(cli_stop_->wait_for_service(service_call_timeout_));
+  // Send resume service call for player
+  successful_service_request<Resume>(cli_resume_);
+  subscription_future.get();
+  successful_service_request<Stop>(cli_stop_);
+  // Wait for the process to finish gracefully after the stop service call
+  EXPECT_TRUE(wait_until_completion(process_id, std::chrono::seconds(5)));
 }
 
 TEST_P(PlayEndToEndTestFixture, play_fails_gracefully_if_bag_does_not_exist) {
