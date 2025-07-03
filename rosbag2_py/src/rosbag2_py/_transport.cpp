@@ -204,7 +204,11 @@ public:
       throw std::runtime_error("Player is not initialized. Please use constructor with "
         "storage and play options.");
     }
-    exec_ = std::make_shared<rclcpp::executors::SingleThreadedExecutor>();
+    if (exec_) {
+      // We already have an executor spinning
+      return;
+    }
+    exec_ = std::make_unique<rclcpp::executors::SingleThreadedExecutor>();
     exec_->add_node(player_);
     spin_thread_ = std::thread(
       [this]() {
@@ -223,6 +227,7 @@ public:
       if (spin_thread_.joinable()) {
         spin_thread_.join();
       }
+      exec_ = nullptr;
     }
   }
 
@@ -441,7 +446,7 @@ protected:
   std::mutex wait_for_exit_mutex_;
 
   std::shared_ptr<rosbag2_transport::Player> player_;
-  std::shared_ptr<rclcpp::executors::SingleThreadedExecutor> exec_{nullptr};
+  std::unique_ptr<rclcpp::executors::SingleThreadedExecutor> exec_{nullptr};
   std::thread spin_thread_;
 };
 
@@ -493,7 +498,11 @@ public:
       throw std::runtime_error("Recorder is not initialized. Please use constructor with "
         "storage and record options.");
     }
-    exec_ = std::make_shared<rclcpp::executors::SingleThreadedExecutor>();
+    if (exec_) {
+      // We already have an executor spinning
+      return;
+    }
+    exec_ = std::make_unique<rclcpp::executors::SingleThreadedExecutor>();
     exec_->add_node(recorder_);
     spin_thread_ = std::thread(
       [this]() {
@@ -512,6 +521,7 @@ public:
       if (spin_thread_.joinable()) {
         spin_thread_.join();
       }
+      exec_ = nullptr;
     }
   }
 
@@ -665,7 +675,7 @@ protected:
   std::mutex wait_for_exit_mutex_;
 
   std::shared_ptr<rosbag2_transport::Recorder> recorder_;
-  std::shared_ptr<rclcpp::executors::SingleThreadedExecutor> exec_{nullptr};
+  std::unique_ptr<rclcpp::executors::SingleThreadedExecutor> exec_{nullptr};
   std::thread spin_thread_;
 };
 

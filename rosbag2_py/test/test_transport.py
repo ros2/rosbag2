@@ -115,6 +115,8 @@ def test_player_api(storage_id):
     ), sub.get_publisher_count()
 
     player.start_spin()
+    # Calling start_spin() a second time should do nothing
+    player.start_spin()
     player.play()
     # assert player.wait_for_playback_to_start()
     assert player.play_next()
@@ -157,6 +159,8 @@ def test_recorder_api(tmp_path, storage_id):
 
     recorder = rosbag2_py.Recorder(
         storage_options, record_options, 'info', 'rosbag2_recorder_test')
+    recorder.start_spin()
+    # Calling start_spin() a second time should do nothing
     recorder.start_spin()
     recorder.record()
 
