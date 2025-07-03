@@ -50,7 +50,7 @@ def test_sequential_reader(storage_id):
     msg_counter = 0
 
     while reader.has_next():
-        (topic, data, t) = reader.read_next()
+        (topic, data, recv_ts, send_ts) = reader.read_next_ext()
         msg_type = get_message(type_map[topic])
         msg = deserialize_message(data, msg_type)
 
@@ -68,7 +68,7 @@ def test_sequential_reader(storage_id):
     msg_counter = 0
 
     while reader.has_next():
-        (topic, data, t) = reader.read_next()
+        (topic, data, recv_ts, send_ts) = reader.read_next_ext()
         msg_type = get_message(type_map[topic])
         msg = deserialize_message(data, msg_type)
 
@@ -124,13 +124,13 @@ def test_sequential_reader_seek(storage_id):
 
     msg_counter = 5
 
-    (topic, data, t) = reader.read_next()
+    (topic, data, recv_ts, send_ts) = reader.read_next_ext()
     msg_type = get_message(type_map[topic])
     msg = deserialize_message(data, msg_type)
 
     assert isinstance(msg, Log)
 
-    (topic, data, t) = reader.read_next()
+    (topic, data, recv_ts, send_ts) = reader.read_next_ext()
     msg_type = get_message(type_map[topic])
     msg = deserialize_message(data, msg_type)
 
@@ -142,7 +142,7 @@ def test_sequential_reader_seek(storage_id):
     storage_filter = rosbag2_py.StorageFilter(topics=['/topic'])
     reader.set_filter(storage_filter)
 
-    (topic, data, t) = reader.read_next()
+    (topic, data, recv_ts, send_ts) = reader.read_next_ext()
     msg_type = get_message(type_map[topic])
     msg = deserialize_message(data, msg_type)
     isinstance(msg, String)
@@ -153,14 +153,14 @@ def test_sequential_reader_seek(storage_id):
 
     msg_counter = 8
 
-    (topic, data, t) = reader.read_next()
+    (topic, data, recv_ts, send_ts) = reader.read_next_ext()
     msg_type = get_message(type_map[topic])
     msg = deserialize_message(data, msg_type)
     isinstance(msg, String)
     assert msg.data == f'Hello, world! {msg_counter}'
     msg_counter += 1
 
-    (topic, data, t) = reader.read_next()
+    (topic, data, recv_ts, send_ts) = reader.read_next_ext()
     msg_type = get_message(type_map[topic])
     msg = deserialize_message(data, msg_type)
     isinstance(msg, String)

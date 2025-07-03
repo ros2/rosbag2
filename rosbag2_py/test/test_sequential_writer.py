@@ -79,13 +79,19 @@ def test_sequential_writer(tmp_path, storage_id):
 
     msg_counter = 0
     while reader.has_next():
-        topic, data, t = reader.read_next()
+        topic, data, recv_ts, send_ts = reader.read_next_ext()
         msg_type = get_message(type_map[topic])
         msg_deserialized = deserialize_message(data, msg_type)
 
         assert isinstance(msg_deserialized, String)
         assert msg_deserialized.data == f'Hello, world! {msg_counter}'
-        assert t == msg_counter * 100
+        assert recv_ts == msg_counter * 100
+
+        # NOTE: Different behaviours when writing in mcap and sqlite3 for the send timestamp
+        if 'sqlite3' == storage_id:
+            assert send_ts == 0
+        elif 'mcap' == storage_id:
+            assert send_ts == msg_counter * 100
 
         msg_counter += 1
 
