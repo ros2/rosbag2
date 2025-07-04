@@ -62,6 +62,26 @@ TEST(test_local_message_definition_source, can_find_msg_deps)
     "float32 c\n");
 }
 
+TEST(test_local_message_definition_source, can_find_msg_definition_in_nested_subfolder)
+{
+  LocalMessageDefinitionSource source;
+  auto result =
+    source.get_full_text("rosbag2_test_msgdefs/msg/nested_sub_dir/AnotherBasicMsg");
+  ASSERT_EQ(result.encoding, "ros2msg");
+  // Note: By design The top-level message definition for MSG format is present first, with no
+  // delimiter. All dependent .msg definitions are preceded by a two-line delimiter:
+  ASSERT_EQ(result.encoded_message_definition, "float32 c\n");
+}
+
+TEST(test_local_message_definition_source, can_find_action_definition_in_nested_subfolder)
+{
+  LocalMessageDefinitionSource source;
+  auto result =
+    source.get_full_text("rosbag2_test_msgdefs/nested_sub_dir/action/BasicMsg");
+  ASSERT_EQ(result.encoding, "unknown");
+  ASSERT_TRUE(result.encoded_message_definition.empty());
+}
+
 TEST(test_local_message_definition_source, can_find_srv_deps_in_msg)
 {
   LocalMessageDefinitionSource source;
@@ -175,9 +195,40 @@ TEST(test_local_message_definition_source, no_crash_on_bad_name)
 {
   LocalMessageDefinitionSource source;
   rosbag2_storage::MessageDefinition result;
+
+  // The following type names are not valid, but it should not crash
   ASSERT_NO_THROW(
   {
-    result = source.get_full_text("rosbag2_test_msgdefs/idl/BasicSrv_Request");
+    // The typename without preceding package name
+    result = source.get_full_text("/msg/String");
+  });
+  ASSERT_EQ(result.encoding, "unknown");
+
+  ASSERT_NO_THROW(
+  {
+    // Missing the actual type name after format specifier
+    result = source.get_full_text("std_msgs/msg/");
+  });
+  ASSERT_EQ(result.encoding, "unknown");
+
+  ASSERT_NO_THROW(
+  {
+    // Missing package name before the first slash
+    result = source.get_full_text("/String");
+  });
+  ASSERT_EQ(result.encoding, "unknown");
+
+  ASSERT_NO_THROW(
+  {
+    // Hyphens are not allowed in package names
+    result = source.get_full_text("std-msgs/String");
+  });
+  ASSERT_EQ(result.encoding, "unknown");
+
+  ASSERT_NO_THROW(
+  {
+    // File extensions are not allowed
+    result = source.get_full_text("std_msgs/String.msg");
   });
   ASSERT_EQ(result.encoding, "unknown");
 }
