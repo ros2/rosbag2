@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.8)
+cmake_minimum_required(VERSION 3.20)
 project(rosbag2_interfaces)
 
 if(NOT CMAKE_CXX_STANDARD)
