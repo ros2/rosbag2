@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.5)
+cmake_minimum_required(VERSION 3.20)
 project(rosbag2_performance_benchmarking)
 
 option(BUILD_ROSBAG2_BENCHMARKS "Build rosbag2 performance benchmarks" OFF)
