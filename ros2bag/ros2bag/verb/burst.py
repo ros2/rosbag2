@@ -112,5 +112,5 @@ class BurstVerb(VerbExtension):
         play_options.start_offset = args.start_offset
         play_options.wait_acked_timeout = -1
 
-        player = Player()
-        player.burst(storage_options, play_options, args.num_messages)
+        player = Player(storage_options, play_options)
+        player.burst_sync(args.num_messages)

@@ -335,6 +335,6 @@ class PlayVerb(VerbExtension):
 
         player = Player(storage_options, play_options, args.log_level)
         try:
-            player.play()
+            player.play_sync()
         except KeyboardInterrupt:
             pass

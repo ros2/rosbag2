@@ -231,6 +231,10 @@ def test_player_unconfigured():
         player.burst(1)
     with pytest.raises(RuntimeError):
         player.seek(0)
+    with pytest.raises(RuntimeError):
+        player.play_sync()
+    with pytest.raises(RuntimeError):
+        player.burst_sync(1)
 
 
 def test_recorder_unconfigured():
@@ -247,6 +251,8 @@ def test_recorder_unconfigured():
         recorder.pause()
     with pytest.raises(RuntimeError):
         recorder.resume()
+    with pytest.raises(RuntimeError):
+        recorder.record_sync()
 
 
 @pytest.mark.parametrize('storage_id', TESTED_STORAGE_IDS)
@@ -259,13 +265,12 @@ def test_record_cancel(tmp_path, storage_id):
     record_options.is_discovery_disabled = False
     record_options.topic_polling_interval = datetime.timedelta(milliseconds=100)
 
-    recorder = rosbag2_py.Recorder()
+    recorder = rosbag2_py.Recorder(storage_options, record_options)
 
     ctx = rclpy.Context()
     ctx.init()
     record_thread = threading.Thread(
-        target=recorder.record,
-        args=(storage_options, record_options),
+        target=recorder.record_sync,
         daemon=True)
     record_thread.start()
 
@@ -307,11 +312,10 @@ def test_play_cancel(storage_id, capfd):
     play_options.loop = True
     play_options.start_paused = True
 
-    player = rosbag2_py.Player()
+    player = rosbag2_py.Player(storage_options, play_options)
 
     player_thread = threading.Thread(
-        target=player.play,
-        args=(storage_options, play_options),
+        target=player.play_sync,
         daemon=True)
     player_thread.start()
 

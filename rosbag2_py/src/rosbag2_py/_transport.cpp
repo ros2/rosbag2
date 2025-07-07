@@ -163,6 +163,8 @@ class Player
 public:
   using SignalHandlerType = void (*)(int);
 
+  // TODO(christophebedard): remove this constructor after a deprecation period
+  // along with the `if (!player_)` checks in the methods
   explicit Player(const std::string & log_level = "info")
   {
     Arguments arguments({"--ros-args", "--log-level", log_level});
@@ -189,7 +191,7 @@ public:
   {
     Arguments arguments({"--ros-args", "--log-level", log_level});
     rclcpp::init(arguments.argc(), arguments.argv());
-    player_ = std::make_shared<rosbag2_transport::Player>(storage_options, play_options, node_name);
+    player_ = std::make_unique<rosbag2_transport::Player>(storage_options, play_options, node_name);
   }
 
   virtual ~Player()
@@ -227,6 +229,7 @@ public:
       if (spin_thread_.joinable()) {
         spin_thread_.join();
       }
+      exec_->remove_node(player_);
       exec_ = nullptr;
     }
   }
@@ -318,29 +321,42 @@ public:
     wait_for_exit_cv_.notify_all();
   }
 
+  // TODO(christophebedard): remove this method after a deprecation period
   void play(
     const rosbag2_storage::StorageOptions & storage_options,
     PlayOptions & play_options)
   {
-    player_ = std::make_shared<rosbag2_transport::Player>(storage_options, play_options);
-    play_impl(false);
+    player_ = std::make_unique<rosbag2_transport::Player>(storage_options, play_options);
+    play_sync_impl(false);
   }
 
+  // TODO(christophebedard): remove this method after a deprecation period
   void play(
     const std::vector<rosbag2_storage::StorageOptions> & storage_options,
     PlayOptions & play_options)
   {
-    player_ = std::make_shared<rosbag2_transport::Player>(storage_options, play_options);
-    play_impl(false);
+    player_ = std::make_unique<rosbag2_transport::Player>(storage_options, play_options);
+    play_sync_impl(false);
   }
 
+  void play_sync()
+  {
+    play_sync_impl(false);
+  }
+
+  // TODO(christophebedard): remove this method after a deprecation period
   void burst(
     const rosbag2_storage::StorageOptions & storage_options,
     PlayOptions & play_options,
     size_t num_messages)
   {
-    player_ = std::make_shared<rosbag2_transport::Player>(storage_options, play_options);
-    play_impl(true, num_messages);
+    player_ = std::make_unique<rosbag2_transport::Player>(storage_options, play_options);
+    play_sync_impl(true, num_messages);
+  }
+
+  void burst_sync(size_t num_messages)
+  {
+    play_sync_impl(true, num_messages);
   }
 
 protected:
@@ -387,7 +403,7 @@ protected:
     }
   }
 
-  void play_impl(bool burst = false, size_t burst_num_messages = 0)
+  void play_sync_impl(bool burst = false, size_t burst_num_messages = 0)
   {
     if (!player_) {
       throw std::runtime_error("Player is not initialized. Please use constructor with "
@@ -395,12 +411,7 @@ protected:
     }
     install_signal_handlers();
     try {
-      rclcpp::executors::SingleThreadedExecutor exec;
-      exec.add_node(player_);
-      auto spin_thread = std::thread(
-        [&exec]() {
-          exec.spin();
-        });
+      start_spin();
       player_->play();
 
       auto wait_for_exit_thread = std::thread(
@@ -424,11 +435,7 @@ protected:
         wait_for_exit_thread.join();
       }
 
-      exec.cancel();
-      if (spin_thread.joinable()) {
-        spin_thread.join();
-      }
-      exec.remove_node(player_);
+      stop_spin();
     } catch (...) {
       process_deferred_signal();
       uninstall_signal_handlers();
@@ -445,7 +452,7 @@ protected:
   static int deferred_sig_number_;
   std::mutex wait_for_exit_mutex_;
 
-  std::shared_ptr<rosbag2_transport::Player> player_;
+  std::unique_ptr<rosbag2_transport::Player> player_;
   std::unique_ptr<rclcpp::executors::SingleThreadedExecutor> exec_{nullptr};
   std::thread spin_thread_;
 };
@@ -460,6 +467,9 @@ class Recorder
 {
 public:
   using SignalHandlerType = void (*)(int);
+
+  // TODO(christophebedard): remove this constructor after a deprecation period
+  // along with the `if (!recorder_)` checks in the methods
   explicit Recorder(const std::string & log_level = "info")
   {
     Arguments arguments({"--ros-args", "--log-level", log_level});
@@ -482,7 +492,7 @@ public:
     }
     auto writer = rosbag2_transport::ReaderWriterFactory::make_writer(record_options);
 
-    recorder_ = std::make_shared<rosbag2_transport::Recorder>(
+    recorder_ = std::make_unique<rosbag2_transport::Recorder>(
       std::move(writer), storage_options, record_options, node_name);
   }
 
@@ -521,6 +531,7 @@ public:
       if (spin_thread_.joinable()) {
         spin_thread_.join();
       }
+      exec_->remove_node(recorder_);
       exec_ = nullptr;
     }
   }
@@ -561,6 +572,7 @@ public:
     recorder_->resume();
   }
 
+  // TODO(christophebedard): remove this method after a deprecation period
   void record(
     const rosbag2_storage::StorageOptions & storage_options,
     RecordOptions & record_options,
@@ -571,13 +583,13 @@ public:
     }
     auto writer = rosbag2_transport::ReaderWriterFactory::make_writer(record_options);
 
-    recorder_ = std::make_shared<rosbag2_transport::Recorder>(
+    recorder_ = std::make_unique<rosbag2_transport::Recorder>(
       std::move(writer), storage_options, record_options, node_name);
 
-    record_impl();
+    record_sync();
   }
 
-  void record_impl()
+  void record_sync()
   {
     if (!recorder_) {
       throw std::runtime_error("Recorder is not initialized. Please use constructor with "
@@ -586,15 +598,10 @@ public:
     install_signal_handlers();
     try {
       exit_ = false;
-      auto exec = std::make_unique<rclcpp::executors::SingleThreadedExecutor>();
       recorder_->record();
-      exec->add_node(recorder_);
       // Run exec->spin() in a separate thread, because we need to call exec->cancel() after
       // recorder->stop() to be able to send notifications about bag split and close.
-      auto spin_thread = std::thread(
-        [&exec]() {
-          exec->spin();
-        });
+      start_spin();
       {
         // Release the GIL for long-running record, so that calling Python code
         // can use other threads
@@ -603,11 +610,8 @@ public:
         wait_for_exit_cv_.wait(lock, [] {return rosbag2_py::Recorder::exit_.load();});
         recorder_->stop();
       }
-      exec->cancel();
-      if (spin_thread.joinable()) {
-        spin_thread.join();
-      }
-      exec->remove_node(recorder_);
+
+      stop_spin();
     } catch (...) {
       process_deferred_signal();
       uninstall_signal_handlers();
@@ -674,7 +678,7 @@ protected:
   static int deferred_sig_number_;
   std::mutex wait_for_exit_mutex_;
 
-  std::shared_ptr<rosbag2_transport::Recorder> recorder_;
+  std::unique_ptr<rosbag2_transport::Recorder> recorder_;
   std::unique_ptr<rclcpp::executors::SingleThreadedExecutor> exec_{nullptr};
   std::thread spin_thread_;
 };
@@ -831,7 +835,8 @@ PYBIND11_MODULE(_transport, m) {
   ;
 
   py::class_<rosbag2_py::Player>(m, "Player")
-    // Deprecated default constructor
+  // TODO(christophebedard): remove this constructor after a deprecation period
+  // Deprecated default constructor
   .def(py::init([]()
     {
       PyErr_WarnEx(PyExc_DeprecationWarning, "Player() is deprecated. Use the constructor with "
@@ -839,7 +844,8 @@ PYBIND11_MODULE(_transport, m) {
       return new rosbag2_py::Player();
     }), "Deprecated: Use constructor with full options.")
 
-    // Deprecated constructor with log_level
+  // TODO(christophebedard): remove this constructor after a deprecation period
+  // Deprecated constructor with log_level
   .def(py::init([](const std::string & log_level)
     {
       PyErr_WarnEx(PyExc_DeprecationWarning, "Player(log_level) is deprecated. Use the "
@@ -847,7 +853,7 @@ PYBIND11_MODULE(_transport, m) {
       return new rosbag2_py::Player(log_level);
     }), py::arg("log_level"), "Deprecated: Use constructor with full options.")
 
-    // Recommended constructor with storage and play options
+  // Recommended constructor with storage and play options
   .def(py::init<const rosbag2_storage::StorageOptions &, const PlayOptions &,
     const std::string &, const std::string &>(),
     py::arg("storage_options"),
@@ -864,7 +870,7 @@ PYBIND11_MODULE(_transport, m) {
           node_name (str, optional): Name of the player node, defaults to 'rosbag2_player'.
     )pbdoc")
 
-    // Recommended constructor with multiple storage options
+  // Recommended constructor with multiple storage options
   .def(py::init<const std::vector<rosbag2_storage::StorageOptions> &, const PlayOptions &,
     const std::string &, const std::string &>(),
     py::arg("storage_options"),
@@ -891,14 +897,17 @@ PYBIND11_MODULE(_transport, m) {
   .def("stop_spin", &rosbag2_py::Player::stop_spin,
     R"pbdoc(
       Stop the thread that spins the player node, if there is one.
+
+      This is automatically called by the destructor, if needed.
     )pbdoc")
 
-    // Recommended play method
+  // Recommended play method
   .def("play", py::overload_cast<>(&rosbag2_py::Player::play),
     R"pbdoc(
       Start playback based on the internal Player configuration.
 
       This is the preferred method for starting playback.
+      It is equivalent to the rosbag2_transport::Player::player() method.
       All parameters should be configured via the constructor.
     )pbdoc")
 
@@ -957,37 +966,48 @@ PYBIND11_MODULE(_transport, m) {
           time_point (int): Time point in ROS playback timeline, in nanoseconds.
     )pbdoc")
 
-    // Deprecated play method with storage and play options
+  // TODO(christophebedard): remove this method after a deprecation period
+  // Deprecated play method with storage and play options
   .def("play",
     [](rosbag2_py::Player & self, const rosbag2_storage::StorageOptions & storage_options,
     PlayOptions & play_options)
     {
       PyErr_WarnEx(PyExc_DeprecationWarning, "Player.play(storage_options, play_options) is "
-          "deprecated. Use the parameterless play() instead.", 1);
+          "deprecated. Use the parameterless play_sync() instead.", 1);
       return self.play(storage_options, play_options);
     },
     py::arg("storage_options"),
     py::arg("play_options"),
-    "Deprecated: use play() with preconfigured options instead.")
+    "Deprecated: use play_sync() with preconfigured options instead.")
 
-    // Deprecated play method with multiple storage options
+  // Deprecated play method with multiple storage options
   .def("play",
     [](rosbag2_py::Player & self,
     const std::vector<rosbag2_storage::StorageOptions> & storage_options,
     PlayOptions & play_options)
     {
       PyErr_WarnEx(PyExc_DeprecationWarning, "Player.play(storage_options_list, play_options) is "
-          "deprecated. Use the parameterless play() instead.", 1);
+          "deprecated. Use the parameterless play_sync() instead.", 1);
       return self.play(storage_options, play_options);
     },
     py::arg("storage_options"),
     py::arg("play_options"),
-    "Deprecated: use play() with preconfigured options instead.")
+    "Deprecated: use play_sync() with preconfigured options instead.")
 
-    // Recommended burst playback method
+  .def("play_sync", &rosbag2_py::Player::play_sync,
+    R"pbdoc(
+      Start playback synchronously.
+
+      This will start playing and block until the playback is finished or cancelled.
+      It will also start a thread with an executor to spin the player node.
+    )pbdoc")
+
+  // Recommended burst playback method
   .def("burst", py::overload_cast<size_t>(&rosbag2_py::Player::burst), py::arg("num_messages"),
     R"pbdoc(
       Play a burst of messages.
+
+      This is equivalent to the rosbag2_transport::Player::burst(const size_t) method.
 
       Args:
           num_messages (int): Number of messages to play in this burst.
@@ -995,20 +1015,32 @@ PYBIND11_MODULE(_transport, m) {
           size_t: Number of messages played in this burst.
     )pbdoc")
 
-    // Deprecated burst method with storage and play options
+  // TODO(christophebedard): remove this method after a deprecation period
+  // Deprecated burst method with storage and play options
   .def("burst",
     [](rosbag2_py::Player & self, const rosbag2_storage::StorageOptions & storage_options,
     PlayOptions & play_options, size_t num_messages)
     {
       PyErr_WarnEx(PyExc_DeprecationWarning,
           "Player.burst(storage_options, play_options, num_messages) is deprecated. "
-          "Use burst(num_messages) with preconfigured options instead.", 1);
+          "Use burst_sync(num_messages) with preconfigured options instead.", 1);
       return self.burst(storage_options, play_options, num_messages);
     },
     py::arg("storage_options"),
     py::arg("play_options"),
     py::arg("num_messages"),
-    "Deprecated: use burst(num_messages) with preconfigured options instead.")
+    "Deprecated: use burst_sync(num_messages) with preconfigured options instead.")
+
+  .def("burst_sync", &rosbag2_py::Player::burst_sync,
+    R"pbdoc(
+      Start burst playback synchronously.
+
+      This will start burst playing and block until the playback is finished or cancelled.
+      It will also start a thread with an executor to spin the player node.
+
+      Args:
+          num_messages (int): Number of messages to play in this burst.
+    )pbdoc")
 
   .def_static("cancel", &rosbag2_py::Player::cancel,
     R"pbdoc(
@@ -1019,7 +1051,8 @@ PYBIND11_MODULE(_transport, m) {
   ;
 
   py::class_<rosbag2_py::Recorder>(m, "Recorder")
-    // Deprecated default constructor
+  // TODO(christophebedard): remove this constructor after a deprecation period
+  // Deprecated default constructor
   .def(py::init([]()
     {
       PyErr_WarnEx(PyExc_DeprecationWarning, "Recorder() is deprecated. Use the constructor with "
@@ -1027,7 +1060,8 @@ PYBIND11_MODULE(_transport, m) {
       return new rosbag2_py::Recorder();
     }), "Deprecated: Use constructor with full options.")
 
-    // Deprecated constructor with string argument
+  // TODO(christophebedard): remove this constructor after a deprecation period
+  // Deprecated constructor with string argument
   .def(py::init([](const std::string & arg)
     {
       PyErr_WarnEx(PyExc_DeprecationWarning, "Recorder(log_level) is deprecated. Use the"
@@ -1035,7 +1069,7 @@ PYBIND11_MODULE(_transport, m) {
       return new rosbag2_py::Recorder(arg);
     }), py::arg("arg"), "Deprecated: Use constructor with full options.")
 
-    // Recommended constructor with storage and record options
+  // Recommended constructor with storage and record options
   .def(
     py::init<const rosbag2_storage::StorageOptions &, RecordOptions &,
     const std::string &, const std::string &>(),
@@ -1070,6 +1104,7 @@ PYBIND11_MODULE(_transport, m) {
       Start recording based on the internal Recorder configuration.
 
       This is the preferred method for starting a recording session.
+      It is equivalent to the rosbag2_transport::Recorder::record() method.
       All parameters should be configured via the constructor.
     )pbdoc")
 
@@ -1088,19 +1123,28 @@ PYBIND11_MODULE(_transport, m) {
     &rosbag2_py::Recorder::resume,
     "Resume the recording.")
 
-    // (deprecated) record method
+  // TODO(christophebedard): remove this method after a deprecation period
+  // (deprecated) record method
   .def("record",
     [](rosbag2_py::Recorder & self, const rosbag2_storage::StorageOptions & storage_options,
     RecordOptions & record_options, const std::string & node_name)
     {
       PyErr_WarnEx(PyExc_DeprecationWarning, "Recorder.record(storage_options, record_options, "
-        "node_name) is deprecated. Use the parameterless record() instead.", 1);
+        "node_name) is deprecated. Use the parameterless record_sync() instead.", 1);
       return self.record(storage_options, record_options, node_name);
     },
     py::arg("storage_options"),
     py::arg("record_options"),
     py::arg("node_name") = "rosbag2_recorder",
-    "Deprecated: use record() with preconfigured options instead.")
+    "Deprecated: use record_sync() with preconfigured options instead.")
+
+  .def("record_sync", &rosbag2_py::Recorder::record_sync,
+    R"pbdoc(
+      Start recording synchronously.
+
+      This will start a thread with an executor to spin the recorder node.
+      It will start recording and block until the recording is stopped or cancelled.
+    )pbdoc")
 
   .def_static("cancel", &rosbag2_py::Recorder::cancel,
     R"pbdoc(

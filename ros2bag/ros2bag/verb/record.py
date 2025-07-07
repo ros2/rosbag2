@@ -387,7 +387,7 @@ class RecordVerb(VerbExtension):
         recorder = Recorder(storage_options, record_options, args.log_level, args.node_name)
 
         try:
-            recorder.record()
+            recorder.record_sync()
         except KeyboardInterrupt:
             pass
 
