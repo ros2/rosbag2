@@ -191,7 +191,7 @@ public:
   {
     Arguments arguments({"--ros-args", "--log-level", log_level});
     rclcpp::init(arguments.argc(), arguments.argv());
-    player_ = std::make_unique<rosbag2_transport::Player>(storage_options, play_options, node_name);
+    player_ = std::make_shared<rosbag2_transport::Player>(storage_options, play_options, node_name);
   }
 
   virtual ~Player()
@@ -326,7 +326,7 @@ public:
     const rosbag2_storage::StorageOptions & storage_options,
     PlayOptions & play_options)
   {
-    player_ = std::make_unique<rosbag2_transport::Player>(storage_options, play_options);
+    player_ = std::make_shared<rosbag2_transport::Player>(storage_options, play_options);
     play_sync_impl(false);
   }
 
@@ -335,7 +335,7 @@ public:
     const std::vector<rosbag2_storage::StorageOptions> & storage_options,
     PlayOptions & play_options)
   {
-    player_ = std::make_unique<rosbag2_transport::Player>(storage_options, play_options);
+    player_ = std::make_shared<rosbag2_transport::Player>(storage_options, play_options);
     play_sync_impl(false);
   }
 
@@ -350,7 +350,7 @@ public:
     PlayOptions & play_options,
     size_t num_messages)
   {
-    player_ = std::make_unique<rosbag2_transport::Player>(storage_options, play_options);
+    player_ = std::make_shared<rosbag2_transport::Player>(storage_options, play_options);
     play_sync_impl(true, num_messages);
   }
 
@@ -452,7 +452,7 @@ protected:
   static int deferred_sig_number_;
   std::mutex wait_for_exit_mutex_;
 
-  std::unique_ptr<rosbag2_transport::Player> player_;
+  std::shared_ptr<rosbag2_transport::Player> player_;
   std::unique_ptr<rclcpp::executors::SingleThreadedExecutor> exec_{nullptr};
   std::thread spin_thread_;
 };
@@ -492,7 +492,7 @@ public:
     }
     auto writer = rosbag2_transport::ReaderWriterFactory::make_writer(record_options);
 
-    recorder_ = std::make_unique<rosbag2_transport::Recorder>(
+    recorder_ = std::make_shared<rosbag2_transport::Recorder>(
       std::move(writer), storage_options, record_options, node_name);
   }
 
@@ -583,7 +583,7 @@ public:
     }
     auto writer = rosbag2_transport::ReaderWriterFactory::make_writer(record_options);
 
-    recorder_ = std::make_unique<rosbag2_transport::Recorder>(
+    recorder_ = std::make_shared<rosbag2_transport::Recorder>(
       std::move(writer), storage_options, record_options, node_name);
 
     record_sync();
@@ -678,7 +678,7 @@ protected:
   static int deferred_sig_number_;
   std::mutex wait_for_exit_mutex_;
 
-  std::unique_ptr<rosbag2_transport::Recorder> recorder_;
+  std::shared_ptr<rosbag2_transport::Recorder> recorder_;
   std::unique_ptr<rclcpp::executors::SingleThreadedExecutor> exec_{nullptr};
   std::thread spin_thread_;
 };
