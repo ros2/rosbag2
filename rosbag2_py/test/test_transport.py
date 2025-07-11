@@ -94,6 +94,7 @@ def test_player_api(storage_id):
     play_options.disable_keyboard_controls = True
 
     player = rosbag2_py.Player(storage_options, play_options, 'debug', 'rosbag2_player_test')
+    assert player.is_paused()
 
     ctx = rclpy.Context()
     ctx.init()
@@ -125,6 +126,7 @@ def test_player_api(storage_id):
     player.seek(0)
     # This requires that the player node be spun by an executor
     resume_client.call(Resume.Request(), 5.0)
+    assert not player.is_paused()
     assert not player.play_next()
     assert player.wait_for_playback_to_finish(15.0)
     player.stop()
@@ -159,6 +161,7 @@ def test_recorder_api(tmp_path, storage_id):
 
     recorder = rosbag2_py.Recorder(
         storage_options, record_options, 'info', 'rosbag2_recorder_test')
+    assert not recorder.is_paused()
     recorder.start_spin()
     # Calling start_spin() a second time should do nothing
     recorder.start_spin()
@@ -178,9 +181,12 @@ def test_recorder_api(tmp_path, storage_id):
 
     assert resume_client.wait_for_service(5.0), str(node.get_service_names_and_types())
     recorder.resume()
+    assert not recorder.is_paused()
     recorder.pause()
+    assert recorder.is_paused()
     # This requires that the recorder node be spun by an executor
     resume_client.call(Resume.Request(), 5.0)
+    assert not recorder.is_paused()
     i = 0
     while rclpy.ok() and i < 10:
         pub.publish(String(data=str(i)))
@@ -226,15 +232,13 @@ def test_player_unconfigured():
     with pytest.raises(RuntimeError):
         player.resume()
     with pytest.raises(RuntimeError):
+        player.is_paused()
+    with pytest.raises(RuntimeError):
         player.play_next()
     with pytest.raises(RuntimeError):
         player.burst(1)
     with pytest.raises(RuntimeError):
         player.seek(0)
-    with pytest.raises(RuntimeError):
-        player.play_sync()
-    with pytest.raises(RuntimeError):
-        player.burst_sync(1)
 
 
 def test_recorder_unconfigured():
@@ -252,7 +256,7 @@ def test_recorder_unconfigured():
     with pytest.raises(RuntimeError):
         recorder.resume()
     with pytest.raises(RuntimeError):
-        recorder.record_sync()
+        recorder.is_paused()
 
 
 @pytest.mark.parametrize('storage_id', TESTED_STORAGE_IDS)
@@ -265,12 +269,13 @@ def test_record_cancel(tmp_path, storage_id):
     record_options.is_discovery_disabled = False
     record_options.topic_polling_interval = datetime.timedelta(milliseconds=100)
 
-    recorder = rosbag2_py.Recorder(storage_options, record_options)
+    recorder = rosbag2_py.Recorder()
 
     ctx = rclpy.Context()
     ctx.init()
     record_thread = threading.Thread(
-        target=recorder.record_sync,
+        target=recorder.record,
+        args=(storage_options, record_options),
         daemon=True)
     record_thread.start()
 
@@ -315,7 +320,8 @@ def test_play_cancel(storage_id, capfd):
     player = rosbag2_py.Player(storage_options, play_options)
 
     player_thread = threading.Thread(
-        target=player.play_sync,
+        target=player.play,
+        args=(storage_options, play_options),
         daemon=True)
     player_thread.start()
 

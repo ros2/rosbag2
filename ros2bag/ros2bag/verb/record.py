@@ -15,6 +15,8 @@
 from argparse import ArgumentParser, FileType
 import datetime
 import os
+import signal
+import threading
 
 from rclpy.qos import InvalidQoSProfileException
 from ros2bag.api import add_writer_storage_plugin_extensions
@@ -386,10 +388,46 @@ class RecordVerb(VerbExtension):
 
         recorder = Recorder(storage_options, record_options, args.log_level, args.node_name)
 
+        # Install signal handlers for graceful shutdown
+        global stop_record
+        stop_record = False
+        stop_record_cv = threading.Condition()
+        global deferred_sig_number
+        deferred_sig_number = None
+
+        def signal_handler(signum, frame):
+            if signum in (signal.SIGINT, signal.SIGTERM):
+                global deferred_sig_number
+                deferred_sig_number = signum
+                with stop_record_cv:
+                    global stop_record
+                    stop_record = True
+                    stop_record_cv.notify()
+
+        old_sigint_handler = signal.signal(signal.SIGINT, signal_handler)
+        old_sigterm_handler = signal.signal(signal.SIGTERM, signal_handler)
+
+        recorder.record()
+        recorder.start_spin()
         try:
-            recorder.record_sync()
+            with stop_record_cv:
+                stop_record_cv.wait_for(lambda: stop_record)
         except KeyboardInterrupt:
             pass
+
+        recorder.stop()
+        recorder.stop_spin()
+
+        # Process deferred signal and uninstall handlers
+        if deferred_sig_number == signal.SIGINT:
+            old_sigint_handler(signal.SIGINT, None)
+        elif deferred_sig_number == signal.SIGTERM:
+            old_sigterm_handler(signal.SIGTERM, None)
+        deferred_sig_number = None
+        signal.signal(signal.SIGINT, old_sigint_handler)
+        old_sigint_handler = None
+        signal.signal(signal.SIGTERM, old_sigterm_handler)
+        old_sigterm_handler = None
 
         if os.path.isdir(uri) and not os.listdir(uri):
             os.rmdir(uri)

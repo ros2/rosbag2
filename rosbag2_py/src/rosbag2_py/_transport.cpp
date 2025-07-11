@@ -202,6 +202,7 @@ public:
 
   void start_spin()
   {
+    std::lock_guard<std::mutex> lock(spin_thread_mutex_);
     if (!player_) {
       throw std::runtime_error("Player is not initialized. Please use constructor with "
         "storage and play options.");
@@ -224,6 +225,7 @@ public:
 
   void stop_spin()
   {
+    std::lock_guard<std::mutex> lock(spin_thread_mutex_);
     if (exec_) {
       exec_->cancel();
       if (spin_thread_.joinable()) {
@@ -288,6 +290,15 @@ public:
     player_->resume();
   }
 
+  bool is_paused() const
+  {
+    if (!player_) {
+      throw std::runtime_error("Player is not initialized. Please use constructor with "
+        "storage and play options.");
+    }
+    return player_->is_paused();
+  }
+
   bool play_next()
   {
     if (!player_) {
@@ -327,7 +338,7 @@ public:
     PlayOptions & play_options)
   {
     player_ = std::make_shared<rosbag2_transport::Player>(storage_options, play_options);
-    play_sync_impl(false);
+    play_impl(false);
   }
 
   // TODO(christophebedard): remove this method after a deprecation period
@@ -336,12 +347,7 @@ public:
     PlayOptions & play_options)
   {
     player_ = std::make_shared<rosbag2_transport::Player>(storage_options, play_options);
-    play_sync_impl(false);
-  }
-
-  void play_sync()
-  {
-    play_sync_impl(false);
+    play_impl(false);
   }
 
   // TODO(christophebedard): remove this method after a deprecation period
@@ -351,12 +357,7 @@ public:
     size_t num_messages)
   {
     player_ = std::make_shared<rosbag2_transport::Player>(storage_options, play_options);
-    play_sync_impl(true, num_messages);
-  }
-
-  void burst_sync(size_t num_messages)
-  {
-    play_sync_impl(true, num_messages);
+    play_impl(true, num_messages);
   }
 
 protected:
@@ -403,7 +404,7 @@ protected:
     }
   }
 
-  void play_sync_impl(bool burst = false, size_t burst_num_messages = 0)
+  void play_impl(bool burst = false, size_t burst_num_messages = 0)
   {
     if (!player_) {
       throw std::runtime_error("Player is not initialized. Please use constructor with "
@@ -453,6 +454,7 @@ protected:
   std::mutex wait_for_exit_mutex_;
 
   std::shared_ptr<rosbag2_transport::Player> player_;
+  std::mutex spin_thread_mutex_;
   std::unique_ptr<rclcpp::executors::SingleThreadedExecutor> exec_{nullptr};
   std::thread spin_thread_;
 };
@@ -504,6 +506,7 @@ public:
 
   void start_spin()
   {
+    std::lock_guard<std::mutex> lock(spin_thread_mutex_);
     if (!recorder_) {
       throw std::runtime_error("Recorder is not initialized. Please use constructor with "
         "storage and record options.");
@@ -526,6 +529,7 @@ public:
 
   void stop_spin()
   {
+    std::lock_guard<std::mutex> lock(spin_thread_mutex_);
     if (exec_) {
       exec_->cancel();
       if (spin_thread_.joinable()) {
@@ -572,6 +576,15 @@ public:
     recorder_->resume();
   }
 
+  bool is_paused()
+  {
+    if (!recorder_) {
+      throw std::runtime_error("Recorder is not initialized. Please use constructor with "
+        "storage and record options.");
+    }
+    return recorder_->is_paused();
+  }
+
   // TODO(christophebedard): remove this method after a deprecation period
   void record(
     const rosbag2_storage::StorageOptions & storage_options,
@@ -586,10 +599,10 @@ public:
     recorder_ = std::make_shared<rosbag2_transport::Recorder>(
       std::move(writer), storage_options, record_options, node_name);
 
-    record_sync();
+    record_impl();
   }
 
-  void record_sync()
+  void record_impl()
   {
     if (!recorder_) {
       throw std::runtime_error("Recorder is not initialized. Please use constructor with "
@@ -679,6 +692,7 @@ protected:
   std::mutex wait_for_exit_mutex_;
 
   std::shared_ptr<rosbag2_transport::Recorder> recorder_;
+  std::mutex spin_thread_mutex_;
   std::unique_ptr<rclcpp::executors::SingleThreadedExecutor> exec_{nullptr};
   std::thread spin_thread_;
 };
@@ -950,6 +964,11 @@ PYBIND11_MODULE(_transport, m) {
     &rosbag2_py::Player::resume,
     "Start the flow of time for playback.")
 
+  .def(
+    "is_paused",
+    &rosbag2_py::Player::is_paused,
+    "Whether the playback is currently paused.")
+
   .def("play_next", &rosbag2_py::Player::play_next,
     R"pbdoc(
       Playing next message from queue when in pause.
@@ -973,13 +992,14 @@ PYBIND11_MODULE(_transport, m) {
     PlayOptions & play_options)
     {
       PyErr_WarnEx(PyExc_DeprecationWarning, "Player.play(storage_options, play_options) is "
-          "deprecated. Use the parameterless play_sync() instead.", 1);
+          "deprecated. Use the parameterless play() instead.", 1);
       return self.play(storage_options, play_options);
     },
     py::arg("storage_options"),
     py::arg("play_options"),
-    "Deprecated: use play_sync() with preconfigured options instead.")
+    "Deprecated: use play() with preconfigured options instead.")
 
+  // TODO(christophebedard): remove this method after a deprecation period
   // Deprecated play method with multiple storage options
   .def("play",
     [](rosbag2_py::Player & self,
@@ -987,20 +1007,12 @@ PYBIND11_MODULE(_transport, m) {
     PlayOptions & play_options)
     {
       PyErr_WarnEx(PyExc_DeprecationWarning, "Player.play(storage_options_list, play_options) is "
-          "deprecated. Use the parameterless play_sync() instead.", 1);
+          "deprecated. Use the parameterless play() instead.", 1);
       return self.play(storage_options, play_options);
     },
     py::arg("storage_options"),
     py::arg("play_options"),
-    "Deprecated: use play_sync() with preconfigured options instead.")
-
-  .def("play_sync", &rosbag2_py::Player::play_sync,
-    R"pbdoc(
-      Start playback synchronously.
-
-      This will start playing and block until the playback is finished or cancelled.
-      It will also start a thread with an executor to spin the player node.
-    )pbdoc")
+    "Deprecated: use play() with preconfigured options instead.")
 
   // Recommended burst playback method
   .def("burst", py::overload_cast<size_t>(&rosbag2_py::Player::burst), py::arg("num_messages"),
@@ -1023,24 +1035,13 @@ PYBIND11_MODULE(_transport, m) {
     {
       PyErr_WarnEx(PyExc_DeprecationWarning,
           "Player.burst(storage_options, play_options, num_messages) is deprecated. "
-          "Use burst_sync(num_messages) with preconfigured options instead.", 1);
+          "Use burst(num_messages) with preconfigured options instead.", 1);
       return self.burst(storage_options, play_options, num_messages);
     },
     py::arg("storage_options"),
     py::arg("play_options"),
     py::arg("num_messages"),
-    "Deprecated: use burst_sync(num_messages) with preconfigured options instead.")
-
-  .def("burst_sync", &rosbag2_py::Player::burst_sync,
-    R"pbdoc(
-      Start burst playback synchronously.
-
-      This will start burst playing and block until the playback is finished or cancelled.
-      It will also start a thread with an executor to spin the player node.
-
-      Args:
-          num_messages (int): Number of messages to play in this burst.
-    )pbdoc")
+    "Deprecated: use burst(num_messages) with preconfigured options instead.")
 
   .def_static("cancel", &rosbag2_py::Player::cancel,
     R"pbdoc(
@@ -1123,6 +1124,11 @@ PYBIND11_MODULE(_transport, m) {
     &rosbag2_py::Recorder::resume,
     "Resume the recording.")
 
+  .def(
+    "is_paused",
+    &rosbag2_py::Recorder::is_paused,
+    "Whether the recording is currently paused.")
+
   // TODO(christophebedard): remove this method after a deprecation period
   // (deprecated) record method
   .def("record",
@@ -1130,21 +1136,13 @@ PYBIND11_MODULE(_transport, m) {
     RecordOptions & record_options, const std::string & node_name)
     {
       PyErr_WarnEx(PyExc_DeprecationWarning, "Recorder.record(storage_options, record_options, "
-        "node_name) is deprecated. Use the parameterless record_sync() instead.", 1);
+        "node_name) is deprecated. Use the parameterless record() instead.", 1);
       return self.record(storage_options, record_options, node_name);
     },
     py::arg("storage_options"),
     py::arg("record_options"),
     py::arg("node_name") = "rosbag2_recorder",
-    "Deprecated: use record_sync() with preconfigured options instead.")
-
-  .def("record_sync", &rosbag2_py::Recorder::record_sync,
-    R"pbdoc(
-      Start recording synchronously.
-
-      This will start a thread with an executor to spin the recorder node.
-      It will start recording and block until the recording is stopped or cancelled.
-    )pbdoc")
+    "Deprecated: use record() with preconfigured options instead.")
 
   .def_static("cancel", &rosbag2_py::Recorder::cancel,
     R"pbdoc(
