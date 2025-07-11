@@ -2,6 +2,12 @@
 Changelog for package rosbag2_examples_py
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.26.8 (2025-07-10)
+-------------------
+* [jazzy] Upstream quality changes from Apex.AI part-2 (backport `#1924 <https://github.com/ros2/rosbag2/issues/1924>`_) (`#1987 <https://github.com/ros2/rosbag2/issues/1987>`_)
+* Add a simple example showing how to convert bags to the csv file (`#1974 <https://github.com/ros2/rosbag2/issues/1974>`_) (`#1982 <https://github.com/ros2/rosbag2/issues/1982>`_)
+* Contributors: Michael Orlov <morlovmr@gmail.com>, Christophe Bedard <bedard.christophe@gmail.com>
+
 0.26.7 (2025-04-22)
 -------------------
 * Avoid using internal modules for examples. (backport `#1905 <https://github.com/ros2/rosbag2/issues/1905>`_) (`#1907 <https://github.com/ros2/rosbag2/issues/1907>`_)

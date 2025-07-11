@@ -2,6 +2,16 @@
 Changelog for package rosbag2
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.26.8 (2025-07-10)
+-------------------
+* [jazzy] Add support for searching message definitions in nested subdirectories (backport `#2055 <https://github.com/ros2/rosbag2/issues/2055>`_) (`#2064 <https://github.com/ros2/rosbag2/issues/2064>`_)
+* [jazzy] Fix for issue when inner message definition not found for service events (`#2042 <https://github.com/ros2/rosbag2/issues/2042>`_)
+* [jazzy] Improvements in message publishing timings (backport `#2025 <https://github.com/ros2/rosbag2/issues/2025>`_) (`#2027 <https://github.com/ros2/rosbag2/issues/2027>`_)
+* [jazzy] Upstream quality changes from Apex.AI part-2 (backport `#1924 <https://github.com/ros2/rosbag2/issues/1924>`_) (`#1987 <https://github.com/ros2/rosbag2/issues/1987>`_)
+* Address clang warning in the `TimeControllerClock::wakeup()` (`#1962 <https://github.com/ros2/rosbag2/issues/1962>`_) (`#1977 <https://github.com/ros2/rosbag2/issues/1977>`_)
+* Contributors: Michael Orlov <morlovmr@gmail.com>, Barry Xu,
+  Alejandro Hernández Cordero<ahcorde@gmail.com>, Christophe Bedard <bedard.christophe@gmail.com>
+
 0.26.7 (2025-04-22)
 -------------------
 

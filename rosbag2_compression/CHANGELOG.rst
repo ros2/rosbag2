@@ -2,6 +2,11 @@
 Changelog for package rosbag2_compression
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.26.8 (2025-07-10)
+-------------------
+* Bugfix: `ros2 bag convert` dropping messages with compression mode message (`#1975 <https://github.com/ros2/rosbag2/issues/1975>`_) (`#1985 <https://github.com/ros2/rosbag2/issues/1985>`_)
+* Contributors: Ben <benjamin.andrew@swri.org>, Michael Orlov <morlovmr@gmail.com>
+
 0.26.7 (2025-04-22)
 -------------------
 

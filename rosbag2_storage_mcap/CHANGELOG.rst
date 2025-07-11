@@ -2,6 +2,9 @@
 Changelog for package rosbag2_storage_mcap
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.26.8 (2025-07-10)
+-------------------
+
 0.26.7 (2025-04-22)
 -------------------
 * [jazzy] Upstream quality changes from Apex.AI part 1 (backport `#1903 <https://github.com/ros2/rosbag2/issues/1903>`_) (`#1909 <https://github.com/ros2/rosbag2/issues/1909>`_)

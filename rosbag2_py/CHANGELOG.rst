@@ -2,6 +2,14 @@
 Changelog for package rosbag2_py
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.26.8 (2025-07-10)
+-------------------
+* Change Python player and recorder to be more as a classes (`#2047 <https://github.com/ros2/rosbag2/issues/2047>`_) (`#2054 <https://github.com/ros2/rosbag2/issues/2054>`_)
+* [jazzy] Upstream quality changes from Apex.AI part-2 (backport `#1924 <https://github.com/ros2/rosbag2/issues/1924>`_) (`#1987 <https://github.com/ros2/rosbag2/issues/1987>`_)
+* Bugfix: `ros2 bag convert` dropping messages with compression mode message (`#1975 <https://github.com/ros2/rosbag2/issues/1975>`_) (`#1985 <https://github.com/ros2/rosbag2/issues/1985>`_)
+* Contributors: Michael Orlov <morlovmr@gmail.com>,
+  Christophe Bedard <bedard.christophe@gmail.com>, Ben <benjamin.andrew@swri.org>
+
 0.26.7 (2025-04-22)
 -------------------
 * Add bindings to close method in PyReader and PyCompressionReader (`#1935 <https://github.com/ros2/rosbag2/issues/1935>`_) (`#1937 <https://github.com/ros2/rosbag2/issues/1937>`_)
