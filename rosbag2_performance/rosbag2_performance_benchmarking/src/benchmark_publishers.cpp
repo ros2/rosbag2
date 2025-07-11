@@ -59,7 +59,7 @@ private:
   {
     std::shared_ptr<msg_utils::ProducerBase> msg_producer;
     std::promise<void> promise_finished;
-    std::chrono::milliseconds period{0};
+    std::chrono::microseconds period{0};
     size_t produced_messages = 0;
     size_t max_messages = 0;
 
@@ -118,8 +118,9 @@ private:
 
     producer->msg_producer = msg_utils::create(producer_config.message_type, *this, topic, config);
     producer->max_messages = producer_config.max_count;
-    producer->period = std::chrono::milliseconds(
-      producer_config.frequency ? 1000 / producer_config.frequency : 1);
+    // Note: The std::chrono::microseconds::period::den == 1,000,000
+    producer->period = std::chrono::microseconds(producer_config.frequency ?
+      std::chrono::microseconds::period::den / producer_config.frequency : 1);
 
     if (producer->max_messages > 0) {
       thread_pool_.queue(
