@@ -22,6 +22,7 @@ namespace helpers
 {
 void generate_data(rosbag2_performance_benchmarking_msgs::msg::ByteArray & array, size_t size)
 {
+  array.data.clear();
   array.data.reserve(size);
   for (auto i = 0u; i < size; ++i) {
     array.data.emplace_back(std::rand() % 255);
@@ -30,18 +31,22 @@ void generate_data(rosbag2_performance_benchmarking_msgs::msg::ByteArray & array
 
 void generate_data(sensor_msgs::msg::Image & msg, size_t size)
 {
-  // TODO(carlossvg): calculate message base size to set total size
-  msg.data.reserve(size);
-  for (auto i = 0u; i < size; ++i) {
+  msg.data.clear();
+  auto msg_type_size = sizeof(msg);
+  auto data_size = (size > msg_type_size) ? size - msg_type_size : 0;
+  msg.data.reserve(data_size);
+  for (auto i = 0u; i < data_size; ++i) {
     msg.data.emplace_back(std::rand() % 255);
   }
 }
 
 void generate_data(sensor_msgs::msg::PointCloud2 & msg, size_t size)
 {
-  // TODO(carlossvg): calculate message base size to set total size
-  msg.data.reserve(size);
-  for (auto i = 0u; i < size; ++i) {
+  msg.data.clear();
+  auto msg_type_size = sizeof(msg);
+  auto data_size = (size > msg_type_size) ? size - msg_type_size : 0;
+  msg.data.reserve(data_size);
+  for (auto i = 0u; i < data_size; ++i) {
     msg.data.emplace_back(std::rand() % 255);
   }
 }
