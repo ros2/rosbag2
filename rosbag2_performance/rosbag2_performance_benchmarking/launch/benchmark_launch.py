@@ -193,6 +193,71 @@ def _producer_node_exited(event, context):
     global _producer_idx, _producer_nodes, _rosbag_pid
     node_params = _producer_nodes[_producer_idx]['parameters']
     transport = node_params['transport']
+<<<<<<< HEAD
+=======
+    _cpu_usage_per_core = psutil.cpu_percent(None, True)
+
+    # If we have non empty rosbag PID, then we need to kill it (end-to-end transport case)
+    if _rosbag_pid is not None and transport:
+        # Check if rosbag process still alive
+        if not psutil.pid_exists(_rosbag_pid):
+            return [
+                launch.actions.LogInfo(msg="Rosbag2 process doesn't exist. "
+                                           'Shutting down benchmark.'),
+                launch.actions.EmitEvent(
+                    event=launch.events.Shutdown(reason="Rosbag2 process doesn't exist")
+                )
+            ]
+        _recorder_cpu_usage = _rosbag_process.cpu_percent()
+        os.kill(_rosbag_pid, signal.SIGINT)
+        _rosbag_pid = None
+        # Wait for rosbag2 process to exit for 10 seconds
+        timeout = 10
+        start_time = time.time()
+        rosbag_return_code = None
+        # Note: we cant use _rosbag_process.wait(10) because wait shall be called only once.
+        # We will have to call wait one more time in the test_proc_terminates(self, last_benchmark)
+        while time.time() - start_time < timeout:
+            if not _rosbag_process.is_running():
+                rosbag_return_code = _rosbag_process.returncode()
+                break
+            time.sleep(0.1)
+
+        if rosbag_return_code is not None and rosbag_return_code != 0:
+            return [
+                launch.actions.LogInfo(msg='Rosbag2 record error. Shutting down benchmark. '
+                                           'Return code = ' + str(rosbag_return_code)),
+                launch.actions.EmitEvent(
+                    event=launch.events.Shutdown(reason='Rosbag2 record error')
+                )
+            ]
+
+    # Check if recorded bag files exists
+    storage_id = get_default_storage_id()
+    bag_files = []
+    if node_params['storage_id'] != '':
+        storage_id = node_params['storage_id']
+    if storage_id == 'sqlite3' or storage_id == 'mcap':
+        file_ext_mask = '*.mcap' if storage_id == 'mcap' else '*.db3'
+        bag_files = pathlib.Path.cwd().joinpath(node_params['bag_folder']).glob(file_ext_mask)
+        #  Raise error if bag_files is empty.
+        if not bag_files:
+            return [
+                launch.actions.LogInfo(msg='Error! Rosbag2 files not found. '
+                                           'Shutting down benchmark.'),
+                launch.actions.EmitEvent(
+                    event=launch.events.Shutdown(reason='Rosbag2 files not found.')
+                )
+            ]
+    else:
+        return [
+            launch.actions.LogInfo(msg=f'Unsupported storage_id = {storage_id}'
+                                       'Shutting down benchmark.'),
+            launch.actions.EmitEvent(
+                event=launch.events.Shutdown(reason=f'Unsupported storage_id = {storage_id}')
+            )
+        ]
+>>>>>>> 6d8b963 (Fix for failure in the benchmark_launch when using Process.wait twice (#2076))
 
     # Handle clearing bag files
     if not node_params['preserve_bags']:
