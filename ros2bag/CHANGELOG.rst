@@ -2,6 +2,12 @@
 Changelog for package ros2bag
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.26.8 (2025-07-10)
+-------------------
+* Change Python player and recorder to be more as a classes (`#2047 <https://github.com/ros2/rosbag2/issues/2047>`_) (`#2054 <https://github.com/ros2/rosbag2/issues/2054>`_)
+* [jazzy] Upstream quality changes from Apex.AI part-2 (backport `#1924 <https://github.com/ros2/rosbag2/issues/1924>`_) (`#1987 <https://github.com/ros2/rosbag2/issues/1987>`_)
+* Contributors: Michael Orlov <morlovmr@gmail.com>, Christophe Bedard <bedard.christophe@gmail.com>
+
 0.26.7 (2025-04-22)
 -------------------
 * Fix for failing test_record_qos_profiles on Windows (`#1949 <https://github.com/ros2/rosbag2/issues/1949>`_) (`#1951 <https://github.com/ros2/rosbag2/issues/1951>`_)

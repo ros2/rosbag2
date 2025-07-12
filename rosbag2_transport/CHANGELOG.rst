@@ -2,6 +2,18 @@
 Changelog for package rosbag2_transport
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.26.8 (2025-07-10)
+-------------------
+* [jazzy] Bugfix for deadlocks in Rosbag2 player when calling stop API (backport `#2057 <https://github.com/ros2/rosbag2/issues/2057>`_) (`#2060 <https://github.com/ros2/rosbag2/issues/2060>`_)
+* Skip flaky `can_record_again_after_stop` test (`#2031 <https://github.com/ros2/rosbag2/issues/2031>`_) (`#2033 <https://github.com/ros2/rosbag2/issues/2033>`_)
+* [jazzy] Address flakiness in tests where need to spin a node (backport `#2001 <https://github.com/ros2/rosbag2/issues/2001>`_) (`#2019 <https://github.com/ros2/rosbag2/issues/2019>`_)
+* [jazzy] Improvements in message publishing timings (backport `#2025 <https://github.com/ros2/rosbag2/issues/2025>`_) (`#2027 <https://github.com/ros2/rosbag2/issues/2027>`_)
+* [jazzy] Upstream quality changes from Apex.AI part-2 (backport `#1924 <https://github.com/ros2/rosbag2/issues/1924>`_) (`#1987 <https://github.com/ros2/rosbag2/issues/1987>`_)
+* Bugfix: `ros2 bag convert` dropping messages with compression mode message (`#1975 <https://github.com/ros2/rosbag2/issues/1975>`_) (`#1985 <https://github.com/ros2/rosbag2/issues/1985>`_)
+* [jazzy] Use DDS queue depth for subscriptions as a maximum value across publishers (backport `#1960 <https://github.com/ros2/rosbag2/issues/1960>`_) (`#1980 <https://github.com/ros2/rosbag2/issues/1980>`_)
+* Contributors: Michael Orlov <morlovmr@gmail.com>, Ben <benjamin.andrew@swri.org>,
+  Christophe Bedard <bedard.christophe@gmail.com>
+
 0.26.7 (2025-04-22)
 -------------------
 * Initialize filter with namespaced updated topics and services.  (rolling) (`#1944 <https://github.com/ros2/rosbag2/issues/1944>`_) (`#1948 <https://github.com/ros2/rosbag2/issues/1948>`_)
