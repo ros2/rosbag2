@@ -51,6 +51,7 @@ import pathlib
 import shutil
 import signal
 import sys
+import time
 
 from ament_index_python import get_package_share_directory
 import launch
@@ -267,9 +268,19 @@ def _producer_node_exited(event, context):
             ]
         _recorder_cpu_usage = _rosbag_process.cpu_percent()
         os.kill(_rosbag_pid, signal.SIGINT)
-        # Wait for rosbag2 process to exit for 10 seconds
-        rosbag_return_code = _rosbag_process.wait(10)
         _rosbag_pid = None
+        # Wait for rosbag2 process to exit for 10 seconds
+        timeout = 10
+        start_time = time.time()
+        rosbag_return_code = None
+        # Note: we cant use _rosbag_process.wait(10) because wait shall be called only once.
+        # We will have to call wait one more time in the test_proc_terminates(self, last_benchmark)
+        while time.time() - start_time < timeout:
+            if not _rosbag_process.is_running():
+                rosbag_return_code = _rosbag_process.returncode()
+                break
+            time.sleep(0.1)
+
         if rosbag_return_code is not None and rosbag_return_code != 0:
             return [
                 launch.actions.LogInfo(msg='Rosbag2 record error. Shutting down benchmark. '
