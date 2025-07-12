@@ -332,9 +332,6 @@ class BenchmarkResultsChecker:
 
 
 def generate_test_description():
-    proc_env = os.environ.copy()
-    proc_env['PYTHONUNBUFFERED'] = '1'
-
     config_path = os.path.join(
         ament_index_python.get_package_share_directory('rosbag2_performance_benchmarking'),
         'config'
@@ -375,7 +372,7 @@ def generate_test_description():
             process = launch.actions.ExecuteProcess(
                 cmd=['ros2', 'launch', 'rosbag2_performance_benchmarking',
                      'benchmark_launch.py'] + args,
-                env=proc_env,
+                additional_env={'PYTHONUNBUFFERED': '1'},
                 output='screen'
             )
             benchmark_processes.append(process)
