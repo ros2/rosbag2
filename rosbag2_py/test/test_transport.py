@@ -16,6 +16,7 @@ import datetime
 import os
 from pathlib import Path
 import re
+import signal
 import threading
 
 from common import get_rosbag_options, wait_for
@@ -347,3 +348,74 @@ def test_play_cancel(storage_id, capfd):
     player.cancel()
     player_thread.join(3)
     assert not player_thread.is_alive()
+
+
+@pytest.mark.parametrize('storage_id', TESTED_STORAGE_IDS)
+def test_play_process_sigint_in_python_handler(storage_id):
+    bag_path = str(RESOURCES_PATH / storage_id / 'talker')
+    assert os.path.exists(bag_path), 'Could not find test bag file: ' + bag_path
+
+    storage_options, _ = get_rosbag_options(bag_path, storage_id)
+
+    play_options = rosbag2_py.PlayOptions()
+    play_options.loop = True
+    play_options.topics_to_filter = ['topic']
+
+    player = rosbag2_py.Player(storage_options, play_options)
+
+    player.start_spin()
+    player.play()
+    player.wait_for_playback_to_start()
+
+    sigint_triggered = False
+    try:
+        signal.raise_signal(signal.SIGINT)
+    except KeyboardInterrupt:
+        sigint_triggered = True
+        pass
+    finally:
+        assert sigint_triggered
+        # The player hasn't been stopped by signal need to call stop() method to stop it.
+        player.stop()
+        player.stop_spin()
+        assert player.wait_for_playback_to_finish(15.0)
+
+
+@pytest.mark.parametrize('storage_id', TESTED_STORAGE_IDS)
+def test_record_process_sigint_in_python_handler(tmp_path, storage_id, capfd):
+    bag_path = tmp_path / 'test_recorder_api'
+    storage_options, _ = get_rosbag_options(str(bag_path), storage_id)
+
+    record_options = rosbag2_py.RecordOptions()
+    record_options.start_paused = False
+    record_options.topics = ['/topic']
+    record_options.is_discovery_disabled = False
+    record_options.topic_polling_interval = datetime.timedelta(milliseconds=10)
+    record_options.disable_keyboard_controls = True
+
+    recorder = rosbag2_py.Recorder(
+        storage_options, record_options, 'info', 'rosbag2_recorder_test')
+    assert not recorder.is_paused()
+    recorder.start_spin()
+    recorder.record()
+
+    sigint_triggered = False
+    try:
+        signal.raise_signal(signal.SIGINT)
+    except KeyboardInterrupt:
+        sigint_triggered = True
+        pass
+    finally:
+        assert sigint_triggered
+        # The recorder hasn't been stopped by signal need to call stop() method to stop it.
+        recorder.stop()
+        recorder.stop_spin()
+
+    metadata_io = rosbag2_py.MetadataIo()
+    assert wait_for(lambda: metadata_io.metadata_file_exists(str(bag_path)),
+                    timeout=rclpy.duration.Duration(seconds=3))
+    metadata = metadata_io.read_metadata(str(bag_path))
+    assert len(metadata.relative_file_paths)
+    storage_path = bag_path / metadata.relative_file_paths[0]
+    assert wait_for(lambda: storage_path.is_file(),
+                    timeout=rclpy.duration.Duration(seconds=3))
