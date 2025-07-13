@@ -190,7 +190,8 @@ public:
     const std::string & node_name)
   {
     Arguments arguments({"--ros-args", "--log-level", log_level});
-    rclcpp::init(arguments.argc(), arguments.argv());
+    rclcpp::init(arguments.argc(), arguments.argv(),
+                 rclcpp::InitOptions(), rclcpp::SignalHandlerOptions::None);
     player_ = std::make_shared<rosbag2_transport::Player>(storage_options, play_options, node_name);
   }
 
@@ -487,7 +488,8 @@ public:
     const std::string & node_name)
   {
     Arguments arguments({"--ros-args", "--log-level", log_level});
-    rclcpp::init(arguments.argc(), arguments.argv());
+    rclcpp::init(arguments.argc(), arguments.argv(),
+                 rclcpp::InitOptions(), rclcpp::SignalHandlerOptions::None);
 
     if (record_options.rmw_serialization_format.empty()) {
       record_options.rmw_serialization_format = std::string(rmw_get_serialization_format());
