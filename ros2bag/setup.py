@@ -22,14 +22,17 @@ setup(
     classifiers=[
         'Environment :: Console',
         'Intended Audience :: Developers',
-        'License :: OSI Approved :: Apache Software License',
         'Programming Language :: Python',
     ],
     description='Entry point for rosbag in ROS 2',
     long_description="""\
 The package provides the rosbag command for the ROS 2 command line tools.""",
     license='Apache License, Version 2.0',
-    tests_require=['pytest'],
+    extras_require={
+        'test': [
+            'pytest',
+        ],
+    },
     entry_points={
         'ros2cli.command': [
             'bag = ros2bag.command.bag:BagCommand',
