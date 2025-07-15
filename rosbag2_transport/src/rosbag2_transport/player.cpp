@@ -2167,7 +2167,17 @@ Player::Player(
   const rclcpp::NodeOptions & node_options)
 : rclcpp::Node(
     node_name,
-    rclcpp::NodeOptions(node_options).arguments(play_options.topic_remapping_options))
+    // Merge existing arguments with topic remapping options
+    rclcpp::NodeOptions(node_options).arguments(
+      [&, node_options]() {
+        auto args = node_options.arguments();
+        args.insert(args.end(),
+          play_options.topic_remapping_options.begin(),
+          play_options.topic_remapping_options.end());
+        return args;
+      }()
+    )
+)
 {
   std::shared_ptr<KeyboardHandler> keyboard_handler;
   if (!play_options.disable_keyboard_controls) {
@@ -2202,7 +2212,17 @@ Player::Player(
   const rclcpp::NodeOptions & node_options)
 : rclcpp::Node(
     node_name,
-    rclcpp::NodeOptions(node_options).arguments(play_options.topic_remapping_options))
+    // Merge existing arguments with topic remapping options
+    rclcpp::NodeOptions(node_options).arguments(
+      [&, node_options]() {
+        auto args = node_options.arguments();
+        args.insert(args.end(),
+          play_options.topic_remapping_options.begin(),
+          play_options.topic_remapping_options.end());
+        return args;
+      }()
+    )
+)
 {
   std::vector<reader_storage_options_pair_t> readers_with_options{};
   readers_with_options.emplace_back(std::move(reader), storage_options);
@@ -2231,10 +2251,21 @@ Player::Player(
   const rclcpp::NodeOptions & node_options)
 : rclcpp::Node(
     node_name,
-    rclcpp::NodeOptions(node_options).arguments(play_options.topic_remapping_options)),
+    // Merge existing arguments with topic remapping options
+    rclcpp::NodeOptions(node_options).arguments(
+      [&, node_options]() {
+        auto args = node_options.arguments();
+        args.insert(args.end(),
+          play_options.topic_remapping_options.begin(),
+          play_options.topic_remapping_options.end());
+        return args;
+      }()
+    )
+),
   pimpl_(std::make_unique<PlayerImpl>(
       this, std::move(readers_with_options), std::move(keyboard_handler), play_options))
-{}
+{
+}
 
 Player::~Player() = default;
 
