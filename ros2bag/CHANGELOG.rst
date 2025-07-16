@@ -2,8 +2,8 @@
 Changelog for package ros2bag
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.15.15 (2025-07-16)
+--------------------
 * [Humble] Fix for failing test_record_qos_profiles on Windows (backport `#1949 <https://github.com/ros2/rosbag2/issues/1949>`_) (`#2011 <https://github.com/ros2/rosbag2/issues/2011>`_)
 * Contributors: mergify[bot]
 
