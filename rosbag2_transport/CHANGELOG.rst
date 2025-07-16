@@ -2,6 +2,11 @@
 Changelog for package rosbag2_transport
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.15.15 (2025-07-16)
+--------------------
+* [humble] Bugfix: `ros2 bag convert` dropping messages with compression mode message (backport `#1975 <https://github.com/ros2/rosbag2/issues/1975>`_) (`#2012 <https://github.com/ros2/rosbag2/issues/2012>`_)
+* Contributors: mergify[bot]
+
 0.15.14 (2025-03-25)
 --------------------
 

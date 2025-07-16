@@ -2,6 +2,9 @@
 Changelog for package rosbag2
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.15.15 (2025-07-16)
+--------------------
+
 0.15.14 (2025-03-25)
 --------------------
 * [humble] Expose more Writer methods in python interface (backport `#1220 <https://github.com/ros2/rosbag2/issues/1220>`_ and `#1339 <https://github.com/ros2/rosbag2/issues/1339>`_) (`#1829 <https://github.com/ros2/rosbag2/issues/1829>`_)

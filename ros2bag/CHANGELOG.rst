@@ -2,6 +2,11 @@
 Changelog for package ros2bag
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.15.15 (2025-07-16)
+--------------------
+* [Humble] Fix for failing test_record_qos_profiles on Windows (backport `#1949 <https://github.com/ros2/rosbag2/issues/1949>`_) (`#2011 <https://github.com/ros2/rosbag2/issues/2011>`_)
+* Contributors: mergify[bot]
+
 0.15.14 (2025-03-25)
 --------------------
 * CLI - play verb metavar (backport `#1906 <https://github.com/ros2/rosbag2/issues/1906>`_) (`#1912 <https://github.com/ros2/rosbag2/issues/1912>`_)
