@@ -13,6 +13,7 @@
 # limitations under the License.
 
 from argparse import FileType
+import signal
 
 from rclpy.qos import InvalidQoSProfileException
 from ros2bag.api import add_standard_multi_reader_args
@@ -334,7 +335,14 @@ class PlayVerb(VerbExtension):
         play_options.progress_bar_separation_lines = args.progress_bar_separation_lines
 
         player = Player(storage_options, play_options, args.log_level)
+        signal.signal(signal.SIGTERM, lambda signum, _: player.stop())
+
+        player.start_spin()
+        player.play()
         try:
-            player.play_sync()
+            player.wait_for_playback_to_finish()
         except KeyboardInterrupt:
             pass
+
+        player.stop()
+        player.stop_spin()

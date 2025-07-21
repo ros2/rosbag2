@@ -13,6 +13,7 @@
 # limitations under the License.
 
 from argparse import FileType
+import signal
 
 from rclpy.qos import InvalidQoSProfileException
 from ros2bag.api import add_standard_reader_args
@@ -113,4 +114,15 @@ class BurstVerb(VerbExtension):
         play_options.wait_acked_timeout = -1
 
         player = Player(storage_options, play_options)
-        player.burst_sync(args.num_messages)
+        signal.signal(signal.SIGTERM, lambda signum, _: player.stop())
+
+        player.start_spin()
+        player.play()
+        try:
+            player.burst(args.num_messages)
+            player.wait_for_playback_to_finish()
+        except KeyboardInterrupt:
+            pass
+
+        player.stop()
+        player.stop_spin()

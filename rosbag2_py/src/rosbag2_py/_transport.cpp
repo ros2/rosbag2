@@ -21,6 +21,7 @@
 #include <utility>
 #include <vector>
 
+#include "keyboard_handler/keyboard_handler.hpp"
 #include "rosbag2_storage/storage_options.hpp"
 #include "rosbag2_storage/yaml.hpp"
 #include "rosbag2_transport/bag_rewrite.hpp"
@@ -190,9 +191,20 @@ public:
     const std::string & node_name)
   {
     Arguments arguments({"--ros-args", "--log-level", log_level});
+    // Don't install signal handlers to keep signal handling simple in the Python layer
     rclcpp::init(arguments.argc(), arguments.argv(),
                  rclcpp::InitOptions(), rclcpp::SignalHandlerOptions::None);
-    player_ = std::make_shared<rosbag2_transport::Player>(storage_options, play_options, node_name);
+    std::vector<rosbag2_transport::Player::reader_storage_options_pair_t> readers_with_options{};
+    for (const auto & options : storage_options) {
+      readers_with_options.emplace_back(
+        rosbag2_transport::ReaderWriterFactory::make_reader(options), options);
+    }
+    player_ = std::make_shared<rosbag2_transport::Player>(
+      std::move(readers_with_options),
+      // Don't install signal handlers here either
+      play_options.disable_keyboard_controls ? nullptr : std::make_shared<KeyboardHandler>(false),
+      play_options,
+      node_name);
   }
 
   virtual ~Player()
@@ -248,20 +260,20 @@ public:
 
   bool wait_for_playback_to_start(double timeout = -1.0)
   {
-    if (!player_) {
-      throw std::runtime_error("Player is not initialized. Please use constructor with "
-        "storage and play options.");
-    }
-    return player_->wait_for_playback_to_start(std::chrono::duration<double>(timeout));
+    return wait_for_and_check_signals(
+      timeout,
+      [&](double short_timeout) {
+        return player_->wait_for_playback_to_start(std::chrono::duration<double>(short_timeout));
+      });
   }
 
   bool wait_for_playback_to_finish(double timeout = -1.0)
   {
-    if (!player_) {
-      throw std::runtime_error("Player is not initialized. Please use constructor with "
-        "storage and play options.");
-    }
-    return player_->wait_for_playback_to_finish(std::chrono::duration<double>(timeout));
+    return wait_for_and_check_signals(
+      timeout,
+      [&](double short_timeout) {
+        return player_->wait_for_playback_to_finish(std::chrono::duration<double>(short_timeout));
+      });
   }
 
   void stop()
@@ -362,6 +374,40 @@ public:
   }
 
 protected:
+  bool wait_for_and_check_signals(double timeout, std::function<bool(double)> wait_for_function)
+  {
+    if (!player_) {
+      throw std::runtime_error("Player is not initialized. Please use constructor with "
+        "storage and play options.");
+    }
+    // The GIL release doesn't result in Python checking for signals while we're in C++, so we can
+    // do it here to simplify the Python layer: just periodically check for signals while waiting
+    bool finished = false;
+    while (!finished) {
+      // Wait for a short period of time
+      double period = \
+        timeout == -1.0 ? SIGNAL_CHECK_INTERVAL : std::min(timeout, SIGNAL_CHECK_INTERVAL);
+      {
+        py::gil_scoped_release release;
+        finished = wait_for_function(period);
+      }
+      // If a signal (Ctrl+C/SIGINT) has been received, propagate it to Python
+      if (PyErr_CheckSignals() != 0) {
+        throw py::error_already_set();
+      }
+      // If we are not done yet and have a non-infinite timeout value
+      if (!finished && timeout != -1.0) {
+        // Decrement the timeout that's left
+        timeout -= SIGNAL_CHECK_INTERVAL;
+        // If we waited all the way to the timeout (and aren't done), return false
+        if (timeout <= 0.0) {
+          return false;
+        }
+      }
+    }
+    return finished;
+  }
+
   static void signal_handler(int sig_num)
   {
     if (sig_num == SIGINT || sig_num == SIGTERM) {
@@ -452,6 +498,7 @@ protected:
   static SignalHandlerType old_sigint_handler_;
   static SignalHandlerType old_sigterm_handler_;
   static int deferred_sig_number_;
+  static constexpr double SIGNAL_CHECK_INTERVAL = 0.1;
   std::mutex wait_for_exit_mutex_;
 
   std::shared_ptr<rosbag2_transport::Player> player_;
@@ -488,6 +535,7 @@ public:
     const std::string & node_name)
   {
     Arguments arguments({"--ros-args", "--log-level", log_level});
+    // Don't install signal handlers to keep signal handling simple in the Python layer
     rclcpp::init(arguments.argc(), arguments.argv(),
                  rclcpp::InitOptions(), rclcpp::SignalHandlerOptions::None);
 
@@ -497,7 +545,12 @@ public:
     auto writer = rosbag2_transport::ReaderWriterFactory::make_writer(record_options);
 
     recorder_ = std::make_shared<rosbag2_transport::Recorder>(
-      std::move(writer), storage_options, record_options, node_name);
+      std::move(writer),
+      // Don't install signal handlers here either
+      record_options.disable_keyboard_controls ? nullptr : std::make_shared<KeyboardHandler>(false),
+      storage_options,
+      record_options,
+      node_name);
   }
 
   virtual ~Recorder()

@@ -15,6 +15,7 @@
 from argparse import ArgumentParser, FileType
 import datetime
 import os
+import signal
 import threading
 
 from rclpy.qos import InvalidQoSProfileException
@@ -386,21 +387,28 @@ class RecordVerb(VerbExtension):
         record_options.disable_keyboard_controls = args.disable_keyboard_controls
 
         recorder = Recorder(storage_options, record_options, args.log_level, args.node_name)
+        global stop_record
+        stop_record = False
+        stop_record_cv = threading.Condition()
+
+        def signal_handler(signum, frame):
+            with stop_record_cv:
+                global stop_record
+                stop_record = True
+                stop_record_cv.notify()
+
+        signal.signal(signal.SIGTERM, signal_handler)
 
         recorder.record()
         recorder.start_spin()
-        stop_record = False
-        stop_record_cv = threading.Condition()
         try:
             with stop_record_cv:
                 stop_record_cv.wait_for(lambda: stop_record)
         except KeyboardInterrupt:
-            stop_record = True
             pass
-        finally:
-            recorder.stop()
-            recorder.stop_spin()
 
-        # Remove empty directory if it was created
+        recorder.stop()
+        recorder.stop_spin()
+
         if os.path.isdir(uri) and not os.listdir(uri):
             os.rmdir(uri)
