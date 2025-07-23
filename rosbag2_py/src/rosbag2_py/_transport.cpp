@@ -260,19 +260,19 @@ public:
 
   bool wait_for_playback_to_start(double timeout = -1.0)
   {
-    return wait_for_and_check_signals(
+    return wait_for_async(
       timeout,
-      [&](double short_timeout) {
-        return player_->wait_for_playback_to_start(std::chrono::duration<double>(short_timeout));
+      [&](double timeout) {
+        return player_->wait_for_playback_to_start(std::chrono::duration<double>(timeout));
       });
   }
 
   bool wait_for_playback_to_finish(double timeout = -1.0)
   {
-    return wait_for_and_check_signals(
+    return wait_for_async(
       timeout,
-      [&](double short_timeout) {
-        return player_->wait_for_playback_to_finish(std::chrono::duration<double>(short_timeout));
+      [&](double timeout) {
+        return player_->wait_for_playback_to_finish(std::chrono::duration<double>(timeout));
       });
   }
 
@@ -374,31 +374,42 @@ public:
   }
 
 protected:
-  bool wait_for_and_check_signals(double timeout, std::function<bool(double)> wait_for_function)
+  bool wait_for_async(double timeout, const std::function<bool(double)> & wait_for_function)
   {
     if (!player_) {
       throw std::runtime_error("Player is not initialized. Please use constructor with "
         "storage and play options.");
     }
-    // The GIL release doesn't result in Python checking for signals while we're in C++, so we can
-    // do it here to simplify the Python layer: just periodically check for signals while waiting
+
+    const double wait_period =
+      (timeout < 0.0) ? SIGNAL_CHECK_INTERVAL : std::min(timeout, SIGNAL_CHECK_INTERVAL);
+
+    // We need to release the Global Interpreter Lock (GIL) to allow other Python threads to
+    // proceed. However, the GIL release doesn't result in Python checking for signals while
+    // we're in C++. We will wait for a short period of time and then check for signals in the loop.
+    // If any signals (Ctrl+C/SIGINT or SIGTERM) have been received, we will propagate them to
+    // Python.
     bool finished = false;
     while (!finished) {
-      // Wait for a short period of time
-      double period = \
-        timeout == -1.0 ? SIGNAL_CHECK_INTERVAL : std::min(timeout, SIGNAL_CHECK_INTERVAL);
       {
+        // Release the Global Interpreter Lock (GIL) to allow other Python threads to proceed
         py::gil_scoped_release release;
-        finished = wait_for_function(period);
+        finished = wait_for_function(wait_period);
       }
-      // If a signal (Ctrl+C/SIGINT) has been received, propagate it to Python
-      if (PyErr_CheckSignals() != 0) {
-        throw py::error_already_set();
+      // The GIL release doesn't result in Python checking for signals while we're in C++, so we can
+      // do it here to simplify the Python layer: just periodically check for signals while waiting
+      // Wait for a short period of time
+      {
+        py::gil_scoped_acquire gil;
+        // If a signal (Ctrl+C/SIGINT or SIGTERM) has been received, propagate it to Python
+        if (PyErr_CheckSignals() != 0) {
+          throw py::error_already_set();
+        }
       }
       // If we are not done yet and have a non-infinite timeout value
-      if (!finished && timeout != -1.0) {
+      if (!finished && timeout > 0.0) {
         // Decrement the timeout that's left
-        timeout -= SIGNAL_CHECK_INTERVAL;
+        timeout -= wait_period;
         // If we waited all the way to the timeout (and aren't done), return false
         if (timeout <= 0.0) {
           return false;
