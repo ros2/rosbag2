@@ -194,17 +194,7 @@ public:
     // Don't install signal handlers to keep signal handling simple in the Python layer
     rclcpp::init(arguments.argc(), arguments.argv(),
                  rclcpp::InitOptions(), rclcpp::SignalHandlerOptions::None);
-    std::vector<rosbag2_transport::Player::reader_storage_options_pair_t> readers_with_options{};
-    for (const auto & options : storage_options) {
-      readers_with_options.emplace_back(
-        rosbag2_transport::ReaderWriterFactory::make_reader(options), options);
-    }
-    player_ = std::make_shared<rosbag2_transport::Player>(
-      std::move(readers_with_options),
-      // Don't install signal handlers here either
-      play_options.disable_keyboard_controls ? nullptr : std::make_shared<KeyboardHandler>(false),
-      play_options,
-      node_name);
+    player_ = std::make_shared<rosbag2_transport::Player>(storage_options, play_options, node_name);
   }
 
   virtual ~Player()
@@ -574,12 +564,7 @@ public:
     auto writer = rosbag2_transport::ReaderWriterFactory::make_writer(record_options);
 
     recorder_ = std::make_shared<rosbag2_transport::Recorder>(
-      std::move(writer),
-      // Don't install signal handlers here either
-      record_options.disable_keyboard_controls ? nullptr : std::make_shared<KeyboardHandler>(false),
-      storage_options,
-      record_options,
-      node_name);
+      std::move(writer), storage_options, record_options, node_name);
   }
 
   virtual ~Recorder()
