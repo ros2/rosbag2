@@ -267,6 +267,15 @@ public:
       });
   }
 
+  bool wait_for_playback_to_start_exclusively(double timeout = -1.0)
+  {
+    if (!player_) {
+      throw std::runtime_error("Player is not initialized. Please use constructor with "
+                               "storage and play options.");
+    }
+    return player_->wait_for_playback_to_start(std::chrono::duration<double>(timeout));
+  }
+
   bool wait_for_playback_to_finish(double timeout = -1.0)
   {
     return wait_for_async(
@@ -274,6 +283,15 @@ public:
       [&](double timeout) {
         return player_->wait_for_playback_to_finish(std::chrono::duration<double>(timeout));
       });
+  }
+
+  bool wait_for_playback_to_finish_exclusively(double timeout = -1.0)
+  {
+    if (!player_) {
+      throw std::runtime_error("Player is not initialized. Please use constructor with "
+                               "storage and play options.");
+    }
+    return player_->wait_for_playback_to_finish(std::chrono::duration<double>(timeout));
   }
 
   void stop()
@@ -995,7 +1013,21 @@ PYBIND11_MODULE(_transport, m) {
     &rosbag2_py::Player::wait_for_playback_to_start,
     py::arg("timeout") = -1.0,
     R"pbdoc(
-      Wait for the playback to start and for the message queue to be filled.
+      Releasing Global Interpreter Lock (GIL) to allow other Python threads to proceed then wait
+      for the playback to start and for the message queue to be filled. Also periodically checks for
+      signals (Ctrl+C/SIGINT or SIGTERM) and propagates them to Python.
+
+      Args:
+          timeout (float): Maximum time to wait in seconds. Default is -1 (wait indefinitely).
+      Returns:
+          bool: True if playback started successfully, False if timed out.
+    )pbdoc")
+
+  .def("wait_for_playback_to_start_exclusively",
+    &rosbag2_py::Player::wait_for_playback_to_start_exclusively,
+    py::arg("timeout") = -1.0,
+    R"pbdoc(
+      Wait for the playback to start exclusively without releasing Global Interpreter Lock (GIL).
 
       Args:
           timeout (float): Maximum time to wait in seconds. Default is -1 (wait indefinitely).
@@ -1007,7 +1039,21 @@ PYBIND11_MODULE(_transport, m) {
     &rosbag2_py::Player::wait_for_playback_to_finish,
     py::arg("timeout") = -1.0,
     R"pbdoc(
-      Wait for the playback to finish.
+      Releasing Global Interpreter Lock (GIL) to allow other Python threads to proceed then wait
+      for the playback to finish.  Also periodically checks for signals (Ctrl+C/SIGINT or SIGTERM)
+      and propagates them to Python.
+
+      Args:
+          timeout (float): Maximum time to wait in seconds. Default is -1 (wait indefinitely).
+      Returns:
+          bool: True if playback finished successfully, False if timed out.
+    )pbdoc")
+
+  .def("wait_for_playback_to_finish_exclusively",
+    &rosbag2_py::Player::wait_for_playback_to_finish_exclusively,
+    py::arg("timeout") = -1.0,
+    R"pbdoc(
+      Wait for the playback to finish exclusively without releasing Global Interpreter Lock (GIL).
 
       Args:
           timeout (float): Maximum time to wait in seconds. Default is -1 (wait indefinitely).
