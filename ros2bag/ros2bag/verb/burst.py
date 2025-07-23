@@ -14,6 +14,7 @@
 
 from argparse import FileType
 import signal
+import threading
 
 from rclpy.qos import InvalidQoSProfileException
 from ros2bag.api import add_standard_reader_args
@@ -30,6 +31,15 @@ from rosbag2_py import StorageOptions
 import yaml
 
 
+# Create termination event
+termination_requested = threading.Event()
+
+
+# Signal handler just sets the event, avoiding complex calls
+def signal_handler(signum, _):
+    termination_requested.set()
+
+
 class BurstVerb(VerbExtension):
     """Burst data from a bag."""
 
@@ -44,7 +54,7 @@ class BurstVerb(VerbExtension):
         parser.add_argument(
             '--topics', type=str, default=[], nargs='+',
             help='topics to replay, separated by space. At least one topic needs to be '
-            "specified. If this parameter isn\'t specified, all topics will be replayed.")
+                 "specified. If this parameter isn\'t specified, all topics will be replayed.")
         parser.add_argument(
             '--services', type=str, default=[], nargs='+',
             help='services to replay, separated by space. At least one service needs to be '
@@ -113,16 +123,27 @@ class BurstVerb(VerbExtension):
         play_options.start_offset = args.start_offset
         play_options.wait_acked_timeout = -1
 
-        player = Player(storage_options, play_options)
-        signal.signal(signal.SIGTERM, lambda signum, _: player.stop())
+        # Set up signal handling for graceful termination
+        signal.signal(signal.SIGTERM, signal_handler)
 
-        player.start_spin()
-        player.play()
+        player = Player(storage_options, play_options)
+
         try:
+            player.start_spin()
+            player.play()
             player.burst(args.num_messages)
-            player.wait_for_playback_to_finish()
+            # Wait for playback to finish with periodic checks for termination
+            while not termination_requested.is_set():
+                # Use a short timeout to periodically check the termination flag
+                if player.wait_for_playback_to_finish_exclusively(0.1):
+                    break  # Playback finished naturally
+
+            # If termination was requested, the player stop will be called in the 'finally' block
         except KeyboardInterrupt:
             pass
-
-        player.stop()
-        player.stop_spin()
+        finally:
+            # Ensure cleanup happens
+            player.stop()
+            player.stop_spin()
+            signal.signal(signal.SIGTERM, signal.SIG_DFL)
+            termination_requested.clear()

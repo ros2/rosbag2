@@ -17,6 +17,7 @@ import datetime
 import os
 import signal
 import threading
+import time
 
 from rclpy.qos import InvalidQoSProfileException
 from ros2bag.api import add_writer_storage_plugin_extensions
@@ -286,7 +287,7 @@ def validate_parsed_arguments(args, uri) -> str:
 
     if (args.all or args.all_topics or args.all_services or args.all_actions) and args.regex:
         print(print_warn('--all, --all-topics --all-services or --all-actions will override '
-                         '--regex'),  flush=True)
+                         '--regex'), flush=True)
 
     if os.path.isdir(uri):
         return print_error("Output folder '{}' already exists.".format(uri))
@@ -304,6 +305,14 @@ def validate_parsed_arguments(args, uri) -> str:
         return print_error('Compression queue size must be at least 0.')
 
     return None
+
+
+# Create termination event
+termination_requested = threading.Event()
+
+
+def signal_handler(signum, _):
+    termination_requested.set()
 
 
 class RecordVerb(VerbExtension):
@@ -387,28 +396,23 @@ class RecordVerb(VerbExtension):
         record_options.disable_keyboard_controls = args.disable_keyboard_controls
 
         recorder = Recorder(storage_options, record_options, args.log_level, args.node_name)
-        global stop_record
-        stop_record = False
-        stop_record_cv = threading.Condition()
-
-        def signal_handler(signum, frame):
-            with stop_record_cv:
-                global stop_record
-                stop_record = True
-                stop_record_cv.notify()
 
         signal.signal(signal.SIGTERM, signal_handler)
 
-        recorder.record()
-        recorder.start_spin()
         try:
-            with stop_record_cv:
-                stop_record_cv.wait_for(lambda: stop_record)
+            # Start the recorder
+            recorder.start_spin()
+            recorder.record()
+            while not termination_requested.is_set():
+                time.sleep(0.1)  # Sleep for 100 msec to avoid busy loop
         except KeyboardInterrupt:
             pass
+        finally:
+            recorder.stop()
+            recorder.stop_spin()
+            signal.signal(signal.SIGTERM, signal.SIG_DFL)
+            termination_requested.clear()
 
-        recorder.stop()
-        recorder.stop_spin()
-
+        # Remove newly created directory if it is empty
         if os.path.isdir(uri) and not os.listdir(uri):
             os.rmdir(uri)

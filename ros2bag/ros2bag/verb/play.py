@@ -14,6 +14,7 @@
 
 from argparse import FileType
 import signal
+import threading
 
 from rclpy.qos import InvalidQoSProfileException
 from ros2bag.api import add_standard_multi_reader_args
@@ -40,6 +41,15 @@ def positive_float(arg: str) -> float:
     if value <= 0:
         raise ValueError(f'Value {value} is less than or equal to zero.')
     return value
+
+
+# Create termination event
+termination_requested = threading.Event()
+
+
+# Signal handler just sets the event, avoiding complex calls
+def signal_handler(signum, _):
+    termination_requested.set()
 
 
 class PlayVerb(VerbExtension):
@@ -334,15 +344,26 @@ class PlayVerb(VerbExtension):
         play_options.progress_bar_update_rate = args.progress_bar_update_rate
         play_options.progress_bar_separation_lines = args.progress_bar_separation_lines
 
-        player = Player(storage_options, play_options, args.log_level)
-        signal.signal(signal.SIGTERM, lambda signum, _: player.stop())
+        # Set up signal handling for graceful termination
+        signal.signal(signal.SIGTERM, signal_handler)
 
-        player.start_spin()
-        player.play()
+        player = Player(storage_options, play_options, args.log_level)
+
         try:
-            player.wait_for_playback_to_finish()
+            player.start_spin()
+            player.play()
+            # Wait for playback to finish with periodic checks for termination
+            while not termination_requested.is_set():
+                # Use a short timeout to periodically check the termination flag
+                if player.wait_for_playback_to_finish_exclusively(0.1):
+                    break  # Playback finished naturally
+
+            # If termination was requested, the player stop will be called in the 'finally' block
         except KeyboardInterrupt:
             pass
-
-        player.stop()
-        player.stop_spin()
+        finally:
+            # Ensure cleanup happens
+            player.stop()
+            player.stop_spin()
+            signal.signal(signal.SIGTERM, signal.SIG_DFL)
+            termination_requested.clear()
