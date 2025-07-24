@@ -53,7 +53,7 @@ bool wait_for_subscriptions_from_node_parameters(rclcpp::Node & node)
 {
   const std::string parameters_ns = "publishers";
   node.declare_parameter<bool>(parameters_ns + ".wait_for_subscriptions", true);
-  bool wait_for_subscriptions;
+  bool wait_for_subscriptions = true;
   node.get_parameter(parameters_ns + ".wait_for_subscriptions", wait_for_subscriptions);
   return wait_for_subscriptions;
 }

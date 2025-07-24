@@ -56,7 +56,8 @@ public:
     producer_initialize_(producer_initialize),
     producer_callback_(producer_callback),
     producer_finalize_(producer_finalize),
-    sleep_time_(configuration_.frequency == 0 ? 1 : 1000 / configuration_.frequency),
+    sleep_time_(std::chrono::microseconds(configuration_.frequency == 0 ?
+      1 : std::chrono::microseconds::period::den / configuration_.frequency)),
     message_(generate_random_message(configuration_))
   {}
 
@@ -68,7 +69,7 @@ public:
         break;
       }
       producer_callback_(message_);
-      std::this_thread::sleep_for(std::chrono::milliseconds(sleep_time_));
+      std::this_thread::sleep_for(sleep_time_);
     }
     producer_finalize_();
   }
@@ -78,7 +79,7 @@ private:
   producer_initialize_function_t producer_initialize_;
   producer_callback_function_t producer_callback_;
   producer_finalize_function_t producer_finalize_;
-  unsigned int sleep_time_;  // in milliseconds
+  std::chrono::microseconds sleep_time_;
   // for simplification, this pointer will be reused
   std::shared_ptr<std_msgs::msg::ByteMultiArray> message_;
 };
