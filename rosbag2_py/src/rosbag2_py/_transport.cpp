@@ -349,6 +349,8 @@ public:
 
   static void cancel()
   {
+    PyErr_WarnEx(PyExc_DeprecationWarning,
+                 "Player.cancel() is deprecated. Please use Player.stop() instead.", 1);
     exit_ = true;
     wait_for_exit_cv_.notify_all();
   }
@@ -705,6 +707,8 @@ public:
 
   static void cancel()
   {
+    PyErr_WarnEx(PyExc_DeprecationWarning,
+                 "Recorder.cancel() is deprecated. Please use Recorder.stop() instead.", 1);
     exit_ = true;
     wait_for_exit_cv_.notify_all();
   }
@@ -1145,6 +1149,7 @@ PYBIND11_MODULE(_transport, m) {
       Cancel the ongoing playback session.
 
       This is a static method and will affect any running Players globally.
+      Deprecated: use Player.stop() instead.
     )pbdoc")
   ;
 
@@ -1246,6 +1251,7 @@ PYBIND11_MODULE(_transport, m) {
       Cancel the ongoing recording session.
 
       This is a static method and will affect any running Recorders globally.
+      Deprecated: use Recorder.stop() instead.
     )pbdoc")
   ;
 
