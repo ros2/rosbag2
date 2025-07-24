@@ -49,7 +49,7 @@ using the optional `number_of_threads` parameter.
 ## Running builtin Rosbag2 benchmark tests on CI or local setup
 
 The package contains a set of builtin tests that can be run to verify the performance of the
-Rosbag2 recorder. However, these tests excluded from the build by default, so you need to enable
+Rosbag2 recorder. However, these tests are excluded from the build by default, so you need to enable
 them by setting the `ENABLE_ROSBAG2_BENCHMARK_TESTS` CMake flag to `ON` when building the package.
 To enable and run the rosbag2 benchmark tests with colcon, you need to:
 First build the package with the `ENABLE_ROSBAG2_BENCHMARK_TESTS` CMake option enabled:
