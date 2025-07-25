@@ -1,7 +1,13 @@
 cmake_minimum_required(VERSION 3.5)
 project(rosbag2_performance_benchmarking)
 
+<<<<<<< HEAD
 # Default to C++14
+=======
+option(ENABLE_ROSBAG2_BENCHMARK_TESTS "Enables rosbag2 performance benchmark tests" OFF)
+
+# Default to C++17
+>>>>>>> e140ca4 (Enable `rosbag2_performance_benchmarking` package to be built by default (#2093))
 if(NOT CMAKE_CXX_STANDARD)
   set(CMAKE_CXX_STANDARD 14)
 endif()
@@ -36,6 +42,7 @@ if(BUILD_ROSBAG2_BENCHMARKS)
     src/result_utils.cpp
     src/results_writer.cpp)
 
+<<<<<<< HEAD
   ament_target_dependencies(writer_benchmark
     rclcpp
     std_msgs
@@ -43,6 +50,65 @@ if(BUILD_ROSBAG2_BENCHMARKS)
     rosbag2_cpp
     rosbag2_storage
     yaml_cpp_vendor
+=======
+target_link_libraries(writer_benchmark
+  rclcpp::rclcpp
+  ${rosbag2_performance_benchmarking_msgs_TARGETS}
+  ${sensor_msgs_TARGETS}
+  rosbag2_compression::rosbag2_compression
+  rosbag2_cpp::rosbag2_cpp
+  rosbag2_storage::rosbag2_storage
+  yaml-cpp::yaml-cpp
+)
+
+target_link_libraries(benchmark_publishers
+  rclcpp::rclcpp
+  rosbag2_storage::rosbag2_storage
+  ${rosbag2_performance_benchmarking_msgs_TARGETS}
+  ${sensor_msgs_TARGETS}
+  yaml-cpp::yaml-cpp
+)
+
+target_link_libraries(results_writer
+  rclcpp::rclcpp
+  rosbag2_storage::rosbag2_storage
+)
+
+target_include_directories(writer_benchmark
+  PUBLIC
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+)
+
+target_include_directories(benchmark_publishers
+  PUBLIC
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+)
+
+target_include_directories(results_writer
+  PUBLIC
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+)
+
+install(TARGETS writer_benchmark benchmark_publishers results_writer
+  DESTINATION lib/${PROJECT_NAME})
+
+install(DIRECTORY
+  launch
+  config
+  DESTINATION share/${PROJECT_NAME}
+)
+
+if(BUILD_TESTING AND ENABLE_ROSBAG2_BENCHMARK_TESTS)
+  find_package(ament_lint_auto REQUIRED)
+  ament_lint_auto_find_test_dependencies()
+
+  find_package(launch_testing_ament_cmake)
+  add_launch_test(
+      test/benchmark_test.py
+      TARGET rosbag2_benchmark_test
+      ENV
+      TIMEOUT 600
+>>>>>>> e140ca4 (Enable `rosbag2_performance_benchmarking` package to be built by default (#2093))
   )
 
   ament_target_dependencies(benchmark_publishers

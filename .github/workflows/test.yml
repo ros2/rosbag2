@@ -45,6 +45,32 @@ jobs:
             "build": {
               "cmake-args": [
                 "-DCMAKE_CXX_FLAGS=\"-Werror\""
+<<<<<<< HEAD
+=======
+              ],
+              "packages-up-to": [
+                "mcap_vendor",
+                "ros2bag",
+                "rosbag2",
+                "rosbag2_compression",
+                "rosbag2_compression_zstd",
+                "rosbag2_cpp",
+                "rosbag2_examples_cpp",
+                "rosbag2_examples_py",
+                "rosbag2_interfaces",
+                "rosbag2_performance_benchmarking",
+                "rosbag2_performance_benchmarking_msgs",
+                "rosbag2_py",
+                "rosbag2_storage",
+                "rosbag2_storage_mcap",
+                "rosbag2_storage_sqlite3",
+                "rosbag2_test_common",
+                "rosbag2_test_msgdefs",
+                "rosbag2_tests",
+                "rosbag2_transport",
+                "sqlite3_vendor",
+                "zstd_vendor"
+>>>>>>> e140ca4 (Enable `rosbag2_performance_benchmarking` package to be built by default (#2093))
               ]
             },
             "test": {
