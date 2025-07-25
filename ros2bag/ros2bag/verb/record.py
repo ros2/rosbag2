@@ -15,6 +15,9 @@
 from argparse import ArgumentParser, FileType
 import datetime
 import os
+import signal
+import threading
+import time
 
 from rclpy.qos import InvalidQoSProfileException
 from ros2bag.api import add_writer_storage_plugin_extensions
@@ -263,9 +266,18 @@ def validate_parsed_arguments(args, uri) -> str:
     if (args.all or args.all_topics) and args.topics:
         print(print_warn('--all or --all-topics will override --topics'), flush=True)
 
+<<<<<<< HEAD
     if (args.all or args.all_topics or args.all_services) and args.regex:
         print(print_warn('--all, --all-topics or --all-services will override --regex'),
               flush=True)
+=======
+    if (args.all or args.all_actions) and args.actions:
+        print(print_warn('--all or --all-actions will override --actions'))
+
+    if (args.all or args.all_topics or args.all_services or args.all_actions) and args.regex:
+        print(print_warn('--all, --all-topics --all-services or --all-actions will override '
+                         '--regex'), flush=True)
+>>>>>>> 1e03b74 (Expose more of the player/recorder API through Python (#2062))
 
     if os.path.isdir(uri):
         return print_error("Output folder '{}' already exists.".format(uri))
@@ -281,6 +293,14 @@ def validate_parsed_arguments(args, uri) -> str:
 
     if args.compression_queue_size < 0:
         return print_error('Compression queue size must be at least 0.')
+
+
+# Create termination event
+termination_requested = threading.Event()
+
+
+def signal_handler(signum, _):
+    termination_requested.set()
 
 
 class RecordVerb(VerbExtension):
@@ -361,10 +381,22 @@ class RecordVerb(VerbExtension):
 
         recorder = Recorder(storage_options, record_options, args.log_level, args.node_name)
 
+        signal.signal(signal.SIGTERM, signal_handler)
+
         try:
+            # Start the recorder
+            recorder.start_spin()
             recorder.record()
+            while not termination_requested.is_set():
+                time.sleep(0.1)  # Sleep for 100 msec to avoid busy loop
         except KeyboardInterrupt:
             pass
+        finally:
+            recorder.stop()
+            recorder.stop_spin()
+            signal.signal(signal.SIGTERM, signal.SIG_DFL)
+            termination_requested.clear()
 
+        # Remove newly created directory if it is empty
         if os.path.isdir(uri) and not os.listdir(uri):
             os.rmdir(uri)
