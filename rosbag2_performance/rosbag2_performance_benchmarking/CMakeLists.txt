@@ -1,11 +1,7 @@
 cmake_minimum_required(VERSION 3.5)
 project(rosbag2_performance_benchmarking)
 
-option(BUILD_ROSBAG2_BENCHMARKS "Build rosbag2 performance benchmarks" OFF)
-
-if(NOT BUILD_ROSBAG2_BENCHMARKS)
-  return()
-endif()
+option(ENABLE_ROSBAG2_BENCHMARK_TESTS "Enables rosbag2 performance benchmark tests" OFF)
 
 # Default to C++17
 if(NOT CMAKE_CXX_STANDARD)
@@ -61,7 +57,7 @@ target_link_libraries(benchmark_publishers
   rosbag2_storage::rosbag2_storage
   ${rosbag2_performance_benchmarking_msgs_TARGETS}
   ${sensor_msgs_TARGETS}
-  yaml-cpp
+  yaml-cpp::yaml-cpp
 )
 
 target_link_libraries(results_writer
@@ -93,7 +89,7 @@ install(DIRECTORY
   DESTINATION share/${PROJECT_NAME}
 )
 
-if(BUILD_TESTING)
+if(BUILD_TESTING AND ENABLE_ROSBAG2_BENCHMARK_TESTS)
   find_package(ament_lint_auto REQUIRED)
   ament_lint_auto_find_test_dependencies()
 
