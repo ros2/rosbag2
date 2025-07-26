@@ -13,6 +13,8 @@
 # limitations under the License.
 
 from argparse import FileType
+import signal
+import threading
 
 from rclpy.qos import InvalidQoSProfileException
 from ros2bag.api import add_standard_multi_reader_args
@@ -38,6 +40,15 @@ def positive_float(arg: str) -> float:
     if value <= 0:
         raise ValueError(f'Value {value} is less than or equal to zero.')
     return value
+
+
+# Create termination event
+termination_requested = threading.Event()
+
+
+# Signal handler just sets the event, avoiding complex calls
+def signal_handler(signum, _):
+    termination_requested.set()
 
 
 class PlayVerb(VerbExtension):
@@ -277,8 +288,26 @@ class PlayVerb(VerbExtension):
         else:
             play_options.service_requests_source = ServiceRequestsSource.CLIENT_INTROSPECTION
 
+        # Set up signal handling for graceful termination
+        signal.signal(signal.SIGTERM, signal_handler)
+
         player = Player(storage_options, play_options, args.log_level)
+
         try:
+            player.start_spin()
             player.play()
+            # Wait for playback to finish with periodic checks for termination
+            while not termination_requested.is_set():
+                # Use a short timeout to periodically check the termination flag
+                if player.wait_for_playback_to_finish_exclusively(0.1):
+                    break  # Playback finished naturally
+
+            # If termination was requested, the player stop will be called in the 'finally' block
         except KeyboardInterrupt:
             pass
+        finally:
+            # Ensure cleanup happens
+            player.stop()
+            player.stop_spin()
+            signal.signal(signal.SIGTERM, signal.SIG_DFL)
+            termination_requested.clear()
