@@ -56,8 +56,11 @@ protected:
       serialize_test_message("topic1", 0, primitive_message2)
     };
 
-    messages[0]->recv_timestamp = 100;
+    messages[0]->send_timestamp = 80;
+    messages[0]->recv_timestamp = 90;
     messages[1]->recv_timestamp = messages[0]->recv_timestamp +
+      message_time_difference.nanoseconds();
+    messages[1]->send_timestamp = messages[0]->send_timestamp +
       message_time_difference.nanoseconds();
 
     prepared_mock_reader = std::make_unique<MockSequentialReader>();
@@ -77,6 +80,28 @@ protected:
   std::unique_ptr<MockSequentialReader> prepared_mock_reader;
   std::unique_ptr<rosbag2_cpp::Reader> reader;
 };
+
+TEST_F(PlayerTestFixture, get_starting_time_returns_correct_value)
+{
+  auto player = std::make_shared<rosbag2_transport::Player>(
+    std::move(reader), storage_options_, play_options_);
+
+  rcutils_time_point_value_t starting_time = player->get_starting_time();
+  // The starting time is the time of the first message in the bag
+  EXPECT_EQ(starting_time, messages[0]->recv_timestamp);
+}
+
+TEST_F(PlayerTestFixture, get_playback_duration_returns_correct_value)
+{
+  auto player = std::make_shared<rosbag2_transport::Player>(
+    std::move(reader), storage_options_, play_options_);
+
+  auto playback_duration = player->get_playback_duration();
+  // The playback duration is the time difference between the first and last message in the bag
+  rcutils_duration_value_t expected_duration =
+    messages.back()->recv_timestamp - messages[0]->recv_timestamp;
+  EXPECT_EQ(playback_duration, expected_duration);
+}
 
 TEST_F(PlayerTestFixture, playing_respects_relative_timing_of_stored_messages)
 {
