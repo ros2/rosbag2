@@ -134,6 +134,10 @@ public:
         std::chrono::nanoseconds(messages[0]->recv_timestamp));
       metadata_.starting_time = message_timestamp;
     }
+    metadata_.duration = std::chrono::nanoseconds(messages.back()->recv_timestamp -
+      std::chrono::duration_cast<std::chrono::nanoseconds>(
+        metadata_.starting_time.time_since_epoch()).count());
+
     messages_ = std::move(messages);
     topics_ = std::move(topics);
   }
