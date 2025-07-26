@@ -16,6 +16,7 @@ import datetime
 import os
 from pathlib import Path
 import re
+import signal
 import threading
 
 from common import get_rosbag_options, wait_for
@@ -24,6 +25,7 @@ import pytest
 
 import rclpy
 from rclpy.qos import QoSProfile
+from rosbag2_interfaces.srv import Resume
 import rosbag2_py
 from rosbag2_test_common import TESTED_STORAGE_IDS
 from std_msgs.msg import String
@@ -81,6 +83,184 @@ def test_recoder_log_level(tmp_path, storage_id):
 
 
 @pytest.mark.parametrize('storage_id', TESTED_STORAGE_IDS)
+def test_player_api(storage_id):
+    bag_path = str(RESOURCES_PATH / storage_id / 'talker')
+    assert os.path.exists(bag_path), 'Could not find test bag file: ' + bag_path
+
+    storage_options, _ = get_rosbag_options(bag_path, storage_id)
+
+    play_options = rosbag2_py.PlayOptions()
+    play_options.start_paused = True
+    play_options.topics_to_filter = ['topic']
+    play_options.disable_keyboard_controls = True
+
+    player = rosbag2_py.Player(storage_options, play_options, 'debug', 'rosbag2_player_test')
+    assert player.is_paused()
+
+    ctx = rclpy.Context()
+    ctx.init()
+    node = rclpy.create_node('test_player_api_node', context=ctx)
+    msgs = []
+    sub = node.create_subscription(
+        String, '/topic', lambda msg: msgs.append(msg.data), QoSProfile(depth=15))
+    resume_client = node.create_client(Resume, '/rosbag2_player_test/resume')
+    executor = rclpy.executors.SingleThreadedExecutor(context=ctx)
+    executor.add_node(node)
+    executor_thread = threading.Thread(
+        target=executor.spin,
+        daemon=True)
+    executor_thread.start()
+
+    assert wait_for(
+        lambda: sub.get_publisher_count() == 1,
+        timeout=rclpy.duration.Duration(seconds=5),
+    ), sub.get_publisher_count()
+
+    player.start_spin()
+    # Calling start_spin() a second time should do nothing
+    player.start_spin()
+    player.play()
+    # assert player.wait_for_playback_to_start()
+    assert player.play_next()
+    assert player.play_next()
+    assert 2 == player.burst(2)
+    player.seek(0)
+    # This requires that the player node be spun by an executor
+    resume_client.call(Resume.Request(), 5.0)
+    assert not player.is_paused()
+    assert not player.play_next()
+    assert player.wait_for_playback_to_finish(15.0)
+    player.stop()
+
+    # 2 msgs with play_next, 2 msgs with burst, then seek to the beginning and play all 10 msgs
+    expected_number_of_messages = 14
+    assert wait_for(
+        lambda: len(msgs) == expected_number_of_messages,
+        timeout=rclpy.duration.Duration(seconds=10),
+    ), str(msgs)
+
+    executor.shutdown()
+    executor_thread.join(3)
+    assert not executor_thread.is_alive()
+    resume_client.destroy()
+    sub.destroy()
+    node.destroy_node()
+    ctx.shutdown()
+
+
+@pytest.mark.parametrize('storage_id', TESTED_STORAGE_IDS)
+def test_recorder_api(tmp_path, storage_id):
+    bag_path = tmp_path / 'test_recorder_api'
+    storage_options, _ = get_rosbag_options(str(bag_path), storage_id)
+
+    record_options = rosbag2_py.RecordOptions()
+    record_options.start_paused = False
+    record_options.topics = ['/topic']
+    record_options.is_discovery_disabled = False
+    record_options.topic_polling_interval = datetime.timedelta(milliseconds=10)
+    record_options.disable_keyboard_controls = True
+
+    recorder = rosbag2_py.Recorder(
+        storage_options, record_options, 'info', 'rosbag2_recorder_test')
+    assert not recorder.is_paused()
+    recorder.start_spin()
+    # Calling start_spin() a second time should do nothing
+    recorder.start_spin()
+    recorder.record()
+
+    ctx = rclpy.Context()
+    ctx.init()
+    node = rclpy.create_node('test_recorder_api_node', context=ctx)
+    pub = node.create_publisher(String, 'topic', QoSProfile(depth=10))
+    resume_client = node.create_client(Resume, '/rosbag2_recorder_test/resume')
+    executor = rclpy.executors.SingleThreadedExecutor(context=ctx)
+    executor.add_node(node)
+    executor_thread = threading.Thread(
+        target=executor.spin,
+        daemon=True)
+    executor_thread.start()
+
+    assert resume_client.wait_for_service(5.0), str(node.get_service_names_and_types())
+    recorder.resume()
+    assert not recorder.is_paused()
+    recorder.pause()
+    assert recorder.is_paused()
+    # This requires that the recorder node be spun by an executor
+    resume_client.call(Resume.Request(), 5.0)
+    assert not recorder.is_paused()
+    i = 0
+    while rclpy.ok() and i < 10:
+        pub.publish(String(data=str(i)))
+        i += 1
+    recorder.stop()
+
+    executor.shutdown()
+    executor_thread.join(3)
+    assert not executor_thread.is_alive()
+    resume_client.destroy()
+    pub.destroy()
+    node.destroy_node()
+    ctx.shutdown()
+
+    metadata_io = rosbag2_py.MetadataIo()
+    assert wait_for(
+        lambda: metadata_io.metadata_file_exists(str(bag_path)),
+        timeout=rclpy.duration.Duration(seconds=10))
+    metadata = metadata_io.read_metadata(str(bag_path))
+    bag_topics = [
+        topic_info.topic_metadata.name
+        for topic_info in metadata.topics_with_message_count
+    ]
+    assert '/topic' in bag_topics, str(bag_topics)
+
+
+def test_player_unconfigured():
+    # Test that using a constructor without full configuration raises an error when trying to use
+    # the player
+    player = rosbag2_py.Player()
+    with pytest.raises(RuntimeError):
+        player.start_spin()
+    with pytest.raises(RuntimeError):
+        player.play()
+    with pytest.raises(RuntimeError):
+        player.wait_for_playback_to_start()
+    with pytest.raises(RuntimeError):
+        player.wait_for_playback_to_finish()
+    with pytest.raises(RuntimeError):
+        player.stop()
+    with pytest.raises(RuntimeError):
+        player.pause()
+    with pytest.raises(RuntimeError):
+        player.resume()
+    with pytest.raises(RuntimeError):
+        player.is_paused()
+    with pytest.raises(RuntimeError):
+        player.play_next()
+    with pytest.raises(RuntimeError):
+        player.burst(1)
+    with pytest.raises(RuntimeError):
+        player.seek(0)
+
+
+def test_recorder_unconfigured():
+    # Test that using a constructor without full configuration raises an error when trying to use
+    # the recorder
+    recorder = rosbag2_py.Recorder()
+    with pytest.raises(RuntimeError):
+        recorder.start_spin()
+    with pytest.raises(RuntimeError):
+        recorder.record()
+    with pytest.raises(RuntimeError):
+        recorder.stop()
+    with pytest.raises(RuntimeError):
+        recorder.pause()
+    with pytest.raises(RuntimeError):
+        recorder.resume()
+    with pytest.raises(RuntimeError):
+        recorder.is_paused()
+
+
+@pytest.mark.parametrize('storage_id', TESTED_STORAGE_IDS)
 def test_record_cancel(tmp_path, storage_id):
     bag_path = tmp_path / 'test_record_cancel'
     storage_options, converter_options = get_rosbag_options(str(bag_path), storage_id)
@@ -90,12 +270,13 @@ def test_record_cancel(tmp_path, storage_id):
     record_options.is_discovery_disabled = False
     record_options.topic_polling_interval = datetime.timedelta(milliseconds=100)
 
-    recorder = rosbag2_py.Recorder(storage_options, record_options)
+    recorder = rosbag2_py.Recorder()
 
     ctx = rclpy.Context()
     ctx.init()
     record_thread = threading.Thread(
         target=recorder.record,
+        args=(storage_options, record_options),
         daemon=True)
     record_thread.start()
 
@@ -141,6 +322,7 @@ def test_play_cancel(storage_id, capfd):
 
     player_thread = threading.Thread(
         target=player.play,
+        args=(storage_options, play_options),
         daemon=True)
     player_thread.start()
 
@@ -166,3 +348,74 @@ def test_play_cancel(storage_id, capfd):
     player.cancel()
     player_thread.join(3)
     assert not player_thread.is_alive()
+
+
+@pytest.mark.parametrize('storage_id', TESTED_STORAGE_IDS)
+def test_play_process_sigint_in_python_handler(storage_id):
+    bag_path = str(RESOURCES_PATH / storage_id / 'talker')
+    assert os.path.exists(bag_path), 'Could not find test bag file: ' + bag_path
+
+    storage_options, _ = get_rosbag_options(bag_path, storage_id)
+
+    play_options = rosbag2_py.PlayOptions()
+    play_options.loop = True
+    play_options.topics_to_filter = ['topic']
+
+    player = rosbag2_py.Player(storage_options, play_options)
+
+    player.start_spin()
+    player.play()
+    player.wait_for_playback_to_start()
+
+    sigint_triggered = False
+    try:
+        signal.raise_signal(signal.SIGINT)
+    except KeyboardInterrupt:
+        sigint_triggered = True
+        pass
+    finally:
+        assert sigint_triggered
+        # The player hasn't been stopped by signal need to call stop() method to stop it.
+        player.stop()
+        player.stop_spin()
+        assert player.wait_for_playback_to_finish(15.0)
+
+
+@pytest.mark.parametrize('storage_id', TESTED_STORAGE_IDS)
+def test_record_process_sigint_in_python_handler(tmp_path, storage_id, capfd):
+    bag_path = tmp_path / 'test_recorder_api'
+    storage_options, _ = get_rosbag_options(str(bag_path), storage_id)
+
+    record_options = rosbag2_py.RecordOptions()
+    record_options.start_paused = False
+    record_options.topics = ['/topic']
+    record_options.is_discovery_disabled = False
+    record_options.topic_polling_interval = datetime.timedelta(milliseconds=10)
+    record_options.disable_keyboard_controls = True
+
+    recorder = rosbag2_py.Recorder(
+        storage_options, record_options, 'info', 'rosbag2_recorder_test')
+    assert not recorder.is_paused()
+    recorder.start_spin()
+    recorder.record()
+
+    sigint_triggered = False
+    try:
+        signal.raise_signal(signal.SIGINT)
+    except KeyboardInterrupt:
+        sigint_triggered = True
+        pass
+    finally:
+        assert sigint_triggered
+        # The recorder hasn't been stopped by signal need to call stop() method to stop it.
+        recorder.stop()
+        recorder.stop_spin()
+
+    metadata_io = rosbag2_py.MetadataIo()
+    assert wait_for(lambda: metadata_io.metadata_file_exists(str(bag_path)),
+                    timeout=rclpy.duration.Duration(seconds=3))
+    metadata = metadata_io.read_metadata(str(bag_path))
+    assert len(metadata.relative_file_paths)
+    storage_path = bag_path / metadata.relative_file_paths[0]
+    assert wait_for(lambda: storage_path.is_file(),
+                    timeout=rclpy.duration.Duration(seconds=3))
