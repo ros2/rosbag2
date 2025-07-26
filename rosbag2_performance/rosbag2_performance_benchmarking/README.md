@@ -26,6 +26,7 @@ For human friendly output, a postprocess report generation tool can be used. Lau
 ```bash
 scripts/report_gen.py -i <BENCHMARK_RESULT_DIR>
 ```
+
 #### Binaries
 
 These are used in the launch file:
@@ -45,12 +46,25 @@ In the case of the `benchmark_publishers` binary, a pool of threads is created t
 the number of threads is equal to the number of publishers. It is possible to change the number of threads
 using the optional `number_of_threads` parameter.
 
-## Building
+## Running builtin Rosbag2 benchmark tests on CI or local setup
 
-To build the package in the rosbag2 build process, make sure to turn `BUILD_ROSBAG2_BENCHMARKS` flag on (e.g. `colcon build --cmake-args -DBUILD_ROSBAG2_BENCHMARKS=1`)
+The package contains a set of builtin tests that can be run to verify the performance of the
+Rosbag2 recorder. However, these tests are excluded from the build by default, so you need to enable
+them by setting the `ENABLE_ROSBAG2_BENCHMARK_TESTS` CMake flag to `ON` when building the package.
+To enable and run the rosbag2 benchmark tests with colcon, you need to:
+First build the package with the `ENABLE_ROSBAG2_BENCHMARK_TESTS` CMake option enabled:
 
-If you already built rosbag2, you can use `packages-select` option to build benchmarks.
-Example: `colcon build --packages-select rosbag2_performance_benchmarking --cmake-args -DBUILD_ROSBAG2_BENCHMARKS=1`.
+```bash
+colcon build --packages-select rosbag2_performance_benchmarking --cmake-args -DENABLE_ROSBAG2_BENCHMARK_TESTS=1
+```
+
+Then, you can run the tests using the `colcon test` command.
+
+```bash
+colcon test --packages-select rosbag2_performance_benchmarking
+```
+
+This will execute the tests defined in the "rosbag2_performance_benchmarking/test/benchmark_test.py".
 
 ## General knowledge: I/O benchmarking
 

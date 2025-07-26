@@ -25,8 +25,7 @@ jobs:
           {
             "build": {
               "cmake-args": [
-                "-DCMAKE_CXX_FLAGS=\"-Werror\"",
-                "-DBUILD_ROSBAG2_BENCHMARKS=1"
+                "-DCMAKE_CXX_FLAGS=\"-Werror\""
               ],
               "packages-up-to": [
                 "mcap_vendor",
