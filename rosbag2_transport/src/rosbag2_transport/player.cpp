@@ -434,15 +434,21 @@ PlayerImpl::PlayerImpl(
   {
     std::lock_guard<std::mutex> lk(reader_mutex_);
     starting_time_ = std::numeric_limits<decltype(starting_time_)>::max();
+    rcutils_time_point_value_t ending_time = std::numeric_limits<decltype(ending_time)>::min();
     for (const auto & [reader, storage_options] : readers_with_options_) {
       // keep readers open until player is destroyed
       reader->open(storage_options, {"", rmw_get_serialization_format()});
-      // Find earliest starting time
+      // Find the earliest starting time
       const auto metadata = reader->get_metadata();
       const auto metadata_starting_time = std::chrono::duration_cast<std::chrono::nanoseconds>(
         metadata.starting_time.time_since_epoch()).count();
+      const auto metadata_bag_duration = std::chrono::duration_cast<std::chrono::nanoseconds>(
+        metadata.duration).count();
       if (metadata_starting_time < starting_time_) {
         starting_time_ = metadata_starting_time;
+      }
+      if (metadata_starting_time + metadata_bag_duration > ending_time) {
+        ending_time = metadata_starting_time + metadata_bag_duration;
       }
     }
     // If a non-default (positive) starting time offset is provided in PlayOptions,
@@ -456,17 +462,9 @@ PlayerImpl::PlayerImpl(
     } else {
       starting_time_ += play_options_.start_offset;
     }
-<<<<<<< HEAD
-=======
 
     playback_duration_ = ending_time - starting_time_;
 
-    progress_bar_ = std::make_unique<PlayerProgressBar>(
-      std::cout, starting_time_, ending_time,
-      play_options.progress_bar_update_rate,
-      play_options.progress_bar_separation_lines);
-
->>>>>>> 9741bfc (Add public API to get player's starting time and playback duration (#2095))
     clock_ = std::make_unique<rosbag2_cpp::TimeControllerClock>(
       starting_time_, std::chrono::steady_clock::now,
       std::chrono::milliseconds{100}, play_options_.start_paused);
