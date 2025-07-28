@@ -27,9 +27,8 @@
 
 #include "rosbag2_storage/bag_metadata.hpp"
 #include "rosbag2_storage/topic_metadata.hpp"
-#include <rcpputils/filesystem_helper.hpp>
+#include "rosbag2_test_common/temporary_directory_fixture.hpp"
 
-#include "mock_converter_factory.hpp"
 #include "mock_metadata_io.hpp"
 #include "mock_storage.hpp"
 #include "mock_storage_factory.hpp"
@@ -37,100 +36,92 @@
 using namespace testing;  // NOLINT
 namespace fs = std::filesystem;
 
-class ReindexerTest : public Test
+class ReindexerTest : public rosbag2_test_common::TemporaryDirectoryFixture
 {
 public:
   ReindexerTest()
-  : storage_(std::make_shared<NiceMock<MockStorage>>()),
-    converter_factory_(std::make_shared<StrictMock<MockConverterFactory>>()),
-    storage_serialization_format_("rmw1_format"),
-    storage_uri_(rcpputils::fs::create_temporary_directory("test_reindexer").generic_string()),
-    relative_path_1_("some_relative_path_1.mcap"),
-    relative_path_2_("some_relative_path_2.mcap"),
-    relative_path_3_("some_relative_path_3.mcap"),
-    default_storage_options_({storage_uri_, ""})
-  {}
-
-  virtual void write_file(const std::string & filename)
   {
-    std::ofstream outfile;
-    outfile.open(fs::path{storage_uri_}.append(filename));
-    outfile.close();
-  }
+    storage_ = std::make_shared<NiceMock<MockStorage>>();
+    storage_uri_ = temporary_dir_path_;
 
-  virtual void init()
-  {
-    // path 1 and path 2 are sequential
-    path_1_metadata_.bag_size = 10;
-    path_1_metadata_.duration = std::chrono::seconds{10};
-    path_1_metadata_.starting_time = std::chrono::system_clock::now();
+    // bag 1 and bag 2 are sequential
+    bag_1_metadata_.bag_size = 10;
+    bag_1_metadata_.duration = std::chrono::seconds{10};
+    bag_1_metadata_.starting_time = std::chrono::system_clock::now();
 
-    path_2_metadata_.bag_size = 15;
-    path_2_metadata_.duration = std::chrono::seconds{10};
-    path_2_metadata_.starting_time = path_1_metadata_.starting_time + path_1_metadata_.duration;
+    bag_2_metadata_.bag_size = 15;
+    bag_2_metadata_.duration = std::chrono::seconds{10};
+    bag_2_metadata_.starting_time = bag_1_metadata_.starting_time + bag_1_metadata_.duration;
 
-    // path 3 is parallel
-    path_3_metadata_.bag_size = 22;
-    path_3_metadata_.duration = std::chrono::seconds{15};
-    path_3_metadata_.starting_time = path_1_metadata_.starting_time - std::chrono::seconds{1};
-    write_file(relative_path_1_);
-    write_file(relative_path_2_);
-    write_file(relative_path_3_);
+    // bag 3 overlap with bag 1
+    bag_3_metadata_.bag_size = 22;
+    bag_3_metadata_.duration = std::chrono::seconds{15};
+    bag_3_metadata_.starting_time = bag_1_metadata_.starting_time - std::chrono::seconds{1};
+    // We mock storage and meatdata_io. However, the reindexer checking that the storage directory
+    // is not empty, so we need to write some files to the storage directory.
+    write_file(bag_1_filename);
+    write_file(bag_2_filename);
+    write_file(bag_3_filename);
 
     auto topic_with_type = rosbag2_storage::TopicMetadata{
       0u, "topic", "test_msgs/BasicTypes", storage_serialization_format_, {}, ""};
     auto topics_and_types = std::vector<rosbag2_storage::TopicMetadata>{topic_with_type};
-    path_1_metadata_.topics_with_message_count.push_back({topic_with_type, 10});
-    path_2_metadata_.topics_with_message_count.push_back({topic_with_type, 10});
-    path_3_metadata_.topics_with_message_count.push_back({topic_with_type, 10});
+    bag_1_metadata_.topics_with_message_count.push_back({topic_with_type, 10});
+    bag_2_metadata_.topics_with_message_count.push_back({topic_with_type, 10});
+    bag_3_metadata_.topics_with_message_count.push_back({topic_with_type, 10});
 
     auto storage_factory = std::make_unique<StrictMock<MockStorageFactory>>();
     auto metadata_io = std::make_unique<NiceMock<MockMetadataIo>>();
     EXPECT_CALL(*metadata_io, write_metadata)
     .WillRepeatedly([this](const std::string &, const rosbag2_storage::BagMetadata & metadata)
       {
-        last_bag_metadata = metadata;
-    });
+        saved_metadata_.push_back(metadata);
+      });
     EXPECT_CALL(*metadata_io, metadata_file_exists(_)).WillRepeatedly(Return(true));
+    ON_CALL(*storage_, set_read_order).WillByDefault(Return(true));
+    EXPECT_CALL(*storage_factory, open_read_only(_)).WillRepeatedly(Return(storage_));
 
     EXPECT_CALL(*storage_, get_all_topics_and_types())
     .Times(AtMost(1)).WillRepeatedly(Return(topics_and_types));
-    ON_CALL(*storage_, set_read_order).WillByDefault(Return(true));
+
     EXPECT_CALL(*storage_, get_metadata()).Times(3)
-    .WillOnce(Return (path_1_metadata_))
-    .WillOnce(Return(path_2_metadata_))
-    .WillOnce(Return(path_3_metadata_));
-    EXPECT_CALL(*storage_factory, open_read_only(_)).WillRepeatedly(Return(storage_));
+    .WillOnce(Return(bag_1_metadata_))
+    .WillOnce(Return(bag_2_metadata_))
+    .WillOnce(Return(bag_3_metadata_));
 
     reindexer_ = std::make_unique<rosbag2_cpp::Reindexer>(std::move(storage_factory),
-      std::move(metadata_io));
+                                                          std::move(metadata_io));
+  }
+
+  void write_file(const std::string & filename) const
+  {
+    std::ofstream outfile;
+    outfile.open(fs::path{storage_uri_}.append(filename));
+    outfile.close();
   }
 
   ~ReindexerTest() override = default;
 
   std::shared_ptr<NiceMock<MockStorage>> storage_;
-  std::shared_ptr<StrictMock<MockConverterFactory>> converter_factory_;
-  std::string storage_serialization_format_;
+  std::string storage_serialization_format_ = "cdr";
   std::string storage_uri_;
-  std::string relative_path_1_;
-  std::string relative_path_2_;
-  std::string relative_path_3_;
-  rosbag2_storage::BagMetadata path_1_metadata_;
-  rosbag2_storage::BagMetadata path_2_metadata_;
-  rosbag2_storage::BagMetadata path_3_metadata_;
-  rosbag2_storage::BagMetadata last_bag_metadata;
-  rosbag2_storage::StorageOptions default_storage_options_;
+  std::string bag_1_filename = "bag_1.mcap";
+  std::string bag_2_filename = "bag_2.mcap";
+  std::string bag_3_filename = "bag_3.mcap";
+  rosbag2_storage::BagMetadata bag_1_metadata_;
+  rosbag2_storage::BagMetadata bag_2_metadata_;
+  rosbag2_storage::BagMetadata bag_3_metadata_;
+  std::vector<rosbag2_storage::BagMetadata> saved_metadata_;
   std::unique_ptr<rosbag2_cpp::Reindexer> reindexer_;
 };
 
 TEST_F(ReindexerTest, duration_and_start_time_correct)
 {
-  init();
-
-  rosbag2_storage::StorageOptions storage_options = default_storage_options_;
+  rosbag2_storage::StorageOptions storage_options{storage_uri_, ""};
   reindexer_->reindex(storage_options);
-  EXPECT_EQ(last_bag_metadata.starting_time.time_since_epoch().count(),
-    path_3_metadata_.starting_time.time_since_epoch().count());
-  EXPECT_EQ(last_bag_metadata.duration.count(),
+  ASSERT_EQ(saved_metadata_.size(), 1u);
+  EXPECT_EQ(saved_metadata_.back().starting_time.time_since_epoch().count(),
+            bag_3_metadata_.starting_time.time_since_epoch().count());
+  EXPECT_EQ(saved_metadata_.back().duration.count(),
     std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::seconds{21}).count());
 }
