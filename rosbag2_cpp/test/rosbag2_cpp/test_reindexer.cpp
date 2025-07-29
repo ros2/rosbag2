@@ -47,7 +47,7 @@ public:
     // bag 1 and bag 2 are sequential
     bag_1_metadata_.bag_size = 10;
     bag_1_metadata_.duration = std::chrono::seconds{10};
-    bag_1_metadata_.starting_time = std::chrono::system_clock::now();
+    bag_1_metadata_.starting_time = std::chrono::high_resolution_clock::now();
 
     bag_2_metadata_.bag_size = 15;
     bag_2_metadata_.duration = std::chrono::seconds{10};
