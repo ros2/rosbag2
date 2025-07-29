@@ -115,6 +115,14 @@ public:
   /// Return whether the playback is currently paused.
   bool is_paused() const;
 
+  /// \brief Getter method for starting time of the playback.
+  /// \return Returns timestamp of the first message in nanoseconds.
+  rcutils_time_point_value_t get_starting_time() const;
+
+  /// \brief Getter method for playback duration
+  /// \return Returns duration of the playback in nanoseconds.
+  rcutils_duration_value_t get_playback_duration() const;
+
   /// Return current playback rate.
   double get_rate() const;
 
@@ -351,7 +359,8 @@ private:
   // Whether we successfully played next
   std::atomic_bool play_next_result_{false};
 
-  rcutils_time_point_value_t starting_time_;
+  rcutils_time_point_value_t starting_time_ = 0;
+  rcutils_duration_value_t playback_duration_ = 0;
 
   // control services
   rclcpp::Service<rosbag2_interfaces::srv::Pause>::SharedPtr srv_pause_;
@@ -425,15 +434,21 @@ PlayerImpl::PlayerImpl(
   {
     std::lock_guard<std::mutex> lk(reader_mutex_);
     starting_time_ = std::numeric_limits<decltype(starting_time_)>::max();
+    rcutils_time_point_value_t ending_time = std::numeric_limits<decltype(ending_time)>::min();
     for (const auto & [reader, storage_options] : readers_with_options_) {
       // keep readers open until player is destroyed
       reader->open(storage_options, {"", rmw_get_serialization_format()});
-      // Find earliest starting time
+      // Find the earliest starting time
       const auto metadata = reader->get_metadata();
       const auto metadata_starting_time = std::chrono::duration_cast<std::chrono::nanoseconds>(
         metadata.starting_time.time_since_epoch()).count();
+      const auto metadata_bag_duration = std::chrono::duration_cast<std::chrono::nanoseconds>(
+        metadata.duration).count();
       if (metadata_starting_time < starting_time_) {
         starting_time_ = metadata_starting_time;
+      }
+      if (metadata_starting_time + metadata_bag_duration > ending_time) {
+        ending_time = metadata_starting_time + metadata_bag_duration;
       }
     }
     // If a non-default (positive) starting time offset is provided in PlayOptions,
@@ -447,6 +462,9 @@ PlayerImpl::PlayerImpl(
     } else {
       starting_time_ += play_options_.start_offset;
     }
+
+    playback_duration_ = ending_time - starting_time_;
+
     clock_ = std::make_unique<rosbag2_cpp::TimeControllerClock>(
       starting_time_, std::chrono::steady_clock::now,
       std::chrono::milliseconds{100}, play_options_.start_paused);
@@ -684,6 +702,16 @@ void PlayerImpl::toggle_paused()
 bool PlayerImpl::is_paused() const
 {
   return clock_->is_paused();
+}
+
+rcutils_time_point_value_t PlayerImpl::get_starting_time() const
+{
+  return starting_time_;
+}
+
+rcutils_duration_value_t PlayerImpl::get_playback_duration() const
+{
+  return playback_duration_;
 }
 
 double PlayerImpl::get_rate() const
@@ -1809,6 +1837,16 @@ void Player::toggle_paused()
 bool Player::is_paused() const
 {
   return pimpl_->is_paused();
+}
+
+rcutils_time_point_value_t Player::get_starting_time() const
+{
+  return pimpl_->get_starting_time();
+}
+
+rcutils_duration_value_t Player::get_playback_duration() const
+{
+  return pimpl_->get_playback_duration();
 }
 
 double Player::get_rate() const

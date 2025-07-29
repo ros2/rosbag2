@@ -149,6 +149,36 @@ def test_player_api(storage_id):
 
 
 @pytest.mark.parametrize('storage_id', TESTED_STORAGE_IDS)
+def test_player_get_starting_time(storage_id):
+    bag_path = str(RESOURCES_PATH / storage_id / 'talker')
+    assert os.path.exists(bag_path), 'Could not find test bag file: ' + bag_path
+
+    storage_options, _ = get_rosbag_options(bag_path, storage_id)
+
+    play_options = rosbag2_py.PlayOptions()
+    play_options.topics_to_filter = ['topic']
+
+    player = rosbag2_py.Player(storage_options, play_options, 'info', 'rosbag2_player_test')
+    starting_time = player.get_starting_time()
+    assert starting_time is not None, 'Expected a valid starting time'
+
+
+@pytest.mark.parametrize('storage_id', TESTED_STORAGE_IDS)
+def test_player_get_playback_duration(storage_id):
+    bag_path = str(RESOURCES_PATH / storage_id / 'talker')
+    assert os.path.exists(bag_path), 'Could not find test bag file: ' + bag_path
+
+    storage_options, _ = get_rosbag_options(bag_path, storage_id)
+
+    play_options = rosbag2_py.PlayOptions()
+    play_options.topics_to_filter = ['topic']
+
+    player = rosbag2_py.Player(storage_options, play_options, 'info', 'rosbag2_player_test')
+    playback_duration = player.get_playback_duration()
+    assert playback_duration is not None, 'Expected a valid starting time'
+
+
+@pytest.mark.parametrize('storage_id', TESTED_STORAGE_IDS)
 def test_recorder_api(tmp_path, storage_id):
     bag_path = tmp_path / 'test_recorder_api'
     storage_options, _ = get_rosbag_options(str(bag_path), storage_id)

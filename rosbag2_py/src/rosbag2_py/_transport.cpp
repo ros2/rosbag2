@@ -311,13 +311,31 @@ public:
     player_->resume();
   }
 
-  bool is_paused() const
+  [[nodiscard]] bool is_paused() const
   {
     if (!player_) {
       throw std::runtime_error("Player is not initialized. Please use constructor with "
         "storage and play options.");
     }
     return player_->is_paused();
+  }
+
+  [[nodiscard]] int64_t get_starting_time() const
+  {
+    if (!player_) {
+      throw std::runtime_error("Player is not initialized. Please use constructor with "
+        "storage and play options.");
+    }
+    return player_->get_starting_time();
+  }
+
+  [[nodiscard]] int64_t get_playback_duration() const
+  {
+    if (!player_) {
+      throw std::runtime_error("Player is not initialized. Please use constructor with "
+        "storage and play options.");
+    }
+    return player_->get_playback_duration();
   }
 
   bool play_next()
@@ -1055,6 +1073,24 @@ PYBIND11_MODULE(_transport, m) {
     "is_paused",
     &rosbag2_py::Player::is_paused,
     "Whether the playback is currently paused.")
+
+  .def("get_starting_time",
+    &rosbag2_py::Player::get_starting_time,
+    R"pbdoc(
+      Get the starting time of the playback.
+
+      Returns:
+          int: The timestamp of the first message in nanoseconds.
+    )pbdoc")
+
+  .def("get_playback_duration",
+    &rosbag2_py::Player::get_playback_duration,
+    R"pbdoc(
+      Get the total duration of the playback.
+
+      Returns:
+          int: The total duration of the playback in nanoseconds.
+    )pbdoc")
 
   .def("play_next", &rosbag2_py::Player::play_next,
     R"pbdoc(

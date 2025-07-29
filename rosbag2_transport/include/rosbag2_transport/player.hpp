@@ -250,6 +250,16 @@ public:
   ROSBAG2_TRANSPORT_PUBLIC
   bool is_paused() const;
 
+  /// \brief Getter method for starting time of the playback.
+  /// \return Returns timestamp of the first message in nanoseconds.
+  ROSBAG2_TRANSPORT_PUBLIC
+  rcutils_time_point_value_t get_starting_time() const;
+
+  /// \brief Getter method for playback duration
+  /// \return Returns duration of the playback in nanoseconds.
+  ROSBAG2_TRANSPORT_PUBLIC
+  rcutils_duration_value_t get_playback_duration() const;
+
   /// Return current playback rate.
   ROSBAG2_TRANSPORT_PUBLIC
   double get_rate() const;
