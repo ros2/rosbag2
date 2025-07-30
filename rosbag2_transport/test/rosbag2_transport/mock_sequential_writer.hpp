@@ -101,6 +101,11 @@ public:
     }
   }
 
+  bool has_callback_for_event(rosbag2_cpp::bag_events::BagEvent event) const override
+  {
+    return callback_manager_.has_callback_for_event(event);
+  }
+
   const std::vector<std::shared_ptr<const rosbag2_storage::SerializedBagMessage>> & get_messages()
   {
     return messages_;

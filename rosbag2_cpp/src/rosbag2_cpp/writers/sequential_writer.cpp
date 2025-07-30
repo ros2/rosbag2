@@ -638,5 +638,10 @@ void SequentialWriter::add_event_callbacks(const bag_events::WriterEventCallback
   }
 }
 
+bool SequentialWriter::has_callback_for_event(bag_events::BagEvent event) const
+{
+  return callback_manager_.has_callback_for_event(event);
+}
+
 }  // namespace writers
 }  // namespace rosbag2_cpp
