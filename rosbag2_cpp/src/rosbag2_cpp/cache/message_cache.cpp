@@ -51,13 +51,14 @@ bool MessageCache::push(std::shared_ptr<const rosbag2_storage::SerializedBagMess
   {
     std::lock_guard<std::mutex> lock(producer_buffer_mutex_);
     pushed = producer_buffer_->push(msg);
+    data_ready_ = true;  // Don't use notify_data_ready() here for the sake of performance.
   }
+  // Notify the consumer that data is ready
+  cache_condition_var_.notify_one();
 
   if (!pushed) {
     messages_dropped_per_topic_[msg->topic_name]++;
   }
-
-  notify_data_ready();
 
   return pushed;
 }

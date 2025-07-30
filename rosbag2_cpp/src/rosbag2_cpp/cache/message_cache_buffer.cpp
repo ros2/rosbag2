@@ -26,6 +26,7 @@ namespace cache
 MessageCacheBuffer::MessageCacheBuffer(size_t max_cache_size)
 : max_bytes_size_(max_cache_size)
 {
+  buffer_.reserve(512);  // Reserve some space to avoid reallocations. 16x512 = 8192 bytes.
 }
 
 bool MessageCacheBuffer::push(CacheBufferInterface::buffer_element_t msg)
