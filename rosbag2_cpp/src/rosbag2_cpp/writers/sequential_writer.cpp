@@ -625,11 +625,15 @@ void SequentialWriter::add_event_callbacks(const bag_events::WriterEventCallback
     callback_manager_.add_event_callback(
       callbacks.write_split_callback,
       bag_events::BagEvent::WRITE_SPLIT);
-  } else if (callbacks.messages_lost_callback) {
+  }
+
+  if (callbacks.messages_lost_callback) {
     callback_manager_.add_event_callback(
       callbacks.messages_lost_callback,
       bag_events::BagEvent::MESSAGES_LOST);
-  } else {
+  }
+
+  if (!callbacks.messages_lost_callback && !callbacks.write_split_callback) {
     throw std::runtime_error("No valid callback provided");
   }
 }
