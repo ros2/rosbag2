@@ -67,6 +67,11 @@ public:
   virtual void seek(const rcutils_time_point_value_t & timestamp) = 0;
 
   virtual void add_event_callbacks(const bag_events::ReaderEventCallbacks & callbacks) = 0;
+
+  /// \brief Checks if a callback is registered for the given event.
+  /// \param event Type of event to check for registered callbacks.
+  /// \return True if there is any callback registered for the event, false otherwise.
+  [[nodiscard]] virtual bool has_callback_for_event(bag_events::BagEvent event) const = 0;
 };
 
 }  // namespace reader_interfaces

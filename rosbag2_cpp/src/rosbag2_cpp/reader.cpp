@@ -107,4 +107,9 @@ void Reader::add_event_callbacks(bag_events::ReaderEventCallbacks & callbacks)
   reader_impl_->add_event_callbacks(callbacks);
 }
 
+bool Reader::has_callback_for_event(bag_events::BagEvent event) const
+{
+  return reader_impl_->has_callback_for_event(event);
+}
+
 }  // namespace rosbag2_cpp

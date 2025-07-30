@@ -128,7 +128,7 @@ public:
    * \brief Check if a callback is registered for the given event.
    * \return True if there is any callback registered for the event, false otherwise.
    */
-  bool has_callback_for_event(const bag_events::BagEvent event) const;
+  [[nodiscard]] bool has_callback_for_event(bag_events::BagEvent event) const override;
 
 protected:
   /**
