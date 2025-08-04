@@ -145,7 +145,7 @@ if(BUILD_TESTING)
   if(CMAKE_SYSTEM_NAME STREQUAL "Linux" AND CMAKE_CXX_COMPILER_ID MATCHES "Clang")
     # Work around a rtti bug when using class_loader from a
     # python extension built with libc++.
-    set(set_env_vars "${set_env_vars} ROSBAG2_PY_TEST_WITH_RTLD_GLOBAL=True")
+    list(APPEND set_env_vars "ROSBAG2_PY_TEST_WITH_RTLD_GLOBAL=True")
   endif()
 
   ament_add_pytest_test(test_sequential_reader_py
