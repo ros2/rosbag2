@@ -108,11 +108,11 @@ class RecordVerb(VerbExtension):
         )
         parser.add_argument(
             '--max-cache-size', type=int, default=100*1024*1024,
-            help='maximum size (in bytes) of messages to hold in each buffer of cache.'
+            help='maximum size (in bytes) of messages to hold in each buffer of cache. '
                  'Default is 100 mebibytes. The cache is handled through double buffering, '
-                 'which means that in pessimistic case up to twice the parameter value of memory'
-                 'is needed. A rule of thumb is to cache an order of magitude corresponding to'
-                 'about one second of total recorded data volume.'
+                 'which means that in pessimistic case up to twice the parameter value of memory '
+                 'is needed. A rule of thumb is to cache an order of magitude corresponding to '
+                 'about one second of total recorded data volume. '
                  'If the value specified is 0, then every message is directly written to disk.'
         )
         parser.add_argument(
