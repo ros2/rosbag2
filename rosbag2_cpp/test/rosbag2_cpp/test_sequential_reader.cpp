@@ -210,6 +210,7 @@ TEST_F(SequentialReaderTest, next_file_calls_callback) {
       callback_called = true;
     };
   reader_->add_event_callbacks(callbacks);
+  ASSERT_TRUE(reader_->has_callback_for_event(rosbag2_cpp::bag_events::BagEvent::READ_SPLIT));
 
   reader_->open(default_storage_options_, {"", storage_serialization_format_});
   // Calling read_next() 6 times should trigger the read-split event callback

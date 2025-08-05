@@ -206,6 +206,12 @@ public:
    */
   void add_event_callbacks(bag_events::ReaderEventCallbacks & callbacks);
 
+  /**
+   * \brief Check if a callback is registered for the given event.
+   * \return True if there is any callback registered for the event, false otherwise.
+   */
+  [[nodiscard]] bool has_callback_for_event(bag_events::BagEvent event) const;
+
 private:
   std::unique_ptr<reader_interfaces::BaseReaderInterface> reader_impl_;
 };

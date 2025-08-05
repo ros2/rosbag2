@@ -132,6 +132,11 @@ public:
     }
   }
 
+  bool has_callback_for_event(rosbag2_cpp::bag_events::BagEvent event) const override
+  {
+    return callback_manager_.has_callback_for_event(event);
+  }
+
   void prepare(
     std::vector<std::shared_ptr<rosbag2_storage::SerializedBagMessage>> messages,
     std::vector<rosbag2_storage::TopicMetadata> topics)

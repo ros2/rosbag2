@@ -1066,6 +1066,37 @@ TEST_F(SequentialWriterTest, split_event_calls_on_writer_close)
   EXPECT_TRUE(opened_file.empty());
 }
 
+TEST_F(SequentialWriterTest, all_event_callbacks_can_be_installed) {
+  auto sequential_writer = std::make_unique<rosbag2_cpp::writers::SequentialWriter>(
+    std::move(storage_factory_), converter_factory_, std::move(metadata_io_));
+  writer_ = std::make_unique<rosbag2_cpp::Writer>(std::move(sequential_writer));
+
+  rosbag2_cpp::bag_events::WriterEventCallbacks callbacks;
+  bool is_split_callback_called = false;
+  bool is_messages_lost_callback_called = false;
+  callbacks.write_split_callback =
+    [&is_split_callback_called](rosbag2_cpp::bag_events::BagSplitInfo &) {
+      is_split_callback_called = true;
+    };
+  callbacks.messages_lost_callback =
+    [&is_messages_lost_callback_called](
+    const std::vector<rosbag2_cpp::bag_events::MessagesLostInfo> &) {
+      is_messages_lost_callback_called = true;
+    };
+  writer_->add_event_callbacks(callbacks);
+  EXPECT_TRUE(writer_->has_callback_for_event(rosbag2_cpp::bag_events::BagEvent::WRITE_SPLIT));
+  EXPECT_TRUE(writer_->has_callback_for_event(rosbag2_cpp::bag_events::BagEvent::MESSAGES_LOST));
+}
+
+TEST_F(SequentialWriterTest, add_event_callbacks_throws_if_callbacks_are_not_set) {
+  auto sequential_writer = std::make_unique<rosbag2_cpp::writers::SequentialWriter>(
+    std::move(storage_factory_), converter_factory_, std::move(metadata_io_));
+  writer_ = std::make_unique<rosbag2_cpp::Writer>(std::move(sequential_writer));
+
+  rosbag2_cpp::bag_events::WriterEventCallbacks callbacks;
+  EXPECT_THROW(writer_->add_event_callbacks(callbacks);, std::runtime_error);
+}
+
 TEST_P(ParametrizedTemporaryDirectoryFixture, split_bag_metadata_has_full_duration) {
   const std::vector<std::pair<rcutils_time_point_value_t, uint32_t>> fake_messages {
     {100, 1},

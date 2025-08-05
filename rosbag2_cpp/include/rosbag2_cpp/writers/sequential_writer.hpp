@@ -141,6 +141,12 @@ public:
    */
   void split_bagfile() override;
 
+  /**
+   * \brief Check if a callback is registered for the given event.
+   * \return True if there is any callback registered for the event, false otherwise.
+   */
+  [[nodiscard]] bool has_callback_for_event(bag_events::BagEvent event) const override;
+
 protected:
   std::string base_folder_;
   std::unique_ptr<rosbag2_storage::StorageFactoryInterface> storage_factory_;

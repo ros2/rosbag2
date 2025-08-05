@@ -574,19 +574,21 @@ void SequentialWriter::write_messages(
   }
   metadata_.files.back().message_count += written_messages_count;
   metadata_.message_count += written_messages_count;
-  std::lock_guard<std::mutex> lock(topics_info_mutex_);
-  // Update message count for each topic in metadata
-  for (size_t i = 0; i < messages.size(); i++) {
-    // If some messages were lost, we need to skip them
-    if (!lost_messages_idx.empty()) {
-      auto is_lost = std::binary_search(lost_messages_idx.begin(), lost_messages_idx.end(), i);
-      if (is_lost) {
-        continue;  // Skip lost messages
+
+  {  // Update message count for each topic in metadata
+    std::lock_guard<std::mutex> lock(topics_info_mutex_);
+    for (size_t i = 0; i < messages.size(); i++) {
+      // If some messages were lost, we need to skip them
+      if (!lost_messages_idx.empty()) {
+        auto is_lost = std::binary_search(lost_messages_idx.begin(), lost_messages_idx.end(), i);
+        if (is_lost) {
+          continue;  // Skip lost messages
+        }
       }
-    }
-    auto topic_info_it = topics_names_to_info_.find(messages[i]->topic_name);
-    if (topic_info_it != topics_names_to_info_.end()) {
-      topic_info_it->second.message_count++;
+      auto topic_info_it = topics_names_to_info_.find(messages[i]->topic_name);
+      if (topic_info_it != topics_names_to_info_.end()) {
+        topic_info_it->second.message_count++;
+      }
     }
   }
 
@@ -623,13 +625,22 @@ void SequentialWriter::add_event_callbacks(const bag_events::WriterEventCallback
     callback_manager_.add_event_callback(
       callbacks.write_split_callback,
       bag_events::BagEvent::WRITE_SPLIT);
-  } else if (callbacks.messages_lost_callback) {
+  }
+
+  if (callbacks.messages_lost_callback) {
     callback_manager_.add_event_callback(
       callbacks.messages_lost_callback,
       bag_events::BagEvent::MESSAGES_LOST);
-  } else {
+  }
+
+  if (!callbacks.messages_lost_callback && !callbacks.write_split_callback) {
     throw std::runtime_error("No valid callback provided");
   }
+}
+
+bool SequentialWriter::has_callback_for_event(bag_events::BagEvent event) const
+{
+  return callback_manager_.has_callback_for_event(event);
 }
 
 }  // namespace writers
