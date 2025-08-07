@@ -20,7 +20,7 @@
 #include "rcutils/strdup.h"
 
 #include "rosbag2_cpp/serialization_format_converter_factory.hpp"
-#include "rosbag2_cpp/typesupport_helpers.hpp"
+#include "rclcpp/typesupport_helpers.hpp"
 #include "rosbag2_cpp/types.hpp"
 
 #include "rosbag2_test_common/memory_management.hpp"
@@ -42,15 +42,15 @@ public:
     allocator_ = rcutils_get_default_allocator();
     cdr_serializer_ = factory_->load_serializer("cdr");
     cdr_deserializer_ = factory_->load_deserializer("cdr");
-    rosidl_typesupport_library_ = rosbag2_cpp::get_typesupport_library(
+    rosidl_typesupport_library_ = rclcpp::get_typesupport_library(
       "test_msgs/MultiNested", "rosidl_typesupport_cpp");
-    rosidl_type_support_ = rosbag2_cpp::get_typesupport_handle(
-      "test_msgs/MultiNested", "rosidl_typesupport_cpp", rosidl_typesupport_library_);
-    introspection_typesupport_library_ = rosbag2_cpp::get_typesupport_library(
+    rosidl_type_support_ = rclcpp::get_message_typesupport_handle(
+      "test_msgs/MultiNested", "rosidl_typesupport_cpp", *rosidl_typesupport_library_);
+    introspection_typesupport_library_ = rclcpp::get_typesupport_library(
       "test_msgs/MultiNested", "rosidl_typesupport_introspection_cpp");
-    introspection_type_support_ = rosbag2_cpp::get_typesupport_handle(
+    introspection_type_support_ = rclcpp::get_message_typesupport_handle(
       "test_msgs/MultiNested", "rosidl_typesupport_introspection_cpp",
-      introspection_typesupport_library_);
+      *introspection_typesupport_library_);
   }
 
   std::shared_ptr<rosbag2_cpp::rosbag2_introspection_message_t>
