@@ -58,6 +58,18 @@ bool wait_for_subscriptions_from_node_parameters(rclcpp::Node & node)
   return wait_for_subscriptions;
 }
 
+<<<<<<< HEAD
+=======
+size_t get_number_of_threads_from_node_parameters(rclcpp::Node & node)
+{
+  const std::string parameters_ns = "publishers";
+  node.declare_parameter<int>(parameters_ns + ".number_of_threads", 0);
+  size_t number_of_threads = 0;
+  node.get_parameter(parameters_ns + ".number_of_threads", number_of_threads);
+  return number_of_threads;
+}
+
+>>>>>>> 24fb1a9 (Fix warning: initialize number_of_threads (#2121))
 std::vector<PublisherGroupConfig> publisher_groups_from_node_parameters(
   rclcpp::Node & node)
 {
