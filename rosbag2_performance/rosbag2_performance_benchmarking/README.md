@@ -26,6 +26,7 @@ For human friendly output, a postprocess report generation tool can be used. Lau
 ```bash
 scripts/report_gen.py -i <BENCHMARK_RESULT_DIR>
 ```
+
 #### Binaries
 
 These are used in the launch file:
@@ -38,13 +39,6 @@ storage uri, which is used to read the bag metadata file.
 #### Compression
 
 Note that while you can opt to select compression for benchmarking, the generated data is random so it is likely not representative for this specific case. To publish non-random data, you need to modify the ByteProducer.
-
-## Building
-
-To build the package in the rosbag2 build process, make sure to turn `BUILD_ROSBAG2_BENCHMARKS` flag on (e.g. `colcon build --cmake-args -DBUILD_ROSBAG2_BENCHMARKS=1`)
-
-If you already built rosbag2, you can use `packages-select` option to build benchmarks.
-Example: `colcon build --packages-select rosbag2_performance_benchmarking --cmake-args -DBUILD_ROSBAG2_BENCHMARKS=1`.
 
 ## General knowledge: I/O benchmarking
 
