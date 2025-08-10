@@ -185,7 +185,7 @@ def test_recorder_api(tmp_path, storage_id):
 
     record_options = rosbag2_py.RecordOptions()
     record_options.start_paused = False
-    record_options.topics = ['/topic']
+    record_options.topics = ['/test_recorder_api_node/topic']
     record_options.is_discovery_disabled = False
     record_options.topic_polling_interval = datetime.timedelta(milliseconds=10)
     record_options.disable_keyboard_controls = True
@@ -201,7 +201,11 @@ def test_recorder_api(tmp_path, storage_id):
     ctx = rclpy.Context()
     ctx.init()
     node = rclpy.create_node('test_recorder_api_node', context=ctx)
-    pub = node.create_publisher(String, 'topic', QoSProfile(depth=10))
+    pub = node.create_publisher(String, '~/topic', QoSProfile(depth=10))
+    # Wait for the recorder to discover the topic
+    assert wait_for(
+        lambda: pub.get_subscription_count() > 0,
+        timeout=rclpy.duration.Duration(seconds=10))
     resume_client = node.create_client(Resume, '/rosbag2_recorder_test/resume')
     executor = rclpy.executors.SingleThreadedExecutor(context=ctx)
     executor.add_node(node)
@@ -241,7 +245,7 @@ def test_recorder_api(tmp_path, storage_id):
         topic_info.topic_metadata.name
         for topic_info in metadata.topics_with_message_count
     ]
-    assert '/topic' in bag_topics, str(bag_topics)
+    assert '/test_recorder_api_node/topic' in bag_topics, str(bag_topics)
 
 
 def test_player_unconfigured():
