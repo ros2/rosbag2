@@ -2,8 +2,8 @@
 Changelog for package rosbag2
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.26.9 (2025-08-11)
+-------------------
 * [jazzy] Fix reindex duration bug when bag file durations overlap (backport `#2036 <https://github.com/ros2/rosbag2/issues/2036>`_) (`#2107 <https://github.com/ros2/rosbag2/issues/2107>`_)
   Co-authored-by: Chui Vanfleet <26607858+ChuiVanfleet@users.noreply.github.com>
   Co-authored-by: Michael Orlov <morlovmr@gmail.com>

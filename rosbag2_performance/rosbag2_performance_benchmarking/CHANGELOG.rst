@@ -2,8 +2,8 @@
 Changelog for package rosbag2_performance_benchmarking
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.26.9 (2025-08-11)
+-------------------
 * Fix warning: initialize number_of_threads (`#2121 <https://github.com/ros2/rosbag2/issues/2121>`_) (`#2123 <https://github.com/ros2/rosbag2/issues/2123>`_)
   Co-authored-by: Cristóbal Arroyo <cristobal.arroyo@ekumenlabs.com>
 * Bugfix: `prosbag2_performance_benchmarking` outputs incorrect results for topics with frequency more than 1 kHz (`#2077 <https://github.com/ros2/rosbag2/issues/2077>`_) (`#2080 <https://github.com/ros2/rosbag2/issues/2080>`_)
