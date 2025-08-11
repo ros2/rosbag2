@@ -2,6 +2,9 @@
 Changelog for package rosbag2_compression_zstd
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+
 0.26.8 (2025-07-10)
 -------------------
 
