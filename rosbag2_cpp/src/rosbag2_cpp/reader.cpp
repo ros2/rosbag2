@@ -48,6 +48,10 @@ void Reader::open(
   const rosbag2_storage::StorageOptions & storage_options,
   const ConverterOptions & converter_options)
 {
+  if (!reader_impl_) {
+    throw std::runtime_error("Reader implementation is not initialized. "
+                             "Check the constructor and initialization logic.");
+  }
   reader_impl_->open(storage_options, converter_options);
 }
 
