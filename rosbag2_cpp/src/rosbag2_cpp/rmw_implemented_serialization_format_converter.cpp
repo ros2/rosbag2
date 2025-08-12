@@ -143,8 +143,8 @@ void RMWImplementedConverter::serialize(
   std::shared_ptr<rosbag2_storage::SerializedBagMessage> serialized_message)
 {
   if (!serialized_message || !serialized_message->serialized_data) {
-      ROSBAG2_CPP_LOG_ERROR("Serialized message is null.");
-      return;
+    ROSBAG2_CPP_LOG_ERROR("Serialized message is null.");
+    return;
   }
   const auto ret = impl_->serialize_fn_(
     introspection_message->message, type_support, serialized_message->serialized_data.get());
