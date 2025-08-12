@@ -2,6 +2,9 @@
 Changelog for package rosbag2_test_msgdefs
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.26.9 (2025-08-11)
+-------------------
+
 0.26.8 (2025-07-10)
 -------------------
 * [jazzy] Add support for searching message definitions in nested subdirectories (backport `#2055 <https://github.com/ros2/rosbag2/issues/2055>`_) (`#2064 <https://github.com/ros2/rosbag2/issues/2064>`_)

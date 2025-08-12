@@ -2,6 +2,9 @@
 Changelog for package rosbag2_storage
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.26.9 (2025-08-11)
+-------------------
+
 0.26.8 (2025-07-10)
 -------------------
 * Bugfix: Undefined behavior in the `rosbag2_storage` and `rosbag2_storage_sqlite3` packages (`#1997 <https://github.com/ros2/rosbag2/issues/1997>`_) (`#1999 <https://github.com/ros2/rosbag2/issues/1999>`_)

@@ -2,6 +2,20 @@
 Changelog for package rosbag2_performance_benchmarking
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.26.9 (2025-08-11)
+-------------------
+* Fix warning: initialize number_of_threads (`#2121 <https://github.com/ros2/rosbag2/issues/2121>`_) (`#2123 <https://github.com/ros2/rosbag2/issues/2123>`_)
+  Co-authored-by: Cristóbal Arroyo <cristobal.arroyo@ekumenlabs.com>
+* Bugfix: `prosbag2_performance_benchmarking` outputs incorrect results for topics with frequency more than 1 kHz (`#2077 <https://github.com/ros2/rosbag2/issues/2077>`_) (`#2080 <https://github.com/ros2/rosbag2/issues/2080>`_)
+  Co-authored-by: Michael Orlov <morlovmr@gmail.com>
+* Fixes in the rosbag2_performance_benchmarking message data generator (`#2078 <https://github.com/ros2/rosbag2/issues/2078>`_) (`#2084 <https://github.com/ros2/rosbag2/issues/2084>`_)
+  Co-authored-by: Michael Orlov <morlovmr@gmail.com>
+* Enable `rosbag2_performance_benchmarking` package to be built by default (`#2093 <https://github.com/ros2/rosbag2/issues/2093>`_) (`#2097 <https://github.com/ros2/rosbag2/issues/2097>`_)
+  Co-authored-by: Michael Orlov <morlovmr@gmail.com>
+* Fix for failure in the benchmark_launch when using Process.wait twice (`#2076 <https://github.com/ros2/rosbag2/issues/2076>`_) (`#2082 <https://github.com/ros2/rosbag2/issues/2082>`_)
+  Co-authored-by: Michael Orlov <morlovmr@gmail.com>
+* Contributors: mergify[bot]
+
 0.26.8 (2025-07-10)
 -------------------
 * [jazzy] Upstream quality changes from Apex.AI part-2 (backport `#1924 <https://github.com/ros2/rosbag2/issues/1924>`_) (`#1987 <https://github.com/ros2/rosbag2/issues/1987>`_)

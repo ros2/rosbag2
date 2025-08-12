@@ -2,6 +2,13 @@
 Changelog for package rosbag2
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.26.9 (2025-08-11)
+-------------------
+* [jazzy] Fix reindex duration bug when bag file durations overlap (backport `#2036 <https://github.com/ros2/rosbag2/issues/2036>`_) (`#2107 <https://github.com/ros2/rosbag2/issues/2107>`_)
+  Co-authored-by: Chui Vanfleet <26607858+ChuiVanfleet@users.noreply.github.com>
+  Co-authored-by: Michael Orlov <morlovmr@gmail.com>
+* Contributors: mergify[bot]
+
 0.26.8 (2025-07-10)
 -------------------
 * [jazzy] Add support for searching message definitions in nested subdirectories (backport `#2055 <https://github.com/ros2/rosbag2/issues/2055>`_) (`#2064 <https://github.com/ros2/rosbag2/issues/2064>`_)
