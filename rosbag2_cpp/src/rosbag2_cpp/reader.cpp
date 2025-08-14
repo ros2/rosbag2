@@ -28,7 +28,11 @@ namespace rosbag2_cpp
 
 Reader::Reader(std::unique_ptr<reader_interfaces::BaseReaderInterface> reader_impl)
 : reader_impl_(std::move(reader_impl))
-{}
+{
+  if (!reader_impl_) {
+    throw std::invalid_argument("Reader implementation is a nullptr.");
+  }
+}
 
 Reader::~Reader()
 {
