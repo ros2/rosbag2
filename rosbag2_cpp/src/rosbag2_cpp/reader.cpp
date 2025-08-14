@@ -28,7 +28,11 @@ namespace rosbag2_cpp
 
 Reader::Reader(std::unique_ptr<reader_interfaces::BaseReaderInterface> reader_impl)
 : reader_impl_(std::move(reader_impl))
-{}
+{
+   if (!reader_impl_) {
+    throw std::invalid_argument("Reader implementation is a nullptr.");
+  }
+}
 
 Reader::~Reader()
 {
@@ -48,10 +52,6 @@ void Reader::open(
   const rosbag2_storage::StorageOptions & storage_options,
   const ConverterOptions & converter_options)
 {
-  if (!reader_impl_) {
-    throw std::runtime_error("Reader implementation is not initialized. "
-                             "Check the constructor and initialization logic.");
-  }
   reader_impl_->open(storage_options, converter_options);
 }
 
