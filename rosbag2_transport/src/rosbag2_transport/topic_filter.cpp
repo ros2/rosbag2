@@ -22,14 +22,8 @@
 
 #include "rclcpp/node_interfaces/node_graph_interface.hpp"
 #include "rcpputils/split.hpp"
-<<<<<<< HEAD
-#include "rosbag2_cpp/typesupport_helpers.hpp"
-#include "rosbag2_cpp/service_utils.hpp"
-=======
-#include "rosbag2_cpp/action_utils.hpp"
-#include "rosbag2_cpp/service_utils.hpp"
 #include "rclcpp/typesupport_helpers.hpp"
->>>>>>> bc37cdf (Use rclcpp typesupport helpers in rosbag2_cpp (#2017))
+#include "rosbag2_cpp/service_utils.hpp"
 
 #include "logging.hpp"
 #include "rosbag2_transport/topic_filter.hpp"
