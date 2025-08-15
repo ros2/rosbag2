@@ -1042,13 +1042,45 @@ rclcpp::Publisher<rosgraph_msgs::msg::Clock>::SharedPtr PlayerImpl::get_clock_pu
 
 bool PlayerImpl::wait_for_playback_to_start(std::chrono::duration<double> timeout)
 {
-  std::unique_lock<std::mutex> lk(ready_to_play_from_queue_mutex_);
+  using namespace std::chrono_literals;  // NOLINT
+  // Lambda for try_lock_with_timeout
+  auto try_lock_with_timeout =
+    [](std::mutex & mutex, std::chrono::duration<double> max_wait,
+    std::chrono::milliseconds poll_interval = 10ms) -> std::unique_lock<std::mutex>
+    {
+      auto start = std::chrono::steady_clock::now();
+      std::unique_lock<std::mutex> lock(mutex, std::defer_lock);  // Do not lock yet
+
+      if (max_wait.count() < 0) {
+      // If timeout is negative, wait indefinitely
+        lock.lock();
+        return lock;  // Lock acquired
+      } else {
+        while (std::chrono::steady_clock::now() - start < max_wait) {
+          if (lock.try_lock()) {
+            return lock;  // Lock acquired
+          }
+          std::this_thread::sleep_for(poll_interval);
+        }
+      }
+      return {};  // Return empty (non-owning) lock
+    };
+
+  auto start = std::chrono::steady_clock::now();
+  auto lock = try_lock_with_timeout(ready_to_play_from_queue_mutex_, timeout);
+  if (!lock.owns_lock()) {
+    return false;  // Timeout occurred, lock not acquired
+  }
+
   if (timeout.count() < 0) {
-    ready_to_play_from_queue_cv_.wait(lk, [this] {return is_ready_to_play_from_queue_;});
+    ready_to_play_from_queue_cv_.wait(lock, [this] {return is_ready_to_play_from_queue_;});
     return true;
   } else {
+    auto lock_duration = std::chrono::steady_clock::now() - start;
+    auto residual_time = timeout > lock_duration ?
+      timeout - lock_duration : std::chrono::microseconds(1);
     return ready_to_play_from_queue_cv_.wait_for(
-      lk, timeout, [this] {return is_ready_to_play_from_queue_;}
+      lock, residual_time, [this] {return is_ready_to_play_from_queue_;}
     );
   }
 }
