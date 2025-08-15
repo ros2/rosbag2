@@ -315,8 +315,8 @@ private:
   void load_storage_content();
   bool is_storage_completely_loaded() const;
   void enqueue_up_to_boundary(
-    const size_t boundary,
-    const size_t message_queue_size) RCPPUTILS_TSA_REQUIRES(reader_mutex_);
+    size_t boundary,
+    size_t message_queue_size) RCPPUTILS_TSA_REQUIRES(reader_mutex_);
   void wait_for_filled_queue() const;
   void play_messages_from_queue();
   void prepare_publishers();
@@ -1118,17 +1118,31 @@ void PlayerImpl::load_storage_content()
   }
 }
 
-void PlayerImpl::enqueue_up_to_boundary(const size_t boundary, const size_t message_queue_size)
+void PlayerImpl::enqueue_up_to_boundary(size_t boundary, size_t message_queue_size)
 {
-  // Read messages from input bags in a round robin way
+  // Read messages from input bags in a round-robin way
   size_t input_bag_index = 0u;
-  for (size_t i = message_queue_size; i < boundary; i++) {
+  while (message_queue_size < boundary) {
     const auto & reader = readers_with_options_[input_bag_index].first;
-    // We are supposed to have at least one bag with messages to read
     if (reader->has_next()) {
+      ++message_queue_size;
       message_queue_.push(reader->read_next());
     }
     input_bag_index = (input_bag_index + 1) % readers_with_options_.size();
+
+    if (input_bag_index == 0) {
+      // If we have gone through all readers, check if we have no more messages
+      const bool no_more_messages = std::all_of(
+        readers_with_options_.cbegin(),
+        readers_with_options_.cend(),
+        [](const auto & reader_options) {return !reader_options.first->has_next();});
+
+      if (no_more_messages) {
+        // If we have no more messages, we shall stop reading and exit the loop to avoid endless
+        // cycle.
+        break;
+      }
+    }
   }
 }
 
