@@ -12,24 +12,36 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 #ifndef ROSBAG2_TRANSPORT__RECORDER_EVENT_NOTIFIER_HPP_
 #define ROSBAG2_TRANSPORT__RECORDER_EVENT_NOTIFIER_HPP_
 
-
 #include <vector>
+#include <memory>
 #include <string>
 
 #include "rclcpp/node.hpp"
 
 #include "rosbag2_cpp/bag_events.hpp"
-#include "rclcpp/logging.hpp"
-
-#include "rosbag2_interfaces/msg/write_split_event.hpp"
 #include "rosbag2_transport/visibility_control.hpp"
+
+#ifdef _WIN32
+#  pragma warning(push)
+// Suppress warning "rosbag2_transport::RecorderEventNotifier::pimpl_': class 'std::unique_ptr>'
+// needs to have dll-interface to be used by clients of class
+// 'rosbag2_transport::RecorderEventNotifier'"
+// Justification:
+// 1. We never inline code in the header that actually calls methods on RecorderEventNotifierImpl.
+// 2. While the `RecorderEventNotifierImpl` is defined in the `recorder_event_notifier_impl.hpp`
+// file, we include it only in the `recorder_event_notifier.cpp` file, and it does not leak into the
+// external API.
+// 3. The pimpl design pattern imply that implementation details are hidden and shouldn't be
+// exposed with the dll-interface.
+#  pragma warning(disable:4251)
+#endif
 
 namespace rosbag2_transport
 {
+class RecorderEventNotifierImpl;
 
 class ROSBAG2_TRANSPORT_PUBLIC RecorderEventNotifier
 {
@@ -65,28 +77,13 @@ public:
   void reset_total_num_messages_lost_in_recorder();
 
 private:
-  void event_publisher_thread_main();
-
-  rclcpp::Node * node;
-
-  // Variables for event publishing
-  rclcpp::Publisher<rosbag2_interfaces::msg::WriteSplitEvent>::SharedPtr split_event_pub_;
-  std::atomic<bool> event_publisher_thread_should_exit_ = false;
-  std::atomic<bool> write_split_has_occurred_ = false;
-  rosbag2_cpp::bag_events::BagSplitInfo bag_split_info_;
-  std::mutex event_publisher_thread_mutex_;
-  std::condition_variable event_publisher_thread_wake_cv_;
-  std::thread event_publisher_thread_;
-  std::chrono::milliseconds msgs_lost_statistics_update_period_{1000};  // 1 second
-
-  std::mutex per_topic_messages_lost_statistics_mutex_;
-  // Stores the number of messages lost per topic in the transport and recorder layers.
-  std::unordered_map<std::string, std::pair<size_t, size_t>> per_topic_messages_lost_statistics_;
-
-  std::atomic<size_t> total_num_messages_lost_in_transport_{0};
-  std::atomic<size_t> total_num_messages_lost_in_recorder_{0};
+  std::unique_ptr<RecorderEventNotifierImpl> pimpl_;
 };
 
 }  // namespace rosbag2_transport
+
+#ifdef _WIN32
+#  pragma warning(pop)
+#endif
 
 #endif  // ROSBAG2_TRANSPORT__RECORDER_EVENT_NOTIFIER_HPP_
