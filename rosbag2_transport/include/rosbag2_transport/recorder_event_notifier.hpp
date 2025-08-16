@@ -52,6 +52,15 @@ public:
   /// \brief Destructor for the RecorderEventNotifier class.
   virtual ~RecorderEventNotifier();
 
+  /// \brief Set the maximum update rate for messages lost statistics.
+  /// \details This controls how often the statistics about messages lost are published.
+  /// \param update_rate_hz Maximum publishing rate in times per second (Hz) for messages lost
+  /// statistics. A value of 0.0 means that the statistics will not be published.
+  /// \note Event notifier will not publish statistics if there are no messages lost since the last
+  /// time it was published.
+  /// \throws std::invalid_argument if the update rate is negative.
+  void set_messages_lost_statistics_max_publishing_rate(float update_rate_hz);
+
   /// \brief Callback for when a bag split occurs in the recorder.
   void on_bag_split_in_recorder(const rosbag2_cpp::bag_events::BagSplitInfo & bag_split_info);
 

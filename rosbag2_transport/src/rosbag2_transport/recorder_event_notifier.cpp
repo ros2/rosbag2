@@ -33,6 +33,10 @@ RecorderEventNotifier::~RecorderEventNotifier()
   pimpl_.reset();
 }
 
+void RecorderEventNotifier::set_messages_lost_statistics_max_publishing_rate(float update_rate_hz)
+{
+  pimpl_->set_messages_lost_statistics_max_publishing_rate(update_rate_hz);
+}
 
 void RecorderEventNotifier::on_bag_split_in_recorder(
   const rosbag2_cpp::bag_events::BagSplitInfo & bag_split_info)

@@ -64,6 +64,26 @@ public:
     }
   }
 
+  void set_messages_lost_statistics_max_publishing_rate(float update_rate_hz)
+  {
+    {
+      std::unique_lock<std::mutex> pub_thread_lock(event_publisher_thread_mutex_);
+      if (update_rate_hz == 0.0f) {
+        disable_publishing_msgs_lost_statistics_ = true;
+        RCLCPP_DEBUG(node->get_logger(), "Messages lost statistics publishing is disabled");
+      } else if (update_rate_hz > 0.0f) {
+        disable_publishing_msgs_lost_statistics_ = false;
+        msgs_lost_stats_max_publishing_period_ =
+          std::chrono::milliseconds(static_cast<int>(1000 / update_rate_hz));
+        RCLCPP_DEBUG(node->get_logger(),
+                     "Messages lost statistics publishing update rate set to %ld ms",
+                     msgs_lost_stats_max_publishing_period_.count());
+      } else {
+        throw std::invalid_argument("Update rate must be non-negative");
+      }
+    }
+    event_publisher_thread_wake_cv_.notify_all();
+  }
 
   void on_bag_split_in_recorder(const rosbag2_cpp::bag_events::BagSplitInfo & bag_split_info)
   {
@@ -136,12 +156,24 @@ public:
     RCLCPP_INFO(node->get_logger(), "Event publisher thread: Started");
     while (!event_publisher_thread_should_exit_.load()) {
       std::unique_lock<std::mutex> pub_thread_lock(event_publisher_thread_mutex_);
-
-      event_publisher_thread_wake_cv_.wait_for(pub_thread_lock, msgs_lost_statistics_update_period_,
-        [this]() {
-          return write_split_has_occurred_ || event_publisher_thread_should_exit_;
-        }
-      );
+      if (disable_publishing_msgs_lost_statistics_) {
+        // If publishing of messages lost statistics is disabled, wait indefinitely
+        event_publisher_thread_wake_cv_.wait(pub_thread_lock,
+          [this]() {
+            return write_split_has_occurred_ || event_publisher_thread_should_exit_ ||
+                   !disable_publishing_msgs_lost_statistics_;
+          });
+      } else {
+        // Wait for either a write split event or the specified period for messages lost statistics
+        event_publisher_thread_wake_cv_.wait_for(
+          pub_thread_lock,
+          msgs_lost_stats_max_publishing_period_,
+          [this]() {
+            return write_split_has_occurred_ || event_publisher_thread_should_exit_ ||
+                   disable_publishing_msgs_lost_statistics_;
+          }
+        );
+      }
 
       if (write_split_has_occurred_) {
         write_split_has_occurred_ = false;
@@ -162,7 +194,7 @@ public:
         }
       }
 
-//    {
+//    if (!disable_publishing_msgs_lost_statistics_) {
 //      // TODO(morlov): Check if we need to publish statistics about messages lost events
 //      std::unique_lock<std::mutex> statistics_lock(per_topic_messages_lost_statistics_mutex_);
 //      for (const auto &[topic, lost_stats] : per_topic_messages_lost_statistics_) {
@@ -183,7 +215,8 @@ private:
   std::mutex event_publisher_thread_mutex_;
   std::condition_variable event_publisher_thread_wake_cv_;
   std::thread event_publisher_thread_;
-  std::chrono::milliseconds msgs_lost_statistics_update_period_{1000};  // 1 second
+  bool disable_publishing_msgs_lost_statistics_{false};
+  std::chrono::milliseconds msgs_lost_stats_max_publishing_period_{1000};  // 1 second
 
   std::mutex per_topic_messages_lost_statistics_mutex_;
   // Stores the number of messages lost per topic in the transport and recorder layers.
