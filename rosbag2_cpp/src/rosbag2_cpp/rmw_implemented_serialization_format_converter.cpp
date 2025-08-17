@@ -127,8 +127,7 @@ void RMWImplementedConverter::deserialize(
     return;
   }
   if (!introspection_message || !introspection_message->message) {
-    ROSBAG2_CPP_LOG_ERROR("Introspection message is null.");
-    return;
+    throw std::runtime_error("Cannot deserialize message: introspection_message is null.");
   }
   const auto ret = impl_->deserialize_fn_(
     serialized_message->serialized_data.get(), type_support, introspection_message->message);
@@ -143,8 +142,7 @@ void RMWImplementedConverter::serialize(
   std::shared_ptr<rosbag2_storage::SerializedBagMessage> serialized_message)
 {
   if (!serialized_message || !serialized_message->serialized_data) {
-    ROSBAG2_CPP_LOG_ERROR("Serialized message is null.");
-    return;
+    throw std::runtime_error("Cannot serialize message: serialized_message is null.");
   }
   const auto ret = impl_->serialize_fn_(
     introspection_message->message, type_support, serialized_message->serialized_data.get());
