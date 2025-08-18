@@ -391,7 +391,7 @@ void SequentialWriter::write(std::shared_ptr<const rosbag2_storage::SerializedBa
     throw std::runtime_error("Bag is not open. Call open() before writing.");
   }
 
-  if (!message_within_accepted_time_range(message->recv_timestamp)) {
+  if (!message || !message_within_accepted_time_range(message->recv_timestamp)) {
     return;
   }
 
