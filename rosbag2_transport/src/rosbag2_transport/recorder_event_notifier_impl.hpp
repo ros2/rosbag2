@@ -219,7 +219,7 @@ private:
   std::mutex event_publisher_thread_mutex_;
   std::condition_variable event_publisher_thread_wake_cv_;
   std::thread event_publisher_thread_;
-  bool disable_publishing_msgs_lost_statistics_{false};
+  bool disable_publishing_msgs_lost_statistics_{true};
   std::chrono::milliseconds msgs_lost_stats_max_publishing_period_{1000};  // 1 second
 
   std::mutex per_topic_messages_lost_statistics_mutex_;
