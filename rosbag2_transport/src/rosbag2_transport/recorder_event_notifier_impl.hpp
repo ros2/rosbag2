@@ -16,11 +16,16 @@
 #ifndef ROSBAG2_TRANSPORT__RECORDER_EVENT_NOTIFIER_IMPL_HPP_
 #define ROSBAG2_TRANSPORT__RECORDER_EVENT_NOTIFIER_IMPL_HPP_
 
-#include <vector>
+#include <chrono>
+#include <condition_variable>
+#include <mutex>
+#include <queue>
+#include <stdexcept>
 #include <string>
 #include <thread>
 #include <unordered_map>
 #include <utility>
+#include <vector>
 
 #include "rclcpp/logging.hpp"
 #include "rclcpp/node.hpp"
@@ -89,8 +94,7 @@ public:
   {
     {
       std::lock_guard<std::mutex> lock(event_publisher_thread_mutex_);
-      bag_split_info_ = bag_split_info;
-      write_split_has_occurred_ = true;
+      bag_split_info_queue_.push(bag_split_info);
     }
     event_publisher_thread_wake_cv_.notify_all();
   }
@@ -160,7 +164,7 @@ public:
         // If publishing of messages lost statistics is disabled, wait indefinitely
         event_publisher_thread_wake_cv_.wait(pub_thread_lock,
           [this]() {
-            return write_split_has_occurred_ || event_publisher_thread_should_exit_ ||
+            return !bag_split_info_queue_.empty() || event_publisher_thread_should_exit_ ||
                    !disable_publishing_msgs_lost_statistics_;
           });
       } else {
@@ -169,17 +173,17 @@ public:
           pub_thread_lock,
           msgs_lost_stats_max_publishing_period_,
           [this]() {
-            return write_split_has_occurred_ || event_publisher_thread_should_exit_ ||
+            return !bag_split_info_queue_.empty() || event_publisher_thread_should_exit_ ||
                    disable_publishing_msgs_lost_statistics_;
           }
         );
       }
 
-      if (write_split_has_occurred_) {
-        write_split_has_occurred_ = false;
+      while (!bag_split_info_queue_.empty()) {
+        const auto & bag_split_info = bag_split_info_queue_.front();
         auto message = rosbag2_interfaces::msg::WriteSplitEvent();
-        message.closed_file = bag_split_info_.closed_file;
-        message.opened_file = bag_split_info_.opened_file;
+        message.closed_file = bag_split_info.closed_file;
+        message.opened_file = bag_split_info.opened_file;
         message.node_name = node->get_fully_qualified_name();
         try {
           split_event_pub_->publish(message);
@@ -192,6 +196,7 @@ public:
             node->get_logger(),
             "Failed to publish message on '/events/write_split' topic.");
         }
+        bag_split_info_queue_.pop();
       }
 
 //    if (!disable_publishing_msgs_lost_statistics_) {
@@ -210,8 +215,7 @@ private:
   rclcpp::Node * node;
   rclcpp::Publisher<rosbag2_interfaces::msg::WriteSplitEvent>::SharedPtr split_event_pub_;
   std::atomic<bool> event_publisher_thread_should_exit_ = false;
-  std::atomic<bool> write_split_has_occurred_ = false;
-  rosbag2_cpp::bag_events::BagSplitInfo bag_split_info_;
+  std::queue<rosbag2_cpp::bag_events::BagSplitInfo> bag_split_info_queue_;
   std::mutex event_publisher_thread_mutex_;
   std::condition_variable event_publisher_thread_wake_cv_;
   std::thread event_publisher_thread_;
