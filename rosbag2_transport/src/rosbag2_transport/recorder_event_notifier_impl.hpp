@@ -30,6 +30,7 @@
 #include "rclcpp/logging.hpp"
 #include "rclcpp/node.hpp"
 
+#include "rosbag2_interfaces/msg/messages_lost_event.hpp"
 #include "rosbag2_interfaces/msg/write_split_event.hpp"
 #include "rosbag2_cpp/bag_events.hpp"
 #include "rosbag2_transport/recorder_event_notifier.hpp"
@@ -47,6 +48,9 @@ public:
     }
     split_event_pub_ =
       node->create_publisher<rosbag2_interfaces::msg::WriteSplitEvent>("events/write_split", 1);
+
+    msgs_lost_event_pub_ =
+      node->create_publisher<rosbag2_interfaces::msg::MessagesLostEvent>("events/messages_lost", 1);
 
     // Start the thread that will publish events
     {
@@ -183,12 +187,12 @@ public:
       }
 
       while (!bag_split_info_queue_.empty()) {
-        const auto & bag_split_info = bag_split_info_queue_.front();
-        auto message = rosbag2_interfaces::msg::WriteSplitEvent();
-        message.closed_file = bag_split_info.closed_file;
-        message.opened_file = bag_split_info.opened_file;
-        message.node_name = node->get_fully_qualified_name();
         try {
+          const auto & bag_split_info = bag_split_info_queue_.front();
+          auto message = rosbag2_interfaces::msg::WriteSplitEvent();
+          message.closed_file = bag_split_info.closed_file;
+          message.opened_file = bag_split_info.opened_file;
+          message.node_name = node->get_fully_qualified_name();
           split_event_pub_->publish(message);
         } catch (const std::exception & e) {
           RCLCPP_ERROR_STREAM(
@@ -202,14 +206,34 @@ public:
         bag_split_info_queue_.pop();
       }
 
-//    if (!disable_publishing_msgs_lost_statistics_) {
-//      // TODO(morlov): Check if we need to publish statistics about messages lost events
-//      std::unique_lock<std::mutex> statistics_lock(per_topic_messages_lost_statistics_mutex_);
-//      for (const auto &[topic, lost_stats] : per_topic_messages_lost_statistics_) {
-//        const auto &[transport_lost, recorder_lost] = lost_stats;
-//        // Use topic, transport_lost, and recorder_lost to publish statistics if needed
-//      }
-//    }
+      if (!disable_publishing_msgs_lost_statistics_) {
+        std::unique_lock<std::mutex> statistics_lock(per_topic_messages_lost_statistics_mutex_);
+        if (!per_topic_messages_lost_statistics_.empty()) {
+          try {
+            auto message = rosbag2_interfaces::msg::MessagesLostEvent();
+            message.node_name = node->get_fully_qualified_name();
+            for (const auto &[topic, lost_stats] : per_topic_messages_lost_statistics_) {
+              const auto &[transport_lost, recorder_lost] = lost_stats;
+              message.messages_lost_statistics.emplace_back();
+              message.messages_lost_statistics.back().topic_name = topic;
+              message.messages_lost_statistics.back().messages_lost_in_transport = transport_lost;
+              message.messages_lost_statistics.back().messages_lost_in_recorder = recorder_lost;
+            }
+            // Reset statistics
+            per_topic_messages_lost_statistics_.clear();
+            statistics_lock.unlock();
+            msgs_lost_event_pub_->publish(message);
+          } catch (const std::exception & e) {
+            RCLCPP_ERROR_STREAM(
+              node->get_logger(),
+              "Failed to publish message on '/events/messages_lost' topic. \nError: " << e.what());
+          } catch (...) {
+            RCLCPP_ERROR_STREAM(
+              node->get_logger(),
+              "Failed to publish message on '/events/messages_lost' topic.");
+          }
+        }
+      }
     }
     RCLCPP_INFO(node->get_logger(), "Event publisher thread: Exited");
   }
@@ -217,6 +241,7 @@ public:
 private:
   rclcpp::Node * node;
   rclcpp::Publisher<rosbag2_interfaces::msg::WriteSplitEvent>::SharedPtr split_event_pub_;
+  rclcpp::Publisher<rosbag2_interfaces::msg::MessagesLostEvent>::SharedPtr msgs_lost_event_pub_;
   std::atomic<bool> event_publisher_thread_should_exit_ = false;
   std::queue<rosbag2_cpp::bag_events::BagSplitInfo> bag_split_info_queue_;
   std::mutex event_publisher_thread_mutex_;
