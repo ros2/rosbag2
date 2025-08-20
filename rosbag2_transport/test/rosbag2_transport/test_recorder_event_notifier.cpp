@@ -18,6 +18,8 @@
 #include <iostream>
 #include <thread>
 
+#include "rosbag2_interfaces/msg/messages_lost_event.hpp"
+#include "rosbag2_interfaces/msg/messages_lost_event_topic_stat.hpp"
 #include "rosbag2_interfaces/msg/write_split_event.hpp"
 #include "rosbag2_transport/recorder_event_notifier.hpp"
 #include "rosbag2_test_common/subscription_manager.hpp"
@@ -55,7 +57,7 @@ TEST_F(TestRecorderEventNotifier, default_ctor_dtor)
   ASSERT_NO_THROW(notifier_.reset());
 }
 
-TEST_F(TestRecorderEventNotifier, handle_bag_split_event)
+TEST_F(TestRecorderEventNotifier, can_handle_and_publish_bag_split_events)
 {
   // Disable statistics publishing
   notifier_->set_messages_lost_statistics_max_publishing_rate(0.0f);
@@ -87,10 +89,228 @@ TEST_F(TestRecorderEventNotifier, handle_bag_split_event)
     sub->get_received_messages<rosbag2_interfaces::msg::WriteSplitEvent>(topic_name);
   ASSERT_THAT(received_split_event_messages, SizeIs(expected_number_of_messages));
 
+  EXPECT_THAT(received_split_event_messages[0]->node_name, Eq(node_->get_fully_qualified_name()));
   EXPECT_THAT(received_split_event_messages[0]->closed_file, Eq(bag_split_info1.closed_file));
   EXPECT_THAT(received_split_event_messages[0]->opened_file, Eq(bag_split_info1.opened_file));
   EXPECT_THAT(received_split_event_messages[1]->closed_file, Eq(bag_split_info2.closed_file));
   EXPECT_THAT(received_split_event_messages[1]->opened_file, Eq(bag_split_info2.opened_file));
+}
+
+TEST_F(TestRecorderEventNotifier, can_publish_event_on_messages_lost_in_recorder)
+{
+  using MessagesLostEventTopicStat = rosbag2_interfaces::msg::MessagesLostEventTopicStat;
+  notifier_->set_messages_lost_statistics_max_publishing_rate(30.0f);
+  const size_t expected_number_of_messages = 1;
+  const std::string topic_name = "/events/messages_lost";
+  auto sub = std::make_unique<SubscriptionManager>();
+  rclcpp::QoS sub_qos(rclcpp::QoS{10}.reliability(rclcpp::ReliabilityPolicy::Reliable));
+  // Create a subscription to the messages_lost event
+  sub->add_subscription<rosbag2_interfaces::msg::MessagesLostEvent>(
+    topic_name, expected_number_of_messages, sub_qos
+  );
+  // Wait for discovery to match publishers with subscribers
+  ASSERT_TRUE(sub->spin_and_wait_for_matched({topic_name}, std::chrono::seconds(30), 1));
+  auto await_received_messages = sub->spin_subscriptions(std::chrono::seconds(30));
+
+  const std::vector<rosbag2_cpp::bag_events::MessagesLostInfo> msgs_lost_in_recorder = {
+    {"topic1", 3u},
+    {"topic3", 9u}
+  };
+  notifier_->on_messages_lost_in_recorder(msgs_lost_in_recorder);
+
+  await_received_messages.get();
+  auto received_msgs_lost_event_messages =
+    sub->get_received_messages<rosbag2_interfaces::msg::MessagesLostEvent>(topic_name);
+  ASSERT_THAT(received_msgs_lost_event_messages, SizeIs(expected_number_of_messages));
+
+  EXPECT_THAT(received_msgs_lost_event_messages[0]->node_name,
+              Eq(node_->get_fully_qualified_name()));
+
+  const auto & msgs_lost_statistics =
+    received_msgs_lost_event_messages[0]->messages_lost_statistics;
+  ASSERT_THAT(msgs_lost_statistics.size(), Eq(2u));
+
+  EXPECT_THAT(
+    msgs_lost_statistics,
+    Contains(
+      AllOf(
+        Field(&MessagesLostEventTopicStat::topic_name, Eq(msgs_lost_in_recorder[0].topic_name)),
+        Field(&MessagesLostEventTopicStat::messages_lost_in_recorder,
+              Eq(msgs_lost_in_recorder[0].num_messages_lost)),
+        Field(&MessagesLostEventTopicStat::messages_lost_in_transport, Eq(0u))
+      )
+    )
+  );
+
+  EXPECT_THAT(
+    msgs_lost_statistics,
+    Contains(
+      AllOf(
+        Field(&MessagesLostEventTopicStat::topic_name, Eq(msgs_lost_in_recorder[1].topic_name)),
+        Field(&MessagesLostEventTopicStat::messages_lost_in_recorder,
+              Eq(msgs_lost_in_recorder[1].num_messages_lost)),
+        Field(&MessagesLostEventTopicStat::messages_lost_in_transport, Eq(0u))
+      )
+    )
+  );
+}
+
+TEST_F(TestRecorderEventNotifier, can_publish_event_on_messages_lost_in_transport)
+{
+  using MessagesLostEventTopicStat = rosbag2_interfaces::msg::MessagesLostEventTopicStat;
+  notifier_->set_messages_lost_statistics_max_publishing_rate(30.0f);
+  const size_t expected_number_of_messages = 1;
+  const std::string topic_name = "/events/messages_lost";
+  auto sub = std::make_unique<SubscriptionManager>();
+  rclcpp::QoS sub_qos(rclcpp::QoS{10}.reliability(rclcpp::ReliabilityPolicy::Reliable));
+  // Create a subscription to the messages_lost event
+  sub->add_subscription<rosbag2_interfaces::msg::MessagesLostEvent>(
+    topic_name, expected_number_of_messages, sub_qos
+  );
+  // Wait for discovery to match publishers with subscribers
+  ASSERT_TRUE(sub->spin_and_wait_for_matched({topic_name}, std::chrono::seconds(30), 1));
+  auto await_received_messages = sub->spin_subscriptions(std::chrono::seconds(30));
+
+  rclcpp::QOSMessageLostInfo msgs_lost_in_transport;
+  msgs_lost_in_transport.total_count = 20;
+  msgs_lost_in_transport.total_count_change = 5;
+  notifier_->on_messages_lost_in_transport("topic1", msgs_lost_in_transport);
+
+  await_received_messages.get();
+  auto received_msgs_lost_event_messages =
+    sub->get_received_messages<rosbag2_interfaces::msg::MessagesLostEvent>(topic_name);
+  ASSERT_THAT(received_msgs_lost_event_messages, SizeIs(expected_number_of_messages));
+
+  EXPECT_THAT(received_msgs_lost_event_messages[0]->node_name,
+              Eq(node_->get_fully_qualified_name()));
+
+  const auto & msgs_lost_statistics =
+    received_msgs_lost_event_messages[0]->messages_lost_statistics;
+  ASSERT_THAT(msgs_lost_statistics.size(), Eq(1u));
+
+  EXPECT_THAT(
+    msgs_lost_statistics,
+    Contains(
+      AllOf(
+        Field(&MessagesLostEventTopicStat::topic_name, Eq("topic1")),
+        Field(&MessagesLostEventTopicStat::messages_lost_in_recorder, Eq(0u)),
+        Field(&MessagesLostEventTopicStat::messages_lost_in_transport,
+              Eq(msgs_lost_in_transport.total_count_change))
+      )
+    )
+  );
+}
+
+TEST_F(TestRecorderEventNotifier, not_publishing_on_messages_lost_event_when_disabled)
+{
+  notifier_->set_messages_lost_statistics_max_publishing_rate(0.0f);  // Disable publishing
+  const size_t expected_number_of_messages = 0;
+  const std::string topic_name = "/events/messages_lost";
+  auto sub = std::make_unique<SubscriptionManager>();
+  rclcpp::QoS sub_qos(rclcpp::QoS{10}.reliability(rclcpp::ReliabilityPolicy::Reliable));
+  // Create a subscription to the messages_lost event
+  sub->add_subscription<rosbag2_interfaces::msg::MessagesLostEvent>(topic_name, 1, sub_qos);
+
+  // Wait for discovery to match publishers with subscribers
+  ASSERT_TRUE(sub->spin_and_wait_for_matched({topic_name}, std::chrono::seconds(30), 1));
+  auto await_received_messages = sub->spin_subscriptions(std::chrono::seconds(3));
+
+  const std::vector<rosbag2_cpp::bag_events::MessagesLostInfo> msgs_lost_in_recorder = {
+    {"topic1", 3u},
+    {"topic3", 9u}
+  };
+  notifier_->on_messages_lost_in_recorder(msgs_lost_in_recorder);
+
+  // Check that no messages lost event is published even if the other events are triggered
+  rosbag2_cpp::bag_events::BagSplitInfo bag_split_info1;
+  bag_split_info1.closed_file = "closed_file1.bag";
+  bag_split_info1.opened_file = "";
+  notifier_->on_bag_split_in_recorder(bag_split_info1);
+
+  await_received_messages.get();
+  auto received_msgs_lost_event_messages =
+    sub->get_received_messages<rosbag2_interfaces::msg::MessagesLostEvent>(topic_name);
+  ASSERT_THAT(received_msgs_lost_event_messages, SizeIs(expected_number_of_messages));
+}
+
+TEST_F(TestRecorderEventNotifier, will_publish_messages_lost_event_when_updating_pub_rate)
+{
+  using MessagesLostEventTopicStat = rosbag2_interfaces::msg::MessagesLostEventTopicStat;
+  // Disable publishing at the beginning
+  notifier_->set_messages_lost_statistics_max_publishing_rate(0.0f);
+  const size_t expected_number_of_messages = 1;
+  const std::string topic_name = "/events/messages_lost";
+  auto sub = std::make_unique<SubscriptionManager>();
+  rclcpp::QoS sub_qos(rclcpp::QoS{10}.reliability(rclcpp::ReliabilityPolicy::Reliable));
+  // Create a subscription to the messages_lost event
+  sub->add_subscription<rosbag2_interfaces::msg::MessagesLostEvent>(
+    topic_name, expected_number_of_messages, sub_qos
+  );
+  // Wait for discovery to match publishers with subscribers
+  ASSERT_TRUE(sub->spin_and_wait_for_matched({topic_name}, std::chrono::seconds(30), 1));
+  auto await_received_messages = sub->spin_subscriptions(std::chrono::seconds(30));
+
+  const std::vector<rosbag2_cpp::bag_events::MessagesLostInfo> msgs_lost_in_recorder = {
+    {"topic1", 3u},
+    {"topic2", 9u}
+  };
+  notifier_->on_messages_lost_in_recorder(msgs_lost_in_recorder);
+
+  rclcpp::QOSMessageLostInfo msgs_lost_in_transport;
+  msgs_lost_in_transport.total_count = 20;
+  msgs_lost_in_transport.total_count_change = 5;
+  notifier_->on_messages_lost_in_transport("topic3", msgs_lost_in_transport);
+
+  // Now enable publishing of messages lost statistics
+  notifier_->set_messages_lost_statistics_max_publishing_rate(30.0f);
+
+  await_received_messages.get();
+  auto received_msgs_lost_event_messages =
+    sub->get_received_messages<rosbag2_interfaces::msg::MessagesLostEvent>(topic_name);
+  ASSERT_THAT(received_msgs_lost_event_messages, SizeIs(expected_number_of_messages));
+
+  EXPECT_THAT(received_msgs_lost_event_messages[0]->node_name,
+              Eq(node_->get_fully_qualified_name()));
+
+  const auto & msgs_lost_statistics =
+    received_msgs_lost_event_messages[0]->messages_lost_statistics;
+  ASSERT_THAT(msgs_lost_statistics.size(), Eq(3u));
+
+  EXPECT_THAT(
+    msgs_lost_statistics,
+    Contains(
+      AllOf(
+        Field(&MessagesLostEventTopicStat::topic_name, Eq(msgs_lost_in_recorder[0].topic_name)),
+        Field(&MessagesLostEventTopicStat::messages_lost_in_recorder,
+              Eq(msgs_lost_in_recorder[0].num_messages_lost)),
+        Field(&MessagesLostEventTopicStat::messages_lost_in_transport, Eq(0u))
+      )
+    )
+  );
+
+  EXPECT_THAT(
+    msgs_lost_statistics,
+    Contains(
+      AllOf(
+        Field(&MessagesLostEventTopicStat::topic_name, Eq(msgs_lost_in_recorder[1].topic_name)),
+        Field(&MessagesLostEventTopicStat::messages_lost_in_recorder,
+              Eq(msgs_lost_in_recorder[1].num_messages_lost)),
+        Field(&MessagesLostEventTopicStat::messages_lost_in_transport, Eq(0u))
+      )
+    )
+  );
+
+  EXPECT_THAT(
+    msgs_lost_statistics,
+    Contains(
+      AllOf(
+        Field(&MessagesLostEventTopicStat::topic_name, Eq("topic3")),
+        Field(&MessagesLostEventTopicStat::messages_lost_in_recorder, Eq(0u)),
+        Field(&MessagesLostEventTopicStat::messages_lost_in_transport,
+              Eq(msgs_lost_in_transport.total_count_change))
+      )
+    )
+  );
 }
 
 TEST_F(TestRecorderEventNotifier, messages_lost_in_transport_correctly_accumulated)
