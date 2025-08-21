@@ -58,7 +58,8 @@ public:
   /// statistics. A value of 0.0 means that the statistics will not be published.
   /// \note Event notifier will not publish statistics if there are no messages lost since the last
   /// time it was published.
-  /// \throws std::invalid_argument if the update rate is negative.
+  /// \throws std::invalid_argument if the update rate is negative or if the update rate more than
+  /// or equal 1000.00 Hz.
   void set_messages_lost_statistics_max_publishing_rate(float update_rate_hz);
 
   /// \brief Callback for when a bag split occurs in the recorder.

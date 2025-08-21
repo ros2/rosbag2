@@ -77,6 +77,9 @@ public:
         disable_publishing_msgs_lost_statistics_ = true;
         RCLCPP_DEBUG(node->get_logger(), "Messages lost statistics publishing is disabled");
       } else if (update_rate_hz > 0.0f) {
+        if (update_rate_hz >= 1000.0f) {
+          throw std::invalid_argument("Update rate must be less than 1000 Hz");
+        }
         disable_publishing_msgs_lost_statistics_ = false;
         msgs_lost_stats_max_publishing_period_ =
           std::chrono::milliseconds(static_cast<int>(1000 / update_rate_hz));

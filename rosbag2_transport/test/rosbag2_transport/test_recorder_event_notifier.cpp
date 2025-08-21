@@ -145,6 +145,11 @@ TEST_F(TestRecorderEventNotifier, set_statistics_publishing_rate)
   ASSERT_NO_THROW(notifier_->set_messages_lost_statistics_max_publishing_rate(0.0f));
   ASSERT_THROW(notifier_->set_messages_lost_statistics_max_publishing_rate(-10.0f),
                std::invalid_argument);
+  ASSERT_THROW(notifier_->set_messages_lost_statistics_max_publishing_rate(1000.0f),
+               std::invalid_argument);
+  ASSERT_THROW(notifier_->set_messages_lost_statistics_max_publishing_rate(1000.001f),
+               std::invalid_argument);
+  ASSERT_NO_THROW(notifier_->set_messages_lost_statistics_max_publishing_rate(999.999f));
 }
 
 TEST_F(TestRecorderEventNotifier, handle_empty_messages_lost_in_recorder)
