@@ -73,11 +73,13 @@ public:
     const std::string & topic_name,
     const rclcpp::QOSMessageLostInfo & qos_msgs_lost_info);
 
-  /// \brief Get the number of messages lost on the transport layer.
-  [[nodiscard]] size_t get_total_num_messages_lost_in_transport() const;
+  /// \brief Getter for the total number of messages lost in transport.
+  /// \return The total number of messages lost in transport.
+  [[nodiscard]] uint64_t get_total_num_messages_lost_in_transport() const;
 
-  /// \brief Get the number of messages lost in the recorder.
-  [[nodiscard]] size_t get_total_num_messages_lost_in_recorder() const;
+  /// \brief Getter for the total number of messages lost in recorder.
+  /// \return The total number of messages lost in recorder.
+  [[nodiscard]] uint64_t get_total_num_messages_lost_in_recorder() const;
 
   /// \brief Reset the counters for messages lost in transport.
   void reset_total_num_messages_lost_in_transport();

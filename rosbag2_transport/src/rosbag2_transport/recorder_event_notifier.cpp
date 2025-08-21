@@ -57,12 +57,12 @@ void RecorderEventNotifier::on_messages_lost_in_transport(
   pimpl_->on_messages_lost_in_transport(topic_name, qos_msgs_lost_info);
 }
 
-size_t RecorderEventNotifier::get_total_num_messages_lost_in_transport() const
+uint64_t RecorderEventNotifier::get_total_num_messages_lost_in_transport() const
 {
   return pimpl_->get_total_num_messages_lost_in_transport();
 }
 
-size_t RecorderEventNotifier::get_total_num_messages_lost_in_recorder() const
+uint64_t RecorderEventNotifier::get_total_num_messages_lost_in_recorder() const
 {
   return pimpl_->get_total_num_messages_lost_in_recorder();
 }

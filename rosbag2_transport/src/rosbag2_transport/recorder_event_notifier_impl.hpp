@@ -135,12 +135,12 @@ public:
   }
 
 
-  [[nodiscard]] size_t get_total_num_messages_lost_in_transport() const
+  [[nodiscard]] uint64_t get_total_num_messages_lost_in_transport() const
   {
     return total_num_messages_lost_in_transport_.load();
   }
 
-  [[nodiscard]] size_t get_total_num_messages_lost_in_recorder() const
+  [[nodiscard]] uint64_t get_total_num_messages_lost_in_recorder() const
   {
     return total_num_messages_lost_in_recorder_.load();
   }
@@ -224,10 +224,11 @@ private:
 
   std::mutex per_topic_messages_lost_statistics_mutex_;
   // Stores the number of messages lost per topic in the transport and recorder layers.
-  std::unordered_map<std::string, std::pair<size_t, size_t>> per_topic_messages_lost_statistics_;
+  std::unordered_map<std::string, std::pair<uint64_t, uint64_t>>
+  per_topic_messages_lost_statistics_;
 
-  std::atomic<size_t> total_num_messages_lost_in_transport_{0};
-  std::atomic<size_t> total_num_messages_lost_in_recorder_{0};
+  std::atomic<uint64_t> total_num_messages_lost_in_transport_{0};
+  std::atomic<uint64_t> total_num_messages_lost_in_recorder_{0};
 };
 
 }  // namespace rosbag2_transport
