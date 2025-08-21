@@ -22,11 +22,29 @@
 #include "rosbag2_interfaces/msg/messages_lost_event_topic_stat.hpp"
 #include "rosbag2_interfaces/msg/write_split_event.hpp"
 #include "rosbag2_transport/recorder_event_notifier.hpp"
+#include "rosbag2_transport/rclcpp_publisher_wrapper.hpp"
 #include "rosbag2_test_common/subscription_manager.hpp"
 
 using namespace ::testing;          // NOLINT
 using namespace rosbag2_transport;  // NOLINT
 using namespace rosbag2_test_common;  // NOLINT
+
+using WriteSplitEvent = rosbag2_interfaces::msg::WriteSplitEvent;
+using MessagesLostEvent = rosbag2_interfaces::msg::MessagesLostEvent;
+
+template<typename T>
+class MockPublisherWrapper : public RclcppPublisherWrapper<T> {
+public:
+  explicit MockPublisherWrapper(typename rclcpp::Publisher<T>::SharedPtr publisher)
+  :RclcppPublisherWrapper<T>(std::move(publisher)) {}
+
+  MockPublisherWrapper(const MockPublisherWrapper & other)
+  :RclcppPublisherWrapper<T>(other.publisher_) {}
+
+  ~MockPublisherWrapper() override = default;
+
+  MOCK_METHOD(void, publish, (const T & msg), (override));
+};
 
 class TestRecorderEventNotifier : public ::testing::Test
 {
@@ -311,6 +329,64 @@ TEST_F(TestRecorderEventNotifier, will_publish_messages_lost_event_when_updating
       )
     )
   );
+}
+
+TEST_F(TestRecorderEventNotifier, event_notifier_respects_max_publishing_rate) {
+  std::vector<WriteSplitEvent> published_write_split_events;
+  std::vector<std::pair<std::chrono::steady_clock::time_point, MessagesLostEvent>>
+    published_messages_lost_events;
+
+  // Create shared_ptrs to the mock wrappers first
+  auto write_split_pub_mock = std::make_shared<MockPublisherWrapper<WriteSplitEvent>>(
+    node_->create_publisher<WriteSplitEvent>("events/write_split", 1));
+
+  auto msgs_lost_pub_mock = std::make_shared<MockPublisherWrapper<MessagesLostEvent>>(
+    node_->create_publisher<MessagesLostEvent>("events/messages_lost", 1));
+
+  // Set up expectations on the shared_ptr mocks directly
+  ON_CALL(*write_split_pub_mock, publish(::testing::_))
+  .WillByDefault(::testing::Invoke(
+      [&published_write_split_events](const WriteSplitEvent & msg) {
+        published_write_split_events.push_back(msg);
+      }
+  ));
+
+  EXPECT_CALL(*msgs_lost_pub_mock, publish(::testing::_))
+  .WillRepeatedly(::testing::Invoke(
+      [&published_messages_lost_events](const MessagesLostEvent & msg) {
+        published_messages_lost_events.emplace_back(std::chrono::steady_clock::now(), msg);
+      }
+  ));
+
+  // Pass the shared_ptr mocks directly to the notifier
+  notifier_ =
+    std::make_unique<RecorderEventNotifier>(node_.get(), write_split_pub_mock, msgs_lost_pub_mock);
+
+  notifier_->set_messages_lost_statistics_max_publishing_rate(2.0f);  // 2 Hz
+
+  // Trigger multiple messages lost events
+  rclcpp::QOSMessageLostInfo qos_msgs_lost_info;
+  qos_msgs_lost_info.total_count_change = 1;
+
+  // Trigger the event 10 times with delay in 100 ms interval. i.e., 10 events in 1 second
+  for (int i = 0; i < 10; ++i) {
+    notifier_->on_messages_lost_in_transport("topic1", qos_msgs_lost_info);
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));  // Simulate time between events
+  }
+
+  // Allow some time for the events to be processed
+  std::this_thread::sleep_for(std::chrono::seconds(1));
+
+  // Verify that the number of published messages respects the 2 Hz rate
+  ASSERT_GE(published_messages_lost_events.size(), 2u);  // At least 2 events in 1 second
+  ASSERT_LE(published_messages_lost_events.size(), 3u);  // At most 3 events in 1 second
+
+  // Verify the time intervals between published events
+  for (size_t i = 1; i < published_messages_lost_events.size(); ++i) {
+    auto time_diff = std::chrono::duration_cast<std::chrono::milliseconds>(
+      published_messages_lost_events[i].first - published_messages_lost_events[i - 1].first);
+    EXPECT_GE(time_diff.count(), 500);  // At least 500 ms between events (2 Hz)
+  }
 }
 
 TEST_F(TestRecorderEventNotifier, messages_lost_in_transport_correctly_accumulated)

@@ -29,10 +29,12 @@
 
 #include "rclcpp/logging.hpp"
 #include "rclcpp/node.hpp"
+#include "rclcpp/publisher.hpp"
 
 #include "rosbag2_interfaces/msg/messages_lost_event.hpp"
 #include "rosbag2_interfaces/msg/write_split_event.hpp"
 #include "rosbag2_cpp/bag_events.hpp"
+#include "rosbag2_transport/rclcpp_publisher_wrapper.hpp"
 #include "rosbag2_transport/recorder_event_notifier.hpp"
 
 namespace rosbag2_transport
@@ -40,17 +42,32 @@ namespace rosbag2_transport
 class RecorderEventNotifierImpl
 {
 public:
-  explicit RecorderEventNotifierImpl(rclcpp::Node * node)
+  using WriteSplitEvent = rosbag2_interfaces::msg::WriteSplitEvent;
+  using MessagesLostEvent = rosbag2_interfaces::msg::MessagesLostEvent;
+
+  explicit RecorderEventNotifierImpl(
+    rclcpp::Node * node,
+    RclcppPublisherWrapper<WriteSplitEvent>::SharedPtr split_event_pub = nullptr,
+    RclcppPublisherWrapper<MessagesLostEvent>::SharedPtr msgs_lost_event_pub = nullptr)
   : node(node)
   {
     if (!node) {
       throw std::invalid_argument("Node pointer cannot be null");
     }
-    split_event_pub_ =
-      node->create_publisher<rosbag2_interfaces::msg::WriteSplitEvent>("events/write_split", 1);
 
-    msgs_lost_event_pub_ =
-      node->create_publisher<rosbag2_interfaces::msg::MessagesLostEvent>("events/messages_lost", 1);
+    if (split_event_pub) {
+      split_event_pub_ = std::move(split_event_pub);
+    } else {
+      split_event_pub_ = RclcppPublisherWrapper<WriteSplitEvent>::make_shared(
+        node->create_publisher<WriteSplitEvent>("events/write_split", 1));
+    }
+
+    if (msgs_lost_event_pub) {
+      msgs_lost_event_pub_ = std::move(msgs_lost_event_pub);
+    } else {
+      msgs_lost_event_pub_ = RclcppPublisherWrapper<MessagesLostEvent>::make_shared(
+        node->create_publisher<MessagesLostEvent>("events/messages_lost", 1));
+    }
 
     // Start the thread that will publish events
     {
@@ -140,7 +157,6 @@ public:
         qos_msgs_lost_info.total_count_change;
     }
   }
-
 
   [[nodiscard]] uint64_t get_total_num_messages_lost_in_transport() const
   {
@@ -240,8 +256,8 @@ public:
 
 private:
   rclcpp::Node * node;
-  rclcpp::Publisher<rosbag2_interfaces::msg::WriteSplitEvent>::SharedPtr split_event_pub_;
-  rclcpp::Publisher<rosbag2_interfaces::msg::MessagesLostEvent>::SharedPtr msgs_lost_event_pub_;
+  RclcppPublisherWrapper<WriteSplitEvent>::SharedPtr split_event_pub_;
+  RclcppPublisherWrapper<MessagesLostEvent>::SharedPtr msgs_lost_event_pub_;
   std::atomic<bool> event_publisher_thread_should_exit_ = false;
   std::queue<rosbag2_cpp::bag_events::BagSplitInfo> bag_split_info_queue_;
   std::mutex event_publisher_thread_mutex_;

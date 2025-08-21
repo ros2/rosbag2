@@ -20,8 +20,12 @@
 #include <string>
 
 #include "rclcpp/node.hpp"
+#include "rclcpp/publisher.hpp"
 
 #include "rosbag2_cpp/bag_events.hpp"
+#include "rosbag2_interfaces/msg/messages_lost_event.hpp"
+#include "rosbag2_interfaces/msg/write_split_event.hpp"
+#include "rosbag2_transport/rclcpp_publisher_wrapper.hpp"
 #include "rosbag2_transport/visibility_control.hpp"
 
 #ifdef _WIN32
@@ -46,10 +50,23 @@ class RecorderEventNotifierImpl;
 class ROSBAG2_TRANSPORT_PUBLIC RecorderEventNotifier
 {
 public:
-  /// \brief Constructor for the RecorderEventNotifier class.
-  explicit RecorderEventNotifier(rclcpp::Node * node);
+  using WriteSplitEvent = rosbag2_interfaces::msg::WriteSplitEvent;
+  using MessagesLostEvent = rosbag2_interfaces::msg::MessagesLostEvent;
 
-  /// \brief Destructor for the RecorderEventNotifier class.
+  /// \brief Constructor for the RecorderEventNotifier class.
+  /// \details This constructor initializes the event notifier with a node and optional publishers
+  /// for split events and messages lost events.
+  /// \param node Pointer to the rclcpp Node that will be used for publishing events.
+  /// \param split_event_pub Optional publisher for WriteSplitEvent messages. If not provided, a
+  /// new publisher will be created with the topic name "events/write_split".
+  /// \param msgs_lost_event_pub Optional publisher for MessagesLostEvent messages. If not provided,
+  /// a new publisher will be created with the topic name "events/messages_lost".
+  explicit RecorderEventNotifier(
+    rclcpp::Node * node,
+    RclcppPublisherWrapper<WriteSplitEvent>::SharedPtr split_event_pub = nullptr,
+    RclcppPublisherWrapper<MessagesLostEvent>::SharedPtr msgs_lost_event_pub = nullptr);
+
+/// \brief Destructor for the RecorderEventNotifier class.
   virtual ~RecorderEventNotifier();
 
   /// \brief Set the maximum update rate for messages lost statistics.

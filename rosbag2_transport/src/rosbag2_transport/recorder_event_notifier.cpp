@@ -21,9 +21,14 @@
 namespace rosbag2_transport
 {
 
-RecorderEventNotifier::RecorderEventNotifier(rclcpp::Node * node)
+RecorderEventNotifier::RecorderEventNotifier(
+  rclcpp::Node * node,
+  RclcppPublisherWrapper<rosbag2_interfaces::msg::WriteSplitEvent>::SharedPtr split_event_pub,
+  RclcppPublisherWrapper<rosbag2_interfaces::msg::MessagesLostEvent>::SharedPtr msgs_lost_event_pub)
 {
-  pimpl_ = std::make_unique<RecorderEventNotifierImpl>(node);
+  pimpl_ = std::make_unique<RecorderEventNotifierImpl>(node,
+                                                       std::move(split_event_pub),
+                                                       std::move(msgs_lost_event_pub));
 }
 
 RecorderEventNotifier::~RecorderEventNotifier()
