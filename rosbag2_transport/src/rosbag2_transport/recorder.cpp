@@ -45,6 +45,7 @@
 #include "rosbag2_transport/config_options_from_node_params.hpp"
 #include "rosbag2_transport/reader_writer_factory.hpp"
 #include "rosbag2_transport/topic_filter.hpp"
+#include "rosbag2_transport/recorder_event_notifier.hpp"
 
 namespace rosbag2_transport
 {
@@ -127,9 +128,12 @@ private:
 
   void warn_if_new_qos_for_subscribed_topic(const std::string & topic_name);
 
+<<<<<<< HEAD
   void event_publisher_thread_main();
   bool event_publisher_thread_should_wake();
 
+=======
+>>>>>>> 7e5e800 (Add RecorderEventNotifier class (#2144))
   rclcpp::Node * node;
   std::unique_ptr<TopicFilter> topic_filter_;
   std::future<void> discovery_future_;
@@ -151,6 +155,7 @@ private:
   KeyboardHandler::callback_handle_t toggle_paused_key_callback_handle_ =
     KeyboardHandler::invalid_handle;
 
+<<<<<<< HEAD
   // Variables for event publishing
   rclcpp::Publisher<rosbag2_interfaces::msg::WriteSplitEvent>::SharedPtr split_event_pub_;
   std::atomic<bool> event_publisher_thread_should_exit_ = false;
@@ -159,6 +164,9 @@ private:
   std::mutex event_publisher_thread_mutex_;
   std::condition_variable event_publisher_thread_wake_cv_;
   std::thread event_publisher_thread_;
+=======
+  std::unique_ptr<RecorderEventNotifier> event_notifier_;
+>>>>>>> 7e5e800 (Add RecorderEventNotifier class (#2144))
 };
 
 RecorderImpl::RecorderImpl(
@@ -172,8 +180,11 @@ RecorderImpl::RecorderImpl(
   record_options_(record_options),
   node(owner),
   paused_(record_options.start_paused),
-  keyboard_handler_(std::move(keyboard_handler))
+  keyboard_handler_(std::move(keyboard_handler)),
+  event_notifier_(std::make_unique<RecorderEventNotifier>(node))
 {
+  event_notifier_->set_messages_lost_statistics_max_publishing_rate(0.0f);  // Disable by default
+
   if (record_options_.use_sim_time && record_options_.is_discovery_disabled) {
     throw std::runtime_error(
             "use_sim_time and is_discovery_disabled both set, but are incompatible settings. "
@@ -242,16 +253,26 @@ void RecorderImpl::stop()
   subscriptions_.clear();
   writer_->close();  // Call writer->close() to finalize current bag file and write metadata
 
-  {
-    std::lock_guard<std::mutex> lock(event_publisher_thread_mutex_);
-    event_publisher_thread_should_exit_ = true;
-  }
-  event_publisher_thread_wake_cv_.notify_all();
-  if (event_publisher_thread_.joinable()) {
-    event_publisher_thread_.join();
-  }
   in_recording_ = false;
   RCLCPP_INFO(node->get_logger(), "Recording stopped");
+<<<<<<< HEAD
+=======
+
+  auto num_messages_lost_in_recorder = event_notifier_->get_total_num_messages_lost_in_recorder();
+  auto num_messages_lost_on_transport = event_notifier_->get_total_num_messages_lost_in_transport();
+
+  if (num_messages_lost_on_transport > 0) {
+    RCLCPP_WARN(node->get_logger(),
+                "Number of messages lost on the transport layer: %lu",
+                num_messages_lost_on_transport);
+  }
+
+  if (num_messages_lost_in_recorder > 0) {
+    RCLCPP_WARN(node->get_logger(),
+                "Number of messages lost in the recorder: %lu",
+                num_messages_lost_in_recorder);
+  }
+>>>>>>> 7e5e800 (Add RecorderEventNotifier class (#2144))
 }
 
 void RecorderImpl::record()
@@ -270,6 +291,11 @@ void RecorderImpl::record()
   }
 
   subscriptions_.clear();
+<<<<<<< HEAD
+=======
+  event_notifier_->reset_total_num_messages_lost_in_transport();
+  event_notifier_->reset_total_num_messages_lost_in_recorder();
+>>>>>>> 7e5e800 (Add RecorderEventNotifier class (#2144))
   writer_->open(
     storage_options_,
     {rmw_get_serialization_format(), record_options_.rmw_serialization_format});
@@ -327,26 +353,18 @@ void RecorderImpl::record()
       response->paused = is_paused();
     });
 
-  split_event_pub_ =
-    node->create_publisher<rosbag2_interfaces::msg::WriteSplitEvent>("events/write_split", 1);
-
-  // Start the thread that will publish events
-  {
-    std::lock_guard<std::mutex> lock(event_publisher_thread_mutex_);
-    event_publisher_thread_should_exit_ = false;
-    event_publisher_thread_ = std::thread(&RecorderImpl::event_publisher_thread_main, this);
-  }
-
   rosbag2_cpp::bag_events::WriterEventCallbacks callbacks;
   callbacks.write_split_callback =
     [this](rosbag2_cpp::bag_events::BagSplitInfo & info) {
-      {
-        std::lock_guard<std::mutex> lock(event_publisher_thread_mutex_);
-        bag_split_info_ = info;
-        write_split_has_occurred_ = true;
-      }
-      event_publisher_thread_wake_cv_.notify_all();
+      event_notifier_->on_bag_split_in_recorder(info);
     };
+<<<<<<< HEAD
+=======
+  callbacks.messages_lost_callback =
+    [this](const std::vector<rosbag2_cpp::bag_events::MessagesLostInfo> & msgs_lost_info) {
+      event_notifier_->on_messages_lost_in_recorder(msgs_lost_info);
+    };
+>>>>>>> 7e5e800 (Add RecorderEventNotifier class (#2144))
   writer_->add_event_callbacks(callbacks);
 
   serialization_format_ = record_options_.rmw_serialization_format;
@@ -366,6 +384,7 @@ void RecorderImpl::record()
   }
 }
 
+<<<<<<< HEAD
 void RecorderImpl::event_publisher_thread_main()
 {
   RCLCPP_INFO(node->get_logger(), "Event publisher thread: Starting");
@@ -403,6 +422,8 @@ bool RecorderImpl::event_publisher_thread_should_wake()
   return write_split_has_occurred_ || event_publisher_thread_should_exit_;
 }
 
+=======
+>>>>>>> 7e5e800 (Add RecorderEventNotifier class (#2144))
 const rosbag2_cpp::Writer & RecorderImpl::get_writer_handle()
 {
   return *writer_;
@@ -583,6 +604,15 @@ std::shared_ptr<rclcpp::GenericSubscription>
 RecorderImpl::create_subscription(
   const std::string & topic_name, const std::string & topic_type, const rclcpp::QoS & qos)
 {
+<<<<<<< HEAD
+=======
+  rclcpp::SubscriptionOptions sub_options;
+  sub_options.event_callbacks.message_lost_callback =
+    [this, topic_name](const rclcpp::QOSMessageLostInfo & msgs_lost_info) {
+      this->event_notifier_->on_messages_lost_in_transport(topic_name, msgs_lost_info);
+    };
+
+>>>>>>> 7e5e800 (Add RecorderEventNotifier class (#2144))
 #ifdef _WIN32
   if (std::string(rmw_get_implementation_identifier()).find("rmw_connextdds") !=
     std::string::npos)
