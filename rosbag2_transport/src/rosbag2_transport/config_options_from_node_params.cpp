@@ -382,6 +382,17 @@ RecordOptions get_record_options_from_node_params(rclcpp::Node & node)
             "'use_sim_time' and 'is_discovery_disabled' both set, but are incompatible settings. "
             "The `/clock` topic needs to be discovered to record with sim time.");
   }
+
+  auto desc_rate = param_utils::float_param_description(
+    "Maximum rate in times per second (Hz) at which the statistics about lost messages"
+    " will be published. If set to 0, no statistics will be published. The value must be greater"
+    " than or equal to 0 and less than or equal to 1000.",
+    0.0f,
+    1000.0f);
+  record_options.statistics_max_publishing_rate =
+    static_cast<float>(node.declare_parameter<float>("record.statistics_max_publishing_rate",
+                                                     1.0f,
+                                                     desc_rate));
   return record_options;
 }
 

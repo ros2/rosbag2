@@ -246,6 +246,7 @@ TEST_P(ComposableRecorderTests, recorder_can_parse_parameters_from_file) {
   EXPECT_EQ(record_options.ignore_leaf_topics, false);
   EXPECT_EQ(record_options.start_paused, false);
   EXPECT_EQ(record_options.disable_keyboard_controls, true);
+  EXPECT_EQ(record_options.statistics_max_publishing_rate, 0.5);
   EXPECT_EQ(record_options.use_sim_time, false);
 
   EXPECT_EQ(storage_options.uri, root_bag_path_.generic_string());

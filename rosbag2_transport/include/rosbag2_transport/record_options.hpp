@@ -64,6 +64,10 @@ public:
   bool start_paused = false;
   bool use_sim_time = false;
   bool disable_keyboard_controls = false;
+  /// \brief Maximum rate in times per second (Hz) at which the statistics about lost messages
+  /// will be published. If set to 0, no statistics will be published. The value must be greater
+  /// than or equal to 0 and less than or equal to 1000.
+  float statistics_max_publishing_rate = 1.0f;
 };
 
 }  // namespace rosbag2_transport

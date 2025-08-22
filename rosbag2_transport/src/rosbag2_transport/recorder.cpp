@@ -166,7 +166,8 @@ RecorderImpl::RecorderImpl(
   keyboard_handler_(std::move(keyboard_handler)),
   event_notifier_(std::make_unique<RecorderEventNotifier>(node))
 {
-  event_notifier_->set_messages_lost_statistics_max_publishing_rate(0.0f);  // Disable by default
+  event_notifier_->set_messages_lost_statistics_max_publishing_rate(
+    record_options.statistics_max_publishing_rate);
 
   if (record_options_.use_sim_time && record_options_.is_discovery_disabled) {
     throw std::runtime_error(

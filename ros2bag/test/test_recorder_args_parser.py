@@ -319,3 +319,56 @@ def test_recorder_validate_exclude_actions_needs_inclusive_args(test_arguments_p
     expected_output = '--exclude-actions argument requires either --all, --all-actions or --regex'
     matches = expected_output in error_str
     assert matches, ERROR_STRING_MSG.format(expected_output, error_str)
+
+
+def test_recorder_stats_max_publishing_rate_argument(test_arguments_parser):
+    """Test recorder --stats_max_publishing_rate argument with valid values."""
+    output_path = RESOURCES_PATH / 'ros2bag_tmp_file'
+    args = test_arguments_parser.parse_args(
+        ['--stats_max_publishing_rate', '0', '--all', '--output', output_path.as_posix()]
+    )
+    assert 0.0 == args.stats_max_publishing_rate
+    assert output_path.as_posix() == args.output
+    uri = args.output or datetime.datetime.now().strftime('rosbag2_%Y_%m_%d-%H_%M_%S')
+    error_str = validate_parsed_arguments(args, uri)
+    assert error_str is None
+
+    args.stats_max_publishing_rate = 1000.0
+    assert output_path.as_posix() == args.output
+    uri = args.output or datetime.datetime.now().strftime('rosbag2_%Y_%m_%d-%H_%M_%S')
+    error_str = validate_parsed_arguments(args, uri)
+    assert error_str is None
+
+    args.stats_max_publishing_rate = 0.5
+    assert output_path.as_posix() == args.output
+    uri = args.output or datetime.datetime.now().strftime('rosbag2_%Y_%m_%d-%H_%M_%S')
+    error_str = validate_parsed_arguments(args, uri)
+    assert error_str is None
+
+
+def test_recorder_stats_max_publishing_rate_argument_invalid(test_arguments_parser):
+    """Test recorder --stats_max_publishing_rate argument with invalid values."""
+    output_path = RESOURCES_PATH / 'ros2bag_tmp_file'
+    args = test_arguments_parser.parse_args(
+        ['--stats_max_publishing_rate', '-1', '--all', '--output', output_path.as_posix()]
+    )
+    assert -1.0 == args.stats_max_publishing_rate
+    assert output_path.as_posix() == args.output
+    uri = args.output or datetime.datetime.now().strftime('rosbag2_%Y_%m_%d-%H_%M_%S')
+    error_str = validate_parsed_arguments(args, uri)
+    assert error_str is not None
+    expected_output = 'stats_max_publishing_rate must be between 0 and 1000.'
+    matches = expected_output in error_str
+    assert matches, ERROR_STRING_MSG.format(expected_output, error_str)
+
+    args = test_arguments_parser.parse_args(
+        ['--stats_max_publishing_rate', '1000.01', '--all', '--output', output_path.as_posix()]
+    )
+    assert 1000.01 == args.stats_max_publishing_rate
+    assert output_path.as_posix() == args.output
+    uri = args.output or datetime.datetime.now().strftime('rosbag2_%Y_%m_%d-%H_%M_%S')
+    error_str = validate_parsed_arguments(args, uri)
+    assert error_str is not None
+    expected_output = 'stats_max_publishing_rate must be between 0 and 1000.'
+    matches = expected_output in error_str
+    assert matches, ERROR_STRING_MSG.format(expected_output, error_str)
