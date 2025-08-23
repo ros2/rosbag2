@@ -65,10 +65,6 @@ public:
   /// \brief Callback for when a bag split occurs in the recorder.
   void on_bag_split_in_recorder(const rosbag2_cpp::bag_events::BagSplitInfo & bag_split_info);
 
-  /// \brief Callback for when messages are lost in recorder.
-  void on_messages_lost_in_recorder(
-    const std::vector<rosbag2_cpp::bag_events::MessagesLostInfo> & msgs_lost_info);
-
   /// \brief Callback for when messages are lost in transport.
   void on_messages_lost_in_transport(
     const std::string & topic_name,
@@ -78,15 +74,8 @@ public:
   /// \return The total number of messages lost in transport.
   [[nodiscard]] uint64_t get_total_num_messages_lost_in_transport() const;
 
-  /// \brief Getter for the total number of messages lost in recorder.
-  /// \return The total number of messages lost in recorder.
-  [[nodiscard]] uint64_t get_total_num_messages_lost_in_recorder() const;
-
   /// \brief Reset the counters for messages lost in transport.
   void reset_total_num_messages_lost_in_transport();
-
-  /// \brief Reset the counters for messages lost in recorder.
-  void reset_total_num_messages_lost_in_recorder();
 
 private:
   std::unique_ptr<RecorderEventNotifierImpl> pimpl_;

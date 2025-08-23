@@ -103,36 +103,16 @@ TEST_F(TestRecorderEventNotifier, messages_lost_in_transport_correctly_accumulat
   EXPECT_EQ(notifier_->get_total_num_messages_lost_in_transport(), 10u);
 }
 
-TEST_F(TestRecorderEventNotifier, messages_lost_in_recorder_correctly_accumulated)
-{
-  std::vector<rosbag2_cpp::bag_events::MessagesLostInfo> msgs_lost_info = {
-    {"topic1", 3},
-    {"topic3", 9}
-  };
-  notifier_->on_messages_lost_in_recorder(msgs_lost_info);
-  notifier_->on_messages_lost_in_recorder(msgs_lost_info);
-
-  EXPECT_EQ(notifier_->get_total_num_messages_lost_in_recorder(), 24u);
-}
-
 TEST_F(TestRecorderEventNotifier, reset_messages_lost_counters)
 {
-  std::vector<rosbag2_cpp::bag_events::MessagesLostInfo> msgs_lost_info = {
-    {"topic1", 5}
-  };
-  notifier_->on_messages_lost_in_recorder(msgs_lost_info);
-
   rclcpp::QOSMessageLostInfo qos_msgs_lost_info;
   qos_msgs_lost_info.total_count_change = 3;
   ASSERT_NO_THROW(notifier_->on_messages_lost_in_transport("topic2", qos_msgs_lost_info));
 
-  EXPECT_EQ(notifier_->get_total_num_messages_lost_in_recorder(), 5u);
   EXPECT_EQ(notifier_->get_total_num_messages_lost_in_transport(), 3u);
 
-  notifier_->reset_total_num_messages_lost_in_recorder();
   notifier_->reset_total_num_messages_lost_in_transport();
 
-  EXPECT_EQ(notifier_->get_total_num_messages_lost_in_recorder(), 0u);
   EXPECT_EQ(notifier_->get_total_num_messages_lost_in_transport(), 0u);
 }
 
@@ -152,13 +132,6 @@ TEST_F(TestRecorderEventNotifier, set_statistics_publishing_rate)
   ASSERT_NO_THROW(notifier_->set_messages_lost_statistics_max_publishing_rate(999.999f));
 }
 
-TEST_F(TestRecorderEventNotifier, handle_empty_messages_lost_in_recorder)
-{
-  std::vector<rosbag2_cpp::bag_events::MessagesLostInfo> msgs_lost_info = {};
-  ASSERT_NO_THROW(notifier_->on_messages_lost_in_recorder(msgs_lost_info));
-  EXPECT_EQ(notifier_->get_total_num_messages_lost_in_recorder(), 0u);
-}
-
 TEST_F(TestRecorderEventNotifier, zero_messages_lost)
 {
   rclcpp::QOSMessageLostInfo qos_msgs_lost_info;
@@ -166,13 +139,7 @@ TEST_F(TestRecorderEventNotifier, zero_messages_lost)
   qos_msgs_lost_info.total_count_change = 0;
   ASSERT_NO_THROW(notifier_->on_messages_lost_in_transport("topic1", qos_msgs_lost_info));
 
-  std::vector<rosbag2_cpp::bag_events::MessagesLostInfo> msgs_lost_info = {
-    {"topic1", 0}
-  };
-  ASSERT_NO_THROW(notifier_->on_messages_lost_in_recorder(msgs_lost_info));
-
   EXPECT_EQ(notifier_->get_total_num_messages_lost_in_transport(), 0u);
-  EXPECT_EQ(notifier_->get_total_num_messages_lost_in_recorder(), 0u);
 }
 
 TEST_F(TestRecorderEventNotifier, large_message_counts)
@@ -182,13 +149,7 @@ TEST_F(TestRecorderEventNotifier, large_message_counts)
   qos_msgs_lost_info.total_count_change = 1000000;
   notifier_->on_messages_lost_in_transport("topic1", qos_msgs_lost_info);
 
-  std::vector<rosbag2_cpp::bag_events::MessagesLostInfo> msgs_lost_info = {
-    {"topic1", 2000000}
-  };
-  notifier_->on_messages_lost_in_recorder(msgs_lost_info);
-
   EXPECT_EQ(notifier_->get_total_num_messages_lost_in_transport(), 1000000u);
-  EXPECT_EQ(notifier_->get_total_num_messages_lost_in_recorder(), 2000000u);
 }
 
 TEST_F(TestRecorderEventNotifier, reset_between_message_loss_notifications)
@@ -198,22 +159,12 @@ TEST_F(TestRecorderEventNotifier, reset_between_message_loss_notifications)
   qos_msgs_lost_info.total_count_change = 10;
   notifier_->on_messages_lost_in_transport("topic1", qos_msgs_lost_info);
 
-  std::vector<rosbag2_cpp::bag_events::MessagesLostInfo> msgs_lost_info = {
-    {"topic1", 5}
-  };
-  notifier_->on_messages_lost_in_recorder(msgs_lost_info);
-
   notifier_->reset_total_num_messages_lost_in_transport();
-  notifier_->reset_total_num_messages_lost_in_recorder();
 
   qos_msgs_lost_info.total_count_change = 7;
   notifier_->on_messages_lost_in_transport("topic2", qos_msgs_lost_info);
 
-  msgs_lost_info = {{"topic2", 3}};
-  notifier_->on_messages_lost_in_recorder(msgs_lost_info);
-
   EXPECT_EQ(notifier_->get_total_num_messages_lost_in_transport(), 7u);
-  EXPECT_EQ(notifier_->get_total_num_messages_lost_in_recorder(), 3u);
 }
 
 TEST_F(TestRecorderEventNotifier, thread_safety_with_concurrent_access)
@@ -221,7 +172,6 @@ TEST_F(TestRecorderEventNotifier, thread_safety_with_concurrent_access)
   constexpr size_t num_threads_for_each_event = 10;
   constexpr size_t iterations_per_thread = 1000;
   constexpr size_t expected_transport_lost = num_threads_for_each_event * iterations_per_thread;
-  constexpr size_t expected_recorder_lost = num_threads_for_each_event * iterations_per_thread;
 
   std::vector<std::thread> threads;
 
@@ -235,15 +185,6 @@ TEST_F(TestRecorderEventNotifier, thread_safety_with_concurrent_access)
           notifier_->on_messages_lost_in_transport("topic" + std::to_string(i), qos_msgs_lost_info);
         }
     });
-    // Simulate concurrent access to on_messages_lost_in_recorder
-    threads.emplace_back([this, i, iterations_per_thread]() {
-        for (size_t j = 0; j < iterations_per_thread; j++) {
-          std::vector<rosbag2_cpp::bag_events::MessagesLostInfo> msgs_lost_info = {
-            {"topic" + std::to_string(i), 1}
-          };
-          notifier_->on_messages_lost_in_recorder(msgs_lost_info);
-        }
-    });
   }
 
   for (auto & thread : threads) {
@@ -252,5 +193,4 @@ TEST_F(TestRecorderEventNotifier, thread_safety_with_concurrent_access)
 
   // Verify that the total counts are consistent
   EXPECT_EQ(notifier_->get_total_num_messages_lost_in_transport(), expected_transport_lost);
-  EXPECT_EQ(notifier_->get_total_num_messages_lost_in_recorder(), expected_recorder_lost);
 }

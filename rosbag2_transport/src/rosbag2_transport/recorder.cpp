@@ -239,19 +239,12 @@ void RecorderImpl::stop()
   in_recording_ = false;
   RCLCPP_INFO(node->get_logger(), "Recording stopped");
 
-  auto num_messages_lost_in_recorder = event_notifier_->get_total_num_messages_lost_in_recorder();
   auto num_messages_lost_on_transport = event_notifier_->get_total_num_messages_lost_in_transport();
 
   if (num_messages_lost_on_transport > 0) {
     RCLCPP_WARN(node->get_logger(),
                 "Number of messages lost on the transport layer: %lu",
                 num_messages_lost_on_transport);
-  }
-
-  if (num_messages_lost_in_recorder > 0) {
-    RCLCPP_WARN(node->get_logger(),
-                "Number of messages lost in the recorder: %lu",
-                num_messages_lost_in_recorder);
   }
 }
 
@@ -272,7 +265,6 @@ void RecorderImpl::record()
 
   subscriptions_.clear();
   event_notifier_->reset_total_num_messages_lost_in_transport();
-  event_notifier_->reset_total_num_messages_lost_in_recorder();
   writer_->open(
     storage_options_,
     {rmw_get_serialization_format(), record_options_.rmw_serialization_format});

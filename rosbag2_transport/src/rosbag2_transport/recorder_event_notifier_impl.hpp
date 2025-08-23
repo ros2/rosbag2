@@ -102,24 +102,6 @@ public:
     event_publisher_thread_wake_cv_.notify_all();
   }
 
-  void on_messages_lost_in_recorder(
-    const std::vector<rosbag2_cpp::bag_events::MessagesLostInfo> & msgs_lost_info)
-  {
-    if (!msgs_lost_info.empty()) {
-      // Log lost messages in recorder
-      std::string log_text("Recorder lost messages per topic: ");
-      {
-        std::unique_lock<std::mutex> lock(per_topic_messages_lost_statistics_mutex_);
-        for (const auto & info : msgs_lost_info) {
-          total_num_messages_lost_in_recorder_.fetch_add(info.num_messages_lost);
-          per_topic_messages_lost_statistics_[info.topic_name].second += info.num_messages_lost;
-          log_text += "\n\t" + info.topic_name + ": " + std::to_string(info.num_messages_lost);
-        }
-      }
-      RCLCPP_DEBUG(node->get_logger(), "%s", log_text.c_str());
-    }
-  }
-
   void on_messages_lost_in_transport(
     const std::string & topic_name,
     const rclcpp::QOSMessageLostInfo & qos_msgs_lost_info)
@@ -143,19 +125,9 @@ public:
     return total_num_messages_lost_in_transport_.load();
   }
 
-  [[nodiscard]] uint64_t get_total_num_messages_lost_in_recorder() const
-  {
-    return total_num_messages_lost_in_recorder_.load();
-  }
-
   void reset_total_num_messages_lost_in_transport()
   {
     total_num_messages_lost_in_transport_.store(0);
-  }
-
-  void reset_total_num_messages_lost_in_recorder()
-  {
-    total_num_messages_lost_in_recorder_.store(0);
   }
 
   void event_publisher_thread_main()
@@ -231,7 +203,6 @@ private:
   per_topic_messages_lost_statistics_;
 
   std::atomic<uint64_t> total_num_messages_lost_in_transport_{0};
-  std::atomic<uint64_t> total_num_messages_lost_in_recorder_{0};
 };
 
 }  // namespace rosbag2_transport
