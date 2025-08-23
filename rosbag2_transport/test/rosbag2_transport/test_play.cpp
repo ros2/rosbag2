@@ -174,9 +174,6 @@ TEST_F(RosBag2PlayTestFixture, recorded_messages_are_played_for_all_topics)
           ElementsAre(40.0f, 2.0f, 0.0f)))));
 }
 
-<<<<<<< HEAD
-TEST_F(RosBag2PlayTestFixture, recorded_messages_are_played_for_all_topics_from_three_bags)
-=======
 TEST_F(RosBag2PlayTestFixture, can_play_when_one_bag_has_fewer_messages_than_other_bags)
 {
   auto msg = get_messages_basic_types()[0];
@@ -191,7 +188,7 @@ TEST_F(RosBag2PlayTestFixture, can_play_when_one_bag_has_fewer_messages_than_oth
 
   messages_list.emplace_back(
     std::vector<std::shared_ptr<rosbag2_storage::SerializedBagMessage>>{
-    serialize_test_message("topic1", 1, 1, msg)
+    serialize_test_message("topic1", 1, msg)
     }
   );
   for (size_t i = 0; i < 5; i++) {
@@ -199,13 +196,12 @@ TEST_F(RosBag2PlayTestFixture, can_play_when_one_bag_has_fewer_messages_than_oth
       serialize_test_message(i % 2 ? "topic1" : "topic2",
         // Translate nanoseconds to milliseconds before incrementing value
                              messages_list.back().back()->recv_timestamp / 1000000 + 3,
-                             messages_list.back().back()->send_timestamp / 1000000 + 3,
                              msg));
   }
 
   messages_list.emplace_back(
     std::vector<std::shared_ptr<rosbag2_storage::SerializedBagMessage>>{
-    serialize_test_message("topic1", 2, 1, msg)
+    serialize_test_message("topic1", 2, msg)
     }
   );
   // Add more messages to the last bag to make it have more messages than the first one
@@ -214,7 +210,6 @@ TEST_F(RosBag2PlayTestFixture, can_play_when_one_bag_has_fewer_messages_than_oth
       serialize_test_message(i % 2 ? "topic1" : "topic2",
         // Translate nanoseconds to milliseconds before incrementing value
                              messages_list.back().back()->recv_timestamp / 1000000 + 3,
-                             messages_list.back().back()->send_timestamp / 1000000 + 3,
                              msg));
   }
 
@@ -233,7 +228,6 @@ TEST_F(RosBag2PlayTestFixture, can_play_when_one_bag_has_fewer_messages_than_oth
   // that is larger than the number of messages in the first bag, but smaller than the total number
   // of messages in all bags.
   play_options_.read_ahead_queue_size = 17;
-  play_options_.message_order = MessageOrder::RECEIVED_TIMESTAMP;
   auto player = std::make_shared<rosbag2_transport::Player>(std::move(bags), play_options_);
   std::size_t num_played_messages = 0u;
   rcutils_time_point_value_t last_timestamp = 0;
@@ -251,8 +245,7 @@ TEST_F(RosBag2PlayTestFixture, can_play_when_one_bag_has_fewer_messages_than_oth
   EXPECT_EQ(total_messages, num_played_messages);
 }
 
-TEST_P(RosBag2PlayTestFixtureMessageOrder, recorded_msgs_are_played_for_all_topics_from_three_bags)
->>>>>>> 7f30413 (Bugfix for deadlock in multibag replay (#2143))
+TEST_F(RosBag2PlayTestFixture, recorded_messages_are_played_for_all_topics_from_three_bags)
 {
   auto msg = get_messages_basic_types()[0];
   msg->int32_value = 42;
@@ -297,12 +290,7 @@ TEST_P(RosBag2PlayTestFixtureMessageOrder, recorded_msgs_are_played_for_all_topi
   }
   ASSERT_GT(total_messages, 0u);
 
-<<<<<<< HEAD
-=======
-  const rosbag2_transport::MessageOrder message_order = GetParam();
-  play_options_.message_order = message_order;
   play_options_.read_ahead_queue_size = total_messages - 3;
->>>>>>> 7f30413 (Bugfix for deadlock in multibag replay (#2143))
   auto player = std::make_shared<rosbag2_transport::Player>(std::move(bags), play_options_);
   std::size_t num_played_messages = 0u;
   rcutils_time_point_value_t last_timetamp = 0;
