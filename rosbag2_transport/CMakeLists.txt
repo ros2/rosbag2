@@ -44,6 +44,7 @@ find_package(yaml-cpp REQUIRED)
 
 add_library(${PROJECT_NAME} SHARED
   src/rosbag2_transport/bag_rewrite.cpp
+  src/rosbag2_transport/recorder_event_notifier.cpp
   src/rosbag2_transport/player.cpp
   src/rosbag2_transport/play_options.cpp
   src/rosbag2_transport/player_service_client.cpp
@@ -534,6 +535,20 @@ if(BUILD_TESTING)
     rcpputils::rcpputils
     rosbag2_test_common::rosbag2_test_common
   )
+<<<<<<< HEAD
+=======
+
+  ament_add_gmock(test_player_progress_bar test/rosbag2_transport/test_player_progress_bar.cpp)
+  target_link_libraries(test_player_progress_bar ${PROJECT_NAME})
+
+  ament_add_gmock(test_recorder_event_notifier
+    test/rosbag2_transport/test_recorder_event_notifier.cpp)
+  target_link_libraries(test_recorder_event_notifier
+    ${PROJECT_NAME}
+    rosbag2_test_common::rosbag2_test_common
+    ${rosbag2_interfaces_TARGETS}
+  )
+>>>>>>> 5944972 ([kilted] Add RecorderEventNotifier class (backport #2144) (#2149))
 endif()
 
 ament_package()

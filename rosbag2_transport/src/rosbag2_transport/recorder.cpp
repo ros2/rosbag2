@@ -45,6 +45,7 @@
 #include "rosbag2_transport/config_options_from_node_params.hpp"
 #include "rosbag2_transport/reader_writer_factory.hpp"
 #include "rosbag2_transport/topic_filter.hpp"
+#include "rosbag2_transport/recorder_event_notifier.hpp"
 
 namespace rosbag2_transport
 {
@@ -127,9 +128,6 @@ private:
 
   void warn_if_new_qos_for_subscribed_topic(const std::string & topic_name);
 
-  void event_publisher_thread_main();
-  bool event_publisher_thread_should_wake();
-
   rclcpp::Node * node;
   std::unique_ptr<TopicFilter> topic_filter_;
   std::future<void> discovery_future_;
@@ -151,14 +149,7 @@ private:
   KeyboardHandler::callback_handle_t toggle_paused_key_callback_handle_ =
     KeyboardHandler::invalid_handle;
 
-  // Variables for event publishing
-  rclcpp::Publisher<rosbag2_interfaces::msg::WriteSplitEvent>::SharedPtr split_event_pub_;
-  std::atomic<bool> event_publisher_thread_should_exit_ = false;
-  std::atomic<bool> write_split_has_occurred_ = false;
-  rosbag2_cpp::bag_events::BagSplitInfo bag_split_info_;
-  std::mutex event_publisher_thread_mutex_;
-  std::condition_variable event_publisher_thread_wake_cv_;
-  std::thread event_publisher_thread_;
+  std::unique_ptr<RecorderEventNotifier> event_notifier_;
 };
 
 RecorderImpl::RecorderImpl(
@@ -172,8 +163,11 @@ RecorderImpl::RecorderImpl(
   record_options_(record_options),
   node(owner),
   paused_(record_options.start_paused),
-  keyboard_handler_(std::move(keyboard_handler))
+  keyboard_handler_(std::move(keyboard_handler)),
+  event_notifier_(std::make_unique<RecorderEventNotifier>(node))
 {
+  event_notifier_->set_messages_lost_statistics_max_publishing_rate(0.0f);  // Disable by default
+
   if (record_options_.use_sim_time && record_options_.is_discovery_disabled) {
     throw std::runtime_error(
             "use_sim_time and is_discovery_disabled both set, but are incompatible settings. "
@@ -242,16 +236,16 @@ void RecorderImpl::stop()
   subscriptions_.clear();
   writer_->close();  // Call writer->close() to finalize current bag file and write metadata
 
-  {
-    std::lock_guard<std::mutex> lock(event_publisher_thread_mutex_);
-    event_publisher_thread_should_exit_ = true;
-  }
-  event_publisher_thread_wake_cv_.notify_all();
-  if (event_publisher_thread_.joinable()) {
-    event_publisher_thread_.join();
-  }
   in_recording_ = false;
   RCLCPP_INFO(node->get_logger(), "Recording stopped");
+
+  auto num_messages_lost_on_transport = event_notifier_->get_total_num_messages_lost_in_transport();
+
+  if (num_messages_lost_on_transport > 0) {
+    RCLCPP_WARN(node->get_logger(),
+                "Number of messages lost on the transport layer: %lu",
+                num_messages_lost_on_transport);
+  }
 }
 
 void RecorderImpl::record()
@@ -270,6 +264,7 @@ void RecorderImpl::record()
   }
 
   subscriptions_.clear();
+  event_notifier_->reset_total_num_messages_lost_in_transport();
   writer_->open(
     storage_options_,
     {rmw_get_serialization_format(), record_options_.rmw_serialization_format});
@@ -327,25 +322,10 @@ void RecorderImpl::record()
       response->paused = is_paused();
     });
 
-  split_event_pub_ =
-    node->create_publisher<rosbag2_interfaces::msg::WriteSplitEvent>("events/write_split", 1);
-
-  // Start the thread that will publish events
-  {
-    std::lock_guard<std::mutex> lock(event_publisher_thread_mutex_);
-    event_publisher_thread_should_exit_ = false;
-    event_publisher_thread_ = std::thread(&RecorderImpl::event_publisher_thread_main, this);
-  }
-
   rosbag2_cpp::bag_events::WriterEventCallbacks callbacks;
   callbacks.write_split_callback =
     [this](rosbag2_cpp::bag_events::BagSplitInfo & info) {
-      {
-        std::lock_guard<std::mutex> lock(event_publisher_thread_mutex_);
-        bag_split_info_ = info;
-        write_split_has_occurred_ = true;
-      }
-      event_publisher_thread_wake_cv_.notify_all();
+      event_notifier_->on_bag_split_in_recorder(info);
     };
   writer_->add_event_callbacks(callbacks);
 
@@ -364,43 +344,6 @@ void RecorderImpl::record()
   } else {
     RCLCPP_INFO(node->get_logger(), "Recording...");
   }
-}
-
-void RecorderImpl::event_publisher_thread_main()
-{
-  RCLCPP_INFO(node->get_logger(), "Event publisher thread: Starting");
-  while (!event_publisher_thread_should_exit_.load()) {
-    std::unique_lock<std::mutex> lock(event_publisher_thread_mutex_);
-    event_publisher_thread_wake_cv_.wait(
-      lock,
-      [this] {return event_publisher_thread_should_wake();});
-
-    if (write_split_has_occurred_) {
-      write_split_has_occurred_ = false;
-
-      auto message = rosbag2_interfaces::msg::WriteSplitEvent();
-      message.closed_file = bag_split_info_.closed_file;
-      message.opened_file = bag_split_info_.opened_file;
-      message.node_name = node->get_fully_qualified_name();
-      try {
-        split_event_pub_->publish(message);
-      } catch (const std::exception & e) {
-        RCLCPP_ERROR_STREAM(
-          node->get_logger(),
-          "Failed to publish message on '/events/write_split' topic. \nError: " << e.what());
-      } catch (...) {
-        RCLCPP_ERROR_STREAM(
-          node->get_logger(),
-          "Failed to publish message on '/events/write_split' topic.");
-      }
-    }
-  }
-  RCLCPP_INFO(node->get_logger(), "Event publisher thread: Exiting");
-}
-
-bool RecorderImpl::event_publisher_thread_should_wake()
-{
-  return write_split_has_occurred_ || event_publisher_thread_should_exit_;
 }
 
 const rosbag2_cpp::Writer & RecorderImpl::get_writer_handle()
@@ -583,6 +526,12 @@ std::shared_ptr<rclcpp::GenericSubscription>
 RecorderImpl::create_subscription(
   const std::string & topic_name, const std::string & topic_type, const rclcpp::QoS & qos)
 {
+  rclcpp::SubscriptionOptions sub_options;
+  sub_options.event_callbacks.message_lost_callback =
+    [this, topic_name](const rclcpp::QOSMessageLostInfo & msgs_lost_info) {
+      this->event_notifier_->on_messages_lost_in_transport(topic_name, msgs_lost_info);
+    };
+
 #ifdef _WIN32
   if (std::string(rmw_get_implementation_identifier()).find("rmw_connextdds") !=
     std::string::npos)
@@ -598,7 +547,8 @@ RecorderImpl::create_subscription(
             std::move(message), topic_name, topic_type, node->now().nanoseconds(),
             0);
         }
-      });
+      },
+      sub_options);
   }
 #endif
 
@@ -614,7 +564,8 @@ RecorderImpl::create_subscription(
             std::move(message), topic_name, topic_type, node->now().nanoseconds(),
             mi.get_rmw_message_info().source_timestamp);
         }
-      });
+      },
+      sub_options);
   } else {
     return node->create_generic_subscription(
       topic_name,
@@ -628,7 +579,8 @@ RecorderImpl::create_subscription(
             mi.get_rmw_message_info().received_timestamp,
             mi.get_rmw_message_info().source_timestamp);
         }
-      });
+      },
+      sub_options);
   }
 }
 
