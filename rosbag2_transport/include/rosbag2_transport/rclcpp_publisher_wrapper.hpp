@@ -71,6 +71,16 @@ public:
     return publisher_->borrow_loaned_message();
   }
 
+  [[nodiscard]] virtual bool can_loan_messages() const
+  {
+    return publisher_->can_loan_messages();
+  }
+
+  [[nodiscard]] virtual const char * get_topic_name() const
+  {
+    return publisher_->get_topic_name();
+  }
+
   RCLCPP_SMART_PTR_DEFINITIONS(RclcppPublisherWrapper<MessageT, AllocatorT>)
 
 protected:

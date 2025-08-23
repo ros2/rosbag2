@@ -22,6 +22,7 @@
 #include <queue>
 #include <stdexcept>
 #include <string>
+#include <string_view>
 #include <thread>
 #include <unordered_map>
 #include <utility>
@@ -44,6 +45,8 @@ class RecorderEventNotifierImpl
 public:
   using WriteSplitEvent = rosbag2_interfaces::msg::WriteSplitEvent;
   using MessagesLostEvent = rosbag2_interfaces::msg::MessagesLostEvent;
+  static constexpr const char * kDefaultWriteSplitTopicName = "events/write_split";
+  static constexpr const char * kDefaultMessagesLostTopicName = "events/rosbag2_messages_lost";
 
   explicit RecorderEventNotifierImpl(
     rclcpp::Node * node,
@@ -59,14 +62,14 @@ public:
       split_event_pub_ = std::move(split_event_pub);
     } else {
       split_event_pub_ = RclcppPublisherWrapper<WriteSplitEvent>::make_shared(
-        node->create_publisher<WriteSplitEvent>("events/write_split", 1));
+        node->create_publisher<WriteSplitEvent>(kDefaultWriteSplitTopicName, 1));
     }
 
     if (msgs_lost_event_pub) {
       msgs_lost_event_pub_ = std::move(msgs_lost_event_pub);
     } else {
       msgs_lost_event_pub_ = RclcppPublisherWrapper<MessagesLostEvent>::make_shared(
-        node->create_publisher<MessagesLostEvent>("events/messages_lost", 1));
+        node->create_publisher<MessagesLostEvent>(kDefaultMessagesLostTopicName, 1));
     }
 
     // Start the thread that will publish events
@@ -90,6 +93,25 @@ public:
     }
   }
 
+  [[nodiscard]] std::string_view get_write_split_topic_name() const
+  {
+    if (split_event_pub_) {
+      return split_event_pub_->get_topic_name();
+    } else {
+      return std::string_view{""};
+    }
+  }
+
+  [[nodiscard]] std::string_view get_messages_lost_topic_name() const
+  {
+    if (msgs_lost_event_pub_) {
+      return msgs_lost_event_pub_->get_topic_name();
+    } else {
+      return std::string_view{""};
+    }
+  }
+
+  /// \brief Set the maximum publishing rate for messages lost statistics.
   void set_messages_lost_statistics_max_publishing_rate(float update_rate_hz)
   {
     {
@@ -211,13 +233,12 @@ public:
           message.node_name = node->get_fully_qualified_name();
           split_event_pub_->publish(message);
         } catch (const std::exception & e) {
-          RCLCPP_ERROR_STREAM(
-            node->get_logger(),
-            "Failed to publish message on '/events/write_split' topic. \nError: " << e.what());
+          RCLCPP_ERROR_STREAM(node->get_logger(),
+            "Failed to publish message on '" << get_write_split_topic_name() <<
+            "' topic. \nError: " << e.what());
         } catch (...) {
-          RCLCPP_ERROR_STREAM(
-            node->get_logger(),
-            "Failed to publish message on '/events/write_split' topic.");
+          RCLCPP_ERROR_STREAM(node->get_logger(),
+            "Failed to publish message on '" << get_write_split_topic_name() << "' topic.");
         }
         bag_split_info_queue_.pop();
       }
@@ -240,13 +261,12 @@ public:
             statistics_lock.unlock();
             msgs_lost_event_pub_->publish(message);
           } catch (const std::exception & e) {
-            RCLCPP_ERROR_STREAM(
-              node->get_logger(),
-              "Failed to publish message on '/events/messages_lost' topic. \nError: " << e.what());
+            RCLCPP_ERROR_STREAM(node->get_logger(),
+              "Failed to publish message on '" << get_messages_lost_topic_name() <<
+              "' topic. \nError: " << e.what());
           } catch (...) {
-            RCLCPP_ERROR_STREAM(
-              node->get_logger(),
-              "Failed to publish message on '/events/messages_lost' topic.");
+            RCLCPP_ERROR_STREAM(node->get_logger(),
+              "Failed to publish message on '" << get_messages_lost_topic_name() << "' topic.");
           }
         }
       }

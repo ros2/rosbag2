@@ -144,7 +144,7 @@ The snapshot is taken by calling the `~/snapshot` service on the recorder, descr
 Rosbag2 provides the ability to monitor statistics about lost messages in the recorder and on the
 transport layer during recording. The `--stats_max_publishing_rate` option allows to specify
 the maximum rate in times per second (Hz) at which statistics about lost messages are published
-on the predefined `events/messages_lost` topic. The message type is named as
+on the predefined `events/rosbag2_messages_lost` topic. The message type is named as
 `rosbag2_interfaces::msg::MessagesLostEvent` and defined in the `rosbag2_interfaces` package.
 Note that the statistics are incremental, and message lost event doesn't include topics with zero
 number of lost messages. i.e., the published statistics will only include topics that have lost

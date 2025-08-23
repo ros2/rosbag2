@@ -31,11 +31,13 @@
 #include "rosbag2_test_common/wait_for.hpp"
 
 #include "rosbag2_transport/recorder.hpp"
+#include "rosbag2_transport/recorder_event_notifier.hpp"
 
 #include "mock_recorder.hpp"
 #include "record_integration_fixture.hpp"
 
 using namespace std::chrono_literals;  // NOLINT
+using namespace rosbag2_transport;  // NOLINT
 
 TEST_F(RecordIntegrationTestFixture, published_messages_from_multiple_topics_are_recorded)
 {
@@ -53,8 +55,15 @@ TEST_F(RecordIntegrationTestFixture, published_messages_from_multiple_topics_are
   pub_manager.setup_publisher(string_topic, string_message, 2);
 
   rosbag2_transport::RecordOptions record_options =
-  {true, false, false, false, {}, {}, {}, {}, {"/rosout", "/events/write_split"},
-    {}, {}, {}, "rmw_format", 100ms};
+  {
+    true, false, false, false, {}, {}, {}, {},
+    {
+      "/rosout",
+      RecorderEventNotifier::get_default_write_split_topic_name(),
+      RecorderEventNotifier::get_default_messages_lost_topic_name(),
+    },
+    {}, {}, {}, "rmw_format", 100ms
+  };
   auto recorder = std::make_shared<rosbag2_transport::Recorder>(
     std::move(writer_), storage_options_, record_options);
   recorder->record();
@@ -213,8 +222,15 @@ TEST_F(RecordIntegrationTestFixture, published_messages_from_topic_service_actio
   pub_manager.setup_publisher(string_topic, string_message, 1);
 
   rosbag2_transport::RecordOptions record_options =
-  {true, true, true, false, {}, {}, {}, {}, {"/rosout", "/events/write_split"},
-    {}, {}, {}, "rmw_format", 100ms};
+  {
+    true, true, true, false, {}, {}, {}, {},
+    {
+      "/rosout",
+      RecorderEventNotifier::get_default_write_split_topic_name(),
+      RecorderEventNotifier::get_default_messages_lost_topic_name(),
+    },
+    {}, {}, {}, "rmw_format", 100ms
+  };
   auto recorder = std::make_shared<MockRecorder>(
     std::move(writer_), storage_options_, record_options);
   recorder->record();
@@ -269,8 +285,15 @@ TEST_F(RecordIntegrationTestFixture, cancel_event_messages_from_action_are_recor
       "test_action_1", 2s);
 
   rosbag2_transport::RecordOptions record_options =
-  {false, false, true, false, {}, {}, {}, {}, {"/rosout", "/events/write_split"},
-    {}, {}, {}, "rmw_format", 100ms};
+  {
+    false, false, true, false, {}, {}, {}, {},
+    {
+      "/rosout",
+      RecorderEventNotifier::get_default_write_split_topic_name(),
+      RecorderEventNotifier::get_default_messages_lost_topic_name(),
+    },
+    {}, {}, {}, "rmw_format", 100ms
+  };
   auto recorder = std::make_shared<MockRecorder>(
     std::move(writer_), storage_options_, record_options);
   recorder->record();

@@ -18,6 +18,7 @@
 #include <vector>
 #include <memory>
 #include <string>
+#include <string_view>
 
 #include "rclcpp/node.hpp"
 #include "rclcpp/publisher.hpp"
@@ -60,7 +61,7 @@ public:
   /// \param split_event_pub Optional publisher for WriteSplitEvent messages. If not provided, a
   /// new publisher will be created with the topic name "events/write_split".
   /// \param msgs_lost_event_pub Optional publisher for MessagesLostEvent messages. If not provided,
-  /// a new publisher will be created with the topic name "events/messages_lost".
+  /// a new publisher will be created with the topic name "events/rosbag2_messages_lost".
   explicit RecorderEventNotifier(
     rclcpp::Node * node,
     RclcppPublisherWrapper<WriteSplitEvent>::SharedPtr split_event_pub = nullptr,
@@ -104,6 +105,18 @@ public:
 
   /// \brief Reset the counters for messages lost in recorder.
   void reset_total_num_messages_lost_in_recorder();
+
+  /// \brief Get the default topic name for write split events.
+  [[nodiscard]] static const char * get_default_write_split_topic_name();
+
+  /// \brief Get the default topic name for messages lost events.
+  [[nodiscard]] static const char * get_default_messages_lost_topic_name();
+
+  /// \brief Get the topic name used for publishing write split events.
+  [[nodiscard]] std::string_view get_write_split_topic_name() const;
+
+  /// \brief Get the topic name used for publishing messages lost events.
+  [[nodiscard]] std::string_view get_messages_lost_topic_name() const;
 
 private:
   std::unique_ptr<RecorderEventNotifierImpl> pimpl_;

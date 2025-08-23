@@ -82,4 +82,24 @@ void RecorderEventNotifier::reset_total_num_messages_lost_in_recorder()
   pimpl_->reset_total_num_messages_lost_in_recorder();
 }
 
+const char * RecorderEventNotifier::get_default_write_split_topic_name()
+{
+  return RecorderEventNotifierImpl::kDefaultWriteSplitTopicName;
+}
+
+const char * RecorderEventNotifier::get_default_messages_lost_topic_name()
+{
+  return RecorderEventNotifierImpl::kDefaultMessagesLostTopicName;
+}
+
+std::string_view RecorderEventNotifier::get_write_split_topic_name() const
+{
+  return pimpl_->get_write_split_topic_name();
+}
+
+std::string_view RecorderEventNotifier::get_messages_lost_topic_name() const
+{
+  return pimpl_->get_messages_lost_topic_name();
+}
+
 }  // namespace rosbag2_transport

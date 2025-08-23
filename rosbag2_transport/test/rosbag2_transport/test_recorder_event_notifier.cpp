@@ -75,12 +75,38 @@ TEST_F(TestRecorderEventNotifier, default_ctor_dtor)
   ASSERT_NO_THROW(notifier_.reset());
 }
 
+TEST_F(TestRecorderEventNotifier, get_default_events_topic_names)
+{
+  EXPECT_STREQ(RecorderEventNotifier::get_default_write_split_topic_name(),
+               "events/write_split");
+  EXPECT_STREQ(RecorderEventNotifier::get_default_messages_lost_topic_name(),
+               "events/rosbag2_messages_lost");
+}
+
+TEST_F(TestRecorderEventNotifier, get_current_events_topic_names)
+{
+  const auto fqn_default_write_split =
+    node_->get_node_base_interface()->resolve_topic_or_service_name(
+      RecorderEventNotifier::get_default_write_split_topic_name(),
+      /*is_service=*/false,
+      /*only_expand=*/false);
+
+  const auto fqn_default_msgs_lost =
+    node_->get_node_base_interface()->resolve_topic_or_service_name(
+      RecorderEventNotifier::get_default_messages_lost_topic_name(),
+      /*is_service=*/false,
+      /*only_expand=*/false);
+
+  EXPECT_STREQ(notifier_->get_write_split_topic_name().data(), fqn_default_write_split.c_str());
+  EXPECT_STREQ(notifier_->get_messages_lost_topic_name().data(), fqn_default_msgs_lost.c_str());
+}
+
 TEST_F(TestRecorderEventNotifier, can_handle_and_publish_bag_split_events)
 {
   // Disable statistics publishing
   notifier_->set_messages_lost_statistics_max_publishing_rate(0.0f);
   const size_t expected_number_of_messages = 2;
-  const std::string topic_name = "events/write_split";
+  const std::string topic_name = RecorderEventNotifier::get_default_write_split_topic_name();
   auto sub = std::make_unique<SubscriptionManager>();
   rclcpp::QoS sub_qos(rclcpp::QoS{10}.reliability(rclcpp::ReliabilityPolicy::Reliable));
   // Create a subscription to the write_split event
@@ -119,7 +145,7 @@ TEST_F(TestRecorderEventNotifier, can_publish_event_on_messages_lost_in_recorder
   using MessagesLostEventTopicStat = rosbag2_interfaces::msg::MessagesLostEventTopicStat;
   notifier_->set_messages_lost_statistics_max_publishing_rate(30.0f);
   const size_t expected_number_of_messages = 1;
-  const std::string topic_name = "/events/messages_lost";
+  const std::string topic_name = RecorderEventNotifier::get_default_messages_lost_topic_name();
   auto sub = std::make_unique<SubscriptionManager>();
   rclcpp::QoS sub_qos(rclcpp::QoS{10}.reliability(rclcpp::ReliabilityPolicy::Reliable));
   // Create a subscription to the messages_lost event
@@ -178,7 +204,7 @@ TEST_F(TestRecorderEventNotifier, can_publish_event_on_messages_lost_in_transpor
   using MessagesLostEventTopicStat = rosbag2_interfaces::msg::MessagesLostEventTopicStat;
   notifier_->set_messages_lost_statistics_max_publishing_rate(30.0f);
   const size_t expected_number_of_messages = 1;
-  const std::string topic_name = "/events/messages_lost";
+  const std::string topic_name = RecorderEventNotifier::get_default_messages_lost_topic_name();
   auto sub = std::make_unique<SubscriptionManager>();
   rclcpp::QoS sub_qos(rclcpp::QoS{10}.reliability(rclcpp::ReliabilityPolicy::Reliable));
   // Create a subscription to the messages_lost event
@@ -223,7 +249,7 @@ TEST_F(TestRecorderEventNotifier, not_publishing_on_messages_lost_event_when_dis
 {
   notifier_->set_messages_lost_statistics_max_publishing_rate(0.0f);  // Disable publishing
   const size_t expected_number_of_messages = 0;
-  const std::string topic_name = "/events/messages_lost";
+  const std::string topic_name = RecorderEventNotifier::get_default_messages_lost_topic_name();
   auto sub = std::make_unique<SubscriptionManager>();
   rclcpp::QoS sub_qos(rclcpp::QoS{10}.reliability(rclcpp::ReliabilityPolicy::Reliable));
   // Create a subscription to the messages_lost event
@@ -257,7 +283,7 @@ TEST_F(TestRecorderEventNotifier, will_publish_messages_lost_event_when_updating
   // Disable publishing at the beginning
   notifier_->set_messages_lost_statistics_max_publishing_rate(0.0f);
   const size_t expected_number_of_messages = 1;
-  const std::string topic_name = "/events/messages_lost";
+  const std::string topic_name = RecorderEventNotifier::get_default_messages_lost_topic_name();
   auto sub = std::make_unique<SubscriptionManager>();
   rclcpp::QoS sub_qos(rclcpp::QoS{10}.reliability(rclcpp::ReliabilityPolicy::Reliable));
   // Create a subscription to the messages_lost event
@@ -338,10 +364,12 @@ TEST_F(TestRecorderEventNotifier, event_notifier_respects_max_publishing_rate) {
 
   // Create shared_ptrs to the mock wrappers first
   auto write_split_pub_mock = std::make_shared<MockPublisherWrapper<WriteSplitEvent>>(
-    node_->create_publisher<WriteSplitEvent>("events/write_split", 1));
+    node_->create_publisher<WriteSplitEvent>(
+      RecorderEventNotifier::get_default_write_split_topic_name(), 1));
 
   auto msgs_lost_pub_mock = std::make_shared<MockPublisherWrapper<MessagesLostEvent>>(
-    node_->create_publisher<MessagesLostEvent>("events/messages_lost", 1));
+    node_->create_publisher<MessagesLostEvent>(
+      RecorderEventNotifier::get_default_messages_lost_topic_name(), 1));
 
   // Set up expectations on the shared_ptr mocks directly
   ON_CALL(*write_split_pub_mock, publish(::testing::_))
