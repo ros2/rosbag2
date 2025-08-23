@@ -77,7 +77,7 @@ post-processing.
 
    Will need to add a new `MessagesLostNotifier` class to the `rosbag2_transport::recorder` that 
    will publish on a predefined topic, incremental statistics about the number of lost messages 
-   and bytes written on a per-topic basis when messages lost happened.
+   on a per-topic basis when messages lost happened.
    - To facilitate this, the Rosbag2 recorder shall satisfy the following requirements:
       1. The messages lost event shall be published from the Rosbag2 recorder on a dedicated topic.
       e.g., `/events/rosbag2_messages_lost`
