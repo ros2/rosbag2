@@ -646,5 +646,3 @@ For example, you want a timestamp on the bag directory name, but want a custom p
 $ ros2 bag record -a -o mybag_"$(date +"%Y_%m_%d-%H_%M_%S")"
 ... creates e.g. mybag_2025_02_21-15_35_35
 ```
-
-`

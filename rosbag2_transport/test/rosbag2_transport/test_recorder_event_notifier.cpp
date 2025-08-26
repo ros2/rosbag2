@@ -405,6 +405,9 @@ TEST_F(TestRecorderEventNotifier, event_notifier_respects_max_publishing_rate) {
   // Allow some time for the events to be processed
   std::this_thread::sleep_for(std::chrono::seconds(1));
 
+  // Verify that no write split events were published
+  EXPECT_TRUE(published_write_split_events.empty());
+
   // Verify that the number of published messages respects the 2 Hz rate
   ASSERT_GE(published_messages_lost_events.size(), 2u);  // At least 2 events in 1 second
   ASSERT_LE(published_messages_lost_events.size(), 3u);  // At most 3 events in 1 second
