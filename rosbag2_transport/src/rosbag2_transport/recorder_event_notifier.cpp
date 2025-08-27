@@ -21,9 +21,14 @@
 namespace rosbag2_transport
 {
 
-RecorderEventNotifier::RecorderEventNotifier(rclcpp::Node * node)
+RecorderEventNotifier::RecorderEventNotifier(
+  rclcpp::Node * node,
+  RclcppPublisherWrapper<rosbag2_interfaces::msg::WriteSplitEvent>::SharedPtr split_event_pub,
+  RclcppPublisherWrapper<rosbag2_interfaces::msg::MessagesLostEvent>::SharedPtr msgs_lost_event_pub)
 {
-  pimpl_ = std::make_unique<RecorderEventNotifierImpl>(node);
+  pimpl_ = std::make_unique<RecorderEventNotifierImpl>(node,
+                                                       std::move(split_event_pub),
+                                                       std::move(msgs_lost_event_pub));
 }
 
 RecorderEventNotifier::~RecorderEventNotifier()
@@ -75,6 +80,26 @@ void RecorderEventNotifier::reset_total_num_messages_lost_in_transport()
 void RecorderEventNotifier::reset_total_num_messages_lost_in_recorder()
 {
   pimpl_->reset_total_num_messages_lost_in_recorder();
+}
+
+const char * RecorderEventNotifier::get_default_write_split_topic_name()
+{
+  return RecorderEventNotifierImpl::kDefaultWriteSplitTopicName;
+}
+
+const char * RecorderEventNotifier::get_default_messages_lost_topic_name()
+{
+  return RecorderEventNotifierImpl::kDefaultMessagesLostTopicName;
+}
+
+std::string_view RecorderEventNotifier::get_write_split_topic_name() const
+{
+  return pimpl_->get_write_split_topic_name();
+}
+
+std::string_view RecorderEventNotifier::get_messages_lost_topic_name() const
+{
+  return pimpl_->get_messages_lost_topic_name();
 }
 
 }  // namespace rosbag2_transport

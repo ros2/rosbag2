@@ -194,6 +194,12 @@ def add_recorder_arguments(parser: ArgumentParser) -> None:
         '--log-level', type=str, default='info',
         choices=['debug', 'info', 'warn', 'error', 'fatal'],
         help='Logging level.')
+    parser.add_argument(
+        '--stats_max_publishing_rate', type=float, default=1.0,
+        help='Maximum rate in times per second (Hz) at which the statistics about lost '
+             'messages will be published. Default: %(default)s. If set to 0, no statistics will '
+             'be published. The value must be greater than or equal to 0 and less than or equal '
+             'to 1000.')
 
     # Storage configuration
     add_writer_storage_plugin_extensions(parser)
@@ -304,6 +310,9 @@ def validate_parsed_arguments(args, uri) -> str:
     if args.compression_queue_size < 0:
         return print_error('Compression queue size must be at least 0.')
 
+    if args.stats_max_publishing_rate < 0 or args.stats_max_publishing_rate > 1000.0:
+        return print_error('stats_max_publishing_rate must be between 0 and 1000.')
+
     return None
 
 
@@ -394,6 +403,7 @@ class RecordVerb(VerbExtension):
         record_options.ignore_leaf_topics = args.ignore_leaf_topics
         record_options.use_sim_time = args.use_sim_time
         record_options.disable_keyboard_controls = args.disable_keyboard_controls
+        record_options.statistics_max_publishing_rate = args.stats_max_publishing_rate
 
         recorder = Recorder(storage_options, record_options, args.log_level, args.node_name)
 

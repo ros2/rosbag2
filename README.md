@@ -139,6 +139,30 @@ This entire buffer can be dumped to disk on request, saving data only in specifi
 
 The snapshot is taken by calling the `~/snapshot` service on the recorder, described previously.
 
+#### Statistics about lost messages
+
+Rosbag2 provides the ability to monitor statistics about lost messages in the recorder and on the
+transport layer during recording. The `--stats_max_publishing_rate` option allows to specify
+the maximum rate in times per second (Hz) at which statistics about lost messages are published
+on the predefined `events/rosbag2_messages_lost` topic. The message type is named as
+`rosbag2_interfaces::msg::MessagesLostEvent` and defined in the `rosbag2_interfaces` package.
+Note that the statistics are incremental, and message lost event doesn't include topics with zero
+number of lost messages. i.e., the published statistics will only include topics that have lost
+messages and inner counters reset to zero after each event has been published.
+
+For example:
+
+```
+$ ros2 bag record -a --stats_max_publishing_rate 0.5
+```
+
+In this example, statistics about lost messages will be published at a maximum rate of 0.5 Hz,
+i.e., once per 2 seconds. Setting the value to `0` disables the publishing of statistics. The value
+must be greater than or equal to `0` and less than or equal to `1000`. The default maximum
+publishing rate is 1 Hz. i.e., statistics will be published once per second.
+
+This feature helps in real-time monitoring of message loss during recording.
+
 ### Replaying data <a id="play"></a>
 
 When you have a recorded bag, you can use Rosbag2 to play it back:
