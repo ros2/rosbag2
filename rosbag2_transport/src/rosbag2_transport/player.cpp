@@ -317,6 +317,11 @@ private:
   void enqueue_up_to_boundary(
     size_t boundary,
     size_t message_queue_size) RCPPUTILS_TSA_REQUIRES(reader_mutex_);
+
+  /// \brief Get the next message from cache with the earliest timestamp. Updates the cache by
+  /// reading from readers as necessary.
+  std::shared_ptr<rosbag2_storage::SerializedBagMessage>
+  get_next_chronological_message_from_cache() RCPPUTILS_TSA_REQUIRES(reader_mutex_);
   void wait_for_filled_queue() const;
   void play_messages_from_queue();
   void prepare_publishers();
@@ -366,6 +371,7 @@ private:
     rosbag2_storage::SerializedBagMessageSharedPtr,
     std::vector<rosbag2_storage::SerializedBagMessageSharedPtr>,
     BagMessageComparator> message_queue_;
+  std::vector<std::shared_ptr<rosbag2_storage::SerializedBagMessage>> next_messages_cache_;
   mutable std::future<void> storage_loading_future_;
   std::atomic_bool load_storage_content_{true};
   std::unordered_map<std::string, rclcpp::QoS> topic_qos_profile_overrides_;
@@ -502,7 +508,7 @@ PlayerImpl::PlayerImpl(
   }
 
   {
-    std::lock_guard<std::mutex> lk(reader_mutex_);
+    rcpputils::unique_lock lk(reader_mutex_);
     starting_time_ = std::numeric_limits<decltype(starting_time_)>::max();
     rcutils_time_point_value_t ending_time = std::numeric_limits<decltype(ending_time)>::min();
     for (const auto & [reader, storage_options] : readers_with_options_) {
@@ -572,12 +578,13 @@ PlayerImpl::~PlayerImpl()
     playback_thread_.join();
   }
   // closes readers
-  std::lock_guard<std::mutex> lk(reader_mutex_);
+  rcpputils::unique_lock lk(reader_mutex_);
   for (const auto & [reader, _] : readers_with_options_) {
     if (reader) {
       reader->close();
     }
   }
+  next_messages_cache_.clear();
   progress_bar_->update(clock_->is_paused() ? PlayerStatus::PAUSED : PlayerStatus::RUNNING);
 }
 
@@ -633,9 +640,17 @@ bool PlayerImpl::play()
         }
         do {
           {
-            std::lock_guard<std::mutex> lk(reader_mutex_);
+            rcpputils::unique_lock lk(reader_mutex_);
+            next_messages_cache_.clear();
+            next_messages_cache_.resize(readers_with_options_.size(), nullptr);
+            size_t i = 0;
             for (const auto & [reader, _] : readers_with_options_) {
               reader->seek(starting_time_);
+              // Refill the next_messages_cache_
+              if (reader->has_next()) {
+                next_messages_cache_[i] = reader->read_next();
+              }
+              i++;
             }
           }
           progress_bar_->update(clock_->is_paused() ? PlayerStatus::PAUSED : PlayerStatus::RUNNING);
@@ -913,11 +928,19 @@ void PlayerImpl::seek(rcutils_time_point_value_t time_point)
     time_point = starting_time_;
   }
   {
-    std::lock_guard<std::mutex> lk(reader_mutex_);
+    rcpputils::unique_lock lk(reader_mutex_);
     // Purge current messages in queue.
     message_queue_.purge();
+    next_messages_cache_.clear();
+    next_messages_cache_.resize(readers_with_options_.size(), nullptr);
+    size_t i = 0;
     for (const auto & [reader, _] : readers_with_options_) {
       reader->seek(time_point);
+      // Refill the next_messages_cache_
+      if (reader->has_next()) {
+        next_messages_cache_[i] = reader->read_next();
+      }
+      i++;
     }
     clock_->jump(time_point);
     // Restart queuing thread if it has finished running (previously reached end of bag),
@@ -1132,9 +1155,9 @@ void PlayerImpl::load_storage_content()
   while (rclcpp::ok() && load_storage_content_ && !stop_playback_) {
     rcpputils::unique_lock lk(reader_mutex_);
     const bool no_messages = std::all_of(
-      readers_with_options_.cbegin(),
-      readers_with_options_.cend(),
-      [](const auto & reader_options) {return !reader_options.first->has_next();});
+      next_messages_cache_.cbegin(),
+      next_messages_cache_.cend(),
+      [](const auto & reader_next_msg) {return reader_next_msg == nullptr;});
     if (no_messages) {
       break;
     }
@@ -1152,30 +1175,43 @@ void PlayerImpl::load_storage_content()
 
 void PlayerImpl::enqueue_up_to_boundary(size_t boundary, size_t message_queue_size)
 {
-  // Read messages from input bags in a round-robin way
-  size_t input_bag_index = 0u;
   while (message_queue_size < boundary) {
-    const auto & reader = readers_with_options_[input_bag_index].first;
-    if (reader->has_next()) {
-      ++message_queue_size;
-      message_queue_.push(reader->read_next());
+    auto next_message = get_next_chronological_message_from_cache();
+    if (next_message != nullptr) {
+      message_queue_.push(next_message);
+      message_queue_size++;
+    } else {
+      // If we have no more messages, we shall stop reading and exit the loop to avoid endless
+      // cycle.
+      break;
     }
-    input_bag_index = (input_bag_index + 1) % readers_with_options_.size();
+  }
+}
 
-    if (input_bag_index == 0) {
-      // If we have gone through all readers, check if we have no more messages
-      const bool no_more_messages = std::all_of(
-        readers_with_options_.cbegin(),
-        readers_with_options_.cend(),
-        [](const auto & reader_options) {return !reader_options.first->has_next();});
-
-      if (no_more_messages) {
-        // If we have no more messages, we shall stop reading and exit the loop to avoid endless
-        // cycle.
-        break;
+std::shared_ptr<rosbag2_storage::SerializedBagMessage>
+PlayerImpl::get_next_chronological_message_from_cache()
+{
+  std::shared_ptr<rosbag2_storage::SerializedBagMessage> earliest_msg = nullptr;
+  size_t earliest_msg_index = 0;
+  for (size_t i = 0; i < next_messages_cache_.size(); ++i) {
+    const auto & message = next_messages_cache_[i];
+    if (message != nullptr) {
+      if (earliest_msg == nullptr || message->recv_timestamp < earliest_msg->recv_timestamp) {
+        earliest_msg = message;
+        earliest_msg_index = i;
       }
     }
   }
+  if (earliest_msg != nullptr) {
+    // Advance the reader that provided the message
+    const auto & reader = readers_with_options_[earliest_msg_index].first;
+    if (reader->has_next()) {
+      next_messages_cache_[earliest_msg_index] = reader->read_next();
+    } else {
+      next_messages_cache_[earliest_msg_index] = nullptr;
+    }
+  }
+  return earliest_msg;
 }
 
 void PlayerImpl::play_messages_from_queue()
