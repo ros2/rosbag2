@@ -141,7 +141,12 @@ if(BUILD_TESTING)
   endfunction()
 
   ament_add_gmock_executable(test_play test/rosbag2_transport/test_play.cpp)
-  target_link_libraries(test_play rosbag2_transport ${test_msgs_TARGETS} rosbag2_test_common::rosbag2_test_common)
+  target_link_libraries(test_play
+    rosbag2_transport
+    ${test_msgs_TARGETS}
+    rosbag2_test_common::rosbag2_test_common
+    rcutils::rcutils
+  )
   function(test_play_for_rmw_implementation)
     set(rmw_implementation_env_var RMW_IMPLEMENTATION=${rmw_implementation})
     append_evars_if_rmw_zenoh(rmw_implementation_env_var ${rmw_implementation})
