@@ -12,8 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "rosbag2_transport/player.hpp"
-
 #include <algorithm>
 #include <chrono>
 #include <limits>
@@ -40,10 +38,12 @@
 #include "rosbag2_storage/storage_filter.hpp"
 #include "rosbag2_storage/qos.hpp"
 #include "rosbag2_transport/config_options_from_node_params.hpp"
+#include "rosbag2_transport/player.hpp"
 #include "rosbag2_transport/player_action_client.hpp"
 #include "rosbag2_transport/player_service_client.hpp"
 #include "rosbag2_transport/player_progress_bar.hpp"
 #include "rosbag2_transport/reader_writer_factory.hpp"
+#include "rosbag2_transport/readers_wrapper.hpp"
 
 #include "logging.hpp"
 #include "locked_priority_queue.hpp"
@@ -314,14 +314,8 @@ private:
   rosbag2_storage::SerializedBagMessageSharedPtr take_next_message_from_queue();
   void load_storage_content();
   bool is_storage_completely_loaded() const;
-  void enqueue_up_to_boundary(
-    size_t boundary,
-    size_t message_queue_size) RCPPUTILS_TSA_REQUIRES(reader_mutex_);
+  void enqueue_up_to_boundary(size_t boundary, size_t message_queue_size);
 
-  /// \brief Get the next message from cache with the earliest timestamp. Updates the cache by
-  /// reading from readers as necessary.
-  std::shared_ptr<rosbag2_storage::SerializedBagMessage>
-  get_next_chronological_message_from_cache() RCPPUTILS_TSA_REQUIRES(reader_mutex_);
   void wait_for_filled_queue() const;
   void play_messages_from_queue();
   void prepare_publishers();
@@ -353,9 +347,7 @@ private:
   std::atomic_bool cancel_wait_for_next_message_{false};
   std::atomic_bool stop_playback_{false};
 
-  std::mutex reader_mutex_;
-  std::vector<reader_storage_options_pair_t> readers_with_options_ RCPPUTILS_TSA_GUARDED_BY(
-    reader_mutex_);
+  std::unique_ptr<ReadersWrapper> readers_;
 
   void publish_clock_update();
   void publish_clock_update(const rclcpp::Time & time);
@@ -371,7 +363,6 @@ private:
     rosbag2_storage::SerializedBagMessageSharedPtr,
     std::vector<rosbag2_storage::SerializedBagMessageSharedPtr>,
     BagMessageComparator> message_queue_;
-  std::vector<std::shared_ptr<rosbag2_storage::SerializedBagMessage>> next_messages_cache_;
   mutable std::future<void> storage_loading_future_;
   std::atomic_bool load_storage_content_{true};
   std::unordered_map<std::string, rclcpp::QoS> topic_qos_profile_overrides_;
@@ -464,7 +455,7 @@ PlayerImpl::PlayerImpl(
   std::vector<reader_storage_options_pair_t> && readers_with_options,
   std::shared_ptr<KeyboardHandler> keyboard_handler,
   const rosbag2_transport::PlayOptions & play_options)
-: readers_with_options_(std::move(readers_with_options)),
+: readers_(std::make_unique<ReadersWrapper>(std::move(readers_with_options))),
   owner_(owner),
   play_options_(play_options),
   message_queue_(get_bag_message_comparator(play_options_.message_order)),
@@ -507,53 +498,35 @@ PlayerImpl::PlayerImpl(
       owner_->get_namespace(), false);
   }
 
-  {
-    rcpputils::unique_lock lk(reader_mutex_);
-    starting_time_ = std::numeric_limits<decltype(starting_time_)>::max();
-    rcutils_time_point_value_t ending_time = std::numeric_limits<decltype(ending_time)>::min();
-    for (const auto & [reader, storage_options] : readers_with_options_) {
-      // keep readers open until player is destroyed
-      reader->open(storage_options, {"", rmw_get_serialization_format()});
-      // Find earliest starting time
-      const auto metadata = reader->get_metadata();
-      const auto metadata_starting_time = std::chrono::duration_cast<std::chrono::nanoseconds>(
-        metadata.starting_time.time_since_epoch()).count();
-      const auto metadata_bag_duration = std::chrono::duration_cast<std::chrono::nanoseconds>(
-        metadata.duration).count();
-      if (metadata_starting_time < starting_time_) {
-        starting_time_ = metadata_starting_time;
-      }
-      if (metadata_starting_time + metadata_bag_duration > ending_time) {
-        ending_time = metadata_starting_time + metadata_bag_duration;
-      }
-    }
-    // If a non-default (positive) starting time offset is provided in PlayOptions,
-    // then add the offset to the starting time obtained from reader metadata
-    if (play_options_.start_offset < 0) {
-      RCLCPP_WARN_STREAM(
-        owner_->get_logger(),
-        "Invalid start offset value: " <<
-          RCUTILS_NS_TO_S(static_cast<double>(play_options_.start_offset)) <<
-          ". Negative start offset ignored.");
-    } else {
-      starting_time_ += play_options_.start_offset;
-    }
-
-    playback_duration_ = ending_time - starting_time_;
-
-    progress_bar_ = std::make_unique<PlayerProgressBar>(
-      std::cout, starting_time_, ending_time,
-      play_options.progress_bar_update_rate,
-      play_options.progress_bar_separation_lines);
-
-    clock_ = std::make_unique<rosbag2_cpp::TimeControllerClock>(
-      starting_time_, std::chrono::steady_clock::now,
-      std::chrono::milliseconds{100}, play_options_.start_paused);
-    set_rate(play_options_.rate);
-    topic_qos_profile_overrides_ = play_options_.topic_qos_profile_overrides;
-    prepare_publishers();
-    configure_play_until_timestamp();
+  starting_time_ = readers_->get_earliest_timestamp();
+  const rcutils_time_point_value_t ending_time = readers_->get_latest_timestamp();
+  // If a non-default (positive) starting time offset is provided in PlayOptions,
+  // then add the offset to the starting time obtained from reader metadata
+  if (play_options_.start_offset < 0) {
+    RCLCPP_WARN_STREAM(
+      owner_->get_logger(),
+      "Invalid start offset value: " <<
+        RCUTILS_NS_TO_S(static_cast<double>(play_options_.start_offset)) <<
+        ". Negative start offset ignored.");
+  } else {
+    starting_time_ += play_options_.start_offset;
   }
+
+  playback_duration_ = ending_time - starting_time_;
+
+  progress_bar_ = std::make_unique<PlayerProgressBar>(
+    std::cout, starting_time_, ending_time,
+    play_options.progress_bar_update_rate,
+    play_options.progress_bar_separation_lines);
+
+  clock_ = std::make_unique<rosbag2_cpp::TimeControllerClock>(
+    starting_time_, std::chrono::steady_clock::now,
+    std::chrono::milliseconds{100}, play_options_.start_paused);
+  set_rate(play_options_.rate);
+  topic_qos_profile_overrides_ = play_options_.topic_qos_profile_overrides;
+  prepare_publishers();
+  configure_play_until_timestamp();
+
   create_control_services();
   add_keyboard_callbacks();
   progress_bar_->print_help_str();
@@ -577,14 +550,6 @@ PlayerImpl::~PlayerImpl()
   if (playback_thread_.joinable()) {
     playback_thread_.join();
   }
-  // closes readers
-  rcpputils::unique_lock lk(reader_mutex_);
-  for (const auto & [reader, _] : readers_with_options_) {
-    if (reader) {
-      reader->close();
-    }
-  }
-  next_messages_cache_.clear();
   progress_bar_->update(clock_->is_paused() ? PlayerStatus::PAUSED : PlayerStatus::RUNNING);
 }
 
@@ -639,20 +604,7 @@ bool PlayerImpl::play()
           std::this_thread::sleep_for(delay_duration);
         }
         do {
-          {
-            rcpputils::unique_lock lk(reader_mutex_);
-            next_messages_cache_.clear();
-            next_messages_cache_.resize(readers_with_options_.size(), nullptr);
-            size_t i = 0;
-            for (const auto & [reader, _] : readers_with_options_) {
-              reader->seek(starting_time_);
-              // Refill the next_messages_cache_
-              if (reader->has_next()) {
-                next_messages_cache_[i] = reader->read_next();
-              }
-              i++;
-            }
-          }
+          readers_->seek(starting_time_);
           progress_bar_->update(clock_->is_paused() ? PlayerStatus::PAUSED : PlayerStatus::RUNNING);
 
           load_storage_content_ = true;
@@ -927,29 +879,18 @@ void PlayerImpl::seek(rcutils_time_point_value_t time_point)
   if (time_point < starting_time_) {
     time_point = starting_time_;
   }
-  {
-    rcpputils::unique_lock lk(reader_mutex_);
-    // Purge current messages in queue.
-    message_queue_.purge();
-    next_messages_cache_.clear();
-    next_messages_cache_.resize(readers_with_options_.size(), nullptr);
-    size_t i = 0;
-    for (const auto & [reader, _] : readers_with_options_) {
-      reader->seek(time_point);
-      // Refill the next_messages_cache_
-      if (reader->has_next()) {
-        next_messages_cache_[i] = reader->read_next();
-      }
-      i++;
-    }
-    clock_->jump(time_point);
-    // Restart queuing thread if it has finished running (previously reached end of bag),
-    // otherwise, queueing should continue automatically after releasing mutex
-    if (is_storage_completely_loaded() && rclcpp::ok()) {
-      load_storage_content_ = true;
-      storage_loading_future_ =
-        std::async(std::launch::async, [this]() {load_storage_content();});
-    }
+
+  // Purge current messages in queue.
+  message_queue_.purge();
+  readers_->seek(time_point);
+
+  clock_->jump(time_point);
+  // Restart queuing thread if it has finished running (previously reached end of bag),
+  // otherwise, queueing should continue automatically after releasing mutex
+  if (is_storage_completely_loaded() && rclcpp::ok()) {
+    load_storage_content_ = true;
+    storage_loading_future_ =
+      std::async(std::launch::async, [this]() {load_storage_content();});
   }
 }
 
@@ -1153,21 +1094,14 @@ void PlayerImpl::load_storage_content()
   auto queue_upper_boundary = play_options_.read_ahead_queue_size;
 
   while (rclcpp::ok() && load_storage_content_ && !stop_playback_) {
-    rcpputils::unique_lock lk(reader_mutex_);
-    const bool no_messages = std::all_of(
-      next_messages_cache_.cbegin(),
-      next_messages_cache_.cend(),
-      [](const auto & reader_next_msg) {return reader_next_msg == nullptr;});
-    if (no_messages) {
+    if (readers_->no_messages_in_cache()) {
       break;
     }
-
     // The message queue size may get smaller after this, but that's OK
     const size_t message_queue_size = message_queue_.size();
     if (message_queue_size < queue_lower_boundary) {
       enqueue_up_to_boundary(queue_upper_boundary, message_queue_size);
     } else {
-      lk.unlock();
       std::this_thread::sleep_for(std::chrono::milliseconds(1));
     }
   }
@@ -1176,7 +1110,7 @@ void PlayerImpl::load_storage_content()
 void PlayerImpl::enqueue_up_to_boundary(size_t boundary, size_t message_queue_size)
 {
   while (message_queue_size < boundary) {
-    auto next_message = get_next_chronological_message_from_cache();
+    auto next_message = readers_->get_next_chronological_message_from_cache();
     if (next_message != nullptr) {
       message_queue_.push(next_message);
       message_queue_size++;
@@ -1186,32 +1120,6 @@ void PlayerImpl::enqueue_up_to_boundary(size_t boundary, size_t message_queue_si
       break;
     }
   }
-}
-
-std::shared_ptr<rosbag2_storage::SerializedBagMessage>
-PlayerImpl::get_next_chronological_message_from_cache()
-{
-  std::shared_ptr<rosbag2_storage::SerializedBagMessage> earliest_msg = nullptr;
-  size_t earliest_msg_index = 0;
-  for (size_t i = 0; i < next_messages_cache_.size(); ++i) {
-    const auto & message = next_messages_cache_[i];
-    if (message != nullptr) {
-      if (earliest_msg == nullptr || message->recv_timestamp < earliest_msg->recv_timestamp) {
-        earliest_msg = message;
-        earliest_msg_index = i;
-      }
-    }
-  }
-  if (earliest_msg != nullptr) {
-    // Advance the reader that provided the message
-    const auto & reader = readers_with_options_[earliest_msg_index].first;
-    if (reader->has_next()) {
-      next_messages_cache_[earliest_msg_index] = reader->read_next();
-    } else {
-      next_messages_cache_[earliest_msg_index] = nullptr;
-    }
-  }
-  return earliest_msg;
 }
 
 void PlayerImpl::play_messages_from_queue()
@@ -1506,9 +1414,7 @@ void PlayerImpl::prepare_publishers()
       std::make_move_iterator(action_interfaces.end()));
   }
 
-  for (const auto & [reader, _] : readers_with_options_) {
-    reader->set_filter(storage_filter);
-  }
+  readers_->set_filter(storage_filter);
 
   // Create /clock publisher
   if (play_options_.clock_publish_frequency > 0.f || play_options_.clock_publish_on_topic_publish) {
@@ -1546,11 +1452,7 @@ void PlayerImpl::prepare_publishers()
 
   // Create topic publishers
   // We could have duplicate topic names here, but we correctly handle it when creating publishers
-  std::vector<rosbag2_storage::TopicMetadata> topics{};
-  for (const auto & [reader, _] : readers_with_options_) {
-    auto bag_topics = reader->get_all_topics_and_types();
-    topics.insert(topics.end(), bag_topics.begin(), bag_topics.end());
-  }
+  std::vector<rosbag2_storage::TopicMetadata> topics = readers_->get_all_topics_and_types();
   std::string topic_without_support_acked;
   for (const auto & topic : topics) {
     TopicKind topic_kind;
@@ -1678,9 +1580,7 @@ void PlayerImpl::prepare_publishers()
       message.node_name = owner_->get_fully_qualified_name();
       split_event_pub_->publish(message);
     };
-  for (const auto & [reader, _] : readers_with_options_) {
-    reader->add_event_callbacks(callbacks);
-  }
+  readers_->add_event_callbacks(callbacks);
 }
 
 void PlayerImpl::run_play_msg_pre_callbacks(
@@ -2211,17 +2111,16 @@ void PlayerImpl::publish_clock_update(const rclcpp::Time & time)
 
 const rosbag2_storage::StorageOptions & PlayerImpl::get_storage_options()
 {
-  return readers_with_options_[0].second;
+  auto all_storage_options = get_all_storage_options();
+  if (all_storage_options.size() < 1) {
+    throw std::runtime_error("Storage options not available.");
+  }
+  return all_storage_options[0];
 }
 
 std::vector<rosbag2_storage::StorageOptions> PlayerImpl::get_all_storage_options()
 {
-  std::vector<rosbag2_storage::StorageOptions> storage_options{};
-  storage_options.reserve(readers_with_options_.size());
-  for (const auto & [_, options] : readers_with_options_) {
-    storage_options.push_back(options);
-  }
-  return storage_options;
+  return readers_->get_all_storage_options();
 }
 
 const rosbag2_transport::PlayOptions & PlayerImpl::get_play_options()

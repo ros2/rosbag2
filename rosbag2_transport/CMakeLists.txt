@@ -52,6 +52,7 @@ add_library(${PROJECT_NAME} SHARED
   src/rosbag2_transport/player_service_client.cpp
   src/rosbag2_transport/player_action_client.cpp
   src/rosbag2_transport/reader_writer_factory.cpp
+  src/rosbag2_transport/readers_wrapper.cpp
   src/rosbag2_transport/recorder.cpp
   src/rosbag2_transport/record_options.cpp
   src/rosbag2_transport/topic_filter.cpp
