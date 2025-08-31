@@ -591,6 +591,13 @@ if(BUILD_TESTING)
     rosbag2_test_common::rosbag2_test_common
     ${rosbag2_interfaces_TARGETS}
   )
+
+  ament_add_gmock(test_readers_wrapper test/rosbag2_transport/test_readers_wrapper.cpp)
+  target_link_libraries(test_readers_wrapper
+    ${PROJECT_NAME}
+    rosbag2_test_common::rosbag2_test_common
+    rcutils::rcutils
+  )
 endif()
 
 ament_package()
