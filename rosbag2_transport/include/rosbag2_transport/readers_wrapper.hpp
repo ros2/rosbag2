@@ -67,6 +67,13 @@ public:
   /// and storage options (which will be applied to the rosbag2_cpp::reader when opening it).
   explicit ReadersWrapper(std::vector<reader_storage_options_pair_t> && reader_with_options);
 
+  /// \brief Deleted default constructor and copy/move operations.
+  ReadersWrapper() = delete;
+  ReadersWrapper(const ReadersWrapper &) = delete;
+  ReadersWrapper & operator=(const ReadersWrapper &) = delete;
+  ReadersWrapper(ReadersWrapper &&) = delete;
+  ReadersWrapper & operator=(ReadersWrapper &&) = delete;
+
   /// \brief Destructor which cleans up resources used by the ReadersWrapper.
   /// \note The readers will be closed during destruction.
   virtual ~ReadersWrapper();
