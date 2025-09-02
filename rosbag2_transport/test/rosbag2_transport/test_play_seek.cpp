@@ -187,28 +187,28 @@ TEST_P(RosBag2PlaySeekTestFixture, reader_can_correctly_do_seek) {
   const auto third_msg_timestamp = (start_time_ms_ + message_spacing_ms_ * 2) * 1000000;
   ASSERT_TRUE(reader_->has_next());
   auto msg = reader_->read_next();
-  EXPECT_EQ(msg->recv_timestamp, first_msg_timestamp);  // First message timestamp
+  EXPECT_EQ(msg->time_stamp, first_msg_timestamp);  // First message timestamp
 
   // Jump on third message (1200 ms)
   reader_->seek(third_msg_timestamp);
   ASSERT_TRUE(reader_->has_next());
   msg = reader_->read_next();
-  EXPECT_EQ(msg->recv_timestamp, third_msg_timestamp);
+  EXPECT_EQ(msg->time_stamp, third_msg_timestamp);
 
   // Jump back on second message (1100 ms)
   reader_->seek(second_msg_timestamp);
   ASSERT_TRUE(reader_->has_next());
   msg = reader_->read_next();
-  EXPECT_EQ(msg->recv_timestamp, second_msg_timestamp);
+  EXPECT_EQ(msg->time_stamp, second_msg_timestamp);
   ASSERT_TRUE(reader_->has_next());
   msg = reader_->read_next();
-  EXPECT_EQ(msg->recv_timestamp, third_msg_timestamp);
+  EXPECT_EQ(msg->time_stamp, third_msg_timestamp);
 
   // Jump on third message (1200 ms) where timestamp is exactly the same as previous read message
   reader_->seek(third_msg_timestamp);
   ASSERT_TRUE(reader_->has_next());
   msg = reader_->read_next();
-  EXPECT_EQ(msg->recv_timestamp, third_msg_timestamp);
+  EXPECT_EQ(msg->time_stamp, third_msg_timestamp);
 }
 
 TEST_P(RosBag2PlaySeekTestFixture, seek_forward) {
