@@ -823,9 +823,7 @@ void MCAPStorage::reset_filter()
 
 void MCAPStorage::seek(const rcutils_time_point_value_t & time_stamp)
 {
-  if (time_stamp != last_read_time_point_) {
-    last_read_message_offset_ = std::nullopt;
-  }
+  last_read_message_offset_ = std::nullopt;
   last_read_time_point_ = time_stamp;
   reset_iterator();
 }

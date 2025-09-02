@@ -183,6 +183,37 @@ TEST_P(RosBag2PlaySeekTestFixture, seek_with_timestamp_later_than_in_last_messag
   ASSERT_THAT(replayed_topic1, SizeIs(expected_number_of_messages));
 }
 
+TEST_P(RosBag2PlaySeekTestFixture, reader_can_correctly_do_seek) {
+  reader_->open(storage_options_);
+  const auto first_msg_timestamp = start_time_ms_ * 1000000;
+  const auto second_msg_timestamp = (start_time_ms_ + message_spacing_ms_) * 1000000;
+  const auto third_msg_timestamp = (start_time_ms_ + message_spacing_ms_ * 2) * 1000000;
+  ASSERT_TRUE(reader_->has_next());
+  auto msg = reader_->read_next();
+  EXPECT_EQ(msg->recv_timestamp, first_msg_timestamp);  // First message timestamp
+
+  // Jump on third message (1200 ms)
+  reader_->seek(third_msg_timestamp);
+  ASSERT_TRUE(reader_->has_next());
+  msg = reader_->read_next();
+  EXPECT_EQ(msg->recv_timestamp, third_msg_timestamp);
+
+  // Jump back on second message (1100 ms)
+  reader_->seek(second_msg_timestamp);
+  ASSERT_TRUE(reader_->has_next());
+  msg = reader_->read_next();
+  EXPECT_EQ(msg->recv_timestamp, second_msg_timestamp);
+  ASSERT_TRUE(reader_->has_next());
+  msg = reader_->read_next();
+  EXPECT_EQ(msg->recv_timestamp, third_msg_timestamp);
+
+  // Jump on third message (1200 ms) where timestamp is exactly the same as previous read message
+  reader_->seek(third_msg_timestamp);
+  ASSERT_TRUE(reader_->has_next());
+  msg = reader_->read_next();
+  EXPECT_EQ(msg->recv_timestamp, third_msg_timestamp);
+}
+
 TEST_P(RosBag2PlaySeekTestFixture, seek_forward) {
   const size_t expected_number_of_messages = num_msgs_in_bag_ - 1;
   auto player = std::make_shared<MockPlayer>(std::move(reader_), storage_options_, play_options_);
