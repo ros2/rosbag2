@@ -186,14 +186,9 @@ TEST_P(TestRewrite, test_compress) {
   use_input_a();
 
   rosbag2_storage::StorageOptions output_storage;
-<<<<<<< HEAD
-  output_storage.uri = (output_dir_ / "compressed").string();
-  output_storage.storage_id = rosbag2_storage::get_default_storage_id();
-=======
   auto out_bag = output_dir_ / "compressed";
   output_storage.uri = out_bag.string();
   output_storage.storage_id = storage_id_;
->>>>>>> 6a54577 (rosbag2_transport: parametrize test_rewrite (#1206))
   rosbag2_transport::RecordOptions output_record;
   output_record.all = true;
   output_record.compression_mode = "file";
