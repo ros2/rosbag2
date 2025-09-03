@@ -43,7 +43,7 @@
 #include "rosbag2_transport/player_service_client.hpp"
 #include "rosbag2_transport/player_progress_bar.hpp"
 #include "rosbag2_transport/reader_writer_factory.hpp"
-#include "rosbag2_transport/readers_wrapper.hpp"
+#include "rosbag2_transport/readers_manager.hpp"
 
 #include "logging.hpp"
 #include "locked_priority_queue.hpp"
@@ -347,7 +347,7 @@ private:
   std::atomic_bool cancel_wait_for_next_message_{false};
   std::atomic_bool stop_playback_{false};
 
-  std::unique_ptr<ReadersWrapper> readers_;
+  std::unique_ptr<ReadersManager> readers_;
 
   void publish_clock_update();
   void publish_clock_update(const rclcpp::Time & time);
@@ -455,7 +455,7 @@ PlayerImpl::PlayerImpl(
   std::vector<reader_storage_options_pair_t> && readers_with_options,
   std::shared_ptr<KeyboardHandler> keyboard_handler,
   const rosbag2_transport::PlayOptions & play_options)
-: readers_(std::make_unique<ReadersWrapper>(std::move(readers_with_options))),
+: readers_(std::make_unique<ReadersManager>(std::move(readers_with_options))),
   owner_(owner),
   play_options_(play_options),
   message_queue_(get_bag_message_comparator(play_options_.message_order)),

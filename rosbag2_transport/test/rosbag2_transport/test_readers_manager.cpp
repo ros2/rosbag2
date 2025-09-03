@@ -18,7 +18,7 @@
 #include <iostream>
 
 #include "rcutils/time.h"
-#include "rosbag2_transport/readers_wrapper.hpp"
+#include "rosbag2_transport/readers_manager.hpp"
 #include "rosbag2_transport_test_fixture.hpp"
 #include "test_msgs/message_fixtures.hpp"
 
@@ -78,32 +78,32 @@ protected:
   const int32_t kNumMessagesPerBag = 5;
   const int32_t kReader1MsgsOffset = 0;
   const int32_t kReader2MsgsOffset = 5;
-  std::vector<ReadersWrapper::reader_storage_options_pair_t> readers_with_options_;
+  std::vector<ReadersManager::reader_storage_options_pair_t> readers_with_options_;
 };
 
 TEST_F(Rosbag2ReadersWrapperTestFixture, default_ctor_dtor)
 {
   {
-    std::vector<ReadersWrapper::reader_storage_options_pair_t> readers_with_options;
+    std::vector<ReadersManager::reader_storage_options_pair_t> readers_with_options;
     EXPECT_THROW(
-      ReadersWrapper readers_wrapper(std::move(readers_with_options)),
+      ReadersManager readers_manager(std::move(readers_with_options)),
       std::invalid_argument
     );
   }
   {
-    EXPECT_NO_THROW(ReadersWrapper readers_wrapper(std::move(readers_with_options_)));
+    EXPECT_NO_THROW(ReadersManager readers_manager(std::move(readers_with_options_)));
   }
 }
 
 TEST_F(Rosbag2ReadersWrapperTestFixture, read_messages_chronologically_from_multiple_readers)
 {
-  ReadersWrapper readers_wrapper(std::move(readers_with_options_));
+  ReadersManager readers_manager(std::move(readers_with_options_));
 
   size_t expected_total_messages = 2 * kNumMessagesPerBag;  // 5 from each reader
 
   for (size_t i = 0; i < expected_total_messages; ++i) {
-    EXPECT_FALSE(readers_wrapper.no_messages_in_cache());
-    auto message = readers_wrapper.get_next_chronological_message_from_cache();
+    EXPECT_FALSE(readers_manager.no_messages_in_cache());
+    auto message = readers_manager.get_next_chronological_message_from_cache();
     ASSERT_NE(message, nullptr);
     // Expected timestamps in chronological order: 0, 5, 10, 15, 20, 25 ms etc.
     EXPECT_EQ(message->recv_timestamp, RCUTILS_MS_TO_NS((i * 5))) << "i = " << i;
@@ -112,25 +112,25 @@ TEST_F(Rosbag2ReadersWrapperTestFixture, read_messages_chronologically_from_mult
   }
 
   // After all messages are read, no_messages_in_cache should return true
-  EXPECT_TRUE(readers_wrapper.no_messages_in_cache());
+  EXPECT_TRUE(readers_manager.no_messages_in_cache());
   // And get_next_chronological_message_from_cache should return nullptr
-  EXPECT_EQ(readers_wrapper.get_next_chronological_message_from_cache(), nullptr);
+  EXPECT_EQ(readers_manager.get_next_chronological_message_from_cache(), nullptr);
 }
 
 TEST_F(Rosbag2ReadersWrapperTestFixture, seek_in_multiple_readers)
 {
-  ReadersWrapper readers_wrapper(std::move(readers_with_options_));
+  ReadersManager readers_manager(std::move(readers_with_options_));
 
   // Seek to timestamp 22ms - should get message at 25ms from reader2 as the next one
-  readers_wrapper.seek(RCUTILS_MS_TO_NS(22));
+  readers_manager.seek(RCUTILS_MS_TO_NS(22));
 
-  auto message = readers_wrapper.get_next_chronological_message_from_cache();
+  auto message = readers_manager.get_next_chronological_message_from_cache();
   ASSERT_NE(message, nullptr);
   EXPECT_EQ(message->recv_timestamp, RCUTILS_MS_TO_NS(25));  // 25ms
   EXPECT_EQ(message->topic_name, "topic2");
 
   // Next message should be at 30ms from reader1
-  message = readers_wrapper.get_next_chronological_message_from_cache();
+  message = readers_manager.get_next_chronological_message_from_cache();
   ASSERT_NE(message, nullptr);
   EXPECT_EQ(message->recv_timestamp, RCUTILS_MS_TO_NS(30));  // 30ms
   EXPECT_EQ(message->topic_name, "topic1");
@@ -145,10 +145,10 @@ TEST_F(Rosbag2ReadersWrapperTestFixture, get_storage_options_from_multiple_reade
   readers_with_options_[0].second = storage_options1;
   readers_with_options_[1].second = storage_options2;
 
-  ReadersWrapper readers_wrapper(std::move(readers_with_options_));
+  ReadersManager readers_manager(std::move(readers_with_options_));
 
   // Get all storage options
-  auto options = readers_wrapper.get_all_storage_options();
+  auto options = readers_manager.get_all_storage_options();
   ASSERT_EQ(options.size(), 2u);
   EXPECT_EQ(options[0].uri, "uri1");
   EXPECT_EQ(options[1].uri, "uri2");
@@ -156,15 +156,15 @@ TEST_F(Rosbag2ReadersWrapperTestFixture, get_storage_options_from_multiple_reade
 
 TEST_F(Rosbag2ReadersWrapperTestFixture, get_earliest_and_latest_timestamps_from_multiple_readers)
 {
-  ReadersWrapper readers_wrapper(std::move(readers_with_options_));
+  ReadersManager readers_manager(std::move(readers_with_options_));
 
   // Earliest timestamp should be 0ms (from first reader)
-  EXPECT_EQ(readers_wrapper.get_earliest_timestamp(), 0);
+  EXPECT_EQ(readers_manager.get_earliest_timestamp(), 0);
 
   // Latest timestamp should be 45ms (from second reader)
   rcutils_time_point_value_t expected_latest_timestamp =
     RCUTILS_MS_TO_NS((kNumMessagesPerBag - 1) * 10 + kReader2MsgsOffset);
-  EXPECT_EQ(readers_wrapper.get_latest_timestamp(), expected_latest_timestamp);
+  EXPECT_EQ(readers_manager.get_latest_timestamp(), expected_latest_timestamp);
 }
 
 TEST_F(Rosbag2ReadersWrapperTestFixture, set_filter_on_multiple_readers)
@@ -197,20 +197,20 @@ TEST_F(Rosbag2ReadersWrapperTestFixture, set_filter_on_multiple_readers)
   mock_reader2->prepare(messages2, topics2);
   auto cpp_reader2 = std::make_unique<rosbag2_cpp::Reader>(std::move(mock_reader2));
 
-  std::vector<ReadersWrapper::reader_storage_options_pair_t> readers_with_options;
+  std::vector<ReadersManager::reader_storage_options_pair_t> readers_with_options;
   readers_with_options.emplace_back(std::move(cpp_reader1), storage_options_);
   readers_with_options.emplace_back(std::move(cpp_reader2), storage_options_);
 
-  ReadersWrapper readers_wrapper(std::move(readers_with_options));
+  ReadersManager readers_manager(std::move(readers_with_options));
 
   // Set filter to include only topic1 and topic3
   rosbag2_storage::StorageFilter filter;
   filter.topics = {"topic1", "topic3"};
-  readers_wrapper.set_filter(filter);
+  readers_manager.set_filter(filter);
 
   // Get all topics and types - should include all topics since filter is applied to reading
   // messages, not to the metadata
-  auto topics = readers_wrapper.get_all_topics_and_types();
+  auto topics = readers_manager.get_all_topics_and_types();
   ASSERT_EQ(topics.size(), 4u);
 
   // Topics might come in any order, so check for existence of each topic
@@ -226,7 +226,7 @@ TEST_F(Rosbag2ReadersWrapperTestFixture, set_filter_on_multiple_readers)
     EXPECT_TRUE(found) << "Expected topic " << expected_topic << " was not found";
   }
 
-  while (auto message = readers_wrapper.get_next_chronological_message_from_cache()) {
+  while (auto message = readers_manager.get_next_chronological_message_from_cache()) {
     // Only messages from topic1 and topic3 should be returned
     EXPECT_TRUE(
       message->topic_name == "topic1" || message->topic_name == "topic3")
@@ -236,10 +236,10 @@ TEST_F(Rosbag2ReadersWrapperTestFixture, set_filter_on_multiple_readers)
 
 TEST_F(Rosbag2ReadersWrapperTestFixture, get_all_topics_and_types_from_multiple_readers)
 {
-  ReadersWrapper readers_wrapper(std::move(readers_with_options_));
+  ReadersManager readers_manager(std::move(readers_with_options_));
 
   // Get all topics and types
-  auto topics = readers_wrapper.get_all_topics_and_types();
+  auto topics = readers_manager.get_all_topics_and_types();
 
   ASSERT_EQ(topics.size(), 2u);
 

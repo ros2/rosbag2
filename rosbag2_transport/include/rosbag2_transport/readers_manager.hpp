@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef ROSBAG2_TRANSPORT__READERS_WRAPPER_HPP_
-#define ROSBAG2_TRANSPORT__READERS_WRAPPER_HPP_
+#ifndef ROSBAG2_TRANSPORT__READERS_MANAGER_HPP_
+#define ROSBAG2_TRANSPORT__READERS_MANAGER_HPP_
 
 #include <memory>
 #include <utility>
@@ -28,12 +28,12 @@
 
 #ifdef _WIN32
 #  pragma warning(push)
-// Suppress warning "rosbag2_transport::ReadersWrapper::pimpl_': class 'std::unique_ptr>'
-// needs to have dll-interface to be used by clients of class 'rosbag2_transport::ReadersWrapper'"
+// Suppress warning "rosbag2_transport::ReadersManager::pimpl_': class 'std::unique_ptr>'
+// needs to have dll-interface to be used by clients of class 'rosbag2_transport::ReadersManager'"
 // Justification:
-// 1. We never inline code in the header that actually calls methods on ReadersWrapperImpl.
-// 2. While the `ReadersWrapperImpl` is defined in the `readers_wrapper_impl.hpp`
-// file, we include it only in the `readers_wrapper.cpp` file, and it does not leak into the
+// 1. We never inline code in the header that actually calls methods on ReadersManagerImpl.
+// 2. While the `ReadersManagerImpl` is defined in the `readers_manager_impl.hpp`
+// file, we include it only in the `readers_manager.cpp` file, and it does not leak into the
 // external API.
 // 3. The pimpl design pattern imply that implementation details are hidden and shouldn't be
 // exposed with the dll-interface.
@@ -43,40 +43,40 @@
 
 namespace rosbag2_transport
 {
-class ReadersWrapperImpl;
+class ReadersManagerImpl;
 
-/// \class ReadersWrapper
+/// \class ReadersManager
 /// \brief This class manages multiple rosbag2_cpp::Reader instances, allowing for
 /// chronological reading of messages across all readers.
 /// \details It maintains a cache of the next message from each reader and provides methods to
 /// retrieve the next message in chronological order, seek to a specific timestamp across all
 /// readers, and apply filters to all readers. It also provides access to the earliest and
 /// latest timestamps across all readers.
-class ROSBAG2_TRANSPORT_PUBLIC ReadersWrapper
+class ROSBAG2_TRANSPORT_PUBLIC ReadersManager
 {
 public:
   using reader_storage_options_pair_t =
     std::pair<std::unique_ptr<rosbag2_cpp::Reader>, rosbag2_storage::StorageOptions>;
 
-  /// \brief Constructor which initializes the ReadersWrapper with multiple readers and their
+  /// \brief Constructor which initializes the ReadersManager with multiple readers and their
   /// associated storage options.
   /// \note The readers will be opened during construction and cache will be populated with the
   /// first message from each reader (if available).
   /// \param reader_with_options Vector of pairs of unique pointer to the rosbag2_cpp::Reader class
-  /// (which will be moved to the internal instance of the ReadersWrapper class during construction)
+  /// (which will be moved to the internal instance of the ReadersManager class during construction)
   /// and storage options (which will be applied to the rosbag2_cpp::reader when opening it).
-  explicit ReadersWrapper(std::vector<reader_storage_options_pair_t> && reader_with_options);
+  explicit ReadersManager(std::vector<reader_storage_options_pair_t> && reader_with_options);
 
   /// \brief Deleted default constructor and copy/move operations.
-  ReadersWrapper() = delete;
-  ReadersWrapper(const ReadersWrapper &) = delete;
-  ReadersWrapper & operator=(const ReadersWrapper &) = delete;
-  ReadersWrapper(ReadersWrapper &&) = delete;
-  ReadersWrapper & operator=(ReadersWrapper &&) = delete;
+  ReadersManager() = delete;
+  ReadersManager(const ReadersManager &) = delete;
+  ReadersManager & operator=(const ReadersManager &) = delete;
+  ReadersManager(ReadersManager &&) = delete;
+  ReadersManager & operator=(ReadersManager &&) = delete;
 
-  /// \brief Destructor which cleans up resources used by the ReadersWrapper.
+  /// \brief Destructor which cleans up resources used by the ReadersManager.
   /// \note The readers will be closed during destruction.
-  virtual ~ReadersWrapper();
+  virtual ~ReadersManager();
 
   /// \brief Getter for the currently stored storage options
   /// \return Copy of the currently stored storage options
@@ -119,7 +119,7 @@ public:
   void add_event_callbacks(rosbag2_cpp::bag_events::ReaderEventCallbacks & callbacks);
 
 private:
-  std::unique_ptr<ReadersWrapperImpl> pimpl_;
+  std::unique_ptr<ReadersManagerImpl> pimpl_;
 };
 
 }  // namespace rosbag2_transport
@@ -128,4 +128,4 @@ private:
 #  pragma warning(pop)
 #endif
 
-#endif  // ROSBAG2_TRANSPORT__READERS_WRAPPER_HPP_
+#endif  // ROSBAG2_TRANSPORT__READERS_MANAGER_HPP_

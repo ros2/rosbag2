@@ -13,67 +13,67 @@
 // limitations under the License.
 
 #include <vector>
-#include "rosbag2_transport/readers_wrapper.hpp"
-#include "readers_wrapper_impl.hpp"
+#include "rosbag2_transport/readers_manager.hpp"
+#include "readers_manager_impl.hpp"
 
 namespace rosbag2_transport
 {
 
-ReadersWrapper::ReadersWrapper(std::vector<reader_storage_options_pair_t> && reader_with_options)
-: pimpl_(std::make_unique<ReadersWrapperImpl>(std::move(reader_with_options)))
+ReadersManager::ReadersManager(std::vector<reader_storage_options_pair_t> && reader_with_options)
+: pimpl_(std::make_unique<ReadersManagerImpl>(std::move(reader_with_options)))
 {}
 
-ReadersWrapper::~ReadersWrapper()
+ReadersManager::~ReadersManager()
 {
-  // Explicitly reset the pimpl_ to ensure the destructor of ReadersWrapperImpl is called
+  // Explicitly reset the pimpl_ to ensure the destructor of ReadersManagerImpl is called
   // only once.
   pimpl_.reset();
 }
 
 [[nodiscard]] std::vector<rosbag2_storage::StorageOptions>
-ReadersWrapper::get_all_storage_options() const
+ReadersManager::get_all_storage_options() const
 {
   return pimpl_->get_all_storage_options();
 }
 
-[[nodiscard]] bool ReadersWrapper::no_messages_in_cache() const
+[[nodiscard]] bool ReadersManager::no_messages_in_cache() const
 {
   return pimpl_->no_messages_in_cache();
 }
 
 [[nodiscard]] std::shared_ptr<rosbag2_storage::SerializedBagMessage>
-ReadersWrapper::get_next_chronological_message_from_cache()
+ReadersManager::get_next_chronological_message_from_cache()
 {
   return pimpl_->get_next_chronological_message_from_cache();
 }
 
-void ReadersWrapper::seek(const rcutils_time_point_value_t & timestamp)
+void ReadersManager::seek(const rcutils_time_point_value_t & timestamp)
 {
   pimpl_->seek(timestamp);
 }
 
-[[nodiscard]] rcutils_time_point_value_t ReadersWrapper::get_earliest_timestamp() const
+[[nodiscard]] rcutils_time_point_value_t ReadersManager::get_earliest_timestamp() const
 {
   return pimpl_->get_earliest_timestamp();
 }
 
-[[nodiscard]] rcutils_time_point_value_t ReadersWrapper::get_latest_timestamp() const
+[[nodiscard]] rcutils_time_point_value_t ReadersManager::get_latest_timestamp() const
 {
   return pimpl_->get_latest_timestamp();
 }
 
-void ReadersWrapper::set_filter(const rosbag2_storage::StorageFilter & storage_filter)
+void ReadersManager::set_filter(const rosbag2_storage::StorageFilter & storage_filter)
 {
   pimpl_->set_filter(storage_filter);
 }
 
 [[nodiscard]] std::vector<rosbag2_storage::TopicMetadata>
-ReadersWrapper::get_all_topics_and_types() const
+ReadersManager::get_all_topics_and_types() const
 {
   return pimpl_->get_all_topics_and_types();
 }
 
-void ReadersWrapper::add_event_callbacks(rosbag2_cpp::bag_events::ReaderEventCallbacks & callbacks)
+void ReadersManager::add_event_callbacks(rosbag2_cpp::bag_events::ReaderEventCallbacks & callbacks)
 {
   pimpl_->add_event_callbacks(callbacks);
 }

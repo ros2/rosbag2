@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef ROSBAG2_TRANSPORT__READERS_WRAPPER_IMPL_HPP_
-#define ROSBAG2_TRANSPORT__READERS_WRAPPER_IMPL_HPP_
+#ifndef ROSBAG2_TRANSPORT__READERS_MANAGER_IMPL_HPP_
+#define ROSBAG2_TRANSPORT__READERS_MANAGER_IMPL_HPP_
 
 #include <memory>
 #include <utility>
@@ -32,13 +32,13 @@
 
 namespace rosbag2_transport
 {
-class ReadersWrapperImpl
+class ReadersManagerImpl
 {
 public:
   using reader_storage_options_pair_t =
     std::pair<std::unique_ptr<rosbag2_cpp::Reader>, rosbag2_storage::StorageOptions>;
 
-  explicit ReadersWrapperImpl(std::vector<reader_storage_options_pair_t> && readers_with_options)
+  explicit ReadersManagerImpl(std::vector<reader_storage_options_pair_t> && readers_with_options)
   : readers_with_options_(std::move(readers_with_options))
   {
     rcpputils::unique_lock lk(reader_mutex_);
@@ -68,7 +68,7 @@ public:
     }
   }
 
-  virtual ~ReadersWrapperImpl() = default;
+  virtual ~ReadersManagerImpl() = default;
 
   [[nodiscard]] std::vector<rosbag2_storage::StorageOptions> get_all_storage_options() const
   {
@@ -190,4 +190,4 @@ private:
 
 }  // namespace rosbag2_transport
 
-#endif  // ROSBAG2_TRANSPORT__READERS_WRAPPER_IMPL_HPP_
+#endif  // ROSBAG2_TRANSPORT__READERS_MANAGER_IMPL_HPP_

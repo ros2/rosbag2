@@ -52,7 +52,7 @@ add_library(${PROJECT_NAME} SHARED
   src/rosbag2_transport/player_service_client.cpp
   src/rosbag2_transport/player_action_client.cpp
   src/rosbag2_transport/reader_writer_factory.cpp
-  src/rosbag2_transport/readers_wrapper.cpp
+  src/rosbag2_transport/readers_manager.cpp
   src/rosbag2_transport/recorder.cpp
   src/rosbag2_transport/record_options.cpp
   src/rosbag2_transport/topic_filter.cpp
@@ -592,8 +592,8 @@ if(BUILD_TESTING)
     ${rosbag2_interfaces_TARGETS}
   )
 
-  ament_add_gmock(test_readers_wrapper test/rosbag2_transport/test_readers_wrapper.cpp)
-  target_link_libraries(test_readers_wrapper
+  ament_add_gmock(test_readers_manager test/rosbag2_transport/test_readers_manager.cpp)
+  target_link_libraries(test_readers_manager
     ${PROJECT_NAME}
     rosbag2_test_common::rosbag2_test_common
     rcutils::rcutils
