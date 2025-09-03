@@ -23,7 +23,6 @@ find_package(rosbag2_storage REQUIRED)
 find_package(rmw REQUIRED)
 find_package(rosbag2_performance_benchmarking_msgs REQUIRED)
 find_package(sensor_msgs REQUIRED)
-find_package(yaml_cpp_vendor REQUIRED)
 find_package(yaml-cpp REQUIRED)
 
 add_executable(writer_benchmark

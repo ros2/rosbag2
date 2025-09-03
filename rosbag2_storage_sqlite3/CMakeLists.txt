@@ -29,7 +29,6 @@ find_package(rcutils REQUIRED)
 find_package(rosbag2_storage REQUIRED)
 find_package(sqlite3_vendor REQUIRED)
 find_package(SQLite3 REQUIRED)  # provided by sqlite3_vendor
-find_package(yaml_cpp_vendor REQUIRED)
 find_package(yaml-cpp REQUIRED)
 
 ament_python_install_package(ros2bag_sqlite3_cli)

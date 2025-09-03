@@ -28,7 +28,6 @@ find_package(mcap_vendor REQUIRED)
 find_package(pluginlib REQUIRED)
 find_package(rcutils REQUIRED)
 find_package(rosbag2_storage REQUIRED)
-find_package(yaml_cpp_vendor REQUIRED)
 find_package(yaml-cpp REQUIRED)
 
 ament_python_install_package(ros2bag_mcap_cli)
