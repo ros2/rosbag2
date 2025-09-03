@@ -42,9 +42,9 @@ ReadersManager::get_all_storage_options() const
 }
 
 [[nodiscard]] std::shared_ptr<rosbag2_storage::SerializedBagMessage>
-ReadersManager::get_next_chronological_message_from_cache()
+ReadersManager::get_next_message_in_chronological_order()
 {
-  return pimpl_->get_next_chronological_message_from_cache();
+  return pimpl_->get_next_message_in_chronological_order();
 }
 
 void ReadersManager::seek(const rcutils_time_point_value_t & timestamp)

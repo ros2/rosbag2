@@ -103,7 +103,7 @@ TEST_F(Rosbag2ReadersWrapperTestFixture, read_messages_chronologically_from_mult
 
   for (size_t i = 0; i < expected_total_messages; ++i) {
     EXPECT_FALSE(readers_manager.no_messages_in_cache());
-    auto message = readers_manager.get_next_chronological_message_from_cache();
+    auto message = readers_manager.get_next_message_in_chronological_order();
     ASSERT_NE(message, nullptr);
     // Expected timestamps in chronological order: 0, 5, 10, 15, 20, 25 ms etc.
     EXPECT_EQ(message->recv_timestamp, RCUTILS_MS_TO_NS((i * 5))) << "i = " << i;
@@ -113,8 +113,8 @@ TEST_F(Rosbag2ReadersWrapperTestFixture, read_messages_chronologically_from_mult
 
   // After all messages are read, no_messages_in_cache should return true
   EXPECT_TRUE(readers_manager.no_messages_in_cache());
-  // And get_next_chronological_message_from_cache should return nullptr
-  EXPECT_EQ(readers_manager.get_next_chronological_message_from_cache(), nullptr);
+  // And get_next_message_in_chronological_order should return nullptr
+  EXPECT_EQ(readers_manager.get_next_message_in_chronological_order(), nullptr);
 }
 
 TEST_F(Rosbag2ReadersWrapperTestFixture, seek_in_multiple_readers)
@@ -124,13 +124,13 @@ TEST_F(Rosbag2ReadersWrapperTestFixture, seek_in_multiple_readers)
   // Seek to timestamp 22ms - should get message at 25ms from reader2 as the next one
   readers_manager.seek(RCUTILS_MS_TO_NS(22));
 
-  auto message = readers_manager.get_next_chronological_message_from_cache();
+  auto message = readers_manager.get_next_message_in_chronological_order();
   ASSERT_NE(message, nullptr);
   EXPECT_EQ(message->recv_timestamp, RCUTILS_MS_TO_NS(25));  // 25ms
   EXPECT_EQ(message->topic_name, "topic2");
 
   // Next message should be at 30ms from reader1
-  message = readers_manager.get_next_chronological_message_from_cache();
+  message = readers_manager.get_next_message_in_chronological_order();
   ASSERT_NE(message, nullptr);
   EXPECT_EQ(message->recv_timestamp, RCUTILS_MS_TO_NS(30));  // 30ms
   EXPECT_EQ(message->topic_name, "topic1");
@@ -226,7 +226,7 @@ TEST_F(Rosbag2ReadersWrapperTestFixture, set_filter_on_multiple_readers)
     EXPECT_TRUE(found) << "Expected topic " << expected_topic << " was not found";
   }
 
-  while (auto message = readers_manager.get_next_chronological_message_from_cache()) {
+  while (auto message = readers_manager.get_next_message_in_chronological_order()) {
     // Only messages from topic1 and topic3 should be returned
     EXPECT_TRUE(
       message->topic_name == "topic1" || message->topic_name == "topic3")

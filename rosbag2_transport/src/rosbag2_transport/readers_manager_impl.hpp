@@ -91,8 +91,15 @@ public:
   }
 
   [[nodiscard]] std::shared_ptr<rosbag2_storage::SerializedBagMessage>
-  get_next_chronological_message_from_cache()
+  get_next_message_in_chronological_order()
   {
+    // Note: To get next message in chronological order, we need to look at all readers' next
+    // messages and pick the earliest one.
+    // This is not optimal, but readers do not provide a way to peek at the next message without
+    // advancing the reader, so we need to keep a cache of next messages for each reader.
+    // This is still better than pushing all messages from all readers into a single priority
+    // queue, because that would require pushing all messages from all readers into the queue,
+    // while this way we only keep one message per reader in memory at any time.
     rcpputils::unique_lock lk(reader_mutex_);
     std::shared_ptr<rosbag2_storage::SerializedBagMessage> earliest_msg = nullptr;
     size_t earliest_msg_index = 0;

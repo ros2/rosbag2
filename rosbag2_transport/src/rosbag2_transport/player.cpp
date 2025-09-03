@@ -1110,7 +1110,7 @@ void PlayerImpl::load_storage_content()
 void PlayerImpl::enqueue_up_to_boundary(size_t boundary, size_t message_queue_size)
 {
   while (message_queue_size < boundary) {
-    auto next_message = readers_->get_next_chronological_message_from_cache();
+    auto next_message = readers_->get_next_message_in_chronological_order();
     if (next_message != nullptr) {
       message_queue_.push(next_message);
       message_queue_size++;

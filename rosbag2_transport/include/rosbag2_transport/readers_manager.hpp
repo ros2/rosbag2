@@ -87,10 +87,10 @@ public:
   /// \return true if there are no messages in the cache, false otherwise.
   [[nodiscard]] bool no_messages_in_cache() const;
 
-  /// \brief Get the next message from cache with the earliest timestamp. Updates the cache by
+  /// \brief Get the next message with the earliest recv_timestamp. Updates the cache by
   /// reading from readers as necessary.
   [[nodiscard]] std::shared_ptr<rosbag2_storage::SerializedBagMessage>
-  get_next_chronological_message_from_cache();
+  get_next_message_in_chronological_order();
 
   /// \brief Seek all readers to the provided timestamp.
   /// \details seek(t) will cause subsequent reads from readers to return messages that satisfy
