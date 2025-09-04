@@ -368,13 +368,12 @@ private:
   std::unordered_map<std::string, rclcpp::QoS> topic_qos_profile_overrides_;
   std::unique_ptr<rosbag2_cpp::PlayerClock> clock_;
   std::shared_ptr<rclcpp::TimerBase> clock_publish_timer_;
-  std::mutex skip_message_in_main_play_loop_mutex_;
-  bool skip_message_in_main_play_loop_ RCPPUTILS_TSA_GUARDED_BY(
-    skip_message_in_main_play_loop_mutex_) = false;
+  std::mutex main_play_loop_mutex_;
+  bool skip_message_in_main_play_loop_ RCPPUTILS_TSA_GUARDED_BY(main_play_loop_mutex_) = false;
   std::mutex is_in_playback_mutex_;
   std::atomic_bool is_in_playback_ RCPPUTILS_TSA_GUARDED_BY(is_in_playback_mutex_) = false;
   std::thread playback_thread_;
-  std::condition_variable playback_finished_cv_;
+  std::condition_variable is_in_playback_cv_;
 
   // Request to play next
   std::atomic_bool play_next_{false};
@@ -671,7 +670,7 @@ bool PlayerImpl::play()
       {
         rcpputils::unique_lock<std::mutex> is_in_playback_lk(is_in_playback_mutex_);
         is_in_playback_ = false;
-        playback_finished_cv_.notify_all();
+        is_in_playback_cv_.notify_all();
       }
 
       // If we get here and still have/just got a play next request, make sure to notify play_next()
@@ -691,10 +690,10 @@ bool PlayerImpl::wait_for_playback_to_finish(std::chrono::duration<double> timeo
 {
   rcpputils::unique_lock<std::mutex> is_in_playback_lk(is_in_playback_mutex_);
   if (timeout.count() < 0) {
-    playback_finished_cv_.wait(is_in_playback_lk, [this] {return !is_in_playback_.load();});
+    is_in_playback_cv_.wait(is_in_playback_lk, [this] {return !is_in_playback_.load();});
     return true;
   } else {
-    return playback_finished_cv_.wait_for(
+    return is_in_playback_cv_.wait_for(
       is_in_playback_lk,
       timeout, [this] {return !is_in_playback_.load();});
   }
@@ -709,14 +708,13 @@ void PlayerImpl::stop()
     // Temporary stop playback in play_messages_from_queue() and block play_next() and seek() or
     // wait until those operations will be finished with stop_playback_ = true;
     {
-      std::lock_guard<std::mutex> main_play_loop_lk(skip_message_in_main_play_loop_mutex_);
+      std::lock_guard<std::mutex> main_play_loop_lk(main_play_loop_mutex_);
       // resume playback if it was in pause and waiting on clock in play_messages_from_queue()
       skip_message_in_main_play_loop_ = true;
       cancel_wait_for_next_message_ = true;
     }
 
-    progress_bar_->update(clock_->is_paused() ? PlayerStatus::PAUSED : PlayerStatus::RUNNING);
-
+    // If in pause mode, we need to wake up the clock to let playback thread finish
     if (clock_->is_paused()) {
       // Wake up the clock in case it's in a sleep_until(time) call
       clock_->wakeup();
@@ -865,7 +863,7 @@ size_t PlayerImpl::burst(const size_t num_messages)
 void PlayerImpl::seek(rcutils_time_point_value_t time_point)
 {
   // Temporary stop playback in play_messages_from_queue() and block play_next()
-  std::lock_guard<std::mutex> main_play_loop_lk(skip_message_in_main_play_loop_mutex_);
+  std::lock_guard<std::mutex> main_play_loop_lk(main_play_loop_mutex_);
   skip_message_in_main_play_loop_ = true;
   // Wait for player to be ready for playback messages from queue i.e. wait for Player:play() to
   // be called if not yet and queue to be filled with messages.
@@ -1150,8 +1148,8 @@ void PlayerImpl::play_messages_from_queue()
         }
       }
 
-      std::lock_guard<std::mutex> lk_skip_message(skip_message_in_main_play_loop_mutex_);
-      if (rclcpp::ok()) {
+      std::lock_guard<std::mutex> main_play_loop_lk(main_play_loop_mutex_);
+      if (!stop_playback_) {
         // This means that the message we took from the queue's top was invalidated after a seek(),
         // so we need to take a fresh element from the top of the queue, unless we have to stop
         if (skip_message_in_main_play_loop_) {
@@ -1172,7 +1170,7 @@ void PlayerImpl::play_messages_from_queue()
           finished_play_next_cv_.notify_all();
         }
         // Updating progress bar in this code section protected
-        // by the mutex skip_message_in_main_play_loop_mutex_.
+        // by the mutex main_play_loop_mutex_.
         const auto current_player_status = progress_bar_->get_player_status();
         switch (current_player_status) {
           case PlayerStatus::PAUSED:
@@ -1215,9 +1213,10 @@ void PlayerImpl::play_messages_from_queue()
     }
 
     // If we had run out of messages before but are starting to play next again, e.g., after a
-    // seek(), we need to take
+    // seek(), we need to take a new message from the queue
     if (play_next_.load()) {
-      std::lock_guard<std::mutex> lk(skip_message_in_main_play_loop_mutex_);
+      // lock the main_play_loop_mutex_ to avoid race with seek()
+      std::lock_guard<std::mutex> main_play_loop_lk(main_play_loop_mutex_);
       skip_message_in_main_play_loop_ = false;
       cancel_wait_for_next_message_ = false;
       message_ptr = take_next_message_from_queue();
