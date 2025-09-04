@@ -24,6 +24,7 @@
 #include "rcpputils/unique_lock.hpp"
 #include "rcpputils/thread_safety_annotations.hpp"
 #include "rcutils/time.h"
+#include "rmw/rmw.h"
 
 #include "rosbag2_cpp/bag_events.hpp"
 #include "rosbag2_cpp/reader.hpp"
@@ -49,7 +50,7 @@ public:
     earliest_timestamp_ = std::numeric_limits<rcutils_time_point_value_t>::max();
     latest_timestamp_ = std::numeric_limits<rcutils_time_point_value_t>::min();
     for (auto & [reader, options] : readers_with_options_) {
-      reader->open(options);
+      reader->open(options, {"", rmw_get_serialization_format()});
       if (reader->has_next()) {
         next_messages_cache_.emplace_back(reader->read_next());
       }
