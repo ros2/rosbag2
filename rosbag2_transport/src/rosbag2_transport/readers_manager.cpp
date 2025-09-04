@@ -36,9 +36,9 @@ ReadersManager::get_all_storage_options() const
   return pimpl_->get_all_storage_options();
 }
 
-[[nodiscard]] bool ReadersManager::no_messages_in_cache() const
+[[nodiscard]] bool ReadersManager::has_next() const
 {
-  return pimpl_->no_messages_in_cache();
+  return pimpl_->has_next();
 }
 
 [[nodiscard]] std::shared_ptr<rosbag2_storage::SerializedBagMessage>

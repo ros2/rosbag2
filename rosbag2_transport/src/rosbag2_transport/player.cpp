@@ -1094,7 +1094,7 @@ void PlayerImpl::load_storage_content()
   auto queue_upper_boundary = play_options_.read_ahead_queue_size;
 
   while (rclcpp::ok() && load_storage_content_ && !stop_playback_) {
-    if (readers_->no_messages_in_cache()) {
+    if (!readers_->has_next()) {
       break;
     }
     // The message queue size may get smaller after this, but that's OK

@@ -82,10 +82,11 @@ public:
   /// \return Copy of the currently stored storage options
   [[nodiscard]] std::vector<rosbag2_storage::StorageOptions> get_all_storage_options() const;
 
-  /// \brief Check if there are no messages in the cache anymore.
+  /// \brief Check if there are present some messages to take.
   /// \details Indicates that all readers have been exhausted.
-  /// \return true if there are no messages in the cache, false otherwise.
-  [[nodiscard]] bool no_messages_in_cache() const;
+  /// i.e. there are no more messages to take from readers.
+  /// \return true if there are more messages to take, false otherwise.
+  [[nodiscard]] bool has_next() const;
 
   /// \brief Get the next message with the earliest recv_timestamp. Updates the cache by
   /// reading from readers as necessary.

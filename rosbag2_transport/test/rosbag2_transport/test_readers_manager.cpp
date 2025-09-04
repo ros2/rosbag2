@@ -102,7 +102,7 @@ TEST_F(Rosbag2ReadersWrapperTestFixture, read_messages_chronologically_from_mult
   size_t expected_total_messages = 2 * kNumMessagesPerBag;  // 5 from each reader
 
   for (size_t i = 0; i < expected_total_messages; ++i) {
-    EXPECT_FALSE(readers_manager.no_messages_in_cache());
+    EXPECT_TRUE(readers_manager.has_next());
     auto message = readers_manager.get_next_message_in_chronological_order();
     ASSERT_NE(message, nullptr);
     // Expected timestamps in chronological order: 0, 5, 10, 15, 20, 25 ms etc.
@@ -111,8 +111,8 @@ TEST_F(Rosbag2ReadersWrapperTestFixture, read_messages_chronologically_from_mult
       (i % 2) ? message->topic_name == "topic2" : message->topic_name == "topic1") << "i = " << i;
   }
 
-  // After all messages are read, no_messages_in_cache should return true
-  EXPECT_TRUE(readers_manager.no_messages_in_cache());
+  // After all messages are read, has_next should return true
+  EXPECT_FALSE(readers_manager.has_next());
   // And get_next_message_in_chronological_order should return nullptr
   EXPECT_EQ(readers_manager.get_next_message_in_chronological_order(), nullptr);
 }

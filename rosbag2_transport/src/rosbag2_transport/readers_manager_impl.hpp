@@ -81,10 +81,10 @@ public:
     return storage_options;
   }
 
-  [[nodiscard]] bool no_messages_in_cache() const
+  [[nodiscard]] bool has_next() const
   {
     rcpputils::unique_lock lk(reader_mutex_);
-    return std::all_of(
+    return !std::all_of(
       next_messages_cache_.cbegin(),
       next_messages_cache_.cend(),
       [](const auto & reader_next_msg) {return reader_next_msg == nullptr;});
