@@ -24,7 +24,7 @@ endif()
 find_package(ament_cmake REQUIRED)
 find_package(pluginlib REQUIRED)
 find_package(rosbag2_compression REQUIRED)
-find_package(zstd_vendor REQUIRED)
+find_package(zstd_cmake_module REQUIRED)
 find_package(zstd REQUIRED)
 
 add_library(${PROJECT_NAME} SHARED
@@ -61,7 +61,7 @@ ament_export_libraries(${PROJECT_NAME})
 ament_export_targets(export_${PROJECT_NAME})
 
 # order matters here, first vendor, then zstd
-ament_export_dependencies(rosbag2_compression zstd_vendor zstd)
+ament_export_dependencies(rosbag2_compression zstd_cmake_module zstd)
 
 
 if(BUILD_TESTING)

@@ -1,23 +1,22 @@
 <?xml version="1.0"?>
 <?xml-model href="http://download.ros.org/schema/package_format2.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="2">
-  <name>zstd_vendor</name>
+  <name>zstd_cmake_module</name>
   <version>0.33.0</version>
-  <description>Zstd compression vendor package, providing a dependency for Zstd.</description>
+  <description>ZSTD compression cmake module package</description>
   <maintainer email="michael.orlov@apex.ai">Michael Orlov</maintainer>
-  <maintainer email="geoff@openrobotics.org">Geoffrey Biggs</maintainer>
-  <maintainer email="michel@ekumenlabs.com">Michel Hidalgo</maintainer>
   <maintainer email="me@emersonknapp.com">Emerson Knapp</maintainer>
   <maintainer email="ros-tooling@googlegroups.com">ROS Tooling Working Group</maintainer>
   <license>Apache License 2.0</license>  <!-- the contents of this package are Apache 2.0 -->
-  <license>BSD</license>  <!-- Zstd is BSD -->
 
-  <url type="website">https://facebook.github.io/zstd/</url>
+  <url type="website">https://github.com/lz4/lz4/</url>
 
   <buildtool_depend>ament_cmake</buildtool_depend>
-  <buildtool_depend>ament_cmake_vendor_package</buildtool_depend>
 
-  <depend>libzstd-dev</depend>
+  <exec_depend>libzstd-dev</exec_depend>
+
+  <test_depend>ament_lint_auto</test_depend>
+  <test_depend>ament_lint_common</test_depend>
 
   <export>
     <build_type>ament_cmake</build_type>

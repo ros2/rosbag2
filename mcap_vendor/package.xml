@@ -13,7 +13,7 @@
   <buildtool_depend>git</buildtool_depend>
 
   <depend>liblz4_vendor</depend>
-  <depend>zstd_vendor</depend>
+  <depend>zstd_cmake_module</depend>
 
   <export>
     <build_type>ament_cmake</build_type>
