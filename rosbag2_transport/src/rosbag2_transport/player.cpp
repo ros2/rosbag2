@@ -1112,10 +1112,7 @@ void PlayerImpl::load_storage_content()
     static_cast<size_t>(play_options_.read_ahead_queue_size * read_ahead_lower_bound_percentage_);
   auto queue_upper_boundary = play_options_.read_ahead_queue_size;
 
-  while (rclcpp::ok() && load_storage_content_ && !stop_playback_) {
-    if (!readers_->has_next()) {
-      break;
-    }
+  while (load_storage_content_ && !stop_playback_ && readers_->has_next()) {
     // The message queue size may get smaller after this, but that's OK
     const size_t message_queue_size = message_queue_.size();
     if (message_queue_size < queue_lower_boundary) {
@@ -1128,7 +1125,7 @@ void PlayerImpl::load_storage_content()
 
 void PlayerImpl::enqueue_up_to_boundary(size_t boundary, size_t message_queue_size)
 {
-  while (message_queue_size < boundary) {
+  while (load_storage_content_ && message_queue_size < boundary) {
     auto next_message = readers_->get_next_message_in_chronological_order();
     if (next_message != nullptr) {
       message_queue_.push(next_message);
