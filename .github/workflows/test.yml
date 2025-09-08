@@ -46,7 +46,8 @@ jobs:
                 "rosbag2_test_common",
                 "rosbag2_test_msgdefs",
                 "rosbag2_tests",
-                "rosbag2_transport"
+                "rosbag2_transport",
+                "zstd_cmake_module"
               ]
             },
             "test": {
@@ -69,7 +70,8 @@ jobs:
                 "rosbag2_test_common",
                 "rosbag2_test_msgdefs",
                 "rosbag2_tests",
-                "rosbag2_transport"
+                "rosbag2_transport",
+                "zstd_cmake_module"
               ]
             }
           }
