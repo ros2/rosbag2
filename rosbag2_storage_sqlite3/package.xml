@@ -17,8 +17,8 @@
   <depend>rcpputils</depend>
   <depend>rcutils</depend>
   <depend>rosbag2_storage</depend>
-  <depend>sqlite3_vendor</depend>
-  <depend>yaml_cpp_vendor</depend>
+  <depend>libsqlite3-dev</depend>
+  <depend>yaml-cpp</depend>
 
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>ament_lint_common</test_depend>
