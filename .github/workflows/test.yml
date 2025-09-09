@@ -47,7 +47,6 @@ jobs:
                 "rosbag2_test_msgdefs",
                 "rosbag2_tests",
                 "rosbag2_transport",
-                "sqlite3_vendor",
                 "zstd_vendor"
               ]
             },
@@ -72,7 +71,6 @@ jobs:
                 "rosbag2_test_msgdefs",
                 "rosbag2_tests",
                 "rosbag2_transport",
-                "sqlite3_vendor",
                 "zstd_vendor"
               ]
             }
