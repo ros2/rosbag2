@@ -111,7 +111,11 @@ public:
   void seek(const rcutils_time_point_value_t & timestamp) override
   {
     seek_time_ = timestamp;
-    num_read_ = 0;
+    for (num_read_ = 0; num_read_ < messages_.size(); num_read_++) {
+      if (messages_[num_read_]->recv_timestamp >= seek_time_) {
+        break;
+      }
+    }
   }
 
   void

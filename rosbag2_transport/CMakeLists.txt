@@ -49,6 +49,7 @@ add_library(${PROJECT_NAME} SHARED
   src/rosbag2_transport/play_options.cpp
   src/rosbag2_transport/player_service_client.cpp
   src/rosbag2_transport/reader_writer_factory.cpp
+  src/rosbag2_transport/readers_manager.cpp
   src/rosbag2_transport/recorder.cpp
   src/rosbag2_transport/record_options.cpp
   src/rosbag2_transport/topic_filter.cpp
@@ -127,7 +128,12 @@ if(BUILD_TESTING)
   ament_find_gmock()
 
   ament_add_gmock_executable(test_play test/rosbag2_transport/test_play.cpp)
-  target_link_libraries(test_play rosbag2_transport ${test_msgs_TARGETS} rosbag2_test_common::rosbag2_test_common)
+  target_link_libraries(test_play
+    rosbag2_transport
+    ${test_msgs_TARGETS}
+    rosbag2_test_common::rosbag2_test_common
+    rcutils::rcutils
+  )
   function(test_play_for_rmw_implementation)
     set(rmw_implementation_env_var RMW_IMPLEMENTATION=${rmw_implementation})
 
@@ -542,6 +548,13 @@ if(BUILD_TESTING)
     ${PROJECT_NAME}
     rosbag2_test_common::rosbag2_test_common
     ${rosbag2_interfaces_TARGETS}
+  )
+
+  ament_add_gmock(test_readers_manager test/rosbag2_transport/test_readers_manager.cpp)
+  target_link_libraries(test_readers_manager
+    ${PROJECT_NAME}
+    rosbag2_test_common::rosbag2_test_common
+    rcutils::rcutils
   )
 endif()
 
