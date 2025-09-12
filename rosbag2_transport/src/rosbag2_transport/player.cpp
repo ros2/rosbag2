@@ -683,7 +683,7 @@ bool PlayerImpl::play()
       is_in_playback_cv_.notify_all();
 
       // If we get here and still have/just got a play next request, make sure to notify play_next()
-      // After that, requests will be automatically rejected since is_in_playback_ is false
+      // After that, requests will be automatically rejected since is_in_playback_ become false
       if (play_next_.exchange(false)) {
         std::lock_guard<std::mutex> lk(finished_play_next_mutex_);
         finished_play_next_ = true;
@@ -1176,14 +1176,37 @@ void PlayerImpl::play_messages_from_queue()
   ready_to_play_from_queue_cv_.notify_all();
 
   // While we haven't stopped playing, try to play messages and wait for a potential request to play
-  // the next message
+  // the next message.
+  std::unique_lock<std::mutex> main_play_loop_lk(main_play_loop_mutex_);
   while (rclcpp::ok() && !stop_playback_) {
-    // While there's a message to play and we haven't reached the end timestamp yet
-    while (rclcpp::ok() && !stop_playback_ &&
-      message_ptr != nullptr && !shall_stop_at_timestamp(get_message_order_timestamp(message_ptr)))
-    {
+    main_play_loop_lk.unlock();  // Unlock while we are waiting/sleeping
+    if (is_paused()) {
+      // If we're paused, we need to wait until the stop of playback or until we get a play next.
+      // Also while we're in a pause state, make sure we don't return if we happen to be at the end
+      // of the queue. We need to be able to make seek back in time from the end of the queue
+      // while in pause.
+      while (rclcpp::ok() && is_paused() && !stop_playback_ && !play_next_.load()) {
+        // When clock is in pause mode, sleep_until() will be blocked until we wake it up or
+        // change the clock state from pause to resume, so this is not a tight busy loop on pause.
+        (void)clock_->sleep_until(clock_->now());
+        // Stop sleeping if cancelled
+        if (std::atomic_exchange(&cancel_wait_for_next_message_, false)) {
+          break;
+        }
+      }
+      if (!is_paused()) {
+        main_play_loop_lk.lock();
+        continue;  // If we just exited from the pause mode, go back to the top of the loop to
+        // handle the non-paused case
+      }
+    } else {
+      // While there's a message to play, and we haven't reached the end yet.
+      if (message_ptr == nullptr ||
+        shall_stop_at_timestamp(get_message_order_timestamp(message_ptr)))
+      {
+        break;
+      }
       // Sleep until the message's replay time, do not move on until sleep_until returns true
-      // It will always sleep, so this is not a tight busy loop on pause
       // However, skip sleeping if we're trying to play the next message
       while (rclcpp::ok() && !stop_playback_ && !play_next_.load() &&
         !clock_->sleep_until(get_message_order_timestamp(message_ptr)))
@@ -1193,83 +1216,79 @@ void PlayerImpl::play_messages_from_queue()
           break;
         }
       }
+    }
 
-      std::lock_guard<std::mutex> main_play_loop_lk(main_play_loop_mutex_);
-      if (!stop_playback_) {
-        // This means that the message we took from the queue's top was invalidated after a seek(),
-        // so we need to take a fresh element from the top of the queue, unless we have to stop
-        if (skip_message_in_main_play_loop_) {
-          skip_message_in_main_play_loop_ = false;
-          cancel_wait_for_next_message_ = false;
-          message_ptr = take_next_message_from_queue();
-          continue;
-        }
+    main_play_loop_lk.lock();
+    if (!stop_playback_) {
+      // This means that the message we took from the queue's top was invalidated after a seek(),
+      // so we need to take a fresh element from the top of the queue, unless we have to stop
+      if (skip_message_in_main_play_loop_) {
+        skip_message_in_main_play_loop_ = false;
+        cancel_wait_for_next_message_ = false;
+        message_ptr = take_next_message_from_queue();
+        continue;
+      }
 
-        const bool message_published = publish_message(message_ptr);
-        // If we tried to publish because of play_next(), jump the clock
+      if (message_ptr == nullptr) {
+        // We can get here with a null message_ptr if we are processing play_next() but there are
+        // actually no more messages to play. In that case, we just notify play_next(). Or if we
+        // have reached the end of playback and resumed playback from pause mode. In this case,
+        // we need to continue loop to gracefully exit from play_messages_from_queue()
         if (play_next_.load()) {
-          clock_->jump(get_message_order_timestamp(message_ptr));
           play_next_ = false;
           std::lock_guard<std::mutex> lk(finished_play_next_mutex_);
           finished_play_next_ = true;
-          play_next_result_ = message_published;
+          play_next_result_ = false;
           finished_play_next_cv_.notify_all();
         }
-        // Updating progress bar in this code section protected
-        // by the mutex main_play_loop_mutex_.
-        const auto current_player_status = progress_bar_->get_player_status();
-        switch (current_player_status) {
-          case PlayerStatus::PAUSED:
-            // Update progress bar without delays for each explicit play_next() call
-            progress_bar_->update(PlayerStatus::PAUSED, get_message_order_timestamp(message_ptr));
-            break;
-          case PlayerStatus::BURST:
-            // Limit progress bar update in burst mode
-            progress_bar_->update_with_limited_rate(
-              PlayerStatus::BURST, get_message_order_timestamp(message_ptr));
-            break;
-          default:
-            progress_bar_->update_with_limited_rate(
-              PlayerStatus::RUNNING, get_message_order_timestamp(message_ptr));
-            break;
-        }
+        continue;
       }
-      message_ptr = take_next_message_from_queue();
-    }
 
-    // At this point, we're at the end of the playback round, there are no more messages to play
-    // If we're still trying to play next or just got a request, we did not succeed
-    if (play_next_.exchange(false)) {
-      std::lock_guard<std::mutex> lk(finished_play_next_mutex_);
-      finished_play_next_ = true;
-      play_next_result_ = false;
-      finished_play_next_cv_.notify_all();
-    }
+      bool message_published = false;
+      // We shall respect shall_stop_at_timestamp() even do play_next in pause mode
+      if (!shall_stop_at_timestamp(get_message_order_timestamp(message_ptr))) {
+        message_published = publish_message(message_ptr);
+      }
 
-    // While we're in a pause state, make sure we don't return if we happen to be at the end of the
-    // queue or playback round. However, if we get a request for play next during sleep_until(...),
-    // we need to stop waiting here and proceed to handle the play next request by doing another
-    // loop of this while().
-    while (!stop_playback_ && is_paused() && !play_next_.load() && rclcpp::ok()) {
-      clock_->sleep_until(clock_->now());
+      // If we tried to publish because of play_next(), jump the clock
+      if (play_next_.load()) {
+        clock_->jump(get_message_order_timestamp(message_ptr));
+        play_next_ = false;
+        std::lock_guard<std::mutex> lk(finished_play_next_mutex_);
+        finished_play_next_ = true;
+        play_next_result_ = message_published;
+        finished_play_next_cv_.notify_all();
+      }
+      // Updating progress bar in this code section protected
+      // by the mutex main_play_loop_mutex_.
+      const auto current_player_status = progress_bar_->get_player_status();
+      switch (current_player_status) {
+        case PlayerStatus::PAUSED:
+          // Update progress bar without delays for each explicit play_next() call
+          progress_bar_->update(PlayerStatus::PAUSED, get_message_order_timestamp(message_ptr));
+          break;
+        case PlayerStatus::BURST:
+          // Limit progress bar update in burst mode
+          progress_bar_->update_with_limited_rate(
+            PlayerStatus::BURST, get_message_order_timestamp(message_ptr));
+          break;
+        default:
+          progress_bar_->update_with_limited_rate(
+            PlayerStatus::RUNNING, get_message_order_timestamp(message_ptr));
+          break;
+      }
     }
-    // If we ran out of messages and are not in pause state, it means we're done playing
-    // TODO(morlov): We could have executed a seek() to a time point beyond the last message
-    //  timestamp, while we were waiting in pause in that case we should not stop playing.
-    if (!is_paused()) {
-      break;
-    }
-
-    // If we had run out of messages before but are starting to play next again, e.g., after a
-    // seek(), we need to take a new message from the queue
-    if (play_next_.load()) {
-      // lock the main_play_loop_mutex_ to avoid race with seek()
-      std::lock_guard<std::mutex> main_play_loop_lk(main_play_loop_mutex_);
-      skip_message_in_main_play_loop_ = false;
-      cancel_wait_for_next_message_ = false;
-      message_ptr = take_next_message_from_queue();
-    }
+    message_ptr = take_next_message_from_queue();
   }
+  // Note: We are still under the lock of main_play_loop_mutex_ here
+  { // Notify seek() that we are NOT ready for playback anymore. The seek() will wait until
+    // play_messages_from_queue() will be called again in the next iteration of the play loop
+    // in Player::play(). This is to avoid race condition between seek() and
+    // play_messages_from_queue() when play_options_.loop = true
+    std::lock_guard<std::mutex> lk(ready_to_play_from_queue_mutex_);
+    is_ready_to_play_from_queue_ = false;
+  }
+  ready_to_play_from_queue_cv_.notify_all();
 }
 
 rcutils_time_point_value_t PlayerImpl::get_message_order_timestamp(
