@@ -577,6 +577,7 @@ bool PlayerImpl::play()
     progress_bar_->update(clock_->is_paused() ? PlayerStatus::PAUSED : PlayerStatus::RUNNING);
     return false;
   }
+  is_in_playback_cv_.notify_all();
 
   // May need to join the previous thread if we are calling play() a second time
   if (playback_thread_.joinable()) {
@@ -1050,20 +1051,45 @@ bool PlayerImpl::wait_for_playback_to_start(std::chrono::duration<double> timeou
     };
 
   auto start = std::chrono::steady_clock::now();
-  auto lock = try_lock_with_timeout(ready_to_play_from_queue_mutex_, timeout);
-  if (!lock.owns_lock()) {
-    return false;  // Timeout occurred, lock not acquired
+  auto is_in_playback_lk = try_lock_with_timeout(is_in_playback_mutex_, timeout);
+  if (!is_in_playback_lk.owns_lock()) {
+    RCLCPP_DEBUG(owner_->get_logger(),
+                 "Timeout occurred. The ready_to_play_from_queue_mutex_ hasn't been acquired.");
+    return false;
+  }
+  if (timeout.count() < 0) {
+    is_in_playback_cv_.wait(is_in_playback_lk, [this] {return is_in_playback_.load();});
+  } else {
+    auto lock_duration = std::chrono::steady_clock::now() - start;
+    auto residual_time =
+      timeout > lock_duration ? timeout - lock_duration : std::chrono::microseconds(1);
+    is_in_playback_cv_.wait_for(
+      is_in_playback_lk, residual_time, [this] {return is_in_playback_.load();});
+  }
+  if (!is_in_playback_) {
+    RCLCPP_DEBUG(owner_->get_logger(), "Timeout occurred. The play() hasn't been called.");
+    return false;
+  }
+  auto lock_duration = std::chrono::steady_clock::now() - start;
+  auto residual_time =
+    timeout > lock_duration ? timeout - lock_duration : std::chrono::microseconds(1);
+  auto ready_to_play_lock = try_lock_with_timeout(ready_to_play_from_queue_mutex_, residual_time);
+  if (!ready_to_play_lock.owns_lock()) {
+    RCLCPP_DEBUG(owner_->get_logger(),
+                 "Timeout occurred. The ready_to_play_from_queue_mutex_ hasn't been acquired.");
+    return false;
   }
 
   if (timeout.count() < 0) {
-    ready_to_play_from_queue_cv_.wait(lock, [this] {return is_ready_to_play_from_queue_;});
+    ready_to_play_from_queue_cv_.wait(
+      ready_to_play_lock, [this] {return is_ready_to_play_from_queue_;});
     return true;
   } else {
-    auto lock_duration = std::chrono::steady_clock::now() - start;
-    auto residual_time = timeout > lock_duration ?
+    lock_duration = std::chrono::steady_clock::now() - start;
+    residual_time = timeout > lock_duration ?
       timeout - lock_duration : std::chrono::microseconds(1);
     return ready_to_play_from_queue_cv_.wait_for(
-      lock, residual_time, [this] {return is_ready_to_play_from_queue_;}
+      ready_to_play_lock, residual_time, [this] {return is_ready_to_play_from_queue_;}
     );
   }
 }
