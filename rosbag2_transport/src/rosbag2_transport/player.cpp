@@ -359,11 +359,11 @@ private:
   rcutils_time_point_value_t play_until_timestamp_ = -1;
   using BagMessageComparator = std::function<
     bool(
-      const rosbag2_storage::SerializedBagMessageSharedPtr &,
-      const rosbag2_storage::SerializedBagMessageSharedPtr &)>;
+      const std::pair<rosbag2_storage::SerializedBagMessageSharedPtr, size_t> &,
+      const std::pair<rosbag2_storage::SerializedBagMessageSharedPtr, size_t> &)>;
   LockedPriorityQueue<
     rosbag2_storage::SerializedBagMessageSharedPtr,
-    std::vector<rosbag2_storage::SerializedBagMessageSharedPtr>,
+    std::vector<std::pair<rosbag2_storage::SerializedBagMessageSharedPtr, size_t>>,
     BagMessageComparator> message_queue_;
   mutable std::future<void> storage_loading_future_;
   std::atomic_bool load_storage_content_{true};
@@ -418,10 +418,16 @@ private:
   static inline const struct
   {
     bool operator()(
-      const rosbag2_storage::SerializedBagMessageSharedPtr & l,
-      const rosbag2_storage::SerializedBagMessageSharedPtr & r) const
+      const std::pair<rosbag2_storage::SerializedBagMessageSharedPtr, size_t> & l,
+      const std::pair<rosbag2_storage::SerializedBagMessageSharedPtr, size_t> & r) const
     {
-      return l->recv_timestamp > r->recv_timestamp;
+      const auto & [l_msg, l_insertion_seq_num] = l;
+      const auto & [r_msg, r_insertion_seq_num] = r;
+      if (l_msg->recv_timestamp == r_msg->recv_timestamp) {
+        // Earlier insertion come first
+        return l_insertion_seq_num > r_insertion_seq_num;
+      }
+      return l_msg->recv_timestamp > r_msg->recv_timestamp;  // Smaller timestamp come first
     }
   } bag_message_chronological_recv_timestamp_comparator;
 
@@ -429,10 +435,16 @@ private:
   static inline const struct
   {
     bool operator()(
-      const rosbag2_storage::SerializedBagMessageSharedPtr & l,
-      const rosbag2_storage::SerializedBagMessageSharedPtr & r) const
+      const std::pair<rosbag2_storage::SerializedBagMessageSharedPtr, size_t> & l,
+      const std::pair<rosbag2_storage::SerializedBagMessageSharedPtr, size_t> & r) const
     {
-      return l->send_timestamp > r->send_timestamp;
+      const auto & [l_msg, l_insertion_seq_num] = l;
+      const auto & [r_msg, r_insertion_seq_num] = r;
+      if (l_msg->send_timestamp == r_msg->send_timestamp) {
+        // Earlier insertion come first
+        return l_insertion_seq_num > r_insertion_seq_num;
+      }
+      return l_msg->send_timestamp > r_msg->send_timestamp;  // Smaller timestamp come first
     }
   } bag_message_chronological_send_timestamp_comparator;
 };

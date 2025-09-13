@@ -20,19 +20,32 @@
 #include <optional>
 #include <queue>
 #include <vector>
+#include <utility>
 
 #include "rcpputils/thread_safety_annotations.hpp"
 #include "rcpputils/unique_lock.hpp"
 
-/// \brief `std::priority_queue` wrapper with locks.
-/// \tparam T the element type
-/// \tparam Container the underlying container type
+/// \brief `std::priority_queue` wrapper with locks and stable sorting.
+/// \details This class wraps a `std::priority_queue` and provides locking for thread-safe
+///   access. It also adds a strictly increasing insertion sequence number to each element to
+///   ensure a stable sort when two elements are equivalent according to the comparator.
+///   This is useful when multiple elements has the same priorities in the queue, and we want to
+///   ensure that elements with the same priority are popped in the order they were pushed.
+///   For example, this is useful when multiple messages have the same timestamp, and we need to
+///   preserve the original messages order.
+/// \note The insertion sequence number is a builtin feature of this class, and users should not
+///   provide it themselves.
+/// \tparam T The element type
+/// \tparam Container The underlying container type. Must be a container of `std::pair<T, size_t>`,
+///   where the `size_t` is a strictly increasing insertion sequence number to break ties
+///   when two elements are equivalent according to the comparator. This ensures a stable sort.
 /// \tparam Compare the comparator
 /// \see std::priority_queue
 template<
   typename T,
-  typename Container = std::vector<T>,
-  typename Compare = std::less<typename Container::value_type>
+  typename Container = std::vector<std::pair<T, size_t>>,
+  typename Compare = std::less<typename Container::value_type>,
+  typename = std::enable_if_t<std::is_same_v<typename Container::value_type, std::pair<T, size_t>>>
 >
 class LockedPriorityQueue
 {
@@ -54,7 +67,7 @@ public:
   void push(const T & element)
   {
     rcpputils::unique_lock<std::mutex> lk(queue_mutex_);
-    queue_.push(element);
+    queue_.emplace(element, ++insert_sequence_number_);
   }
 
   /// \brief Remove the top element.
@@ -87,6 +100,7 @@ public:
     while (!queue_.empty()) {
       queue_.pop();
     }
+    insert_sequence_number_ = 0;
   }
 
   /// \brief Try to take the top element from the queue.
@@ -97,14 +111,17 @@ public:
     if (queue_.empty()) {
       return std::nullopt;
     }
-    T e = queue_.top();
+    T e = queue_.top().first;
     queue_.pop();
     return e;
   }
 
 private:
   mutable std::mutex queue_mutex_;
-  std::priority_queue<T, Container, Compare> queue_ RCPPUTILS_TSA_GUARDED_BY(queue_mutex_);
+  std::priority_queue<typename Container::value_type, Container, Compare> queue_
+  RCPPUTILS_TSA_GUARDED_BY(queue_mutex_);
+
+  size_t insert_sequence_number_{0} RCPPUTILS_TSA_GUARDED_BY(queue_mutex_);
 };
 
 #endif  // ROSBAG2_TRANSPORT__LOCKED_PRIORITY_QUEUE_HPP_
