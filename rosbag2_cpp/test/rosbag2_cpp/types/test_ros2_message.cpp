@@ -19,7 +19,7 @@
 #include <utility>
 #include <vector>
 
-#include "rosbag2_cpp/typesupport_helpers.hpp"
+#include "rclcpp/typesupport_helpers.hpp"
 #include "rosbag2_cpp/types/introspection_message.hpp"
 
 #include "test_msgs/message_fixtures.hpp"
@@ -46,10 +46,10 @@ public:
 
   auto get_allocated_message(const std::string & message_type)
   {
-    library_ = rosbag2_cpp::get_typesupport_library(
+    library_ = rclcpp::get_typesupport_library(
       message_type, "rosidl_typesupport_introspection_cpp");
-    auto introspection_ts = rosbag2_cpp::get_typesupport_handle(
-      message_type, "rosidl_typesupport_introspection_cpp", library_);
+    auto introspection_ts = rclcpp::get_message_typesupport_handle(
+      message_type, "rosidl_typesupport_introspection_cpp", *library_);
 
     return rosbag2_cpp::allocate_introspection_message(introspection_ts, &allocator_);
   }
