@@ -47,7 +47,7 @@ protected:
 
     for (int32_t i = 0; i < kNumMessagesPerBag; i++) {
       int64_t timestamp_ms = i * 10 + kReader1MsgsOffset;  // 0, 10, 20, 30, 40 ms
-      auto msg = serialize_test_message("topic1", timestamp_ms, timestamp_ms, basic_message);
+      auto msg = serialize_test_message("topic1", timestamp_ms, basic_message);
       messages1.push_back(msg);
     }
 
@@ -59,7 +59,7 @@ protected:
     string_message->string_value = "Hello, world!";
     for (int32_t i = 0; i < kNumMessagesPerBag; i++) {
       int64_t timestamp_ms = i * 10 + kReader2MsgsOffset;  // 5, 15, 25, 35, 45 ms
-      auto msg = serialize_test_message("topic2", timestamp_ms, timestamp_ms, string_message);
+      auto msg = serialize_test_message("topic2", timestamp_ms, string_message);
       messages2.push_back(msg);
     }
 

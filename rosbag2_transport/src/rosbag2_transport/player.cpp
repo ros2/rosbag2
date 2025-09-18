@@ -36,11 +36,7 @@
 #include "rosbag2_storage/storage_filter.hpp"
 #include "rosbag2_storage/qos.hpp"
 #include "rosbag2_transport/config_options_from_node_params.hpp"
-<<<<<<< HEAD
-=======
 #include "rosbag2_transport/player.hpp"
-#include "rosbag2_transport/player_action_client.hpp"
->>>>>>> bfce7ac (Fix for multibag replay stagnation (#2158))
 #include "rosbag2_transport/player_service_client.hpp"
 #include "rosbag2_transport/reader_writer_factory.hpp"
 #include "rosbag2_transport/readers_manager.hpp"
@@ -433,61 +429,6 @@ PlayerImpl::PlayerImpl(
       owner_->get_namespace(), false);
   }
 
-<<<<<<< HEAD
-  {
-    std::lock_guard<std::mutex> lk(reader_mutex_);
-    starting_time_ = std::numeric_limits<decltype(starting_time_)>::max();
-    rcutils_time_point_value_t ending_time = std::numeric_limits<decltype(ending_time)>::min();
-    for (const auto & [reader, storage_options] : readers_with_options_) {
-      // keep readers open until player is destroyed
-      reader->open(storage_options, {"", rmw_get_serialization_format()});
-      // Find the earliest starting time
-      const auto metadata = reader->get_metadata();
-      const auto metadata_starting_time = std::chrono::duration_cast<std::chrono::nanoseconds>(
-        metadata.starting_time.time_since_epoch()).count();
-      const auto metadata_bag_duration = std::chrono::duration_cast<std::chrono::nanoseconds>(
-        metadata.duration).count();
-      if (metadata_starting_time < starting_time_) {
-        starting_time_ = metadata_starting_time;
-      }
-      if (metadata_starting_time + metadata_bag_duration > ending_time) {
-        ending_time = metadata_starting_time + metadata_bag_duration;
-      }
-    }
-    // If a non-default (positive) starting time offset is provided in PlayOptions,
-    // then add the offset to the starting time obtained from reader metadata
-    if (play_options_.start_offset < 0) {
-      RCLCPP_WARN_STREAM(
-        owner_->get_logger(),
-        "Invalid start offset value: " <<
-          RCUTILS_NS_TO_S(static_cast<double>(play_options_.start_offset)) <<
-          ". Negative start offset ignored.");
-    } else {
-      starting_time_ += play_options_.start_offset;
-    }
-
-    playback_duration_ = ending_time - starting_time_;
-
-    clock_ = std::make_unique<rosbag2_cpp::TimeControllerClock>(
-      starting_time_, std::chrono::steady_clock::now,
-      std::chrono::milliseconds{100}, play_options_.start_paused);
-    set_rate(play_options_.rate);
-    topic_qos_profile_overrides_ = play_options_.topic_qos_profile_overrides;
-    prepare_publishers();
-    configure_play_until_timestamp();
-=======
-  for (auto & action_topic : play_options_.actions_to_filter) {
-    action_topic = rclcpp::expand_topic_or_service_name(
-      action_topic, owner_->get_name(),
-      owner_->get_namespace(), false);
-  }
-
-  for (auto & exclude_action_topic : play_options_.exclude_actions_to_filter) {
-    exclude_action_topic = rclcpp::expand_topic_or_service_name(
-      exclude_action_topic, owner_->get_name(),
-      owner_->get_namespace(), false);
-  }
-
   starting_time_ = readers_->get_earliest_timestamp();
   const rcutils_time_point_value_t ending_time = readers_->get_latest_timestamp();
   // If a non-default (positive) starting time offset is provided in PlayOptions,
@@ -500,15 +441,9 @@ PlayerImpl::PlayerImpl(
         ". Negative start offset ignored.");
   } else {
     starting_time_ += play_options_.start_offset;
->>>>>>> bfce7ac (Fix for multibag replay stagnation (#2158))
   }
 
   playback_duration_ = ending_time - starting_time_;
-
-  progress_bar_ = std::make_unique<PlayerProgressBar>(
-    std::cout, starting_time_, ending_time,
-    play_options.progress_bar_update_rate,
-    play_options.progress_bar_separation_lines);
 
   clock_ = std::make_unique<rosbag2_cpp::TimeControllerClock>(
     starting_time_, std::chrono::steady_clock::now,
@@ -539,17 +474,6 @@ PlayerImpl::~PlayerImpl()
   if (playback_thread_.joinable()) {
     playback_thread_.join();
   }
-<<<<<<< HEAD
-  // closes readers
-  std::lock_guard<std::mutex> lk(reader_mutex_);
-  for (const auto & [reader, _] : readers_with_options_) {
-    if (reader) {
-      reader->close();
-    }
-  }
-=======
-  progress_bar_->update(clock_->is_paused() ? PlayerStatus::PAUSED : PlayerStatus::RUNNING);
->>>>>>> bfce7ac (Fix for multibag replay stagnation (#2158))
 }
 
 const std::chrono::milliseconds
@@ -615,8 +539,6 @@ bool PlayerImpl::play()
               ready_to_play_from_queue_cv_.notify_all();
             }
             readers_->seek(starting_time_);
-            progress_bar_->update(clock_->is_paused() ?
-                                 PlayerStatus::PAUSED : PlayerStatus::RUNNING);
 
             load_storage_content_ = true;
             storage_loading_future_ = std::async(
@@ -630,22 +552,6 @@ bool PlayerImpl::play()
             }
             clock_->jump(starting_time_);
           }
-<<<<<<< HEAD
-
-          load_storage_content_ = true;
-          storage_loading_future_ = std::async(
-            std::launch::async, [this]() {
-              load_storage_content();
-            });
-          wait_for_filled_queue();
-
-          if (clock_publish_timer_ != nullptr) {
-            clock_publish_timer_->reset();
-          }
-          clock_->jump(starting_time_);
-
-=======
->>>>>>> bfce7ac (Fix for multibag replay stagnation (#2158))
           play_messages_from_queue();
         } while (rclcpp::ok() && !stop_playback_ && play_options_.loop);
       } catch (const std::exception & e) {
@@ -731,19 +637,13 @@ void PlayerImpl::stop()
       cancel_wait_for_next_message_ = true;
     }
 
-<<<<<<< HEAD
-=======
     // If in pause mode, we need to wake up the clock to let playback thread finish
->>>>>>> bfce7ac (Fix for multibag replay stagnation (#2158))
     if (clock_->is_paused()) {
       // Wake up the clock in case it's in a sleep_until(time) call
       clock_->wakeup();
     }
     // Note: Don't clean up message queue here. It will be cleaned up automatically at the end of
     // playback thread.
-
-    progress_bar_->update(PlayerStatus::STOPPED);
-
     // Wait for playback thread to finish. Make sure that we have unlocked
     // is_in_playback_mutex_, otherwise playback_thread_ will wait forever at the end
     is_in_playback_lk.unlock();
@@ -1165,27 +1065,6 @@ void PlayerImpl::play_messages_from_queue()
           play_next_result_ = message_published;
           finished_play_next_cv_.notify_all();
         }
-<<<<<<< HEAD
-=======
-        // Updating progress bar in this code section protected
-        // by the mutex main_play_loop_mutex_.
-        const auto current_player_status = progress_bar_->get_player_status();
-        switch (current_player_status) {
-          case PlayerStatus::PAUSED:
-            // Update progress bar without delays for each explicit play_next() call
-            progress_bar_->update(PlayerStatus::PAUSED, get_message_order_timestamp(message_ptr));
-            break;
-          case PlayerStatus::BURST:
-            // Limit progress bar update in burst mode
-            progress_bar_->update_with_limited_rate(
-              PlayerStatus::BURST, get_message_order_timestamp(message_ptr));
-            break;
-          default:
-            progress_bar_->update_with_limited_rate(
-              PlayerStatus::RUNNING, get_message_order_timestamp(message_ptr));
-            break;
-        }
->>>>>>> bfce7ac (Fix for multibag replay stagnation (#2158))
       }
       message_ptr = take_next_message_from_queue();
     }
@@ -1313,21 +1192,8 @@ void PlayerImpl::prepare_publishers()
   storage_filter.regex_to_exclude = play_options_.exclude_regex_to_filter;
   storage_filter.exclude_topics = play_options_.exclude_topics_to_filter;
   storage_filter.exclude_service_events = play_options_.exclude_services_to_filter;
-<<<<<<< HEAD
-  for (const auto & [reader, _] : readers_with_options_) {
-    reader->set_filter(storage_filter);
-  }
-=======
-  for (const auto & action : play_options_.exclude_actions_to_filter) {
-    auto action_interfaces = rosbag2_cpp::action_name_to_action_interface_names(action);
-    storage_filter.exclude_actions_interfaces.insert(
-      storage_filter.exclude_actions_interfaces.end(),
-      std::make_move_iterator(action_interfaces.begin()),
-      std::make_move_iterator(action_interfaces.end()));
-  }
 
   readers_->set_filter(storage_filter);
->>>>>>> bfce7ac (Fix for multibag replay stagnation (#2158))
 
   // Create /clock publisher
   if (play_options_.clock_publish_frequency > 0.f || play_options_.clock_publish_on_topic_publish) {

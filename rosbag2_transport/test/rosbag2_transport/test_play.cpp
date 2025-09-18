@@ -308,8 +308,6 @@ TEST_F(RosBag2PlayTestFixture, recorded_messages_are_played_for_all_topics_from_
   EXPECT_EQ(total_messages, num_played_messages);
 }
 
-<<<<<<< HEAD
-=======
 TEST_F(RosBag2PlayTestFixture, high_freq_topics_does_not_starve_in_multibag_playback) {
   static constexpr const char * high_freq_topic1_name = "HighFreqTopic1";
   static constexpr const char * low_freq_topic1_name = "LowFreqTopic1";
@@ -343,14 +341,13 @@ TEST_F(RosBag2PlayTestFixture, high_freq_topics_does_not_starve_in_multibag_play
     };
     std::vector<std::shared_ptr<rosbag2_storage::SerializedBagMessage>> msgs;
     msgs.reserve(num_msgs);
-    msgs.emplace_back(serialize_test_message(topic_name, start_time, start_time, msg));
+    msgs.emplace_back(serialize_test_message(topic_name, start_time, msg));
     for (size_t i = 1; i < num_msgs; i++) {
       auto last_msg = msgs.back();
       msgs.emplace_back(
         serialize_test_message(
           topic_name,
           RCUTILS_NS_TO_MS(last_msg->recv_timestamp) + topic_period_ms,
-          RCUTILS_NS_TO_MS(last_msg->send_timestamp) + topic_period_ms,
           msg));
     }
     total_messages += msgs.size();
@@ -363,7 +360,6 @@ TEST_F(RosBag2PlayTestFixture, high_freq_topics_does_not_starve_in_multibag_play
 
   // Keep read_ahead_queue_size small to trigger possible starvation
   play_options_.read_ahead_queue_size = num_low_freq_msgs_per_bag / 2;
-  play_options_.message_order = MessageOrder::RECEIVED_TIMESTAMP;
   auto player = std::make_shared<rosbag2_transport::Player>(std::move(bags), play_options_);
 
   using timestamped_msg_t =
@@ -421,17 +417,6 @@ TEST_F(RosBag2PlayTestFixture, high_freq_topics_does_not_starve_in_multibag_play
   }
 }
 
-INSTANTIATE_TEST_SUITE_P(
-  ParametrizedPlayTests,
-  RosBag2PlayTestFixtureMessageOrder,
-  Values(
-    rosbag2_transport::MessageOrder::RECEIVED_TIMESTAMP,
-    rosbag2_transport::MessageOrder::SENT_TIMESTAMP
-  ),
-  Rosbag2TransportTestFixture::format_message_order
-);
-
->>>>>>> bfce7ac (Fix for multibag replay stagnation (#2158))
 TEST_F(RosBag2PlayTestFixture, recorded_messages_are_played_for_all_services)
 {
   const std::string service_name1 = "/test_service1";
