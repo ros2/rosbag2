@@ -403,7 +403,7 @@ TEST_F(RosBag2PlayTestFixture, recorded_messages_are_played_for_all_topics)
           ElementsAre(40.0f, 2.0f, 0.0f)))));
 }
 
-TEST_F(RosBag2PlayTestFixture, can_play_messages_with_queue_size_equeal_one)
+TEST_F(RosBag2PlayTestFixture, can_play_messages_with_queue_size_equal_one)
 {
   const auto msg = get_messages_basic_types()[0];
   auto topic_types = std::vector<rosbag2_storage::TopicMetadata>{
