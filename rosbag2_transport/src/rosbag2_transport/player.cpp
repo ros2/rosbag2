@@ -683,7 +683,7 @@ bool PlayerImpl::play()
       is_in_playback_cv_.notify_all();
 
       // If we get here and still have/just got a play next request, make sure to notify play_next()
-      // After that, requests will be automatically rejected since is_in_playback_ become false
+      // After that, requests will be automatically rejected since is_in_playback_ becomes false
       if (play_next_.exchange(false)) {
         std::lock_guard<std::mutex> lk(finished_play_next_mutex_);
         finished_play_next_ = true;
