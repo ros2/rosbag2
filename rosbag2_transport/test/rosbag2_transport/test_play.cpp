@@ -210,26 +210,15 @@ TEST_F(RosBag2PlayTestFixture, can_play_messages_with_queue_size_equal_one)
   // This is to make sure that the player can handle this case correctly.
   // In a real scenario, a larger queue size is recommended to improve performance.
   play_options_.read_ahead_queue_size = 1;
-  const rosbag2_transport::MessageOrder message_order = play_options_.message_order;
 
   auto player = std::make_shared<rosbag2_transport::Player>(std::move(bags), play_options_);
   std::size_t num_played_messages = 0u;
   rcutils_time_point_value_t last_timestamp = 0;
-  const auto get_timestamp =
-    [message_order](std::shared_ptr<rosbag2_storage::SerializedBagMessage> msg) {
-      switch (message_order) {
-        case rosbag2_transport::MessageOrder::RECEIVED_TIMESTAMP:
-          return msg->recv_timestamp;
-        case rosbag2_transport::MessageOrder::SENT_TIMESTAMP:
-          return msg->send_timestamp;
-        default:
-          throw std::runtime_error("unknown rosbag2_transport::MessageOrder value");
-      }
-    };
+
   const auto callback = [&](std::shared_ptr<rosbag2_storage::SerializedBagMessage> playing_msg) {
       // Make sure messages are played in order
       num_played_messages++;
-      const auto timestamp = get_timestamp(playing_msg);
+      const auto timestamp = playing_msg->recv_timestamp;
       using MessageT = typename decltype(msg)::element_type;
       const auto deserialized_msg = deserialize_test_message<MessageT>(playing_msg);
       // The int32_value was set in an increasing order when creating the messages
