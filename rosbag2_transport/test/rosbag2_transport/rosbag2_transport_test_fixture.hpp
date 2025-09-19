@@ -66,6 +66,29 @@ public:
     return bag_msg;
   }
 
+<<<<<<< HEAD
+=======
+  template<typename MessageT>
+  std::shared_ptr<MessageT> deserialize_test_message(
+    const std::shared_ptr<rosbag2_storage::SerializedBagMessage> bag_msg)
+  {
+    return memory_management_.deserialize_message<MessageT>(bag_msg->serialized_data);
+  }
+
+  static std::string format_message_order(
+    const TestParamInfo<rosbag2_transport::MessageOrder> & info)
+  {
+    switch (info.param) {
+      case rosbag2_transport::MessageOrder::RECEIVED_TIMESTAMP:
+        return "received_timestamp";
+      case rosbag2_transport::MessageOrder::SENT_TIMESTAMP:
+        return "sent_timestamp";
+      default:
+        throw std::runtime_error("unknown value");
+    }
+  }
+
+>>>>>>> 951d175 (Bugfix: Player can't play with read_ahead_queue_size equal 1 (#2174))
   MemoryManagement memory_management_;
 
   rosbag2_storage::StorageOptions storage_options_;
