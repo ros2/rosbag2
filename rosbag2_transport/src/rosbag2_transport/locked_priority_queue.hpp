@@ -27,7 +27,8 @@
 
 /// \brief `std::priority_queue` wrapper with locks and stable sorting.
 /// \details This class wraps a `std::priority_queue` and provides locking for thread-safe
-///   access. It also adds a strictly increasing insertion sequence number to each element to
+///   access. It uses std::vector as underlying container for the `std::priority_queue` and
+///   adds a strictly increasing insertion sequence number to each element to
 ///   ensure a stable sort when two elements are equivalent according to the comparator.
 ///   This is useful when multiple elements has the same priorities in the queue, and we want to
 ///   ensure that elements with the same priority are popped in the order they were pushed.
@@ -36,24 +37,17 @@
 /// \note The insertion sequence number is a builtin feature of this class, and users should not
 ///   provide it themselves.
 /// \tparam T The element type
-/// \tparam Container The underlying container type. Must be a container of `std::pair<T, size_t>`,
-///   where the `size_t` is a strictly increasing insertion sequence number to break ties
-///   when two elements are equivalent according to the comparator. This ensures a stable sort.
-/// \tparam Compare the comparator
 /// \see std::priority_queue
-template<
-  typename T,
-  typename Container = std::vector<std::pair<T, size_t>>,
-  typename Compare = std::less<typename Container::value_type>,
-  typename = std::enable_if_t<std::is_same_v<typename Container::value_type, std::pair<T, size_t>>>
->
+template<typename T>
 class LockedPriorityQueue
 {
 public:
+  using Comparator = std::function<bool(const T &, const T &)>;
+
   /// \brief Constructor.
   /// \param compare the comparator object
-  explicit LockedPriorityQueue(const Compare & compare)
-  : queue_(compare)
+  explicit LockedPriorityQueue(const Comparator & compare)
+  : queue_(StableComparator{compare})
   {}
 
   LockedPriorityQueue() = delete;
@@ -117,8 +111,34 @@ public:
   }
 
 private:
+  using Container = std::vector<std::pair<T, size_t>>;
+
+  /// \brief Internal wrapper comparator around the user-provided comparator.
+  /// \details This comparator uses the user-provided comparator to compare the `T` values.
+  ///   If the `T` values are equivalent according to the user comparator, it uses
+  ///   the insertion sequence number to break ties, ensuring that earlier inserted elements
+  ///   are considered "less than" later inserted elements.
+  struct StableComparator
+  {
+    Comparator user_comp;
+    bool operator()(const std::pair<T, size_t> & l, const std::pair<T, size_t> & r) const
+    {
+      const auto & [l_t_value, l_insertion_seq_num] = l;
+      const auto & [r_t_value, r_insertion_seq_num] = r;
+      if (user_comp(l_t_value, r_t_value)) {
+        return true;
+      }
+      if (user_comp(r_t_value, l_t_value)) {
+        return false;
+      }
+      // If values are equal according to user's comparator, use sequence numbers for stability
+      // Tie-breaker: earlier insertion comes first
+      return l_insertion_seq_num > r_insertion_seq_num;
+    }
+  };
+
   mutable std::mutex queue_mutex_;
-  std::priority_queue<typename Container::value_type, Container, Compare> queue_
+  std::priority_queue<typename Container::value_type, Container, StableComparator> queue_
   RCPPUTILS_TSA_GUARDED_BY(queue_mutex_);
 
   size_t insert_sequence_number_{0} RCPPUTILS_TSA_GUARDED_BY(queue_mutex_);
