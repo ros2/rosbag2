@@ -434,31 +434,35 @@ TEST_F(PlaySrvsTest, stop_in_pause) {
 }
 
 TEST_F(PlaySrvsTest, stop_in_active_play) {
-  auto calls = 0;
-  std::mutex m;
-  std::condition_variable cv;
+  auto num_calls = 0;
+  std::mutex calls_counter_update_mutex;
+  std::condition_variable calls_counter_update_cv;
   ASSERT_TRUE(player_->is_paused());
 
   const auto callback = [&](std::shared_ptr<rosbag2_storage::SerializedBagMessage>) {
-      std::unique_lock<std::mutex> lk{m};
-      ++calls;
+      std::unique_lock<std::mutex> lk{calls_counter_update_mutex};
+      ++num_calls;
       lk.unlock();
-      cv.notify_one();
+      calls_counter_update_cv.notify_one();
       std::this_thread::sleep_for(50ms);
     };
   const auto pre_callback_handle = player_->add_on_play_message_pre_callback(callback);
   ASSERT_NE(pre_callback_handle, rosbag2_transport::Player::invalid_callback_handle);
 
-  player_->wait_for_playback_to_start();
+  player_->wait_for_playback_to_start(10s);
   ASSERT_TRUE(player_->is_paused());
 
-  std::unique_lock<std::mutex> lk{m};
+  // Lock calls_counter_update_mutex to avoid missing the first message published after resume
+  std::unique_lock<std::mutex> lk{calls_counter_update_mutex};
   player_->resume();
   ASSERT_FALSE(player_->is_paused());
   // Wait until first message is going to be published in active playback mode
-  ASSERT_TRUE(cv.wait_for(lk, 2s, [&] {return calls == 1;}));
+  ASSERT_TRUE(calls_counter_update_cv.wait_for(lk, 2s, [&] {return num_calls == 1;}));
+  // Unlock calls_counter_update_mutex before calling stop() to avoid deadlock in the callback
+  // if we happened to call stop() after the next message started being processed in the callback
+  lk.unlock();
+  // Now call stop() while player is in active playback mode
   service_call_stop();
   // playback shall successfully finish after "Stop" without rclcpp::shutdown()
-  player_->wait_for_playback_to_finish();
-  ASSERT_EQ(calls, 1);
+  player_->wait_for_playback_to_finish(10s);
 }
