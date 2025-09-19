@@ -463,6 +463,10 @@ PlayerImpl::PlayerImpl(
   keyboard_handler_(std::move(keyboard_handler)),
   player_service_client_manager_(std::make_shared<PlayerServiceClientManager>())
 {
+  if (play_options_.read_ahead_queue_size < 1) {
+    throw std::invalid_argument("read_ahead_queue_size must be at least 1");
+  }
+
   for (auto & topic : play_options_.topics_to_filter) {
     topic = rclcpp::expand_topic_or_service_name(
       topic, owner_->get_name(),
@@ -1141,7 +1145,7 @@ void PlayerImpl::load_storage_content()
   while (load_storage_content_ && !stop_playback_ && readers_->has_next()) {
     // The message queue size may get smaller after this, but that's OK
     const size_t message_queue_size = message_queue_.size();
-    if (message_queue_size < queue_lower_boundary) {
+    if (message_queue_size <= queue_lower_boundary) {
       enqueue_up_to_boundary(queue_upper_boundary, message_queue_size);
     } else {
       std::this_thread::sleep_for(std::chrono::milliseconds(1));
