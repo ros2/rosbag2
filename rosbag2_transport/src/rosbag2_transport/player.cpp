@@ -1055,12 +1055,6 @@ void PlayerImpl::play_messages_from_queue()
   // the next message.
   std::unique_lock<std::mutex> main_play_loop_lk(main_play_loop_mutex_);
   while (rclcpp::ok() && !stop_playback_) {
-<<<<<<< HEAD
-    // While there's a message to play and we haven't reached the end timestamp yet
-    while (rclcpp::ok() && !stop_playback_ &&
-      message_ptr != nullptr && !shall_stop_at_timestamp(message_ptr->recv_timestamp))
-    {
-=======
     main_play_loop_lk.unlock();  // Unlock while we are waiting/sleeping
     if (is_paused()) {
       // If we're paused, we need to wait until the stop of playback or until we get a play next.
@@ -1084,11 +1078,10 @@ void PlayerImpl::play_messages_from_queue()
     } else {
       // While there's a message to play, and we haven't reached the end yet.
       if (message_ptr == nullptr ||
-        shall_stop_at_timestamp(get_message_order_timestamp(message_ptr)))
+        shall_stop_at_timestamp(message_ptr->recv_timestamp))
       {
         break;
       }
->>>>>>> b08269e (Fixes for multiple race conditions in player (#2171))
       // Sleep until the message's replay time, do not move on until sleep_until returns true
       // However, skip sleeping if we're trying to play the next message
       while (rclcpp::ok() && !stop_playback_ && !play_next_.load() &&
@@ -1118,54 +1111,29 @@ void PlayerImpl::play_messages_from_queue()
         // have reached the end of playback and resumed playback from pause mode. In this case,
         // we need to continue loop to gracefully exit from play_messages_from_queue()
         if (play_next_.load()) {
-<<<<<<< HEAD
-          clock_->jump(message_ptr->recv_timestamp);
-=======
->>>>>>> b08269e (Fixes for multiple race conditions in player (#2171))
           play_next_ = false;
           std::lock_guard<std::mutex> lk(finished_play_next_mutex_);
           finished_play_next_ = true;
           play_next_result_ = false;
           finished_play_next_cv_.notify_all();
         }
-<<<<<<< HEAD
-=======
         continue;
->>>>>>> b08269e (Fixes for multiple race conditions in player (#2171))
       }
 
       bool message_published = false;
       // We shall respect shall_stop_at_timestamp() even do play_next in pause mode
-      if (!shall_stop_at_timestamp(get_message_order_timestamp(message_ptr))) {
+      if (!shall_stop_at_timestamp(message_ptr->recv_timestamp)) {
         message_published = publish_message(message_ptr);
       }
 
       // If we tried to publish because of play_next(), jump the clock
       if (play_next_.load()) {
-        clock_->jump(get_message_order_timestamp(message_ptr));
+        clock_->jump(message_ptr->recv_timestamp);
         play_next_ = false;
         std::lock_guard<std::mutex> lk(finished_play_next_mutex_);
         finished_play_next_ = true;
         play_next_result_ = message_published;
         finished_play_next_cv_.notify_all();
-      }
-      // Updating progress bar in this code section protected
-      // by the mutex main_play_loop_mutex_.
-      const auto current_player_status = progress_bar_->get_player_status();
-      switch (current_player_status) {
-        case PlayerStatus::PAUSED:
-          // Update progress bar without delays for each explicit play_next() call
-          progress_bar_->update(PlayerStatus::PAUSED, get_message_order_timestamp(message_ptr));
-          break;
-        case PlayerStatus::BURST:
-          // Limit progress bar update in burst mode
-          progress_bar_->update_with_limited_rate(
-            PlayerStatus::BURST, get_message_order_timestamp(message_ptr));
-          break;
-        default:
-          progress_bar_->update_with_limited_rate(
-            PlayerStatus::RUNNING, get_message_order_timestamp(message_ptr));
-          break;
       }
     }
     message_ptr = take_next_message_from_queue();
