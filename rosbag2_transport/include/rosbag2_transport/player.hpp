@@ -381,6 +381,7 @@ protected:
 
   /// \brief Getter for the first of the currently stored storage options
   /// \return Reference to the first item in the StorageOptions vector
+  [[deprecated("Use rosabg2_transport::Player::get_all_storage_options() instead")]]
   ROSBAG2_TRANSPORT_PUBLIC
   const rosbag2_storage::StorageOptions & get_storage_options();
 
