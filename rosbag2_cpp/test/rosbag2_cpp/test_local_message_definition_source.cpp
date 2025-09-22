@@ -233,17 +233,32 @@ TEST(test_local_message_definition_source, no_crash_on_bad_name)
   ASSERT_EQ(result.encoding, "unknown");
 }
 
-TEST(test_local_message_definition_source, throw_definition_not_found_for_unknown_msg)
+TEST(test_local_message_definition_source, gracefully_handle_unknown_msg)
 {
   LocalMessageDefinitionSource source;
-  ASSERT_THROW(
+  rosbag2_storage::MessageDefinition result;
+  EXPECT_NO_THROW(
   {
+<<<<<<< HEAD
     source.get_full_text("rosbag2_test_msgdefs/msg/UnknownMessage");
   }, rosbag2_cpp::DefinitionNotFoundError);
+=======
+    result = source.get_full_text_ext("rosbag2_test_msgdefs/msg/UnknownMessage",
+      "/unknown_msg_topic");
+  });
+  EXPECT_EQ(result.encoding, "unknown");
+>>>>>>> 87b7243 (Log reasoning for not found message definition only in debug log (#2183))
 
-  // Throw DefinitionNotFoundError for not found message definition package name
-  ASSERT_THROW(
+  // No throw for not found message definition package name
+  EXPECT_NO_THROW(
   {
+<<<<<<< HEAD
     source.get_full_text("not_found_msgdefs_pkg/msg/UnknownMessage");
   }, rosbag2_cpp::DefinitionNotFoundError);
+=======
+    result = source.get_full_text_ext(
+      "not_found_msgdefs_pkg/msg/UnknownMessage", "/not_found_msgdefs_pkg_topic");
+  });
+  EXPECT_EQ(result.encoding, "unknown");
+>>>>>>> 87b7243 (Log reasoning for not found message definition only in debug log (#2183))
 }

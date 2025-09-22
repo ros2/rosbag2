@@ -221,6 +221,7 @@ void SequentialWriter::create_topic(const rosbag2_storage::TopicMetadata & topic
     // nothing to do, topic already created
     return;
   }
+<<<<<<< HEAD
   rosbag2_storage::MessageDefinition definition;
 
   std::string topic_type;
@@ -236,6 +237,23 @@ void SequentialWriter::create_topic(const rosbag2_storage::TopicMetadata & topic
   } catch (DefinitionNotFoundError &) {
     definition = rosbag2_storage::MessageDefinition::empty_message_definition_for(topic_type);
   }
+=======
+  rosbag2_storage::MessageDefinition definition =
+    message_definitions_.get_full_text_ext(topic_with_type.type, topic_with_type.name);
+
+  if (definition.encoded_message_definition.empty() ||
+    definition.encoding.empty() || definition.encoding == "unknown")
+  {
+    ROSBAG2_CPP_LOG_WARN("Message definition for topic '%s' with type '%s' not found. "
+      "Message definition will be left empty in bag.",
+      topic_with_type.name.c_str(), topic_with_type.type.c_str());
+    definition =
+      rosbag2_storage::MessageDefinition::empty_message_definition_for(topic_with_type.type);
+  }
+
+  // Copy hash from topic_with_type to message definition
+  definition.type_hash = topic_with_type.type_description_hash;
+>>>>>>> 87b7243 (Log reasoning for not found message definition only in debug log (#2183))
   create_topic(topic_with_type, definition);
 }
 

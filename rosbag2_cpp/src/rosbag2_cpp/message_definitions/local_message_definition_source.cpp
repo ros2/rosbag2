@@ -225,7 +225,7 @@ const LocalMessageDefinitionSource::MessageSpec & LocalMessageDefinitionSource::
       "resource_content : \n%s for package: '%s' ,\n share_dir: '%s'\n, topic_type: '%s'",
       resource_content.c_str(), package_name.c_str(), share_dir_path.c_str(), topic_type.c_str());
   } else {
-    ROSBAG2_CPP_LOG_WARN(
+    ROSBAG2_CPP_LOG_DEBUG(
       "Failed to get information about rosidl_interfaces resources from ament_index for package "
       "'%s'", package_name.c_str());
     throw DefinitionNotFoundError(definition_identifier.topic_type());
@@ -247,7 +247,7 @@ const LocalMessageDefinitionSource::MessageSpec & LocalMessageDefinitionSource::
   }
 
   if (relative_file_path_str.empty()) {
-    ROSBAG2_CPP_LOG_WARN(
+    ROSBAG2_CPP_LOG_DEBUG(
       "Message definition file '%s' not found in the resource content for package: '%s'",
       file_name.c_str(), package_name.c_str());
     throw DefinitionNotFoundError(definition_identifier.topic_type());
@@ -255,7 +255,7 @@ const LocalMessageDefinitionSource::MessageSpec & LocalMessageDefinitionSource::
   std::string msg_definition_path_str = (share_dir_path / relative_file_path_str).generic_string();
   std::ifstream file{msg_definition_path_str};
   if (!file.good()) {
-    ROSBAG2_CPP_LOG_WARN("Message definition not found in the %s for package: '%s'",
+    ROSBAG2_CPP_LOG_DEBUG("Message definition not found in the %s for package: '%s'",
       msg_definition_path_str.c_str(), package_name.c_str());
     throw DefinitionNotFoundError(definition_identifier.topic_type());
   }
@@ -316,24 +316,23 @@ rosbag2_storage::MessageDefinition LocalMessageDefinitionSource::get_full_text(
       // delimiter. All dependent .msg definitions are preceded by a two-line delimiter:
       result = append_recursive(DefinitionIdentifier(root_type, format), max_recursion_depth);
     } catch (const DefinitionNotFoundError & err) {
-      ROSBAG2_CPP_LOG_WARN("No .msg definition for %s, falling back to IDL", err.what());
+      ROSBAG2_CPP_LOG_DEBUG("No .msg definition for %s, falling back to IDL", err.what());
       format = Format::IDL;
       try {
         DefinitionIdentifier root_definition_identifier(root_type, format);
         result = (delimiter(root_definition_identifier) +
           append_recursive(root_definition_identifier, max_recursion_depth));
-      } catch (const DefinitionNotFoundError & err) {
-        ROSBAG2_CPP_LOG_WARN("No .idl definition found for topic type %s, "
-          "definition will be left empty in bag", err.what());
+      } catch (const DefinitionNotFoundError & idl_search_error) {
+        ROSBAG2_CPP_LOG_DEBUG("No .idl definition found for topic type %s.",
+                              idl_search_error.what());
         format = Format::UNKNOWN;
-        throw;
       }
     } catch (const TypenameNotUnderstoodError & err) {
-      ROSBAG2_CPP_LOG_WARN(
-        "Message type name '%s' not understood by type definition search, "
-        "definition will be left empty in bag.", err.what());
+      ROSBAG2_CPP_LOG_DEBUG(
+        "Message type name '%s' not understood by type definition search.", err.what());
       format = Format::UNKNOWN;
     }
+<<<<<<< HEAD
   } else if (is_service_type) {  // Service event topic type
     // The service dependencies could be either in the msg or idl files. Therefore, will try to
     // search service dependencies in MSG files first then in IDL files via two separate recursive
@@ -367,18 +366,88 @@ rosbag2_storage::MessageDefinition LocalMessageDefinitionSource::get_full_text(
           dep = DefinitionIdentifier(dep_name, Format::IDL);
           inserted = seen_deps.insert(dep).second;
           if (inserted) {
+=======
+  } else {
+    // The service and action dependencies could be either in the msg or idl files.
+    // Therefore, will try to search dependencies in MSG files first then in IDL files
+    // via two separate recursive searches for each dependency.
+    if (is_service_type) {
+      format = Format::SRV;
+      if (!topic_name.empty() && is_service_event_topic(topic_name, root_type)) {
+        // Convert service event type to service type
+        real_root_type = service_event_topic_type_to_service_type(root_type);
+      }
+    } else if (is_action_type) {
+      format = Format::ACTION;
+      if (!topic_name.empty() && is_topic_belong_to_action(topic_name, root_type)) {
+        // Search for action type in cache first. Since we can't convert CancelGoalEvent or Status
+        // action introspection interface types to the corresponding action type directly, we are
+        // using cache to store the action type from other action introspection interface types
+        // corresponding to the same topic name and original action type.
+        std::string action_name = action_interface_name_to_action_name(topic_name);
+        auto it = action_name_to_inner_action_interface_type_cache_.find(action_name);
+        if (it != action_name_to_inner_action_interface_type_cache_.end() && !it->second.empty()) {
+          real_root_type = it->second;
+        } else {
+          // Convert action interface type to action type
+          std::string action_type = rosbag2_cpp::get_action_type_for_info(root_type);
+          // Note: get_action_type_for_info(topic_type) will return empty string if the action
+          // type is CancelGoalEvent or Status.
+          if (!action_type.empty()) {
+            real_root_type = std::move(action_type);
+            action_name_to_inner_action_interface_type_cache_[action_name] = real_root_type;
+          }
+        }
+      }
+    }
+    try {
+      DefinitionIdentifier def_identifier{real_root_type, format};
+      const MessageSpec & spec = load_message_spec(def_identifier);
+      (void)seen_deps.insert(def_identifier).second;
+      result = delimiter(def_identifier);
+      result += spec.text;
+      for (const auto & dep_name : spec.dependencies) {
+        DefinitionIdentifier dep(dep_name, Format::MSG);
+        bool inserted = seen_deps.insert(dep).second;
+        if (inserted) {
+          try {
+>>>>>>> 87b7243 (Log reasoning for not found message definition only in debug log (#2183))
             result += "\n";
             result += delimiter(dep);
             result += append_recursive(dep, max_recursion_depth);
-            format = Format::IDL;
+            format = Format::MSG;
+          } catch (const DefinitionNotFoundError & msg_search_err) {
+            ROSBAG2_CPP_LOG_DEBUG("No .msg definition for %s, falling back to IDL",
+                                  msg_search_err.what());
+            try {
+              dep = DefinitionIdentifier(dep_name, Format::IDL);
+              inserted = seen_deps.insert(dep).second;
+              if (inserted) {
+                result += "\n";
+                result += delimiter(dep);
+                result += append_recursive(dep, max_recursion_depth);
+                format = Format::IDL;
+              }
+            } catch (const DefinitionNotFoundError & idl_search_error) {
+              ROSBAG2_CPP_LOG_DEBUG("No .idl definition found for topic type %s.",
+                                    idl_search_error.what());
+              format = Format::UNKNOWN;
+            }
+          } catch (const TypenameNotUnderstoodError & err) {
+            ROSBAG2_CPP_LOG_DEBUG(
+              "Message type name '%s' not understood by type definition search.", err.what());
+            format = Format::UNKNOWN;
           }
-        } catch (const TypenameNotUnderstoodError & err) {
-          ROSBAG2_CPP_LOG_WARN(
-            "Message type name '%s' not understood by type definition search, "
-            "definition will be left empty in bag.", err.what());
-          format = Format::UNKNOWN;
         }
       }
+    } catch (const DefinitionNotFoundError & real_root_search_err) {
+      ROSBAG2_CPP_LOG_DEBUG("No message definition found for topic type %s.",
+                            real_root_search_err.what());
+      format = Format::UNKNOWN;
+    } catch (const TypenameNotUnderstoodError & err) {
+      ROSBAG2_CPP_LOG_DEBUG(
+        "Message type name '%s' not understood by type definition search.", err.what());
+      format = Format::UNKNOWN;
     }
   } else {
     ROSBAG2_CPP_LOG_WARN(
@@ -391,6 +460,7 @@ rosbag2_storage::MessageDefinition LocalMessageDefinitionSource::get_full_text(
   switch (format) {
     case Format::UNKNOWN:
       out.encoding = "unknown";
+      result = "";
       break;
     case Format::MSG:
     case Format::SRV:
