@@ -65,8 +65,6 @@ public:
    * docs/message_definition_encoding.md
    * For SRV type, root_type must include a string '/srv/'.
    * For ACTION type, root_type must include a string '/action/'.
-   * Throws DefinitionNotFoundError if one or more definition files are missing for the given
-   * package resource name.
    */
   [[deprecated("Use get_full_text_ext() instead, which allows specifying the topic name and "
      "provides more flexibility in how the message definition is constructed.")]]
@@ -84,8 +82,11 @@ public:
    * \param[in] topic_name The topic name, which is used to determine the message definition format.
    * \param[in] root_type The root type of the message definition, which should be a fully qualified
    * datatype name.
+<<<<<<< HEAD
    * \throws DefinitionNotFoundError if one or more definition files are missing for the given
    * package resource name.
+=======
+>>>>>>> 87b7243 (Log reasoning for not found message definition only in debug log (#2183))
    * \return A MessageDefinition object containing the encoded message definition and its
    * dependencies.
    */
