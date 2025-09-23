@@ -226,7 +226,7 @@ public:
   size_t get_number_of_registered_on_play_msg_post_callbacks();
 
   /// \brief Getter for the first of the currently stored storage options
-  /// \return Copy of the first of the currently stored storage options
+  /// \return Reference to the first of the currently stored storage options
   const rosbag2_storage::StorageOptions & get_storage_options();
 
   /// \brief Getter for the currently stored storage options
@@ -391,6 +391,23 @@ private:
       return l->recv_timestamp > r->recv_timestamp;
     }
   } bag_message_chronological_recv_timestamp_comparator;
+<<<<<<< HEAD
+=======
+
+  /// Comparator for SerializedBagMessageSharedPtr to order chronologically by send_timestamp.
+  static inline const struct
+  {
+    bool operator()(
+      const rosbag2_storage::SerializedBagMessageSharedPtr & l,
+      const rosbag2_storage::SerializedBagMessageSharedPtr & r) const
+    {
+      return l->send_timestamp > r->send_timestamp;
+    }
+  } bag_message_chronological_send_timestamp_comparator;
+
+  // Note: The first_storage_options_ is used as a workaround for deprecated get_storage_options()
+  rosbag2_storage::StorageOptions first_storage_options_;
+>>>>>>> 19e0b90 ([kilted] Follow-up on "Fix for multibag replay stagnation (#2158)" (#2182))
 };
 
 PlayerImpl::PlayerImpl(
@@ -1725,10 +1742,12 @@ void PlayerImpl::publish_clock_update(const rclcpp::Time & time)
 const rosbag2_storage::StorageOptions & PlayerImpl::get_storage_options()
 {
   auto all_storage_options = get_all_storage_options();
-  if (all_storage_options.size() < 1) {
+  if (all_storage_options.empty()) {
     throw std::runtime_error("Storage options not available.");
   }
-  return all_storage_options[0];
+  first_storage_options_ = all_storage_options[0];
+  // Note: Use first_storage_options_ as return value to keep the reference valid
+  return first_storage_options_;
 }
 
 std::vector<rosbag2_storage::StorageOptions> PlayerImpl::get_all_storage_options()
