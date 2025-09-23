@@ -66,6 +66,13 @@ public:
     return bag_msg;
   }
 
+  template<typename MessageT>
+  std::shared_ptr<MessageT> deserialize_test_message(
+    const std::shared_ptr<rosbag2_storage::SerializedBagMessage> bag_msg)
+  {
+    return memory_management_.deserialize_message<MessageT>(bag_msg->serialized_data);
+  }
+
   MemoryManagement memory_management_;
 
   rosbag2_storage::StorageOptions storage_options_;
