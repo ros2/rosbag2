@@ -328,20 +328,9 @@ private:
   Player * owner_;
   rosbag2_transport::PlayOptions play_options_;
   rcutils_time_point_value_t play_until_timestamp_ = -1;
-<<<<<<< HEAD
-  using BagMessageComparator = std::function<
-    int(
-      const rosbag2_storage::SerializedBagMessageSharedPtr &,
-      const rosbag2_storage::SerializedBagMessageSharedPtr &)>;
-  LockedPriorityQueue<
-    rosbag2_storage::SerializedBagMessageSharedPtr,
-    std::vector<rosbag2_storage::SerializedBagMessageSharedPtr>,
-    BagMessageComparator> message_queue_;
-=======
   LockedPriorityQueue<rosbag2_storage::SerializedBagMessageSharedPtr> message_queue_;
   using BagMessageComparator =
     LockedPriorityQueue<rosbag2_storage::SerializedBagMessageSharedPtr>::Comparator;
->>>>>>> 6b462de (Make the player respect the original messages' order with the same timestamp (#2172))
   mutable std::future<void> storage_loading_future_;
   std::atomic_bool load_storage_content_{true};
   std::unordered_map<std::string, rclcpp::QoS> topic_qos_profile_overrides_;
@@ -397,20 +386,6 @@ private:
       return l->recv_timestamp > r->recv_timestamp;  // Smaller timestamp comes first
     }
   } bag_message_chronological_recv_timestamp_comparator;
-<<<<<<< HEAD
-=======
-
-  /// Comparator for SerializedBagMessageSharedPtr to order chronologically by send_timestamp.
-  static inline const struct
-  {
-    bool operator()(
-      const rosbag2_storage::SerializedBagMessageSharedPtr & l,
-      const rosbag2_storage::SerializedBagMessageSharedPtr & r) const
-    {
-      return l->send_timestamp > r->send_timestamp;  // Smaller timestamp comes first
-    }
-  } bag_message_chronological_send_timestamp_comparator;
->>>>>>> 6b462de (Make the player respect the original messages' order with the same timestamp (#2172))
 };
 
 PlayerImpl::PlayerImpl(

@@ -367,7 +367,7 @@ TEST_F(RosBag2PlayTestFixture, recorded_messages_are_played_for_all_topics_from_
   EXPECT_EQ(total_messages, num_played_messages);
 }
 
-TEST_P(RosBag2PlayTestFixtureMessageOrder,
+TEST_F(RosBag2PlayTestFixture,
        order_of_msgs_with_the_same_timestamp_in_one_bag_respected_during_replay)
 {
   const auto msg = get_messages_basic_types()[0];
@@ -384,12 +384,12 @@ TEST_P(RosBag2PlayTestFixtureMessageOrder,
   std::vector<std::vector<std::shared_ptr<rosbag2_storage::SerializedBagMessage>>> messages_list{};
   msg->int32_value = 0;
   messages_list.emplace_back(std::vector<std::shared_ptr<rosbag2_storage::SerializedBagMessage>>{
-    (msg->int32_value++, serialize_test_message("topic1", 1, 1, msg)),
-    (msg->int32_value++, serialize_test_message("topic2", 1, 1, msg)),
-    (msg->int32_value++, serialize_test_message("topic1", 5, 4, msg)),
-    (msg->int32_value++, serialize_test_message("topic2", 5, 4, msg)),
-    (msg->int32_value++, serialize_test_message("topic1", 9, 4, msg)),
-    (msg->int32_value++, serialize_test_message("topic2", 9, 14, msg))
+    (msg->int32_value++, serialize_test_message("topic1", 1, msg)),
+    (msg->int32_value++, serialize_test_message("topic2", 1, msg)),
+    (msg->int32_value++, serialize_test_message("topic1", 5, msg)),
+    (msg->int32_value++, serialize_test_message("topic2", 5, msg)),
+    (msg->int32_value++, serialize_test_message("topic1", 9, msg)),
+    (msg->int32_value++, serialize_test_message("topic2", 9, msg))
   });
 
   std::vector<rosbag2_transport::Player::reader_storage_options_pair_t> bags{};
@@ -402,27 +402,15 @@ TEST_P(RosBag2PlayTestFixtureMessageOrder,
       std::make_unique<rosbag2_cpp::Reader>(std::move(prepared_mock_reader)), storage_options_);
   }
   ASSERT_GT(total_messages, 0u);
-  const rosbag2_transport::MessageOrder message_order = GetParam();
-  play_options_.message_order = message_order;
   play_options_.read_ahead_queue_size = total_messages - 3;
   auto player = std::make_shared<rosbag2_transport::Player>(std::move(bags), play_options_);
   std::size_t num_played_messages = 0u;
   rcutils_time_point_value_t last_timestamp = 0;
-  const auto get_timestamp =
-    [message_order](std::shared_ptr<rosbag2_storage::SerializedBagMessage> msg) {
-      switch (message_order) {
-        case rosbag2_transport::MessageOrder::RECEIVED_TIMESTAMP:
-          return msg->recv_timestamp;
-        case rosbag2_transport::MessageOrder::SENT_TIMESTAMP:
-          return msg->send_timestamp;
-        default:
-          throw std::runtime_error("unknown rosbag2_transport::MessageOrder value");
-      }
-    };
+
   const auto callback = [&](std::shared_ptr<rosbag2_storage::SerializedBagMessage> playing_msg) {
       // Make sure messages are played in order
       num_played_messages++;
-      const auto timestamp = get_timestamp(playing_msg);
+      const auto timestamp = playing_msg->recv_timestamp;
       using MessageT = typename decltype(msg)::element_type;
       const auto deserialized_msg = deserialize_test_message<MessageT>(playing_msg);
       // The int32_value was set in an increasing order when creating the messages
@@ -440,7 +428,7 @@ TEST_P(RosBag2PlayTestFixtureMessageOrder,
   EXPECT_EQ(total_messages, num_played_messages);
 }
 
-TEST_P(RosBag2PlayTestFixtureMessageOrder,
+TEST_F(RosBag2PlayTestFixture,
        order_of_msgs_with_the_same_timestamp_respected_in_multibag_replay)
 {
   const auto msg = get_messages_basic_types()[0];
@@ -460,22 +448,22 @@ TEST_P(RosBag2PlayTestFixtureMessageOrder,
   std::vector<std::vector<std::shared_ptr<rosbag2_storage::SerializedBagMessage>>> messages_list{};
   msg->int32_value = 1;
   messages_list.emplace_back(std::vector<std::shared_ptr<rosbag2_storage::SerializedBagMessage>>{
-    serialize_test_message("topic1", 1, 1, msg),
-    (msg->int32_value += 2, serialize_test_message("topic3", 3, 2, msg)),
-    (msg->int32_value += 2, serialize_test_message("topic1", 5, 4, msg)),
-    (msg->int32_value += 2, serialize_test_message("topic3", 7, 7, msg)),
-    (msg->int32_value += 2, serialize_test_message("topic1", 9, 8, msg)),
-    (msg->int32_value += 2, serialize_test_message("topic3", 11, 14, msg))
+    serialize_test_message("topic1", 1, msg),
+    (msg->int32_value += 2, serialize_test_message("topic3", 3, msg)),
+    (msg->int32_value += 2, serialize_test_message("topic1", 5, msg)),
+    (msg->int32_value += 2, serialize_test_message("topic3", 7, msg)),
+    (msg->int32_value += 2, serialize_test_message("topic1", 9, msg)),
+    (msg->int32_value += 2, serialize_test_message("topic3", 11, msg))
   });
   msg->int32_value = 2;
   messages_list.emplace_back(std::vector<std::shared_ptr<rosbag2_storage::SerializedBagMessage>>{
-    serialize_test_message("topic2", 1, 1, msg),
-    (msg->int32_value += 2, serialize_test_message("topic4", 3, 2, msg)),
+    serialize_test_message("topic2", 1, msg),
+    (msg->int32_value += 2, serialize_test_message("topic4", 3, msg)),
     // (msg->int32_value += 2, serialize_test_message("topic1", 5, 4, msg)),
-    (msg->int32_value += 2, serialize_test_message("topic2", 5, 4, msg)),
-    (msg->int32_value += 2, serialize_test_message("topic4", 7, 7, msg)),
-    (msg->int32_value += 2, serialize_test_message("topic2", 9, 9, msg)),
-    (msg->int32_value += 2, serialize_test_message("topic4", 11, 14, msg))
+    (msg->int32_value += 2, serialize_test_message("topic2", 5, msg)),
+    (msg->int32_value += 2, serialize_test_message("topic4", 7, msg)),
+    (msg->int32_value += 2, serialize_test_message("topic2", 9, msg)),
+    (msg->int32_value += 2, serialize_test_message("topic4", 11, msg))
   });
   std::vector<rosbag2_transport::Player::reader_storage_options_pair_t> bags{};
   std::size_t total_messages = 0u;
@@ -487,27 +475,15 @@ TEST_P(RosBag2PlayTestFixtureMessageOrder,
       std::make_unique<rosbag2_cpp::Reader>(std::move(prepared_mock_reader)), storage_options_);
   }
   ASSERT_GT(total_messages, 0u);
-  const rosbag2_transport::MessageOrder message_order = GetParam();
-  play_options_.message_order = message_order;
   play_options_.read_ahead_queue_size = total_messages - 3;
   auto player = std::make_shared<rosbag2_transport::Player>(std::move(bags), play_options_);
   std::size_t num_played_messages = 0u;
   rcutils_time_point_value_t last_timestamp = 0;
-  const auto get_timestamp =
-    [message_order](std::shared_ptr<rosbag2_storage::SerializedBagMessage> msg) {
-      switch (message_order) {
-        case rosbag2_transport::MessageOrder::RECEIVED_TIMESTAMP:
-          return msg->recv_timestamp;
-        case rosbag2_transport::MessageOrder::SENT_TIMESTAMP:
-          return msg->send_timestamp;
-        default:
-          throw std::runtime_error("unknown rosbag2_transport::MessageOrder value");
-      }
-    };
+
   const auto callback = [&](std::shared_ptr<rosbag2_storage::SerializedBagMessage> playing_msg) {
       // Make sure messages are played in order
       num_played_messages++;
-      const auto timestamp = get_timestamp(playing_msg);
+      const auto timestamp = playing_msg->recv_timestamp;
       using MessageT = typename decltype(msg)::element_type;
       const auto deserialized_msg = deserialize_test_message<MessageT>(playing_msg);
       // The int32_value was set in an increasing order when creating the messages
