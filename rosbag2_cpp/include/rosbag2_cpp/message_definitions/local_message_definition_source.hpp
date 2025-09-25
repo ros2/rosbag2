@@ -82,11 +82,6 @@ public:
    * \param[in] topic_name The topic name, which is used to determine the message definition format.
    * \param[in] root_type The root type of the message definition, which should be a fully qualified
    * datatype name.
-<<<<<<< HEAD
-   * \throws DefinitionNotFoundError if one or more definition files are missing for the given
-   * package resource name.
-=======
->>>>>>> 87b7243 (Log reasoning for not found message definition only in debug log (#2183))
    * \return A MessageDefinition object containing the encoded message definition and its
    * dependencies.
    */
