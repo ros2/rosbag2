@@ -391,23 +391,9 @@ private:
       return l->recv_timestamp > r->recv_timestamp;
     }
   } bag_message_chronological_recv_timestamp_comparator;
-<<<<<<< HEAD
-=======
-
-  /// Comparator for SerializedBagMessageSharedPtr to order chronologically by send_timestamp.
-  static inline const struct
-  {
-    bool operator()(
-      const rosbag2_storage::SerializedBagMessageSharedPtr & l,
-      const rosbag2_storage::SerializedBagMessageSharedPtr & r) const
-    {
-      return l->send_timestamp > r->send_timestamp;
-    }
-  } bag_message_chronological_send_timestamp_comparator;
 
   // Note: The first_storage_options_ is used as a workaround for deprecated get_storage_options()
   rosbag2_storage::StorageOptions first_storage_options_;
->>>>>>> 19e0b90 ([kilted] Follow-up on "Fix for multibag replay stagnation (#2158)" (#2182))
 };
 
 PlayerImpl::PlayerImpl(
