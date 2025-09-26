@@ -64,8 +64,6 @@ public:
    * The format is different for MSG/SRV and IDL definitions, and is described fully in
    * docs/message_definition_encoding.md
    * For SRV type, root_type must include a string '/srv/'.
-   * Throws DefinitionNotFoundError if one or more definition files are missing for the given
-   * package resource name.
    */
   rosbag2_storage::MessageDefinition get_full_text(const std::string & root_type);
 
