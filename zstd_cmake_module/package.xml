@@ -9,7 +9,7 @@
   <maintainer email="ros-tooling@googlegroups.com">ROS Tooling Working Group</maintainer>
   <license>Apache License 2.0</license>  <!-- the contents of this package are Apache 2.0 -->
 
-  <url type="website">https://github.com/lz4/lz4/</url>
+  <url type="website">https://facebook.github.io/zstd/</url>
 
   <buildtool_depend>ament_cmake</buildtool_depend>
 
