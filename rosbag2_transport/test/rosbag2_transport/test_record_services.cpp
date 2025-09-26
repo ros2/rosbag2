@@ -169,20 +169,20 @@ TEST_F(RecordSrvsSnapshotTest, trigger_snapshot)
 {
   auto & writer = recorder_->get_writer_handle();
   auto & mock_writer = dynamic_cast<MockSequentialWriter &>(writer.get_implementation_handle());
-  EXPECT_THAT(mock_writer.get_messages().size(), Eq(0u));
+  EXPECT_THAT(mock_writer.get_number_of_recorded_messages(), Eq(0u));
 
   // Wait for messages to be appeared in snapshot_buffer
   std::chrono::duration<int> timeout = std::chrono::seconds(10);
   using clock = std::chrono::steady_clock;
   auto start = clock::now();
-  while (mock_writer.get_snapshot_buffer().empty()) {
+  while (mock_writer.get_snapshot_buffer_size() == 0) {
     std::this_thread::sleep_for(std::chrono::milliseconds(30));
     EXPECT_LE((clock::now() - start), timeout) << "Failed to capture messages in time";
   }
-  EXPECT_THAT(mock_writer.get_messages().size(), Eq(0u));
+  EXPECT_THAT(mock_writer.get_number_of_recorded_messages(), Eq(0u));
 
   successful_service_request<Snapshot>(cli_snapshot_);
-  EXPECT_THAT(mock_writer.get_messages().size(), Ne(0u));
+  EXPECT_THAT(mock_writer.get_number_of_recorded_messages(), Ne(0u));
 }
 
 TEST_F(RecordSrvsTest, split_bagfile)
@@ -204,7 +204,7 @@ TEST_F(RecordSrvsTest, split_bagfile)
   std::chrono::duration<int> timeout = std::chrono::seconds(10);
   using clock = std::chrono::steady_clock;
   auto start = clock::now();
-  while (mock_writer.get_messages().empty()) {
+  while (mock_writer.get_number_of_recorded_messages() == 0) {
     std::this_thread::sleep_for(std::chrono::milliseconds(30));
     EXPECT_LE((clock::now() - start), timeout) << "Failed to capture messages in time";
   }

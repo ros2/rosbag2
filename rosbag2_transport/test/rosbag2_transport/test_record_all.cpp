@@ -70,7 +70,7 @@ TEST_F(RecordIntegrationTestFixture, published_messages_from_multiple_topics_are
   constexpr size_t expected_messages = 4;
   auto ret = rosbag2_test_common::wait_until_condition(
     [ =, &mock_writer]() {
-      return mock_writer.get_messages().size() >= expected_messages;
+      return mock_writer.get_number_of_recorded_messages() >= expected_messages;
     },
     std::chrono::seconds(5));
   EXPECT_TRUE(ret) << "failed to capture expected messages in time";
@@ -128,7 +128,7 @@ TEST_F(RecordIntegrationTestFixture, published_messages_from_multiple_services_a
   constexpr size_t expected_messages = 4;
   auto ret = rosbag2_test_common::wait_until_condition(
     [ =, &mock_writer]() {
-      return mock_writer.get_messages().size() >= expected_messages;
+      return mock_writer.get_number_of_recorded_messages() >= expected_messages;
     },
     std::chrono::seconds(5));
   EXPECT_TRUE(ret) << "failed to capture expected messages in time";
@@ -136,7 +136,68 @@ TEST_F(RecordIntegrationTestFixture, published_messages_from_multiple_services_a
   EXPECT_EQ(recorded_messages.size(), expected_messages);
 }
 
+<<<<<<< HEAD
 TEST_F(RecordIntegrationTestFixture, published_messages_from_topic_and_service_are_recorded)
+=======
+TEST_F(RecordIntegrationTestFixture, published_messages_from_multiple_actions_are_recorded)
+{
+  auto action_client_manager_1 =
+    std::make_shared<rosbag2_test_common::ActionClientManager<test_msgs::action::Fibonacci>>(
+    "test_action_1");
+
+  auto action_client_manager_2 =
+    std::make_shared<rosbag2_test_common::ActionClientManager<test_msgs::action::Fibonacci>>(
+    "test_action_2");
+
+  rosbag2_transport::RecordOptions record_options =
+  {false, false, true, false, {}, {}, {}, {}, {}, {}, {}, {}, "rmw_format", 100ms};
+  auto recorder = std::make_shared<MockRecorder>(
+    std::move(writer_), storage_options_, record_options);
+  recorder->record();
+
+  start_async_spin(recorder);
+  auto cleanup_process_handle = rcpputils::make_scope_exit([&]() {stop_spinning();});
+
+  ASSERT_TRUE(action_client_manager_1->wait_for_action_server_to_be_ready());
+  ASSERT_TRUE(action_client_manager_2->wait_for_action_server_to_be_ready());
+
+  // Ensure that the introspection service event topic already exists.
+  ASSERT_TRUE(recorder->wait_for_topic_to_be_discovered(
+    "/test_action_1/_action/get_result/_service_event"));
+  ASSERT_TRUE(recorder->wait_for_topic_to_be_discovered(
+    "/test_action_2/_action/get_result/_service_event"));
+
+  ASSERT_TRUE(recorder->wait_for_topic_to_be_discovered(
+    "/test_action_1/_action/send_goal/_service_event"));
+  ASSERT_TRUE(recorder->wait_for_topic_to_be_discovered(
+    "/test_action_2/_action/send_goal/_service_event"));
+
+  ASSERT_TRUE(action_client_manager_1->send_goal());
+  ASSERT_TRUE(action_client_manager_2->send_goal());
+
+  auto & writer = recorder->get_writer_handle();
+  auto & mock_writer = dynamic_cast<MockSequentialWriter &>(writer.get_implementation_handle());
+
+  // For one action, 2 send_goal msgs, 2 feedback msgs, 2 status msgs, 2 get_result msgs
+  constexpr size_t expected_messages = 16;
+  auto ret = rosbag2_test_common::wait_until_condition(
+    [ =, &mock_writer]() {
+      return mock_writer.get_number_of_recorded_messages() >= expected_messages;
+    },
+    std::chrono::seconds(5));
+  EXPECT_TRUE(ret) << "failed to capture expected messages in time";
+  auto recorded_messages = mock_writer.get_messages();
+  EXPECT_EQ(recorded_messages.size(), expected_messages);
+  if (!ret) {
+    std::cout << "Recorded messages: " << std::endl;
+    for (const auto & message : recorded_messages) {
+      std::cout << message->topic_name << std::endl;
+    }
+  }
+}
+
+TEST_F(RecordIntegrationTestFixture, published_messages_from_topic_service_action_are_recorded)
+>>>>>>> 79ca3cf (Fix for data races in tests with MockSequentialWriter (#2192))
 {
   auto client_manager_1 =
     std::make_shared<rosbag2_test_common::ClientManager<test_msgs::srv::BasicTypes>>(
@@ -180,10 +241,69 @@ TEST_F(RecordIntegrationTestFixture, published_messages_from_topic_and_service_a
   constexpr size_t expected_messages = 3;
   auto ret = rosbag2_test_common::wait_until_condition(
     [ =, &mock_writer]() {
-      return mock_writer.get_messages().size() >= expected_messages;
+      return mock_writer.get_number_of_recorded_messages() >= expected_messages;
     },
     std::chrono::seconds(5));
   EXPECT_TRUE(ret) << "failed to capture expected messages in time";
   auto recorded_messages = mock_writer.get_messages();
   EXPECT_EQ(recorded_messages.size(), expected_messages);
 }
+<<<<<<< HEAD
+=======
+
+TEST_F(RecordIntegrationTestFixture, cancel_event_messages_from_action_are_recorded)
+{
+  auto action_manager_1 =
+    std::make_shared<rosbag2_test_common::ActionClientManager<test_msgs::action::Fibonacci>>(
+      "test_action_1", 2s);
+
+  rosbag2_transport::RecordOptions record_options =
+  {
+    false, false, true, false, {}, {}, {}, {},
+    {
+      "/rosout",
+      RecorderEventNotifier::get_default_write_split_topic_name(),
+      RecorderEventNotifier::get_default_messages_lost_topic_name(),
+    },
+    {}, {}, {}, "rmw_format", 100ms
+  };
+  auto recorder = std::make_shared<MockRecorder>(
+    std::move(writer_), storage_options_, record_options);
+  recorder->record();
+
+  start_async_spin(recorder);
+  auto cleanup_process_handle = rcpputils::make_scope_exit([&]() {stop_spinning();});
+
+  ASSERT_TRUE(action_manager_1->wait_for_action_server_to_be_ready());
+
+  // Ensure that the introspection service event topic already exists.
+  ASSERT_TRUE(recorder->wait_for_topic_to_be_discovered(
+    "/test_action_1/_action/cancel_goal/_service_event"));
+
+  ASSERT_TRUE(action_manager_1->send_goal(true));
+
+  auto & writer = recorder->get_writer_handle();
+  auto & mock_writer = dynamic_cast<MockSequentialWriter &>(writer.get_implementation_handle());
+
+  // 2 send_goal msgs, 2 cancel goal msgs , 2 status msgs, 2 get_result msgs
+  // feedback msgs (Not sure)
+  constexpr size_t expected_messages = 8;
+  auto ret = rosbag2_test_common::wait_until_condition(
+    [ =, &mock_writer]() {
+      return mock_writer.get_number_of_recorded_messages() > expected_messages;
+    },
+    std::chrono::seconds(5));
+  EXPECT_TRUE(ret) << "failed to capture expected messages in time";
+  auto recorded_messages = mock_writer.get_messages();
+  EXPECT_GT(recorded_messages.size(), expected_messages);
+
+  // Confirm cancel goal messages are recorded
+  size_t cancel_goal_msg_count = 0;
+  for (auto & msg : recorded_messages) {
+    if (msg->topic_name == "/test_action_1/_action/cancel_goal/_service_event") {
+      cancel_goal_msg_count++;
+    }
+  }
+  EXPECT_EQ(cancel_goal_msg_count, 2);
+}
+>>>>>>> 79ca3cf (Fix for data races in tests with MockSequentialWriter (#2192))

@@ -62,6 +62,7 @@ public:
 
   void write(std::shared_ptr<const rosbag2_storage::SerializedBagMessage> message) override
   {
+    std::lock_guard<std::mutex> lock(messages_mutex_);
     if (!snapshot_mode_) {
       messages_.push_back(message);
     } else {
@@ -76,6 +77,7 @@ public:
 
   bool take_snapshot() override
   {
+    std::lock_guard<std::mutex> lock(messages_mutex_);
     std::swap(snapshot_buffer_, messages_);
     snapshot_buffer_.clear();
     return true;
@@ -101,26 +103,61 @@ public:
     }
   }
 
+<<<<<<< HEAD
   const std::vector<std::shared_ptr<const rosbag2_storage::SerializedBagMessage>> & get_messages()
+=======
+  bool has_callback_for_event(rosbag2_cpp::bag_events::BagEvent event) const override
   {
-    return messages_;
+    return callback_manager_.has_callback_for_event(event);
   }
 
-  const std::vector<std::shared_ptr<const rosbag2_storage::SerializedBagMessage>> &
-  get_snapshot_buffer()
+  size_t get_number_of_recorded_messages() const
+>>>>>>> 79ca3cf (Fix for data races in tests with MockSequentialWriter (#2192))
   {
-    return snapshot_buffer_;
+    std::lock_guard<std::mutex> lock(messages_mutex_);
+    return messages_.size();
   }
 
-  const std::unordered_map<std::string, size_t> & messages_per_topic()
+  std::vector<std::shared_ptr<const rosbag2_storage::SerializedBagMessage>> get_messages()
   {
-    return messages_per_topic_;
+    std::lock_guard<std::mutex> lock(messages_mutex_);
+    auto copy_of_messages = messages_;
+    return copy_of_messages;
   }
 
-  const std::unordered_map<
+  size_t get_snapshot_buffer_size() const
+  {
+    std::lock_guard<std::mutex> lock(messages_mutex_);
+    return snapshot_buffer_.size();
+  }
+
+  std::vector<std::shared_ptr<const rosbag2_storage::SerializedBagMessage>> get_snapshot_buffer()
+  {
+    std::lock_guard<std::mutex> lock(messages_mutex_);
+    auto copy_of_snapshot_buffer = snapshot_buffer_;
+    return copy_of_snapshot_buffer;
+  }
+
+  std::unordered_map<std::string, size_t> messages_per_topic()
+  {
+    std::lock_guard<std::mutex> lock(messages_mutex_);
+    auto copy_of_messages_per_topic = messages_per_topic_;
+    return copy_of_messages_per_topic;
+  }
+
+  size_t get_messages_per_topic(const std::string & topic_name) const
+  {
+    std::lock_guard<std::mutex> lock(messages_mutex_);
+    if (messages_per_topic_.find(topic_name) != messages_per_topic_.end()) {
+      return messages_per_topic_.at(topic_name);
+    }
+    return 0;
+  }
+
+  std::unordered_map<
     std::string,
     std::pair<rosbag2_storage::TopicMetadata, rosbag2_storage::MessageDefinition>
-  > & get_topics()
+  > get_topics()
   {
     return topics_;
   }
@@ -149,6 +186,7 @@ private:
   std::vector<std::shared_ptr<const rosbag2_storage::SerializedBagMessage>> snapshot_buffer_;
   std::unordered_map<std::string, size_t> messages_per_topic_;
   size_t messages_per_file_ = 0;
+  mutable std::mutex messages_mutex_;
   bool snapshot_mode_ = false;
   rosbag2_cpp::bag_events::EventCallbackManager callback_manager_;
   size_t file_number_ = 0;
