@@ -48,12 +48,11 @@ public:
       (1000 / progress_bar_update_rate) : 0),
     progress_bar_separation_lines_(progress_bar_separation_lines)
   {
-    starting_time_secs_ = RCUTILS_NS_TO_S(
-      static_cast<double>(std::min(starting_time, ending_time)));
+    starting_time_nanosec_ = std::min(starting_time, ending_time);
     duration_secs_ = RCUTILS_NS_TO_S(
       std::max(static_cast<double>(ending_time - starting_time), 0.0));
-    progress_current_time_secs_ = starting_time_secs_;
-    progress_secs_from_start_ = progress_current_time_secs_ - starting_time_secs_;
+    progress_current_time_nanosec_ = starting_time_nanosec_;
+    progress_nanosec_from_start_ = progress_current_time_nanosec_ - starting_time_nanosec_;
     std::ostringstream oss_clear_and_move_cursor_down;
 
     for (uint32_t i = 0; i < progress_bar_separation_lines_; i++) {
@@ -133,9 +132,13 @@ public:
     const rcutils_time_point_value_t & timestamp = -1)
   {
     if (timestamp >= 0) {
-      progress_current_time_secs_ = RCUTILS_NS_TO_S(static_cast<double>(timestamp));
-      progress_secs_from_start_ = progress_current_time_secs_ - starting_time_secs_;
+      progress_current_time_nanosec_ = timestamp;
+      progress_nanosec_from_start_ = progress_current_time_nanosec_ - starting_time_nanosec_;
     }
+    double progress_current_time_secs =
+      RCUTILS_NS_TO_S(static_cast<double>(progress_current_time_nanosec_));
+    double progress_secs_from_start =
+      RCUTILS_NS_TO_S(static_cast<double>(progress_nanosec_from_start_));
     std::stringstream ss;
     ss <<
         // Clear and print newlines
@@ -143,8 +146,8 @@ public:
       // Print progress bar
       // Use "\033[2K" ANSI control code to clear an entire line in the terminal before output.
       "\033[2K====== Playback Progress ======\n\033[2K" <<
-      "[" << std::fixed << std::setprecision(9) << progress_current_time_secs_ <<
-      "] Duration " << std::setprecision(2) << progress_secs_from_start_ <<
+      "[" << std::fixed << std::setprecision(9) << progress_current_time_secs <<
+      "] Duration " << std::setprecision(2) << progress_secs_from_start <<
       "/" << duration_secs_ << " [" << static_cast<char>(status) << "]\n" <<
         // Go up to the beginning of the blank lines
       progress_bar_helper_move_cursor_up_;
@@ -155,7 +158,7 @@ public:
 
 private:
   std::ostream & o_stream_;
-  double starting_time_secs_ = 0.0;
+  rcutils_time_point_value_t starting_time_nanosec_ = 0.0;
   double duration_secs_ = 0.0;
   std::string progress_bar_helper_move_cursor_down_;
   std::string progress_bar_helper_move_cursor_up_;
@@ -163,8 +166,8 @@ private:
   uint16_t progress_bar_update_period_ms_;
   std::chrono::steady_clock::time_point progress_bar_last_time_updated_{};
   uint32_t progress_bar_separation_lines_ = 3;
-  double progress_secs_from_start_ = 0.0;
-  double progress_current_time_secs_ = 0.0;
+  std::atomic<rcutils_time_point_value_t> progress_nanosec_from_start_ = 0;
+  std::atomic<rcutils_time_point_value_t> progress_current_time_nanosec_ = 0;
 
   /// progress_bar_lines_count_ - The number of lines in progress bar to be printed out.
   ///  ====== Playback Progress ======
