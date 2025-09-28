@@ -71,7 +71,7 @@ TEST_F(RecordIntegrationTestFixture, published_messages_from_two_topics_ignore_l
   constexpr size_t expected_messages = 2;
   auto ret = rosbag2_test_common::wait_until_condition(
     [ =, &mock_writer]() {
-      return mock_writer.get_messages().size() >= expected_messages;
+      return mock_writer.get_number_of_recorded_messages() >= expected_messages;
     },
     std::chrono::seconds(5));
   auto recorded_messages = mock_writer.get_messages();

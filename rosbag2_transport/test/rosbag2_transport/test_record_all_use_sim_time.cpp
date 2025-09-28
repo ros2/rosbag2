@@ -91,9 +91,9 @@ TEST_F(RecordIntegrationTestFixture, record_all_with_sim_time)
 
   // publishes /clock messages every 100ms until shutdown
   auto clock_pub = ClockPublisher(std::chrono::milliseconds(100), time_value);
-
+  constexpr size_t expected_string_messages = 5;
   rosbag2_test_common::PublicationManager pub_manager;
-  pub_manager.setup_publisher(string_topic, string_message, 5);
+  pub_manager.setup_publisher(string_topic, string_message, expected_string_messages);
 
   rosbag2_transport::RecordOptions record_options =
   {
@@ -104,7 +104,6 @@ TEST_F(RecordIntegrationTestFixture, record_all_with_sim_time)
     std::move(writer_), storage_options_, record_options);
   recorder->record();
 
-  constexpr size_t expected_messages = 10;
   std::vector<std::shared_ptr<const rosbag2_storage::SerializedBagMessage>> recorded_messages;
   std::unordered_map<std::string, size_t> messages_per_topic;
 
@@ -112,11 +111,11 @@ TEST_F(RecordIntegrationTestFixture, record_all_with_sim_time)
   {
     auto cleanup_process_handle = rcpputils::make_scope_exit([&]() {stop_spinning();});
 
-    ASSERT_TRUE(pub_manager.wait_for_matched(string_topic.c_str()));
-
     ASSERT_TRUE(recorder->wait_for_topic_to_be_discovered(string_topic));
 
     ASSERT_TRUE(recorder->topic_available_for_recording(string_topic));
+
+    ASSERT_TRUE(pub_manager.wait_for_matched(string_topic.c_str()));
 
     pub_manager.run_publishers();
 
@@ -126,19 +125,19 @@ TEST_F(RecordIntegrationTestFixture, record_all_with_sim_time)
 
     auto ret = rosbag2_test_common::wait_until_condition(
       [ =, &mock_writer]() {
-        return mock_writer.get_messages().size() >= expected_messages;
+        return mock_writer.get_messages_per_topic(string_topic) == expected_string_messages;
       },
       std::chrono::seconds(5));
     ASSERT_TRUE(ret) << "failed to capture expected messages in time. " <<
-      "recorded messages = " << recorded_messages.size();
+      "recorded messages = " << mock_writer.get_messages_per_topic(string_topic);
     recorded_messages = mock_writer.get_messages();
     messages_per_topic = mock_writer.messages_per_topic();
   }
 
   ASSERT_EQ(messages_per_topic.count(string_topic), 1u);
-  EXPECT_EQ(messages_per_topic[string_topic], 5u);
+  EXPECT_EQ(messages_per_topic[string_topic], expected_string_messages);
 
-  EXPECT_THAT(recorded_messages, SizeIs(Ge(expected_messages)));
+  EXPECT_THAT(recorded_messages, SizeIs(Ge(expected_string_messages)));
 
   std::vector<rosbag2_storage::SerializedBagMessageConstSharedPtr> string_messages;
   for (const auto & message : recorded_messages) {
