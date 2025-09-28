@@ -103,16 +103,7 @@ public:
     }
   }
 
-<<<<<<< HEAD
-  const std::vector<std::shared_ptr<const rosbag2_storage::SerializedBagMessage>> & get_messages()
-=======
-  bool has_callback_for_event(rosbag2_cpp::bag_events::BagEvent event) const override
-  {
-    return callback_manager_.has_callback_for_event(event);
-  }
-
   size_t get_number_of_recorded_messages() const
->>>>>>> 79ca3cf (Fix for data races in tests with MockSequentialWriter (#2192))
   {
     std::lock_guard<std::mutex> lock(messages_mutex_);
     return messages_.size();
