@@ -20,27 +20,34 @@
 #include <optional>
 #include <queue>
 #include <vector>
+#include <utility>
 
 #include "rcpputils/thread_safety_annotations.hpp"
 #include "rcpputils/unique_lock.hpp"
 
-/// \brief `std::priority_queue` wrapper with locks.
-/// \tparam T the element type
-/// \tparam Container the underlying container type
-/// \tparam Compare the comparator
+/// \brief `std::priority_queue` wrapper with locks and stable sorting.
+/// \details This class wraps a `std::priority_queue` and provides locking for thread-safe
+///   access. It uses std::vector as underlying container for the `std::priority_queue` and
+///   adds a strictly increasing insertion sequence number to each element to
+///   ensure a stable sort when two elements are equivalent according to the comparator.
+///   This is useful when multiple elements has the same priorities in the queue, and we want to
+///   ensure that elements with the same priority are popped in the order they were pushed.
+///   For example, this is useful when multiple messages have the same timestamp, and we need to
+///   preserve the original messages order.
+/// \note The insertion sequence number is a builtin feature of this class, and users should not
+///   provide it themselves.
+/// \tparam T The element type
 /// \see std::priority_queue
-template<
-  typename T,
-  typename Container = std::vector<T>,
-  typename Compare = std::less<typename Container::value_type>
->
+template<typename T>
 class LockedPriorityQueue
 {
 public:
+  using Comparator = std::function<bool(const T &, const T &)>;
+
   /// \brief Constructor.
   /// \param compare the comparator object
-  explicit LockedPriorityQueue(const Compare & compare)
-  : queue_(compare)
+  explicit LockedPriorityQueue(const Comparator & compare)
+  : queue_(StableComparator{compare})
   {}
 
   LockedPriorityQueue() = delete;
@@ -54,7 +61,7 @@ public:
   void push(const T & element)
   {
     rcpputils::unique_lock<std::mutex> lk(queue_mutex_);
-    queue_.push(element);
+    queue_.emplace(element, ++insert_sequence_number_);
   }
 
   /// \brief Remove the top element.
@@ -87,6 +94,7 @@ public:
     while (!queue_.empty()) {
       queue_.pop();
     }
+    insert_sequence_number_ = 0;
   }
 
   /// \brief Try to take the top element from the queue.
@@ -97,14 +105,43 @@ public:
     if (queue_.empty()) {
       return std::nullopt;
     }
-    T e = queue_.top();
+    T e = queue_.top().first;
     queue_.pop();
     return e;
   }
 
 private:
+  using Container = std::vector<std::pair<T, size_t>>;
+
+  /// \brief Internal wrapper comparator around the user-provided comparator.
+  /// \details This comparator uses the user-provided comparator to compare the `T` values.
+  ///   If the `T` values are equivalent according to the user comparator, it uses
+  ///   the insertion sequence number to break ties, ensuring that earlier inserted elements
+  ///   are considered "less than" later inserted elements.
+  struct StableComparator
+  {
+    Comparator user_comp;
+    bool operator()(const std::pair<T, size_t> & l, const std::pair<T, size_t> & r) const
+    {
+      const auto & [l_t_value, l_insertion_seq_num] = l;
+      const auto & [r_t_value, r_insertion_seq_num] = r;
+      if (user_comp(l_t_value, r_t_value)) {
+        return true;
+      }
+      if (user_comp(r_t_value, l_t_value)) {
+        return false;
+      }
+      // If values are equal according to user's comparator, use sequence numbers for stability
+      // Tie-breaker: earlier insertion comes first
+      return l_insertion_seq_num > r_insertion_seq_num;
+    }
+  };
+
   mutable std::mutex queue_mutex_;
-  std::priority_queue<T, Container, Compare> queue_ RCPPUTILS_TSA_GUARDED_BY(queue_mutex_);
+  std::priority_queue<typename Container::value_type, Container, StableComparator> queue_
+  RCPPUTILS_TSA_GUARDED_BY(queue_mutex_);
+
+  size_t insert_sequence_number_{0} RCPPUTILS_TSA_GUARDED_BY(queue_mutex_);
 };
 
 #endif  // ROSBAG2_TRANSPORT__LOCKED_PRIORITY_QUEUE_HPP_
