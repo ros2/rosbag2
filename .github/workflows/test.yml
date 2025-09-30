@@ -28,6 +28,7 @@ jobs:
                 "-DCMAKE_CXX_FLAGS=\"-Werror\""
               ],
               "packages-up-to": [
+                "lz4_cmake_module",
                 "mcap_vendor",
                 "ros2bag",
                 "rosbag2",
@@ -54,6 +55,7 @@ jobs:
               "ctest-args": ["-LE", "xfail"],
               "pytest-args": ["-m", "not xfail"],
               "packages-select": [
+                "lz4_cmake_module",
                 "mcap_vendor",
                 "ros2bag",
                 "rosbag2",
