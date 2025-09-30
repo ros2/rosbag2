@@ -1,3 +1,17 @@
+# Copyright 2025 Open Source Robotics Foundation, Inc.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 # Get package location hint from environment variable (if any)
 if(NOT zstd_ROOT_DIR AND DEFINED ENV{zstd_ROOT_DIR})
     set(zstd_ROOT_DIR "$ENV{zstd_ROOT_DIR}" CACHE PATH
@@ -17,7 +31,7 @@ endif()
 find_path(zstd_INCLUDE_DIR NAMES zstd.h PATH_SUFFIXES "zstd" ${zstd_INCLUDE_PATH})
 find_library(zstd_LIBRARY  NAMES zstd   PATH_SUFFIXES "zstd" ${zstd_LIBRARY_PATH})
 
-if (zstd_INCLUDE_DIR)
+if(zstd_INCLUDE_DIR)
   file(STRINGS "${zstd_INCLUDE_DIR}/zstd.h" version-file
     REGEX "#define[ \t]+ZSTD_VERSION_(MAJOR|MINOR|RELEASE).*")
   list(GET version-file 0 major-line)

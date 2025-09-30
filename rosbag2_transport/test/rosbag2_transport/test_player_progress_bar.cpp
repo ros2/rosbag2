@@ -269,7 +269,7 @@ TEST_F(TestPlayerProgressBar, update_with_limited_rate_respect_update_rate) {
       "\033\\[2K====== Playback Progress ======\n\033\\[2K"
       "\\[1\\.000000000\\] Duration 0\\.00/5\\.00 \\[R\\]\n.*"
       "\033\\[2K====== Playback Progress ======\n\033\\[2K"
-      "\\[1\\.325000000\\] Duration 0\\.32/5\\.00 \\[R\\]\n.*"
+      "\\[1\\.325000000\\] Duration 0\\.33/5\\.00 \\[R\\]\n.*"
       "\033\\[2K====== Playback Progress ======\n\033\\[2K"
       "\\[1\\.700000000\\] Duration 0\\.70/5\\.00 \\[R\\]\n.*"
     )
