@@ -12,8 +12,10 @@
   <buildtool_depend>ament_cmake</buildtool_depend>
   <buildtool_depend>git</buildtool_depend>
 
-  <depend>liblz4_vendor</depend>
   <depend>zstd_cmake_module</depend>
+
+  <build_depend>lz4_cmake_module</build_depend>
+  <build_export_depend>lz4_cmake_module</build_export_depend>
 
   <export>
     <build_type>ament_cmake</build_type>
