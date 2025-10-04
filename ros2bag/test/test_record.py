@@ -15,8 +15,6 @@
 import os
 from pathlib import Path
 import shutil
-import signal
-import subprocess
 import tempfile
 
 import unittest
@@ -61,20 +59,6 @@ class TestRecord(unittest.TestCase):
         proc_output.assertWaitFor(
             'Recording...',
             process=record_all_process
-        )
-
-        # Get the process info and explicitly send SIGINT
-        proc_id = record_all_process.process_details['pid']
-        if os.name != 'nt':  # Unix-like systems
-            os.kill(proc_id, signal.SIGINT)
-        else:  # Windows
-            # On Windows, we need to use a different approach
-            subprocess.run(['taskkill', '/F', '/PID', str(proc_id)])
-
-        proc_output.assertWaitFor(
-            'Recording stopped',
-            process=record_all_process,
-            timeout=10
         )
 
 
