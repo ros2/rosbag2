@@ -44,7 +44,6 @@ TEST_F(RecordIntegrationTestFixture, published_messages_from_multiple_topics_are
 
   rosbag2_test_common::PublicationManager pub_manager;
   pub_manager.setup_publisher(array_topic, array_message, 2);
-  pub_manager.setup_publisher(string_topic, string_message, 2);
 
   rosbag2_transport::RecordOptions record_options =
   {false, false, false, false, {string_topic, array_topic},
@@ -52,6 +51,10 @@ TEST_F(RecordIntegrationTestFixture, published_messages_from_multiple_topics_are
   auto recorder = std::make_shared<rosbag2_transport::Recorder>(
     std::move(writer_), storage_options_, record_options);
   recorder->record();
+
+  // Note: Intentionally setup one publisher after starting recorder to test recorder's ability
+  // to dynamically discover topics in runtime.
+  pub_manager.setup_publisher(string_topic, string_message, 2);
 
   constexpr size_t expected_messages = 4;
   std::vector<std::shared_ptr<const rosbag2_storage::SerializedBagMessage>> recorded_messages;
