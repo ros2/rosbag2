@@ -580,7 +580,7 @@ TEST_P(RecordFixture, record_fails_gracefully_if_plugin_for_given_encoding_does_
 }
 
 TEST_P(RecordFixture, record_end_to_end_test_with_cache) {
-  auto max_cache_size = 10;
+  auto max_cache_size = 700;
   auto topic_name = "/rosbag2_cache_test_topic";
 
   auto message = get_messages_strings()[0];

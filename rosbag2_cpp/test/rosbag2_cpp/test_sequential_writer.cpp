@@ -499,7 +499,7 @@ TEST_F(SequentialWriterTest, do_not_use_cache_if_cache_size_is_zero) {
 TEST_F(SequentialWriterTest, snapshot_mode_write_on_trigger)
 {
   storage_options_.max_bagfile_size = 0;
-  storage_options_.max_cache_size = 200;
+  storage_options_.max_cache_size = 700;
   storage_options_.snapshot_mode = true;
 
   // Expect a single write call when the snapshot is triggered
@@ -534,7 +534,7 @@ TEST_F(SequentialWriterTest, snapshot_mode_write_on_trigger)
 TEST_F(SequentialWriterTest, snapshot_mode_not_triggered_no_storage_write)
 {
   storage_options_.max_bagfile_size = 0;
-  storage_options_.max_cache_size = 200;
+  storage_options_.max_cache_size = 700;
   storage_options_.snapshot_mode = true;
 
   // Storage should never be written to when snapshot mode is enabled
@@ -583,10 +583,10 @@ TEST_F(SequentialWriterTest, snapshot_mode_zero_cache_size_throws_exception)
 TEST_F(SequentialWriterTest, snapshot_writes_to_new_file_with_bag_split)
 {
   storage_options_.max_bagfile_size = 0;
-  storage_options_.max_cache_size = 200;
+  storage_options_.max_cache_size = 700;
   storage_options_.snapshot_mode = true;
   const rcutils_time_point_value_t first_msg_timestamp = 100;
-  const size_t num_msgs_to_write = 100;
+  const size_t num_msgs_to_write = 150;
   const std::string topic_name = "test_topic";
   std::string msg_content = "Hello";
   const size_t serialized_msg_buffer_length = msg_content.length();
@@ -706,7 +706,7 @@ TEST_F(SequentialWriterTest, snapshot_writes_to_new_file_with_bag_split)
 TEST_F(SequentialWriterTest, snapshot_can_be_called_twice)
 {
   storage_options_.max_bagfile_size = 0;
-  storage_options_.max_cache_size = 200;
+  storage_options_.max_cache_size = 700;
   storage_options_.snapshot_mode = true;
   const size_t num_msgs_to_write = 100;
 
