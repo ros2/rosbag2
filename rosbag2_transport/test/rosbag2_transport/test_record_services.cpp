@@ -71,7 +71,7 @@ public:
     rosbag2_transport::RecordOptions record_options =
     {false, false, false, false, {test_topic_}, {}, {}, {}, {}, {}, {}, {}, "rmw_format", 100ms};
     storage_options_.snapshot_mode = snapshot_mode_;
-    storage_options_.max_cache_size = 200;
+    storage_options_.max_cache_size = 700;
     recorder_ = std::make_shared<rosbag2_transport::Recorder>(
       std::move(writer_), storage_options_, record_options, recorder_name_);
     recorder_->record();
