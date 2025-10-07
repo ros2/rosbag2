@@ -29,6 +29,7 @@
 
 #include "rclcpp/logging.hpp"
 #include "rclcpp/clock.hpp"
+#include "rclcpp/event.hpp"
 
 #include "rmw/types.h"
 
@@ -98,7 +99,7 @@ public:
   std::unordered_map<std::string, std::shared_ptr<rclcpp::SubscriptionBase>> subscriptions_;
 
 private:
-  void topics_discovery();
+  void topics_discovery() noexcept;
 
   std::unordered_map<std::string, std::string>
   get_missing_topics(const std::unordered_map<std::string, std::string> & all_topics);
@@ -130,6 +131,7 @@ private:
 
   rclcpp::Node * node;
   std::unique_ptr<TopicFilter> topic_filter_;
+  rclcpp::Event::SharedPtr discovery_graph_event_;
   std::future<void> discovery_future_;
   std::string serialization_format_;
   std::unordered_map<std::string, rclcpp::QoS> topic_qos_profile_overrides_;
@@ -389,6 +391,12 @@ void RecorderImpl::start_discovery()
   if (discovery_running_.exchange(true)) {
     RCLCPP_DEBUG(node->get_logger(), "Recorder topic discovery is already running.");
   } else {
+    // Get graph event to ensure to start GrapListener if not already started and register event,
+    // before we're starting discovery thread.
+    // This is a workaround to split initialization and runtime phases to avoid race condition when
+    // a new publisher appeared after we finish start_discovery() and/or Recorder::record(),
+    // but before we really start topics_discovery() thread.
+    discovery_graph_event_ = node->get_graph_event();
     discovery_future_ =
       std::async(std::launch::async, std::bind(&RecorderImpl::topics_discovery, this));
   }
@@ -398,6 +406,13 @@ void RecorderImpl::stop_discovery()
 {
   std::lock_guard<std::mutex> state_lock(discovery_mutex_);
   if (discovery_running_.exchange(false)) {
+    try {
+      // Notify graph change to wake up discovery thread if it is sleeping on the graph event
+      node->get_node_graph_interface()->notify_graph_change();
+    } catch (const std::exception & e) {
+      RCLCPP_WARN_STREAM(node->get_logger(),
+        "Failed to notify graph change while stopping discovery: " << e.what());
+    }
     if (discovery_future_.valid()) {
       auto status = discovery_future_.wait_for(
         std::chrono::milliseconds(500) + record_options_.topic_polling_interval);
@@ -417,45 +432,52 @@ void RecorderImpl::stop_discovery()
   }
 }
 
-void RecorderImpl::topics_discovery()
+void RecorderImpl::topics_discovery() noexcept
 {
-  // If using sim time - wait until /clock topic received before even creating subscriptions
-  if (record_options_.use_sim_time) {
-    RCLCPP_INFO(
-      node->get_logger(),
-      "use_sim_time set, waiting for /clock before starting recording...");
-    while (rclcpp::ok() && discovery_running_) {
-      if (node->get_clock()->wait_until_started(record_options_.topic_polling_interval)) {
-        break;
+  try {
+    RCLCPP_INFO(node->get_logger(), "Topics discovery started.");
+    // If using sim time - wait until /clock topic received before even creating subscriptions
+    if (record_options_.use_sim_time) {
+      RCLCPP_INFO(
+        node->get_logger(),
+        "use_sim_time set, waiting for /clock before starting recording...");
+      while (rclcpp::ok() && discovery_running_) {
+        if (node->get_clock()->wait_until_started(record_options_.topic_polling_interval)) {
+          break;
+        }
+      }
+      if (node->get_clock()->started()) {
+        RCLCPP_INFO(node->get_logger(), "Sim time /clock found, starting recording.");
       }
     }
-    if (node->get_clock()->started()) {
-      RCLCPP_INFO(node->get_logger(), "Sim time /clock found, starting recording.");
-    }
-  }
-  while (rclcpp::ok() && discovery_running_) {
-    try {
+    bool should_update_subscriptions = true;
+    while (rclcpp::ok() && discovery_running_) {
       if (!record_options_.topics.empty() &&
         subscriptions_.size() == record_options_.topics.size())
       {
         RCLCPP_INFO(
           node->get_logger(), "All requested topics are subscribed. Stopping discovery...");
-        return;
+        break;
       }
 
-      auto topics_to_subscribe = get_requested_or_available_topics();
-      for (const auto & topic_and_type : topics_to_subscribe) {
-        warn_if_new_qos_for_subscribed_topic(topic_and_type.first);
+      if (should_update_subscriptions) {
+        auto topics_to_subscribe = get_requested_or_available_topics();
+        for (const auto & topic_and_type : topics_to_subscribe) {
+          warn_if_new_qos_for_subscribed_topic(topic_and_type.first);
+        }
+        auto missing_topics = get_missing_topics(topics_to_subscribe);
+        subscribe_topics(missing_topics);
       }
-      auto missing_topics = get_missing_topics(topics_to_subscribe);
-      subscribe_topics(missing_topics);
-    } catch (const std::exception & e) {
-      RCLCPP_ERROR_STREAM(node->get_logger(), "Failure in topics discovery.\nError: " << e.what());
-    } catch (...) {
-      RCLCPP_ERROR_STREAM(node->get_logger(), "Failure in topics discovery.");
+      node->wait_for_graph_change(discovery_graph_event_, record_options_.topic_polling_interval);
+      should_update_subscriptions = discovery_graph_event_->check_and_clear();
     }
-    std::this_thread::sleep_for(record_options_.topic_polling_interval);
+  } catch (const std::exception & e) {
+    RCLCPP_ERROR_STREAM(node->get_logger(), "Failure in topics discovery.\nError: " << e.what());
+  } catch (...) {
+    RCLCPP_ERROR_STREAM(node->get_logger(), "Failure in topics discovery.");
   }
+  discovery_running_ = false;
+  RCLCPP_INFO(node->get_logger(), "Topics discovery stopped.");
 }
 
 std::unordered_map<std::string, std::string>
