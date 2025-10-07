@@ -54,6 +54,35 @@ public:
   std::unordered_map<std::string, std::string> filter_topics(
     const std::map<std::string, std::vector<std::string>> & topic_names_and_types);
 
+  // Expose getters for caches for testing purposes
+  const std::unordered_map<std::string, std::pair<bool, bool>> & get_take_topics_cache() const
+  {
+    return take_topics_cache_;
+  }
+
+  const std::unordered_set<std::string> & get_unknown_types_cache() const
+  {
+    return unknown_types_cache_;
+  }
+
+  bool get_allow_unknown_types() const
+  {
+    return allow_unknown_types_;
+  }
+
+  // Add setter for cache entries to support testing cache behavior
+  void set_topic_cache_entry(const std::string & topic_name, bool take_topic, bool type_unknown)
+  {
+    take_topics_cache_[topic_name] = {take_topic, type_unknown};
+  }
+
+  // Clear the cache for testing purposes
+  void clear_caches()
+  {
+    take_topics_cache_.clear();
+    unknown_types_cache_.clear();
+  }
+
 private:
   /// Return true if the topic passes all filter criteria
   bool take_topic(const std::string & topic_name, const std::vector<std::string> & topic_types);

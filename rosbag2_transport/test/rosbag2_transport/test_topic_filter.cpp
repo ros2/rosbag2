@@ -674,3 +674,163 @@ TEST_F(TestTopicFilter, all_topics_and_all_services_overrides_regex)
   auto filtered_topics = filter.filter_topics(topics_services_actions_with_types_);
   EXPECT_THAT(filtered_topics, SizeIs(10));
 }
+
+TEST_F(TestTopicFilter, caching_behavior) {
+  std::map<std::string, std::vector<std::string>> topics_and_types {
+    {"topic/a", {"type_a"}},
+    {"topic/b", {"type_b"}},
+    {"topic/c", {"type_c"}},
+    {"_hidden_topic", {"type_d"}}  // Hidden topic that should be excluded
+  };
+
+  // Set up a filter that excludes hidden topics
+  rosbag2_transport::RecordOptions record_options;
+  record_options.all_topics = true;
+  record_options.include_hidden_topics = false;  // This should filter out _hidden_topic
+  rosbag2_transport::TopicFilter filter{record_options, nullptr, true};
+
+  // First call should populate the cache and filter out the hidden topic
+  auto filtered_topics = filter.filter_topics(topics_and_types);
+  ASSERT_EQ(3u, filtered_topics.size());
+  EXPECT_TRUE(filtered_topics.find("_hidden_topic") == filtered_topics.end());
+
+  // Verify cache contains expected entries
+  auto cache = filter.get_take_topics_cache();
+  ASSERT_EQ(4u, cache.size());
+
+  // Normal topics should be accepted
+  for (const auto & topic : {"topic/a", "topic/b", "topic/c"}) {
+    ASSERT_TRUE(cache.find(topic) != cache.end());
+    EXPECT_TRUE(cache.at(topic).first);  // Should be accepted
+    EXPECT_FALSE(cache.at(topic).second);  // Type is known, since allow_unknown_types = true
+  }
+
+  // Hidden topic should be rejected
+  ASSERT_TRUE(cache.find("_hidden_topic") != cache.end());
+  EXPECT_FALSE(cache.at("_hidden_topic").first);  // Should be rejected
+
+  // Now manually override the cache to accept the hidden topic
+  filter.set_topic_cache_entry("_hidden_topic", true, false);
+
+  // Second call should use the cache instead of re-evaluating filter criteria
+  filtered_topics = filter.filter_topics(topics_and_types);
+
+  // Now we should have all 4 topics, because we're using the cache value (true) for _hidden_topic
+  // rather than re-evaluating the filter criteria which would exclude it
+  ASSERT_EQ(4u, filtered_topics.size());
+  EXPECT_TRUE(filtered_topics.find("_hidden_topic") != filtered_topics.end());
+
+  // Clear cache and check that filtering goes back to normal
+  filter.clear_caches();
+  filtered_topics = filter.filter_topics(topics_and_types);
+  ASSERT_EQ(3u, filtered_topics.size());
+  EXPECT_TRUE(filtered_topics.find("_hidden_topic") == filtered_topics.end());
+}
+
+TEST_F(TestTopicFilter, unknown_types_cache) {
+  std::map<std::string, std::vector<std::string>> topics_and_types {
+    {"topic/a", {"unknown_type_a"}},
+    {"topic/b", {"unknown_type_b"}},
+    {"topic/c", {"test_msgs/BasicTypes"}}  // Known type
+  };
+
+  rosbag2_transport::RecordOptions record_options;
+  record_options.all_topics = true;
+  // Set flag to not allow unknown types in filter ctor
+  rosbag2_transport::TopicFilter filter{record_options, nullptr, false};
+
+  // Should filter out unknown types
+  auto filtered_topics = filter.filter_topics(topics_and_types);
+  ASSERT_EQ(1u, filtered_topics.size());
+  ASSERT_EQ("topic/c", filtered_topics.begin()->first);
+
+  // Check if unknown types were cached
+  auto unknown_types = filter.get_unknown_types_cache();
+  ASSERT_EQ(2u, unknown_types.size());
+  EXPECT_TRUE(unknown_types.find("unknown_type_a") != unknown_types.end());
+  EXPECT_TRUE(unknown_types.find("unknown_type_b") != unknown_types.end());
+
+  // Check the topic cache entries for unknown types
+  auto cache = filter.get_take_topics_cache();
+  ASSERT_EQ(3u, cache.size());
+
+  for (const auto & topic : {"topic/a", "topic/b"}) {
+    ASSERT_TRUE(cache.find(topic) != cache.end());
+    // Cache entry should indicate topic is rejected (false) and type is unknown (true)
+    EXPECT_FALSE(cache.at(topic).first);
+    EXPECT_TRUE(cache.at(topic).second);
+  }
+
+  ASSERT_TRUE(cache.find("topic/c") != cache.end());
+  EXPECT_TRUE(cache.at("topic/c").first);  // Topic should be accepted
+  EXPECT_FALSE(cache.at("topic/c").second);  // Type is not unknown
+}
+
+TEST_F(TestTopicFilter, type_changes_from_unknown_to_known) {
+  // First set up with unknown type
+  std::map<std::string, std::vector<std::string>> topics_and_types {
+    {"topic/a", {"unknown_type_a"}}
+  };
+
+  rosbag2_transport::RecordOptions record_options;
+  record_options.all_topics = true;
+  // Set flag to allow unknown types in filter ctor
+  rosbag2_transport::TopicFilter filter{record_options, nullptr, false};
+
+  // First call should filter out the unknown type
+  auto filtered_topics = filter.filter_topics(topics_and_types);
+  ASSERT_EQ(0u, filtered_topics.size());
+
+  // Now change the type to a known one
+  topics_and_types["topic/a"] = {"test_msgs/BasicTypes"};
+
+  // Second call should detect the type change and include the topic
+  filtered_topics = filter.filter_topics(topics_and_types);
+  ASSERT_EQ(1u, filtered_topics.size());
+  ASSERT_EQ("topic/a", filtered_topics.begin()->first);
+
+  // Check that the cache was updated
+  auto cache = filter.get_take_topics_cache();
+  ASSERT_TRUE(cache.find("topic/a") != cache.end());
+  EXPECT_TRUE(cache.at("topic/a").first);  // Topic should be accepted
+  EXPECT_FALSE(cache.at("topic/a").second);  // Type is not unknown anymore
+}
+
+TEST_F(TestTopicFilter, allow_unknown_types_behavior) {
+  std::map<std::string, std::vector<std::string>> topics_and_types {
+    {"topic/a", {"unknown_type_a"}},
+    {"topic/b", {"test_msgs/BasicTypes"}}
+  };
+
+  // Test with allow_unknown_types = true
+  {
+    rosbag2_transport::RecordOptions record_options;
+    record_options.all_topics = true;
+    rosbag2_transport::TopicFilter filter{record_options, nullptr, true};
+
+    EXPECT_TRUE(filter.get_allow_unknown_types());
+
+    auto filtered_topics = filter.filter_topics(topics_and_types);
+    ASSERT_EQ(2u, filtered_topics.size());
+
+    // Unknown types shouldn't be cached when allowed
+    auto unknown_types = filter.get_unknown_types_cache();
+    ASSERT_EQ(0u, unknown_types.size());
+  }
+
+  // Test with allow_unknown_types = false
+  {
+    rosbag2_transport::RecordOptions record_options;
+    record_options.all_topics = true;
+    rosbag2_transport::TopicFilter filter{record_options, nullptr, false};
+
+    EXPECT_FALSE(filter.get_allow_unknown_types());
+
+    auto filtered_topics = filter.filter_topics(topics_and_types);
+    ASSERT_EQ(1u, filtered_topics.size());
+
+    // Unknown types should be cached
+    auto unknown_types = filter.get_unknown_types_cache();
+    ASSERT_EQ(1u, unknown_types.size());
+  }
+}
