@@ -1,0 +1,9 @@
+<library path="rosbag2_storage_fifo_plugin">
+  <class
+    name="fifo"
+    type="rosbag2_storage_fifo_plugin::FifoStorage"
+    base_class_type="rosbag2_storage::storage_interfaces::ReadWriteInterface"
+  >
+    <description>A rosbag2 storage plugin that writes to a FIFO stream.</description>
+  </class>
+</library>

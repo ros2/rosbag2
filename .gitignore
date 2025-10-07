@@ -8,3 +8,7 @@ venv/
 __pycache__/
 *.db3-*
 
+
+build/
+install/
+log/
