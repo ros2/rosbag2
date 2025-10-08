@@ -38,39 +38,97 @@ namespace rosbag2_transport
 class ROSBAG2_TRANSPORT_PUBLIC TopicFilter
 {
 public:
+  /// \brief Constructor
+  /// @param record_options Options for filtering topics.
+  /// @param node_graph Node graph interface, used to check if a topic is unpublished
+  /// (i.e. has no publishers associated with topic) or a leaf topic (i.e. has no subscribers).
+  /// If nullptr, unpublished and leaf topics cannot be filtered out and corresponding checks will
+  /// be disabled.
+  /// @param allow_unknown_types Allow unknown types, i.e. types for which type support cannot be
+  /// loaded.
   explicit TopicFilter(
     RecordOptions record_options,
     rclcpp::node_interfaces::NodeGraphInterface::SharedPtr node_graph = nullptr,
     bool allow_unknown_types = false);
   virtual ~TopicFilter();
 
-  /// Filter all topic_names_and_types via take_topic method, return the resulting filtered set
+  /// \brief Filter topics based on the options provided in the constructor
+  /// \details Used to filter all topic_names_and_types received from the
+  /// node->get_topic_names_and_types()
   /// Filtering order is:
   /// - remove topics with multiple types, unknown type, and hidden topics
   /// - topics list
   /// - exclude regex
   /// - include regex OR "all"
+  /// - exclude topics list
+  /// - topic types list
+  /// - exclude topic types list
+  /// - actions list
+  /// - exclude actions list
+  /// - services list
+  /// - exclude services list
+  /// - unpublished topics
+  /// - leaf topics
+  /// @param topic_names_and_types The map of topic names and their associated types to filter
+  /// @return The filtered map of topic names and their associated types
   std::unordered_map<std::string, std::string> filter_topics(
     const std::map<std::string, std::vector<std::string>> & topic_names_and_types);
 
-private:
-  /// Return true if the topic passes all filter criteria
+protected:
+  /// \brief Check if the topic is selected by include/exclude lists or regexes
+  /// @param topic_name - the name of the topic to check
+  /// @param topic_type - the type of the topic to check
+  /// @return Return true if the topic is selected, false otherwise
+  bool topic_selected_by_lists_or_regex(
+    const std::string & topic_name,
+    const std::string & topic_type);
+
+  /// \brief Check if the topic should be taken (i.e. recorded) based on all filter criteria
+  /// @details The checks performed are:
+  /// - selected by include/exclude lists or regexes
+  /// - type is known (i.e. type support can be loaded)
+  /// - not unpublished (i.e. has at least one publisher associated with topic)
+  /// - not a leaf topic (i.e. has at least one subscriber associated with topic)
+  /// @param topic_name - the name of the topic to check
+  /// @param topic_types - the types of the topic to check
+  /// @return Return true if the topic passes all filter criteria, false otherwise
   bool take_topic(const std::string & topic_name, const std::vector<std::string> & topic_types);
+
+  /// \brief Check if the topic type is known (i.e. type support can be loaded)
+  /// @param topic_name - the name of the topic to check
+  /// @param topic_type - the type of the topic to check
+  /// @return Return true if the topic type support can be loaded, false otherwise
   bool type_is_known(const std::string & topic_name, const std::string & topic_type);
 
-  RecordOptions record_options_;
-  bool allow_unknown_types_ = false;
+  /// Cache for topic_selected_by_lists_or_regex results
+  /// The key is a concatenation of topic name and topic type to avoid ambiguity
+  std::unordered_map<std::string, bool> topic_selected_by_lists_or_regex_cache_;
+
+  /// Cache for type_is_known results
+  std::unordered_map<std::string, bool> known_topic_types_cache_;
+
+  /// Remember which unknown types have already been warned about to avoid spamming the console
   std::unordered_set<std::string> already_warned_unknown_types_;
+
+private:
+  /// Options for filtering topics
+  RecordOptions record_options_;
+
+  /// Allow unknown types, i.e. types for which type support cannot be loaded
+  bool allow_unknown_types_ = false;
+
+  /// Node graph interface, used to check if a topic is unpublished or a leaf topic
   rclcpp::node_interfaces::NodeGraphInterface::SharedPtr node_graph_;
 
   /// The action name in record_options.include_action will be converted into the action interface
-  ///  name and saved in this set
+  /// name and saved in this set
   std::unordered_set<std::string> include_action_interface_names_;
 
   /// The action name in record_options.exclude_action will be converted into the action interface
-  ///  name and saved in this set
+  /// name and saved in this set
   std::unordered_set<std::string> exclude_action_interface_names_;
 };
+
 }  // namespace rosbag2_transport
 
 #endif  // ROSBAG2_TRANSPORT__TOPIC_FILTER_HPP_
