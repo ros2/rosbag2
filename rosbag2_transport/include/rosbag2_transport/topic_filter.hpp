@@ -19,7 +19,6 @@
 #include <string>
 #include <unordered_map>
 #include <unordered_set>
-#include <utility>
 #include <vector>
 
 #include "rosbag2_transport/record_options.hpp"
@@ -61,7 +60,7 @@ private:
 
   RecordOptions record_options_;
   bool allow_unknown_types_ = false;
-  std::unordered_set<std::string> unknown_types_cache_;
+  std::unordered_set<std::string> already_warned_unknown_types_;
   rclcpp::node_interfaces::NodeGraphInterface::SharedPtr node_graph_;
 
   /// The action name in record_options.include_action will be converted into the action interface
@@ -72,13 +71,7 @@ private:
   ///  name and saved in this set
   std::unordered_set<std::string> exclude_action_interface_names_;
 
-  /// Cache for already filtered topics. The pair contains:
-  /// - first: take topic result
-  /// - second: whether the topic type is unknown when the topic was checked
-  /// This is to avoid checking the same unknown type again and again.
-  /// Note: This cache does not guarantee to be always correct, because the topic type may
-  /// change over time. But it is good enough for performance consideration.
-  std::unordered_map<std::string, std::pair<bool, bool>> take_topics_cache_;
+  std::unordered_map<std::string, bool> take_topics_cache_;
 };
 }  // namespace rosbag2_transport
 

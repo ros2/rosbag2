@@ -131,45 +131,18 @@ std::unordered_map<std::string, std::string> TopicFilter::filter_topics(
 {
   std::unordered_map<std::string, std::string> filtered_topics;
   for (const auto & [topic_name, topic_types] : topic_names_and_types) {
-    if (topic_types.empty()) {
-      ROSBAG2_TRANSPORT_LOG_WARN_STREAM(
-        "Topic " << topic_name << " has no associated types. This case shouldn't occur.");
-      continue;
-    }
-    auto const & topic_type = topic_types[0];
     // Check take_topics_cache_ first to avoid performance burden when discovery thread running
     auto take_topics_cache_it = take_topics_cache_.find(topic_name);
     if (take_topics_cache_it != take_topics_cache_.end()) {
-      auto [take_topic_cached, type_unknown_cached] = take_topics_cache_it->second;
-      if (take_topic_cached) {
-        filtered_topics.insert(std::make_pair(topic_name, topic_type));
-      } else {  // Already cached as not to take
-        // If not allow unknown types, and the topic was detected to be with the unknown type
-        // before, and the current type is not in the unknown types cache, check the topic again.
-        // This is to handle the case that a topic was bound to the unknow type when first
-        // discovered, then later rebound with a known type and discovered again.
-        if (!allow_unknown_types_ && type_unknown_cached &&
-          unknown_types_cache_.find(topic_type) == unknown_types_cache_.end())
-        {
-          if (take_topic(topic_name, topic_types)) {
-            filtered_topics.insert(std::make_pair(topic_name, topic_type));
-            take_topics_cache_[topic_name] = {true, false};
-          } else {
-            bool type_unknown =
-              (unknown_types_cache_.find(topic_type) != unknown_types_cache_.end()) ? true : false;
-            take_topics_cache_[topic_name] = {false, type_unknown};
-          }
-        }
+      if (take_topics_cache_it->second) {
+        filtered_topics.insert(std::make_pair(topic_name, topic_types[0]));
       }
     } else {
       if (take_topic(topic_name, topic_types)) {
-        filtered_topics.insert(std::make_pair(topic_name, topic_type));
-        take_topics_cache_[topic_name] = {true, false};
+        filtered_topics.insert(std::make_pair(topic_name, topic_types[0]));
+        take_topics_cache_[topic_name] = true;
       } else {
-        bool type_unknown =
-          (!allow_unknown_types_ &&
-          unknown_types_cache_.find(topic_type) != unknown_types_cache_.end()) ? true : false;
-        take_topics_cache_[topic_name] = {false, type_unknown};
+        take_topics_cache_[topic_name] = false;
       }
     }
   }
@@ -351,8 +324,8 @@ bool TopicFilter::type_is_known(const std::string & topic_name, const std::strin
     auto package_name = std::get<0>(rclcpp::extract_type_identifier(topic_type));
     rclcpp::get_typesupport_library_path(package_name, "rosidl_typesupport_cpp");
   } catch (std::runtime_error & e) {
-    if (unknown_types_cache_.find(topic_type) == unknown_types_cache_.end()) {
-      unknown_types_cache_.emplace(topic_type);
+    if (already_warned_unknown_types_.find(topic_type) == already_warned_unknown_types_.end()) {
+      already_warned_unknown_types_.emplace(topic_type);
       ROSBAG2_TRANSPORT_LOG_WARN_STREAM(
         "Topic '" << topic_name <<
           "' has unknown type '" << topic_type <<
