@@ -70,8 +70,6 @@ private:
   /// The action name in record_options.exclude_action will be converted into the action interface
   ///  name and saved in this set
   std::unordered_set<std::string> exclude_action_interface_names_;
-
-  std::unordered_map<std::string, bool> take_topics_cache_;
 };
 }  // namespace rosbag2_transport
 

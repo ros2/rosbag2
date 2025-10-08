@@ -131,19 +131,8 @@ std::unordered_map<std::string, std::string> TopicFilter::filter_topics(
 {
   std::unordered_map<std::string, std::string> filtered_topics;
   for (const auto & [topic_name, topic_types] : topic_names_and_types) {
-    // Check take_topics_cache_ first to avoid performance burden when discovery thread running
-    auto take_topics_cache_it = take_topics_cache_.find(topic_name);
-    if (take_topics_cache_it != take_topics_cache_.end()) {
-      if (take_topics_cache_it->second) {
-        filtered_topics.insert(std::make_pair(topic_name, topic_types[0]));
-      }
-    } else {
-      if (take_topic(topic_name, topic_types)) {
-        filtered_topics.insert(std::make_pair(topic_name, topic_types[0]));
-        take_topics_cache_[topic_name] = true;
-      } else {
-        take_topics_cache_[topic_name] = false;
-      }
+    if (take_topic(topic_name, topic_types)) {
+      filtered_topics.insert(std::make_pair(topic_name, topic_types[0]));
     }
   }
   return filtered_topics;
