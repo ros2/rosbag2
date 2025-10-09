@@ -53,7 +53,9 @@ inline bool has_single_type(
   return true;
 }
 
-
+/// \brief Determine if a topic is hidden i.e. starting any token of the name with an underscore.
+/// @param topic_name - the name of the topic to check
+/// @return Return true if the topic is hidden, false otherwise
 inline bool topic_is_hidden(const std::string & topic_name)
 {
   // According to rclpy's implementation, the indicator for a hidden topic is a leading '_'
@@ -86,6 +88,10 @@ inline bool topic_is_unpublished(
   return publishers_info.empty();
 }
 
+/// \brief Determine if a topic is a leaf topic (i.e. has no subscribers).
+/// @param topic_name - the name of the topic to check
+/// @param node_graph  - the node graph interface to use for checking
+/// @return Return true if the topic is a leaf topic (has no subscribers), false otherwise
 inline bool is_leaf_topic(
   const std::string & topic_name, rclcpp::node_interfaces::NodeGraphInterface & node_graph)
 {
@@ -138,15 +144,10 @@ std::unordered_map<std::string, std::string> TopicFilter::filter_topics(
   return filtered_topics;
 }
 
-bool TopicFilter::take_topic(
-  const std::string & topic_name, const std::vector<std::string> & topic_types)
+bool TopicFilter::topic_selected_by_lists_or_regex(
+  const std::string & topic_name,
+  const std::string & topic_type)
 {
-  if (!has_single_type(topic_name, topic_types)) {
-    return false;
-  }
-
-  const std::string & topic_type = topic_types[0];
-
   bool is_action_topic = rosbag2_cpp::is_topic_belong_to_action(topic_name, topic_type);
   bool is_service_event_topic = false;
   if (!is_action_topic) {
@@ -287,6 +288,32 @@ bool TopicFilter::take_topic(
       }
     }
   }
+  return true;
+}
+
+bool TopicFilter::take_topic(
+  const std::string & topic_name, const std::vector<std::string> & topic_types)
+{
+  if (!has_single_type(topic_name, topic_types)) {
+    return false;
+  }
+
+  const std::string & topic_type = topic_types[0];
+
+  bool topic_selected = false;
+  // Check cache first
+  auto lists_or_regex_cache_it =
+    topic_selected_by_lists_or_regex_cache_.find(topic_name + topic_type);
+  if (lists_or_regex_cache_it != topic_selected_by_lists_or_regex_cache_.end()) {
+    topic_selected = lists_or_regex_cache_it->second;
+  } else {
+    topic_selected = topic_selected_by_lists_or_regex(topic_name, topic_type);
+    topic_selected_by_lists_or_regex_cache_[topic_name + topic_type] = topic_selected;
+  }
+
+  if (!topic_selected) {
+    return false;
+  }
 
   if (!allow_unknown_types_ && !type_is_known(topic_name, topic_type)) {
     return false;
@@ -309,19 +336,28 @@ bool TopicFilter::take_topic(
 
 bool TopicFilter::type_is_known(const std::string & topic_name, const std::string & topic_type)
 {
-  try {
-    auto package_name = std::get<0>(rclcpp::extract_type_identifier(topic_type));
-    rclcpp::get_typesupport_library_path(package_name, "rosidl_typesupport_cpp");
-  } catch (std::runtime_error & e) {
-    if (already_warned_unknown_types_.find(topic_type) == already_warned_unknown_types_.end()) {
-      already_warned_unknown_types_.emplace(topic_type);
-      ROSBAG2_TRANSPORT_LOG_WARN_STREAM(
-        "Topic '" << topic_name <<
-          "' has unknown type '" << topic_type <<
-          "' . Only topics with known type are supported. Reason: '" << e.what());
+  bool type_known = false;
+  // Check cache first
+  auto cache_it = known_topic_types_cache_.find(topic_type);
+  if (cache_it != known_topic_types_cache_.end()) {
+    type_known = cache_it->second;
+  } else {
+    try {
+      auto package_name = std::get<0>(rclcpp::extract_type_identifier(topic_type));
+      (void)rclcpp::get_typesupport_library_path(package_name, "rosidl_typesupport_cpp");
+      type_known = true;
+    } catch (std::runtime_error & e) {
+      if (already_warned_unknown_types_.find(topic_type) == already_warned_unknown_types_.end()) {
+        already_warned_unknown_types_.emplace(topic_type);
+        ROSBAG2_TRANSPORT_LOG_WARN_STREAM(
+          "Topic '" << topic_name <<
+            "' has unknown type '" << topic_type <<
+            "' . Only topics with known type are supported. Reason: '" << e.what());
+      }
     }
-    return false;
+    known_topic_types_cache_[topic_type] = type_known;
   }
-  return true;
+  return type_known;
 }
+
 }  // namespace rosbag2_transport

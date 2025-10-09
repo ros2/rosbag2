@@ -27,6 +27,38 @@
 
 using namespace ::testing;  // NOLINT
 
+// Test class to expose protected methods for testing
+class TopicFilterForTest : public rosbag2_transport::TopicFilter
+{
+public:
+  explicit TopicFilterForTest(
+    rosbag2_transport::RecordOptions record_options,
+    rclcpp::node_interfaces::NodeGraphInterface::SharedPtr node_graph = nullptr,
+    bool allow_unknown_types = false)
+  : TopicFilter(std::move(record_options), node_graph, allow_unknown_types) {}
+
+  // Expose protected methods
+  using TopicFilter::topic_selected_by_lists_or_regex;
+  using TopicFilter::take_topic;
+  using TopicFilter::type_is_known;
+
+  // Getter for the caches to verify caching functionality
+  std::unordered_map<std::string, bool> & get_topic_selected_by_lists_or_regex_cache()
+  {
+    return topic_selected_by_lists_or_regex_cache_;
+  }
+
+  std::unordered_map<std::string, bool> & get_known_topic_types_cache()
+  {
+    return known_topic_types_cache_;
+  }
+
+  const std::unordered_set<std::string> & get_already_warned_unknown_types() const
+  {
+    return already_warned_unknown_types_;
+  }
+};
+
 class TestTopicFilter : public Test
 {
 protected:
@@ -673,4 +705,156 @@ TEST_F(TestTopicFilter, all_topics_and_all_services_overrides_regex)
   rosbag2_transport::TopicFilter filter{record_options, nullptr, true};
   auto filtered_topics = filter.filter_topics(topics_services_actions_with_types_);
   EXPECT_THAT(filtered_topics, SizeIs(10));
+}
+
+TEST_F(TestTopicFilter, test_topic_selected_by_lists_or_regex_caching) {
+  // Create a TopicFilterForTest with simple options
+  rosbag2_transport::RecordOptions record_options{};
+  record_options.all_topics = true;
+  TopicFilterForTest filter{record_options, nullptr, true};
+
+  // Initial cache should be empty
+  EXPECT_TRUE(filter.get_topic_selected_by_lists_or_regex_cache().empty());
+
+  // First take_topic call should add to cache
+  // Note: We are not using topic_selected_by_lists_or_regex(...) directly here because the caching
+  // for the selected topics implemented in the take_topic(...)
+  EXPECT_TRUE(filter.take_topic("/planning1", {"planning_topic_type"}));
+  EXPECT_EQ(filter.get_topic_selected_by_lists_or_regex_cache().size(), 1);
+  auto find_in_cache_it =
+    filter.get_topic_selected_by_lists_or_regex_cache().find("/planning1planning_topic_type");
+  ASSERT_TRUE(find_in_cache_it != filter.get_topic_selected_by_lists_or_regex_cache().end());
+  ASSERT_TRUE(find_in_cache_it->second);
+
+  // Second call with same parameters should use cache
+  find_in_cache_it->second = false;  // Modify cached value to test that cache being used
+  EXPECT_FALSE(filter.take_topic("/planning1", {"planning_topic_type"}));
+  EXPECT_EQ(filter.get_topic_selected_by_lists_or_regex_cache().size(), 1);  // Cache size unchanged
+
+  // Call with different parameters should add new entry
+  EXPECT_TRUE(filter.take_topic("/planning2", {"planning_topic_type"}));
+  EXPECT_EQ(filter.get_topic_selected_by_lists_or_regex_cache().size(), 2);
+}
+
+TEST_F(TestTopicFilter, test_type_is_known_caching) {
+  // Create a TopicFilterForTest with allow_unknown_types = true
+  rosbag2_transport::RecordOptions record_options{};
+  TopicFilterForTest filter{record_options, nullptr, true};
+
+  // Initial cache should be empty
+  EXPECT_TRUE(filter.get_known_topic_types_cache().empty());
+  EXPECT_TRUE(filter.get_already_warned_unknown_types().empty());
+
+  // First call for unknown type should add to cache and set already_warned_unknown_types
+  testing::internal::CaptureStderr();
+  EXPECT_FALSE(filter.type_is_known("/planning1", "planning_topic_type"));
+  std::string output = testing::internal::GetCapturedStderr();
+  EXPECT_EQ(filter.get_already_warned_unknown_types().size(), 1);
+  EXPECT_THAT(output, HasSubstr("Topic '/planning1' has unknown type 'planning_topic_type'"));
+
+  EXPECT_EQ(filter.get_known_topic_types_cache().size(), 1);
+  auto find_in_cache_it = filter.get_known_topic_types_cache().find("planning_topic_type");
+  ASSERT_TRUE(find_in_cache_it != filter.get_known_topic_types_cache().end());
+  ASSERT_FALSE(find_in_cache_it->second);
+
+  // Second call with same type should use cache and not warn again
+  find_in_cache_it->second = true;  // Modify cached value to true to test that cache being used
+  testing::internal::CaptureStderr();
+  EXPECT_TRUE(filter.type_is_known("/planning2", "planning_topic_type"));
+  std::string output2 = testing::internal::GetCapturedStderr();
+  EXPECT_TRUE(output2.empty());
+  EXPECT_EQ(filter.get_known_topic_types_cache().size(), 1);  // Cache size unchanged
+}
+
+TEST_F(TestTopicFilter, test_filter_topics_uses_caching) {
+  rosbag2_transport::RecordOptions record_options{};
+  record_options.all_topics = true;
+  TopicFilterForTest filter{record_options, nullptr, false};
+
+  // Initial caches should be empty
+  EXPECT_TRUE(filter.get_topic_selected_by_lists_or_regex_cache().empty());
+  EXPECT_TRUE(filter.get_known_topic_types_cache().empty());
+
+  // First call should populate caches
+  auto filtered_topics = filter.filter_topics(topics_services_actions_with_types_);
+  // No known topic types, so no topics pass filter
+  EXPECT_THAT(filtered_topics, SizeIs(0));
+
+  // Should have entries in both caches now
+  EXPECT_FALSE(filter.get_topic_selected_by_lists_or_regex_cache().empty());
+  EXPECT_FALSE(filter.get_known_topic_types_cache().empty());
+
+  // Test that calling filter_topics again uses the caches
+  for (auto & [topic_type, is_known] : filter.get_known_topic_types_cache()) {
+    EXPECT_FALSE(is_known) << "topic_type: " << topic_type;  // Expect that all types are unknown
+    // Set all types to known to test that caching is used and some topics are returned
+    is_known = true;
+  }
+
+  auto filtered_topics2 = filter.filter_topics(topics_services_actions_with_types_);
+  EXPECT_THAT(filtered_topics2, SizeIs(Gt(0)));  // Should have some topics now
+}
+
+TEST_F(TestTopicFilter, topic_selected_by_lists_or_regex_service_topics) {
+  // Test specifically for service topic selection with regex
+  rosbag2_transport::RecordOptions record_options{};
+  record_options.regex = "^/planning_service";
+  TopicFilterForTest filter{record_options, nullptr, true};
+
+  EXPECT_TRUE(filter.topic_selected_by_lists_or_regex(
+    "/planning_service/_service_event", "service/srv/planning_service_Event"));
+  EXPECT_FALSE(filter.topic_selected_by_lists_or_regex(
+    "/invalid_service/_service_event", "service/srv/planning_service_Event"));
+}
+
+TEST_F(TestTopicFilter, topic_selected_by_lists_or_regex_action_topics) {
+  // Test specifically for action topic selection with regex
+  rosbag2_transport::RecordOptions record_options{};
+  record_options.regex = "^/planning_action";
+  TopicFilterForTest filter{record_options, nullptr, true};
+
+  EXPECT_TRUE(filter.topic_selected_by_lists_or_regex(
+    "/planning_action/_action/status", "action_msgs/msg/GoalStatusArray"));
+  EXPECT_TRUE(filter.topic_selected_by_lists_or_regex(
+    "/planning_action/_action/feedback", "unknown_pkg/action/Planning_FeedbackMessage"));
+  EXPECT_FALSE(filter.topic_selected_by_lists_or_regex(
+    "/invalid_action/_action/status", "action_msgs/msg/GoalStatusArray"));
+}
+
+TEST_F(TestTopicFilter, take_topic_uses_cache) {
+  const std::string topic_name = "/planning_service";
+  const std::string topic_type = "planning_topic_type";
+
+  rosbag2_transport::RecordOptions record_options{};
+  record_options.all_topics = true;
+  TopicFilterForTest filter{record_options, nullptr, false};
+
+  // Initial caches should be empty
+  EXPECT_TRUE(filter.get_topic_selected_by_lists_or_regex_cache().empty());
+  EXPECT_TRUE(filter.get_known_topic_types_cache().empty());
+
+  // First call should populate caches
+  EXPECT_FALSE(filter.take_topic(topic_name, {topic_type}));
+
+  // Should have entries in both caches now
+  EXPECT_FALSE(filter.get_topic_selected_by_lists_or_regex_cache().empty());
+  EXPECT_FALSE(filter.get_known_topic_types_cache().empty());
+
+  auto find_in_known_topics_cache_it = filter.get_known_topic_types_cache().find(topic_type);
+  ASSERT_TRUE(find_in_known_topics_cache_it != filter.get_known_topic_types_cache().end());
+  ASSERT_FALSE(find_in_known_topics_cache_it->second);
+  find_in_known_topics_cache_it->second = true;  // Set to known type to allow topic to pass filter
+
+  // Check that calling again should use the known topic types cache
+  EXPECT_TRUE(filter.take_topic(topic_name, {topic_type}));
+
+  // Check that topic_selected_by_lists_or_regex_cache is used
+  auto find_in_selected_topics_cache_it =
+    filter.get_topic_selected_by_lists_or_regex_cache().find(topic_name + topic_type);
+  ASSERT_TRUE(find_in_selected_topics_cache_it !=
+              filter.get_topic_selected_by_lists_or_regex_cache().end());
+  EXPECT_TRUE(find_in_selected_topics_cache_it->second);
+  // Modify cached value to test that cache being used
+  find_in_selected_topics_cache_it->second = false;
+  EXPECT_FALSE(filter.take_topic(topic_name, {topic_type}));
 }
