@@ -303,12 +303,15 @@ bool TopicFilter::take_topic(
   bool topic_selected = false;
   // Check cache first
   auto lists_or_regex_cache_it =
-    topic_selected_by_lists_or_regex_cache_.find(topic_name + topic_type);
+    topic_selected_by_lists_or_regex_cache_.find(
+      topic_name + kTopicNameTypeDelimiter_ + topic_type);
+
   if (lists_or_regex_cache_it != topic_selected_by_lists_or_regex_cache_.end()) {
     topic_selected = lists_or_regex_cache_it->second;
   } else {
     topic_selected = topic_selected_by_lists_or_regex(topic_name, topic_type);
-    topic_selected_by_lists_or_regex_cache_[topic_name + topic_type] = topic_selected;
+    topic_selected_by_lists_or_regex_cache_[topic_name + kTopicNameTypeDelimiter_ + topic_type] =
+      topic_selected;
   }
 
   if (!topic_selected) {

@@ -48,6 +48,12 @@ public:
     return topic_selected_by_lists_or_regex_cache_;
   }
 
+  // Getter for the delimiter constant
+  static std::string get_topic_name_and_type_delimiter()
+  {
+    return kTopicNameTypeDelimiter_;
+  }
+
   std::unordered_map<std::string, bool> & get_known_topic_types_cache()
   {
     return known_topic_types_cache_;
@@ -713,26 +719,32 @@ TEST_F(TestTopicFilter, test_topic_selected_by_lists_or_regex_caching) {
   record_options.all_topics = true;
   TopicFilterForTest filter{record_options, nullptr, true};
 
+  const std::string topic_name1 = "/planning1";
+  const std::string topic_name2 = "/planning2";
+  const std::string topic_type = "planning_topic_type";
+  const std::string topic_name_type_delimiter = filter.get_topic_name_and_type_delimiter();
+
   // Initial cache should be empty
   EXPECT_TRUE(filter.get_topic_selected_by_lists_or_regex_cache().empty());
 
   // First take_topic call should add to cache
   // Note: We are not using topic_selected_by_lists_or_regex(...) directly here because the caching
   // for the selected topics implemented in the take_topic(...)
-  EXPECT_TRUE(filter.take_topic("/planning1", {"planning_topic_type"}));
+  EXPECT_TRUE(filter.take_topic(topic_name1, {topic_type}));
   EXPECT_EQ(filter.get_topic_selected_by_lists_or_regex_cache().size(), 1);
   auto find_in_cache_it =
-    filter.get_topic_selected_by_lists_or_regex_cache().find("/planning1planning_topic_type");
+    filter.get_topic_selected_by_lists_or_regex_cache().find(
+      topic_name1 + topic_name_type_delimiter + topic_type);
   ASSERT_TRUE(find_in_cache_it != filter.get_topic_selected_by_lists_or_regex_cache().end());
   ASSERT_TRUE(find_in_cache_it->second);
 
   // Second call with same parameters should use cache
   find_in_cache_it->second = false;  // Modify cached value to test that cache being used
-  EXPECT_FALSE(filter.take_topic("/planning1", {"planning_topic_type"}));
+  EXPECT_FALSE(filter.take_topic(topic_name1, {topic_type}));
   EXPECT_EQ(filter.get_topic_selected_by_lists_or_regex_cache().size(), 1);  // Cache size unchanged
 
   // Call with different parameters should add new entry
-  EXPECT_TRUE(filter.take_topic("/planning2", {"planning_topic_type"}));
+  EXPECT_TRUE(filter.take_topic(topic_name2, {topic_type}));
   EXPECT_EQ(filter.get_topic_selected_by_lists_or_regex_cache().size(), 2);
 }
 
@@ -822,12 +834,13 @@ TEST_F(TestTopicFilter, topic_selected_by_lists_or_regex_action_topics) {
 }
 
 TEST_F(TestTopicFilter, take_topic_uses_cache) {
-  const std::string topic_name = "/planning_service";
-  const std::string topic_type = "planning_topic_type";
-
   rosbag2_transport::RecordOptions record_options{};
   record_options.all_topics = true;
   TopicFilterForTest filter{record_options, nullptr, false};
+
+  const std::string topic_name = "/planning_service";
+  const std::string topic_type = "planning_topic_type";
+  const std::string topic_name_type_delimiter = filter.get_topic_name_and_type_delimiter();
 
   // Initial caches should be empty
   EXPECT_TRUE(filter.get_topic_selected_by_lists_or_regex_cache().empty());
@@ -850,7 +863,8 @@ TEST_F(TestTopicFilter, take_topic_uses_cache) {
 
   // Check that topic_selected_by_lists_or_regex_cache is used
   auto find_in_selected_topics_cache_it =
-    filter.get_topic_selected_by_lists_or_regex_cache().find(topic_name + topic_type);
+    filter.get_topic_selected_by_lists_or_regex_cache().find(
+     topic_name + topic_name_type_delimiter + topic_type);
   ASSERT_TRUE(find_in_selected_topics_cache_it !=
               filter.get_topic_selected_by_lists_or_regex_cache().end());
   EXPECT_TRUE(find_in_selected_topics_cache_it->second);
