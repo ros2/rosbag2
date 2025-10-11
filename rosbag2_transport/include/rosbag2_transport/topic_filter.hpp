@@ -102,7 +102,15 @@ protected:
 
   /// Cache for topic_selected_by_lists_or_regex results
   /// The key is a concatenation of topic name and topic type to avoid ambiguity
+  /// \note Uses kTypeNameDelimiter_ as delimiter between topic name and topic type in the key
   std::unordered_map<std::string, bool> topic_selected_by_lists_or_regex_cache_;
+
+  /// Delimiter used for concatenating topic name and topic type in the cache key
+  /// Using a special character to avoid collisions with topic names and types. i.e. without
+  /// delimiter topic name "/motor" and type "controlsystem_msgs/msg/Foo" would create the same
+  /// key as a topic name "/motorcontrol" and type "system_msgs/msg/Foo". The '&' character is not
+  /// allowed in ROS topic names and types, so it is safe to use as delimiter.
+  static constexpr const char * kTopicNameTypeDelimiter_ = "&";
 
   /// Cache for type_is_known results
   std::unordered_map<std::string, bool> known_topic_types_cache_;
