@@ -44,7 +44,6 @@ TEST_F(RecordIntegrationTestFixture, published_messages_from_multiple_topics_are
 
   rosbag2_test_common::PublicationManager pub_manager;
   pub_manager.setup_publisher(array_topic, array_message, 2);
-  pub_manager.setup_publisher(string_topic, string_message, 2);
 
   rosbag2_transport::RecordOptions record_options =
   {false, false, false, false, {string_topic, array_topic},
@@ -52,6 +51,10 @@ TEST_F(RecordIntegrationTestFixture, published_messages_from_multiple_topics_are
   auto recorder = std::make_shared<rosbag2_transport::Recorder>(
     std::move(writer_), storage_options_, record_options);
   recorder->record();
+
+  // Note: Intentionally setup one publisher after starting recorder to test recorder's ability
+  // to dynamically discover topics in runtime.
+  pub_manager.setup_publisher(string_topic, string_message, 2);
 
   constexpr size_t expected_messages = 4;
   std::vector<std::shared_ptr<const rosbag2_storage::SerializedBagMessage>> recorded_messages;
@@ -75,7 +78,7 @@ TEST_F(RecordIntegrationTestFixture, published_messages_from_multiple_topics_are
 
     auto ret = rosbag2_test_common::wait_until_condition(
       [ =, &mock_writer]() {
-        return mock_writer.get_messages().size() >= expected_messages;
+        return mock_writer.get_number_of_recorded_messages() >= expected_messages;
       },
       std::chrono::seconds(5));
     EXPECT_TRUE(ret) << "failed to capture expected messages in time" <<
@@ -166,7 +169,7 @@ TEST_F(RecordIntegrationTestFixture, can_record_again_after_stop)
   constexpr size_t expected_messages = 4;
   auto ret = rosbag2_test_common::wait_until_condition(
     [ =, &mock_writer]() {
-      return mock_writer.get_messages().size() >= expected_messages;
+      return mock_writer.get_number_of_recorded_messages() >= expected_messages;
     },
     std::chrono::seconds(5));
   auto recorded_messages = mock_writer.get_messages();
@@ -240,7 +243,7 @@ TEST_F(RecordIntegrationTestFixture, qos_is_stored_in_metadata)
   constexpr size_t expected_messages = 2;
   auto ret = rosbag2_test_common::wait_until_condition(
     [ =, &mock_writer]() {
-      return mock_writer.get_messages().size() >= expected_messages;
+      return mock_writer.get_number_of_recorded_messages() >= expected_messages;
     },
     std::chrono::seconds(5));
   auto recorded_messages = mock_writer.get_messages();
@@ -305,7 +308,7 @@ TEST_F(RecordIntegrationTestFixture, records_sensor_data)
   constexpr size_t expected_messages = 2;
   auto ret = rosbag2_test_common::wait_until_condition(
     [ =, &mock_writer]() {
-      return mock_writer.get_messages().size() >= expected_messages;
+      return mock_writer.get_number_of_recorded_messages() >= expected_messages;
     },
     std::chrono::seconds(5));
   auto recorded_messages = mock_writer.get_messages();
@@ -347,7 +350,7 @@ TEST_F(RecordIntegrationTestFixture, receives_latched_messages)
   size_t expected_messages = num_latched_messages;
   auto ret = rosbag2_test_common::wait_until_condition(
     [&mock_writer, &expected_messages]() {
-      return mock_writer.get_messages().size() >= expected_messages;
+      return mock_writer.get_number_of_recorded_messages() >= expected_messages;
     },
     std::chrono::seconds(5));
   auto recorded_messages = mock_writer.get_messages();
@@ -461,8 +464,10 @@ TEST_F(RecordIntegrationTestFixture, write_split_callback_is_called)
     };
   writer_->add_event_callbacks(callbacks);
 
-  auto & mock_writer = dynamic_cast<MockSequentialWriter &>(writer_->get_implementation_handle());
-  mock_writer.set_max_messages_per_file(5);
+  {
+    auto & mock_writer = dynamic_cast<MockSequentialWriter &>(writer_->get_implementation_handle());
+    mock_writer.set_max_messages_per_file(5);
+  }
 
   rosbag2_transport::RecordOptions record_options =
   {false, false, false, false, {string_topic}, {}, {}, {}, {}, {}, {}, {}, "rmw_format", 10ms};
@@ -473,7 +478,7 @@ TEST_F(RecordIntegrationTestFixture, write_split_callback_is_called)
   auto cleanup_process_handle = rcpputils::make_scope_exit([&]() {stop_spinning();});
 
   auto & writer = recorder->get_writer_handle();
-  mock_writer = dynamic_cast<MockSequentialWriter &>(writer.get_implementation_handle());
+  auto & mock_writer = dynamic_cast<MockSequentialWriter &>(writer.get_implementation_handle());
 
   size_t expected_messages = mock_writer.max_messages_per_file() + 1;
 
@@ -487,7 +492,7 @@ TEST_F(RecordIntegrationTestFixture, write_split_callback_is_called)
 
   auto ret = rosbag2_test_common::wait_until_condition(
     [&mock_writer, &expected_messages]() {
-      return mock_writer.get_messages().size() >= expected_messages;
+      return mock_writer.get_number_of_recorded_messages() >= expected_messages;
     },
     std::chrono::seconds(5));
   auto recorded_messages = mock_writer.get_messages();
