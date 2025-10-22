@@ -159,7 +159,7 @@ if(BUILD_TESTING)
       set(SKIP_TEST "SKIP_TEST")
     endif()
 
-    ament_add_gmock_test(test_play
+    ament_add_ros_isolated_gmock_test(test_play
       TEST_NAME test_play${target_suffix}
       ENV ${rmw_implementation_env_var}
       ${SKIP_TEST}
@@ -179,7 +179,7 @@ if(BUILD_TESTING)
     set(rmw_implementation_env_var RMW_IMPLEMENTATION=${rmw_implementation})
     append_evars_if_rmw_zenoh(rmw_implementation_env_var ${rmw_implementation})
 
-    ament_add_gmock_test(test_composable_player
+    ament_add_ros_isolated_gmock_test(test_composable_player
       TEST_NAME test_composable_player${target_suffix}
       ENV ${rmw_implementation_env_var}
     )
@@ -199,7 +199,7 @@ if(BUILD_TESTING)
       set(SKIP_TEST "SKIP_TEST")
     endif()
 
-    ament_add_gmock_test(test_play_loop
+    ament_add_ros_isolated_gmock_test(test_play_loop
       TEST_NAME test_play_loop${target_suffix}
       ENV ${rmw_implementation_env_var}
       ${SKIP_TEST}
@@ -220,7 +220,7 @@ if(BUILD_TESTING)
       set(SKIP_TEST "SKIP_TEST")
     endif()
 
-    ament_add_gmock_test(test_play_publish_clock
+    ament_add_ros_isolated_gmock_test(test_play_publish_clock
       TEST_NAME test_play_publish_clock${target_suffix}
       ENV ${rmw_implementation_env_var}
       ${SKIP_TEST}
@@ -234,7 +234,7 @@ if(BUILD_TESTING)
     set(rmw_implementation_env_var RMW_IMPLEMENTATION=${rmw_implementation})
     append_evars_if_rmw_zenoh(rmw_implementation_env_var ${rmw_implementation})
 
-    ament_add_gmock_test(test_play_timing
+    ament_add_ros_isolated_gmock_test(test_play_timing
       TEST_NAME test_play_timing${target_suffix}
       ENV ${rmw_implementation_env_var}
     )
@@ -247,7 +247,7 @@ if(BUILD_TESTING)
     set(rmw_implementation_env_var RMW_IMPLEMENTATION=${rmw_implementation})
     append_evars_if_rmw_zenoh(rmw_implementation_env_var ${rmw_implementation})
 
-    ament_add_gmock_test(test_play_callbacks
+    ament_add_ros_isolated_gmock_test(test_play_callbacks
       TEST_NAME test_play_callbacks${target_suffix}
       ENV ${rmw_implementation_env_var}
     )
@@ -260,7 +260,7 @@ if(BUILD_TESTING)
     set(rmw_implementation_env_var RMW_IMPLEMENTATION=${rmw_implementation})
     append_evars_if_rmw_zenoh(rmw_implementation_env_var ${rmw_implementation})
 
-    ament_add_gmock_test(test_player_stop
+    ament_add_ros_isolated_gmock_test(test_player_stop
       TEST_NAME test_player_stop${target_suffix}
       ENV ${rmw_implementation_env_var}
     )
@@ -273,7 +273,7 @@ if(BUILD_TESTING)
     set(rmw_implementation_env_var RMW_IMPLEMENTATION=${rmw_implementation})
     append_evars_if_rmw_zenoh(rmw_implementation_env_var ${rmw_implementation})
 
-    ament_add_gmock_test(test_play_seek
+    ament_add_ros_isolated_gmock_test(test_play_seek
       TEST_NAME test_play_seek${target_suffix}
       ENV ${rmw_implementation_env_var}
     )
@@ -286,7 +286,7 @@ if(BUILD_TESTING)
     set(rmw_implementation_env_var RMW_IMPLEMENTATION=${rmw_implementation})
     append_evars_if_rmw_zenoh(rmw_implementation_env_var ${rmw_implementation})
 
-    ament_add_gmock_test(test_play_services
+    ament_add_ros_isolated_gmock_test(test_play_services
       TEST_NAME test_play_services${target_suffix}
       ENV ${rmw_implementation_env_var}
     )
@@ -306,7 +306,7 @@ if(BUILD_TESTING)
       set(SKIP_TEST "SKIP_TEST")
     endif()
 
-    ament_add_gmock_test(test_play_topic_remap
+    ament_add_ros_isolated_gmock_test(test_play_topic_remap
       TEST_NAME test_play_topic_remap${target_suffix}
       ENV ${rmw_implementation_env_var}
       ${SKIP_TEST}
@@ -321,7 +321,7 @@ if(BUILD_TESTING)
     set(rmw_implementation_env_var RMW_IMPLEMENTATION=${rmw_implementation})
     append_evars_if_rmw_zenoh(rmw_implementation_env_var ${rmw_implementation})
 
-    ament_add_gmock_test(test_play_duration
+    ament_add_ros_isolated_gmock_test(test_play_duration
       TEST_NAME test_play_duration${target_suffix}
       ENV ${rmw_implementation_env_var}
     )
@@ -335,7 +335,7 @@ if(BUILD_TESTING)
     set(rmw_implementation_env_var RMW_IMPLEMENTATION=${rmw_implementation})
     append_evars_if_rmw_zenoh(rmw_implementation_env_var ${rmw_implementation})
 
-    ament_add_gmock_test(test_play_next
+    ament_add_ros_isolated_gmock_test(test_play_next
       TEST_NAME test_play_next${target_suffix}
       ENV ${rmw_implementation_env_var}
     )
@@ -349,7 +349,7 @@ if(BUILD_TESTING)
     set(rmw_implementation_env_var RMW_IMPLEMENTATION=${rmw_implementation})
     append_evars_if_rmw_zenoh(rmw_implementation_env_var ${rmw_implementation})
 
-    ament_add_gmock_test(test_play_until
+    ament_add_ros_isolated_gmock_test(test_play_until
       TEST_NAME test_play_until${target_suffix}
       ENV ${rmw_implementation_env_var}
     )
@@ -363,7 +363,7 @@ if(BUILD_TESTING)
     set(rmw_implementation_env_var RMW_IMPLEMENTATION=${rmw_implementation})
     append_evars_if_rmw_zenoh(rmw_implementation_env_var ${rmw_implementation})
 
-    ament_add_gmock_test(test_burst
+    ament_add_ros_isolated_gmock_test(test_burst
       TEST_NAME test_burst${target_suffix}
       ENV ${rmw_implementation_env_var}
     )
@@ -384,7 +384,7 @@ if(BUILD_TESTING)
       set(SKIP_TEST "SKIP_TEST")
     endif()
 
-    ament_add_gmock_test(test_record
+    ament_add_ros_isolated_gmock_test(test_record
       TEST_NAME test_record${target_suffix}
       ENV ${rmw_implementation_env_var}
       ${SKIP_TEST}
@@ -398,7 +398,7 @@ if(BUILD_TESTING)
     set(rmw_implementation_env_var RMW_IMPLEMENTATION=${rmw_implementation})
     append_evars_if_rmw_zenoh(rmw_implementation_env_var ${rmw_implementation})
 
-    ament_add_gmock_test(test_record_all
+    ament_add_ros_isolated_gmock_test(test_record_all
       TEST_NAME test_record_all${target_suffix}
       ENV ${rmw_implementation_env_var}
     )
@@ -411,7 +411,7 @@ if(BUILD_TESTING)
     set(rmw_implementation_env_var RMW_IMPLEMENTATION=${rmw_implementation})
     append_evars_if_rmw_zenoh(rmw_implementation_env_var ${rmw_implementation})
 
-    ament_add_gmock_test(test_record_all_ignore_leaf_topics
+    ament_add_ros_isolated_gmock_test(test_record_all_ignore_leaf_topics
       TEST_NAME test_record_all_ignore_leaf_topics${target_suffix}
       ENV ${rmw_implementation_env_var}
     )
@@ -429,7 +429,7 @@ if(BUILD_TESTING)
     set(rmw_implementation_env_var RMW_IMPLEMENTATION=${rmw_implementation})
     append_evars_if_rmw_zenoh(rmw_implementation_env_var ${rmw_implementation})
 
-    ament_add_gmock_test(test_record_all_include_unpublished_topics
+    ament_add_ros_isolated_gmock_test(test_record_all_include_unpublished_topics
       TEST_NAME test_record_all_include_unpublished_topics${target_suffix}
       ENV ${rmw_implementation_env_var}
     )
@@ -442,7 +442,7 @@ if(BUILD_TESTING)
     set(rmw_implementation_env_var RMW_IMPLEMENTATION=${rmw_implementation})
     append_evars_if_rmw_zenoh(rmw_implementation_env_var ${rmw_implementation})
 
-    ament_add_gmock_test(test_record_all_no_discovery
+    ament_add_ros_isolated_gmock_test(test_record_all_no_discovery
       TEST_NAME test_record_all_no_discovery${target_suffix}
       ENV ${rmw_implementation_env_var}
     )
@@ -455,7 +455,7 @@ if(BUILD_TESTING)
     set(rmw_implementation_env_var RMW_IMPLEMENTATION=${rmw_implementation})
     append_evars_if_rmw_zenoh(rmw_implementation_env_var ${rmw_implementation})
 
-    ament_add_gmock_test(test_record_all_use_sim_time
+    ament_add_ros_isolated_gmock_test(test_record_all_use_sim_time
       TEST_NAME test_record_all_use_sim_time${target_suffix}
       ENV ${rmw_implementation_env_var}
     )
@@ -468,7 +468,7 @@ if(BUILD_TESTING)
     set(rmw_implementation_env_var RMW_IMPLEMENTATION=${rmw_implementation})
     append_evars_if_rmw_zenoh(rmw_implementation_env_var ${rmw_implementation})
 
-    ament_add_gmock_test(test_keyboard_controls
+    ament_add_ros_isolated_gmock_test(test_keyboard_controls
       TEST_NAME test_keyboard_controls${target_suffix}
       ENV ${rmw_implementation_env_var}
     )
@@ -488,7 +488,7 @@ if(BUILD_TESTING)
       set(SKIP_TEST "SKIP_TEST")
     endif()
 
-    ament_add_gmock_test(test_record_regex
+    ament_add_ros_isolated_gmock_test(test_record_regex
       TEST_NAME test_record_regex${target_suffix}
       ENV ${rmw_implementation_env_var}
       ${SKIP_TEST}
@@ -502,7 +502,7 @@ if(BUILD_TESTING)
     set(rmw_implementation_env_var RMW_IMPLEMENTATION=${rmw_implementation})
     append_evars_if_rmw_zenoh(rmw_implementation_env_var ${rmw_implementation})
 
-    ament_add_gmock_test(test_record_services
+    ament_add_ros_isolated_gmock_test(test_record_services
       TEST_NAME test_record_services${target_suffix}
       ENV ${rmw_implementation_env_var}
     )
@@ -521,7 +521,7 @@ if(BUILD_TESTING)
     set(rmw_implementation_env_var RMW_IMPLEMENTATION=${rmw_implementation})
     append_evars_if_rmw_zenoh(rmw_implementation_env_var ${rmw_implementation})
 
-    ament_add_gmock_test(test_composable_recorder
+    ament_add_ros_isolated_gmock_test(test_composable_recorder
       TEST_NAME test_composable_recorder${target_suffix}
       ENV ${rmw_implementation_env_var}
     )
@@ -539,7 +539,7 @@ if(BUILD_TESTING)
     set(rmw_implementation_env_var RMW_IMPLEMENTATION=${rmw_implementation})
     append_evars_if_rmw_zenoh(rmw_implementation_env_var ${rmw_implementation})
 
-    ament_add_gmock_test(test_load_composable_components
+    ament_add_ros_isolated_gmock_test(test_load_composable_components
       TEST_NAME test_load_composable_components${target_suffix}
       ENV ${rmw_implementation_env_var}
     )
