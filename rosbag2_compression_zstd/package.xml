@@ -17,7 +17,7 @@
   <depend>pluginlib</depend>
   <depend>rcutils</depend>
   <depend>rosbag2_compression</depend>
-  <depend>zstd_vendor</depend>
+  <depend>zstd_cmake_module</depend>
 
   <test_depend>ament_cmake_gmock</test_depend>
   <test_depend>ament_lint_auto</test_depend>

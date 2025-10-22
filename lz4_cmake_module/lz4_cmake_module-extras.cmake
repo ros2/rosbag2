@@ -1,4 +1,4 @@
-# Copyright 2019 Open Source Robotics Foundation, Inc.
+# Copyright 2025 Open Source Robotics Foundation, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,4 +12,4 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-list(INSERT CMAKE_MODULE_PATH 0 "${sqlite3_vendor_DIR}/Modules")
+list(INSERT CMAKE_MODULE_PATH 0 "${lz4_cmake_module_DIR}/Modules")

@@ -82,7 +82,7 @@ TEST_F(RecordIntegrationTestFixture, published_messages_from_multiple_topics_are
   constexpr size_t expected_messages = 4;
   auto ret = rosbag2_test_common::wait_until_condition(
     [ =, &mock_writer]() {
-      return mock_writer.get_messages().size() >= expected_messages;
+      return mock_writer.get_number_of_recorded_messages() >= expected_messages;
     },
     std::chrono::seconds(5));
   EXPECT_TRUE(ret) << "failed to capture expected messages in time";
@@ -140,7 +140,7 @@ TEST_F(RecordIntegrationTestFixture, published_messages_from_multiple_services_a
   constexpr size_t expected_messages = 4;
   auto ret = rosbag2_test_common::wait_until_condition(
     [ =, &mock_writer]() {
-      return mock_writer.get_messages().size() >= expected_messages;
+      return mock_writer.get_number_of_recorded_messages() >= expected_messages;
     },
     std::chrono::seconds(5));
   EXPECT_TRUE(ret) << "failed to capture expected messages in time";
@@ -191,7 +191,7 @@ TEST_F(RecordIntegrationTestFixture, published_messages_from_multiple_actions_ar
   constexpr size_t expected_messages = 16;
   auto ret = rosbag2_test_common::wait_until_condition(
     [ =, &mock_writer]() {
-      return mock_writer.get_messages().size() >= expected_messages;
+      return mock_writer.get_number_of_recorded_messages() >= expected_messages;
     },
     std::chrono::seconds(5));
   EXPECT_TRUE(ret) << "failed to capture expected messages in time";
@@ -270,7 +270,7 @@ TEST_F(RecordIntegrationTestFixture, published_messages_from_topic_service_actio
   constexpr size_t expected_messages = 1 + 2 + 8;
   auto ret = rosbag2_test_common::wait_until_condition(
     [ =, &mock_writer]() {
-      return mock_writer.get_messages().size() >= expected_messages;
+      return mock_writer.get_number_of_recorded_messages() >= expected_messages;
     },
     std::chrono::seconds(5));
   EXPECT_TRUE(ret) << "failed to capture expected messages in time";
@@ -317,7 +317,7 @@ TEST_F(RecordIntegrationTestFixture, cancel_event_messages_from_action_are_recor
   constexpr size_t expected_messages = 8;
   auto ret = rosbag2_test_common::wait_until_condition(
     [ =, &mock_writer]() {
-      return mock_writer.get_messages().size() > expected_messages;
+      return mock_writer.get_number_of_recorded_messages() > expected_messages;
     },
     std::chrono::seconds(5));
   EXPECT_TRUE(ret) << "failed to capture expected messages in time";
