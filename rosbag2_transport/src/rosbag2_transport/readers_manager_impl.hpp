@@ -50,7 +50,7 @@ public:
     earliest_timestamp_ = std::numeric_limits<rcutils_time_point_value_t>::max();
     latest_timestamp_ = std::numeric_limits<rcutils_time_point_value_t>::min();
     for (auto & [reader, options] : readers_with_options_) {
-      reader->open(options, {"", rmw_get_serialization_format()});
+      reader->open(options, {rmw_get_serialization_format(), rmw_get_serialization_format()});
       if (reader->has_next()) {
         next_messages_cache_.emplace_back(reader->read_next());
       }

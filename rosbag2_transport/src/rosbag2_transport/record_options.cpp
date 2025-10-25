@@ -37,6 +37,8 @@ Node convert<rosbag2_transport::RecordOptions>::encode(
   node["services"] = record_options.services;
   node["actions"] = record_options.actions;
   node["rmw_serialization_format"] = record_options.rmw_serialization_format;
+  node["input_serialization_format"] = record_options.input_serialization_format;
+  node["output_serialization_format"] = record_options.output_serialization_format;
   node["topic_polling_interval"] = record_options.topic_polling_interval;
   node["regex"] = record_options.regex;
   node["exclude_regex"] = record_options.exclude_regex;
@@ -79,6 +81,10 @@ bool convert<rosbag2_transport::RecordOptions>::decode(
   optional_assign<std::vector<std::string>>(node, "actions", record_options.actions);
   optional_assign<std::string>(
     node, "rmw_serialization_format", record_options.rmw_serialization_format);
+  optional_assign<std::string>(
+    node, "input_serialization_format", record_options.input_serialization_format);
+  optional_assign<std::string>(
+    node, "output_serialization_format", record_options.output_serialization_format);
 
   optional_assign<std::chrono::milliseconds>(
     node, "topic_polling_interval", record_options.topic_polling_interval);

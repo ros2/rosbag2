@@ -133,7 +133,6 @@ private:
   std::unique_ptr<TopicFilter> topic_filter_;
   rclcpp::Event::SharedPtr discovery_graph_event_;
   std::future<void> discovery_future_;
-  std::string serialization_format_;
   std::unordered_map<std::string, rclcpp::QoS> topic_qos_profile_overrides_;
   std::unordered_set<std::string> topic_unknown_types_;
   rclcpp::Service<rosbag2_interfaces::srv::IsPaused>::SharedPtr srv_is_paused_;
@@ -269,15 +268,33 @@ void RecorderImpl::record()
   }
   paused_ = record_options_.start_paused;
   topic_qos_profile_overrides_ = record_options_.topic_qos_profile_overrides;
-  if (record_options_.rmw_serialization_format.empty()) {
-    throw std::runtime_error("No serialization format specified!");
+  // Check serialization format options
+  if (!record_options_.rmw_serialization_format.empty() &&
+    record_options_.output_serialization_format.empty())
+  {
+    RCLCPP_WARN(node->get_logger(),
+      "The rmw_serialization_format option is deprecated and will be removed in a future release.\n"
+      "Please use output_serialization_format instead.");
+    record_options_.output_serialization_format = record_options_.rmw_serialization_format;
+  }
+  if (record_options_.input_serialization_format.empty()) {
+    record_options_.input_serialization_format = rmw_get_serialization_format();
+    RCLCPP_WARN(node->get_logger(),
+      "No input serialization format specified, using default rmw serialization format: '%s'.",
+      record_options_.input_serialization_format.c_str());
+  }
+  if (record_options_.output_serialization_format.empty()) {
+    record_options_.output_serialization_format = rmw_get_serialization_format();
+    RCLCPP_WARN(node->get_logger(),
+      "No output serialization format specified, using rmw serialization format. '%s'.",
+      record_options_.output_serialization_format.c_str());
   }
   subscriptions_.clear();
   event_notifier_->reset_total_num_messages_lost_in_transport();
   event_notifier_->reset_total_num_messages_lost_in_recorder();
   writer_->open(
     storage_options_,
-    {rmw_get_serialization_format(), record_options_.rmw_serialization_format});
+    {record_options_.input_serialization_format, record_options_.output_serialization_format});
 
   // Only expose snapshot service when mode is enabled
   if (storage_options_.snapshot_mode) {
@@ -343,7 +360,6 @@ void RecorderImpl::record()
     };
   writer_->add_event_callbacks(callbacks);
 
-  serialization_format_ = record_options_.rmw_serialization_format;
   RCLCPP_INFO(node->get_logger(), "Listening for topics...");
   if (!record_options_.use_sim_time) {
     subscribe_topics(get_requested_or_available_topics());
@@ -522,7 +538,7 @@ void RecorderImpl::subscribe_topics(
         0u,
         topic_with_type.first,
         topic_with_type.second,
-        serialization_format_,
+        record_options_.input_serialization_format,
         offered_qos_profiles_for_topic(endpoint_infos),
         type_description_hash_for_topic(endpoint_infos),
       });

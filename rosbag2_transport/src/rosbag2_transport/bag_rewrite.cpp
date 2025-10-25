@@ -114,6 +114,12 @@ setup_topic_filtering(
     rosbag2_transport::TopicFilter topic_filter{record_options, nullptr, true};
     auto filtered_topics_and_types = topic_filter.filter_topics(input_topics);
 
+    std::string output_serialization_format = record_options.output_serialization_format;
+    // Fall back to the deprecated rmw_serialization_format if output format is unspecified
+    if (!record_options.rmw_serialization_format.empty() && output_serialization_format.empty()) {
+      output_serialization_format = record_options.rmw_serialization_format;
+    }
+
     // Done filtering - set up writer
     for (const auto & [topic_name, topic_type] : filtered_topics_and_types) {
       rosbag2_storage::TopicMetadata topic_metadata;
@@ -121,10 +127,10 @@ setup_topic_filtering(
       topic_metadata.type = topic_type;
 
       // Take source serialization format for the topic if output format is unspecified
-      if (record_options.rmw_serialization_format.empty()) {
+      if (output_serialization_format.empty()) {
         topic_metadata.serialization_format = input_topics_serialization_format[topic_name];
       } else {
-        topic_metadata.serialization_format = record_options.rmw_serialization_format;
+        topic_metadata.serialization_format = output_serialization_format;
       }
 
       topic_metadata.offered_qos_profiles = input_topics_qos_profiles[topic_name];

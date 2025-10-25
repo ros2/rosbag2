@@ -324,7 +324,8 @@ output_bags:
   services: []
   all_actions: false
   actions: []
-  rmw_serialization_format: ""  # defaults to using the format of the input topic
+  input_serialization_format: ""   # defaults to using the format of the input topic
+  output_serialization_format: ""  # defaults to using the format of the input topic
   regex: ""
   exclude_regex: ""
   exclude_topics: []
