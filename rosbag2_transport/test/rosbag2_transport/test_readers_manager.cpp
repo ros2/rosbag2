@@ -139,8 +139,8 @@ TEST_F(Rosbag2ReadersWrapperTestFixture, seek_in_multiple_readers)
 TEST_F(Rosbag2ReadersWrapperTestFixture, get_storage_options_from_multiple_readers)
 {
   // Create different storage options for each reader
-  rosbag2_storage::StorageOptions storage_options1 = {"uri1", "storage_id", 0, 100, 0};
-  rosbag2_storage::StorageOptions storage_options2 = {"uri2", "storage_id", 0, 100, 0};
+  rosbag2_storage::StorageOptions storage_options1 = {"uri1", "storage_id", 0, 100};
+  rosbag2_storage::StorageOptions storage_options2 = {"uri2", "storage_id", 0, 100};
 
   readers_with_options_[0].second = storage_options1;
   readers_with_options_[1].second = storage_options2;
