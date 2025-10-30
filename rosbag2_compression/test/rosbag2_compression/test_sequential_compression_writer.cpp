@@ -557,6 +557,73 @@ TEST_P(SequentialCompressionWriterTest, split_event_calls_callback_with_msg_comp
   }
 }
 
+TEST_F(SequentialCompressionWriterTest, deletes_oldest_files_when_exceeding_max_record_size)
+{
+  initializeFakeFileStorage();
+  rosbag2_compression::CompressionOptions compression_options {
+    DefaultTestCompressor,
+    rosbag2_compression::CompressionMode::FILE,
+    kDefaultCompressionQueueSize,
+    kDefaultCompressionQueueThreads,
+    kDefaultCompressionQueueThreadsPriority
+  };
+  initializeWriter(compression_options);
+
+  // Split on every message and cap total recording size so oldest gets deleted
+  tmp_dir_storage_options_.max_bagfile_size = 1;
+  tmp_dir_storage_options_.max_record_size = 15; // each touched file ~> 10+ bytes
+
+  writer_->open(tmp_dir_storage_options_);
+  writer_->create_topic({0u, "test_topic", "test_msgs/BasicTypes", "", {}, ""});
+
+  auto message = std::make_shared<rosbag2_storage::SerializedBagMessage>();
+  message->topic_name = "test_topic";
+  writer_->write(message);
+  writer_->write(message);
+  writer_->write(message);
+  writer_->close();
+
+  ASSERT_FALSE(v_intercepted_update_metadata_.empty());
+  const auto & last_meta = v_intercepted_update_metadata_.back();
+  EXPECT_LE(last_meta.files.size(), 2u);
+}
+
+TEST_F(SequentialCompressionWriterTest, deletes_oldest_files_when_exceeding_max_record_duration)
+{
+  initializeFakeFileStorage();
+  rosbag2_compression::CompressionOptions compression_options {
+    DefaultTestCompressor,
+    rosbag2_compression::CompressionMode::FILE,
+    kDefaultCompressionQueueSize,
+    kDefaultCompressionQueueThreads,
+    kDefaultCompressionQueueThreadsPriority
+  };
+  initializeWriter(compression_options);
+
+  tmp_dir_storage_options_.max_bagfile_duration = 1; // seconds
+  tmp_dir_storage_options_.max_record_duration = 2;   // seconds total
+
+  writer_->open(tmp_dir_storage_options_);
+  writer_->create_topic({0u, "test_topic", "test_msgs/BasicTypes", "", {}, ""});
+
+  auto make_msg_at = [](rcutils_time_point_value_t t) {
+    auto m = std::make_shared<rosbag2_storage::SerializedBagMessage>();
+    m->topic_name = "test_topic";
+    m->recv_timestamp = t;
+    m->send_timestamp = t;
+    return m;
+  };
+
+  writer_->write(make_msg_at(0));
+  writer_->write(make_msg_at(1'000'000'000));
+  writer_->write(make_msg_at(2'000'000'000));
+  writer_->close();
+
+  ASSERT_FALSE(v_intercepted_update_metadata_.empty());
+  const auto & last_meta = v_intercepted_update_metadata_.back();
+  EXPECT_LE(last_meta.files.size(), 2u);
+}
+
 TEST_P(SequentialCompressionWriterTest, split_event_calls_callback_with_file_compression)
 {
   const uint64_t max_bagfile_size = 3;

@@ -50,7 +50,7 @@ public:
     const fs::path base{_SRC_RESOURCES_DIR_PATH};
     const fs::path bag_path = base / GetParam() / "test_bag_for_seek";
 
-    storage_options_ = rosbag2_storage::StorageOptions({bag_path.string(), "", 0, 0, 0});
+    storage_options_ = rosbag2_storage::StorageOptions({bag_path.string(), "", 0, 0, 0, 0});
     play_options_.read_ahead_queue_size = 2;
     reader_ = std::make_unique<rosbag2_cpp::Reader>();
 

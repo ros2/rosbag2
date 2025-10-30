@@ -39,6 +39,18 @@ public:
   // A value of 0 indicates that bagfile splitting will not be used.
   uint64_t max_bagfile_duration = 0;
 
+  // The maximum size a record can be, in bytes, before the oldest bagfile is deleted.
+  // A value of 0 indicates that oldest bagfile is not deleted.
+  // This feature is only available if either max_bagfile_size or max_bagfile_duration is set.
+  uint64_t max_record_size = 0;
+
+  // The maximum duration a record can be, in seconds, before the oldest bagfile is deleted.
+  // A value of 0 indicates that oldest bagfile is not deleted.
+  // This feature is only available if either max_bagfile_size or max_bagfile_duration is set.
+  // Note: Internally this is converted to nanoseconds for comparisons. The theoretical
+  // maximum supported duration is floor(UINT64_MAX / 1e9) seconds (about 584 years).
+  uint64_t max_record_duration = 0;
+
   // The cache size indiciates how many messages can maximally be hold in cache
   // before these being written to disk.
   // A value of 0 disables caching and every write happens directly to disk.

@@ -170,6 +170,22 @@ void SequentialWriter::open(
 
   init_metadata();
   storage_->update_metadata(metadata_);
+  total_recorded_size_ = 0;
+  total_recorded_duration_ = std::chrono::nanoseconds(0);
+  // Cache max_record_duration in nanoseconds. Guard against overflow when converting seconds->ns.
+  if (storage_options_.max_record_duration == 0) {
+    max_record_duration_ns_ = 0ULL;
+  } else {
+    const uint64_t max_sec_without_overflow = UINT64_MAX / 1000000000ULL;  // ~18446744073s
+    if (storage_options_.max_record_duration > max_sec_without_overflow) {
+      max_record_duration_ns_ = UINT64_MAX;
+      ROSBAG2_CPP_LOG_WARN(
+        "max_record_duration exceeds max representable ns; clamping to UINT64_MAX ns");
+    } else {
+      max_record_duration_ns_ = storage_options_.max_record_duration * 1000000000ULL;
+    }
+  }
+  next_file_index_ = 1;  // First file is 0, next will be 1
   is_open_ = true;
 }
 
@@ -326,9 +342,25 @@ void SequentialWriter::switch_to_next_storage()
   }
 
   storage_->update_metadata(metadata_);
+
+  // Add current file size and duration to totals before switching
+  total_recorded_size_ += storage_->get_bagfile_size();
+  if (!metadata_.files.empty()) {
+    total_recorded_duration_ += metadata_.files.back().duration;
+  }
+
+  // Check for overflow: if next_file_index_ is 0, we've wrapped around (very unlikely but possible)
+  if (next_file_index_ == 0) {
+    ROSBAG2_CPP_LOG_WARN_STREAM(
+      "File index counter has overflowed (wrapped to 0). "
+      "This should not happen in practice, but continuing with index 0. "
+      "If circular logging is enabled, ensure old files are deleted to avoid conflicts.");
+  }
+
   storage_options_.uri = format_storage_uri(
     base_folder_,
-    metadata_.relative_file_paths.size());
+    next_file_index_);
+  next_file_index_++;
   storage_ = storage_factory_->open_read_write(storage_options_);
   if (!storage_) {
     std::stringstream errmsg;
@@ -416,6 +448,8 @@ void SequentialWriter::write(std::shared_ptr<const rosbag2_storage::SerializedBa
   if (!storage_options_.snapshot_mode && should_split_bagfile(message_timestamp)) {
     split_bagfile();
     metadata_.files.back().starting_time = message_timestamp;
+    // Delete oldest files if circular buffer limit exceeded (after split creates new file)
+    delete_oldest_files_if_needed();
   }
 
   metadata_.starting_time = std::min(metadata_.starting_time, message_timestamp);
@@ -497,6 +531,81 @@ bool SequentialWriter::should_split_bagfile(
   }
 
   return should_split;
+}
+
+uint64_t SequentialWriter::get_total_record_size() const
+{
+  // Total = sum of all previous files + current file
+  return total_recorded_size_ + storage_->get_bagfile_size();
+}
+
+uint64_t SequentialWriter::get_total_record_duration() const
+{
+  // Total = sum of all previous files' durations + current file duration (nanoseconds)
+  std::chrono::nanoseconds current_file_duration{0};
+  if (!metadata_.files.empty()) {
+    current_file_duration = metadata_.files.back().duration;
+  }
+  const auto total_duration = total_recorded_duration_ + current_file_duration;
+  return static_cast<uint64_t>(total_duration.count());
+}
+
+void SequentialWriter::delete_oldest_files_if_needed()
+{
+  // Only delete if max_record_size or max_record_duration is set (circular buffer mode)
+  // Note: This is only called after split_bagfile(), so max_bagfile_size is guaranteed to be set
+  if (storage_options_.max_record_size == 0 && storage_options_.max_record_duration == 0) {
+    return;
+  }
+
+  // Protect metadata access with mutex to prevent race conditions
+  std::lock_guard<std::mutex> lock(topics_info_mutex_);
+
+  // Delete oldest files until we're under both limits (if set)
+  // Note: We just split, so we have at least 2 files and the oldest is definitely not current
+  while (metadata_.files.size() > 1) {
+    // Check if we need to delete based on size limit
+    bool exceeds_size_limit = (storage_options_.max_record_size != 0 &&
+      get_total_record_size() > storage_options_.max_record_size);
+
+    // Check if we need to delete based on duration limit using cached ns value
+    bool exceeds_duration_limit = (max_record_duration_ns_ != 0 &&
+      get_total_record_duration() > max_record_duration_ns_);
+
+    // If we're under both limits (or they're not set), stop deleting
+    if (!exceeds_size_limit && !exceeds_duration_limit) {
+      break;
+    }
+
+    const auto & oldest_file = metadata_.files.front();
+    const auto file_path = fs::path(base_folder_) / oldest_file.path;
+
+    // Calculate duration contribution of this file for updating total duration
+    const auto file_duration = oldest_file.duration;
+    const auto file_duration_ns = file_duration.count();
+
+    // Delete file from filesystem
+    if (fs::exists(file_path)) {
+      const auto file_size = fs::file_size(file_path);
+      fs::remove(file_path);
+
+      total_recorded_size_ -= file_size;
+      total_recorded_duration_ -= file_duration;
+      ROSBAG2_CPP_LOG_WARN(
+        "Deleted oldest bagfile: %s (%lu bytes, %lu ns)",
+        oldest_file.path.c_str(), file_size, file_duration_ns);
+    }
+
+    // Remove from metadata
+    metadata_.relative_file_paths.erase(metadata_.relative_file_paths.begin());
+    metadata_.files.erase(metadata_.files.begin());
+    metadata_.starting_time = metadata_.files.front().starting_time;
+  }
+
+  // Update metadata after deletions
+  if (!metadata_.files.empty()) {
+    storage_->update_metadata(metadata_);
+  }
 }
 
 bool SequentialWriter::message_within_accepted_time_range(

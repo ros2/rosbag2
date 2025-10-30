@@ -185,6 +185,27 @@ protected:
 
   rosbag2_storage::BagMetadata metadata_;
 
+  // Tracks the total size of all recorded files across splits
+  uint64_t total_recorded_size_ {0};
+
+  // Tracks the total duration of all recorded files across splits (in nanoseconds)
+  std::chrono::nanoseconds total_recorded_duration_ {0};
+
+  // Cached max record duration in nanoseconds (derived from seconds option at init)
+  uint64_t max_record_duration_ns_ {0};
+
+  // Tracks the next file index to use for sequential numbering (independent of file deletions)
+  uint64_t next_file_index_ {1};
+
+  // Gets the total size of the recording including current and all previous files
+  uint64_t get_total_record_size() const;
+
+  // Gets the total duration of the recording in seconds
+  uint64_t get_total_record_duration() const;
+
+  // Delete oldest bagfiles if total record size or duration exceeds limits
+  void delete_oldest_files_if_needed();
+
   // Checks if the current recording bagfile needs to be split and rolled over to a new file.
   bool should_split_bagfile(
     const std::chrono::time_point<std::chrono::high_resolution_clock> & current_time) const;
