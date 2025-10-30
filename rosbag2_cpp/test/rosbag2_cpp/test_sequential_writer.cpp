@@ -1137,7 +1137,7 @@ TEST_F(SequentialWriterTest, circular_logging_limits_total_size_by_max_record_si
 TEST_F(SequentialWriterTest, circular_logging_limits_total_duration_by_max_record_duration)
 {
   const uint64_t max_bagfile_size = 3;   // split every 3 writes
-  const uint64_t max_record_duration_sec = 3; // total duration cap
+  const uint64_t max_record_duration_sec = 3;  // total duration cap
   const int message_count = 20;
 
   auto sequential_writer = std::make_unique<rosbag2_cpp::writers::SequentialWriter>(
@@ -1147,7 +1147,7 @@ TEST_F(SequentialWriterTest, circular_logging_limits_total_duration_by_max_recor
   storage_options_.max_cache_size = 0;                 // direct writes
   storage_options_.max_bagfile_size = max_bagfile_size;
   storage_options_.max_record_size = 0;                // disable size-based limit
-  storage_options_.max_record_duration = max_record_duration_sec; // enable duration-based limit
+  storage_options_.max_record_duration = max_record_duration_sec;  // enable duration-based limit
   storage_options_.max_splits = 0;                     // disable split-count limit
 
   writer_->open(storage_options_, {"rmw_format", "rmw_format"});
@@ -1157,7 +1157,7 @@ TEST_F(SequentialWriterTest, circular_logging_limits_total_duration_by_max_recor
   for (int i = 0; i < message_count; ++i) {
     auto msg = std::make_shared<rosbag2_storage::SerializedBagMessage>();
     msg->topic_name = "test_topic";
-    msg->recv_timestamp = static_cast<rcutils_time_point_value_t>(i) * 1000000000LL; // ns
+    msg->recv_timestamp = static_cast<rcutils_time_point_value_t>(i) * 1000000000LL;  // ns
     writer_->write(msg);
   }
   writer_->close();
