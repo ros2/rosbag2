@@ -82,7 +82,8 @@ PYBIND11_MODULE(_storage, m) {
   pybind11::class_<rosbag2_storage::StorageOptions>(m, "StorageOptions")
   .def(
     pybind11::init<
-      std::string, std::string, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, std::string, std::string, bool,
+      std::string, std::string, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t,
+      std::string, std::string, bool,
       int64_t, int64_t, KEY_VALUE_MAP>(),
     pybind11::arg("uri"),
     pybind11::arg("storage_id") = "",

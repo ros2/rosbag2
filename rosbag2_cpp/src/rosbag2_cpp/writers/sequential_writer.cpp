@@ -555,8 +555,9 @@ void SequentialWriter::delete_oldest_files_if_needed()
   // Only delete if any circular buffer limit is set (size, duration, or split count)
   // Note: This is only called after split_bagfile(), so max_bagfile_size is guaranteed to be set
   if (storage_options_.max_record_size == 0 &&
-      storage_options_.max_record_duration == 0 &&
-      storage_options_.max_splits == 0) {
+    storage_options_.max_record_duration == 0 &&
+    storage_options_.max_splits == 0)
+  {
     return;
   }
 

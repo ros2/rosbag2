@@ -1066,6 +1066,111 @@ TEST_F(SequentialWriterTest, split_event_calls_on_writer_close)
   EXPECT_TRUE(opened_file.empty());
 }
 
+TEST_F(SequentialWriterTest, circular_logging_limits_number_of_files_by_max_splits)
+{
+  // Configure frequent splits and a small retention window
+  const uint64_t max_bagfile_size = 5;   // split every 5 writes
+  const uint64_t max_splits = 3;         // retain at most 3 files
+  const int message_count = 25;          // enough writes to exceed retention
+
+  auto sequential_writer = std::make_unique<rosbag2_cpp::writers::SequentialWriter>(
+    std::move(storage_factory_), converter_factory_, std::move(metadata_io_));
+  writer_ = std::make_unique<rosbag2_cpp::Writer>(std::move(sequential_writer));
+
+  auto message = std::make_shared<rosbag2_storage::SerializedBagMessage>();
+  message->topic_name = "test_topic";
+
+  storage_options_.max_cache_size = 0;             // direct writes
+  storage_options_.max_bagfile_size = max_bagfile_size;
+  storage_options_.max_record_size = 0;            // disable size-based circular limit
+  storage_options_.max_record_duration = 0;        // disable duration-based circular limit
+  storage_options_.max_splits = max_splits;        // enable split-count circular limit
+
+  writer_->open(storage_options_, {"rmw_format", "rmw_format"});
+  writer_->create_topic({0u, "test_topic", "test_msgs/BasicTypes", "", {}, ""});
+
+  for (int i = 0; i < message_count; ++i) {
+    writer_->write(message);
+  }
+  writer_->close();
+
+  // After circular deletion, only max_splits files should remain in metadata
+  ASSERT_LE(fake_metadata_.files.size(), max_splits);
+  ASSERT_EQ(fake_metadata_.files.size(), fake_metadata_.relative_file_paths.size());
+}
+// Add tests for size- and duration-based circular logging
+TEST_F(SequentialWriterTest, circular_logging_limits_total_size_by_max_record_size)
+{
+  const uint64_t max_bagfile_size = 3;  // split every 3 writes
+  const uint64_t max_record_size = 4;   // very small total size to force pruning
+  const int message_count = 20;
+
+  auto sequential_writer = std::make_unique<rosbag2_cpp::writers::SequentialWriter>(
+    std::move(storage_factory_), converter_factory_, std::move(metadata_io_));
+  writer_ = std::make_unique<rosbag2_cpp::Writer>(std::move(sequential_writer));
+
+  auto message = std::make_shared<rosbag2_storage::SerializedBagMessage>();
+  message->topic_name = "test_topic";
+
+  storage_options_.max_cache_size = 0;             // direct writes
+  storage_options_.max_bagfile_size = max_bagfile_size;
+  storage_options_.max_record_size = max_record_size;    // enable size-based circular limit
+  storage_options_.max_record_duration = 0;              // disable duration-based limit
+  storage_options_.max_splits = 0;                       // disable split-count limit
+
+  writer_->open(storage_options_, {"rmw_format", "rmw_format"});
+  writer_->create_topic({0u, "test_topic", "test_msgs/BasicTypes", "", {}, ""});
+
+  for (int i = 0; i < message_count; ++i) {
+    writer_->write(message);
+  }
+  writer_->close();
+
+  // Assert total retained "size" (modeled by message_count in this test) <= max_record_size
+  uint64_t total_retained_units = 0;
+  for (const auto & fi : fake_metadata_.files) {
+    total_retained_units += static_cast<uint64_t>(fi.message_count);
+  }
+  ASSERT_LE(total_retained_units, max_record_size);
+}
+
+TEST_F(SequentialWriterTest, circular_logging_limits_total_duration_by_max_record_duration)
+{
+  const uint64_t max_bagfile_size = 3;   // split every 3 writes
+  const uint64_t max_record_duration_sec = 3; // total duration cap
+  const int message_count = 20;
+
+  auto sequential_writer = std::make_unique<rosbag2_cpp::writers::SequentialWriter>(
+    std::move(storage_factory_), converter_factory_, std::move(metadata_io_));
+  writer_ = std::make_unique<rosbag2_cpp::Writer>(std::move(sequential_writer));
+
+  storage_options_.max_cache_size = 0;                 // direct writes
+  storage_options_.max_bagfile_size = max_bagfile_size;
+  storage_options_.max_record_size = 0;                // disable size-based limit
+  storage_options_.max_record_duration = max_record_duration_sec; // enable duration-based limit
+  storage_options_.max_splits = 0;                     // disable split-count limit
+
+  writer_->open(storage_options_, {"rmw_format", "rmw_format"});
+  writer_->create_topic({0u, "test_topic", "test_msgs/BasicTypes", "", {}, ""});
+
+  // Write messages with increasing timestamps (1s increments)
+  for (int i = 0; i < message_count; ++i) {
+    auto msg = std::make_shared<rosbag2_storage::SerializedBagMessage>();
+    msg->topic_name = "test_topic";
+    msg->recv_timestamp = static_cast<rcutils_time_point_value_t>(i) * 1000000000LL; // ns
+    writer_->write(msg);
+  }
+  writer_->close();
+
+  // Assert total retained duration (ns) <= max_record_duration
+  uint64_t total_duration_ns = 0;
+  for (const auto & fi : fake_metadata_.files) {
+    total_duration_ns += static_cast<uint64_t>(fi.duration.count());
+  }
+  const uint64_t cap_ns = max_record_duration_sec * 1000000000ULL;
+  ASSERT_LE(total_duration_ns, cap_ns);
+}
+
 TEST_F(SequentialWriterTest, all_event_callbacks_can_be_installed) {
   auto sequential_writer = std::make_unique<rosbag2_cpp::writers::SequentialWriter>(
     std::move(storage_factory_), converter_factory_, std::move(metadata_io_));
