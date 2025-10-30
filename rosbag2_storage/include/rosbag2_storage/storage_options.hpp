@@ -39,6 +39,11 @@ public:
   // A value of 0 indicates that bagfile splitting will not be used.
   uint64_t max_bagfile_duration = 0;
 
+  // The maximum number of bagfile splits to retain before the oldest bagfile is deleted.
+  // A value of 0 indicates that no deletion based on split count will occur.
+  // This feature is only available if either max_bagfile_size or max_bagfile_duration is set.
+  uint64_t max_splits = 0;
+
   // The maximum size a record can be, in bytes, before the oldest bagfile is deleted.
   // A value of 0 indicates that oldest bagfile is not deleted.
   // This feature is only available if either max_bagfile_size or max_bagfile_duration is set.

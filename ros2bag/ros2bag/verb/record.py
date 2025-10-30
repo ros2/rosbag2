@@ -160,6 +160,11 @@ def add_recorder_arguments(parser: ArgumentParser) -> None:
              'is disabled. If both splitting by size and duration are enabled, '
              'the bag will split at whichever threshold is reached first.')
     parser.add_argument(
+        '--max-splits', type=int, default=0,
+        help='Maximum number of splits to retain before deleting the oldest bagfile '
+             '(circular logging). Default: %(default)d, unlimited. '
+             'Requires --max-bag-size or --max-bag-duration to be set.')
+    parser.add_argument(
         '--max-record-size', type=int, default=0,
         help='Maximum total size in bytes for the entire recording across all splits. '
              'Oldest bagfiles will be deleted when this limit is exceeded (circular logging). '
@@ -376,6 +381,7 @@ class RecordVerb(VerbExtension):
             max_bagfile_size=args.max_bag_size,
             max_bagfile_duration=args.max_bag_duration,
             max_cache_size=args.max_cache_size,
+            max_splits=args.max_splits,
             max_record_size=args.max_record_size,
             max_record_duration=args.max_record_duration,
             storage_preset_profile=args.storage_preset_profile,

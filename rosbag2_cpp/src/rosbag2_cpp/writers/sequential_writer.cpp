@@ -552,16 +552,18 @@ uint64_t SequentialWriter::get_total_record_duration() const
 
 void SequentialWriter::delete_oldest_files_if_needed()
 {
-  // Only delete if max_record_size or max_record_duration is set (circular buffer mode)
+  // Only delete if any circular buffer limit is set (size, duration, or split count)
   // Note: This is only called after split_bagfile(), so max_bagfile_size is guaranteed to be set
-  if (storage_options_.max_record_size == 0 && storage_options_.max_record_duration == 0) {
+  if (storage_options_.max_record_size == 0 &&
+      storage_options_.max_record_duration == 0 &&
+      storage_options_.max_splits == 0) {
     return;
   }
 
   // Protect metadata access with mutex to prevent race conditions
   std::lock_guard<std::mutex> lock(topics_info_mutex_);
 
-  // Delete oldest files until we're under both limits (if set)
+  // Delete oldest files until we're under all configured limits (if set)
   // Note: We just split, so we have at least 2 files and the oldest is definitely not current
   while (metadata_.files.size() > 1) {
     // Check if we need to delete based on size limit
@@ -572,8 +574,12 @@ void SequentialWriter::delete_oldest_files_if_needed()
     bool exceeds_duration_limit = (max_record_duration_ns_ != 0 &&
       get_total_record_duration() > max_record_duration_ns_);
 
-    // If we're under both limits (or they're not set), stop deleting
-    if (!exceeds_size_limit && !exceeds_duration_limit) {
+    // Check if we need to delete based on split-count limit
+    bool exceeds_split_limit = (storage_options_.max_splits != 0 &&
+      metadata_.files.size() > storage_options_.max_splits);
+
+    // If we're under all limits (or they're not set), stop deleting
+    if (!exceeds_size_limit && !exceeds_duration_limit && !exceeds_split_limit) {
       break;
     }
 
