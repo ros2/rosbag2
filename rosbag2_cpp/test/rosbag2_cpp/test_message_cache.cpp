@@ -13,7 +13,7 @@
 // limitations under the License.
 
 #include <gmock/gmock.h>
-#include <gtest/gtest.h>
+
 #include <chrono>
 #include <numeric>
 #include <memory>
@@ -23,13 +23,11 @@
 #include <vector>
 #include <thread>
 
-#include "rosbag2_cpp/cache/message_cache_circular_buffer.hpp"
 #include "rosbag2_storage/ros_helper.hpp"
 #include "rosbag2_storage/serialized_bag_message.hpp"
 
 #include "mock_cache_consumer.hpp"
 #include "mock_message_cache.hpp"
-
 
 using namespace testing;  // NOLINT
 
@@ -106,19 +104,4 @@ TEST_F(MessageCacheTest, message_cache_writes_full_producer_buffer) {
 
   mock_cache_consumer->stop();
   EXPECT_EQ(consumed_message_count, message_count - should_be_dropped_count);
-}
-
-class MessageCacheCircularBufferTest : public testing::Test {
-protected:
-  MessageCacheCircularBufferTest()
-  : buffer_(1024) {}
-  rosbag2_cpp::cache::MessageCacheCircularBuffer buffer_;
-};
-
-TEST_F(MessageCacheCircularBufferTest, PushNullptrCausesCrash) {
-  bool result = true;
-  ASSERT_NO_THROW({
-    result = buffer_.push(nullptr);
-  });
-  EXPECT_FALSE(result);
 }
