@@ -42,6 +42,10 @@ CircularMessageCache::~CircularMessageCache()
 
 bool CircularMessageCache::push(std::shared_ptr<const rosbag2_storage::SerializedBagMessage> msg)
 {
+  if (msg == nullptr) {
+    return false;
+  }
+
   std::lock_guard<std::mutex> cache_lock(producer_buffer_mutex_);
   producer_buffer_->push(msg);
   // Always return true since circular message cache drops old messages by design and it
