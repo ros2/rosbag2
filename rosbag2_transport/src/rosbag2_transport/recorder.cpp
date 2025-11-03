@@ -63,12 +63,98 @@ public:
 
   ~RecorderImpl();
 
+  /// @brief Start recording.
+  /// The record() method will return almost immediately and recording will happen in background.
   void record();
+
+  /// @brief Add a new channel (topic) to the rosbag2 writer to be recorded.
+  /// \details This is a direct Recorder API equivalent to the rosbag2_cpp::Writer::add_topic().
+  /// \note This method does not require the message definition. The recorder will try to find the
+  /// corresponding message definition by the given topic name and type.
+  /// @param topic_name The name of the topic.
+  /// @param topic_type The type of the topic.
+  /// @param serialization_format The serialization format of the topic.
+  /// @param type_description_hash REP-2011 type description hash of the topic.
+  /// @param offered_qos_profiles The list of offered QoS profiles for the topic.
+  void add_channel(
+    const std::string & topic_name,
+    const std::string & topic_type,
+    const std::string & serialization_format = "memory_view",
+    const std::string & type_description_hash = "",
+    const std::vector<rclcpp::QoS> & offered_qos_profiles = {});
+
+  /// \brief Add a new channel (topic) to the rosbag2 writer to be recorded.
+  /// \details This is a direct Recorder API equivalent to the rosbag2_cpp::Writer::add_topic().
+  /// \param topic_name The name of the topic.
+  /// \param topic_type The type of the topic.
+  /// \param message_definition_encoding The encoding technique used in
+  /// the `encoded_message_definition` e.g. "ros2idl", "ros2msg", "apex_json" or "unknown" if
+  /// encoded_message_definition is empty.
+  /// \param encoded_message_definition The fully encoded message definition for this type.
+  /// \param serialization_format The serialization format of the topic.
+  /// \param type_description_hash REP-2011 type description hash of the topic.
+  /// \param offered_qos_profiles The list of offered QoS profiles for the topic.
+  void add_channel(
+    const std::string & topic_name,
+    const std::string & topic_type,
+    const std::string & message_definition_encoding,
+    const std::string & encoded_message_definition,
+    const std::string & serialization_format = "memory_view",
+    const std::string & type_description_hash = "",
+    const std::vector<rclcpp::QoS> & offered_qos_profiles = {});
+
+  /// @brief Write a serialized message to the bag file.
+  /// \details This is a direct Recorder API equivalent to the rosbag2_cpp::Writer::write().
+  /// \note This method assumes that the topic has already been created via add_channel().
+  /// \note If recorder is in pause mode, this method will return without writing anything.
+  /// \note This overload uses only publication timestamp. The received timestamp will be taken
+  /// from the underlying node's clock at the time of writing.
+  /// @param serialized_data The serialized message data to write.
+  /// @param topic_name The name of the topic the message belongs to.
+  /// @param pub_timestamp The original or publication timestamp of the message in nanoseconds.
+  /// @param sequence_number An optional sequence number of the message. If non-zero, sequence
+  /// numbers should be unique per channel and increasing over time.
+  /// \throws std::runtime_error if topic has not been added via add_channel().
+  void write_message(
+    std::shared_ptr<rcutils_uint8_array_t> serialized_data,
+    const std::string & topic_name,
+    const rcutils_time_point_value_t & pub_timestamp,
+    uint32_t sequence_number = 0);
+
+  /// @brief Write a serialized message to the bag file with receive timestamp.
+  /// \details This is a direct Recorder API equivalent to the rosbag2_cpp::Writer::write().
+  /// \note This method assumes that the topic has already been created via add_channel().
+  /// \note If recorder is in pause mode, this method will return without writing anything.
+  /// @param serialized_data The serialized message data to write.
+  /// @param topic_name The name of the topic the message belongs to.
+  /// @param pub_timestamp The original or publication timestamp of the message in nanoseconds.
+  /// @param recv_timestamp The timestamp of the message in nanoseconds when message was received.
+  /// @param sequence_number An optional sequence number of the message. If non-zero, sequence
+  /// numbers should be unique per channel and increasing over time.
+  /// \throws std::runtime_error if topic has not been added via add_channel().
+  void write_message(
+    std::shared_ptr<rcutils_uint8_array_t> serialized_data,
+    const std::string & topic_name,
+    const rcutils_time_point_value_t & pub_timestamp,
+    const rcutils_time_point_value_t & recv_timestamp,
+    uint32_t sequence_number = 0);
+
+
+  /// @brief Updates recorder about lost messages on transport layer.
+  /// @details This a direct recorder API and this method is expected to be called when messages
+  /// are lost in the transport layer.
+  /// The recorder may use this information for logging or metrics.
+  /// @param topic_name The name of the topic.
+  /// @param qos_msgs_lost_info Information about lost messages.
+  void on_messages_lost_in_transport(
+    const std::string & topic_name,
+    const rclcpp::QOSMessageLostInfo & qos_msgs_lost_info);
 
   /// @brief Stopping recording and closing writer.
   /// The record() can be called again after stop().
   void stop();
 
+  /// Get a const reference to the underlying rosbag2 writer.
   const rosbag2_cpp::Writer & get_writer_handle();
 
   /// Pause the recording.
@@ -150,6 +236,7 @@ private:
   KeyboardHandler::callback_handle_t toggle_paused_key_callback_handle_ =
     KeyboardHandler::invalid_handle;
 
+public:
   std::unique_ptr<RecorderEventNotifier> event_notifier_;
 };
 
@@ -545,6 +632,89 @@ void RecorderImpl::subscribe_topics(
   }
 }
 
+void RecorderImpl::add_channel(
+  const std::string & topic_name,
+  const std::string & topic_type,
+  const std::string & serialization_format,
+  const std::string & type_description_hash,
+  const std::vector<rclcpp::QoS> & offered_qos_profiles)
+{
+  rosbag2_storage::TopicMetadata topic_with_type{
+    0u,
+    topic_name,
+    topic_type,
+    serialization_format,
+    offered_qos_profiles,
+    type_description_hash,
+  };
+  writer_->create_topic(topic_with_type);
+}
+
+void RecorderImpl::add_channel(
+  const std::string & topic_name,
+  const std::string & topic_type,
+  const std::string & message_definition_encoding,
+  const std::string & encoded_message_definition,
+  const std::string & serialization_format,
+  const std::string & type_description_hash,
+  const std::vector<rclcpp::QoS> & offered_qos_profiles)
+{
+  rosbag2_storage::TopicMetadata topic_with_type{
+    0u,
+    topic_name,
+    topic_type,
+    serialization_format,
+    offered_qos_profiles,
+    type_description_hash,
+  };
+  rosbag2_storage::MessageDefinition message_definition{
+    topic_type,
+    message_definition_encoding,
+    encoded_message_definition,
+    type_description_hash
+  };
+  writer_->create_topic(topic_with_type, message_definition);
+}
+
+void RecorderImpl::write_message(
+  std::shared_ptr<rcutils_uint8_array_t> serialized_data,
+  const std::string & topic_name,
+  const rcutils_time_point_value_t & pub_timestamp,
+  uint32_t sequence_number)
+{
+  write_message(
+    std::move(serialized_data),
+    topic_name,
+    pub_timestamp,
+    node->now().nanoseconds(),
+    sequence_number);
+}
+
+void RecorderImpl::write_message(
+  std::shared_ptr<rcutils_uint8_array_t> serialized_data,
+  const std::string & topic_name,
+  const rcutils_time_point_value_t & pub_timestamp,
+  const rcutils_time_point_value_t & recv_timestamp,
+  uint32_t sequence_number)
+{
+  if (!paused_.load()) {
+    auto bag_message = std::make_shared<rosbag2_storage::SerializedBagMessage>();
+    bag_message->serialized_data = std::move(serialized_data);
+    bag_message->topic_name = topic_name;
+    bag_message->recv_timestamp = recv_timestamp;
+    bag_message->send_timestamp = pub_timestamp;
+    bag_message->sequence_number = sequence_number;
+    writer_->write(bag_message);
+  }
+}
+
+void RecorderImpl::on_messages_lost_in_transport(
+  const std::string & topic_name,
+  const rclcpp::QOSMessageLostInfo & qos_msgs_lost_info)
+{
+  event_notifier_->on_messages_lost_in_transport(topic_name, qos_msgs_lost_info);
+}
+
 void RecorderImpl::subscribe_topic(const rosbag2_storage::TopicMetadata & topic)
 {
   if (subscriptions_.find(topic.name) != subscriptions_.end()) {
@@ -579,7 +749,7 @@ RecorderImpl::create_subscription(
   rclcpp::SubscriptionOptions sub_options;
   sub_options.event_callbacks.message_lost_callback =
     [this, topic_name](const rclcpp::QOSMessageLostInfo & msgs_lost_info) {
-      this->event_notifier_->on_messages_lost_in_transport(topic_name, msgs_lost_info);
+      on_messages_lost_in_transport(topic_name, msgs_lost_info);
     };
 
 #ifdef _WIN32
@@ -817,6 +987,63 @@ Recorder::~Recorder() = default;
 void Recorder::record()
 {
   pimpl_->record();
+}
+
+void Recorder::add_channel(
+  const std::string & topic_name,
+  const std::string & topic_type,
+  const std::string & serialization_format,
+  const std::string & type_description_hash,
+  const std::vector<rclcpp::QoS> & offered_qos_profiles)
+{
+  pimpl_->add_channel(
+    topic_name, topic_type, serialization_format, type_description_hash, offered_qos_profiles);
+}
+
+void Recorder::add_channel(
+  const std::string & topic_name,
+  const std::string & topic_type,
+  const std::string & message_definition_encoding,
+  const std::string & encoded_message_definition,
+  const std::string & serialization_format,
+  const std::string & type_description_hash,
+  const std::vector<rclcpp::QoS> & offered_qos_profiles)
+{
+  pimpl_->add_channel(
+    topic_name, topic_type, message_definition_encoding, encoded_message_definition,
+    serialization_format, type_description_hash, offered_qos_profiles);
+}
+
+void Recorder::write_message(
+  std::shared_ptr<rcutils_uint8_array_t> serialized_data,
+  const std::string & topic_name,
+  const rcutils_time_point_value_t & pub_timestamp,
+  uint32_t sequence_number)
+{
+  pimpl_->write_message(
+    std::move(serialized_data), topic_name, pub_timestamp, sequence_number);
+}
+
+void Recorder::write_message(
+  std::shared_ptr<rcutils_uint8_array_t> serialized_data,
+  const std::string & topic_name,
+  const rcutils_time_point_value_t & pub_timestamp,
+  const rcutils_time_point_value_t & recv_timestamp,
+  uint32_t sequence_number)
+{
+  pimpl_->write_message(
+    std::move(serialized_data), topic_name, pub_timestamp, recv_timestamp, sequence_number);
+}
+
+void Recorder::on_messages_lost_in_transport(
+  const std::string & topic_name, const rclcpp::QOSMessageLostInfo & qos_msgs_lost_info)
+{
+  pimpl_->on_messages_lost_in_transport(topic_name, qos_msgs_lost_info);
+}
+
+uint64_t Recorder::get_total_num_messages_lost_in_transport() const
+{
+  return pimpl_->event_notifier_->get_total_num_messages_lost_in_transport();
 }
 
 void Recorder::stop()
