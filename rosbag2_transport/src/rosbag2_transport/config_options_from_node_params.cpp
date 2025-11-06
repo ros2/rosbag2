@@ -319,6 +319,11 @@ RecordOptions get_record_options_from_node_params(rclcpp::Node & node)
   record_options.rmw_serialization_format =
     node.declare_parameter<std::string>("record.rmw_serialization_format", "cdr");
 
+  record_options.input_serialization_format =
+    node.declare_parameter<std::string>("record.input_serialization_format", "cdr");
+  record_options.output_serialization_format =
+    node.declare_parameter<std::string>("record.output_serialization_format", "cdr");
+
   record_options.topic_polling_interval = param_utils::get_duration_from_node_param(
     node, "record.topic_polling_interval",
     0, 1000000).to_chrono<std::chrono::milliseconds>();

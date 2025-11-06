@@ -146,7 +146,7 @@ def add_recorder_arguments(parser: ArgumentParser) -> None:
     # Core config
     parser.add_argument(
         '-f', '--serialization-format', default='', choices=serialization_choices,
-        help='The rmw serialization format in which the messages are saved, defaults to the '
+        help='The serialization format in which the messages are saved, defaults to the '
              'rmw currently in use.')
     parser.add_argument(
         '-b', '--max-bag-size', type=int, default=0,
@@ -381,7 +381,7 @@ class RecordVerb(VerbExtension):
         record_options.actions = args.actions if args.actions else []
 
         record_options.exclude_topic_types = args.exclude_topic_types
-        record_options.rmw_serialization_format = args.serialization_format
+        record_options.output_serialization_format = args.serialization_format
         record_options.topic_polling_interval = datetime.timedelta(
             milliseconds=args.polling_interval)
         record_options.regex = args.regex

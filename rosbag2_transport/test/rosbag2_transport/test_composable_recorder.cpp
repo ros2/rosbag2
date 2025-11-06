@@ -221,6 +221,8 @@ TEST_P(ComposableRecorderTests, recorder_can_parse_parameters_from_file) {
   std::vector<std::string> services {"/service/_service_event", "/other_service/_service_event"};
   EXPECT_EQ(record_options.services, services);
   EXPECT_EQ(record_options.rmw_serialization_format, "cdr");
+  EXPECT_EQ(record_options.input_serialization_format, "cdr");
+  EXPECT_EQ(record_options.output_serialization_format, "cdr");
   EXPECT_TRUE(record_options.topic_polling_interval == 0.01s);
   EXPECT_EQ(record_options.regex, "[xyz]/topic");
   EXPECT_EQ(record_options.exclude_regex, "(.*)");
