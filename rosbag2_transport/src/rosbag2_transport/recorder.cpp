@@ -150,6 +150,11 @@ public:
     const std::string & topic_name,
     const rclcpp::QOSMessageLostInfo & qos_msgs_lost_info);
 
+  /// @brief Get total number of messages lost in transport layer.
+  /// @return Total number of messages lost in transport layer.
+  [[nodiscard]]
+  uint64_t get_total_num_messages_lost_in_transport() const;
+
   /// @brief Stopping recording and closing writer.
   /// The record() can be called again after stop().
   void stop();
@@ -236,7 +241,6 @@ private:
   KeyboardHandler::callback_handle_t toggle_paused_key_callback_handle_ =
     KeyboardHandler::invalid_handle;
 
-public:
   std::unique_ptr<RecorderEventNotifier> event_notifier_;
 };
 
@@ -715,6 +719,11 @@ void RecorderImpl::on_messages_lost_in_transport(
   event_notifier_->on_messages_lost_in_transport(topic_name, qos_msgs_lost_info);
 }
 
+uint64_t RecorderImpl::get_total_num_messages_lost_in_transport() const
+{
+  return event_notifier_->get_total_num_messages_lost_in_transport();
+}
+
 void RecorderImpl::subscribe_topic(const rosbag2_storage::TopicMetadata & topic)
 {
   if (subscriptions_.find(topic.name) != subscriptions_.end()) {
@@ -1043,7 +1052,7 @@ void Recorder::on_messages_lost_in_transport(
 
 uint64_t Recorder::get_total_num_messages_lost_in_transport() const
 {
-  return pimpl_->event_notifier_->get_total_num_messages_lost_in_transport();
+  return pimpl_->get_total_num_messages_lost_in_transport();
 }
 
 void Recorder::stop()
