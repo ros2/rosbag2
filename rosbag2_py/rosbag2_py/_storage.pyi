@@ -103,9 +103,9 @@ class StorageOptions:
     max_bagfile_duration: int
     max_bagfile_size: int
     max_cache_size: int
-    max_splits: int
-    max_record_size: int
     max_record_duration: int
+    max_record_size: int
+    max_splits: int
     snapshot_mode: bool
     start_time_ns: int
     storage_config_uri: str
