@@ -63,7 +63,7 @@ public:
       subscriber_node_->create_subscription<MessageT>(
       topic_name,
       qos,
-      [this, topic_name](std::shared_ptr<rclcpp::SerializedMessage> msg) {
+      [this, topic_name](std::shared_ptr<const rclcpp::SerializedMessage> msg) {
         subscribed_messages_[topic_name].push_back(msg);
       },
       options);
@@ -219,7 +219,7 @@ private:
 
   std::unordered_map<std::string, rclcpp::SubscriptionBase::SharedPtr> subscriptions_;
   std::unordered_map<std::string,
-    std::vector<std::shared_ptr<rclcpp::SerializedMessage>>> subscribed_messages_;
+    std::vector<std::shared_ptr<const rclcpp::SerializedMessage>>> subscribed_messages_;
   std::unordered_map<std::string, size_t> expected_topics_with_size_;
   rclcpp::Node::SharedPtr subscriber_node_;
   const std::chrono::milliseconds sleep_per_loop_ = std::chrono::milliseconds(2);

@@ -45,7 +45,7 @@ public:
   }
 
 private:
-  void topic_callback(std::shared_ptr<rclcpp::SerializedMessage> msg) const
+  void topic_callback(std::shared_ptr<const rclcpp::SerializedMessage> msg) const
   {
     rclcpp::Time time_stamp = this->now();
 
