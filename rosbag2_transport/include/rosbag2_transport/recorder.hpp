@@ -117,8 +117,101 @@ public:
   ROSBAG2_TRANSPORT_PUBLIC
   virtual ~Recorder();
 
+  /// @brief Start recording.
+  /// The record() method will return almost immediately and recording will happen in background.
   ROSBAG2_TRANSPORT_PUBLIC
   void record();
+
+  /// @brief Add a new channel (topic) to the rosbag2 writer to be recorded.
+  /// \details This is a direct Recorder API equivalent to the rosbag2_cpp::Writer::add_topic().
+  /// \note This method does not require the message definition. The recorder will try to find the
+  /// corresponding message definition by the given topic name and type.
+  /// @param topic_name The name of the topic.
+  /// @param topic_type The type of the topic.
+  /// @param serialization_format The serialization format of the topic.
+  /// @param type_description_hash REP-2011 type description hash of the topic.
+  /// @param offered_qos_profiles The list of offered QoS profiles for the topic if available.
+  ROSBAG2_TRANSPORT_PUBLIC
+  void add_channel(
+    const std::string & topic_name,
+    const std::string & topic_type,
+    const std::string & serialization_format = "memory_view",
+    const std::string & type_description_hash = "",
+    const std::vector<rclcpp::QoS> & offered_qos_profiles = {});
+
+  /// \brief Add a new channel (topic) to the rosbag2 writer to be recorded.
+  /// \details This is a direct Recorder API equivalent to the rosbag2_cpp::Writer::add_topic().
+  /// \param topic_name The name of the topic.
+  /// \param topic_type The type of the topic.
+  /// \param message_definition_encoding The encoding technique used in
+  /// the `encoded_message_definition` e.g. "ros2idl", "ros2msg", "apex_json" or "unknown" if
+  /// encoded_message_definition is empty.
+  /// \param encoded_message_definition The fully encoded message definition for this type.
+  /// \param serialization_format The serialization format of the topic.
+  /// \param type_description_hash REP-2011 type description hash of the topic.
+  /// \param offered_qos_profiles The list of offered QoS profiles for the topic if available.
+  ROSBAG2_TRANSPORT_PUBLIC
+  void add_channel(
+    const std::string & topic_name,
+    const std::string & topic_type,
+    const std::string & message_definition_encoding,
+    const std::string & encoded_message_definition,
+    const std::string & serialization_format = "memory_view",
+    const std::string & type_description_hash = "",
+    const std::vector<rclcpp::QoS> & offered_qos_profiles = {});
+
+  /// @brief Write a serialized message to the bag file.
+  /// \details This is a direct Recorder API equivalent to the rosbag2_cpp::Writer::write().
+  /// \note This method assumes that the topic has already been created via add_channel().
+  /// \note If recorder is in pause mode, this method will return without writing anything.
+  /// @param serialized_data The serialized message data to write.
+  /// @param topic_name The name of the topic the message belongs to.
+  /// @param pub_timestamp The original or publication timestamp of the message.
+  /// @param sequence_number An optional sequence number of the message. If non-zero, sequence
+  /// numbers should be unique per channel and increasing over time.
+  /// \throws std::runtime_error if topic has not been added via add_channel().
+  ROSBAG2_TRANSPORT_PUBLIC
+  void write_message(
+    std::shared_ptr<rcutils_uint8_array_t> serialized_data,
+    const std::string & topic_name,
+    const rcutils_time_point_value_t & pub_timestamp,
+    uint32_t sequence_number = 0);
+
+  /// @brief Write a serialized message to the bag file with receive timestamp.
+  /// \details This is a direct Recorder API equivalent to the rosbag2_cpp::Writer::write().
+  /// \note This method assumes that the topic has already been created via add_channel().
+  /// \note If recorder is in pause mode, this method will return without writing anything.
+  /// @param serialized_data The serialized message data to write.
+  /// @param topic_name The name of the topic the message belongs to.
+  /// @param pub_timestamp The original or publication timestamp of the message in nanoseconds.
+  /// @param recv_timestamp The timestamp of the message in nanoseconds when message was received.
+  /// @param sequence_number An optional sequence number of the message. If non-zero, sequence
+  /// numbers should be unique per channel and increasing over time.
+  /// \throws std::runtime_error if topic has not been added via add_channel().
+  ROSBAG2_TRANSPORT_PUBLIC
+  void write_message(
+    std::shared_ptr<rcutils_uint8_array_t> serialized_data,
+    const std::string & topic_name,
+    const rcutils_time_point_value_t & pub_timestamp,
+    const rcutils_time_point_value_t & recv_timestamp,
+    uint32_t sequence_number = 0);
+
+  /// @brief Updates recorder about lost messages on transport layer.
+  /// @details This a direct recorder API and this method is expected to be called when messages
+  /// are lost in the transport layer.
+  /// The recorder may use this information for logging or metrics.
+  /// @param topic_name The name of the topic.
+  /// @param qos_msgs_lost_info Information about lost messages.
+  ROSBAG2_TRANSPORT_PUBLIC
+  void on_messages_lost_in_transport(
+    const std::string & topic_name,
+    const rclcpp::QOSMessageLostInfo & qos_msgs_lost_info);
+
+  /// @brief Get total number of messages lost in transport layer.
+  /// @return Total number of messages lost in transport layer.
+  [[nodiscard]]
+  ROSBAG2_TRANSPORT_PUBLIC
+  uint64_t get_total_num_messages_lost_in_transport() const;
 
   /// @brief Stopping recording.
   /// @details The stop() is opposite to the record() operation. It will stop recording, dump
