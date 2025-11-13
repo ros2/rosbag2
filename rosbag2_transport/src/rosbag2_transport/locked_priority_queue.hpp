@@ -25,6 +25,12 @@
 #include "rcpputils/thread_safety_annotations.hpp"
 #include "rcpputils/unique_lock.hpp"
 
+#ifdef __APPLE__
+// On macOS, thread-safety annotations break compilation; make them no-op
+#undef RCPPUTILS_TSA_GUARDED_BY
+#define RCPPUTILS_TSA_GUARDED_BY(x)
+#endif
+
 /// \brief `std::priority_queue` wrapper with locks and stable sorting.
 /// \details This class wraps a `std::priority_queue` and provides locking for thread-safe
 ///   access. It uses std::vector as underlying container for the `std::priority_queue` and
