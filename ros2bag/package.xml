@@ -18,6 +18,7 @@
   <exec_depend>rclpy</exec_depend>
   <exec_depend>ros2cli</exec_depend>
   <exec_depend>rosbag2_py</exec_depend>
+  <exec_depend>rosbag2_storage_default_plugins</exec_depend>
 
   <test_depend>ament_copyright</test_depend>
   <test_depend>ament_flake8</test_depend>
