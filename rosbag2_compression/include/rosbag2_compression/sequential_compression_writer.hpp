@@ -72,33 +72,33 @@ public:
   ~SequentialCompressionWriter() override;
 
   /**
-   * Create a new topic in the underlying storage. Needs to be called for every topic used within
-   * a message which is passed to write(...).
-   *
+   * \brief Create a new topic in the underlying storage.
+   * \details Needs to be called for every topic used within a message which is passed
+   * to \ref write "write(...)".
+   * \note If writer is not open, this will just store the topic information locally and
+   * topics will be created on storage open.
    * \param topic_with_type name and type identifier of topic to be created
-   * \throws runtime_error if the Writer is not open.
    */
   void create_topic(const rosbag2_storage::TopicMetadata & topic_with_type) override;
 
   /**
-   * Create a new topic in the underlying storage. Needs to be called for every topic used within
-   * a message which is passed to write(...).
-   *
+   * \brief Create a new topic in the underlying storage.
+   * \details Needs to be called for every topic used within a message which is passed
+   * to \ref write "write(...)".
+   * \note If writer is not open, this will just store the topic information locally and
+   * topics will be created on storage open.
    * \param topic_with_type name and type identifier of topic to be created
-   * \param message_definition definition of topic_with_type.type
-   * \throws runtime_error if the Writer is not open.
+   * \param message_definition message definition content for this topic's type
    */
   void create_topic(
     const rosbag2_storage::TopicMetadata & topic_with_type,
     const rosbag2_storage::MessageDefinition & message_definition) override;
 
   /**
-   * Remove a new topic in the underlying storage.
-   * If creation of subscription fails remove the topic
-   * from the db (more of cleanup)
-   *
+   * \brief Removes a new topic in the underlying storage.
+   * \details Expected to be used if creation of subscription fails and cleanup is needed.
+   * \note If writer is not open, this will just remove the topic information locally.
    * \param topic_with_type name and type identifier of topic to be created
-   * \throws runtime_error if the Writer is not open.
    */
   void remove_topic(const rosbag2_storage::TopicMetadata & topic_with_type) override;
 
@@ -115,9 +115,9 @@ public:
   void write(std::shared_ptr<const rosbag2_storage::SerializedBagMessage> message) override;
 
   /**
-   * Opens a new bagfile and prepare it for writing messages. The bagfile must not exist.
-   * This must be called before any other function is used.
-   *
+   * \brief Opens a new bagfile and prepare it for writing messages. The bagfile must not exist.
+   * \details This must be called before any other function is used among \ref create_topic
+   * and \ref remove_topic.
    * \param storage_options Options to configure the storage
    * \param converter_options options to define in which format incoming messages are stored
    **/
