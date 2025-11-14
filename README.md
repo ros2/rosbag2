@@ -304,7 +304,7 @@ output_bags:
 
 When starting a recording or playback workflow, you can pass a YAML file that contains QoS profile settings for a specific topic.
 The YAML schema for the profile overrides is a dictionary of topic names with key/value pairs for each QoS policy.
-Below is an example profile set to the default ROS2 QoS settings.
+Below is an example profile set to the default ROS 2 QoS settings.
 
 ```yaml
 /topic_name:
