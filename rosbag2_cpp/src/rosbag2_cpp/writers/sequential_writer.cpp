@@ -172,19 +172,6 @@ void SequentialWriter::open(
   storage_->update_metadata(metadata_);
   total_recorded_size_ = 0;
   total_recorded_duration_ = std::chrono::nanoseconds(0);
-  // Cache max_record_duration in nanoseconds. Guard against overflow when converting seconds->ns.
-  if (storage_options_.max_record_duration == 0) {
-    max_record_duration_ns_ = 0ULL;
-  } else {
-    const uint64_t max_sec_without_overflow = UINT64_MAX / 1000000000ULL;  // ~18446744073s
-    if (storage_options_.max_record_duration > max_sec_without_overflow) {
-      max_record_duration_ns_ = UINT64_MAX;
-      ROSBAG2_CPP_LOG_WARN(
-        "max_record_duration exceeds max representable ns; clamping to UINT64_MAX ns");
-    } else {
-      max_record_duration_ns_ = storage_options_.max_record_duration * 1000000000ULL;
-    }
-  }
   next_file_index_ = 1;  // First file is 0, next will be 1
   is_open_ = true;
 }
@@ -552,35 +539,20 @@ uint64_t SequentialWriter::get_total_record_duration() const
 
 void SequentialWriter::delete_oldest_files_if_needed()
 {
-  // Only delete if any circular buffer limit is set (size, duration, or split count)
+  // Only delete if split count limit is set
   // Note: This is only called after split_bagfile(), so max_bagfile_size is guaranteed to be set
-  if (storage_options_.max_record_size == 0 &&
-    storage_options_.max_record_duration == 0 &&
-    storage_options_.max_splits == 0)
-  {
+  if (storage_options_.max_splits == 0) {
     return;
   }
 
   // Protect metadata access with mutex to prevent race conditions
   std::lock_guard<std::mutex> lock(topics_info_mutex_);
 
-  // Delete oldest files until we're under all configured limits (if set)
+  // Delete oldest files until we're under the split-count limit
   // Note: We just split, so we have at least 2 files and the oldest is definitely not current
   while (metadata_.files.size() > 1) {
-    // Check if we need to delete based on size limit
-    bool exceeds_size_limit = (storage_options_.max_record_size != 0 &&
-      get_total_record_size() > storage_options_.max_record_size);
-
-    // Check if we need to delete based on duration limit using cached ns value
-    bool exceeds_duration_limit = (max_record_duration_ns_ != 0 &&
-      get_total_record_duration() > max_record_duration_ns_);
-
-    // Check if we need to delete based on split-count limit
-    bool exceeds_split_limit = (storage_options_.max_splits != 0 &&
-      metadata_.files.size() > storage_options_.max_splits);
-
-    // If we're under all limits (or they're not set), stop deleting
-    if (!exceeds_size_limit && !exceeds_duration_limit && !exceeds_split_limit) {
+    // If we're under the limit, stop deleting
+    if (metadata_.files.size() <= storage_options_.max_splits) {
       break;
     }
 
