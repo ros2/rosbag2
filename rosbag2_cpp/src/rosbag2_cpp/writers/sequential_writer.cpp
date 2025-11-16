@@ -170,8 +170,6 @@ void SequentialWriter::open(
 
   init_metadata();
   storage_->update_metadata(metadata_);
-  total_recorded_size_ = 0;
-  total_recorded_duration_ = std::chrono::nanoseconds(0);
   next_file_index_ = 1;  // First file is 0, next will be 1
   is_open_ = true;
 }
@@ -329,12 +327,6 @@ void SequentialWriter::switch_to_next_storage()
   }
 
   storage_->update_metadata(metadata_);
-
-  // Add current file size and duration to totals before switching
-  total_recorded_size_ += storage_->get_bagfile_size();
-  if (!metadata_.files.empty()) {
-    total_recorded_duration_ += metadata_.files.back().duration;
-  }
 
   // Check for overflow: if next_file_index_ is 0, we've wrapped around (very unlikely but possible)
   if (next_file_index_ == 0) {
@@ -520,23 +512,6 @@ bool SequentialWriter::should_split_bagfile(
   return should_split;
 }
 
-uint64_t SequentialWriter::get_total_record_size() const
-{
-  // Total = sum of all previous files + current file
-  return total_recorded_size_ + storage_->get_bagfile_size();
-}
-
-uint64_t SequentialWriter::get_total_record_duration() const
-{
-  // Total = sum of all previous files' durations + current file duration (nanoseconds)
-  std::chrono::nanoseconds current_file_duration{0};
-  if (!metadata_.files.empty()) {
-    current_file_duration = metadata_.files.back().duration;
-  }
-  const auto total_duration = total_recorded_duration_ + current_file_duration;
-  return static_cast<uint64_t>(total_duration.count());
-}
-
 void SequentialWriter::delete_oldest_files_if_needed()
 {
   // Only delete if split count limit is set
@@ -559,17 +534,11 @@ void SequentialWriter::delete_oldest_files_if_needed()
     const auto & oldest_file = metadata_.files.front();
     const auto file_path = fs::path(base_folder_) / oldest_file.path;
 
-    // Calculate duration contribution of this file for updating total duration
-    const auto file_duration = oldest_file.duration;
-    const auto file_duration_ns = file_duration.count();
-
     // Delete file from filesystem
     if (fs::exists(file_path)) {
       const auto file_size = fs::file_size(file_path);
+      const auto file_duration_ns = oldest_file.duration.count();
       fs::remove(file_path);
-
-      total_recorded_size_ -= file_size;
-      total_recorded_duration_ -= file_duration;
       ROSBAG2_CPP_LOG_WARN(
         "Deleted oldest bagfile: %s (%lu bytes, %lu ns)",
         oldest_file.path.c_str(), file_size, file_duration_ns);
