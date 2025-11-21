@@ -57,6 +57,13 @@ public:
   /// \return string representation of this QoS profile.
   [[nodiscard]] std::string to_string() const;
 
+  static Rosbag2QoS EventQoS()
+  {
+    return Rosbag2QoS(rclcpp::QoS(3)
+             .reliable()
+             .durability_volatile());
+  }
+
   // Create an adaptive QoS profile to use for subscribing to a set of offers from publishers.
   /**
     * - Uses history keep last with the maximum depth from all publishers. If depth is 0, it
