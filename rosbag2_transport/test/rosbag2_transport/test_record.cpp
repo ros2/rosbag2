@@ -14,16 +14,20 @@
 
 #include <gmock/gmock.h>
 
+#include <filesystem>
 #include <memory>
 #include <string>
 #include <unordered_map>
 #include <utility>
 #include <vector>
 
+#include "mock_recorder.hpp"
 #include "rclcpp/rclcpp.hpp"
+#include "rcpputils/scope_exit.hpp"
 
 #include "rosbag2_test_common/publication_manager.hpp"
 #include "rosbag2_test_common/wait_for.hpp"
+#include "rosbag2_test_common/temporary_directory_fixture.hpp"
 
 #include "rosbag2_transport/recorder.hpp"
 
@@ -33,6 +37,11 @@
 
 #include "rosbag2_storage/qos.hpp"
 #include "record_integration_fixture.hpp"
+#include "rosbag2_transport/reader_writer_factory.hpp"
+
+using namespace ::testing;  // NOLINT
+using rosbag2_test_common::TemporaryDirectoryFixture;
+namespace fs = std::filesystem;
 
 TEST_F(RecordIntegrationTestFixture, published_messages_from_multiple_topics_are_recorded)
 {
@@ -122,6 +131,33 @@ TEST_F(RecordIntegrationTestFixture, published_messages_from_multiple_topics_are
       // if rwm has not sent timestamp support, send_timestamp must be zero
       EXPECT_EQ(message->send_timestamp, 0);
     }
+  }
+}
+
+TEST_F(TemporaryDirectoryFixture, can_record_again_after_stop_with_real_storage) {
+  rclcpp::init(0, nullptr);
+  auto cleanup_process_handle = rcpputils::make_scope_exit([&]() {rclcpp::shutdown();});
+  std::string test_topic = "/can_record_again_after_stop_topic";
+  rosbag2_storage::StorageOptions storage_options{};
+  storage_options.uri = (fs::path(temporary_dir_path_) / "start_stop_again").generic_string();
+
+  rosbag2_transport::RecordOptions record_options{};
+
+  auto writer = rosbag2_transport::ReaderWriterFactory::make_writer(record_options);
+  {
+    auto recorder = std::make_shared<MockRecorder>(
+      std::move(writer), storage_options, record_options);
+
+    EXPECT_NO_THROW(recorder->record());
+    fs::path storage_path(storage_options.uri);
+    EXPECT_TRUE(fs::is_directory(storage_path));
+
+    EXPECT_NO_THROW(recorder->stop());
+    EXPECT_NO_THROW(recorder->record());
+    storage_path = recorder->get_storage_options().uri;
+    EXPECT_TRUE(fs::is_directory(storage_path));
+    std::string expected_path_str = storage_options.uri + "(1)";
+    EXPECT_EQ(storage_path.generic_string(), expected_path_str);
   }
 }
 
