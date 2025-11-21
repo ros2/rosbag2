@@ -15,8 +15,14 @@
 
 #include <gmock/gmock.h>
 
-#include <iostream>
 #include <thread>
+#include <memory>
+#include <string>
+#include <vector>
+#include <chrono>
+#include <utility>
+#include <queue>
+#include <mutex>
 
 #include "rosbag2_interfaces/msg/messages_lost_event.hpp"
 #include "rosbag2_interfaces/msg/messages_lost_event_topic_stat.hpp"
@@ -361,6 +367,7 @@ TEST_F(TestRecorderEventNotifier, event_notifier_respects_max_publishing_rate) {
   std::vector<WriteSplitEvent> published_write_split_events;
   std::vector<std::pair<std::chrono::steady_clock::time_point, MessagesLostEvent>>
     published_messages_lost_events;
+  std::mutex published_events_mutex;
 
   // Create shared_ptrs to the mock wrappers first
   auto write_split_pub_mock = std::make_shared<MockPublisherWrapper<WriteSplitEvent>>(
@@ -374,14 +381,16 @@ TEST_F(TestRecorderEventNotifier, event_notifier_respects_max_publishing_rate) {
   // Set up expectations on the shared_ptr mocks directly
   ON_CALL(*write_split_pub_mock, publish(::testing::_))
   .WillByDefault(::testing::Invoke(
-      [&published_write_split_events](const WriteSplitEvent & msg) {
+      [&published_write_split_events, &published_events_mutex](const WriteSplitEvent & msg) {
+        std::lock_guard<std::mutex> lock(published_events_mutex);
         published_write_split_events.push_back(msg);
       }
   ));
 
   EXPECT_CALL(*msgs_lost_pub_mock, publish(::testing::_))
   .WillRepeatedly(::testing::Invoke(
-      [&published_messages_lost_events](const MessagesLostEvent & msg) {
+      [&published_messages_lost_events, &published_events_mutex](const MessagesLostEvent & msg) {
+        std::lock_guard<std::mutex> lock(published_events_mutex);
         published_messages_lost_events.emplace_back(std::chrono::steady_clock::now(), msg);
       }
   ));
@@ -404,7 +413,9 @@ TEST_F(TestRecorderEventNotifier, event_notifier_respects_max_publishing_rate) {
 
   // Allow some time for the events to be processed
   std::this_thread::sleep_for(std::chrono::seconds(1));
+  notifier_.reset();  // Ensure all events are processed before assertions
 
+  std::lock_guard<std::mutex> lock(published_events_mutex);
   // Verify that no write split events were published
   EXPECT_TRUE(published_write_split_events.empty());
 
@@ -555,7 +566,7 @@ TEST_F(TestRecorderEventNotifier, thread_safety_with_concurrent_access)
   // Simulate concurrent access to on_messages_lost_in_transport
   for (size_t i = 0; i < num_threads_for_each_event; i++) {
     // Simulate concurrent access to on_messages_lost_in_transport
-    threads.emplace_back([this, i, iterations_per_thread]() {
+    threads.emplace_back([this, i]() {
         for (size_t j = 0; j < iterations_per_thread; j++) {
           rclcpp::QOSMessageLostInfo qos_msgs_lost_info;
           qos_msgs_lost_info.total_count_change = 1;
@@ -563,7 +574,7 @@ TEST_F(TestRecorderEventNotifier, thread_safety_with_concurrent_access)
         }
     });
     // Simulate concurrent access to on_messages_lost_in_recorder
-    threads.emplace_back([this, i, iterations_per_thread]() {
+    threads.emplace_back([this, i]() {
         for (size_t j = 0; j < iterations_per_thread; j++) {
           std::vector<rosbag2_cpp::bag_events::MessagesLostInfo> msgs_lost_info = {
             {"topic" + std::to_string(i), 1}
