@@ -63,9 +63,11 @@ public:
 
   ~RecorderImpl();
 
-  /// @brief Start recording.
-  /// The record() method will return almost immediately and recording will happen in background.
-  void record();
+  /// \brief Start recording.
+  /// \details The record(uri) method will return almost immediately and recording will happen in
+  /// background.
+  /// \param uri If provided, it will override the storage_options.uri provided during construction.
+  void record(const std::string & uri = "");
 
   /// @brief Add a new channel (topic) to the rosbag2 writer to be recorded.
   /// \details This is a direct Recorder API equivalent to the rosbag2_cpp::Writer::add_topic().
@@ -156,7 +158,7 @@ public:
   uint64_t get_total_num_messages_lost_in_transport() const;
 
   /// @brief Stopping recording and closing writer.
-  /// The record() can be called again after stop().
+  /// The record(uri) can be called again after stop().
   void stop();
 
   /// Get a const reference to the underlying rosbag2 writer.
@@ -348,15 +350,19 @@ void RecorderImpl::stop()
   }
 }
 
-void RecorderImpl::record()
+void RecorderImpl::record(const std::string & uri)
 {
   std::lock_guard<std::mutex> state_lock(start_stop_transition_mutex_);
   if (in_recording_.exchange(true)) {
     RCLCPP_WARN_STREAM(
       node->get_logger(),
-      "Called Recorder::record() while already in recording, dismissing request.");
+      "Called Recorder::record(uri) while already in recording, dismissing request.");
     return;
   }
+  if (!uri.empty()) {
+    storage_options_.uri = uri;
+  }
+  RCLCPP_INFO(node->get_logger(), "Starting recording to '%s'", storage_options_.uri.c_str());
   paused_ = record_options_.start_paused;
   topic_qos_profile_overrides_ = record_options_.topic_qos_profile_overrides;
   // Check serialization format options
@@ -383,6 +389,31 @@ void RecorderImpl::record()
   subscriptions_.clear();
   event_notifier_->reset_total_num_messages_lost_in_transport();
   event_notifier_->reset_total_num_messages_lost_in_recorder();
+
+  // Check if storage_options.uri already exists and try to add '(n)' postfix
+  namespace fs = std::filesystem;
+  fs::path storage_path(storage_options_.uri);
+  if (fs::is_directory(storage_path)) {
+    RCLCPP_WARN_STREAM(node->get_logger(),
+                       "Bag directory '" << storage_path.c_str() << "' already exists.");
+    for (size_t i = 1U; i < std::numeric_limits<size_t>::max(); i++) {
+      fs::path new_path = storage_path;
+      new_path += "(" + std::to_string(i) + ")";
+      if (!fs::exists(new_path)) {
+        RCLCPP_WARN_STREAM(node->get_logger(),
+                           "Changing bag directory to '" << new_path.c_str() << "'.");
+        storage_options_.uri = new_path.generic_string();
+        storage_path = new_path;
+        break;
+      }
+    }
+  }
+  if (fs::is_directory(storage_path)) {
+    throw std::runtime_error{
+            "Failed to derive non-existent directory for the new Rosbag2 recording. "
+            "Please specify non existent uri explicitly."};
+  }
+
   writer_->open(
     storage_options_,
     {record_options_.input_serialization_format, record_options_.output_serialization_format});
@@ -513,7 +544,7 @@ void RecorderImpl::start_discovery()
     // Get graph event to ensure to start GrapListener if not already started and register event,
     // before we're starting discovery thread.
     // This is a workaround to split initialization and runtime phases to avoid race condition when
-    // a new publisher appeared after we finish start_discovery() and/or Recorder::record(),
+    // a new publisher appeared after we finish start_discovery() and/or Recorder::record(uri),
     // but before we really start topics_discovery() thread.
     discovery_graph_event_ = node->get_graph_event();
     discovery_future_ =
@@ -993,9 +1024,9 @@ Recorder::Recorder(
 
 Recorder::~Recorder() = default;
 
-void Recorder::record()
+void Recorder::record(const std::string & uri)
 {
-  pimpl_->record();
+  pimpl_->record(uri);
 }
 
 void Recorder::add_channel(
