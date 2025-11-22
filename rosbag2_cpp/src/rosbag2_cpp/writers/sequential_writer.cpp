@@ -426,17 +426,10 @@ void SequentialWriter::write(std::shared_ptr<const rosbag2_storage::SerializedBa
   metadata_.files.back().message_count++;
   if (storage_options_.max_cache_size == 0u) {
     // If cache size is set to zero, we write to storage directly
-<<<<<<< HEAD
+
     storage_->write(converted_msg);
-    ++topic_information->message_count;
-=======
-    if (storage_->write_message(converted_msg)) {
-      metadata_.files.back().message_count++;
-      topic_information_ptr->message_count++;
-    } else {
-      message_lost = true;
-    }
->>>>>>> f5553c8 (Make topics persistent between writer's close() and open() API calls. (#2229))
+    metadata_.files.back().message_count++;
+    topic_information_ptr->message_count++;
   } else {
     // Otherwise, use cache buffer
     message_cache_->push(converted_msg);
