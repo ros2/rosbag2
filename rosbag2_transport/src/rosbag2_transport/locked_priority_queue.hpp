@@ -27,6 +27,7 @@
 
 #ifdef __APPLE__
 // On macOS, thread-safety annotations break compilation; make them no-op
+#pragma push_macro("RCPPUTILS_TSA_GUARDED_BY")
 #undef RCPPUTILS_TSA_GUARDED_BY
 #define RCPPUTILS_TSA_GUARDED_BY(x)
 #endif
@@ -149,5 +150,9 @@ private:
 
   size_t insert_sequence_number_{0} RCPPUTILS_TSA_GUARDED_BY(queue_mutex_);
 };
+
+#ifdef __APPLE__
+#pragma pop_macro("RCPPUTILS_TSA_GUARDED_BY")
+#endif
 
 #endif  // ROSBAG2_TRANSPORT__LOCKED_PRIORITY_QUEUE_HPP_
