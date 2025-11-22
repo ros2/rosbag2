@@ -142,6 +142,7 @@ TEST_F(TemporaryDirectoryFixture, can_record_again_after_stop_with_real_storage)
   storage_options.uri = (fs::path(temporary_dir_path_) / "start_stop_again").generic_string();
 
   rosbag2_transport::RecordOptions record_options{};
+  record_options.rmw_serialization_format = "cdr";
 
   auto writer = rosbag2_transport::ReaderWriterFactory::make_writer(record_options);
   {

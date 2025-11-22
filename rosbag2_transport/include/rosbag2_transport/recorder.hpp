@@ -117,13 +117,10 @@ public:
   ROSBAG2_TRANSPORT_PUBLIC
   virtual ~Recorder();
 
-<<<<<<< HEAD
-=======
   /// \brief Start recording.
   /// \details The record() method will return almost immediately and recording will happen in
   /// background.
   /// \param uri If provided, it will override the storage_options.uri provided during construction.
->>>>>>> e3ad46a (Fix for C++ Recorder failure on stop() -> record() due to reusing the bag name (#2224))
   ROSBAG2_TRANSPORT_PUBLIC
   void record(const std::string & uri = "");
 

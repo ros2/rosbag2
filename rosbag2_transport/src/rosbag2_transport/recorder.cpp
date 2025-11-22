@@ -63,15 +63,11 @@ public:
 
   ~RecorderImpl();
 
-<<<<<<< HEAD
-  void record();
-=======
   /// \brief Start recording.
   /// \details The record(uri) method will return almost immediately and recording will happen in
   /// background.
   /// \param uri If provided, it will override the storage_options.uri provided during construction.
   void record(const std::string & uri = "");
->>>>>>> e3ad46a (Fix for C++ Recorder failure on stop() -> record() due to reusing the bag name (#2224))
 
   /// @brief Stopping recording and closing writer.
   /// The record(uri) can be called again after stop().
@@ -279,9 +275,6 @@ void RecorderImpl::record(const std::string & uri)
 
   subscriptions_.clear();
   event_notifier_->reset_total_num_messages_lost_in_transport();
-<<<<<<< HEAD
-=======
-  event_notifier_->reset_total_num_messages_lost_in_recorder();
 
   // Check if storage_options.uri already exists and try to add '(n)' postfix
   namespace fs = std::filesystem;
@@ -307,7 +300,6 @@ void RecorderImpl::record(const std::string & uri)
             "Please specify non existent uri explicitly."};
   }
 
->>>>>>> e3ad46a (Fix for C++ Recorder failure on stop() -> record() due to reusing the bag name (#2224))
   writer_->open(
     storage_options_,
     {rmw_get_serialization_format(), record_options_.rmw_serialization_format});
