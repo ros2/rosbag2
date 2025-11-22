@@ -56,15 +56,8 @@ public:
 
   ~CircularMessageCache() override;
 
-  /// Puts msg into circular buffer, replacing the oldest msg when buffer is full
-<<<<<<< HEAD
+  /// \brief Puts msg into circular buffer, replacing the oldest msg when buffer is full.
   void push(std::shared_ptr<const rosbag2_storage::SerializedBagMessage> msg) override;
-=======
-  /// \return True if message was successfully pushed, otherwise false.
-  /// NOTE: Unless message is null or too large for the buffer, this will always return true
-  /// since the circular buffer by design drops old messages when the buffer is full.
-  bool push(std::shared_ptr<const rosbag2_storage::SerializedBagMessage> msg) override;
->>>>>>> 572f98e (Check for nullptrs when pushing new messages to the message cache (#2219))
 
   /// Get current buffer to consume.
   /// Locks consumer buffer until release_consumer_buffer is called.

@@ -138,7 +138,6 @@ TEST_F(CircularMessageCacheTest, circular_message_cache_rejects_null_message) {
   auto circular_message_cache_ = std::make_shared<rosbag2_cpp::cache::CircularMessageCache>(
   cache_size_);
 
-  bool result = true;
-  ASSERT_NO_THROW(result = circular_message_cache_->push(nullptr));
-  EXPECT_FALSE(result);
+  ASSERT_NO_THROW(circular_message_cache_->push(nullptr));
+  ASSERT_NO_THROW(circular_message_cache_->push(nullptr));
 }
