@@ -63,14 +63,12 @@ public:
 
   ~RecorderImpl();
 
-  /// \brief Start recording.
-  /// \details The record(uri) method will return almost immediately and recording will happen in
-  /// background.
-  /// \param uri If provided, it will override the storage_options.uri provided during construction.
-  void record(const std::string & uri = "");
+  /// @brief Start recording.
+  /// The record() method will return almost immediately and recording will happen in background.
+  void record();
 
   /// @brief Stopping recording and closing writer.
-  /// The record(uri) can be called again after stop().
+  /// The record() can be called again after stop().
   void stop();
 
   const rosbag2_cpp::Writer & get_writer_handle();
@@ -254,17 +252,14 @@ void RecorderImpl::stop()
   }
 }
 
-void RecorderImpl::record(const std::string & uri)
+void RecorderImpl::record()
 {
   std::lock_guard<std::mutex> state_lock(start_stop_transition_mutex_);
   if (in_recording_.exchange(true)) {
     RCLCPP_WARN_STREAM(
       node->get_logger(),
-      "Called Recorder::record(uri) while already in recording, dismissing request.");
+      "Called Recorder::record() while already in recording, dismissing request.");
     return;
-  }
-  if (!uri.empty()) {
-    storage_options_.uri = uri;
   }
   RCLCPP_INFO(node->get_logger(), "Starting recording to '%s'", storage_options_.uri.c_str());
   paused_ = record_options_.start_paused;
@@ -427,7 +422,7 @@ void RecorderImpl::start_discovery()
     // Get graph event to ensure to start GrapListener if not already started and register event,
     // before we're starting discovery thread.
     // This is a workaround to split initialization and runtime phases to avoid race condition when
-    // a new publisher appeared after we finish start_discovery() and/or Recorder::record(uri),
+    // a new publisher appeared after we finish start_discovery() and/or Recorder::record(),
     // but before we really start topics_discovery() thread.
     discovery_graph_event_ = node->get_graph_event();
     discovery_future_ =
@@ -819,9 +814,9 @@ Recorder::Recorder(
 
 Recorder::~Recorder() = default;
 
-void Recorder::record(const std::string & uri)
+void Recorder::record()
 {
-  pimpl_->record(uri);
+  pimpl_->record();
 }
 
 void Recorder::stop()

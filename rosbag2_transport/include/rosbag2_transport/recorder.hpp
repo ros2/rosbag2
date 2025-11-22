@@ -117,16 +117,14 @@ public:
   ROSBAG2_TRANSPORT_PUBLIC
   virtual ~Recorder();
 
-  /// \brief Start recording.
-  /// \details The record() method will return almost immediately and recording will happen in
-  /// background.
-  /// \param uri If provided, it will override the storage_options.uri provided during construction.
+  /// @brief Start recording.
+  /// The record() method will return almost immediately and recording will happen in background.
   ROSBAG2_TRANSPORT_PUBLIC
-  void record(const std::string & uri = "");
+  void record();
 
   /// @brief Stopping recording.
-  /// @details The stop() is opposite to the record(uri) operation. It will stop recording, dump
-  /// all buffers to the disk and close writer. The record(uri) can be called again after stop().
+  /// @details The stop() is opposite to the record() operation. It will stop recording, dump
+  /// all buffers to the disk and close writer. The record() can be called again after stop().
   ROSBAG2_TRANSPORT_PUBLIC
   void stop();
 
