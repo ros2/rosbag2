@@ -26,7 +26,7 @@
 #include "rcpputils/unique_lock.hpp"
 
 #ifdef __APPLE__
-// On macOS, thread-safety annotations break compilation; make them no-op
+// no-op: Clang on macOS does not support thread-safety annotations
 #pragma push_macro("RCPPUTILS_TSA_GUARDED_BY")
 #undef RCPPUTILS_TSA_GUARDED_BY
 #define RCPPUTILS_TSA_GUARDED_BY(x)
