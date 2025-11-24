@@ -43,7 +43,7 @@ CircularMessageCache::~CircularMessageCache()
 void CircularMessageCache::push(std::shared_ptr<const rosbag2_storage::SerializedBagMessage> msg)
 {
   std::lock_guard<std::mutex> cache_lock(producer_buffer_mutex_);
-  producer_buffer_->push(msg);
+  (void)producer_buffer_->push(std::move(msg));
 }
 
 std::shared_ptr<CacheBufferInterface> CircularMessageCache::get_consumer_buffer()
