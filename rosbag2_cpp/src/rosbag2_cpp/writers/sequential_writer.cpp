@@ -56,8 +56,6 @@ SequentialWriter::SequentialWriter(
   storage_(nullptr),
   metadata_io_(std::move(metadata_io)),
   converter_(nullptr),
-  topics_names_to_info_(),
-  topic_names_to_message_definitions_(),
   metadata_()
 {}
 
@@ -169,6 +167,18 @@ void SequentialWriter::open(
   }
 
   init_metadata();
+  // Register topics in storage if they already exists
+  metadata_.topics_with_message_count.clear();
+  metadata_.topics_with_message_count.reserve(topics_names_to_info_.size());
+  for (auto & [topic_name, topic_info] : topics_names_to_info_) {
+    topic_info.message_count = 0U;
+    auto const & md = topic_names_to_message_definitions_[topic_name];
+    storage_->create_topic(topic_info.topic_metadata, md);
+    metadata_.topics_with_message_count.push_back(topic_info);
+    if (converter_) {
+      converter_->add_topic(topic_name, topic_info.topic_metadata.type);
+    }
+  }
   storage_->update_metadata(metadata_);
   is_open_ = true;
 }
@@ -205,19 +215,20 @@ void SequentialWriter::close()
     execute_bag_split_callbacks(closed_file, "");
   }
 
-  topics_names_to_info_.clear();
-  topic_names_to_message_definitions_.clear();
+  // Zero message counts for all topics
+  std::lock_guard<std::mutex> lock(topics_info_mutex_);
+  for (auto & [_, topic_info] : topics_names_to_info_) {
+    topic_info.message_count = 0U;
+  }
 
   converter_.reset();
 }
 
 void SequentialWriter::create_topic(const rosbag2_storage::TopicMetadata & topic_with_type)
 {
-  if (topics_names_to_info_.find(topic_with_type.name) !=
-    topics_names_to_info_.end())
-  {
-    // nothing to do, topic already created
-    return;
+  // Don't need to lock topics_info_mutex_ since we are not modifying topics_names_to_info_ here
+  if (topics_names_to_info_.find(topic_with_type.name) != topics_names_to_info_.end()) {
+    return;  // nothing to do, topic already created
   }
   rosbag2_storage::MessageDefinition definition =
     message_definitions_.get_full_text_ext(topic_with_type.type, topic_with_type.name);
@@ -241,65 +252,39 @@ void SequentialWriter::create_topic(
   const rosbag2_storage::TopicMetadata & topic_with_type,
   const rosbag2_storage::MessageDefinition & message_definition)
 {
-  if (topics_names_to_info_.find(topic_with_type.name) !=
-    topics_names_to_info_.end())
-  {
-    // nothing to do, topic already created
-    return;
-  }
-
-  if (!is_open_) {
-    throw std::runtime_error("Bag is not open. Call open() before writing.");
-  }
-
   rosbag2_storage::TopicInformation info{};
-  info.topic_metadata = topic_with_type;
-
-  bool insert_succeeded = false;
   {
     std::lock_guard<std::mutex> lock(topics_info_mutex_);
-    const auto insert_res = topics_names_to_info_.insert(
-      std::make_pair(topic_with_type.name, info));
-    insert_succeeded = insert_res.second;
+    if (topics_names_to_info_.find(topic_with_type.name) != topics_names_to_info_.end()) {
+      return;  // nothing to do, topic already created
+    }
+    info.topic_metadata = topic_with_type;
+    (void)topics_names_to_info_.insert({topic_with_type.name, info});
+    (void)topic_names_to_message_definitions_.insert({topic_with_type.name, message_definition});
   }
 
-  if (!insert_succeeded) {
-    std::stringstream errmsg;
-    errmsg << "Failed to insert topic \"" << topic_with_type.name << "\"!";
-
-    throw std::runtime_error(errmsg.str());
-  }
-
-  topic_names_to_message_definitions_.insert(
-    std::make_pair(topic_with_type.name, message_definition));
-
-  storage_->create_topic(topic_with_type, message_definition);
-
-  if (converter_) {
-    converter_->add_topic(topic_with_type.name, topic_with_type.type);
+  if (is_open_.load()) {
+    storage_->create_topic(topic_with_type, message_definition);
+    metadata_.topics_with_message_count.push_back(info);
+    if (converter_) {
+      converter_->add_topic(topic_with_type.name, topic_with_type.type);
+    }
   }
 }
 
 void SequentialWriter::remove_topic(const rosbag2_storage::TopicMetadata & topic_with_type)
 {
-  if (!is_open_) {
-    throw std::runtime_error("Bag is not open. Call open() before removing.");
-  }
-
-  bool erased = false;
-  {
-    std::lock_guard<std::mutex> lock(topics_info_mutex_);
-    erased = topics_names_to_info_.erase(topic_with_type.name) > 0;
-    erased = erased && (topic_names_to_message_definitions_.erase(topic_with_type.name) > 0);
-  }
+  std::lock_guard<std::mutex> lock(topics_info_mutex_);
+  bool erased = topics_names_to_info_.erase(topic_with_type.name) > 0;
+  erased = erased && (topic_names_to_message_definitions_.erase(topic_with_type.name) > 0);
 
   if (erased) {
-    storage_->remove_topic(topic_with_type);
+    if (is_open_.load()) {
+      storage_->remove_topic(topic_with_type);
+    }
   } else {
     std::stringstream errmsg;
-    errmsg << "Failed to remove the non-existing topic \"" <<
-      topic_with_type.name << "\"!";
-
+    errmsg << "Failed to remove the non-existing topic \"" << topic_with_type.name << "\"!";
     throw std::runtime_error(errmsg.str());
   }
 }
@@ -329,6 +314,9 @@ void SequentialWriter::switch_to_next_storage()
   storage_options_.uri = format_storage_uri(
     base_folder_,
     metadata_.relative_file_paths.size());
+  // TODO(morlov): If we would ever remove the upper level writer mutex lock, consider protecting
+  //  storage_ with mutex to avoid race conditions with write(msg) call when we are switching to
+  //  next storage and not using cache.
   storage_ = storage_factory_->open_read_write(storage_options_);
   if (!storage_) {
     std::stringstream errmsg;
@@ -345,10 +333,13 @@ void SequentialWriter::switch_to_next_storage()
   metadata_.relative_file_paths.push_back(file_info.path);
 
   storage_->update_metadata(metadata_);
-  // Re-register all topics since we rolled-over to a new bagfile.
-  for (const auto & topic : topics_names_to_info_) {
-    auto const & md = topic_names_to_message_definitions_[topic.first];
-    storage_->create_topic(topic.second.topic_metadata, md);
+  {
+    // Re-register all topics since we rolled-over to a new bagfile.
+    std::lock_guard<std::mutex> lock(topics_info_mutex_);
+    for (const auto & topic : topics_names_to_info_) {
+      auto const & md = topic_names_to_message_definitions_[topic.first];
+      storage_->create_topic(topic.second.topic_metadata, md);
+    }
   }
 
   if (use_cache_) {
@@ -394,12 +385,13 @@ void SequentialWriter::write(std::shared_ptr<const rosbag2_storage::SerializedBa
   }
 
   // Get TopicInformation handler for counting messages.
-  rosbag2_storage::TopicInformation * topic_information {nullptr};
-  try {
-    topic_information = &topics_names_to_info_.at(message->topic_name);
-  } catch (const std::out_of_range & /* oor */) {
+  rosbag2_storage::TopicInformation * topic_information_ptr{nullptr};
+  const auto & topic_name = message->topic_name;
+  if (const auto it = topics_names_to_info_.find(topic_name); it != topics_names_to_info_.end()) {
+    topic_information_ptr = &(it->second);
+  } else {
     std::stringstream errmsg;
-    errmsg << "Failed to write on topic '" << message->topic_name <<
+    errmsg << "Failed to write on topic '" << topic_name <<
       "'. Call create_topic() before first write.";
     throw std::runtime_error(errmsg.str());
   }
@@ -434,8 +426,10 @@ void SequentialWriter::write(std::shared_ptr<const rosbag2_storage::SerializedBa
   metadata_.files.back().message_count++;
   if (storage_options_.max_cache_size == 0u) {
     // If cache size is set to zero, we write to storage directly
+
     storage_->write(converted_msg);
-    ++topic_information->message_count;
+    metadata_.files.back().message_count++;
+    topic_information_ptr->message_count++;
   } else {
     // Otherwise, use cache buffer
     message_cache_->push(converted_msg);
