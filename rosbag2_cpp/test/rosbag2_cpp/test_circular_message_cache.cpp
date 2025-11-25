@@ -133,3 +133,11 @@ TEST_F(CircularMessageCacheTest, circular_message_cache_ensure_empty) {
   EXPECT_THAT(circular_message_cache->get_consumer_buffer()->size(), Eq(0u));
   circular_message_cache->release_consumer_buffer();
 }
+
+TEST_F(CircularMessageCacheTest, circular_message_cache_rejects_null_message) {
+  auto circular_message_cache_ = std::make_shared<rosbag2_cpp::cache::CircularMessageCache>(
+  cache_size_);
+
+  ASSERT_NO_THROW(circular_message_cache_->push(nullptr));
+  ASSERT_NO_THROW(circular_message_cache_->push(nullptr));
+}
