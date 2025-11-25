@@ -117,6 +117,8 @@ public:
   ROSBAG2_TRANSPORT_PUBLIC
   virtual ~Recorder();
 
+  /// @brief Start recording.
+  /// The record() method will return almost immediately and recording will happen in background.
   ROSBAG2_TRANSPORT_PUBLIC
   void record();
 

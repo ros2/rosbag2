@@ -63,6 +63,8 @@ public:
 
   ~RecorderImpl();
 
+  /// @brief Start recording.
+  /// The record() method will return almost immediately and recording will happen in background.
   void record();
 
   /// @brief Stopping recording and closing writer.
@@ -259,6 +261,7 @@ void RecorderImpl::record()
       "Called Recorder::record() while already in recording, dismissing request.");
     return;
   }
+  RCLCPP_INFO(node->get_logger(), "Starting recording to '%s'", storage_options_.uri.c_str());
   paused_ = record_options_.start_paused;
   topic_qos_profile_overrides_ = record_options_.topic_qos_profile_overrides;
   if (record_options_.rmw_serialization_format.empty()) {
@@ -267,6 +270,31 @@ void RecorderImpl::record()
 
   subscriptions_.clear();
   event_notifier_->reset_total_num_messages_lost_in_transport();
+
+  // Check if storage_options.uri already exists and try to add '(n)' postfix
+  namespace fs = std::filesystem;
+  fs::path storage_path(storage_options_.uri);
+  if (fs::is_directory(storage_path)) {
+    RCLCPP_WARN_STREAM(node->get_logger(),
+                       "Bag directory '" << storage_path.c_str() << "' already exists.");
+    for (size_t i = 1U; i < std::numeric_limits<size_t>::max(); i++) {
+      fs::path new_path = storage_path;
+      new_path += "(" + std::to_string(i) + ")";
+      if (!fs::exists(new_path)) {
+        RCLCPP_WARN_STREAM(node->get_logger(),
+                           "Changing bag directory to '" << new_path.c_str() << "'.");
+        storage_options_.uri = new_path.generic_string();
+        storage_path = new_path;
+        break;
+      }
+    }
+  }
+  if (fs::is_directory(storage_path)) {
+    throw std::runtime_error{
+            "Failed to derive non-existent directory for the new Rosbag2 recording. "
+            "Please specify non existent uri explicitly."};
+  }
+
   writer_->open(
     storage_options_,
     {rmw_get_serialization_format(), record_options_.rmw_serialization_format});
