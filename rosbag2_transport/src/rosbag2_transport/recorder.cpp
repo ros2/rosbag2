@@ -12,8 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "rosbag2_transport/recorder.hpp"
-
 #include <algorithm>
 #include <chrono>
 #include <cstdint>
@@ -49,6 +47,7 @@
 #include "rosbag2_transport/config_options_from_node_params.hpp"
 #include "rosbag2_transport/reader_writer_factory.hpp"
 #include "rosbag2_transport/topic_filter.hpp"
+#include "rosbag2_transport/recorder.hpp"
 #include "rosbag2_transport/recorder_event_notifier.hpp"
 
 namespace rosbag2_transport
@@ -456,7 +455,37 @@ void RecorderImpl::record(const std::string & uri)
     storage_options_,
     {record_options_.input_serialization_format, record_options_.output_serialization_format});
 
-  // TODO(morlov): move this block into the create_control_services()
+  rosbag2_cpp::bag_events::WriterEventCallbacks callbacks;
+  callbacks.write_split_callback =
+    [this](rosbag2_cpp::bag_events::BagSplitInfo & info) {
+      event_notifier_->on_bag_split_in_recorder(info);
+    };
+  callbacks.messages_lost_callback =
+    [this](const std::vector<rosbag2_cpp::bag_events::MessagesLostInfo> & msgs_lost_info) {
+      event_notifier_->on_messages_lost_in_recorder(msgs_lost_info);
+    };
+  writer_->add_event_callbacks(callbacks);
+
+  if (!record_options_.use_sim_time) {
+    subscribe_topics(get_requested_or_available_topics());
+  }
+  if (!record_options_.is_discovery_disabled) {
+    start_discovery();
+    RCLCPP_INFO(node->get_logger(), "Listening for topics...");
+  }
+  if (record_options_.start_paused) {
+    if (!record_options_.disable_keyboard_controls) {
+      RCLCPP_INFO(
+        node->get_logger(), "Wait for recording: Press %s to start.",
+        enum_key_code_to_str(Recorder::kPauseResumeToggleKey).c_str());
+    }
+  } else {
+    RCLCPP_INFO(node->get_logger(), "Recording...");
+  }
+}
+
+void RecorderImpl::create_control_services()
+{
   // Only expose snapshot service when mode is enabled
   if (storage_options_.snapshot_mode) {
     srv_snapshot_ = node->create_service<rosbag2_interfaces::srv::Snapshot>(
@@ -643,39 +672,6 @@ void RecorderImpl::record(const std::string & uri)
     {
       response->paused = is_paused();
     });
-
-  rosbag2_cpp::bag_events::WriterEventCallbacks callbacks;
-  callbacks.write_split_callback =
-    [this](rosbag2_cpp::bag_events::BagSplitInfo & info) {
-      event_notifier_->on_bag_split_in_recorder(info);
-    };
-  callbacks.messages_lost_callback =
-    [this](const std::vector<rosbag2_cpp::bag_events::MessagesLostInfo> & msgs_lost_info) {
-      event_notifier_->on_messages_lost_in_recorder(msgs_lost_info);
-    };
-  writer_->add_event_callbacks(callbacks);
-
-  if (!record_options_.use_sim_time) {
-    subscribe_topics(get_requested_or_available_topics());
-  }
-  if (!record_options_.is_discovery_disabled) {
-    start_discovery();
-    RCLCPP_INFO(node->get_logger(), "Listening for topics...");
-  }
-  if (record_options_.start_paused) {
-    if (!record_options_.disable_keyboard_controls) {
-      RCLCPP_INFO(
-        node->get_logger(), "Wait for recording: Press %s to start.",
-        enum_key_code_to_str(Recorder::kPauseResumeToggleKey).c_str());
-    }
-  } else {
-    RCLCPP_INFO(node->get_logger(), "Recording...");
-  }
-}
-
-void RecorderImpl::create_control_services()
-{
-  // TODO(morlov): Move services creation from record() to here and call it from constructor
 }
 
 const rosbag2_cpp::Writer & RecorderImpl::get_writer_handle()
