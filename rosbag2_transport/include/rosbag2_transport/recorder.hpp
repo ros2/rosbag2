@@ -182,6 +182,14 @@ private:
 
   void event_publisher_thread_main();
   bool event_publisher_thread_should_wake();
+  struct ThrottleState {
+    rclcpp::Time last_message_time;
+    bool is_first_message = true;
+  };
+  std::unordered_map<std::string, ThrottleState> throttle_states_;
+
+  std::mutex throttle_mutex_;
+  bool should_record_message(const std::string& topic);
 };
 
 }  // namespace rosbag2_transport

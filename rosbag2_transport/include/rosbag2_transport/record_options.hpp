@@ -49,6 +49,7 @@ public:
   bool ignore_leaf_topics = false;
   bool start_paused = false;
   bool use_sim_time = false;
+  std::map<std::string, double> topic_throttle_rates{};
 };
 
 }  // namespace rosbag2_transport

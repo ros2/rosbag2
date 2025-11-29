@@ -384,7 +384,9 @@ Recorder::create_subscription(
     qos,
     [this, topic_name, topic_type](std::shared_ptr<rclcpp::SerializedMessage> message) {
       if (!paused_.load()) {
-        writer_->write(message, topic_name, topic_type, this->get_clock()->now());
+        if (this->should_record_message(topic_name)) {
+          writer_->write(message, topic_name, topic_type, this->get_clock()->now());
+        }
       }
     });
   return subscription;
@@ -454,5 +456,38 @@ void Recorder::warn_if_new_qos_for_subscribed_topic(const std::string & topic_na
     }
   }
 }
+
+bool Recorder::should_record_message(const std::string& topic) {
+  std::lock_guard<std::mutex> lock(throttle_mutex_);
+  
+  auto it = record_options_.topic_throttle_rates.find(topic);
+  if (it == record_options_.topic_throttle_rates.end()) {
+    return true;
+  }
+  
+  double desired_rate = it->second;
+  if (desired_rate <= 0) {
+    return true;
+  }
+  
+  int64_t min_interval_ns = static_cast<int64_t>(1e9 / desired_rate);
+  auto& state = throttle_states_[topic];
+  auto now = this->get_clock()->now();
+  
+  if (state.is_first_message) {
+    state.last_message_time = now;
+    state.is_first_message = false;
+    return true;
+  }
+  
+  int64_t time_diff_ns = (now - state.last_message_time).nanoseconds();
+  if (time_diff_ns >= min_interval_ns) {
+    state.last_message_time = now;
+    return true;
+  }
+  
+  return false;
+}
+
 
 }  // namespace rosbag2_transport

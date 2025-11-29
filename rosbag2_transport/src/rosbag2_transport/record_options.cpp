@@ -60,6 +60,7 @@ Node convert<rosbag2_transport::RecordOptions>::encode(
   node["topic_qos_profile_overrides"] = qos_overrides;
   node["include_hidden_topics"] = record_options.include_hidden_topics;
   node["include_unpublished_topics"] = record_options.include_unpublished_topics;
+  node["topic_throttle_rates"] = record_options.topic_throttle_rates;
   return node;
 }
 
@@ -91,6 +92,8 @@ bool convert<rosbag2_transport::RecordOptions>::decode(
   optional_assign<bool>(
     node, "include_unpublished_topics",
     record_options.include_unpublished_topics);
+  optional_assign<std::map<std::string, double>>(
+    node, "topic_throttle_rates", record_options.topic_throttle_rates);
   return true;
 }
 
