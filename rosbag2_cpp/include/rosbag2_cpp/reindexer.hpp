@@ -89,7 +89,8 @@ protected:
   std::vector<rosbag2_storage::TopicMetadata> topics_metadata_{};
 
 private:
-  std::string regex_bag_pattern_;
+  std::string new_format_regex_;
+  std::string old_format_regex_;
   std::filesystem::path base_folder_;   // The folder that the bag files are in
   std::shared_ptr<SerializationFormatConverterFactoryInterface> converter_factory_{};
   void get_bag_files(

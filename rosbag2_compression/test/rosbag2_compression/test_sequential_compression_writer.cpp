@@ -17,6 +17,8 @@
 #include <filesystem>
 #include <fstream>
 #include <memory>
+#include <regex>
+#include <sstream>
 #include <string>
 #include <utility>
 #include <vector>
@@ -27,6 +29,7 @@
 #include "rosbag2_compression/sequential_compression_writer.hpp"
 
 #include "rosbag2_cpp/writer.hpp"
+#include "rosbag2_cpp/writers/sequential_writer.hpp"
 
 #include "rosbag2_storage/ros_helper.hpp"
 #include "rosbag2_storage/storage_options.hpp"
@@ -304,12 +307,29 @@ TEST_F(SequentialCompressionWriterTest, writer_creates_correct_metadata_relative
 
   EXPECT_EQ(intercepted_write_metadata_.relative_file_paths.size(), 3u);
 
+  // New filename format: {counter}_{bag_base_dir}_{timestamp}.{compressor}
+  // Timestamp is generated at runtime, so validate using regex
+  // Use static to avoid recompiling regex on each test run
+  static const std::string file_pattern_str =
+    R"(\d+_)" + std::string("test_bag") + R"(_)" +
+    std::string(rosbag2_cpp::writers::TIMESTAMP_PATTERN) +
+    R"(\.)" + std::string(DefaultTestCompressor);
+  static const std::regex file_pattern(file_pattern_str);
+
   int counter = 0;
   for (const auto & path : intercepted_write_metadata_.relative_file_paths) {
-    std::stringstream ss;
-    ss << bag_base_dir_ << "_" << counter << "." << DefaultTestCompressor;
+    // Verify that filename matches expected format
+    EXPECT_TRUE(std::regex_match(path, file_pattern)) <<
+      "Path '" << path << "' does not match expected pattern for file " << counter;
+
+    // Verify that counter is at the correct position
+    std::stringstream expected_prefix;
+    expected_prefix << counter << "_" << bag_base_dir_ << "_";
+    EXPECT_TRUE(path.find(expected_prefix.str()) == 0) <<
+      "Path '" << path << "' does not start with expected prefix '" <<
+      expected_prefix.str() << "'";
+
     counter++;
-    EXPECT_EQ(ss.str(), path);
   }
 }
 
@@ -546,14 +566,44 @@ TEST_P(SequentialCompressionWriterTest, split_event_calls_callback_with_msg_comp
 
   ASSERT_GE(opened_files.size(), num_splits + 1);
   ASSERT_GE(closed_files.size(), num_splits + 1);
+
+  // New filename format: {counter}_{bag_base_dir}_{timestamp}
+  // Timestamp is generated at runtime, so validate using regex
+  static const std::string file_pattern_str =
+    R"(\d+_)" + std::string("test_bag") + R"(_)" +
+    std::string(rosbag2_cpp::writers::TIMESTAMP_PATTERN);
+  static const std::regex file_pattern(file_pattern_str);
+
   for (size_t i = 0; i < num_splits + 1; i++) {
-    auto expected_closed =
-      fs::path(tmp_dir_storage_options_.uri) / (bag_base_dir_ + "_" + std::to_string(i));
-    auto expected_opened = (i == num_splits) ?
+    // Verify closed file format
+    fs::path closed_path(closed_files[i]);
+    std::string closed_filename = closed_path.filename().generic_string();
+    EXPECT_TRUE(std::regex_match(closed_filename, file_pattern)) <<
+      "Closed file '" << closed_filename << "' does not match expected pattern for file " << i;
+
+    // Verify counter is at the correct position
+    std::stringstream expected_prefix;
+    expected_prefix << i << "_" << bag_base_dir_ << "_";
+    EXPECT_TRUE(closed_filename.find(expected_prefix.str()) == 0) <<
+      "Closed file '" << closed_filename << "' does not start with expected prefix '" <<
+      expected_prefix.str() << "'";
+
+    // Verify opened file format
+    if (i == num_splits) {
       // The last opened file shall be empty string when we do "writer->close();"
-      "" : fs::path(tmp_dir_storage_options_.uri) / (bag_base_dir_ + "_" + std::to_string(i + 1));
-    EXPECT_EQ(closed_files[i], expected_closed.generic_string()) << "i = " << i;
-    EXPECT_EQ(opened_files[i], expected_opened.generic_string()) << "i = " << i;
+      EXPECT_EQ(opened_files[i], "") << "i = " << i;
+    } else {
+      fs::path opened_path(opened_files[i]);
+      std::string opened_filename = opened_path.filename().generic_string();
+      EXPECT_TRUE(std::regex_match(opened_filename, file_pattern)) <<
+        "Opened file '" << opened_filename << "' does not match expected pattern for file " << i;
+
+      std::stringstream expected_opened_prefix;
+      expected_opened_prefix << (i + 1) << "_" << bag_base_dir_ << "_";
+      EXPECT_TRUE(opened_filename.find(expected_opened_prefix.str()) == 0) <<
+        "Opened file '" << opened_filename << "' does not start with expected prefix '" <<
+        expected_opened_prefix.str() << "'";
+    }
   }
 }
 
@@ -616,15 +666,49 @@ TEST_P(SequentialCompressionWriterTest, split_event_calls_callback_with_file_com
 
   ASSERT_GE(opened_files.size(), num_splits + 1);
   ASSERT_GE(closed_files.size(), num_splits + 1);
+
+  // New filename format: {counter}_{bag_base_dir}_{timestamp}.{compressor}
+  // Timestamp is generated at runtime, so validate using regex
+  static const std::string closed_file_pattern_str =
+    R"(\d+_)" + std::string("test_bag") + R"(_)" +
+    std::string(rosbag2_cpp::writers::TIMESTAMP_PATTERN) +
+    R"(\.)" + std::string(DefaultTestCompressor);
+  static const std::regex closed_file_pattern(closed_file_pattern_str);
+  static const std::string opened_file_pattern_str =
+    R"(\d+_)" + std::string("test_bag") + R"(_)" +
+    std::string(rosbag2_cpp::writers::TIMESTAMP_PATTERN);
+  static const std::regex opened_file_pattern(opened_file_pattern_str);
+
   for (size_t i = 0; i < num_splits + 1; i++) {
-    auto expected_closed =
-      fs::path(tmp_dir_storage_options_.uri) / (bag_base_dir_ + "_" + std::to_string(i) +
-      "." + DefaultTestCompressor);
-    auto expected_opened = (i == num_splits) ?
+    // Verify closed file format
+    fs::path closed_path(closed_files[i]);
+    std::string closed_filename = closed_path.filename().generic_string();
+    EXPECT_TRUE(std::regex_match(closed_filename, closed_file_pattern)) <<
+      "Closed file '" << closed_filename << "' does not match expected pattern for file " << i;
+
+    // Verify counter is at the correct position
+    std::stringstream expected_prefix;
+    expected_prefix << i << "_" << bag_base_dir_ << "_";
+    EXPECT_TRUE(closed_filename.find(expected_prefix.str()) == 0) <<
+      "Closed file '" << closed_filename << "' does not start with expected prefix '" <<
+      expected_prefix.str() << "'";
+
+    // Verify opened file format
+    if (i == num_splits) {
       // The last opened file shall be empty string when we do "writer->close();"
-      "" : fs::path(tmp_dir_storage_options_.uri) / (bag_base_dir_ + "_" + std::to_string(i + 1));
-    EXPECT_EQ(closed_files[i], expected_closed.generic_string()) << "i = " << i;
-    EXPECT_EQ(opened_files[i], expected_opened.generic_string()) << "i = " << i;
+      EXPECT_EQ(opened_files[i], "") << "i = " << i;
+    } else {
+      fs::path opened_path(opened_files[i]);
+      std::string opened_filename = opened_path.filename().generic_string();
+      EXPECT_TRUE(std::regex_match(opened_filename, opened_file_pattern)) <<
+        "Opened file '" << opened_filename << "' does not match expected pattern for file " << i;
+
+      std::stringstream expected_opened_prefix;
+      expected_opened_prefix << (i + 1) << "_" << bag_base_dir_ << "_";
+      EXPECT_TRUE(opened_filename.find(expected_opened_prefix.str()) == 0) <<
+        "Opened file '" << opened_filename << "' does not start with expected prefix '" <<
+        expected_opened_prefix.str() << "'";
+    }
   }
 }
 
@@ -728,15 +812,48 @@ TEST_F(SequentialCompressionWriterTest, snapshot_writes_to_new_file_with_file_co
   ASSERT_EQ(opened_files.size(), 2);
   ASSERT_EQ(closed_files.size(), 2);
 
+  // New filename format: {counter}_{bag_base_dir}_{timestamp}.{compressor}
+  // Timestamp is generated at runtime, so validate using regex
+  static const std::string closed_file_pattern_str =
+    R"(\d+_)" + std::string("test_bag") + R"(_)" +
+    std::string(rosbag2_cpp::writers::TIMESTAMP_PATTERN) +
+    R"(\.)" + std::string(DefaultTestCompressor);
+  static const std::regex closed_file_pattern(closed_file_pattern_str);
+  static const std::string opened_file_pattern_str =
+    R"(\d+_)" + std::string("test_bag") + R"(_)" +
+    std::string(rosbag2_cpp::writers::TIMESTAMP_PATTERN);
+  static const std::regex opened_file_pattern(opened_file_pattern_str);
+
   for (size_t i = 0; i < 2; i++) {
-    auto expected_closed = fs::path(tmp_dir_storage_options_.uri) /
-      (bag_base_dir_ + "_" + std::to_string(i) + "." + DefaultTestCompressor);
-    auto expected_opened = (i == 1) ?
+    // Verify closed file format
+    fs::path closed_path(closed_files[i]);
+    std::string closed_filename = closed_path.filename().generic_string();
+    EXPECT_TRUE(std::regex_match(closed_filename, closed_file_pattern)) <<
+      "Closed file '" << closed_filename << "' does not match expected pattern for file " << i;
+
+    // Verify counter is at the correct position
+    std::stringstream expected_prefix;
+    expected_prefix << i << "_" << bag_base_dir_ << "_";
+    EXPECT_TRUE(closed_filename.find(expected_prefix.str()) == 0) <<
+      "Closed file '" << closed_filename << "' does not start with expected prefix '" <<
+      expected_prefix.str() << "'";
+
+    // Verify opened file format
+    if (i == 1) {
       // The last opened file shall be empty string when we do "writer->close();"
-      "" : fs::path(tmp_dir_storage_options_.uri) /
-      (bag_base_dir_ + "_" + std::to_string(i + 1));
-    ASSERT_STREQ(closed_files[i].c_str(), expected_closed.generic_string().c_str());
-    ASSERT_STREQ(opened_files[i].c_str(), expected_opened.generic_string().c_str());
+      EXPECT_EQ(opened_files[i], "") << "i = " << i;
+    } else {
+      fs::path opened_path(opened_files[i]);
+      std::string opened_filename = opened_path.filename().generic_string();
+      EXPECT_TRUE(std::regex_match(opened_filename, opened_file_pattern)) <<
+        "Opened file '" << opened_filename << "' does not match expected pattern for file " << i;
+
+      std::stringstream expected_opened_prefix;
+      expected_opened_prefix << (i + 1) << "_" << bag_base_dir_ << "_";
+      EXPECT_TRUE(opened_filename.find(expected_opened_prefix.str()) == 0) <<
+        "Opened file '" << opened_filename << "' does not start with expected prefix '" <<
+        expected_opened_prefix.str() << "'";
+    }
   }
 }
 

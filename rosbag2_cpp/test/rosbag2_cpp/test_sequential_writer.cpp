@@ -14,8 +14,13 @@
 
 #include <gmock/gmock.h>
 
+#include <chrono>
+#include <ctime>
 #include <filesystem>
+#include <iomanip>
 #include <memory>
+#include <regex>
+#include <sstream>
 #include <stdexcept>
 #include <string>
 #include <utility>
@@ -43,6 +48,90 @@
 using namespace testing;  // NOLINT
 using rosbag2_test_common::ParametrizedTemporaryDirectoryFixture;
 namespace fs = std::filesystem;
+
+// Helper function to check if filename matches new naming pattern: {counter}_{prefix}_{timestamp}
+bool matches_filename_pattern(
+  const std::string & filename, const std::string & prefix,
+  uint64_t expected_counter)
+{
+  // Expected format: {counter}_{prefix}_{timestamp}
+  std::string expected_prefix = std::to_string(expected_counter) + "_" + prefix + "_";
+
+  if (filename.size() < expected_prefix.size() ||
+    filename.substr(0, expected_prefix.size()) != expected_prefix)
+  {
+    return false;
+  }
+
+  // Check timestamp pattern: YYYY_MM_DD-HH_MM_SS (19 chars)
+  size_t timestamp_start = expected_prefix.size();
+  if (filename.size() < timestamp_start + 19) {
+    return false;
+  }
+
+  std::string timestamp = filename.substr(timestamp_start, 19);
+  // Simple format validation: YYYY_MM_DD-HH_MM_SS
+  static const std::regex timestamp_pattern(rosbag2_cpp::writers::TIMESTAMP_PATTERN);
+  return std::regex_match(timestamp, timestamp_pattern);
+}
+
+// Helper function to extract counter from filename
+uint64_t extract_counter_from_filename(const std::string & filename)
+{
+  static const std::regex pattern("^(\\d+)_");
+  std::smatch match;
+  if (std::regex_search(filename, match, pattern)) {
+    return std::stoull(match[1].str());
+  }
+  return UINT64_MAX;  // Invalid if pattern doesn't match
+}
+
+// Helper function to extract timestamp from filename
+std::string extract_timestamp_from_filename(const std::string & filename)
+{
+  static std::regex pattern("_" + std::string(rosbag2_cpp::writers::TIMESTAMP_PATTERN) + "$");
+  std::smatch match;
+  if (std::regex_search(filename, match, pattern)) {
+    return match[0].str().substr(1);  // Remove leading underscore
+  }
+  return "";  // Invalid if pattern doesn't match
+}
+
+// Helper function to check if timestamp in filename matches recorded timestamp (within tolerance)
+// Note: Both production code and this test use local time (localtime_r/mktime) for timestamps.
+// This design choice means timestamps are in local time, which may cause ambiguity during
+// DST transitions when the same local time occurs twice. The 5-second tolerance helps
+// handle minor timing differences.
+bool timestamp_matches(
+  const std::string & filename_timestamp,
+  const std::chrono::system_clock::time_point & recorded_time,
+  std::chrono::seconds tolerance = std::chrono::seconds(5))
+{
+  // Parse filename timestamp
+  std::tm tm_parsed = {};
+  std::istringstream ss(filename_timestamp);
+  ss >> std::get_time(&tm_parsed, "%Y_%m_%d-%H_%M_%S");
+  if (ss.fail()) {
+    return false;
+  }
+
+  // Explicitly set tm_isdst to -1 to let std::mktime determine DST automatically
+  // This avoids issues during DST transitions when tm_isdst might not be set by std::get_time
+  tm_parsed.tm_isdst = -1;
+
+  // std::mktime interprets parsed time as local time, matching production code behavior
+  auto filename_time_t = std::mktime(&tm_parsed);
+  auto filename_time_point = std::chrono::system_clock::from_time_t(filename_time_t);
+
+  // Get recorded time
+  auto recorded_time_t = std::chrono::system_clock::to_time_t(recorded_time);
+  auto recorded_time_point = std::chrono::system_clock::from_time_t(recorded_time_t);
+
+  // Check if difference is within tolerance
+  auto diff = (filename_time_point > recorded_time_point) ?
+    (filename_time_point - recorded_time_point) : (recorded_time_point - filename_time_point);
+  return diff <= tolerance;
+}
 
 class SequentialWriterForTest : public rosbag2_cpp::writers::SequentialWriter
 {
@@ -420,6 +509,11 @@ TEST_F(SequentialWriterTest, writer_splits_when_storage_bagfile_size_gt_max_bagf
     writer_->write(message);
   }
 
+  // Record end timestamp after write operations complete
+  // (files created during open() and write/split)
+  // This captures an upper bound for tolerance-based comparison with file creation timestamps
+  auto recorded_time = std::chrono::system_clock::now();
+
   writer_.reset();
   // metadata should be written now that the Writer was released.
 
@@ -430,12 +524,22 @@ TEST_F(SequentialWriterTest, writer_splits_when_storage_bagfile_size_gt_max_bagf
 
   int counter = 0;
   for (const auto & path : fake_metadata_.relative_file_paths) {
-    std::stringstream ss;
-    ss << bag_base_dir_ << "_" << counter;
+    // Extract filename from path (remove directory part if present)
+    std::string filename = fs::path(path).filename().generic_string();
+    // Remove extension if present (e.g., .mcap)
+    std::string filename_no_ext = fs::path(filename).stem().generic_string();
 
-    const auto expected_path = ss.str();
+    EXPECT_TRUE(matches_filename_pattern(filename_no_ext, bag_base_dir_, counter))
+      << "Filename '" << filename_no_ext << "' does not match expected pattern";
+    EXPECT_EQ(extract_counter_from_filename(filename_no_ext), static_cast<uint64_t>(counter))
+      << "Counter in filename '" << filename_no_ext << "' does not match expected value";
+
+    // Verify timestamp matches recorded time (with tolerance)
+    std::string filename_timestamp = extract_timestamp_from_filename(filename_no_ext);
+    EXPECT_TRUE(timestamp_matches(filename_timestamp, recorded_time))
+      << "Timestamp in filename '" << filename_timestamp << "' does not match recorded time";
+
     counter++;
-    EXPECT_EQ(expected_path, path);
   }
 }
 
@@ -503,6 +607,11 @@ TEST_F(
     }
   }
 
+  // Record end timestamp after write operations complete
+  // (files created during open() and write/split)
+  // This captures an upper bound for tolerance-based comparison with file creation timestamps
+  auto recorded_time = std::chrono::system_clock::now();
+
   writer_.reset();
   EXPECT_EQ(written_messages, expected_total_written_messages);
 
@@ -514,12 +623,22 @@ TEST_F(
 
   int counter = 0;
   for (const auto & path : fake_metadata_.relative_file_paths) {
-    std::stringstream ss;
-    ss << bag_base_dir_ << "_" << counter;
+    // Extract filename from path (remove directory part if present)
+    std::string filename = fs::path(path).filename().generic_string();
+    // Remove extension if present (e.g., .mcap)
+    std::string filename_no_ext = fs::path(filename).stem().generic_string();
 
-    const auto expected_path = ss.str();
+    EXPECT_TRUE(matches_filename_pattern(filename_no_ext, bag_base_dir_, counter))
+      << "Filename '" << filename_no_ext << "' does not match expected pattern";
+    EXPECT_EQ(extract_counter_from_filename(filename_no_ext), static_cast<uint64_t>(counter))
+      << "Counter in filename '" << filename_no_ext << "' does not match expected value";
+
+    // Verify timestamp matches recorded time (with tolerance)
+    std::string filename_timestamp = extract_timestamp_from_filename(filename_no_ext);
+    EXPECT_TRUE(timestamp_matches(filename_timestamp, recorded_time))
+      << "Timestamp in filename '" << filename_timestamp << "' does not match recorded time";
+
     counter++;
-    EXPECT_EQ(expected_path, path);
   }
 }
 
@@ -708,10 +827,16 @@ TEST_F(SequentialWriterTest, snapshot_writes_to_new_file_with_bag_split)
   ASSERT_EQ(opened_files.size(), 1);
   ASSERT_EQ(closed_files.size(), 1);
 
-  const auto expected_closed = fs::path(storage_options_.uri) / (bag_base_dir_ + "_0");
-  const auto expected_opened = fs::path(storage_options_.uri) / (bag_base_dir_ + "_1");
-  ASSERT_STREQ(closed_files[0].c_str(), expected_closed.generic_string().c_str());
-  ASSERT_STREQ(opened_files[0].c_str(), expected_opened.generic_string().c_str());
+  // Check that filenames match the new naming pattern
+  std::string closed_filename = fs::path(closed_files[0]).filename().generic_string();
+  std::string opened_filename = fs::path(opened_files[0]).filename().generic_string();
+  std::string closed_filename_no_ext = fs::path(closed_filename).stem().generic_string();
+  std::string opened_filename_no_ext = fs::path(opened_filename).stem().generic_string();
+
+  EXPECT_TRUE(matches_filename_pattern(closed_filename_no_ext, bag_base_dir_, 0))
+    << "Closed filename '" << closed_filename_no_ext << "' does not match expected pattern";
+  EXPECT_TRUE(matches_filename_pattern(opened_filename_no_ext, bag_base_dir_, 1))
+    << "Opened filename '" << opened_filename_no_ext << "' does not match expected pattern";
 
   // Check metadata
   ASSERT_EQ(v_intercepted_update_metadata_.size(), 3u);
@@ -730,7 +855,9 @@ TEST_F(SequentialWriterTest, snapshot_writes_to_new_file_with_bag_split)
 
   ASSERT_FALSE(v_intercepted_update_metadata_[1].files.empty());
   const auto & first_file_info = v_intercepted_update_metadata_[1].files[0];
-  EXPECT_STREQ(first_file_info.path.c_str(), std::string(bag_base_dir_ + "_0").c_str());
+  std::string first_file_name = fs::path(first_file_info.path).stem().generic_string();
+  EXPECT_TRUE(matches_filename_pattern(first_file_name, bag_base_dir_, 0))
+    << "First file path '" << first_file_name << "' does not match expected pattern";
   EXPECT_EQ(first_file_info.message_count, num_expected_msgs);
   EXPECT_EQ(
     std::chrono::time_point_cast<std::chrono::nanoseconds>(
@@ -800,12 +927,15 @@ TEST_F(SequentialWriterTest, snapshot_can_be_called_twice)
   ASSERT_EQ(closed_files.size(), 2);
 
   for (size_t i = 0; i < opened_files.size(); i++) {
-    const auto expected_closed = fs::path(storage_options_.uri) /
-      (bag_base_dir_ + "_" + std::to_string(i));
-    const auto expected_opened = fs::path(storage_options_.uri) /
-      (bag_base_dir_ + "_" + std::to_string(i + 1));
-    ASSERT_STREQ(closed_files[i].c_str(), expected_closed.generic_string().c_str());
-    ASSERT_STREQ(opened_files[i].c_str(), expected_opened.generic_string().c_str());
+    std::string closed_filename = fs::path(closed_files[i]).filename().generic_string();
+    std::string opened_filename = fs::path(opened_files[i]).filename().generic_string();
+    std::string closed_filename_no_ext = fs::path(closed_filename).stem().generic_string();
+    std::string opened_filename_no_ext = fs::path(opened_filename).stem().generic_string();
+
+    EXPECT_TRUE(matches_filename_pattern(closed_filename_no_ext, bag_base_dir_, i))
+      << "Closed filename '" << closed_filename_no_ext << "' does not match expected pattern";
+    EXPECT_TRUE(matches_filename_pattern(opened_filename_no_ext, bag_base_dir_, i + 1))
+      << "Opened filename '" << opened_filename_no_ext << "' does not match expected pattern";
   }
 }
 
@@ -1060,13 +1190,21 @@ TEST_F(SequentialWriterTest, split_event_calls_callback)
   ASSERT_GE(opened_files.size(), num_splits + 1);
   ASSERT_GE(closed_files.size(), num_splits + 1);
   for (size_t i = 0; i < num_splits + 1; i++) {
-    auto expected_closed =
-      fs::path(storage_options_.uri) / (bag_base_dir_ + "_" + std::to_string(i));
-    auto expected_opened = (i == num_splits) ?
+    std::string closed_filename = fs::path(closed_files[i]).filename().generic_string();
+    std::string closed_filename_no_ext = fs::path(closed_filename).stem().generic_string();
+
+    EXPECT_TRUE(matches_filename_pattern(closed_filename_no_ext, bag_base_dir_, i))
+      << "Closed filename '" << closed_filename_no_ext << "' does not match expected pattern";
+
+    if (i == num_splits) {
       // The last opened file shall be empty string when we do "writer->close();"
-      "" : fs::path(storage_options_.uri) / (bag_base_dir_ + "_" + std::to_string(i + 1));
-    EXPECT_EQ(closed_files[i], expected_closed.generic_string());
-    EXPECT_EQ(opened_files[i], expected_opened.generic_string());
+      EXPECT_TRUE(opened_files[i].empty());
+    } else {
+      std::string opened_filename = fs::path(opened_files[i]).filename().generic_string();
+      std::string opened_filename_no_ext = fs::path(opened_filename).stem().generic_string();
+      EXPECT_TRUE(matches_filename_pattern(opened_filename_no_ext, bag_base_dir_, i + 1))
+        << "Opened filename '" << opened_filename_no_ext << "' does not match expected pattern";
+    }
   }
 }
 
@@ -1103,8 +1241,10 @@ TEST_F(SequentialWriterTest, split_event_calls_on_writer_close)
   writer_->close();
 
   ASSERT_TRUE(callback_called);
-  auto expected_closed = fs::path(storage_options_.uri) / (bag_base_dir_ + "_0");
-  EXPECT_EQ(closed_file, expected_closed.generic_string());
+  std::string closed_filename = fs::path(closed_file).filename().generic_string();
+  std::string closed_filename_no_ext = fs::path(closed_filename).stem().generic_string();
+  EXPECT_TRUE(matches_filename_pattern(closed_filename_no_ext, bag_base_dir_, 0))
+    << "Closed filename '" << closed_filename_no_ext << "' does not match expected pattern";
   EXPECT_TRUE(opened_file.empty());
 }
 
@@ -1268,6 +1408,56 @@ TEST_P(ParametrizedTemporaryDirectoryFixture, split_bag_metadata_has_full_durati
     metadata.starting_time,
     std::chrono::high_resolution_clock::time_point(std::chrono::nanoseconds(100)));
   ASSERT_EQ(metadata.duration, std::chrono::nanoseconds(500));
+}
+
+TEST_F(SequentialWriterTest, filename_extracts_prefix_from_timestamped_directory_name)
+{
+  // Test that timestamp pattern is removed from directory name when generating filename
+  // This simulates the case where:
+  // * --output is not specified
+  // * default timestamped directory is used
+  const std::string timestamped_dir = "rosbag2_2025_11_04-20_21_42";
+  storage_options_.uri = (tmp_dir_ / timestamped_dir).string();
+
+  // Set up metadata interception
+  ON_CALL(*metadata_io_, write_metadata).WillByDefault(
+    [this](const std::string &, const rosbag2_storage::BagMetadata & metadata) {
+      fake_metadata_ = metadata;
+    });
+  EXPECT_CALL(*metadata_io_, write_metadata).Times(1);
+
+  auto sequential_writer = std::make_unique<rosbag2_cpp::writers::SequentialWriter>(
+    std::move(storage_factory_), converter_factory_, std::move(metadata_io_));
+  writer_ = std::make_unique<rosbag2_cpp::Writer>(std::move(sequential_writer));
+
+  std::string rmw_format = "rmw_format";
+  writer_->open(storage_options_, {rmw_format, rmw_format});
+  writer_->create_topic({0u, "test_topic", "test_msgs/BasicTypes", "", {}, ""});
+
+  auto message = make_test_msg();
+  writer_->write(message);
+
+  // Record end timestamp after write operation completes,
+  // for tolerance-based comparison with filename timestamp
+  auto recorded_time = std::chrono::system_clock::now();
+  writer_.reset();
+
+  // Verify that filename uses "rosbag2" as prefix (timestamp pattern removed)
+  ASSERT_FALSE(fake_metadata_.relative_file_paths.empty());
+  std::string filename =
+    fs::path(fake_metadata_.relative_file_paths[0]).filename().generic_string();
+  std::string filename_no_ext = fs::path(filename).stem().generic_string();
+
+  EXPECT_TRUE(matches_filename_pattern(filename_no_ext, "rosbag2", 0))
+    << "Filename '" << filename_no_ext <<
+    "' should use 'rosbag2' as prefix (timestamp pattern removed)";
+
+  // Verify timestamp is present in filename
+  std::string filename_timestamp = extract_timestamp_from_filename(filename_no_ext);
+  EXPECT_FALSE(filename_timestamp.empty())
+    << "Filename should contain timestamp";
+  EXPECT_TRUE(timestamp_matches(filename_timestamp, recorded_time))
+    << "Timestamp in filename '" << filename_timestamp << "' should match recorded time";
 }
 
 INSTANTIATE_TEST_SUITE_P(

@@ -105,7 +105,7 @@ TEST_P(RecordFixture, record_end_to_end_test_with_zstd_file_compression) {
 
   const auto decompressed_uri = decompressor.decompress_uri(
     compressed_bag_file_path.generic_string());
-  const auto bag_path = get_bag_file_path(0).generic_string();
+  const auto bag_path = get_actual_bag_file_path(0);
 
   ASSERT_EQ(decompressed_uri, bag_path) <<
     "Expected decompressed URI to be same as uncompressed bag file path!";
@@ -426,10 +426,42 @@ TEST_P(RecordFixture, record_end_to_end_with_splitting_max_size_not_reached) {
   ASSERT_TRUE(fs::exists(bagfile_path)) <<
     "Expected bag file: \"" << bagfile_path.generic_string() << "\" to exist.";
 
-  // Check that the next bagfile does not exist.
-  const auto next_bag_file = get_bag_file_path(1);
-  EXPECT_FALSE(fs::exists(next_bag_file)) << "Expected next bag file: \"" <<
-    next_bag_file.generic_string() << "\" to not exist!";
+  // Verify that only the expected bag files exist and no extra files were created
+  // Check that all files listed in metadata exist and count actual bag files
+  std::set<std::string> expected_bag_files;
+  for (const auto & file : metadata.files) {
+    expected_bag_files.insert(file.path);
+    const auto full_path = root_bag_path_ / fs::path(file.path);
+    EXPECT_TRUE(fs::exists(full_path)) <<
+      "Expected bag file from metadata does not exist: " << full_path.generic_string();
+  }
+
+  // Count actual bag files in directory (excluding metadata files)
+  size_t actual_bag_file_count = 0;
+  for (const auto & entry : fs::directory_iterator(root_bag_path_)) {
+    if (entry.is_regular_file()) {
+      const auto & path = entry.path();
+      const auto filename = path.filename().generic_string();
+      const auto extension = path.extension().generic_string();
+
+      // Skip metadata file
+      if (filename == "metadata.yaml") {
+        continue;
+      }
+
+      // Count bag files (including compressed ones)
+      if (extension == ".db3" || extension == ".mcap" ||
+        (extension == ".zstd" && (filename.find(".db3.zstd") != std::string::npos ||
+        filename.find(".mcap.zstd") != std::string::npos)))
+      {
+        actual_bag_file_count++;
+      }
+    }
+  }
+
+  EXPECT_EQ(metadata.files.size(), actual_bag_file_count) <<
+    "Expected " << metadata.files.size() << " bag files, but found " << actual_bag_file_count <<
+    " bag files in directory.";
 }
 
 TEST_P(RecordFixture, record_end_to_end_with_splitting_splits_bagfile) {

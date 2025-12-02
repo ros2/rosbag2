@@ -25,6 +25,8 @@
 #include "rosbag2_cpp/info.hpp"
 #include "rosbag2_cpp/writer.hpp"
 
+#include "rosbag2_storage/metadata_io.hpp"
+
 #include "rosbag2_test_common/client_manager.hpp"
 #include "rosbag2_test_common/publication_manager.hpp"
 #include "rosbag2_test_common/temporary_directory_fixture.hpp"
@@ -136,6 +138,34 @@ public:
     return rosbag2_test_common::bag_filename_for_storage_id(bag_file_name.str(), storage_id);
   }
 
+  std::filesystem::path get_actual_bag_file_path(int split_index = 0) const
+  {
+    // Read metadata to get actual file name (timestamped format)
+    rosbag2_storage::MetadataIo metadata_io;
+    const auto bag_path = root_bag_path_.generic_string();
+
+    // Wait for metadata file to exist
+    const auto start_time = std::chrono::steady_clock::now();
+    while (std::chrono::steady_clock::now() - start_time < std::chrono::seconds(10)) {
+      if (metadata_io.metadata_file_exists(bag_path)) {
+        break;
+      }
+      std::this_thread::sleep_for(std::chrono::milliseconds(50));
+    }
+
+    if (!metadata_io.metadata_file_exists(bag_path)) {
+      throw std::runtime_error("Metadata file not found for bag: " + bag_path);
+    }
+
+    auto metadata = metadata_io.read_metadata(bag_path);
+    if (metadata.files.empty() || split_index >= static_cast<int>(metadata.files.size())) {
+      throw std::runtime_error("No file found at split_index " + std::to_string(split_index));
+    }
+
+    // Return full path to the actual file
+    return fs::path(bag_path) / metadata.files[split_index].path;
+  }
+
   std::string get_bag_path_str() const
   {
     return root_bag_path_.generic_string();
@@ -187,7 +217,7 @@ TEST_P(Rosbag2CPPGetServiceInfoTest, get_service_info_for_bag_with_topics_only) 
   std::pair<std::vector<std::shared_ptr<rosbag2_cpp::rosbag2_service_info_t>>,
     std::vector<std::shared_ptr<rosbag2_cpp::rosbag2_action_info_t>>>
     ret_service_action_infos;
-  const std::string recorded_bag_uri = bag_path_str + "/" + get_bag_file_name();
+  const std::string recorded_bag_uri = get_actual_bag_file_path().generic_string();
   ASSERT_NO_THROW(
     ret_service_action_infos = info.read_service_and_action_info(
       recorded_bag_uri, storage_id)) << recorded_bag_uri;
@@ -252,7 +282,7 @@ TEST_P(Rosbag2CPPGetServiceInfoTest, get_service_info_for_bag_with_services_only
     std::vector<std::shared_ptr<rosbag2_cpp::rosbag2_action_info_t>>>
     ret_service_action_infos;
 
-  const std::string recorded_bag_uri = bag_path_str + "/" + get_bag_file_name();
+  const std::string recorded_bag_uri = get_actual_bag_file_path().generic_string();
   ASSERT_NO_THROW(
     ret_service_action_infos = info.read_service_and_action_info(
     recorded_bag_uri, storage_id)) << recorded_bag_uri;
@@ -342,7 +372,7 @@ TEST_P(Rosbag2CPPGetServiceInfoTest, get_service_info_for_bag_with_topics_and_se
     std::vector<std::shared_ptr<rosbag2_cpp::rosbag2_action_info_t>>>
     ret_service_action_infos;
 
-  const std::string recorded_bag_uri = bag_path_str + "/" + get_bag_file_name();
+  const std::string recorded_bag_uri = get_actual_bag_file_path().generic_string();
   ASSERT_NO_THROW(
     ret_service_action_infos = info.read_service_and_action_info(
       recorded_bag_uri, storage_id)) << recorded_bag_uri;
