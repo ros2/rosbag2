@@ -14,16 +14,21 @@
 
 #include <gmock/gmock.h>
 
+#include <filesystem>
 #include <memory>
 #include <string>
 #include <unordered_map>
 #include <utility>
 #include <vector>
+#include <rosbag2_storage/ros_helper.hpp>
 
+#include "mock_recorder.hpp"
 #include "rclcpp/rclcpp.hpp"
+#include "rcpputils/scope_exit.hpp"
 
 #include "rosbag2_test_common/publication_manager.hpp"
 #include "rosbag2_test_common/wait_for.hpp"
+#include "rosbag2_test_common/temporary_directory_fixture.hpp"
 
 #include "rosbag2_transport/recorder.hpp"
 
@@ -33,6 +38,11 @@
 
 #include "rosbag2_storage/qos.hpp"
 #include "record_integration_fixture.hpp"
+#include "rosbag2_transport/reader_writer_factory.hpp"
+
+using namespace ::testing;  // NOLINT
+using rosbag2_test_common::TemporaryDirectoryFixture;
+namespace fs = std::filesystem;
 
 TEST_F(RecordIntegrationTestFixture, published_messages_from_multiple_topics_are_recorded)
 {
@@ -47,7 +57,7 @@ TEST_F(RecordIntegrationTestFixture, published_messages_from_multiple_topics_are
 
   rosbag2_transport::RecordOptions record_options =
   {false, false, false, false, {string_topic, array_topic},
-    {}, {}, {}, {}, {}, {}, {}, "rmw_format", 50ms};
+    {}, {}, {}, {}, {}, {}, {}, {}, "rmw_format", "rmw_format", 50ms};
   auto recorder = std::make_shared<rosbag2_transport::Recorder>(
     std::move(writer_), storage_options_, record_options);
   recorder->record();
@@ -125,6 +135,33 @@ TEST_F(RecordIntegrationTestFixture, published_messages_from_multiple_topics_are
   }
 }
 
+TEST_F(TemporaryDirectoryFixture, can_record_again_after_stop_with_real_storage) {
+  rclcpp::init(0, nullptr);
+  auto cleanup_process_handle = rcpputils::make_scope_exit([&]() {rclcpp::shutdown();});
+  std::string test_topic = "/can_record_again_after_stop_topic";
+  rosbag2_storage::StorageOptions storage_options{};
+  storage_options.uri = (fs::path(temporary_dir_path_) / "start_stop_again").generic_string();
+
+  rosbag2_transport::RecordOptions record_options{};
+
+  auto writer = rosbag2_transport::ReaderWriterFactory::make_writer(record_options);
+  {
+    auto recorder = std::make_shared<MockRecorder>(
+      std::move(writer), storage_options, record_options);
+
+    EXPECT_NO_THROW(recorder->record());
+    fs::path storage_path(storage_options.uri);
+    EXPECT_TRUE(fs::is_directory(storage_path));
+
+    EXPECT_NO_THROW(recorder->stop());
+    EXPECT_NO_THROW(recorder->record());
+    storage_path = recorder->get_storage_options().uri;
+    EXPECT_TRUE(fs::is_directory(storage_path));
+    std::string expected_path_str = storage_options.uri + "(1)";
+    EXPECT_EQ(storage_path.generic_string(), expected_path_str);
+  }
+}
+
 TEST_F(RecordIntegrationTestFixture, can_record_again_after_stop)
 {
   GTEST_SKIP() << "Skipping test `can_record_again_after_stop` in rosbag2_transport, until "
@@ -140,7 +177,10 @@ TEST_F(RecordIntegrationTestFixture, can_record_again_after_stop)
     test_topic, basic_type_message, num_messages_to_publish, rclcpp::QoS{rclcpp::KeepAll()}, 50ms);
 
   rosbag2_transport::RecordOptions record_options =
-  {false, false, false, false, {test_topic}, {}, {}, {}, {}, {}, {}, {}, "rmw_format", 50ms};
+  {
+    false, false, false, false, {test_topic}, {}, {}, {}, {}, {}, {}, {}, {}, "rmw_format",
+    "rmw_format", 50ms
+  };
   auto recorder = std::make_shared<rosbag2_transport::Recorder>(
     std::move(writer_), storage_options_, record_options);
   recorder->record();
@@ -224,7 +264,7 @@ TEST_F(RecordIntegrationTestFixture, qos_is_stored_in_metadata)
   pub_manager.setup_publisher(topic, string_message, 2);
 
   rosbag2_transport::RecordOptions record_options =
-  {false, false, false, false, {topic}, {}, {}, {}, {}, {}, {}, {}, "rmw_format", 100ms};
+  {false, false, false, false, {topic}, {}, {}, {}, {}, {}, {}, {}, {}, {}, "rmw_format", 100ms};
   auto recorder = std::make_shared<rosbag2_transport::Recorder>(
     std::move(writer_), storage_options_, record_options);
   recorder->record();
@@ -289,7 +329,7 @@ TEST_F(RecordIntegrationTestFixture, records_sensor_data)
   pub_manager.setup_publisher(topic, string_message, 2, rclcpp::SensorDataQoS());
 
   rosbag2_transport::RecordOptions record_options =
-  {false, false, false, false, {topic}, {}, {}, {}, {}, {}, {}, {}, "rmw_format", 100ms};
+  {false, false, false, false, {topic}, {}, {}, {}, {}, {}, {}, {}, {}, {}, "rmw_format", 100ms};
   auto recorder = std::make_shared<rosbag2_transport::Recorder>(
     std::move(writer_), storage_options_, record_options);
   recorder->record();
@@ -333,7 +373,7 @@ TEST_F(RecordIntegrationTestFixture, receives_latched_messages)
   pub_manager.run_publishers();
 
   rosbag2_transport::RecordOptions record_options =
-  {false, false, false, false, {topic}, {}, {}, {}, {}, {}, {}, {}, "rmw_format", 100ms};
+  {false, false, false, false, {topic}, {}, {}, {}, {}, {}, {}, {}, {}, {}, "rmw_format", 100ms};
   auto recorder = std::make_shared<rosbag2_transport::Recorder>(
     std::move(writer_), storage_options_, record_options);
   recorder->record();
@@ -379,7 +419,7 @@ TEST_F(RecordIntegrationTestFixture, mixed_qos_subscribes) {
     topic, profile_transient_local);
 
   rosbag2_transport::RecordOptions record_options =
-  {false, false, false, false, {topic}, {}, {}, {}, {}, {}, {}, {}, "rmw_format", 100ms};
+  {false, false, false, false, {topic}, {}, {}, {}, {}, {}, {}, {}, {}, {}, "rmw_format", 100ms};
   auto recorder = std::make_shared<rosbag2_transport::Recorder>(
     std::move(writer_), storage_options_, record_options);
   recorder->record();
@@ -428,7 +468,7 @@ TEST_F(RecordIntegrationTestFixture, duration_and_noncompatibility_policies_mixe
   auto publisher_liveliness = create_pub(profile_liveliness);
 
   rosbag2_transport::RecordOptions record_options =
-  {false, false, false, false, {topic}, {}, {}, {}, {}, {}, {}, {}, "rmw_format", 100ms};
+  {false, false, false, false, {topic}, {}, {}, {}, {}, {}, {}, {}, {}, {}, "rmw_format", 100ms};
   auto recorder = std::make_shared<rosbag2_transport::Recorder>(
     std::move(writer_), storage_options_, record_options);
   recorder->record();
@@ -470,7 +510,10 @@ TEST_F(RecordIntegrationTestFixture, write_split_callback_is_called)
   }
 
   rosbag2_transport::RecordOptions record_options =
-  {false, false, false, false, {string_topic}, {}, {}, {}, {}, {}, {}, {}, "rmw_format", 10ms};
+  {
+    false, false, false, false, {string_topic}, {}, {}, {}, {}, {}, {}, {}, {}, {}, "rmw_format",
+    10ms
+  };
   auto recorder = std::make_shared<rosbag2_transport::Recorder>(
     std::move(writer_), storage_options_, record_options);
 
@@ -524,4 +567,250 @@ TEST_F(RecordIntegrationTestFixture, toggle_paused_do_pause_resume)
   test_output = testing::internal::GetCapturedStderr();
   EXPECT_TRUE(recorder->is_paused());
   EXPECT_TRUE(test_output.find("Pausing recording.") != std::string::npos);
+}
+
+TEST_F(RecordIntegrationTestFixture, add_channel_creates_topic_in_writer)
+{
+  rosbag2_transport::RecordOptions record_options{};
+  record_options.is_discovery_disabled = true;
+  auto recorder = std::make_shared<rosbag2_transport::Recorder>(
+    std::move(writer_), storage_options_, record_options);
+
+  std::string topic_name = "/test_channel";
+  std::string topic_type = "rosbag2_test_msgdefs/ComplexMsg";
+  std::string serialization_format = "cdr";
+
+  recorder->record();
+
+  recorder->add_channel(topic_name, topic_type, serialization_format);
+
+  EXPECT_THAT(recorder->subscriptions().size(), 0u);
+
+  auto & writer = recorder->get_writer_handle();
+  auto & mock_writer = dynamic_cast<MockSequentialWriter &>(writer.get_implementation_handle());
+  auto recorded_topics = mock_writer.get_topics();
+
+  EXPECT_EQ(recorded_topics.count(topic_name), 1u);
+  EXPECT_EQ(recorded_topics.at(topic_name).first.name, topic_name);
+  EXPECT_EQ(recorded_topics.at(topic_name).first.type, topic_type);
+  EXPECT_EQ(recorded_topics.at(topic_name).first.serialization_format, serialization_format);
+
+  recorder->stop();
+}
+
+TEST_F(RecordIntegrationTestFixture, add_channel_with_message_definition)
+{
+  rosbag2_transport::RecordOptions record_options{};
+  record_options.is_discovery_disabled = true;
+  auto recorder = std::make_shared<rosbag2_transport::Recorder>(
+    std::move(writer_), storage_options_, record_options);
+
+  std::string topic_name = "/test_channel_with_def";
+  std::string topic_type = "test_msgs/msg/BasicTypes";
+  std::string message_definition_encoding = "ros2idl";
+  std::string encoded_message_definition = "string test_field";
+  std::string serialization_format = "cdr";
+
+  recorder->record();
+
+  recorder->add_channel(topic_name, topic_type, message_definition_encoding,
+                        encoded_message_definition, serialization_format);
+
+  auto & writer = recorder->get_writer_handle();
+  auto & mock_writer = dynamic_cast<MockSequentialWriter &>(writer.get_implementation_handle());
+  auto recorded_topics = mock_writer.get_topics();
+
+  EXPECT_EQ(recorded_topics.count(topic_name), 1u);
+  EXPECT_EQ(recorded_topics.at(topic_name).first.name, topic_name);
+  EXPECT_EQ(recorded_topics.at(topic_name).first.type, topic_type);
+  EXPECT_EQ(recorded_topics.at(topic_name).second.encoding, message_definition_encoding);
+  EXPECT_EQ(
+    recorded_topics.at(topic_name).second.encoded_message_definition,
+    encoded_message_definition
+  );
+  recorder->stop();
+}
+
+TEST_F(RecordIntegrationTestFixture, write_message_writes_to_bag)
+{
+  rosbag2_transport::RecordOptions record_options{};
+  const std::string serialization_format = "memory_view";
+  record_options.input_serialization_format = serialization_format;
+  record_options.output_serialization_format = serialization_format;
+  record_options.is_discovery_disabled = true;
+
+  auto recorder = std::make_shared<rosbag2_transport::Recorder>(
+    std::move(writer_), storage_options_, record_options);
+
+  const std::string topic_name = "/direct_write_topic";
+  const std::string topic_type = "test_msgs/msg/Strings";
+
+  // Add channel first
+  recorder->add_channel(topic_name, topic_type, serialization_format);
+
+  recorder->record();
+
+  const uint32_t num_messages = 5U;
+  const rcutils_time_point_value_t initial_timestamp = 1234567890;
+
+  for (uint32_t i = 0; i < num_messages; i++) {
+    // Create serialized message
+    uint64_t msg_content_uint64_value = i * 1000;
+    auto serialized_data =
+      rosbag2_storage::make_serialized_message(&msg_content_uint64_value,
+                                               sizeof(msg_content_uint64_value));
+
+    rcutils_time_point_value_t timestamp = initial_timestamp + (i * 200);
+    uint32_t sequence_number = i;
+    recorder->write_message(serialized_data, topic_name, timestamp, timestamp + 1, sequence_number);
+  }
+
+  auto & writer = recorder->get_writer_handle();
+  auto & mock_writer = dynamic_cast<MockSequentialWriter &>(writer.get_implementation_handle());
+
+  ASSERT_EQ(mock_writer.get_number_of_recorded_messages(), num_messages);
+
+  auto recorded_messages = mock_writer.get_messages();
+  ASSERT_EQ(recorded_messages.size(), num_messages);
+
+  for (uint32_t i = 0; i < num_messages; i++) {
+    EXPECT_EQ(recorded_messages[i]->topic_name, topic_name);
+    EXPECT_EQ(recorded_messages[i]->send_timestamp, initial_timestamp + (i * 200));
+    EXPECT_EQ(recorded_messages[i]->recv_timestamp, initial_timestamp + (i * 200) + 1);
+    EXPECT_EQ(recorded_messages[i]->sequence_number, i);
+
+    uint64_t recorded_message_value =
+      *(reinterpret_cast<uint64_t *>(recorded_messages[i]->serialized_data->buffer));
+    EXPECT_EQ(recorded_message_value, i * 1000);
+  }
+
+  recorder->stop();
+}
+
+TEST_F(RecordIntegrationTestFixture, write_message_uses_recv_timestamp_from_node_clock)
+{
+  rosbag2_transport::RecordOptions record_options{};
+  const std::string serialization_format = "memory_view";
+  record_options.input_serialization_format = serialization_format;
+  record_options.output_serialization_format = serialization_format;
+  record_options.is_discovery_disabled = true;
+
+  auto recorder = std::make_shared<rosbag2_transport::Recorder>(
+    std::move(writer_), storage_options_, record_options);
+
+  const std::string topic_name = "/direct_write_topic";
+  const std::string topic_type = "test_msgs/msg/Strings";
+
+  // Add channel first
+  recorder->add_channel(topic_name, topic_type, serialization_format);
+
+  recorder->record();
+
+  const uint32_t num_messages = 5u;
+  const rcutils_time_point_value_t initial_timestamp = 1234567890;
+
+  for (uint32_t i = 0; i < num_messages; i++) {
+    // Create serialized message
+    uint64_t msg_content_uint64_value = i * 1000;
+    auto serialized_data =
+      rosbag2_storage::make_serialized_message(&msg_content_uint64_value,
+                                               sizeof(msg_content_uint64_value));
+
+    rcutils_time_point_value_t timestamp = initial_timestamp + (i * 200);
+    uint32_t sequence_number = i;
+    recorder->write_message(serialized_data, topic_name, timestamp, sequence_number);
+  }
+
+  auto & writer = recorder->get_writer_handle();
+  auto & mock_writer = dynamic_cast<MockSequentialWriter &>(writer.get_implementation_handle());
+
+  ASSERT_EQ(mock_writer.get_number_of_recorded_messages(), num_messages);
+
+  auto recorded_messages = mock_writer.get_messages();
+  ASSERT_EQ(recorded_messages.size(), num_messages);
+
+  for (uint32_t i = 0; i < num_messages; i++) {
+    EXPECT_EQ(recorded_messages[i]->topic_name, topic_name);
+    EXPECT_EQ(recorded_messages[i]->send_timestamp, initial_timestamp + (i * 200));
+    // recv_timestamp should be set by the node's clock, so it should be different from
+    // send_timestamp or zero.
+    EXPECT_NE(recorded_messages[i]->recv_timestamp, recorded_messages[i]->send_timestamp);
+    EXPECT_NE(recorded_messages[i]->recv_timestamp, 0);
+    EXPECT_EQ(recorded_messages[i]->sequence_number, i);
+
+    uint64_t recorded_message_value =
+      *(reinterpret_cast<uint64_t *>(recorded_messages[i]->serialized_data->buffer));
+    EXPECT_EQ(recorded_message_value, i * 1000);
+  }
+
+  recorder->stop();
+}
+
+TEST_F(RecordIntegrationTestFixture, write_message_does_not_write_when_paused)
+{
+  rosbag2_transport::RecordOptions record_options{};
+  const std::string serialization_format = "memory_view";
+  record_options.input_serialization_format = serialization_format;
+  record_options.output_serialization_format = serialization_format;
+  record_options.is_discovery_disabled = true;
+
+  auto recorder = std::make_shared<rosbag2_transport::Recorder>(
+    std::move(writer_), storage_options_, record_options);
+
+  // Create serialized message
+  uint64_t msg_content_uint64_value = 12345;
+  auto serialized_data = rosbag2_storage::make_serialized_message(&msg_content_uint64_value,
+                                                                  sizeof(msg_content_uint64_value));
+
+  recorder->record();
+
+  const std::string topic_name = "/paused_write_topic";
+  const std::string topic_type = "test_msgs/msg/Strings";
+  recorder->add_channel(topic_name, topic_type, serialization_format, "unknown", "");
+
+  // Pause recording
+  recorder->pause();
+  ASSERT_TRUE(recorder->is_paused());
+
+  // Try to write message while paused
+  rcutils_time_point_value_t timestamp = 1234567890;
+  uint32_t sequence_number = 42;
+  recorder->write_message(serialized_data, topic_name, timestamp, sequence_number);
+
+  auto & writer = recorder->get_writer_handle();
+  auto & mock_writer = dynamic_cast<MockSequentialWriter &>(writer.get_implementation_handle());
+  auto recorded_messages = mock_writer.get_messages();
+
+  // No messages should be recorded while paused
+  EXPECT_EQ(recorded_messages.size(), 0u);
+
+  recorder->stop();
+}
+
+TEST_F(RecordIntegrationTestFixture, on_messages_lost_in_transport_updates_statistics)
+{
+  rosbag2_transport::RecordOptions record_options{};
+  record_options.is_discovery_disabled = true;
+  auto recorder = std::make_shared<rosbag2_transport::Recorder>(
+    std::move(writer_), storage_options_, record_options);
+
+  std::string topic_name = "/lost_topic";
+  std::string topic_type = "test_msgs/msg/BasicTypes";
+  std::string serialization_format = "cdr";
+
+  recorder->record();
+  recorder->add_channel(topic_name, topic_type, serialization_format);
+
+  rclcpp::QOSMessageLostInfo lost_info;
+  lost_info.total_count = 5;
+  lost_info.total_count_change = 3;
+
+  recorder->on_messages_lost_in_transport(topic_name, lost_info);
+  lost_info.total_count++;
+  lost_info.total_count_change = 1;
+  recorder->on_messages_lost_in_transport(topic_name, lost_info);
+
+  EXPECT_EQ(recorder->get_total_num_messages_lost_in_transport(), 4u);
+
+  recorder->stop();
 }

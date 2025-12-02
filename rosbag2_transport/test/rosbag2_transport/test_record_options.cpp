@@ -33,6 +33,8 @@ TEST(record_options, test_yaml_serialization)
   original.exclude_service_events = {"exclude_service1", "exclude_service2"};
   original.exclude_actions = {"exclude_action1", "exclude_action2"};
   original.rmw_serialization_format = "cdr";
+  original.input_serialization_format = "cdr";
+  original.output_serialization_format = "cdr";
   original.topic_polling_interval = std::chrono::milliseconds{200};
   original.regex = "[xyz]/topic";
   original.exclude_regex = "[x]/topic";
@@ -64,6 +66,8 @@ TEST(record_options, test_yaml_serialization)
   CHECK(exclude_service_events);
   CHECK(exclude_actions);
   CHECK(rmw_serialization_format);
+  CHECK(input_serialization_format);
+  CHECK(output_serialization_format);
   #undef CHECK
 }
 
@@ -73,7 +77,8 @@ TEST(record_options, test_yaml_decode_for_all_and_exclude)
     "  all: true\n"
     "  all_topics: false\n"
     "  topics: []\n"
-    "  rmw_serialization_format: \"\"  # defaults to using the format of the input topic\n"
+    "  input_serialization_format: \"\"  # defaults to using the format of the input topic\n"
+    "  output_serialization_format: \"\"  # defaults to using the format of the input topic\n"
     "  regex: \"[xyz]/topic\"\n"
     "  exclude: \"[x]/topic\"\n";
 

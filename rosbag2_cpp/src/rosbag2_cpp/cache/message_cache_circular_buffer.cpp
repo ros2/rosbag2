@@ -32,9 +32,14 @@ MessageCacheCircularBuffer::MessageCacheCircularBuffer(size_t max_cache_size)
 
 bool MessageCacheCircularBuffer::push(CacheBufferInterface::buffer_element_t msg)
 {
+  if (!msg || !msg->serialized_data) {
+    ROSBAG2_CPP_LOG_ERROR("Attempted to push null message into circular buffer. Dropping message!");
+    return false;
+  }
+
   // Drop message if it exceeds the buffer size
   if (msg->serialized_data->buffer_length > max_bytes_size_) {
-    ROSBAG2_CPP_LOG_WARN_STREAM("Last message exceeds snapshot buffer size. Dropping message!");
+    ROSBAG2_CPP_LOG_WARN("Last message exceeds snapshot buffer size. Dropping message!");
     return false;
   }
 

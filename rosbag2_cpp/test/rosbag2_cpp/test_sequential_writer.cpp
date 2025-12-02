@@ -169,6 +169,48 @@ std::shared_ptr<rosbag2_storage::SerializedBagMessage> make_test_msg()
   return message;
 }
 
+TEST_F(SequentialWriterTest, create_topic_does_not_throw_if_writer_not_open) {
+  auto sequential_writer = std::make_unique<rosbag2_cpp::writers::SequentialWriter>(
+    std::move(storage_factory_), converter_factory_, std::move(metadata_io_));
+  writer_ = std::make_unique<rosbag2_cpp::Writer>(std::move(sequential_writer));
+
+  rosbag2_storage::TopicMetadata topic_metadata{0u, "topic1", "test_msgs/BasicTypes", "", {}, ""};
+
+  EXPECT_NO_THROW(writer_->create_topic(topic_metadata));
+}
+
+TEST_F(SequentialWriterTest, remove_topic_does_not_throw_if_writer_not_open) {
+  auto sequential_writer = std::make_unique<rosbag2_cpp::writers::SequentialWriter>(
+    std::move(storage_factory_), converter_factory_, std::move(metadata_io_));
+  writer_ = std::make_unique<rosbag2_cpp::Writer>(std::move(sequential_writer));
+
+  rosbag2_storage::TopicMetadata topic_metadata{0u, "topic1", "test_msgs/BasicTypes", "", {}, ""};
+
+  EXPECT_NO_THROW(writer_->create_topic(topic_metadata));
+  EXPECT_NO_THROW(writer_->remove_topic(topic_metadata));
+}
+
+TEST_F(SequentialWriterTest, topics_persist_between_close_and_open) {
+  auto sequential_writer = std::make_unique<rosbag2_cpp::writers::SequentialWriter>(
+    std::move(storage_factory_), converter_factory_, std::move(metadata_io_));
+  writer_ = std::make_unique<rosbag2_cpp::Writer>(std::move(sequential_writer));
+
+  auto test_message = make_test_msg();
+  rosbag2_storage::TopicMetadata topic_metadata {
+    0U, test_message->topic_name, "test_msgs/BasicTypes", "", {}, ""
+  };
+
+  writer_->create_topic(topic_metadata);
+  writer_->open(storage_options_);
+  writer_->close();
+
+  // Reopen the writer and verify the topic still exists. i.e., writing a message without
+  // recreating the topic.
+  storage_options_.uri += "(1)";  // Add suffix to create a new bag folder in the scope of the test
+  writer_->open(storage_options_);
+  EXPECT_NO_THROW(writer_->write(test_message));
+}
+
 TEST_F(
   SequentialWriterTest,
   write_uses_converters_to_convert_serialization_format_if_input_and_output_format_are_different) {

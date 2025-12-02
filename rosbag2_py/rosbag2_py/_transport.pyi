@@ -116,8 +116,10 @@ class RecordOptions:
     ignore_leaf_topics: bool
     include_hidden_topics: bool
     include_unpublished_topics: bool
+    input_serialization_format: str
     is_discovery_disabled: bool
     node_prefix: str
+    output_serialization_format: str
     regex: str
     rmw_serialization_format: str
     services: List[str]

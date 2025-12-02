@@ -42,7 +42,10 @@ public:
   std::vector<std::string> exclude_topic_types;
   std::vector<std::string> exclude_service_events;  // service event topics list
   std::vector<std::string> exclude_actions;         // actions name list
+  // rmw_serialization_format deprecated. Use output_serialization_format instead
   std::string rmw_serialization_format;
+  std::string input_serialization_format;
+  std::string output_serialization_format;
   std::chrono::milliseconds topic_polling_interval{100};
   std::string regex = "";
   std::string exclude_regex = "";

@@ -324,7 +324,8 @@ output_bags:
   services: []
   all_actions: false
   actions: []
-  rmw_serialization_format: ""  # defaults to using the format of the input topic
+  input_serialization_format: ""   # defaults to using the format of the input topic
+  output_serialization_format: ""  # defaults to using the format of the input topic
   regex: ""
   exclude_regex: ""
   exclude_topics: []
@@ -382,7 +383,7 @@ output_bags:
 
 When starting a recording or playback, you can pass a YAML file that contains QoS profile settings for a specific topic.
 The YAML schema for the profile overrides is a dictionary of topic names with key/value pairs for each QoS policy.
-Below is an example profile set to the default ROS2 QoS settings.
+Below is an example profile set to the default ROS 2 QoS settings.
 
 ```yaml
 /topic_name:

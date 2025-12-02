@@ -58,8 +58,8 @@ public:
 
   /// Puts msg into circular buffer, replacing the oldest msg when buffer is full
   /// \return True if message was successfully pushed, otherwise false.
-  /// NOTE: This will always return true, since the circular buffer by design drops old messages
-  /// when the buffer is full.
+  /// NOTE: Unless message is null or too large for the buffer, this will always return true
+  /// since the circular buffer by design drops old messages when the buffer is full.
   bool push(std::shared_ptr<const rosbag2_storage::SerializedBagMessage> msg) override;
 
   /// Get current buffer to consume.

@@ -62,7 +62,7 @@ TEST_F(RecordIntegrationTestFixture, published_messages_from_multiple_topics_are
       RecorderEventNotifier::get_default_write_split_topic_name(),
       RecorderEventNotifier::get_default_messages_lost_topic_name(),
     },
-    {}, {}, {}, "rmw_format", 100ms
+    {}, {}, {}, {}, {}, "rmw_format", 100ms
   };
   auto recorder = std::make_shared<rosbag2_transport::Recorder>(
     std::move(writer_), storage_options_, record_options);
@@ -111,7 +111,7 @@ TEST_F(RecordIntegrationTestFixture, published_messages_from_multiple_services_a
     "test_service_2");
 
   rosbag2_transport::RecordOptions record_options =
-  {false, true, false, false, {}, {}, {}, {}, {}, {}, {}, {}, "rmw_format", 100ms};
+  {false, true, false, false, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, "rmw_format", 100ms};
   auto recorder = std::make_shared<MockRecorder>(
     std::move(writer_), storage_options_, record_options);
   recorder->record();
@@ -159,7 +159,7 @@ TEST_F(RecordIntegrationTestFixture, published_messages_from_multiple_actions_ar
     "test_action_2");
 
   rosbag2_transport::RecordOptions record_options =
-  {false, false, true, false, {}, {}, {}, {}, {}, {}, {}, {}, "rmw_format", 100ms};
+  {false, false, true, false, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, "rmw_format", 100ms};
   auto recorder = std::make_shared<MockRecorder>(
     std::move(writer_), storage_options_, record_options);
   recorder->record();
@@ -229,7 +229,7 @@ TEST_F(RecordIntegrationTestFixture, published_messages_from_topic_service_actio
       RecorderEventNotifier::get_default_write_split_topic_name(),
       RecorderEventNotifier::get_default_messages_lost_topic_name(),
     },
-    {}, {}, {}, "rmw_format", 100ms
+    {}, {}, {}, {}, {}, "rmw_format", 100ms
   };
   auto recorder = std::make_shared<MockRecorder>(
     std::move(writer_), storage_options_, record_options);
@@ -292,7 +292,7 @@ TEST_F(RecordIntegrationTestFixture, cancel_event_messages_from_action_are_recor
       RecorderEventNotifier::get_default_write_split_topic_name(),
       RecorderEventNotifier::get_default_messages_lost_topic_name(),
     },
-    {}, {}, {}, "rmw_format", 100ms
+    {}, {}, {}, {}, {}, "rmw_format", 100ms
   };
   auto recorder = std::make_shared<MockRecorder>(
     std::move(writer_), storage_options_, record_options);
