@@ -182,7 +182,7 @@ void Reindexer::aggregate_metadata(
       storage_options.storage_id,
       storage_options.max_bagfile_size,
       storage_options.max_bagfile_duration,
-      storage_options.max_splits,
+      storage_options.max_bag_files,
       storage_options.max_cache_size,
       storage_options.storage_config_uri
     };

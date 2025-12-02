@@ -1066,11 +1066,11 @@ TEST_F(SequentialWriterTest, split_event_calls_on_writer_close)
   EXPECT_TRUE(opened_file.empty());
 }
 
-TEST_F(SequentialWriterTest, circular_logging_limits_number_of_files_by_max_splits)
+TEST_F(SequentialWriterTest, circular_logging_limits_number_of_files_by_max_bag_files)
 {
   // Configure frequent splits and a small retention window
   const uint64_t max_bagfile_size = 5;   // split every 5 writes
-  const uint64_t max_splits = 3;         // retain at most 3 files
+  const uint64_t max_bag_files = 3;      // retain at most 3 files
   const int message_count = 25;          // enough writes to exceed retention
 
   auto sequential_writer = std::make_unique<rosbag2_cpp::writers::SequentialWriter>(
@@ -1082,7 +1082,7 @@ TEST_F(SequentialWriterTest, circular_logging_limits_number_of_files_by_max_spli
 
   storage_options_.max_cache_size = 0;             // direct writes
   storage_options_.max_bagfile_size = max_bagfile_size;
-  storage_options_.max_splits = max_splits;        // enable split-count circular limit
+  storage_options_.max_bag_files = max_bag_files;  // enable bag file count circular limit
 
   writer_->open(storage_options_, {"rmw_format", "rmw_format"});
   writer_->create_topic({0u, "test_topic", "test_msgs/BasicTypes", "", {}, ""});
@@ -1092,8 +1092,8 @@ TEST_F(SequentialWriterTest, circular_logging_limits_number_of_files_by_max_spli
   }
   writer_->close();
 
-  // After circular deletion, only max_splits files should remain in metadata
-  ASSERT_LE(fake_metadata_.files.size(), max_splits);
+  // After circular deletion, only max_bag_files files should remain in metadata
+  ASSERT_LE(fake_metadata_.files.size(), max_bag_files);
   ASSERT_EQ(fake_metadata_.files.size(), fake_metadata_.relative_file_paths.size());
 }
 

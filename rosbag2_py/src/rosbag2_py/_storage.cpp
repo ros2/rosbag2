@@ -89,7 +89,7 @@ PYBIND11_MODULE(_storage, m) {
     pybind11::arg("storage_id") = "",
     pybind11::arg("max_bagfile_size") = 0,
     pybind11::arg("max_bagfile_duration") = 0,
-    pybind11::arg("max_splits") = 0,
+    pybind11::arg("max_bag_files") = 0,
     pybind11::arg("max_cache_size") = 0,
     pybind11::arg("storage_preset_profile") = "",
     pybind11::arg("storage_config_uri") = "",
@@ -106,8 +106,8 @@ PYBIND11_MODULE(_storage, m) {
     "max_bagfile_duration",
     &rosbag2_storage::StorageOptions::max_bagfile_duration)
   .def_readwrite(
-    "max_splits",
-    &rosbag2_storage::StorageOptions::max_splits)
+    "max_bag_files",
+    &rosbag2_storage::StorageOptions::max_bag_files)
   .def_readwrite(
     "max_cache_size",
     &rosbag2_storage::StorageOptions::max_cache_size)

@@ -416,9 +416,9 @@ get_storage_options_from_node_params(rclcpp::Node & node)
     node, "storage.max_bagfile_duration", 0,
     std::numeric_limits<int64_t>::max(), storage_options.max_bagfile_duration);
 
-  storage_options.max_splits = param_utils::declare_integer_node_params<uint64_t>(
-    node, "storage.max_splits", 0,
-    std::numeric_limits<int64_t>::max(), storage_options.max_splits);
+  storage_options.max_bag_files = param_utils::declare_integer_node_params<uint64_t>(
+    node, "storage.max_bag_files", 0,
+    std::numeric_limits<int64_t>::max(), storage_options.max_bag_files);
 
   storage_options.max_cache_size = param_utils::declare_integer_node_params<uint64_t>(
     node, "storage.max_cache_size", 0,

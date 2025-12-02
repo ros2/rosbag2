@@ -557,7 +557,6 @@ TEST_P(SequentialCompressionWriterTest, split_event_calls_callback_with_msg_comp
   }
 }
 
-
 TEST_P(SequentialCompressionWriterTest, split_event_calls_callback_with_file_compression)
 {
   const uint64_t max_bagfile_size = 3;
@@ -630,10 +629,10 @@ TEST_P(SequentialCompressionWriterTest, split_event_calls_callback_with_file_com
 }
 
 TEST_F(SequentialCompressionWriterTest,
-  circular_logging_limits_number_of_files_by_max_splits_with_file_compression)
+  circular_logging_limits_number_of_files_by_max_bag_files_with_file_compression)
 {
   const uint64_t max_bagfile_size = 3;   // split frequently
-  const uint64_t max_splits = 3;         // retain at most 3 files
+  const uint64_t max_bag_files = 3;      // retain at most 3 files
   const int message_count = 40;
 
   rosbag2_compression::CompressionOptions compression_options {
@@ -649,7 +648,7 @@ TEST_F(SequentialCompressionWriterTest,
 
   tmp_dir_storage_options_.max_cache_size = 0;
   tmp_dir_storage_options_.max_bagfile_size = max_bagfile_size;
-  tmp_dir_storage_options_.max_splits = max_splits;
+  tmp_dir_storage_options_.max_bag_files = max_bag_files;
 
   writer_->open(tmp_dir_storage_options_);
   writer_->create_topic({0u, "test_topic", "test_msgs/BasicTypes", "", {}, ""});
@@ -661,7 +660,7 @@ TEST_F(SequentialCompressionWriterTest,
   }
   writer_.reset();
 
-  ASSERT_LE(intercepted_write_metadata_.files.size(), max_splits);
+  ASSERT_LE(intercepted_write_metadata_.files.size(), max_bag_files);
   ASSERT_EQ(
     intercepted_write_metadata_.files.size(),
     intercepted_write_metadata_.relative_file_paths.size());

@@ -336,9 +336,7 @@ void SequentialWriter::switch_to_next_storage()
       "If circular logging is enabled, ensure old files are deleted to avoid conflicts.");
   }
 
-  storage_options_.uri = format_storage_uri(
-    base_folder_,
-    next_file_index_);
+  storage_options_.uri = format_storage_uri(base_folder_, next_file_index_);
   next_file_index_++;
   storage_ = storage_factory_->open_read_write(storage_options_);
   if (!storage_) {
@@ -354,6 +352,9 @@ void SequentialWriter::switch_to_next_storage()
   file_info.path = strip_parent_path(storage_->get_relative_file_path());
   metadata_.files.push_back(file_info);
   metadata_.relative_file_paths.push_back(file_info.path);
+
+  // Delete oldest files if circular buffer limit exceeded (after new file is added)
+  delete_oldest_files_if_needed();
 
   storage_->update_metadata(metadata_);
   // Re-register all topics since we rolled-over to a new bagfile.
@@ -427,8 +428,6 @@ void SequentialWriter::write(std::shared_ptr<const rosbag2_storage::SerializedBa
   if (!storage_options_.snapshot_mode && should_split_bagfile(message_timestamp)) {
     split_bagfile();
     metadata_.files.back().starting_time = message_timestamp;
-    // Delete oldest files if circular buffer limit exceeded (after split creates new file)
-    delete_oldest_files_if_needed();
   }
 
   metadata_.starting_time = std::min(metadata_.starting_time, message_timestamp);
@@ -514,20 +513,20 @@ bool SequentialWriter::should_split_bagfile(
 
 void SequentialWriter::delete_oldest_files_if_needed()
 {
-  // Only delete if split count limit is set
+  // Only delete if bag file count limit is set
   // Note: This is only called after split_bagfile(), so max_bagfile_size is guaranteed to be set
-  if (storage_options_.max_splits == 0) {
+  if (storage_options_.max_bag_files == 0) {
     return;
   }
 
   // Protect metadata access with mutex to prevent race conditions
   std::lock_guard<std::mutex> lock(topics_info_mutex_);
 
-  // Delete oldest files until we're under the split-count limit
+  // Delete oldest files until we're under the bag file count limit
   // Note: We just split, so we have at least 2 files and the oldest is definitely not current
   while (metadata_.files.size() > 1) {
     // If we're under the limit, stop deleting
-    if (metadata_.files.size() <= storage_options_.max_splits) {
+    if (metadata_.files.size() <= storage_options_.max_bag_files) {
       break;
     }
 
@@ -548,11 +547,6 @@ void SequentialWriter::delete_oldest_files_if_needed()
     metadata_.relative_file_paths.erase(metadata_.relative_file_paths.begin());
     metadata_.files.erase(metadata_.files.begin());
     metadata_.starting_time = metadata_.files.front().starting_time;
-  }
-
-  // Update metadata after deletions
-  if (!metadata_.files.empty()) {
-    storage_->update_metadata(metadata_);
   }
 }
 
