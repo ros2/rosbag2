@@ -515,13 +515,7 @@ void SequentialWriter::delete_oldest_files_if_needed()
   std::lock_guard<std::mutex> lock(topics_info_mutex_);
 
   // Delete oldest files until we're under the bag file count limit
-  // Note: We just split, so we have at least 2 files and the oldest is definitely not current
-  while (metadata_.files.size() > 1) {
-    // If we're under the limit, stop deleting
-    if (metadata_.files.size() <= storage_options_.max_bag_files) {
-      break;
-    }
-
+  while (metadata_.files.size() > storage_options_.max_bag_files) {
     const auto & oldest_file = metadata_.files.front();
     const auto file_path = fs::path(base_folder_) / oldest_file.path;
 
