@@ -1139,6 +1139,72 @@ TEST_F(SequentialWriterTest, circular_logging_limits_number_of_files_by_max_bag_
   ASSERT_EQ(fake_metadata_.files.size(), fake_metadata_.relative_file_paths.size());
 }
 
+TEST_P(
+  ParametrizedTemporaryDirectoryFixture,
+  circular_logging_deletes_oldest_files_with_real_storage)
+{
+  // Integration test: verify max_bag_files actually deletes files from disk
+  const uint64_t max_bag_files = 3;
+  const size_t total_files_to_create = 6;
+  std::string topic_name = "topic";
+
+  rosbag2_storage::StorageOptions storage_options;
+  storage_options.uri = (fs::path(temporary_dir_path_) / "circular_bag").generic_string();
+  storage_options.storage_id = GetParam();
+  storage_options.max_bag_files = max_bag_files;
+
+  rosbag2_cpp::writers::SequentialWriter writer{};
+  writer.open(storage_options, rosbag2_cpp::ConverterOptions{});
+  writer.create_topic(
+  {
+    0u,
+    topic_name,
+    "test_msgs/msg/BasicTypes",
+    "cdr",
+    {},
+    ""
+  },
+  {
+    "test_msgs/msg/BasicTypes",
+    "ros2msg",
+    "bool bool_value",
+    ""
+  });
+
+  // Use manual splits instead of max_bagfile_size because storage plugins enforce
+  // minimum split sizes (sqlite3: 86KB, mcap: 1KB) which would require large writes
+  for (size_t i = 0; i < total_files_to_create; i++) {
+    if (i > 0) {
+      writer.split_bagfile();
+    }
+
+    auto msg = std::make_shared<rosbag2_storage::SerializedBagMessage>();
+    msg->topic_name = topic_name;
+    msg->recv_timestamp = static_cast<rcutils_time_point_value_t>(i * 100);
+    msg->send_timestamp = msg->recv_timestamp;
+    uint32_t data = static_cast<uint32_t>(i);
+    msg->serialized_data = rosbag2_storage::make_serialized_message(&data, sizeof(data));
+    writer.write(msg);
+  }
+  writer.close();
+
+  // Count bag files on disk
+  size_t file_count = 0;
+  for (const auto & entry : fs::directory_iterator(storage_options.uri)) {
+    const auto ext = entry.path().extension().string();
+    if (ext == ".mcap" || ext == ".db3") {
+      file_count++;
+    }
+  }
+  EXPECT_EQ(file_count, max_bag_files);
+
+  // Verify metadata matches
+  rosbag2_storage::MetadataIo metadata_io;
+  auto metadata = metadata_io.read_metadata(storage_options.uri);
+  EXPECT_EQ(metadata.relative_file_paths.size(), max_bag_files);
+  EXPECT_EQ(metadata.files.size(), max_bag_files);
+}
+
 TEST_F(SequentialWriterTest, all_event_callbacks_can_be_installed) {
   auto sequential_writer = std::make_unique<rosbag2_cpp::writers::SequentialWriter>(
     std::move(storage_factory_), converter_factory_, std::move(metadata_io_));
