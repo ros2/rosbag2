@@ -100,10 +100,10 @@ class StorageFilter:
 class StorageOptions:
     custom_data: Dict[str, str]
     end_time_ns: int
+    max_bag_files: int
     max_bagfile_duration: int
     max_bagfile_size: int
     max_cache_size: int
-    max_bag_files: int
     snapshot_mode: bool
     start_time_ns: int
     storage_config_uri: str
