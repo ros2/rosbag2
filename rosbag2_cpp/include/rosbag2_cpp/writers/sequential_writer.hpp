@@ -194,6 +194,11 @@ protected:
   // Tracks the next file index to use for sequential numbering (independent of file deletions)
   uint64_t next_file_index_ {1};
 
+  // Per-file per-topic message counts for accurate adjustment during circular deletion.
+  // Each element corresponds to a file in metadata_.files (same index).
+  // Used to decrement topics_names_to_info_ counts when oldest files are pruned.
+  std::vector<std::unordered_map<std::string, size_t>> per_file_topic_message_counts_;
+
   // Delete oldest bagfiles if split count exceeds limit
   void delete_oldest_files_if_needed();
 

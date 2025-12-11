@@ -1111,32 +1111,55 @@ TEST_F(SequentialWriterTest, split_event_calls_on_writer_close)
 TEST_F(SequentialWriterTest, circular_logging_limits_number_of_files_by_max_bag_files)
 {
   // Configure frequent splits and a small retention window
-  const uint64_t max_bagfile_size = 5;   // split every 5 writes
+  const uint64_t max_bagfile_size = 6;   // split every 6 writes (even for 2 topics)
   const uint64_t max_bag_files = 3;      // retain at most 3 files
-  const int message_count = 25;          // enough writes to exceed retention
+  const int message_count = 30;          // enough writes to exceed retention
 
   auto sequential_writer = std::make_unique<rosbag2_cpp::writers::SequentialWriter>(
     std::move(storage_factory_), converter_factory_, std::move(metadata_io_));
   writer_ = std::make_unique<rosbag2_cpp::Writer>(std::move(sequential_writer));
 
-  auto message = std::make_shared<rosbag2_storage::SerializedBagMessage>();
-  message->topic_name = "test_topic";
+  auto message1 = std::make_shared<rosbag2_storage::SerializedBagMessage>();
+  message1->topic_name = "test_topic_1";
+  auto message2 = std::make_shared<rosbag2_storage::SerializedBagMessage>();
+  message2->topic_name = "test_topic_2";
 
   storage_options_.max_cache_size = 0;             // direct writes
   storage_options_.max_bagfile_size = max_bagfile_size;
   storage_options_.max_bag_files = max_bag_files;  // enable bag file count circular limit
 
   writer_->open(storage_options_, {"rmw_format", "rmw_format"});
-  writer_->create_topic({0u, "test_topic", "test_msgs/BasicTypes", "", {}, ""});
+  writer_->create_topic({0u, "test_topic_1", "test_msgs/BasicTypes", "", {}, ""});
+  writer_->create_topic({0u, "test_topic_2", "test_msgs/BasicTypes", "", {}, ""});
 
+  // Alternate messages between topics
   for (int i = 0; i < message_count; ++i) {
-    writer_->write(message);
+    writer_->write((i % 2 == 0) ? message1 : message2);
   }
   writer_->close();
 
   // After circular deletion, only max_bag_files files should remain in metadata
   ASSERT_LE(fake_metadata_.files.size(), max_bag_files);
   ASSERT_EQ(fake_metadata_.files.size(), fake_metadata_.relative_file_paths.size());
+
+  // Verify message counts reflect only retained files (not full session totals)
+  // 30 messages / 6 per file = 5 files total, 2 deleted, 3 retained with 6 messages each
+  const size_t expected_total_count = max_bag_files * max_bagfile_size;  // 18 total
+  const size_t expected_per_topic_count = expected_total_count / 2;       // 9 per topic
+  EXPECT_EQ(fake_metadata_.message_count, expected_total_count);
+
+  // Verify per-topic message counts are also adjusted correctly
+  ASSERT_EQ(fake_metadata_.topics_with_message_count.size(), 2u);
+  size_t topic1_count = 0, topic2_count = 0;
+  for (const auto & topic_info : fake_metadata_.topics_with_message_count) {
+    if (topic_info.topic_metadata.name == "test_topic_1") {
+      topic1_count = topic_info.message_count;
+    } else if (topic_info.topic_metadata.name == "test_topic_2") {
+      topic2_count = topic_info.message_count;
+    }
+  }
+  EXPECT_EQ(topic1_count, expected_per_topic_count);
+  EXPECT_EQ(topic2_count, expected_per_topic_count);
 }
 
 TEST_P(

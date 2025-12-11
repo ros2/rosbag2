@@ -84,6 +84,8 @@ void SequentialWriter::init_metadata()
   file_info.message_count = 0;
   metadata_.custom_data = storage_options_.custom_data;
   metadata_.files = {file_info};
+  per_file_topic_message_counts_.clear();
+  per_file_topic_message_counts_.push_back({});  // Initialize tracking for first file
   metadata_.ros_distro = rcpputils::get_env_var("ROS_DISTRO");
   if (metadata_.ros_distro.empty()) {
     ROSBAG2_CPP_LOG_WARN(
@@ -340,6 +342,7 @@ void SequentialWriter::switch_to_next_storage()
   file_info.path = strip_parent_path(storage_->get_relative_file_path());
   metadata_.files.push_back(file_info);
   metadata_.relative_file_paths.push_back(file_info.path);
+  per_file_topic_message_counts_.push_back({});  // Initialize tracking for new file
 
   // Delete oldest files if circular buffer limit exceeded (after new file is added)
   delete_oldest_files_if_needed();
@@ -441,6 +444,7 @@ void SequentialWriter::write(std::shared_ptr<const rosbag2_storage::SerializedBa
     if (storage_->write_message(converted_msg)) {
       metadata_.files.back().message_count++;
       topic_information_ptr->message_count++;
+      per_file_topic_message_counts_.back()[message->topic_name]++;
     } else {
       message_lost = true;
     }
@@ -505,8 +509,10 @@ bool SequentialWriter::should_split_bagfile(
 
 void SequentialWriter::delete_oldest_files_if_needed()
 {
-  // Only delete if bag file count limit is set
-  // Note: This is only called after split_bagfile(), so max_bagfile_size is guaranteed to be set
+  // Only delete if bag file count limit is set.
+  // Note: This is only called after split_bagfile(), so max_bagfile_size is guaranteed to be set.
+  // This function also adjusts per-topic message counts in topics_names_to_info_, which are
+  // used to compute metadata.message_count and topics_with_message_count during finalization.
   if (storage_options_.max_bag_files == 0) {
     return;
   }
@@ -528,6 +534,16 @@ void SequentialWriter::delete_oldest_files_if_needed()
         "Deleted oldest bagfile: %s (%lu bytes, %lu ns)",
         oldest_file.path.c_str(), file_size, file_duration_ns);
     }
+
+    // Adjust per-topic message counts to reflect only retained files
+    const auto & oldest_topic_counts = per_file_topic_message_counts_.front();
+    for (const auto & [topic_name, count] : oldest_topic_counts) {
+      auto it = topics_names_to_info_.find(topic_name);
+      if (it != topics_names_to_info_.end()) {
+        it->second.message_count -= count;
+      }
+    }
+    per_file_topic_message_counts_.erase(per_file_topic_message_counts_.begin());
 
     // Remove from metadata
     metadata_.relative_file_paths.erase(metadata_.relative_file_paths.begin());
@@ -632,6 +648,7 @@ void SequentialWriter::write_messages(
       auto topic_info_it = topics_names_to_info_.find(messages[i]->topic_name);
       if (topic_info_it != topics_names_to_info_.end()) {
         topic_info_it->second.message_count++;
+        per_file_topic_message_counts_.back()[messages[i]->topic_name]++;
       }
     }
   }
