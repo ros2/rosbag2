@@ -42,7 +42,13 @@ template<typename T>
 void optional_assign(const Node & node, std::string field, T & assign_to)
 {
   if (node[field]) {
-    YAML::convert<T>::decode(node[field], assign_to);
+    try {
+      assign_to = node[field].as<T>();
+    } catch (const YAML::Exception & ex) {
+      throw YAML::Exception(
+        node[field].Mark(),
+        "Failed to convert field '" + field + "': " + ex.what());
+    }
   }
 }
 
