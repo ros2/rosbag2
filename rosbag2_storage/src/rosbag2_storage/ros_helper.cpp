@@ -45,6 +45,7 @@ make_empty_serialized_message(size_t size)
   *msg = rcutils_get_zero_initialized_uint8_array();
   auto ret = rcutils_uint8_array_init(msg, size, &allocator);
   if (ret != RCUTILS_RET_OK) {
+    delete msg;
     throw std::runtime_error(
             "Error allocating resources for serialized message: " +
             std::string(rcutils_get_error_string().str));
