@@ -64,6 +64,7 @@ public:
   bool start_paused = false;
   bool use_sim_time = false;
   bool disable_keyboard_controls = false;
+  bool repeated_transient_local = false;
 };
 
 }  // namespace rosbag2_transport

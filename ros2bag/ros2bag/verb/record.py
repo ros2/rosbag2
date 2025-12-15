@@ -194,6 +194,10 @@ def add_recorder_arguments(parser: ArgumentParser) -> None:
         '--log-level', type=str, default='info',
         choices=['debug', 'info', 'warn', 'error', 'fatal'],
         help='Logging level.')
+    parser.add_argument(
+        '--repeated-transient-local', action='store_true', default=False,
+        help='Repeat transient local messages at the start of each new bag file.'
+    )
 
     # Storage configuration
     add_writer_storage_plugin_extensions(parser)
@@ -394,6 +398,7 @@ class RecordVerb(VerbExtension):
         record_options.ignore_leaf_topics = args.ignore_leaf_topics
         record_options.use_sim_time = args.use_sim_time
         record_options.disable_keyboard_controls = args.disable_keyboard_controls
+        record_options.repeated_transient_local = args.repeated_transient_local
 
         recorder = Recorder(storage_options, record_options, args.log_level, args.node_name)
 

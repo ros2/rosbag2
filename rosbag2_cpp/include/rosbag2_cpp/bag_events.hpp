@@ -22,6 +22,7 @@
 
 #include "rclcpp/function_traits.hpp"
 #include "rosbag2_cpp/visibility_control.hpp"
+#include "rosbag2_storage/serialized_bag_message.hpp"
 
 namespace rosbag2_cpp
 {
@@ -49,6 +50,8 @@ struct BagSplitInfo
   std::string closed_file;
   /// The URI of the file that was opened.
   std::string opened_file;
+  /// Messages to republish to the new bag file (e.g., transient local messages).
+  std::vector<std::shared_ptr<rosbag2_storage::SerializedBagMessage>> messages_to_republish;
 };
 
 using BagSplitCallbackType = std::function<void (BagSplitInfo &)>;

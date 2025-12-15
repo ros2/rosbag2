@@ -937,6 +937,7 @@ PYBIND11_MODULE(_transport, m) {
   .def_readwrite("actions", &RecordOptions::actions)
   .def_readwrite("all_actions", &RecordOptions::all_actions)
   .def_readwrite("exclude_actions", &RecordOptions::exclude_actions)
+  .def_readwrite("repeated_transient_local", &RecordOptions::repeated_transient_local)
   ;
 
   py::class_<rosbag2_py::Player>(m, "Player")
