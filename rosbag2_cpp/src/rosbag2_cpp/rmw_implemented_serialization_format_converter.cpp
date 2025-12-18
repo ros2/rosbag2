@@ -53,7 +53,7 @@ std::vector<std::string>
 get_available_rmw_implementations()
 {
   std::vector<std::string> result;
-  const auto packages_with_prefixes = ament_index_cpp::get_resources("rmw_typesupport");
+  const auto packages_with_prefixes = ament_index_cpp::get_resources_by_name("rmw_typesupport");
   for (const auto & package_prefix_pair : packages_with_prefixes) {
     if (package_prefix_pair.first != "rmw_implementation") {
       result.push_back(package_prefix_pair.first);

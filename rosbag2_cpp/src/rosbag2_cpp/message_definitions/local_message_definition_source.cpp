@@ -223,17 +223,13 @@ const LocalMessageDefinitionSource::MessageSpec & LocalMessageDefinitionSource::
   const std::string file_name =
     match[2].str() + extension_for_format(definition_identifier.format());
   fs::path share_dir_path;
-  std::string resource_content;
-  std::string resource_prefix_path;
-
   // Get the resource content and prefix path from ament_index
-  if (ament_index_cpp::get_resource("rosidl_interfaces", package_name, resource_content,
-                                     &resource_prefix_path))
-  {
-    share_dir_path = fs::path(resource_prefix_path) / "share" / package_name;
+  auto result = ament_index_cpp::get_resource("rosidl_interfaces", package_name);
+  if (result.first != std::nullopt) {
+    share_dir_path = result.first.value() / "share" / package_name;
     ROSBAG2_CPP_LOG_DEBUG(
       "resource_content : \n%s for package: '%s' ,\n share_dir: '%s'\n, topic_type: '%s'",
-      resource_content.c_str(), package_name.c_str(), share_dir_path.c_str(), topic_type.c_str());
+      result.second.c_str(), package_name.c_str(), share_dir_path.c_str(), topic_type.c_str());
   } else {
     ROSBAG2_CPP_LOG_DEBUG(
       "Failed to get information about rosidl_interfaces resources from ament_index for package "
@@ -243,7 +239,7 @@ const LocalMessageDefinitionSource::MessageSpec & LocalMessageDefinitionSource::
 
   // Parse the resource content to find the relative file path matching the file name.
   std::string relative_file_path_str;
-  std::stringstream ss(resource_content);
+  std::stringstream ss(result.second);
   std::string line;
   while (std::getline(ss, line, '\n')) {
     if (!line.empty()) {
