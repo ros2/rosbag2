@@ -44,6 +44,14 @@ public:
   /// \return True if message was successfully pushed, false if the buffer is full.
   virtual bool push(std::shared_ptr<const rosbag2_storage::SerializedBagMessage> msg) = 0;
 
+  /// Push a transient local bag message into the protected buffer.
+  virtual void push_transient_local(
+    std::shared_ptr<const rosbag2_storage::SerializedBagMessage> msg)
+  {
+    // Default implementation: treat like normal push for caches that don't support it
+    push(msg);
+  }
+
   /// \brief Get a pointer to the buffer that can be used for consuming the cached messages.
   /// This call locks access to the buffer, `swap_buffers` and `get_consumer_buffer` will block
   /// until `release_consumer_buffer` is called to unlock access to the buffer.

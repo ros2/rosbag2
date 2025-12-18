@@ -19,6 +19,7 @@
 #include <mutex>
 #include <string>
 #include <unordered_map>
+#include <unordered_set>
 #include <vector>
 
 #include "rosbag2_cpp/bag_events.hpp"
@@ -131,6 +132,13 @@ public:
   bool take_snapshot() override;
 
   /**
+   * \brief Mark a topic as using transient_local durability.
+   * This ensures messages from this topic are preserved in snapshot mode.
+   * \param topic_name The name of the topic using transient_local durability
+   */
+  void mark_topic_as_transient_local(const std::string & topic_name);
+
+  /**
    * \brief Add callbacks for events that may occur during bag writing.
    * \param callbacks the structure containing the callback to add for each event.
    */
@@ -183,6 +191,9 @@ protected:
   /// with \sa writer_mutex_ on \sa rosbag2_cpp::Writer level.
   std::unordered_map<std::string, rosbag2_storage::TopicInformation> topics_names_to_info_;
   std::mutex topics_info_mutex_;
+
+  /// Track which topics use transient_local durability for snapshot mode
+  std::unordered_set<std::string> transient_local_topics_;
 
   LocalMessageDefinitionSource message_definitions_;
   // used to track message definitions written to the bag.

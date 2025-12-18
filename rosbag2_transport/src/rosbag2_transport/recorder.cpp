@@ -767,6 +767,14 @@ void RecorderImpl::subscribe_topic(const rosbag2_storage::TopicMetadata & topic)
 
   rosbag2_storage::Rosbag2QoS subscription_qos{subscription_qos_for_topic(topic.name)};
 
+  // Check if topic uses transient_local durability for snapshot mode preservation
+  if (subscription_qos.durability() == rclcpp::DurabilityPolicy::TransientLocal) {
+    writer_->mark_topic_as_transient_local(topic.name);
+    RCLCPP_DEBUG_STREAM(node->get_logger(),
+      "Topic '" << topic.name << "' uses transient_local durability - " <<
+      "messages will be preserved in snapshot mode");
+  }
+
   auto subscription = create_subscription(topic.name, topic.type, subscription_qos);
   if (subscription) {
     subscriptions_.insert({topic.name, subscription});

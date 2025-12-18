@@ -20,6 +20,7 @@
 #include <memory>
 #include <mutex>
 #include <string>
+#include <unordered_map>
 
 #include "rcpputils/thread_safety_annotations.hpp"
 
@@ -62,6 +63,9 @@ public:
   /// since the circular buffer by design drops old messages when the buffer is full.
   bool push(std::shared_ptr<const rosbag2_storage::SerializedBagMessage> msg) override;
 
+  /// \brief Puts msg into protected buffer for transient local messages that won't be overwritten.
+  void push_transient_local(std::shared_ptr<const rosbag2_storage::SerializedBagMessage> msg);
+
   /// Get current buffer to consume.
   /// Locks consumer buffer until release_consumer_buffer is called.
   /// This may be repeatedly empty if `swap_buffers` has not been called.
@@ -94,6 +98,10 @@ private:
   std::mutex producer_buffer_mutex_;
   std::shared_ptr<MessageCacheCircularBuffer> consumer_buffer_;
   std::mutex consumer_buffer_mutex_;
+  // Map to store latest transient local message per topic for snapshot preservation
+  std::unordered_map<std::string, std::shared_ptr<const rosbag2_storage::SerializedBagMessage>>
+  transient_local_messages_;
+  std::mutex transient_local_buffer_mutex_;
 
   bool data_ready_ {false};
   std::condition_variable cache_condition_var_;

@@ -46,6 +46,15 @@ bool CircularMessageCache::push(std::shared_ptr<const rosbag2_storage::Serialize
   return producer_buffer_->push(msg);
 }
 
+void CircularMessageCache::push_transient_local(
+  std::shared_ptr<const rosbag2_storage::SerializedBagMessage> msg)
+{
+  std::lock_guard<std::mutex> cache_lock(transient_local_buffer_mutex_);
+  // Store/update the latest message for this topic
+  // This ensures we always have the most recent state for transient local topics
+  transient_local_messages_[msg->topic_name] = std::move(msg);
+}
+
 std::shared_ptr<CacheBufferInterface> CircularMessageCache::get_consumer_buffer()
 {
   consumer_buffer_mutex_.lock();
@@ -99,8 +108,37 @@ void CircularMessageCache::swap_buffers()
   // we should not dump buffer on exit if snapshot has not been triggered.
   if (data_ready_) {
     std::lock_guard<std::mutex> consumer_lock(consumer_buffer_mutex_);
+    std::lock_guard<std::mutex> transient_lock(transient_local_buffer_mutex_);
     consumer_buffer_->clear();
     std::swap(producer_buffer_, consumer_buffer_);
+
+    // Merge latest transient local message for each topic into consumer buffer
+    // Update timestamps to match the current snapshot time window to avoid timeline issues
+    const auto & consumer_data = consumer_buffer_->data();
+    rcutils_time_point_value_t snapshot_start_time = 0;
+
+    // Use the front message timestamp as the snapshot start time for transient local messages.
+    // This may not be the absolute earliest timestamp in the buffer (messages can arrive
+    // out of order), but it's close enough - typically within 1-2ms of the true minimum.
+    // This avoids the overhead of searching through all messages for the exact minimum.
+    if (!consumer_data.empty()) {
+      snapshot_start_time = consumer_data.front()->recv_timestamp;
+    }
+
+    // Add transient local messages with updated timestamp
+    for (const auto & topic_msg_pair : transient_local_messages_) {
+      if (snapshot_start_time > 0) {
+        // Create a copy with updated timestamp to match snapshot window
+        auto updated_msg = std::make_shared<rosbag2_storage::SerializedBagMessage>();
+        *updated_msg = *topic_msg_pair.second;
+        updated_msg->recv_timestamp = snapshot_start_time;
+        updated_msg->send_timestamp = snapshot_start_time;
+        consumer_buffer_->push(updated_msg);
+      } else {
+        // If buffer is empty, use original timestamps
+        consumer_buffer_->push(topic_msg_pair.second);
+      }
+    }
     data_ready_ = false;
   }
 }

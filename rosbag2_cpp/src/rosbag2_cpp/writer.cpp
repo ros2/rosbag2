@@ -177,4 +177,10 @@ bool Writer::has_callback_for_event(bag_events::BagEvent event) const
   return writer_impl_->has_callback_for_event(event);
 }
 
+void Writer::mark_topic_as_transient_local(const std::string & topic_name)
+{
+  std::lock_guard<std::mutex> writer_lock(writer_mutex_);
+  writer_impl_->mark_topic_as_transient_local(topic_name);
+}
+
 }  // namespace rosbag2_cpp

@@ -239,6 +239,12 @@ public:
   }
 
   /**
+   * \brief Mark a topic as using transient_local durability for snapshot mode preservation.
+   * \param topic_name The name of the topic using transient_local durability
+   */
+  void mark_topic_as_transient_local(const std::string & topic_name);
+
+  /**
    * \brief Add callbacks for events that may occur during bag writing.
    *
    * \param callbacks the structure containing the callback to add for each event.

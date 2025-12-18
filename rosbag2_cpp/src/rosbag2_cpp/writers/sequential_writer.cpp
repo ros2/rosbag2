@@ -433,8 +433,13 @@ void SequentialWriter::write(std::shared_ptr<const rosbag2_storage::SerializedBa
       message_lost = true;
     }
   } else {
-    // Otherwise, use cache buffer
-    message_lost = !message_cache_->push(converted_msg);
+    // Check if this topic uses transient_local durability
+    if (transient_local_topics_.find(message->topic_name) != transient_local_topics_.end()) {
+      message_cache_->push_transient_local(converted_msg);
+    } else {
+      // Otherwise, use cache buffer
+      message_lost = !message_cache_->push(converted_msg);
+    }
   }
 
   if (message_lost) {
@@ -456,6 +461,13 @@ bool SequentialWriter::take_snapshot()
   message_cache_->notify_data_ready();
   split_bagfile();
   return true;
+}
+
+void SequentialWriter::mark_topic_as_transient_local(const std::string & topic_name)
+{
+  transient_local_topics_.insert(topic_name);
+  ROSBAG2_CPP_LOG_DEBUG_STREAM(
+    "Topic '" << topic_name << "' marked as transient_local for snapshot preservation");
 }
 
 std::shared_ptr<const rosbag2_storage::SerializedBagMessage>
