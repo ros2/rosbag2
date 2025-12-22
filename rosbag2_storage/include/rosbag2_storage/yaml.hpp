@@ -43,8 +43,13 @@ void optional_assign(const Node & node, std::string field, T & assign_to)
 {
   if (node[field]) {
     try {
-      assign_to = node[field].as<T>();
+      if (!YAML::convert<T>::decode(node[field], assign_to)) {
+        throw YAML::Exception(
+          node[field].Mark(),
+          "Failed to convert field '" + field + "'");
+      }
     } catch (const YAML::Exception & ex) {
+      // Preserve original error but add field name context
       throw YAML::Exception(
         node[field].Mark(),
         "Failed to convert field '" + field + "': " + ex.what());
