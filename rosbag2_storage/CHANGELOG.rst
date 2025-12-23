@@ -2,6 +2,11 @@
 Changelog for package rosbag2_storage
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.26.10 (2025-12-23)
+--------------------
+* fix memory leak on make_empty_serialized_message(). (`#2253 <https://github.com/ros2/rosbag2/issues/2253>`_) (`#2260 <https://github.com/ros2/rosbag2/issues/2260>`_)
+* Contributors: mergify[bot]
+
 0.26.9 (2025-08-11)
 -------------------
 

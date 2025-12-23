@@ -2,6 +2,11 @@
 Changelog for package ros2bag
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.26.10 (2025-12-23)
+--------------------
+* add rosbag2_storage_default_plugins to exec_depend of ros2bag. (`#2227 <https://github.com/ros2/rosbag2/issues/2227>`_) (`#2231 <https://github.com/ros2/rosbag2/issues/2231>`_)
+* Contributors: mergify[bot]
+
 0.26.9 (2025-08-11)
 -------------------
 * [jazzy] Expose more of the player/recorder API through Python (backport `#2062 <https://github.com/ros2/rosbag2/issues/2062>`_) (`#2100 <https://github.com/ros2/rosbag2/issues/2100>`_)

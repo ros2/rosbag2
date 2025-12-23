@@ -2,6 +2,11 @@
 Changelog for package rosbag2_py
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.26.10 (2025-12-23)
+--------------------
+* Make sure test topic is discovered by recorder in rosbag2_py test (`#2132 <https://github.com/ros2/rosbag2/issues/2132>`_) (`#2138 <https://github.com/ros2/rosbag2/issues/2138>`_)
+* Contributors: mergify[bot]
+
 0.26.9 (2025-08-11)
 -------------------
 * [jazzy] Add public API to get player's starting time and playback duration (backport `#2095 <https://github.com/ros2/rosbag2/issues/2095>`_) (`#2102 <https://github.com/ros2/rosbag2/issues/2102>`_)

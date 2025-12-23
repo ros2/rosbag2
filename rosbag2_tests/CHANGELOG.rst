@@ -2,6 +2,12 @@
 Changelog for package rosbag2_tests
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.26.10 (2025-12-23)
+--------------------
+* Address flakiness in the recorder tests with small cache size (`#2203 <https://github.com/ros2/rosbag2/issues/2203>`_) (`#2207 <https://github.com/ros2/rosbag2/issues/2207>`_)
+* [jazzy] Use rclcpp type support helpers in rosbag2_cpp (backport `#2017 <https://github.com/ros2/rosbag2/issues/2017>`_) (`#2130 <https://github.com/ros2/rosbag2/issues/2130>`_)
+* Contributors: mergify[bot]
+
 0.26.9 (2025-08-11)
 -------------------
 * [jazzy] Expose more of the player/recorder API through Python (backport `#2062 <https://github.com/ros2/rosbag2/issues/2062>`_) (`#2100 <https://github.com/ros2/rosbag2/issues/2100>`_)
