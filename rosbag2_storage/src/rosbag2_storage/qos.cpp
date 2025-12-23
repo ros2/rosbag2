@@ -277,7 +277,7 @@ bool convert<std::vector<rclcpp::QoS>>::decode(
 Node convert<std::unordered_map<std::string, rclcpp::QoS>>::encode(
   const std::unordered_map<std::string, rclcpp::QoS> & rhs)
 {
-  Node node{NodeType::Sequence};
+  Node node{NodeType::Map};
   for (const auto & [key, value] : rhs) {
     node.force_insert(key, value);
   }
