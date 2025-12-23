@@ -2,6 +2,16 @@
 Changelog for package ros2bag
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.34.0 (2025-12-23)
+-------------------
+* add rosbag2_storage_default_plugins to exec_depend of ros2bag. (`#2227 <https://github.com/ros2/rosbag2/issues/2227>`_)
+* Add input[output]_serialization_format to the RecordOptions (`#2215 <https://github.com/ros2/rosbag2/issues/2215>`_)
+* Add messages lost notification on a predefined topic during recording (`#2150 <https://github.com/ros2/rosbag2/issues/2150>`_)
+* Expose more of the player/recorder API through Python (`#2062 <https://github.com/ros2/rosbag2/issues/2062>`_)
+* fix setuptools deprecations (`#2087 <https://github.com/ros2/rosbag2/issues/2087>`_)
+* Change Python player and recorder to be more as a classes (`#2047 <https://github.com/ros2/rosbag2/issues/2047>`_)
+* Contributors: Christophe Bedard, Michael Orlov, Tomoya Fujita, mosfet80
+
 0.33.0 (2025-04-25)
 -------------------
 * Upstream quality changes from Apex.AI part-2 (`#1924 <https://github.com/ros2/rosbag2/issues/1924>`_)

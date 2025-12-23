@@ -2,6 +2,14 @@
 Changelog for package rosbag2_storage
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.34.0 (2025-12-23)
+-------------------
+* fix memory leak on make_empty_serialized_message(). (`#2253 <https://github.com/ros2/rosbag2/issues/2253>`_)
+* fix CMAKE deprecation (`#2067 <https://github.com/ros2/rosbag2/issues/2067>`_)
+* Add new messages write API in BaseWriteInterface, with return status of operation (`#2030 <https://github.com/ros2/rosbag2/issues/2030>`_)
+* Bugfix: Undefined behavior in the `rosbag2_storage` and `rosbag2_storage_sqlite3` packages (`#1997 <https://github.com/ros2/rosbag2/issues/1997>`_)
+* Contributors: Michael Orlov, Tomoya Fujita, mosfet80
+
 0.33.0 (2025-04-25)
 -------------------
 * Use DDS queue depth for subscriptions as a maximum value across publishers (`#1960 <https://github.com/ros2/rosbag2/issues/1960>`_)

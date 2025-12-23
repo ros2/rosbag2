@@ -2,6 +2,28 @@
 Changelog for package rosbag2_cpp
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.34.0 (2025-12-23)
+-------------------
+* Updated deprecated ament_index_cpp API (`#2268 <https://github.com/ros2/rosbag2/issues/2268>`_)
+* Make topics persistent between writer's close() and open() API calls. (`#2229 <https://github.com/ros2/rosbag2/issues/2229>`_)
+* Check for nullptrs when pushing new messages to the message cache (`#2219 <https://github.com/ros2/rosbag2/issues/2219>`_)
+* Address flakiness in the recorder tests with small cache size (`#2203 <https://github.com/ros2/rosbag2/issues/2203>`_)
+* Log reasoning for not found message definition only in debug log (`#2183 <https://github.com/ros2/rosbag2/issues/2183>`_)
+* minor error checks for rosbag2_cpp (`#2127 <https://github.com/ros2/rosbag2/issues/2127>`_)
+* Fix: Add null pointer check for reader_imp in the Reader constructor (`#2135 <https://github.com/ros2/rosbag2/issues/2135>`_)
+* Use rclcpp typesupport helpers in rosbag2_cpp (`#2017 <https://github.com/ros2/rosbag2/issues/2017>`_)
+* Bugfix for callback not called in writer for MESSAGES_LOST event (`#2105 <https://github.com/ros2/rosbag2/issues/2105>`_)
+* Minor performance improvements in the recorder's MessageCache (`#2104 <https://github.com/ros2/rosbag2/issues/2104>`_)
+* Fix reindex duration bug when bag file durations overlap (`#2036 <https://github.com/ros2/rosbag2/issues/2036>`_)
+* fix CMAKE deprecation (`#2067 <https://github.com/ros2/rosbag2/issues/2067>`_)
+* Add support for searching message definitions in nested subdirectories (`#2055 <https://github.com/ros2/rosbag2/issues/2055>`_)
+* Add callbacks for messages loss statistics (`#2039 <https://github.com/ros2/rosbag2/issues/2039>`_)
+* Use cache to try to determine the inner type for action introspection interfaces (`#2052 <https://github.com/ros2/rosbag2/issues/2052>`_)
+* Fix service/action message definition issue (`#2041 <https://github.com/ros2/rosbag2/issues/2041>`_)
+* Add new messages write API in BaseWriteInterface, with return status of operation (`#2030 <https://github.com/ros2/rosbag2/issues/2030>`_)
+* Improvements in message publishing timings (`#2025 <https://github.com/ros2/rosbag2/issues/2025>`_)
+* Contributors: Alejandro Hernández Cordero, Barry Xu, Chui Vanfleet, José Faria, Michael Orlov, Tomoya Fujita, YuJin Hong, mosfet80
+
 0.33.0 (2025-04-25)
 -------------------
 * Upstream quality changes from Apex.AI part-2 (`#1924 <https://github.com/ros2/rosbag2/issues/1924>`_)

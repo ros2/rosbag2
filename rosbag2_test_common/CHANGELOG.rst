@@ -2,6 +2,13 @@
 Changelog for package rosbag2_test_common
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.34.0 (2025-12-23)
+-------------------
+* Update subscription callback signatures (`#2225 <https://github.com/ros2/rosbag2/issues/2225>`_)
+* fix CMAKE deprecation (`#2067 <https://github.com/ros2/rosbag2/issues/2067>`_)
+* Address flakiness in tests where need to spin a node (`#2001 <https://github.com/ros2/rosbag2/issues/2001>`_)
+* Contributors: Michael Orlov, mini-1235, mosfet80
+
 0.33.0 (2025-04-25)
 -------------------
 * Upstream quality changes from Apex.AI part-2 (`#1924 <https://github.com/ros2/rosbag2/issues/1924>`_)

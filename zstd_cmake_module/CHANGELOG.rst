@@ -1,12 +1,11 @@
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-Changelog for package rosbag2_performance_benchmarking_msgs
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Changelog for package zstd_cmake_module
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 0.34.0 (2025-12-23)
 -------------------
-* Enable `rosbag2_performance_benchmarking` package to be built by default (`#2093 <https://github.com/ros2/rosbag2/issues/2093>`_)
-* fix CMAKE deprecation (`#2067 <https://github.com/ros2/rosbag2/issues/2067>`_)
-* Contributors: Michael Orlov, mosfet80
+* Replace zstd_vendor with zstd_cmake_module (`#2166 <https://github.com/ros2/rosbag2/issues/2166>`_)
+* Contributors: Alejandro Hernández Cordero
 
 0.33.0 (2025-04-25)
 -------------------
@@ -14,16 +13,16 @@ Changelog for package rosbag2_performance_benchmarking_msgs
 0.32.0 (2025-04-18)
 -------------------
 
-0.31.0 (2025-02-02)
+0.31.0 (2025-02-03)
 -------------------
 
 0.30.0 (2024-11-26)
 -------------------
 
-0.29.0 (2024-09-03)
+0.29.0 (2024-09-04)
 -------------------
 
-0.28.0 (2024-06-17)
+0.28.0 (2024-06-21)
 -------------------
 
 0.27.0 (2024-04-30)
@@ -35,33 +34,26 @@ Changelog for package rosbag2_performance_benchmarking_msgs
 0.26.0 (2024-04-16)
 -------------------
 
-0.25.0 (2024-03-27)
+0.25.0 (2024-03-28)
 -------------------
 
-0.24.0 (2023-07-11)
+0.24.0 (2023-07-12)
 -------------------
 
-0.23.0 (2023-04-28)
+0.23.0 (2023-04-29)
 -------------------
 
 0.22.0 (2023-04-18)
 -------------------
-* Add tests for rosbag2_performance_benchmarking pkg (`#1268 <https://github.com/ros2/rosbag2/issues/1268>`_)
-* Contributors: Michael Orlov
 
-0.21.0 (2023-04-12)
+0.21.0 (2023-04-13)
 -------------------
 
 0.20.0 (2023-02-14)
 -------------------
-* Skip ament_package() call when not building rosbag2_performance_benchmarking (`#1242 <https://github.com/ros2/rosbag2/issues/1242>`_)
-* Contributors: Shane Loretz
 
 0.19.0 (2023-01-13)
 -------------------
-* [rolling] Bump to 0.19.0 (`#1232 <https://github.com/ros2/rosbag2/issues/1232>`_)
-* Add option to specify a message type (`#1153 <https://github.com/ros2/rosbag2/issues/1153>`_)
-* Contributors: Audrow Nash, carlossvg
 
 0.18.0 (2022-11-15)
 -------------------

@@ -2,6 +2,19 @@
 Changelog for package rosbag2_tests
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.34.0 (2025-12-23)
+-------------------
+* Add input[output]_serialization_format to the RecordOptions (`#2215 <https://github.com/ros2/rosbag2/issues/2215>`_)
+* Address flakiness in the recorder tests with small cache size (`#2203 <https://github.com/ros2/rosbag2/issues/2203>`_)
+* Use rclcpp typesupport helpers in rosbag2_cpp (`#2017 <https://github.com/ros2/rosbag2/issues/2017>`_)
+* Expose more of the player/recorder API through Python (`#2062 <https://github.com/ros2/rosbag2/issues/2062>`_)
+* fix CMAKE deprecation (`#2067 <https://github.com/ros2/rosbag2/issues/2067>`_)
+  cmake version < then 3.10 is deprecated
+* Bugfixes for deadlocks in Rosbag2 player when calling stop API (`#2057 <https://github.com/ros2/rosbag2/issues/2057>`_)
+* Add new messages write API in BaseWriteInterface, with return status of operation (`#2030 <https://github.com/ros2/rosbag2/issues/2030>`_)
+* Address flakiness in tests where need to spin a node (`#2001 <https://github.com/ros2/rosbag2/issues/2001>`_)
+* Contributors: Christophe Bedard, Michael Orlov, mosfet80
+
 0.33.0 (2025-04-25)
 -------------------
 * Upstream quality changes from Apex.AI part-2 (`#1924 <https://github.com/ros2/rosbag2/issues/1924>`_)

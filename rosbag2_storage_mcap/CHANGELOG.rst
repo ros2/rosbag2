@@ -2,6 +2,14 @@
 Changelog for package rosbag2_storage_mcap
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.34.0 (2025-12-23)
+-------------------
+* Bugfix for MCAPStorage::seek(time) advance in time is current (`#2157 <https://github.com/ros2/rosbag2/issues/2157>`_)
+* fix CMAKE deprecation (`#2067 <https://github.com/ros2/rosbag2/issues/2067>`_)
+* Add new messages write API in BaseWriteInterface, with return status of operation (`#2030 <https://github.com/ros2/rosbag2/issues/2030>`_)
+* Update index.ros.org/p/ links for rosbag2_storage_mcap (`#2034 <https://github.com/ros2/rosbag2/issues/2034>`_)
+* Contributors: Christophe Bedard, Michael Orlov, mosfet80
+
 0.33.0 (2025-04-25)
 -------------------
 

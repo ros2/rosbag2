@@ -2,6 +2,16 @@
 Changelog for package rosbag2_performance_benchmarking
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.34.0 (2025-12-23)
+-------------------
+* Fix warning: initialize number_of_threads (`#2121 <https://github.com/ros2/rosbag2/issues/2121>`_)
+* Enable `rosbag2_performance_benchmarking` package to be built by default (`#2093 <https://github.com/ros2/rosbag2/issues/2093>`_)
+* Fixes in the rosbag2_performance_benchmarking message data generator (`#2078 <https://github.com/ros2/rosbag2/issues/2078>`_)
+* Fix for failure in the benchmark_launch when using Process.wait twice (`#2076 <https://github.com/ros2/rosbag2/issues/2076>`_)
+* Bugfix: `prosbag2_performance_benchmarking` outputs incorrect results for topics with frequency more than 1 kHz (`#2077 <https://github.com/ros2/rosbag2/issues/2077>`_)
+* fix CMAKE deprecation (`#2067 <https://github.com/ros2/rosbag2/issues/2067>`_)
+* Contributors: Cristóbal Arroyo, Michael Orlov, mosfet80
+
 0.33.0 (2025-04-25)
 -------------------
 * Upstream quality changes from Apex.AI part-2 (`#1924 <https://github.com/ros2/rosbag2/issues/1924>`_)

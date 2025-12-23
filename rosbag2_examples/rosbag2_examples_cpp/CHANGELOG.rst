@@ -2,6 +2,13 @@
 Changelog for package rosbag2_examples_cpp
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.34.0 (2025-12-23)
+-------------------
+* Update subscription callback signatures (`#2225 <https://github.com/ros2/rosbag2/issues/2225>`_)
+* fix CMAKE deprecation (`#2067 <https://github.com/ros2/rosbag2/issues/2067>`_)
+* Add examples for compressing bag files (`#1956 <https://github.com/ros2/rosbag2/issues/1956>`_)
+* Contributors: Maxime Fleury, mini-1235, mosfet80
+
 0.33.0 (2025-04-25)
 -------------------
 

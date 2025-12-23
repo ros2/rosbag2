@@ -2,6 +2,43 @@
 Changelog for package rosbag2_transport
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.34.0 (2025-12-23)
+-------------------
+* Fix macOS build: Disable thread-safety annotations in locked_priority_queue.hpp (`#2245 <https://github.com/ros2/rosbag2/issues/2245>`_)
+* Fix for C++ Recorder failure on stop() -> record() due to reusing the bag name (`#2224 <https://github.com/ros2/rosbag2/issues/2224>`_)
+* Add a direct API for rosbag2_transport::Recorder (`#2221 <https://github.com/ros2/rosbag2/issues/2221>`_)
+* Add input[output]_serialization_format to the RecordOptions (`#2215 <https://github.com/ros2/rosbag2/issues/2215>`_)
+* Enable RMW communication isolation in rosbag2_transport tests (`#2190 <https://github.com/ros2/rosbag2/issues/2190>`_)
+* Add topic name and type delimiter for the hash map key (`#2210 <https://github.com/ros2/rosbag2/issues/2210>`_)
+* Add cache for topic filter to avoid performance burden on discovery (`#1486 <https://github.com/ros2/rosbag2/issues/1486>`_)
+* Address flakiness in the recorder tests with small cache size (`#2203 <https://github.com/ros2/rosbag2/issues/2203>`_)
+* Reduce CPU overhead in the Rosbag2 recorder discovery (`#2201 <https://github.com/ros2/rosbag2/issues/2201>`_)
+* Fix for possible data races in PlayerProgressBar class (`#2194 <https://github.com/ros2/rosbag2/issues/2194>`_)
+* Fix for data races in tests with MockSequentialWriter (`#2192 <https://github.com/ros2/rosbag2/issues/2192>`_)
+* Make the player respect the original messages' order with the same timestamp (`#2172 <https://github.com/ros2/rosbag2/issues/2172>`_)
+* Follow-up on "Fix for multibag replay stagnation (`#2158 <https://github.com/ros2/rosbag2/issues/2158>`_)" (`#2181 <https://github.com/ros2/rosbag2/issues/2181>`_)
+* Bugfix: Player can't play with read_ahead_queue_size equal 1 (`#2174 <https://github.com/ros2/rosbag2/issues/2174>`_)
+  Co-authored-by: Christophe Bedard <bedard.christophe@gmail.com>
+* Fixes for multiple race conditions in player (`#2171 <https://github.com/ros2/rosbag2/issues/2171>`_)
+* Fix for multibag replay stagnation (`#2158 <https://github.com/ros2/rosbag2/issues/2158>`_)
+* Bugfix for MCAPStorage::seek(time) advance in time is current (`#2157 <https://github.com/ros2/rosbag2/issues/2157>`_)
+* Add messages lost notification on a predefined topic during recording (`#2150 <https://github.com/ros2/rosbag2/issues/2150>`_)
+* Add RecorderEventNotifier class (`#2144 <https://github.com/ros2/rosbag2/issues/2144>`_)
+* Bugfix for deadlock in multibag replay (`#2143 <https://github.com/ros2/rosbag2/issues/2143>`_)
+* Use rclcpp typesupport helpers in rosbag2_cpp (`#2017 <https://github.com/ros2/rosbag2/issues/2017>`_)
+* Bugfix for callback not called in writer for MESSAGES_LOST event (`#2105 <https://github.com/ros2/rosbag2/issues/2105>`_)
+* Add public API to get player's starting time and playback duration (`#2095 <https://github.com/ros2/rosbag2/issues/2095>`_)
+* fix CMAKE deprecation (`#2067 <https://github.com/ros2/rosbag2/issues/2067>`_)
+* Bugfixes for deadlocks in Rosbag2 player when calling stop API (`#2057 <https://github.com/ros2/rosbag2/issues/2057>`_)
+* Add callbacks for messages loss statistics (`#2039 <https://github.com/ros2/rosbag2/issues/2039>`_)
+* Skip flaky `can_record_again_after_stop` test (`#2031 <https://github.com/ros2/rosbag2/issues/2031>`_)
+* Bugfix: No output in cout if progress bar is disabled (`#2024 <https://github.com/ros2/rosbag2/issues/2024>`_)
+* Improvements in message publishing timings (`#2025 <https://github.com/ros2/rosbag2/issues/2025>`_)
+* Fix for flaky `playing_respects_delay` test (`#2016 <https://github.com/ros2/rosbag2/issues/2016>`_)
+* Address flakiness in tests where need to spin a node (`#2001 <https://github.com/ros2/rosbag2/issues/2001>`_)
+* Avoid sending non-existent cancel requests (`#2005 <https://github.com/ros2/rosbag2/issues/2005>`_)
+* Contributors: Barry Xu, Dhruv Patel, Michael Orlov, Scott K Logan, mosfet80
+
 0.33.0 (2025-04-25)
 -------------------
 * Fix a maybe-uninitialized warning in player_action_client.cpp (`#1969 <https://github.com/ros2/rosbag2/issues/1969>`_)

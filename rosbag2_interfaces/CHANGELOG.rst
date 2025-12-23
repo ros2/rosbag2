@@ -2,6 +2,12 @@
 Changelog for package rosbag2_interfaces
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.34.0 (2025-12-23)
+-------------------
+* Add messages lost notification on a predefined topic during recording (`#2150 <https://github.com/ros2/rosbag2/issues/2150>`_)
+* fix CMAKE deprecation (`#2067 <https://github.com/ros2/rosbag2/issues/2067>`_)
+* Contributors: Michael Orlov, mosfet80
+
 0.33.0 (2025-04-25)
 -------------------
 

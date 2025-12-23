@@ -2,6 +2,12 @@
 Changelog for package rosbag2_examples_py
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.34.0 (2025-12-23)
+-------------------
+* fix setuptools deprecation (`#2092 <https://github.com/ros2/rosbag2/issues/2092>`_)
+* Add examples for compressing bag files (`#1956 <https://github.com/ros2/rosbag2/issues/1956>`_)
+* Contributors: Maxime Fleury, mosfet80
+
 0.33.0 (2025-04-25)
 -------------------
 * Upstream quality changes from Apex.AI part-2 (`#1924 <https://github.com/ros2/rosbag2/issues/1924>`_)

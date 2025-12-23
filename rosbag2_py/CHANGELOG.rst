@@ -2,6 +2,20 @@
 Changelog for package rosbag2_py
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.34.0 (2025-12-23)
+-------------------
+* Add input[output]_serialization_format to the RecordOptions (`#2215 <https://github.com/ros2/rosbag2/issues/2215>`_)
+* Use pybind11 from deb or pixi (`#2154 <https://github.com/ros2/rosbag2/issues/2154>`_)
+* Add messages lost notification on a predefined topic during recording (`#2150 <https://github.com/ros2/rosbag2/issues/2150>`_)
+* Make sure test topic is discovered by recorder in rosbag2_py test (`#2132 <https://github.com/ros2/rosbag2/issues/2132>`_)
+* Fix env var CMake list append in rosbag2_py with clang (`#2116 <https://github.com/ros2/rosbag2/issues/2116>`_)
+* Add public API to get player's starting time and playback duration (`#2095 <https://github.com/ros2/rosbag2/issues/2095>`_)
+* Expose more of the player/recorder API through Python (`#2062 <https://github.com/ros2/rosbag2/issues/2062>`_)
+* Add send_timestamp to python interface for reading serialized messages (`#2061 <https://github.com/ros2/rosbag2/issues/2061>`_)
+* Change Python player and recorder to be more as a classes (`#2047 <https://github.com/ros2/rosbag2/issues/2047>`_)
+* Fix service/action message definition issue (`#2041 <https://github.com/ros2/rosbag2/issues/2041>`_)
+* Contributors: Alejandro Hernández Cordero, Barry Xu, Christophe Bedard, Michael Orlov, Om Shivam Verma
+
 0.33.0 (2025-04-25)
 -------------------
 * Upstream quality changes from Apex.AI part-2 (`#1924 <https://github.com/ros2/rosbag2/issues/1924>`_)

@@ -2,6 +2,12 @@
 Changelog for package rosbag2_compression_zstd
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.34.0 (2025-12-23)
+-------------------
+* Replace zstd_vendor with zstd_cmake_module (`#2166 <https://github.com/ros2/rosbag2/issues/2166>`_)
+* fix CMAKE deprecation (`#2067 <https://github.com/ros2/rosbag2/issues/2067>`_)
+* Contributors: Alejandro Hernández Cordero, mosfet80
+
 0.33.0 (2025-04-25)
 -------------------
 

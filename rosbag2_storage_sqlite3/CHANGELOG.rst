@@ -2,6 +2,14 @@
 Changelog for package rosbag2_storage_default_plugins
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.34.0 (2025-12-23)
+-------------------
+* Removed sqlite3_vendor (`#2164 <https://github.com/ros2/rosbag2/issues/2164>`_)
+* fix CMAKE deprecation (`#2067 <https://github.com/ros2/rosbag2/issues/2067>`_)
+* Add new messages write API in BaseWriteInterface, with return status of operation (`#2030 <https://github.com/ros2/rosbag2/issues/2030>`_)
+* Bugfix: Undefined behavior in the `rosbag2_storage` and `rosbag2_storage_sqlite3` packages (`#1997 <https://github.com/ros2/rosbag2/issues/1997>`_)
+* Contributors: Alejandro Hernández Cordero, Michael Orlov, mosfet80
+
 0.33.0 (2025-04-25)
 -------------------
 * Upstream quality changes from Apex.AI part-2 (`#1924 <https://github.com/ros2/rosbag2/issues/1924>`_)
