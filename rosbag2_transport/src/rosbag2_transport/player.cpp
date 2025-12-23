@@ -356,6 +356,7 @@ private:
 
   Player * owner_;
   rosbag2_transport::PlayOptions play_options_;
+  static constexpr const char * kDefaultReadSplitTopicName = "events/read_split";
   rcutils_time_point_value_t play_until_timestamp_ = -1;
   LockedPriorityQueue<rosbag2_storage::SerializedBagMessageSharedPtr> message_queue_;
   using BagMessageComparator =
@@ -1633,8 +1634,21 @@ void PlayerImpl::prepare_publishers()
   }
 
   // Create a publisher and callback for when encountering a split in the input
+  rosbag2_storage::Rosbag2QoS split_event_qos = rosbag2_storage::Rosbag2QoS::EventQoS();
+  if (play_options_.topic_qos_profile_overrides.find(kDefaultReadSplitTopicName) !=
+    play_options_.topic_qos_profile_overrides.end())
+  {
+    const auto & override_qos =
+      play_options_.topic_qos_profile_overrides.at(kDefaultReadSplitTopicName);
+    split_event_qos = rosbag2_storage::Rosbag2QoS(override_qos);
+    RCLCPP_DEBUG(owner_->get_logger(),
+      "Using overridden QoS profile: \n%s\nfor '%s' topic.",
+      split_event_qos.to_string().c_str(),
+      kDefaultReadSplitTopicName);
+  }
+
   split_event_pub_ = owner_->create_publisher<rosbag2_interfaces::msg::ReadSplitEvent>(
-    "events/read_split", rosbag2_storage::Rosbag2QoS::EventQoS());
+    kDefaultReadSplitTopicName, split_event_qos);
   rosbag2_cpp::bag_events::ReaderEventCallbacks callbacks;
   callbacks.read_split_callback =
     [this](rosbag2_cpp::bag_events::BagSplitInfo & info) {

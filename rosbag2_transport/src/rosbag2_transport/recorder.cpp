@@ -258,7 +258,7 @@ RecorderImpl::RecorderImpl(
   node(owner),
   paused_(record_options.start_paused),
   keyboard_handler_(std::move(keyboard_handler)),
-  event_notifier_(std::make_unique<RecorderEventNotifier>(node))
+  event_notifier_(std::make_unique<RecorderEventNotifier>(node, record_options))
 {
   event_notifier_->set_messages_lost_statistics_max_publishing_rate(
     record_options.statistics_max_publishing_rate);
