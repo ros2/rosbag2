@@ -1635,16 +1635,16 @@ void PlayerImpl::prepare_publishers()
 
   // Create a publisher and callback for when encountering a split in the input
   rosbag2_storage::Rosbag2QoS split_event_qos = rosbag2_storage::Rosbag2QoS::EventQoS();
-  if (play_options_.topic_qos_profile_overrides.find(kDefaultReadSplitTopicName) !=
+  auto read_split_topic_name = rclcpp::expand_topic_or_service_name(
+    kDefaultReadSplitTopicName, owner_->get_name(), owner_->get_namespace(), false);
+  if (play_options_.topic_qos_profile_overrides.find(read_split_topic_name) !=
     play_options_.topic_qos_profile_overrides.end())
   {
-    const auto & override_qos =
-      play_options_.topic_qos_profile_overrides.at(kDefaultReadSplitTopicName);
+    const auto & override_qos = play_options_.topic_qos_profile_overrides.at(read_split_topic_name);
     split_event_qos = rosbag2_storage::Rosbag2QoS(override_qos);
     RCLCPP_DEBUG(owner_->get_logger(),
       "Using overridden QoS profile: \n%s\nfor '%s' topic.",
-      split_event_qos.to_string().c_str(),
-      kDefaultReadSplitTopicName);
+      split_event_qos.to_string().c_str(), read_split_topic_name.c_str());
   }
 
   split_event_pub_ = owner_->create_publisher<rosbag2_interfaces::msg::ReadSplitEvent>(

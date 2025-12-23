@@ -63,28 +63,36 @@ public:
     rosbag2_storage::Rosbag2QoS split_event_qos = rosbag2_storage::Rosbag2QoS::EventQoS();
     rosbag2_storage::Rosbag2QoS msgs_lost_event_qos = rosbag2_storage::Rosbag2QoS::EventQoS();
 
-    if (record_options.topic_qos_profile_overrides.find(kDefaultWriteSplitTopicName) !=
+    // Need to expand the default relative topic name to check for QoS overrides
+    auto write_split_topic_name = rclcpp::expand_topic_or_service_name(
+      kDefaultWriteSplitTopicName, node->get_name(), node->get_namespace(), false);
+
+    if (record_options.topic_qos_profile_overrides.find(write_split_topic_name) !=
       record_options.topic_qos_profile_overrides.end())
     {
       const auto & override_qos =
-        record_options.topic_qos_profile_overrides.at(kDefaultWriteSplitTopicName);
+        record_options.topic_qos_profile_overrides.at(write_split_topic_name);
       split_event_qos = rosbag2_storage::Rosbag2QoS(override_qos);
       RCLCPP_DEBUG(node_->get_logger(),
                    "Using overridden QoS profile: \n%s\nfor '%s' topic.",
                    split_event_qos.to_string().c_str(),
-                   kDefaultWriteSplitTopicName);
+                   write_split_topic_name.c_str());
     }
 
-    if (record_options.topic_qos_profile_overrides.find(kDefaultMessagesLostTopicName) !=
+    // Need to expand the default relative topic name to check for QoS overrides
+    auto messages_lost_topic_name = rclcpp::expand_topic_or_service_name(
+      kDefaultMessagesLostTopicName, node->get_name(), node->get_namespace(), false);
+
+    if (record_options.topic_qos_profile_overrides.find(messages_lost_topic_name) !=
       record_options.topic_qos_profile_overrides.end())
     {
       const auto & override_qos =
-        record_options.topic_qos_profile_overrides.at(kDefaultMessagesLostTopicName);
+        record_options.topic_qos_profile_overrides.at(messages_lost_topic_name);
       msgs_lost_event_qos = rosbag2_storage::Rosbag2QoS(override_qos);
       RCLCPP_DEBUG(node_->get_logger(),
                    "Using overridden QoS profile: \n%s\nfor '%s' topic.",
                    msgs_lost_event_qos.to_string().c_str(),
-                   kDefaultMessagesLostTopicName);
+                   messages_lost_topic_name.c_str());
     }
 
     // Store QoS profiles for getter methods

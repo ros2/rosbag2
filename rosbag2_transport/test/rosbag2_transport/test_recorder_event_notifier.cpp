@@ -626,8 +626,12 @@ TEST_F(TestRecorderEventNotifier, applies_qos_override_for_write_split_topic)
   // Set custom QoS for write_split topic
   rclcpp::QoS custom_qos(10);
   custom_qos.reliable().transient_local();
-  record_options.topic_qos_profile_overrides.insert(
-    {RecorderEventNotifier::get_default_write_split_topic_name(), custom_qos});
+  // Need to expand the default relative topic name to check for QoS overrides
+  auto write_split_topic_name = rclcpp::expand_topic_or_service_name(
+    RecorderEventNotifier::get_default_write_split_topic_name(),
+    node_->get_name(), node_->get_namespace(), false);
+
+  record_options.topic_qos_profile_overrides.insert({write_split_topic_name, custom_qos});
 
   auto notifier = std::make_unique<RecorderEventNotifier>(node_.get(), record_options);
 
@@ -651,8 +655,12 @@ TEST_F(TestRecorderEventNotifier, applies_qos_override_for_messages_lost_topic)
   // Set custom QoS for messages_lost topic
   rclcpp::QoS custom_qos(20);
   custom_qos.best_effort().durability_volatile();
-  record_options.topic_qos_profile_overrides.insert(
-    {RecorderEventNotifier::get_default_messages_lost_topic_name(), custom_qos});
+  // Need to expand the default relative topic name to check for QoS overrides
+  auto messages_lost_topic_name = rclcpp::expand_topic_or_service_name(
+    RecorderEventNotifier::get_default_messages_lost_topic_name(),
+    node_->get_name(), node_->get_namespace(), false);
+
+  record_options.topic_qos_profile_overrides.insert({messages_lost_topic_name, custom_qos});
 
   auto notifier = std::make_unique<RecorderEventNotifier>(node_.get(), record_options);
 
@@ -680,10 +688,16 @@ TEST_F(TestRecorderEventNotifier, applies_qos_overrides_for_both_event_topics)
   rclcpp::QoS custom_lost_qos(25);
   custom_lost_qos.best_effort().durability_volatile();
 
-  record_options.topic_qos_profile_overrides.insert(
-    {RecorderEventNotifier::get_default_write_split_topic_name(), custom_split_qos});
-  record_options.topic_qos_profile_overrides.insert(
-    {RecorderEventNotifier::get_default_messages_lost_topic_name(), custom_lost_qos});
+  // Need to expand the default relative topic names
+  auto write_split_topic_name = rclcpp::expand_topic_or_service_name(
+    RecorderEventNotifier::get_default_write_split_topic_name(),
+    node_->get_name(), node_->get_namespace(), false);
+  auto messages_lost_topic_name = rclcpp::expand_topic_or_service_name(
+    RecorderEventNotifier::get_default_messages_lost_topic_name(),
+    node_->get_name(), node_->get_namespace(), false);
+
+  record_options.topic_qos_profile_overrides.insert({write_split_topic_name, custom_split_qos});
+  record_options.topic_qos_profile_overrides.insert({messages_lost_topic_name, custom_lost_qos});
 
   auto notifier = std::make_unique<RecorderEventNotifier>(node_.get(), record_options);
 
@@ -704,8 +718,13 @@ TEST_F(TestRecorderEventNotifier, qos_override_preserves_functionality_for_event
 {
   rosbag2_transport::RecordOptions record_options;
   const size_t expected_number_of_messages = 1;
-  const std::string split_topic_name = RecorderEventNotifier::get_default_write_split_topic_name();
-  const std::string lost_topic_name = RecorderEventNotifier::get_default_messages_lost_topic_name();
+  // Need to expand the default relative topic names
+  auto split_topic_name = rclcpp::expand_topic_or_service_name(
+    RecorderEventNotifier::get_default_write_split_topic_name(),
+    node_->get_name(), node_->get_namespace(), false);
+  auto lost_topic_name = rclcpp::expand_topic_or_service_name(
+    RecorderEventNotifier::get_default_messages_lost_topic_name(),
+    node_->get_name(), node_->get_namespace(), false);
 
   // Set custom QoS for write_split topic
   rclcpp::QoS custom_qos(5);
