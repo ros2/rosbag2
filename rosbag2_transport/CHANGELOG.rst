@@ -2,6 +2,12 @@
 Changelog for package rosbag2_transport
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.15.16 (2025-12-23)
+--------------------
+* [humble] Bugfix for incorrect MCAPStorage::seek(timestamp) when timestamp is current (backport `#2157 <https://github.com/ros2/rosbag2/issues/2157>`_) (`#2161 <https://github.com/ros2/rosbag2/issues/2161>`_)
+* [humble] rosbag2_transport: parametrize test_rewrite (backport `#1206 <https://github.com/ros2/rosbag2/issues/1206>`_) (`#2162 <https://github.com/ros2/rosbag2/issues/2162>`_)
+* Contributors: mergify[bot]
+
 0.15.15 (2025-07-16)
 --------------------
 * [humble] Bugfix: `ros2 bag convert` dropping messages with compression mode message (backport `#1975 <https://github.com/ros2/rosbag2/issues/1975>`_) (`#2012 <https://github.com/ros2/rosbag2/issues/2012>`_)

@@ -2,6 +2,12 @@
 Changelog for package ros2bag
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.15.16 (2025-12-23)
+--------------------
+* add rosbag2_storage_default_plugins to exec_depend of ros2bag. (`#2227 <https://github.com/ros2/rosbag2/issues/2227>`_) (`#2232 <https://github.com/ros2/rosbag2/issues/2232>`_)
+* Fix missing blanks in help text (`#2112 <https://github.com/ros2/rosbag2/issues/2112>`_)
+* Contributors: Eric Su, mergify[bot]
+
 0.15.15 (2025-07-16)
 --------------------
 * [Humble] Fix for failing test_record_qos_profiles on Windows (backport `#1949 <https://github.com/ros2/rosbag2/issues/1949>`_) (`#2011 <https://github.com/ros2/rosbag2/issues/2011>`_)
