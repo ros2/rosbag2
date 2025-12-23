@@ -389,9 +389,8 @@ void RecorderImpl::stop()
 void RecorderImpl::record(const std::string & uri)
 {
   std::lock_guard<std::mutex> state_lock(start_stop_transition_mutex_);
-  if (in_recording_.exchange(true)) {
-    RCLCPP_WARN_STREAM(
-      node->get_logger(),
+  if (in_recording_) {
+    RCLCPP_WARN_STREAM(node->get_logger(),
       "Called Recorder::record(uri) while already in recording, dismissing request.");
     return;
   }
@@ -482,6 +481,7 @@ void RecorderImpl::record(const std::string & uri)
   } else {
     RCLCPP_INFO(node->get_logger(), "Recording...");
   }
+  in_recording_ = true;
 }
 
 void RecorderImpl::create_control_services()
