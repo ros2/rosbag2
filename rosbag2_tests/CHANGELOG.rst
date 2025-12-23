@@ -2,6 +2,17 @@
 Changelog for package rosbag2_tests
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.32.1 (2025-12-23)
+-------------------
+* Address flakiness in the recorder tests with small cache size (`#2203 <https://github.com/ros2/rosbag2/issues/2203>`_) (`#2206 <https://github.com/ros2/rosbag2/issues/2206>`_)
+* Use rclcpp typesupport helpers in rosbag2_cpp (`#2017 <https://github.com/ros2/rosbag2/issues/2017>`_) (`#2129 <https://github.com/ros2/rosbag2/issues/2129>`_)
+* Expose more of the player/recorder API through Python (`#2062 <https://github.com/ros2/rosbag2/issues/2062>`_) (`#2099 <https://github.com/ros2/rosbag2/issues/2099>`_)
+* fix CMAKE deprecation (`#2067 <https://github.com/ros2/rosbag2/issues/2067>`_) (`#2068 <https://github.com/ros2/rosbag2/issues/2068>`_)
+* Bugfixes for deadlocks in Rosbag2 player when calling stop API (`#2057 <https://github.com/ros2/rosbag2/issues/2057>`_) (`#2059 <https://github.com/ros2/rosbag2/issues/2059>`_)
+* Address flakiness in tests where need to spin a node (`#2001 <https://github.com/ros2/rosbag2/issues/2001>`_) (`#2018 <https://github.com/ros2/rosbag2/issues/2018>`_)
+* Upstream quality changes from Apex.AI part-2 (`#1924 <https://github.com/ros2/rosbag2/issues/1924>`_) (`#1986 <https://github.com/ros2/rosbag2/issues/1986>`_)
+* Contributors: mergify[bot]
+
 0.32.0 (2025-04-18)
 -------------------
 * Implement actions recording and displaying information about recorded actions features (`#1939 <https://github.com/ros2/rosbag2/issues/1939>`_)

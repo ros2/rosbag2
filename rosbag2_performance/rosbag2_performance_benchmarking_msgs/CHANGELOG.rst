@@ -2,6 +2,12 @@
 Changelog for package rosbag2_performance_benchmarking_msgs
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.32.1 (2025-12-23)
+-------------------
+* Enable `rosbag2_performance_benchmarking` package to be built by default (`#2093 <https://github.com/ros2/rosbag2/issues/2093>`_) (`#2096 <https://github.com/ros2/rosbag2/issues/2096>`_)
+* fix CMAKE deprecation (`#2067 <https://github.com/ros2/rosbag2/issues/2067>`_) (`#2068 <https://github.com/ros2/rosbag2/issues/2068>`_)
+* Contributors: mergify[bot]
+
 0.32.0 (2025-04-18)
 -------------------
 

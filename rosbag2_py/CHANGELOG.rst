@@ -2,6 +2,17 @@
 Changelog for package rosbag2_py
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.32.1 (2025-12-23)
+-------------------
+* Make sure test topic is discovered by recorder in rosbag2_py test (`#2132 <https://github.com/ros2/rosbag2/issues/2132>`_) (`#2134 <https://github.com/ros2/rosbag2/issues/2134>`_)
+* Add public API to get player's starting time and playback duration (`#2095 <https://github.com/ros2/rosbag2/issues/2095>`_) (`#2101 <https://github.com/ros2/rosbag2/issues/2101>`_)
+* Expose more of the player/recorder API through Python (`#2062 <https://github.com/ros2/rosbag2/issues/2062>`_) (`#2099 <https://github.com/ros2/rosbag2/issues/2099>`_)
+* Change Python player and recorder to be more as a classes (`#2047 <https://github.com/ros2/rosbag2/issues/2047>`_) (`#2053 <https://github.com/ros2/rosbag2/issues/2053>`_)
+* Fix service/action message definition issue (`#2041 <https://github.com/ros2/rosbag2/issues/2041>`_) (`#2051 <https://github.com/ros2/rosbag2/issues/2051>`_)
+* Upstream quality changes from Apex.AI part-2 (`#1924 <https://github.com/ros2/rosbag2/issues/1924>`_) (`#1986 <https://github.com/ros2/rosbag2/issues/1986>`_)
+* Bugfix: `ros2 bag convert` dropping messages with compression mode message (`#1975 <https://github.com/ros2/rosbag2/issues/1975>`_) (`#1984 <https://github.com/ros2/rosbag2/issues/1984>`_)
+* Contributors: mergify[bot]
+
 0.32.0 (2025-04-18)
 -------------------
 * Add message sequence number to the messages write API (`#1961 <https://github.com/ros2/rosbag2/issues/1961>`_)

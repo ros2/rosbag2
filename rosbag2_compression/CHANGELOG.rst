@@ -2,6 +2,14 @@
 Changelog for package rosbag2_compression
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.32.1 (2025-12-23)
+-------------------
+* [kilted] Make topics persistent between writer's close() and open() API calls. (backport `#2229 <https://github.com/ros2/rosbag2/issues/2229>`_) (`#2242 <https://github.com/ros2/rosbag2/issues/2242>`_)
+* Address flakiness in the recorder tests with small cache size (`#2203 <https://github.com/ros2/rosbag2/issues/2203>`_) (`#2206 <https://github.com/ros2/rosbag2/issues/2206>`_)
+* fix CMAKE deprecation (`#2067 <https://github.com/ros2/rosbag2/issues/2067>`_) (`#2068 <https://github.com/ros2/rosbag2/issues/2068>`_)
+* Bugfix: `ros2 bag convert` dropping messages with compression mode message (`#1975 <https://github.com/ros2/rosbag2/issues/1975>`_) (`#1984 <https://github.com/ros2/rosbag2/issues/1984>`_)
+* Contributors: mergify[bot]
+
 0.32.0 (2025-04-18)
 -------------------
 

@@ -2,6 +2,12 @@
 Changelog for package rosbag2_storage_mcap
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.32.1 (2025-12-23)
+-------------------
+* Bugfix for MCAPStorage::seek(time) advance in time is current (`#2157 <https://github.com/ros2/rosbag2/issues/2157>`_) (`#2159 <https://github.com/ros2/rosbag2/issues/2159>`_)
+* fix CMAKE deprecation (`#2067 <https://github.com/ros2/rosbag2/issues/2067>`_) (`#2068 <https://github.com/ros2/rosbag2/issues/2068>`_)
+* Contributors: mergify[bot]
+
 0.32.0 (2025-04-18)
 -------------------
 * Add message sequence number to the messages write API (`#1961 <https://github.com/ros2/rosbag2/issues/1961>`_)

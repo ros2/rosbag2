@@ -2,6 +2,24 @@
 Changelog for package rosbag2_cpp
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.32.1 (2025-12-23)
+-------------------
+* [kilted] Make topics persistent between writer's close() and open() API calls. (backport `#2229 <https://github.com/ros2/rosbag2/issues/2229>`_) (`#2242 <https://github.com/ros2/rosbag2/issues/2242>`_)
+* [kilted] Check for nullptrs when pushing new messages to the message cache (backport `#2219 <https://github.com/ros2/rosbag2/issues/2219>`_) (`#2222 <https://github.com/ros2/rosbag2/issues/2222>`_)
+* Address flakiness in the recorder tests with small cache size (`#2203 <https://github.com/ros2/rosbag2/issues/2203>`_) (`#2206 <https://github.com/ros2/rosbag2/issues/2206>`_)
+* [kilted] Log reasoning for not found message definition only in debug log (backport `#2183 <https://github.com/ros2/rosbag2/issues/2183>`_) (`#2185 <https://github.com/ros2/rosbag2/issues/2185>`_)
+* Use rclcpp typesupport helpers in rosbag2_cpp (`#2017 <https://github.com/ros2/rosbag2/issues/2017>`_) (`#2129 <https://github.com/ros2/rosbag2/issues/2129>`_)
+* Fix: Add null pointer check for reader_imp in the Reader constructor (`#2135 <https://github.com/ros2/rosbag2/issues/2135>`_) (`#2139 <https://github.com/ros2/rosbag2/issues/2139>`_)
+* minor error checks for rosbag2_cpp (`#2127 <https://github.com/ros2/rosbag2/issues/2127>`_) (`#2145 <https://github.com/ros2/rosbag2/issues/2145>`_)
+* Fix reindex duration bug when bag file durations overlap (`#2036 <https://github.com/ros2/rosbag2/issues/2036>`_) (`#2106 <https://github.com/ros2/rosbag2/issues/2106>`_)
+* fix CMAKE deprecation (`#2067 <https://github.com/ros2/rosbag2/issues/2067>`_) (`#2068 <https://github.com/ros2/rosbag2/issues/2068>`_)
+* Add support for searching message definitions in nested subdirectories (`#2055 <https://github.com/ros2/rosbag2/issues/2055>`_) (`#2063 <https://github.com/ros2/rosbag2/issues/2063>`_)
+* Fix service/action message definition issue (`#2041 <https://github.com/ros2/rosbag2/issues/2041>`_) (`#2051 <https://github.com/ros2/rosbag2/issues/2051>`_)
+* Improvements in message publishing timings (`#2025 <https://github.com/ros2/rosbag2/issues/2025>`_) (`#2026 <https://github.com/ros2/rosbag2/issues/2026>`_)
+* Upstream quality changes from Apex.AI part-2 (`#1924 <https://github.com/ros2/rosbag2/issues/1924>`_) (`#1986 <https://github.com/ros2/rosbag2/issues/1986>`_)
+* Address clang warning in the `TimeControllerClock::wakeup()` (`#1962 <https://github.com/ros2/rosbag2/issues/1962>`_) (`#1978 <https://github.com/ros2/rosbag2/issues/1978>`_)
+* Contributors: mergify[bot]
+
 0.32.0 (2025-04-18)
 -------------------
 * Add support for finding action types message definitions in the `LocalMessageDefinitionSource`

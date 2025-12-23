@@ -2,6 +2,14 @@
 Changelog for package ros2bag
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.32.1 (2025-12-23)
+-------------------
+* add rosbag2_storage_default_plugins to exec_depend of ros2bag. (`#2227 <https://github.com/ros2/rosbag2/issues/2227>`_) (`#2230 <https://github.com/ros2/rosbag2/issues/2230>`_)
+* Expose more of the player/recorder API through Python (`#2062 <https://github.com/ros2/rosbag2/issues/2062>`_) (`#2099 <https://github.com/ros2/rosbag2/issues/2099>`_)
+* Change Python player and recorder to be more as a classes (`#2047 <https://github.com/ros2/rosbag2/issues/2047>`_) (`#2053 <https://github.com/ros2/rosbag2/issues/2053>`_)
+* Upstream quality changes from Apex.AI part-2 (`#1924 <https://github.com/ros2/rosbag2/issues/1924>`_) (`#1986 <https://github.com/ros2/rosbag2/issues/1986>`_)
+* Contributors: mergify[bot]
+
 0.32.0 (2025-04-18)
 -------------------
 * Add actions replay feature (`#1955 <https://github.com/ros2/rosbag2/issues/1955>`_)

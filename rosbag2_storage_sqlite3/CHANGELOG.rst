@@ -2,6 +2,13 @@
 Changelog for package rosbag2_storage_default_plugins
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.32.1 (2025-12-23)
+-------------------
+* fix CMAKE deprecation (`#2067 <https://github.com/ros2/rosbag2/issues/2067>`_) (`#2068 <https://github.com/ros2/rosbag2/issues/2068>`_)
+* Bugfix: Undefined behavior in the `rosbag2_storage` and `rosbag2_storage_sqlite3` packages (`#1997 <https://github.com/ros2/rosbag2/issues/1997>`_) (`#1998 <https://github.com/ros2/rosbag2/issues/1998>`_)
+* Upstream quality changes from Apex.AI part-2 (`#1924 <https://github.com/ros2/rosbag2/issues/1924>`_) (`#1986 <https://github.com/ros2/rosbag2/issues/1986>`_)
+* Contributors: mergify[bot]
+
 0.32.0 (2025-04-18)
 -------------------
 * Add actions replay feature (`#1955 <https://github.com/ros2/rosbag2/issues/1955>`_)

@@ -2,6 +2,13 @@
 Changelog for package mcap_vendor
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.32.1 (2025-12-23)
+-------------------
+* Backporting Missing cstdint Include (`#2008 <https://github.com/ros2/rosbag2/issues/2008>`_) (`#2199 <https://github.com/ros2/rosbag2/issues/2199>`_)
+* mcap_vendor: update to v1.4.2 (`#2070 <https://github.com/ros2/rosbag2/issues/2070>`_)
+* fix CMAKE deprecation (`#2067 <https://github.com/ros2/rosbag2/issues/2067>`_) (`#2068 <https://github.com/ros2/rosbag2/issues/2068>`_)
+* Contributors: james-rms, mergify[bot]
+
 0.32.0 (2025-04-18)
 -------------------
 

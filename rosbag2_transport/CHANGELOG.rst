@@ -2,6 +2,38 @@
 Changelog for package rosbag2_transport
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.32.1 (2025-12-23)
+-------------------
+* Fix macOS build: Disable thread-safety annotations in locked_priority_queue.hpp (`#2245 <https://github.com/ros2/rosbag2/issues/2245>`_) (`#2247 <https://github.com/ros2/rosbag2/issues/2247>`_)
+* [kilted] Fix for C++ Recorder failure on stop() -> record() due to reusing the bag name (backport `#2224 <https://github.com/ros2/rosbag2/issues/2224>`_) (`#2244 <https://github.com/ros2/rosbag2/issues/2244>`_)
+* Enable RMW communication isolation in rosbag2_transport tests (`#2190 <https://github.com/ros2/rosbag2/issues/2190>`_) (`#2213 <https://github.com/ros2/rosbag2/issues/2213>`_)
+* Address flakiness in the recorder tests with small cache size (`#2203 <https://github.com/ros2/rosbag2/issues/2203>`_) (`#2206 <https://github.com/ros2/rosbag2/issues/2206>`_)
+* Reduce CPU overhead in the Rosbag2 recorder discovery (`#2201 <https://github.com/ros2/rosbag2/issues/2201>`_) (`#2204 <https://github.com/ros2/rosbag2/issues/2204>`_)
+* [kilted] Fix for data races in tests with MockSequentialWriter (backport `#2192 <https://github.com/ros2/rosbag2/issues/2192>`_) (`#2195 <https://github.com/ros2/rosbag2/issues/2195>`_)
+* Fix for possible data races in PlayerProgressBar class (`#2194 <https://github.com/ros2/rosbag2/issues/2194>`_) (`#2197 <https://github.com/ros2/rosbag2/issues/2197>`_)
+* Make the player respect the original messages' order with the same timestamp (`#2172 <https://github.com/ros2/rosbag2/issues/2172>`_) (`#2187 <https://github.com/ros2/rosbag2/issues/2187>`_)
+* [kilted] Follow-up on "Fix for multibag replay stagnation (`#2158 <https://github.com/ros2/rosbag2/issues/2158>`_)" (`#2182 <https://github.com/ros2/rosbag2/issues/2182>`_)
+* Bugfix: Player can't play with read_ahead_queue_size equal 1 (`#2174 <https://github.com/ros2/rosbag2/issues/2174>`_) (`#2179 <https://github.com/ros2/rosbag2/issues/2179>`_)
+* Fixes for multiple race conditions in player (`#2171 <https://github.com/ros2/rosbag2/issues/2171>`_) (`#2176 <https://github.com/ros2/rosbag2/issues/2176>`_)
+* Use rclcpp typesupport helpers in rosbag2_cpp (`#2017 <https://github.com/ros2/rosbag2/issues/2017>`_) (`#2129 <https://github.com/ros2/rosbag2/issues/2129>`_)
+* Fix for multibag replay stagnation (`#2158 <https://github.com/ros2/rosbag2/issues/2158>`_) (`#2169 <https://github.com/ros2/rosbag2/issues/2169>`_)
+* Bugfix for MCAPStorage::seek(time) advance in time is current (`#2157 <https://github.com/ros2/rosbag2/issues/2157>`_) (`#2159 <https://github.com/ros2/rosbag2/issues/2159>`_)
+* [kilted] Add RecorderEventNotifier class (backport `#2144 <https://github.com/ros2/rosbag2/issues/2144>`_) (`#2149 <https://github.com/ros2/rosbag2/issues/2149>`_)
+* Bugfix for deadlock in multibag replay (`#2143 <https://github.com/ros2/rosbag2/issues/2143>`_) (`#2147 <https://github.com/ros2/rosbag2/issues/2147>`_)
+* Add public API to get player's starting time and playback duration (`#2095 <https://github.com/ros2/rosbag2/issues/2095>`_) (`#2101 <https://github.com/ros2/rosbag2/issues/2101>`_)
+* fix CMAKE deprecation (`#2067 <https://github.com/ros2/rosbag2/issues/2067>`_) (`#2068 <https://github.com/ros2/rosbag2/issues/2068>`_)
+* Bugfixes for deadlocks in Rosbag2 player when calling stop API (`#2057 <https://github.com/ros2/rosbag2/issues/2057>`_) (`#2059 <https://github.com/ros2/rosbag2/issues/2059>`_)
+* Skip flaky `can_record_again_after_stop` test (`#2031 <https://github.com/ros2/rosbag2/issues/2031>`_) (`#2032 <https://github.com/ros2/rosbag2/issues/2032>`_)
+* Bugfix: No output in cout if progress bar is disabled (`#2024 <https://github.com/ros2/rosbag2/issues/2024>`_) (`#2028 <https://github.com/ros2/rosbag2/issues/2028>`_)
+* Improvements in message publishing timings (`#2025 <https://github.com/ros2/rosbag2/issues/2025>`_) (`#2026 <https://github.com/ros2/rosbag2/issues/2026>`_)
+* Address flakiness in tests where need to spin a node (`#2001 <https://github.com/ros2/rosbag2/issues/2001>`_) (`#2018 <https://github.com/ros2/rosbag2/issues/2018>`_)
+* Avoid sending non-existent cancel requests (`#2005 <https://github.com/ros2/rosbag2/issues/2005>`_) (`#2010 <https://github.com/ros2/rosbag2/issues/2010>`_)
+* Fix a maybe-uninitialized warning in player_action_client.cpp (`#1969 <https://github.com/ros2/rosbag2/issues/1969>`_) (`#1989 <https://github.com/ros2/rosbag2/issues/1989>`_)
+* Upstream quality changes from Apex.AI part-2 (`#1924 <https://github.com/ros2/rosbag2/issues/1924>`_) (`#1986 <https://github.com/ros2/rosbag2/issues/1986>`_)
+* Bugfix: `ros2 bag convert` dropping messages with compression mode message (`#1975 <https://github.com/ros2/rosbag2/issues/1975>`_) (`#1984 <https://github.com/ros2/rosbag2/issues/1984>`_)
+* Use DDS queue depth for subscriptions as a maximum value across publishers (`#1960 <https://github.com/ros2/rosbag2/issues/1960>`_) (`#1979 <https://github.com/ros2/rosbag2/issues/1979>`_)
+* Contributors: Michael Orlov, mergify[bot]
+
 0.32.0 (2025-04-18)
 -------------------
 * Add actions replay feature (`#1955 <https://github.com/ros2/rosbag2/issues/1955>`_)
