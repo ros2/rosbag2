@@ -24,6 +24,7 @@
 #include <utility>
 #include <vector>
 
+#include "rclcpp/qos.hpp"
 #include "rosbag2_interfaces/msg/messages_lost_event.hpp"
 #include "rosbag2_interfaces/msg/messages_lost_event_topic_stat.hpp"
 #include "rosbag2_interfaces/msg/write_split_event.hpp"
