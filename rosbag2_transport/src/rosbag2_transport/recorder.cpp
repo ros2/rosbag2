@@ -399,7 +399,6 @@ void RecorderImpl::record(const std::string & uri)
   }
   RCLCPP_INFO(node->get_logger(), "Starting recording to '%s'", storage_options_.uri.c_str());
 
-  paused_ = record_options_.start_paused;
   topic_qos_profile_overrides_ = record_options_.topic_qos_profile_overrides;
   // Check serialization format options
   if (!record_options_.rmw_serialization_format.empty() &&
@@ -472,7 +471,7 @@ void RecorderImpl::record(const std::string & uri)
     start_discovery();
     RCLCPP_INFO(node->get_logger(), "Listening for topics...");
   }
-  if (record_options_.start_paused) {
+  if (paused_.load()) {
     if (!record_options_.disable_keyboard_controls) {
       RCLCPP_INFO(
         node->get_logger(), "Wait for recording: Press %s to start.",
