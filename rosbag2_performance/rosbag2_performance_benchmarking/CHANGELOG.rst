@@ -2,6 +2,12 @@
 Changelog for package rosbag2_performance_benchmarking
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.15.16 (2025-12-23)
+--------------------
+* [humble] Enable `rosbag2_performance_benchmarking` package to be built by default (backport `#2093 <https://github.com/ros2/rosbag2/issues/2093>`_) (`#2098 <https://github.com/ros2/rosbag2/issues/2098>`_)
+* [humble] Bugfix: `prosbag2_performance_benchmarking` outputs incorrect results for topics with frequency more than 1 kHz (backport `#2077 <https://github.com/ros2/rosbag2/issues/2077>`_) (`#2086 <https://github.com/ros2/rosbag2/issues/2086>`_)
+* Contributors: mergify[bot]
+
 0.15.15 (2025-07-16)
 --------------------
 

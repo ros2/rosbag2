@@ -2,6 +2,11 @@
 Changelog for package rosbag2_storage
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.15.16 (2025-12-23)
+--------------------
+* fix memory leak on make_empty_serialized_message(). (`#2253 <https://github.com/ros2/rosbag2/issues/2253>`_) (`#2261 <https://github.com/ros2/rosbag2/issues/2261>`_)
+* Contributors: mergify[bot]
+
 0.15.15 (2025-07-16)
 --------------------
 * Bugfix: Undefined behavior in the `rosbag2_storage` and `rosbag2_storage_sqlite3` packages (`#1997 <https://github.com/ros2/rosbag2/issues/1997>`_) (`#2000 <https://github.com/ros2/rosbag2/issues/2000>`_)
