@@ -169,6 +169,15 @@ def add_recorder_arguments(parser: ArgumentParser) -> None:
              'about one second of total recorded data volume. '
              'If the value specified is 0, then every message is directly written to disk.')
     parser.add_argument(
+        '--max-cache-duration', type=check_not_negative_float, default=0.0,
+        help='Maximum cache duration in a fraction of seconds.\n'
+             'Default: %(default)d, indicates that buffering will be limited by the'
+             ' --max-cache-size parameter only. If the value is more than 0, the cache buffer'
+             ' will be limited by both the series of messages duration and the maximum cache size'
+             ' parameter.\n'
+             'To override the upper bound by total messages size, the --max-cache-size parameter'
+             ' can be set to 0.')
+    parser.add_argument(
         '--disable-keyboard-controls', action='store_true', default=False,
         help='disables keyboard controls for recorder')
     parser.add_argument(
@@ -191,15 +200,6 @@ def add_recorder_arguments(parser: ArgumentParser) -> None:
         help='Enable snapshot mode. Messages will not be written to the bagfile until '
              'the "/rosbag2_recorder/snapshot" service is called. e.g. \n '
              'ros2 service call /rosbag2_recorder/snapshot rosbag2_interfaces/Snapshot')
-    parser.add_argument(
-        '--max-cache-duration', type=check_not_negative_float, default=0.0,
-        help='Maximum cache duration in a fraction of seconds.\n'
-             'Default: %(default)d, indicates that buffering will be limited by the'
-             ' --max-cache-size parameter only. If the value is more than 0, the cache buffer'
-             ' will be limited by both the series of messages duration and the maximum cache size'
-             ' parameter.\n'
-             'To override the upper bound by total messages size, the '
-             '--max-cache-size parameter can be set to 0.')
     parser.add_argument(
         '--log-level', type=str, default='info',
         choices=['debug', 'info', 'warn', 'error', 'fatal'],
@@ -378,10 +378,10 @@ class RecordVerb(VerbExtension):
             max_bagfile_size=args.max_bag_size,
             max_bagfile_duration=args.max_bag_duration,
             max_cache_size=args.max_cache_size,
+            max_cache_duration=args.max_cache_duration,
             storage_preset_profile=args.storage_preset_profile,
             storage_config_uri=storage_config_file,
             snapshot_mode=args.snapshot_mode,
-            max_cache_duration=args.max_cache_duration,
             custom_data=custom_data
         )
         record_options = RecordOptions()

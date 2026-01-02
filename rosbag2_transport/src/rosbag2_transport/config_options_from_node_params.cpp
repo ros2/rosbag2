@@ -425,13 +425,13 @@ get_storage_options_from_node_params(rclcpp::Node & node)
     node, "storage.max_cache_size", 0,
     std::numeric_limits<int64_t>::max(), 100 * 1024 * 1024);
 
+  storage_options.max_cache_duration =
+    param_utils::get_duration_from_node_param(node, "storage.max_cache_duration", 0, 0);
+
   storage_options.storage_preset_profile =
     node.declare_parameter<std::string>("storage.storage_preset_profile", "");
 
   storage_options.snapshot_mode = node.declare_parameter<bool>("storage.snapshot_mode", false);
-
-  storage_options.max_cache_duration =
-    param_utils::get_duration_from_node_param(node, "storage.max_cache_duration", 0, 0);
 
   auto list_of_key_value_strings = node.declare_parameter<std::vector<std::string>>(
     "storage.custom_data",

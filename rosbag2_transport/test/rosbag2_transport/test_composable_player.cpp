@@ -196,9 +196,9 @@ TEST_P(ComposablePlayerTests, player_can_parse_parameters_from_file) {
   EXPECT_EQ(storage_options[0].max_bagfile_size, 12345);
   EXPECT_EQ(storage_options[0].max_bagfile_duration, 54321);
   EXPECT_EQ(storage_options[0].max_cache_size, 9898);
+  EXPECT_DOUBLE_EQ(storage_options[0].max_cache_duration.seconds(), 1.5);
   EXPECT_EQ(storage_options[0].storage_preset_profile, "resilient");
   EXPECT_EQ(storage_options[0].snapshot_mode, false);
-  EXPECT_DOUBLE_EQ(storage_options[0].max_cache_duration.seconds(), 1.5);
   std::unordered_map<std::string, std::string> custom_data{
     std::pair{"key1", "value1"},
     std::pair{"key2", "value2"}

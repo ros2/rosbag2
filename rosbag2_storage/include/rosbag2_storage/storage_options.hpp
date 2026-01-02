@@ -45,6 +45,12 @@ public:
   // A value of 0 disables caching and every write happens directly to disk.
   uint64_t max_cache_size = 0;
 
+  // Maximum cache duration used for time-limited buffering (applies to both snapshot mode
+  // and regular caching). A value of 0.0 indicates that buffering will be limited by the
+  // max_cache_size only. When greater than 0, the cache buffer will maintain messages
+  // within this time window, dropping older messages as needed.
+  rclcpp::Duration max_cache_duration{0, 0};
+
   // Preset storage configuration. Preset settings can be overriden with
   // corresponding settings specified through storage_config_uri file
   std::string storage_preset_profile = "";
@@ -56,12 +62,6 @@ public:
   // Enable snapshot mode.
   // Defaults to disabled.
   bool snapshot_mode = false;
-
-  // Maximum cache duration used for time-limited buffering (applies to both snapshot mode
-  // and regular caching). A value of 0.0 indicates that buffering will be limited by the
-  // max_cache_size only. When greater than 0, the cache buffer will maintain messages
-  // within this time window, dropping older messages as needed.
-  rclcpp::Duration max_cache_duration{0, 0};
 
   // Start and end time for cutting
   int64_t start_time_ns = -1;
