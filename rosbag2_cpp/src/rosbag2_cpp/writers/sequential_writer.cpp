@@ -162,7 +162,7 @@ void SequentialWriter::open(
         storage_options.max_cache_size, storage_options.snapshot_duration.nanoseconds());
     } else {
       message_cache_ = std::make_shared<rosbag2_cpp::cache::MessageCache>(
-        storage_options.max_cache_size);
+        storage_options.max_cache_size, storage_options.snapshot_duration.nanoseconds());
     }
     cache_consumer_ = std::make_unique<rosbag2_cpp::cache::CacheConsumer>(
       message_cache_,

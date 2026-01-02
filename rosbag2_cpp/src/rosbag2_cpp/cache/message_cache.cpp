@@ -28,10 +28,10 @@ namespace rosbag2_cpp
 namespace cache
 {
 
-MessageCache::MessageCache(size_t max_buffer_size)
+MessageCache::MessageCache(size_t max_buffer_size, int64_t max_buffer_duration_ns)
 {
-  producer_buffer_ = std::make_shared<MessageCacheBuffer>(max_buffer_size);
-  consumer_buffer_ = std::make_shared<MessageCacheBuffer>(max_buffer_size);
+  producer_buffer_ = std::make_shared<MessageCacheBuffer>(max_buffer_size, max_buffer_duration_ns);
+  consumer_buffer_ = std::make_shared<MessageCacheBuffer>(max_buffer_size, max_buffer_duration_ns);
 }
 
 MessageCache::~MessageCache()
@@ -41,7 +41,7 @@ MessageCache::~MessageCache()
   // exceptional situations.
   flushing_ = true;
   cache_condition_var_.notify_one();
-  log_dropped();
+  MessageCache::log_dropped();
 }
 
 bool MessageCache::push(std::shared_ptr<const rosbag2_storage::SerializedBagMessage> msg)

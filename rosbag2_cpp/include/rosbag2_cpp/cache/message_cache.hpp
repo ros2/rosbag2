@@ -71,7 +71,7 @@ class ROSBAG2_CPP_PUBLIC MessageCache
   : public MessageCacheInterface
 {
 public:
-  explicit MessageCache(size_t max_buffer_size);
+  explicit MessageCache(size_t max_buffer_size, int64_t max_buffer_duration_ns = 0);
 
   ~MessageCache() override;
 
