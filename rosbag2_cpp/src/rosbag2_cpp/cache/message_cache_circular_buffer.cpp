@@ -56,8 +56,8 @@ bool MessageCacheCircularBuffer::push(CacheBufferInterface::buffer_element_t msg
     buffer_bytes_size_ -= buffer_.front()->serialized_data->buffer_length;
     buffer_.pop_front();
   }
-  // Remove any old items until the difference between last and newest message timestamp
-  // will be less than or equal to the max_cache_duration_.
+  // Remove old messages until the time span between the oldest and newest message
+  // is less than or equal to max_cache_duration_.
   if (buffer_.size() > 1) {
     auto current_buffer_duration = buffer_.front()->recv_timestamp - buffer_.back()->recv_timestamp;
     while (max_cache_duration_ > 0 && current_buffer_duration > max_cache_duration_) {

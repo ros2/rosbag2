@@ -102,7 +102,7 @@ PYBIND11_MODULE(_storage, m) {
         std::string storage_preset_profile,
         std::string storage_config_uri,
         bool snapshot_mode,
-        const pybind11::object & snapshot_duration,
+        const pybind11::object & max_cache_duration,
         int64_t start_time_ns,
         int64_t end_time_ns,
         KEY_VALUE_MAP custom_data)
@@ -116,7 +116,7 @@ PYBIND11_MODULE(_storage, m) {
           std::move(storage_preset_profile),
           std::move(storage_config_uri),
           snapshot_mode,
-          py_float_to_rclcpp_duration(snapshot_duration),
+          py_float_to_rclcpp_duration(max_cache_duration),
           start_time_ns,
           end_time_ns,
           std::move(custom_data),
@@ -130,7 +130,7 @@ PYBIND11_MODULE(_storage, m) {
     pybind11::arg("storage_preset_profile") = "",
     pybind11::arg("storage_config_uri") = "",
     pybind11::arg("snapshot_mode") = false,
-    pybind11::arg("snapshot_duration") = rclcpp_duration_to_py_float(rclcpp::Duration(0, 0)),
+    pybind11::arg("max_cache_duration") = rclcpp_duration_to_py_float(rclcpp::Duration(0, 0)),
     pybind11::arg("start_time_ns") = -1,
     pybind11::arg("end_time_ns") = -1,
     pybind11::arg("custom_data") = KEY_VALUE_MAP{})
@@ -155,12 +155,12 @@ PYBIND11_MODULE(_storage, m) {
     "snapshot_mode",
     &rosbag2_storage::StorageOptions::snapshot_mode)
   .def_property(
-    "snapshot_duration",
+    "max_cache_duration",
     [](const rosbag2_storage::StorageOptions & self) {
-      return rclcpp_duration_to_py_float(self.snapshot_duration);
+      return rclcpp_duration_to_py_float(self.max_cache_duration);
     },
     [](rosbag2_storage::StorageOptions & self, const pybind11::object & obj) {
-      self.snapshot_duration = py_float_to_rclcpp_duration(obj);
+      self.max_cache_duration = py_float_to_rclcpp_duration(obj);
     })
   .def_readwrite(
     "start_time_ns",

@@ -57,9 +57,11 @@ public:
   // Defaults to disabled.
   bool snapshot_mode = false;
 
-  // The maximum snapshot duration.
-  // A value of 0.0 indicates that snapshot will be limited by the max_cache_size only.
-  rclcpp::Duration snapshot_duration{0, 0};
+  // Maximum cache duration used for time-limited buffering (applies to both snapshot mode
+  // and regular caching). A value of 0.0 indicates that buffering will be limited by the
+  // max_cache_size only. When greater than 0, the cache buffer will maintain messages
+  // within this time window, dropping older messages as needed.
+  rclcpp::Duration max_cache_duration{0, 0};
 
   // Start and end time for cutting
   int64_t start_time_ns = -1;
