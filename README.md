@@ -149,7 +149,58 @@ These services enable full remote control of the recording process, allowing you
 The Recorder provides a "snapshot mode", enabled via `--snapshot-mode` or `StorageOptions.snapshot_mode`, which does not write messages to disk as they come in, but instead keeps an in-memory circular buffer of size `--max-cache-size`.
 This entire buffer can be dumped to disk on request, saving data only in specified circumstances such as a detected error condition or point of interest, capturing the "last N bytes" of incoming data, therefore making sure that you can trigger snapshot after the fact of the event.
 
-The snapshot is taken by calling the `~/snapshot` service on the recorder, described previously.
+The snapshot is taken by calling the `~/snapshot` service on the recorder, described previously.\
+Triggering a snapshot via CLI:
+```
+$ ros2 service call /rosbag2_recorder/snapshot rosbag2_interfaces/srv/Snapshot
+```
+
+#### Time-limited buffering with --max-cache-duration
+
+Rosbag2 supports generic time-limited buffering for both regular recording and snapshot mode:
+
+- `--max-cache-duration <float_seconds>`: Maximum cache duration window, in seconds
+(fractional values allowed).
+  - Default: `0.0` — buffer is limited only by `--max-cache-size`.
+  - If `> 0.0`: buffer is limited by both time and size:
+    - Time bound: retains only the most recent messages within the duration window.
+    - Size bound: respects `--max-cache-size` (bytes).
+
+Configuring bounds options:
+- Time-only buffer: `--max-cache-size 0 --max-cache-duration > 0.0`
+- Size-only buffer: `--max-cache-duration 0.0 --max-cache-size > 0`
+- In snapshot mode, at least one bound must be enabled.
+
+Double-buffering notes:
+- The cache uses double buffering. In pessimistic cases, memory usage can reach up to
+`2 × --max-cache-size`.
+- When time bounding is active:
+  - Snapshot mode: the recorded timespan corresponds to the current buffer window at snapshot 
+    trigger time. i.e., up to `--max-cache-duration`.
+  - Non-snapshot (regular) mode: due to producer/consumer buffer swap and write cadence, the
+    effective observed timespan can be up to approximately `2 × --max-cache-duration`.
+
+Examples:
+- Regular recording, time-only buffer (keep last 30 seconds in cache, regardless of size):
+  ```
+  ros2 bag record -a --max-cache-size 0 --max-cache-duration 30.0
+  ```
+- Snapshot mode, size-only buffer (keep last ~100 MB of recent messages):
+  ```
+  ros2 bag record -a --snapshot-mode --max-cache-size 100000000 --max-cache-duration 0.0
+  ```
+- Snapshot mode, time-and-size bounded (keep last 10 seconds, max 50 MB):
+  ```
+  ros2 bag record -a --snapshot-mode --max-cache-size 50000000 --max-cache-duration 10.0
+  ```
+- Snapshot mode, time-only buffer (keep last 7.5 seconds regardless of size):
+  ```
+  ros2 bag record -a --snapshot-mode --max-cache-size 0 --max-cache-duration 7.5
+  ```
+
+Operational behavior:
+- In snapshot mode, the file’s start/end timestamps reflect the buffered messages at cache 
+  buffer swap time.
 
 #### Statistics about lost messages
 
