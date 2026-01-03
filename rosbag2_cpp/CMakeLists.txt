@@ -138,6 +138,7 @@ if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
   find_package(test_msgs REQUIRED)
   find_package(std_msgs REQUIRED)
+  find_package(rcutils REQUIRED)
   find_package(rosbag2_test_msgdefs REQUIRED)
   find_package(rmw_implementation_cmake REQUIRED)
   ament_lint_auto_find_test_dependencies()
@@ -204,7 +205,21 @@ if(BUILD_TESTING)
   ament_add_gmock(test_circular_message_cache
     test/rosbag2_cpp/test_circular_message_cache.cpp)
   if(TARGET test_circular_message_cache)
-    target_link_libraries(test_circular_message_cache ${PROJECT_NAME})
+    target_link_libraries(test_circular_message_cache
+      ${PROJECT_NAME}
+      rcutils::rcutils
+      rosbag2_storage::rosbag2_storage
+    )
+  endif()
+
+  ament_add_gmock(test_message_cache_circular_buffer
+    test/rosbag2_cpp/test_message_cache_circular_buffer.cpp)
+  if(TARGET test_message_cache_circular_buffer)
+    target_link_libraries(test_message_cache_circular_buffer
+      ${PROJECT_NAME}
+      rcutils::rcutils
+      rosbag2_storage::rosbag2_storage
+    )
   endif()
 
 
