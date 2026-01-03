@@ -59,23 +59,25 @@ bool MessageCacheCircularBuffer::push(CacheBufferInterface::buffer_element_t msg
   // Remove old messages until the time span between the oldest and newest message
   // is less than or equal to max_cache_duration_ns_.
   if (max_cache_duration_ns_ > 0 && buffer_.size() > 1) {
-    auto current_buffer_duration = buffer_.front()->recv_timestamp - buffer_.back()->recv_timestamp;
+    // Note: the newest messages are at the back of the deque
+    auto current_buffer_duration = buffer_.back()->recv_timestamp - buffer_.front()->recv_timestamp;
 
     auto current_buffer_duration_exceed_limit = [&]() {
         if (current_buffer_duration < 0) {
-          ROSBAG2_CPP_LOG_ERROR_STREAM("Inconsistent timestamps in circular buffer: "
+          ROSBAG2_CPP_LOG_ERROR_STREAM("Inconsistent timestamps in circular cache buffer: "
             << "oldest message timestamp " << buffer_.front()->recv_timestamp
             << " is earlier than newest message timestamp " << buffer_.back()->recv_timestamp
             << ". Dropping message!");
           return true;
         }
-        return static_cast<uint64_t>(current_buffer_duration) > max_cache_duration_ns_;
+        return static_cast<uint64_t>(current_buffer_duration) >= max_cache_duration_ns_;
       };
 
     while (buffer_.size() > 1 && current_buffer_duration_exceed_limit()) {
       buffer_bytes_size_ -= buffer_.front()->serialized_data->buffer_length;
       buffer_.pop_front();
-      current_buffer_duration = buffer_.front()->recv_timestamp - buffer_.back()->recv_timestamp;
+      // Note: the newest messages are at the back of the deque
+      current_buffer_duration = buffer_.back()->recv_timestamp - buffer_.front()->recv_timestamp;
     }
   }
   // Add a new message to the end of the buffer

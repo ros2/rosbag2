@@ -44,16 +44,17 @@ bool MessageCacheBuffer::push(CacheBufferInterface::buffer_element_t msg)
   if (!drop_messages_) {
     // Check if adding this message would exceed the time limit
     if (max_cache_duration_ns_ > 0 && buffer_.size() > 1) {  // If we have at least 2 messages
+      // Note: the newest messages are at the back of the vector
       auto current_buffer_duration =
-        buffer_.front()->recv_timestamp - buffer_.back()->recv_timestamp;
+        buffer_.back()->recv_timestamp - buffer_.front()->recv_timestamp;
       if (current_buffer_duration < 0) {
-        ROSBAG2_CPP_LOG_ERROR_STREAM("Inconsistent timestamps in circular buffer: "
+        ROSBAG2_CPP_LOG_ERROR_STREAM("Inconsistent timestamps in cache buffer: "
           << "oldest message timestamp " << buffer_.front()->recv_timestamp
           << " is earlier than newest message timestamp " << buffer_.back()->recv_timestamp
           << "Dropping message!");
         drop_messages_ = true;
       }
-      if (static_cast<uint64_t>(current_buffer_duration) > max_cache_duration_ns_) {
+      if (static_cast<uint64_t>(current_buffer_duration) >= max_cache_duration_ns_) {
         drop_messages_ = true;
       }
     }
