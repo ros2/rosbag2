@@ -148,7 +148,7 @@ void SequentialWriter::open(
   }
 
   use_cache_ =
-    storage_options.max_cache_size > 0u || storage_options.max_cache_duration.nanoseconds() > 0;
+    storage_options.max_cache_size > 0u || storage_options.max_cache_duration > 0u;
 
   if (storage_options.snapshot_mode && !use_cache_) {
     throw std::runtime_error(
@@ -159,10 +159,10 @@ void SequentialWriter::open(
   if (use_cache_) {
     if (storage_options.snapshot_mode) {
       message_cache_ = std::make_shared<rosbag2_cpp::cache::CircularMessageCache>(
-        storage_options.max_cache_size, storage_options.max_cache_duration.nanoseconds());
+        storage_options.max_cache_size, storage_options.max_cache_duration);
     } else {
       message_cache_ = std::make_shared<rosbag2_cpp::cache::MessageCache>(
-        storage_options.max_cache_size, storage_options.max_cache_duration.nanoseconds());
+        storage_options.max_cache_size, storage_options.max_cache_duration);
     }
     cache_consumer_ = std::make_unique<rosbag2_cpp::cache::CacheConsumer>(
       message_cache_,

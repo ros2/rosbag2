@@ -27,10 +27,10 @@ namespace cache
 
 MessageCacheCircularBuffer::MessageCacheCircularBuffer(
   size_t max_cache_size,
-  int64_t max_cache_duration_ns)
-: max_bytes_size_(max_cache_size), max_cache_duration_(max_cache_duration_ns)
+  uint32_t max_cache_duration)
+: max_bytes_size_(max_cache_size), max_cache_duration_ns_(max_cache_duration * 1'000'000'000ULL)
 {
-  if (max_bytes_size_ == 0 && max_cache_duration_ == 0) {
+  if (max_bytes_size_ == 0 && max_cache_duration_ns_ == 0) {
     throw std::invalid_argument("Invalid arguments for the MessageCacheCircularBuffer. "
                                 "Both max_bytes_size and max_cache_duration are zero.");
   }
@@ -57,10 +57,23 @@ bool MessageCacheCircularBuffer::push(CacheBufferInterface::buffer_element_t msg
     buffer_.pop_front();
   }
   // Remove old messages until the time span between the oldest and newest message
-  // is less than or equal to max_cache_duration_.
-  if (buffer_.size() > 1) {
+  // is less than or equal to max_cache_duration_ns_.
+  if (max_cache_duration_ns_ > 0 && buffer_.size() > 1) {
     auto current_buffer_duration = buffer_.front()->recv_timestamp - buffer_.back()->recv_timestamp;
-    while (max_cache_duration_ > 0 && current_buffer_duration > max_cache_duration_) {
+
+    auto current_buffer_duration_exceed_limit = [&]() {
+        if (current_buffer_duration < 0) {
+          ROSBAG2_CPP_LOG_ERROR_STREAM("Inconsistent timestamps in circular buffer: "
+            << "oldest message timestamp " << buffer_.front()->recv_timestamp
+            << " is earlier than newest message timestamp " << buffer_.back()->recv_timestamp
+            << ". Dropping message!");
+          return true;
+        }
+        return static_cast<uint64_t>(current_buffer_duration) > max_cache_duration_ns_;
+      };
+
+    while (buffer_.size() > 1 && current_buffer_duration_exceed_limit()) {
+      buffer_bytes_size_ -= buffer_.front()->serialized_data->buffer_length;
       buffer_.pop_front();
       current_buffer_duration = buffer_.front()->recv_timestamp - buffer_.back()->recv_timestamp;
     }

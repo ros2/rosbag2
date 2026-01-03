@@ -42,7 +42,7 @@ namespace cache
 /// \note When both max_cache_size and max_cache_duration are set, the buffer will drop
 /// messages when either of the limits is exceeded.
 /// \note If max_cache_size is set to zero, the buffer will be only bounded by max_cache_duration.
-/// \note If max_cache_duration is set to zero or negative, the buffer will be only bounded by
+/// \note If max_cache_duration is set to zero, the buffer will be only bounded by
 /// max_cache_size.
 /// \note if max_cache_size more than zero, but an individual message exceeds the buffer size,
 /// the message still will be added to the buffer. This means that buffer can at times use more
@@ -56,16 +56,16 @@ public:
   /// \param max_cache_size Maximum amount of memory which could be occupied by the messages stored
   /// in the buffer. Note. If max_cache_size is zero, the buffer will be only bounded by the
   /// max_cache_duration.
-  /// \param max_cache_duration_ns Maximum duration in nanoseconds of message sequence allowed to be
+  /// \param max_cache_duration Maximum duration in seconds of message sequence allowed to be
   /// stored in the buffer. Note. If max_cache_duration is zero, the buffer will be only bounded by
   /// the max_cache_size.
   /// \throws std::invalid_argument if both max_cache_size and max_cache_duration are zero.
-  explicit MessageCacheBuffer(size_t max_cache_size, int64_t max_cache_duration_ns = 0);
+  explicit MessageCacheBuffer(size_t max_cache_size, uint32_t max_cache_duration = 0);
 
   /// \brief Pushes a new message into the buffer
   /// \details If buffer size got some space left, we push message regardless of its size, but if
-  /// this results in exceeding buffer size, we mark buffer to drop all new incoming messages.
-  /// This flag is cleared when buffers are swapped.
+  /// this results in exceeding buffer size or duration limits, we mark buffer to drop all new
+  /// incoming messages. This flag is cleared when buffers are swapped.
   /// \param msg Shared pointer to the rosbag2_storage::SerializedBagMessage to add to the buffer.
   /// \return True if message was successfully pushed, otherwise false.
   bool push(CacheBufferInterface::buffer_element_t msg) override;
@@ -90,8 +90,7 @@ private:
 
   /// Maximum duration in nanoseconds of message sequence allowed to be stored in the buffer
   /// Note. If max_cache_duration_ is zero, the buffer will be only bounded by the max_bytes_size_.
-  /// Note. Uses int64_t to be consistent with message timestamp type.
-  const int64_t max_cache_duration_;
+  const uint64_t max_cache_duration_ns_;
 
   /// Set when buffer is full and should drop messages instead of inserting them
   std::atomic_bool drop_messages_ {false};

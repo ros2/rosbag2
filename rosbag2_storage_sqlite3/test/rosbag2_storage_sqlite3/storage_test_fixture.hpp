@@ -284,8 +284,9 @@ public:
       out << config_yaml;
     }
 
-    rosbag2_storage::StorageOptions storage_options{storage_uri, plugin_id, 0, 0, 0,
-      rclcpp::Duration(0, 0), "", yaml_config};
+    rosbag2_storage::StorageOptions storage_options{
+      storage_uri, plugin_id, 0, 0, 0, 0, "", yaml_config
+    };
     return storage_options;
   }
 

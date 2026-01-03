@@ -26,7 +26,7 @@ TEST(storage_options, test_yaml_serialization)
   original.max_bagfile_size = 5;
   original.max_bagfile_duration = 120;
   original.max_cache_size = 1024;
-  original.max_cache_duration = rclcpp::Duration::from_seconds(1.5);
+  original.max_cache_duration = 30;
   original.storage_preset_profile = "profile";
   original.storage_config_uri = "config_uri";
   original.snapshot_mode = true;

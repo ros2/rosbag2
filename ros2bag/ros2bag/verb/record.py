@@ -21,7 +21,6 @@ import time
 
 from rclpy.qos import InvalidQoSProfileException
 from ros2bag.api import add_writer_storage_plugin_extensions
-from ros2bag.api import check_not_negative_float
 from ros2bag.api import convert_service_to_service_event_topic
 from ros2bag.api import convert_yaml_to_qos_profile
 from ros2bag.api import print_error
@@ -169,8 +168,8 @@ def add_recorder_arguments(parser: ArgumentParser) -> None:
              'about one second of total recorded data volume. '
              'If the value specified is 0, then every message is directly written to disk.')
     parser.add_argument(
-        '--max-cache-duration', type=check_not_negative_float, default=0.0,
-        help='Maximum cache duration in a fraction of seconds.\n'
+        '--max-cache-duration', type=int, default=0,
+        help='Maximum cache duration in seconds.\n'
              'Default: %(default)d, indicates that buffering will be limited by the'
              ' --max-cache-size parameter only. If the value is more than 0, the cache buffer'
              ' will be limited by both the series of messages duration and the maximum cache size'
@@ -323,7 +322,14 @@ def validate_parsed_arguments(args, uri) -> str:
     if args.stats_max_publishing_rate < 0 or args.stats_max_publishing_rate > 1000.0:
         return print_error('stats_max_publishing_rate must be between 0 and 1000.')
 
-    if args.snapshot_mode and args.max_cache_duration == 0.0 and args.max_cache_size == 0:
+    if args.max_cache_duration < 0:
+        return print_error('max_cache_duration must be a non-negative integer.')
+
+    if args.max_cache_duration > 4294967295:
+        return print_error('max_cache_duration must not exceed 4294967295 seconds '
+                           '(~136 years, uint32_t max).')
+
+    if args.snapshot_mode and args.max_cache_duration == 0 and args.max_cache_size == 0:
         return print_error('In snapshot mode, either the max_cache_duration or max_cache_size shall'
                            ' not be set to zero.')
 

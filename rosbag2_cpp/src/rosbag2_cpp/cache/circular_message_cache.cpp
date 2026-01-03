@@ -27,12 +27,12 @@ namespace rosbag2_cpp
 namespace cache
 {
 
-CircularMessageCache::CircularMessageCache(size_t max_buffer_size, int64_t max_buffer_duration_ns)
+CircularMessageCache::CircularMessageCache(size_t max_buffer_size, uint32_t max_buffer_duration)
 {
   producer_buffer_ =
-    std::make_shared<MessageCacheCircularBuffer>(max_buffer_size, max_buffer_duration_ns);
+    std::make_shared<MessageCacheCircularBuffer>(max_buffer_size, max_buffer_duration);
   consumer_buffer_ =
-    std::make_shared<MessageCacheCircularBuffer>(max_buffer_size, max_buffer_duration_ns);
+    std::make_shared<MessageCacheCircularBuffer>(max_buffer_size, max_buffer_duration);
 }
 
 CircularMessageCache::~CircularMessageCache()

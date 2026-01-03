@@ -23,10 +23,10 @@ namespace rosbag2_cpp
 {
 namespace cache
 {
-MessageCacheBuffer::MessageCacheBuffer(size_t max_cache_size, int64_t max_cache_duration_ns)
-: max_bytes_size_(max_cache_size), max_cache_duration_(max_cache_duration_ns)
+MessageCacheBuffer::MessageCacheBuffer(size_t max_cache_size, uint32_t max_cache_duration)
+: max_bytes_size_(max_cache_size), max_cache_duration_ns_(max_cache_duration * 1'000'000'000ULL)
 {
-  if (max_bytes_size_ == 0 && max_cache_duration_ == 0) {
+  if (max_bytes_size_ == 0 && max_cache_duration_ns_ == 0) {
     throw std::invalid_argument("Invalid arguments for the MessageCacheBuffer. "
                                 "Both max_bytes_size and max_cache_duration are zero.");
   }
@@ -40,22 +40,36 @@ bool MessageCacheBuffer::push(CacheBufferInterface::buffer_element_t msg)
     return false;
   }
 
-  if (max_cache_duration_ > 0 && buffer_.size() > 1) {  // If we have at least 2 messages
-    auto current_buffer_duration = buffer_.front()->recv_timestamp - buffer_.back()->recv_timestamp;
-    if (current_buffer_duration > max_cache_duration_) {
-      drop_messages_ = true;
-    }
-  }
-
   bool pushed = false;
   if (!drop_messages_) {
-    buffer_bytes_size_ += msg->serialized_data->buffer_length;
-    buffer_.push_back(msg);
-    pushed = true;
-  }
+    // Check if adding this message would exceed the time limit
+    if (max_cache_duration_ns_ > 0 && buffer_.size() > 1) {  // If we have at least 2 messages
+      auto current_buffer_duration =
+        buffer_.front()->recv_timestamp - buffer_.back()->recv_timestamp;
+      if (current_buffer_duration < 0) {
+        ROSBAG2_CPP_LOG_ERROR_STREAM("Inconsistent timestamps in circular buffer: "
+          << "oldest message timestamp " << buffer_.front()->recv_timestamp
+          << " is earlier than newest message timestamp " << buffer_.back()->recv_timestamp
+          << "Dropping message!");
+        drop_messages_ = true;
+      }
+      if (static_cast<uint64_t>(current_buffer_duration) > max_cache_duration_ns_) {
+        drop_messages_ = true;
+      }
+    }
 
-  if (max_bytes_size_ > 0 && buffer_bytes_size_ >= max_bytes_size_) {
-    drop_messages_ = true;
+    // Note: Allow at least one message to be added even if it exceeds the size limit.
+    if (max_bytes_size_ > 0 && !buffer_.empty()) {
+      if (buffer_bytes_size_ + msg->serialized_data->buffer_length > max_bytes_size_) {
+        drop_messages_ = true;
+      }
+    }
+
+    if (!drop_messages_) {
+      buffer_bytes_size_ += msg->serialized_data->buffer_length;
+      buffer_.push_back(msg);
+      pushed = true;
+    }
   }
   return pushed;
 }

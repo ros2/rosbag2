@@ -45,16 +45,6 @@ std::chrono::nanoseconds from_rclpy_duration(const pybind11::object & duration)
   return std::chrono::nanoseconds(nanos);
 }
 
-pybind11::object rclcpp_duration_to_py_float(const rclcpp::Duration & duration)
-{
-  return pybind11::cast(duration.seconds());
-}
-
-rclcpp::Duration py_float_to_rclcpp_duration(const pybind11::object & obj)
-{
-  return rclcpp::Duration::from_seconds(obj.cast<double>());
-}
-
 template<typename T>
 pybind11::object to_rclpy_time(T time)
 {
@@ -99,7 +89,7 @@ PYBIND11_MODULE(_storage, m) {
         uint64_t max_bagfile_size,
         uint64_t max_bagfile_duration,
         uint64_t max_cache_size,
-        const pybind11::object & max_cache_duration,
+        uint32_t max_cache_duration,
         std::string storage_preset_profile,
         std::string storage_config_uri,
         bool snapshot_mode,
@@ -113,7 +103,7 @@ PYBIND11_MODULE(_storage, m) {
           max_bagfile_size,
           max_bagfile_duration,
           max_cache_size,
-          py_float_to_rclcpp_duration(max_cache_duration),
+          max_cache_duration,
           std::move(storage_preset_profile),
           std::move(storage_config_uri),
           snapshot_mode,
@@ -127,7 +117,7 @@ PYBIND11_MODULE(_storage, m) {
     pybind11::arg("max_bagfile_size") = 0,
     pybind11::arg("max_bagfile_duration") = 0,
     pybind11::arg("max_cache_size") = 0,
-    pybind11::arg("max_cache_duration") = rclcpp_duration_to_py_float(rclcpp::Duration(0, 0)),
+    pybind11::arg("max_cache_duration") = 0,
     pybind11::arg("storage_preset_profile") = "",
     pybind11::arg("storage_config_uri") = "",
     pybind11::arg("snapshot_mode") = false,
@@ -145,14 +135,9 @@ PYBIND11_MODULE(_storage, m) {
   .def_readwrite(
     "max_cache_size",
     &rosbag2_storage::StorageOptions::max_cache_size)
-  .def_property(
+  .def_readwrite(
     "max_cache_duration",
-    [](const rosbag2_storage::StorageOptions & self) {
-      return rclcpp_duration_to_py_float(self.max_cache_duration);
-    },
-    [](rosbag2_storage::StorageOptions & self, const pybind11::object & obj) {
-      self.max_cache_duration = py_float_to_rclcpp_duration(obj);
-    })
+    &rosbag2_storage::StorageOptions::max_cache_duration)
   .def_readwrite(
     "storage_preset_profile",
     &rosbag2_storage::StorageOptions::storage_preset_profile)

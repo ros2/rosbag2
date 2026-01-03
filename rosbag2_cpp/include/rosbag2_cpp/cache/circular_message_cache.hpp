@@ -49,17 +49,16 @@ namespace cache
 /// This is useful for snapshot mode, where no data is written to disk until asked for,
 /// then the full circular buffer is dumped all at once, giving historical context.
 /// The buffer can be limited by both size (max_buffer_size) and time duration
-/// (max_buffer_duration_ns).
+/// (max_buffer_duration). If both are non-zero, both bounds are enforced.
 class ROSBAG2_CPP_PUBLIC CircularMessageCache
   : public MessageCacheInterface
 {
 public:
   /// \brief Parametrized constructor
   /// \param max_buffer_size Maximum buffer size in bytes. If 0, only limited by duration.
-  /// \param max_buffer_duration_ns Maximum buffer duration in nanoseconds. If 0,
-  /// only limited by size.
+  /// \param max_buffer_duration Maximum buffer duration in seconds. If 0, only limited by size.
   /// At least one parameter must be non-zero.
-  explicit CircularMessageCache(size_t max_buffer_size, int64_t max_buffer_duration_ns = 0);
+  explicit CircularMessageCache(size_t max_buffer_size, uint32_t max_buffer_duration = 0);
 
   ~CircularMessageCache() override;
 

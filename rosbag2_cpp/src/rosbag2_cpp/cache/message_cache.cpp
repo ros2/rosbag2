@@ -28,10 +28,10 @@ namespace rosbag2_cpp
 namespace cache
 {
 
-MessageCache::MessageCache(size_t max_buffer_size, int64_t max_buffer_duration_ns)
+MessageCache::MessageCache(size_t max_buffer_size, uint32_t max_buffer_duration)
 {
-  producer_buffer_ = std::make_shared<MessageCacheBuffer>(max_buffer_size, max_buffer_duration_ns);
-  consumer_buffer_ = std::make_shared<MessageCacheBuffer>(max_buffer_size, max_buffer_duration_ns);
+  producer_buffer_ = std::make_shared<MessageCacheBuffer>(max_buffer_size, max_buffer_duration);
+  consumer_buffer_ = std::make_shared<MessageCacheBuffer>(max_buffer_size, max_buffer_duration);
 }
 
 MessageCache::~MessageCache()

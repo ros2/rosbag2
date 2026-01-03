@@ -47,18 +47,18 @@ class ROSBAG2_CPP_PUBLIC MessageCacheCircularBuffer
   : public CacheBufferInterface
 {
 public:
-  // Delete default constructor since max_cache_size is required
+  // Delete default constructor since at least max_cache_size is required
   MessageCacheCircularBuffer() = delete;
 
   /// \brief Parametrized constructor
   /// \param max_cache_size Maximum amount of memory which could be occupied by the messages stored
   /// in the circular buffer. Note: If max_cache_size is zero, the circular buffer will be only
-  /// bounded by the max_cache_duration_ns.
-  /// \param max_cache_duration_ns Maximum duration in nanoseconds of message sequence allowed to be
-  /// stored in the circular buffer. Note: If max_cache_duration_ns is zero, the circular buffer
-  /// will be only bounded by the max_cache_size.
-  /// \throws std::invalid_argument if both max_cache_size and max_cache_duration_ns are zero.
-  explicit MessageCacheCircularBuffer(size_t max_cache_size, int64_t max_cache_duration_ns = 0);
+  /// bounded by the max_cache_duration.
+  /// \param max_cache_duration Maximum duration in seconds of message sequence allowed to be
+  /// stored in the circular buffer. Note: If max_cache_duration is zero, the circular buffer
+  /// will be only bounded by the max_cache_size. If both are non-zero, both limits apply.
+  /// \throws std::invalid_argument if both max_cache_size and max_cache_duration are zero.
+  explicit MessageCacheCircularBuffer(size_t max_cache_size, uint32_t max_cache_duration = 0);
 
   /// \brief Pushes a new message into the circular buffer
   /// \details If buffer has space remaining, the message is pushed regardless of its size,
@@ -93,7 +93,7 @@ private:
 
   /// \brief Maximum duration in nanoseconds of message sequence allowed to be stored in the buffer.
   /// If zero or negative, the buffer is only bounded by max_bytes_size_.
-  const int64_t max_cache_duration_;
+  const uint64_t max_cache_duration_ns_;
 };
 
 }  // namespace cache
