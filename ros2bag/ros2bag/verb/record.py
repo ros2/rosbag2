@@ -330,8 +330,8 @@ def validate_parsed_arguments(args, uri) -> str:
                            '(~136 years, uint32_t max).')
 
     if args.snapshot_mode and args.max_cache_duration == 0 and args.max_cache_size == 0:
-        return print_error('In snapshot mode, either the max_cache_duration or max_cache_size shall'
-                           ' not be set to zero.')
+        return print_error('In snapshot mode, either the max_cache_duration or max_cache_size'
+                           ' shall not be set to zero.')
 
     return None
 
