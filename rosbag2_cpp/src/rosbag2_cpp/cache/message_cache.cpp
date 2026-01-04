@@ -46,6 +46,10 @@ MessageCache::~MessageCache()
 
 bool MessageCache::push(std::shared_ptr<const rosbag2_storage::SerializedBagMessage> msg)
 {
+  if (!msg) {
+    ROSBAG2_CPP_LOG_ERROR("Attempted to push null message into cache. Dropping message!");
+    return false;
+  }
   // While pushing, we keep track of inserted and dropped messages as well
   bool pushed = false;
   {
@@ -53,13 +57,13 @@ bool MessageCache::push(std::shared_ptr<const rosbag2_storage::SerializedBagMess
     pushed = producer_buffer_->push(msg);
     data_ready_ = true;  // Don't use notify_data_ready() here for the sake of performance.
   }
-  // Notify the consumer that data is ready
-  cache_condition_var_.notify_one();
 
-  if (!pushed) {
+  if (pushed) {
+    // Notify the consumer that data is ready
+    cache_condition_var_.notify_one();
+  } else {
     messages_dropped_per_topic_[msg->topic_name]++;
   }
-
   return pushed;
 }
 
