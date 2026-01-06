@@ -32,6 +32,11 @@
 
 #include "rosbag2_interfaces/msg/write_split_event.hpp"
 #include "rosbag2_cpp/bag_events.hpp"
+<<<<<<< HEAD
+=======
+#include "rosbag2_storage/qos.hpp"
+#include "rosbag2_transport/rclcpp_publisher_wrapper.hpp"
+>>>>>>> 0cc4340 (Upstream minor fixes from Apex.AI (#2240))
 #include "rosbag2_transport/recorder_event_notifier.hpp"
 
 namespace rosbag2_transport
@@ -45,8 +50,27 @@ public:
     if (!node) {
       throw std::invalid_argument("Node pointer cannot be null");
     }
+<<<<<<< HEAD
     split_event_pub_ =
       node->create_publisher<rosbag2_interfaces::msg::WriteSplitEvent>("events/write_split", 1);
+=======
+
+    if (split_event_pub) {
+      split_event_pub_ = std::move(split_event_pub);
+    } else {
+      split_event_pub_ = RclcppPublisherWrapper<WriteSplitEvent>::make_shared(
+        node->create_publisher<WriteSplitEvent>(kDefaultWriteSplitTopicName,
+                                                rosbag2_storage::Rosbag2QoS::EventQoS()));
+    }
+
+    if (msgs_lost_event_pub) {
+      msgs_lost_event_pub_ = std::move(msgs_lost_event_pub);
+    } else {
+      msgs_lost_event_pub_ = RclcppPublisherWrapper<MessagesLostEvent>::make_shared(
+        node->create_publisher<MessagesLostEvent>(kDefaultMessagesLostTopicName,
+                                                  rosbag2_storage::Rosbag2QoS::EventQoS()));
+    }
+>>>>>>> 0cc4340 (Upstream minor fixes from Apex.AI (#2240))
 
     // Start the thread that will publish events
     {
