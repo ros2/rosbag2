@@ -331,18 +331,24 @@ void RecorderImpl::record()
     };
   writer_->add_event_callbacks(callbacks);
 
+<<<<<<< HEAD
   serialization_format_ = record_options_.rmw_serialization_format;
   RCLCPP_INFO(node->get_logger(), "Listening for topics...");
+=======
+>>>>>>> 0cc4340 (Upstream minor fixes from Apex.AI (#2240))
   if (!record_options_.use_sim_time) {
     subscribe_topics(get_requested_or_available_topics());
   }
   if (!record_options_.is_discovery_disabled) {
     start_discovery();
+    RCLCPP_INFO(node->get_logger(), "Listening for topics...");
   }
   if (record_options_.start_paused) {
-    RCLCPP_INFO(
-      node->get_logger(), "Wait for recording: Press %s to start.",
-      enum_key_code_to_str(Recorder::kPauseResumeToggleKey).c_str());
+    if (!record_options_.disable_keyboard_controls) {
+      RCLCPP_INFO(
+        node->get_logger(), "Wait for recording: Press %s to start.",
+        enum_key_code_to_str(Recorder::kPauseResumeToggleKey).c_str());
+    }
   } else {
     RCLCPP_INFO(node->get_logger(), "Recording...");
   }
