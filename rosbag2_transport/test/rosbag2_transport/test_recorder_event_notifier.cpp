@@ -15,14 +15,14 @@
 
 #include <gmock/gmock.h>
 
-#include <thread>
-#include <memory>
-#include <string>
-#include <vector>
 #include <chrono>
-#include <utility>
-#include <queue>
+#include <memory>
 #include <mutex>
+#include <queue>
+#include <string>
+#include <thread>
+#include <utility>
+#include <vector>
 
 #include "rosbag2_interfaces/msg/messages_lost_event.hpp"
 #include "rosbag2_interfaces/msg/messages_lost_event_topic_stat.hpp"
