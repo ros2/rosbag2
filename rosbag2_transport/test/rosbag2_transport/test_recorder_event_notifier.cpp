@@ -566,7 +566,7 @@ TEST_F(TestRecorderEventNotifier, thread_safety_with_concurrent_access)
   // Simulate concurrent access to on_messages_lost_in_transport
   for (size_t i = 0; i < num_threads_for_each_event; i++) {
     // Simulate concurrent access to on_messages_lost_in_transport
-    threads.emplace_back([this, i]() {
+    threads.emplace_back([this, i, iterations_per_thread]() {
         for (size_t j = 0; j < iterations_per_thread; j++) {
           rclcpp::QOSMessageLostInfo qos_msgs_lost_info;
           qos_msgs_lost_info.total_count_change = 1;
@@ -574,7 +574,7 @@ TEST_F(TestRecorderEventNotifier, thread_safety_with_concurrent_access)
         }
     });
     // Simulate concurrent access to on_messages_lost_in_recorder
-    threads.emplace_back([this, i]() {
+    threads.emplace_back([this, i, iterations_per_thread]() {
         for (size_t j = 0; j < iterations_per_thread; j++) {
           std::vector<rosbag2_cpp::bag_events::MessagesLostInfo> msgs_lost_info = {
             {"topic" + std::to_string(i), 1}
