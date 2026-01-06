@@ -15,8 +15,14 @@
 
 #include <gmock/gmock.h>
 
-#include <iostream>
+#include <chrono>
+#include <memory>
+#include <mutex>
+#include <queue>
+#include <string>
 #include <thread>
+#include <utility>
+#include <vector>
 
 #include "rosbag2_interfaces/msg/messages_lost_event.hpp"
 #include "rosbag2_interfaces/msg/messages_lost_event_topic_stat.hpp"
@@ -361,6 +367,7 @@ TEST_F(TestRecorderEventNotifier, event_notifier_respects_max_publishing_rate) {
   std::vector<WriteSplitEvent> published_write_split_events;
   std::vector<std::pair<std::chrono::steady_clock::time_point, MessagesLostEvent>>
     published_messages_lost_events;
+  std::mutex published_events_mutex;
 
   // Create shared_ptrs to the mock wrappers first
   auto write_split_pub_mock = std::make_shared<MockPublisherWrapper<WriteSplitEvent>>(
@@ -374,14 +381,16 @@ TEST_F(TestRecorderEventNotifier, event_notifier_respects_max_publishing_rate) {
   // Set up expectations on the shared_ptr mocks directly
   ON_CALL(*write_split_pub_mock, publish(::testing::_))
   .WillByDefault(::testing::Invoke(
-      [&published_write_split_events](const WriteSplitEvent & msg) {
+      [&published_write_split_events, &published_events_mutex](const WriteSplitEvent & msg) {
+        std::lock_guard<std::mutex> lock(published_events_mutex);
         published_write_split_events.push_back(msg);
       }
   ));
 
   EXPECT_CALL(*msgs_lost_pub_mock, publish(::testing::_))
   .WillRepeatedly(::testing::Invoke(
-      [&published_messages_lost_events](const MessagesLostEvent & msg) {
+      [&published_messages_lost_events, &published_events_mutex](const MessagesLostEvent & msg) {
+        std::lock_guard<std::mutex> lock(published_events_mutex);
         published_messages_lost_events.emplace_back(std::chrono::steady_clock::now(), msg);
       }
   ));
@@ -404,7 +413,9 @@ TEST_F(TestRecorderEventNotifier, event_notifier_respects_max_publishing_rate) {
 
   // Allow some time for the events to be processed
   std::this_thread::sleep_for(std::chrono::seconds(1));
+  notifier_.reset();  // Ensure all events are processed before assertions
 
+  std::lock_guard<std::mutex> lock(published_events_mutex);
   // Verify that no write split events were published
   EXPECT_TRUE(published_write_split_events.empty());
 

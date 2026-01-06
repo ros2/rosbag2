@@ -35,6 +35,7 @@
 #include "rosbag2_interfaces/msg/messages_lost_event.hpp"
 #include "rosbag2_interfaces/msg/write_split_event.hpp"
 #include "rosbag2_cpp/bag_events.hpp"
+#include "rosbag2_storage/qos.hpp"
 #include "rosbag2_transport/rclcpp_publisher_wrapper.hpp"
 #include "rosbag2_transport/recorder_event_notifier.hpp"
 
@@ -62,14 +63,16 @@ public:
       split_event_pub_ = std::move(split_event_pub);
     } else {
       split_event_pub_ = RclcppPublisherWrapper<WriteSplitEvent>::make_shared(
-        node->create_publisher<WriteSplitEvent>(kDefaultWriteSplitTopicName, 1));
+        node->create_publisher<WriteSplitEvent>(kDefaultWriteSplitTopicName,
+                                                rosbag2_storage::Rosbag2QoS::EventQoS()));
     }
 
     if (msgs_lost_event_pub) {
       msgs_lost_event_pub_ = std::move(msgs_lost_event_pub);
     } else {
       msgs_lost_event_pub_ = RclcppPublisherWrapper<MessagesLostEvent>::make_shared(
-        node->create_publisher<MessagesLostEvent>(kDefaultMessagesLostTopicName, 1));
+        node->create_publisher<MessagesLostEvent>(kDefaultMessagesLostTopicName,
+                                                  rosbag2_storage::Rosbag2QoS::EventQoS()));
     }
 
     // Start the thread that will publish events
