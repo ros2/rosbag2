@@ -53,13 +53,6 @@ public:
     return *this;
   }
 
-  static Rosbag2QoS EventQoS()
-  {
-    return Rosbag2QoS(rclcpp::QoS(3)
-             .reliable()
-             .durability_volatile());
-  }
-
   /// \brief Convert this QoS profile to a string representation.
   /// \return string representation of this QoS profile.
   [[nodiscard]] std::string to_string() const;
