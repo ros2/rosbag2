@@ -78,3 +78,19 @@ TEST(record_options, test_yaml_decode_for_all_and_exclude)
   ASSERT_EQ(record_options.regex, "[xyz]/topic");
   ASSERT_EQ(record_options.exclude_regex, "[x]/topic");
 }
+
+TEST(record_options, test_large_serialization)
+{
+  rosbag2_transport::RecordOptions options;
+  options.topics = std::vector<std::string>(100000, "test_topic");
+  options.services = std::vector<std::string>(100000, "test_service");
+
+  ASSERT_NO_THROW({
+    auto node = YAML::convert<rosbag2_transport::RecordOptions>().encode(options);
+    std::stringstream serializer;
+    serializer << node;
+    auto recreated_node = YAML::Load(serializer.str()).as<rosbag2_transport::RecordOptions>();
+    ASSERT_EQ(options.topics, recreated_node.topics);
+    ASSERT_EQ(options.services, recreated_node.services);
+  });
+}
