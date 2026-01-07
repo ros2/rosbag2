@@ -498,6 +498,7 @@ protected:
     }
     install_signal_handlers();
     try {
+      exit_ = false;
       start_spin();
       player_->play();
 

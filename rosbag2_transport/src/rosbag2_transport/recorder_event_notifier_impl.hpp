@@ -32,6 +32,7 @@
 
 #include "rosbag2_interfaces/msg/write_split_event.hpp"
 #include "rosbag2_cpp/bag_events.hpp"
+#include "rosbag2_storage/qos.hpp"
 #include "rosbag2_transport/recorder_event_notifier.hpp"
 
 namespace rosbag2_transport
@@ -45,8 +46,9 @@ public:
     if (!node) {
       throw std::invalid_argument("Node pointer cannot be null");
     }
-    split_event_pub_ =
-      node->create_publisher<rosbag2_interfaces::msg::WriteSplitEvent>("events/write_split", 1);
+
+    split_event_pub_ = node->create_publisher<rosbag2_interfaces::msg::WriteSplitEvent>(
+      "events/write_split", rosbag2_storage::Rosbag2QoS::EventQoS());
 
     // Start the thread that will publish events
     {
