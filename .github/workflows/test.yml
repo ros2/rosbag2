@@ -17,7 +17,7 @@ jobs:
     steps:
     - name: Build and run tests
       id: action-ros-ci
-      uses: ros-tooling/action-ros-ci@v0.3
+      uses: ros-tooling/action-ros-ci@v0.4
       with:
         target-ros2-distro: kilted
         vcs-repo-file-url: https://raw.githubusercontent.com/ros2/ros2/kilted/ros2.repos
