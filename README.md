@@ -199,8 +199,8 @@ If you want Rosbag2 to replay recorded action messages in the role of an action 
 ```
 $ ros2 bag play --send-actions-as-client <bag>
 ```
-Rosbag2 will send recorded goal request, cancel request and result request to action server.  
-For more information, please refer to https://github.com/ros2/rosbag2/blob/rolling/docs/design/rosbag2_record_replay_action.md.
+Rosbag2 will send recorded goal request, cancel request and result request to action server.
+For more information, please refer to https://github.com/ros2/rosbag2/blob/kilted/docs/design/rosbag2_record_replay_action.md.
 
 #### Controlling playback via services
 
@@ -454,15 +454,15 @@ Play and record are fundamental tasks of Rosbag2. However, playing or recording 
 
 ROS 2 C++ nodes can benefit from intra-process communication to partially or completely bypass network transport of messages between two nodes.
 
-Multiple _components_ can be _composed_, either [statically](https://docs.ros.org/en/rolling/Tutorials/Intermediate/Composition.html#compile-time-composition-with-hardcoded-nodes) or [dynamically](https://docs.ros.org/en/rolling/Tutorials/Intermediate/Composition.html#run-time-composition-using-ros-services-with-a-publisher-and-subscriber): all the composed component will share the same address space because they will be loaded in a single process.
+Multiple _components_ can be _composed_, either [statically](https://docs.ros.org/en/kilted/Tutorials/Intermediate/Composition.html#compile-time-composition-with-hardcoded-nodes) or [dynamically](https://docs.ros.org/en/kilted/Tutorials/Intermediate/Composition.html#run-time-composition-using-ros-services-with-a-publisher-and-subscriber): all the composed component will share the same address space because they will be loaded in a single process.
 
-A prerequirement is for each C++ node to be [_composable_](https://docs.ros.org/en/rolling/Concepts/Intermediate/About-Composition.html?highlight=composition) and to follow the [guidelines](https://docs.ros.org/en/rolling/Tutorials/Demos/Intra-Process-Communication.html?highlight=intra) for efficient publishing & subscription.
+A prerequirement is for each C++ node to be [_composable_](https://docs.ros.org/en/kilted/Concepts/Intermediate/About-Composition.html?highlight=composition) and to follow the [guidelines](https://docs.ros.org/en/kilted/Tutorials/Demos/Intra-Process-Communication.html?highlight=intra) for efficient publishing & subscription.
 
 With the above requirements met, the user can:
 - compose multiple nodes together
 - explicitly enable intra-process communication
 
-Whenever a publisher and a subscriber on the same topic belong to the same _composed_ process, and intra-process is enabled for both, `rclcpp` completely bypasses RMW layer and below transport layer (i.e. DDS). Instead, messages are shared via process memory and *potentially* never copied. Some exception hold, so please have a look to the [IPC guidelines](https://docs.ros.org/en/rolling/Tutorials/Demos/Intra-Process-Communication.html?highlight=intra).
+Whenever a publisher and a subscriber on the same topic belong to the same _composed_ process, and intra-process is enabled for both, `rclcpp` completely bypasses RMW layer and below transport layer (i.e. DDS). Instead, messages are shared via process memory and *potentially* never copied. Some exception hold, so please have a look to the [IPC guidelines](https://docs.ros.org/en/kilted/Tutorials/Demos/Intra-Process-Communication.html?highlight=intra).
 
 Here is an example of Python launchfile composition. Notice that composable container components do not expect YAML files to be directly passed to them: parameters have to be "dumped" out from the YAML file (if you have one). A suggestion of possible implementation is offered as a starting point.
 
@@ -579,8 +579,8 @@ This also allows to record data in a native format to optimize for speed, but to
 
 By default, Rosbag2 can convert from and to CDR as it's the default serialization format for ROS 2.
 
-[qos-override-tutorial]: https://docs.ros.org/en/rolling/Guides/Overriding-QoS-Policies-For-Recording-And-Playback.html
-[about-qos-settings]: https://docs.ros.org/en/rolling/Concepts/About-Quality-of-Service-Settings.html
+[qos-override-tutorial]: https://docs.ros.org/en/kilted/Guides/Overriding-QoS-Policies-For-Recording-And-Playback.html
+[about-qos-settings]: https://docs.ros.org/en/kilted/Concepts/About-Quality-of-Service-Settings.html
 
 ## Tips and Tricks
 
