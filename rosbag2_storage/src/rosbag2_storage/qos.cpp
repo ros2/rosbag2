@@ -279,7 +279,10 @@ Node convert<std::unordered_map<std::string, rclcpp::QoS>>::encode(
 {
   Node node{NodeType::Sequence};
   for (const auto & [key, value] : rhs) {
-    node.force_insert(key, value);
+    Node element;
+    element["topic"] = key;
+    element["qos"] = value;
+    node.push_back(element);
   }
   return node;
 }
@@ -287,19 +290,31 @@ Node convert<std::unordered_map<std::string, rclcpp::QoS>>::encode(
 bool convert<std::unordered_map<std::string, rclcpp::QoS>>::decode(
   const Node & node, std::unordered_map<std::string, rclcpp::QoS> & rhs, int version)
 {
-  if (!node.IsMap()) {
+  rhs.clear();
+
+  if (node.IsSequence()) {
+    // New sequence format
+    for (const auto & element : node) {
+      std::string topic = element["topic"].as<std::string>();
+      // Using rosbag2_storage::Rosbag2QoS for decoding because rclcpp::QoS is not default
+      // constructable. Note: It is safe to use upcast when inserting into the unordered_map
+      rhs.insert(
+        {topic, decode_for_version<rosbag2_storage::Rosbag2QoS>(element["qos"], version)});
+    }
+  } else if (node.IsMap()) {
+    // Legacy map format for backward compatibility
+    for (const auto & element : node) {
+      // Using rosbag2_storage::Rosbag2QoS for decoding because rclcpp::QoS is not default
+      // constructable. Note: It is safe to use upcast when inserting into the unordered_map
+      rhs.insert(
+        {element.first.as<std::string>(),
+          decode_for_version<rosbag2_storage::Rosbag2QoS>(element.second, version)
+        });
+    }
+  } else {
     return false;
   }
 
-  rhs.clear();
-  for (const auto & element : node) {
-    // Using rosbag2_storage::Rosbag2QoS for decoding because rclcpp::QoS is not default
-    // constructable. Note: It is safe to use upcast when inserting into the unordered_map
-    rhs.insert(
-      {element.first.as<std::string>(),
-        decode_for_version<rosbag2_storage::Rosbag2QoS>(element.second, version)
-      });
-  }
   return true;
 }
 }  // namespace YAML
