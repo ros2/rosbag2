@@ -17,8 +17,8 @@ This set of definitions with all field types recursively included can be called 
 ## `ros2msg` encoding
 
 This encoding consists of definitions in
-[.msg](https://docs.ros.org/en/rolling/Concepts/Basic/About-Interfaces.html#messages) and
-[.srv](https://docs.ros.org/en/rolling/Concepts/Basic/About-Interfaces.html#services) format,
+[.msg](https://docs.ros.org/en/kilted/Concepts/Basic/About-Interfaces.html#messages) and
+[.srv](https://docs.ros.org/en/kilted/Concepts/Basic/About-Interfaces.html#services) format,
 concatenated together in human-readable form with
 a delimiter.
 
