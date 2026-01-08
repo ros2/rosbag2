@@ -54,3 +54,19 @@ TEST(storage_options, test_yaml_serialization)
   ASSERT_EQ(original.end_time_ns, reconstructed.end_time_ns);
   ASSERT_EQ(original.custom_data, reconstructed.custom_data);
 }
+
+TEST(storage_options, test_invalid_numeric_value)
+{
+  YAML::Node node;
+  node["uri"] = "some_uri";
+  node["storage_id"] = "some_identification";
+  node["max_bagfile_size"] = "non_numeric_value";
+  try {
+    node.as<rosbag2_storage::StorageOptions>();
+    FAIL() << "Expected YAML::Exception to be thrown";
+  } catch (const YAML::Exception & ex) {
+    std::string error_msg = ex.what();
+    EXPECT_THAT(error_msg, HasSubstr("max_bagfile_size"));
+    EXPECT_THAT(error_msg, HasSubstr("Failed to convert field"));
+  }
+}
