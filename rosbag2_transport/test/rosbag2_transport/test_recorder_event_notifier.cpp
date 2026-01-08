@@ -24,6 +24,7 @@
 #include <utility>
 #include <vector>
 
+#include "rclcpp/qos.hpp"
 #include "rosbag2_interfaces/msg/messages_lost_event.hpp"
 #include "rosbag2_interfaces/msg/messages_lost_event_topic_stat.hpp"
 #include "rosbag2_interfaces/msg/write_split_event.hpp"
@@ -396,8 +397,10 @@ TEST_F(TestRecorderEventNotifier, event_notifier_respects_max_publishing_rate) {
   ));
 
   // Pass the shared_ptr mocks directly to the notifier
-  notifier_ =
-    std::make_unique<RecorderEventNotifier>(node_.get(), write_split_pub_mock, msgs_lost_pub_mock);
+  notifier_ = std::make_unique<RecorderEventNotifier>(node_.get(),
+                                                      rosbag2_transport::RecordOptions{},
+                                                      write_split_pub_mock,
+                                                      msgs_lost_pub_mock);
 
   notifier_->set_messages_lost_statistics_max_publishing_rate(2.0f);  // 2 Hz
 
@@ -591,4 +594,188 @@ TEST_F(TestRecorderEventNotifier, thread_safety_with_concurrent_access)
   // Verify that the total counts are consistent
   EXPECT_EQ(notifier_->get_total_num_messages_lost_in_transport(), expected_transport_lost);
   EXPECT_EQ(notifier_->get_total_num_messages_lost_in_recorder(), expected_recorder_lost);
+}
+
+TEST_F(TestRecorderEventNotifier, uses_default_qos_when_no_overrides_specified)
+{
+  // Create notifier without QoS overrides
+  rosbag2_transport::RecordOptions record_options;
+  auto notifier = std::make_unique<RecorderEventNotifier>(node_.get(), record_options);
+
+  // Get the QoS profiles used by the notifier
+  auto write_split_qos = notifier->get_write_split_qos();
+  auto msgs_lost_qos = notifier->get_messages_lost_qos();
+
+  // Default EventQoS is: depth=3, reliable, volatile
+  auto default_qos = rosbag2_storage::Rosbag2QoS::EventQoS();
+
+  EXPECT_EQ(write_split_qos.history(), default_qos.history());
+  EXPECT_EQ(write_split_qos.depth(), default_qos.depth());
+  EXPECT_EQ(write_split_qos.reliability(), default_qos.reliability());
+  EXPECT_EQ(write_split_qos.durability(), default_qos.durability());
+
+  EXPECT_EQ(msgs_lost_qos.history(), default_qos.history());
+  EXPECT_EQ(msgs_lost_qos.depth(), default_qos.depth());
+  EXPECT_EQ(msgs_lost_qos.reliability(), default_qos.reliability());
+  EXPECT_EQ(msgs_lost_qos.durability(), default_qos.durability());
+}
+
+TEST_F(TestRecorderEventNotifier, applies_qos_override_for_write_split_topic)
+{
+  rosbag2_transport::RecordOptions record_options;
+
+  // Set custom QoS for write_split topic
+  rclcpp::QoS custom_qos(10);
+  custom_qos.reliable().transient_local();
+  // Need to expand the default relative topic name to check for QoS overrides
+  auto write_split_topic_name = rclcpp::expand_topic_or_service_name(
+    RecorderEventNotifier::get_default_write_split_topic_name(),
+    node_->get_name(), node_->get_namespace(), false);
+
+  record_options.topic_qos_profile_overrides.insert({write_split_topic_name, custom_qos});
+
+  auto notifier = std::make_unique<RecorderEventNotifier>(node_.get(), record_options);
+
+  // Verify the QoS was applied
+  auto actual_qos = notifier->get_write_split_qos();
+
+  EXPECT_EQ(actual_qos.depth(), custom_qos.depth());
+  EXPECT_EQ(actual_qos.reliability(), custom_qos.reliability());
+  EXPECT_EQ(actual_qos.durability(), custom_qos.durability());
+
+  // Verify messages_lost QoS remains default
+  auto msgs_lost_qos = notifier->get_messages_lost_qos();
+  auto default_qos = rosbag2_storage::Rosbag2QoS::EventQoS();
+  EXPECT_EQ(msgs_lost_qos.depth(), default_qos.depth());
+}
+
+TEST_F(TestRecorderEventNotifier, applies_qos_override_for_messages_lost_topic)
+{
+  rosbag2_transport::RecordOptions record_options;
+
+  // Set custom QoS for messages_lost topic
+  rclcpp::QoS custom_qos(20);
+  custom_qos.best_effort().durability_volatile();
+  // Need to expand the default relative topic name to check for QoS overrides
+  auto messages_lost_topic_name = rclcpp::expand_topic_or_service_name(
+    RecorderEventNotifier::get_default_messages_lost_topic_name(),
+    node_->get_name(), node_->get_namespace(), false);
+
+  record_options.topic_qos_profile_overrides.insert({messages_lost_topic_name, custom_qos});
+
+  auto notifier = std::make_unique<RecorderEventNotifier>(node_.get(), record_options);
+
+  // Verify the QoS was applied
+  auto actual_qos = notifier->get_messages_lost_qos();
+
+  EXPECT_EQ(actual_qos.depth(), custom_qos.depth());
+  EXPECT_EQ(actual_qos.reliability(), custom_qos.reliability());
+  EXPECT_EQ(actual_qos.durability(), custom_qos.durability());
+
+  // Verify write_split QoS remains default
+  auto write_split_qos = notifier->get_write_split_qos();
+  auto default_qos = rosbag2_storage::Rosbag2QoS::EventQoS();
+  EXPECT_EQ(write_split_qos.depth(), default_qos.depth());
+}
+
+TEST_F(TestRecorderEventNotifier, applies_qos_overrides_for_both_event_topics)
+{
+  rosbag2_transport::RecordOptions record_options;
+
+  // Set custom QoS for both event topics
+  rclcpp::QoS custom_split_qos(15);
+  custom_split_qos.reliable().transient_local();
+
+  rclcpp::QoS custom_lost_qos(25);
+  custom_lost_qos.best_effort().durability_volatile();
+
+  // Need to expand the default relative topic names
+  auto write_split_topic_name = rclcpp::expand_topic_or_service_name(
+    RecorderEventNotifier::get_default_write_split_topic_name(),
+    node_->get_name(), node_->get_namespace(), false);
+  auto messages_lost_topic_name = rclcpp::expand_topic_or_service_name(
+    RecorderEventNotifier::get_default_messages_lost_topic_name(),
+    node_->get_name(), node_->get_namespace(), false);
+
+  record_options.topic_qos_profile_overrides.insert({write_split_topic_name, custom_split_qos});
+  record_options.topic_qos_profile_overrides.insert({messages_lost_topic_name, custom_lost_qos});
+
+  auto notifier = std::make_unique<RecorderEventNotifier>(node_.get(), record_options);
+
+  // Verify write_split QoS
+  auto actual_split_qos = notifier->get_write_split_qos();
+  EXPECT_EQ(actual_split_qos.depth(), custom_split_qos.depth());
+  EXPECT_EQ(actual_split_qos.reliability(), custom_split_qos.reliability());
+  EXPECT_EQ(actual_split_qos.durability(), custom_split_qos.durability());
+
+  // Verify messages_lost QoS
+  auto actual_lost_qos = notifier->get_messages_lost_qos();
+  EXPECT_EQ(actual_lost_qos.depth(), custom_lost_qos.depth());
+  EXPECT_EQ(actual_lost_qos.reliability(), custom_lost_qos.reliability());
+  EXPECT_EQ(actual_lost_qos.durability(), custom_lost_qos.durability());
+}
+
+TEST_F(TestRecorderEventNotifier, qos_override_preserves_functionality_for_events)
+{
+  rosbag2_transport::RecordOptions record_options;
+  const size_t expected_number_of_messages = 1;
+  // Need to expand the default relative topic names
+  auto split_topic_name = rclcpp::expand_topic_or_service_name(
+    RecorderEventNotifier::get_default_write_split_topic_name(),
+    node_->get_name(), node_->get_namespace(), false);
+  auto lost_topic_name = rclcpp::expand_topic_or_service_name(
+    RecorderEventNotifier::get_default_messages_lost_topic_name(),
+    node_->get_name(), node_->get_namespace(), false);
+
+  // Set custom QoS for write_split topic
+  rclcpp::QoS custom_qos(5);
+  custom_qos.reliable().transient_local();
+
+  record_options.topic_qos_profile_overrides.insert({split_topic_name, custom_qos});
+  record_options.topic_qos_profile_overrides.insert({lost_topic_name, custom_qos});
+
+  auto notifier = std::make_unique<RecorderEventNotifier>(node_.get(), record_options);
+  notifier->set_messages_lost_statistics_max_publishing_rate(30.0f);
+
+  auto sub = std::make_unique<SubscriptionManager>();
+  sub->add_subscription<WriteSplitEvent>(split_topic_name, expected_number_of_messages, custom_qos);
+
+  ASSERT_TRUE(sub->spin_and_wait_for_matched({split_topic_name}, std::chrono::seconds(30), 1));
+  auto await_received_messages = sub->spin_subscriptions(std::chrono::seconds(30));
+
+  // Trigger event
+  rosbag2_cpp::bag_events::BagSplitInfo bag_split_info;
+  bag_split_info.closed_file = "test_closed.bag";
+  bag_split_info.opened_file = "test_opened.bag";
+  notifier->on_bag_split_in_recorder(bag_split_info);
+
+  await_received_messages.get();
+  auto write_split_msgs_received = sub->get_received_messages<WriteSplitEvent>(split_topic_name);
+
+  // Verify event was received correctly even with custom QoS
+  ASSERT_THAT(write_split_msgs_received, SizeIs(expected_number_of_messages));
+  EXPECT_THAT(write_split_msgs_received[0]->node_name, Eq(node_->get_fully_qualified_name()));
+  EXPECT_THAT(write_split_msgs_received[0]->closed_file, Eq(bag_split_info.closed_file));
+  EXPECT_THAT(write_split_msgs_received[0]->opened_file, Eq(bag_split_info.opened_file));
+
+  // Verify messages_lost event with custom QoS
+  sub->add_subscription<MessagesLostEvent>(lost_topic_name,
+                                           expected_number_of_messages,
+                                           custom_qos);
+
+  ASSERT_TRUE(sub->spin_and_wait_for_matched({lost_topic_name}, std::chrono::seconds(30), 1));
+  await_received_messages = sub->spin_subscriptions(std::chrono::seconds(30));
+
+  // Trigger event
+  rclcpp::QOSMessageLostInfo msgs_lost_info;
+  msgs_lost_info.total_count = 10;
+  msgs_lost_info.total_count_change = 5;
+  notifier->on_messages_lost_in_transport("test_topic", msgs_lost_info);
+
+  await_received_messages.get();
+  auto lost_msgs_received = sub->get_received_messages<MessagesLostEvent>(lost_topic_name);
+
+  // Verify event was received correctly even with custom QoS
+  ASSERT_THAT(lost_msgs_received, SizeIs(expected_number_of_messages));
+  EXPECT_THAT(lost_msgs_received[0]->node_name, Eq(node_->get_fully_qualified_name()));
 }
