@@ -15,8 +15,14 @@
 
 #include <gmock/gmock.h>
 
-#include <iostream>
+#include <chrono>
+#include <memory>
+#include <mutex>
+#include <queue>
+#include <string>
 #include <thread>
+#include <utility>
+#include <vector>
 
 #include "rosbag2_interfaces/msg/write_split_event.hpp"
 #include "rosbag2_transport/recorder_event_notifier.hpp"
