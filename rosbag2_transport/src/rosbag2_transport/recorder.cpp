@@ -14,8 +14,6 @@
 
 #include <algorithm>
 #include <chrono>
-#include <cstdint>
-#include <condition_variable>
 #include <future>
 #include <memory>
 #include <regex>
