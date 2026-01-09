@@ -24,6 +24,7 @@
 #include <utility>
 #include <vector>
 
+#include "rclcpp/qos.hpp"
 #include "rosbag2_interfaces/msg/write_split_event.hpp"
 #include "rosbag2_transport/recorder_event_notifier.hpp"
 #include "rosbag2_test_common/subscription_manager.hpp"
@@ -31,6 +32,8 @@
 using namespace ::testing;          // NOLINT
 using namespace rosbag2_transport;  // NOLINT
 using namespace rosbag2_test_common;  // NOLINT
+
+using WriteSplitEvent = rosbag2_interfaces::msg::WriteSplitEvent;
 
 class TestRecorderEventNotifier : public ::testing::Test
 {
@@ -199,4 +202,86 @@ TEST_F(TestRecorderEventNotifier, thread_safety_with_concurrent_access)
 
   // Verify that the total counts are consistent
   EXPECT_EQ(notifier_->get_total_num_messages_lost_in_transport(), expected_transport_lost);
+}
+
+TEST_F(TestRecorderEventNotifier, uses_default_qos_when_no_overrides_specified)
+{
+  // Create notifier without QoS overrides
+  rosbag2_transport::RecordOptions record_options;
+  auto notifier = std::make_unique<RecorderEventNotifier>(node_.get(), record_options);
+
+  // Get the QoS profiles used by the notifier
+  auto write_split_qos = notifier->get_write_split_qos();
+
+  // Default EventQoS is: depth=3, reliable, volatile
+  auto default_qos = rosbag2_storage::Rosbag2QoS::EventQoS();
+
+  EXPECT_EQ(write_split_qos.history(), default_qos.history());
+  EXPECT_EQ(write_split_qos.depth(), default_qos.depth());
+  EXPECT_EQ(write_split_qos.reliability(), default_qos.reliability());
+  EXPECT_EQ(write_split_qos.durability(), default_qos.durability());
+}
+
+TEST_F(TestRecorderEventNotifier, applies_qos_override_for_write_split_topic)
+{
+  rosbag2_transport::RecordOptions record_options;
+
+  // Set custom QoS for write_split topic
+  rclcpp::QoS custom_qos(10);
+  custom_qos.reliable().transient_local();
+  // Need to expand the default relative topic name to check for QoS overrides
+  auto write_split_topic_name = rclcpp::expand_topic_or_service_name(
+    RecorderEventNotifier::get_default_write_split_topic_name(),
+    node_->get_name(), node_->get_namespace(), false);
+
+  record_options.topic_qos_profile_overrides.insert({write_split_topic_name, custom_qos});
+
+  auto notifier = std::make_unique<RecorderEventNotifier>(node_.get(), record_options);
+
+  // Verify the QoS was applied
+  auto actual_qos = notifier->get_write_split_qos();
+
+  EXPECT_EQ(actual_qos.depth(), custom_qos.depth());
+  EXPECT_EQ(actual_qos.reliability(), custom_qos.reliability());
+  EXPECT_EQ(actual_qos.durability(), custom_qos.durability());
+}
+
+TEST_F(TestRecorderEventNotifier, qos_override_preserves_functionality_for_events)
+{
+  rosbag2_transport::RecordOptions record_options;
+  const size_t expected_number_of_messages = 1;
+  // Need to expand the default relative topic names
+  auto split_topic_name = rclcpp::expand_topic_or_service_name(
+    RecorderEventNotifier::get_default_write_split_topic_name(),
+    node_->get_name(), node_->get_namespace(), false);
+
+  // Set custom QoS for write_split topic
+  rclcpp::QoS custom_qos(5);
+  custom_qos.reliable().transient_local();
+
+  record_options.topic_qos_profile_overrides.insert({split_topic_name, custom_qos});
+
+  auto notifier = std::make_unique<RecorderEventNotifier>(node_.get(), record_options);
+  notifier->set_messages_lost_statistics_max_publishing_rate(30.0f);
+
+  auto sub = std::make_unique<SubscriptionManager>();
+  sub->add_subscription<WriteSplitEvent>(split_topic_name, expected_number_of_messages, custom_qos);
+
+  ASSERT_TRUE(sub->spin_and_wait_for_matched({split_topic_name}, std::chrono::seconds(30), 1));
+  auto await_received_messages = sub->spin_subscriptions(std::chrono::seconds(30));
+
+  // Trigger event
+  rosbag2_cpp::bag_events::BagSplitInfo bag_split_info;
+  bag_split_info.closed_file = "test_closed.bag";
+  bag_split_info.opened_file = "test_opened.bag";
+  notifier->on_bag_split_in_recorder(bag_split_info);
+
+  await_received_messages.get();
+  auto write_split_msgs_received = sub->get_received_messages<WriteSplitEvent>(split_topic_name);
+
+  // Verify event was received correctly even with custom QoS
+  ASSERT_THAT(write_split_msgs_received, SizeIs(expected_number_of_messages));
+  EXPECT_THAT(write_split_msgs_received[0]->node_name, Eq(node_->get_fully_qualified_name()));
+  EXPECT_THAT(write_split_msgs_received[0]->closed_file, Eq(bag_split_info.closed_file));
+  EXPECT_THAT(write_split_msgs_received[0]->opened_file, Eq(bag_split_info.opened_file));
 }

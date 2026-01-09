@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+
 #include "rclcpp/logging.hpp"
 #include "rclcpp/node.hpp"
 
@@ -21,9 +22,12 @@
 namespace rosbag2_transport
 {
 
-RecorderEventNotifier::RecorderEventNotifier(rclcpp::Node * node)
+
+RecorderEventNotifier::RecorderEventNotifier(
+  rclcpp::Node * node,
+  const rosbag2_transport::RecordOptions & record_options)
 {
-  pimpl_ = std::make_unique<RecorderEventNotifierImpl>(node);
+  pimpl_ = std::make_unique<RecorderEventNotifierImpl>(node, record_options);
 }
 
 RecorderEventNotifier::~RecorderEventNotifier()
@@ -59,6 +63,16 @@ uint64_t RecorderEventNotifier::get_total_num_messages_lost_in_transport() const
 void RecorderEventNotifier::reset_total_num_messages_lost_in_transport()
 {
   pimpl_->reset_total_num_messages_lost_in_transport();
+}
+
+const char * RecorderEventNotifier::get_default_write_split_topic_name()
+{
+  return RecorderEventNotifierImpl::kDefaultWriteSplitTopicName;
+}
+
+rclcpp::QoS RecorderEventNotifier::get_write_split_qos() const
+{
+  return pimpl_->get_write_split_qos();
 }
 
 }  // namespace rosbag2_transport
