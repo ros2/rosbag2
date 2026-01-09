@@ -22,6 +22,7 @@
 #include "rclcpp/node.hpp"
 
 #include "rosbag2_cpp/bag_events.hpp"
+#include <rosbag2_transport/record_options.hpp>
 #include "rosbag2_transport/visibility_control.hpp"
 
 #ifdef _WIN32
@@ -47,7 +48,11 @@ class ROSBAG2_TRANSPORT_PUBLIC RecorderEventNotifier
 {
 public:
   /// \brief Constructor for the RecorderEventNotifier class.
-  explicit RecorderEventNotifier(rclcpp::Node * node);
+  /// \param node Pointer to the rclcpp Node that will be used for publishing events.
+  /// \param record_options The record options used by the recorder.
+  explicit RecorderEventNotifier(
+    rclcpp::Node * node,
+    const rosbag2_transport::RecordOptions & record_options = {});
 
   /// \brief Destructor for the RecorderEventNotifier class.
   virtual ~RecorderEventNotifier();
@@ -76,6 +81,13 @@ public:
 
   /// \brief Reset the counters for messages lost in transport.
   void reset_total_num_messages_lost_in_transport();
+
+  /// \brief Get the default topic name for write split events.
+  [[nodiscard]] static const char * get_default_write_split_topic_name();
+
+  /// \brief Get the QoS profile used for write split event publisher.
+  /// \return The QoS profile used for publishing write split events.
+  [[nodiscard]] rclcpp::QoS get_write_split_qos() const;
 
 private:
   std::unique_ptr<RecorderEventNotifierImpl> pimpl_;
