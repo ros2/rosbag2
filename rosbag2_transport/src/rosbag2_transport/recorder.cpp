@@ -14,6 +14,8 @@
 
 #include <algorithm>
 #include <chrono>
+#include <cstdint>
+#include <condition_variable>
 #include <future>
 #include <memory>
 #include <regex>
@@ -619,19 +621,16 @@ void RecorderImpl::create_control_services()
     [this](
       const std::shared_ptr<rmw_request_id_t>/* request_header */,
       const std::shared_ptr<rosbag2_interfaces::srv::Stop::Request>/* request */,
-      const std::shared_ptr<rosbag2_interfaces::srv::Stop::Response> response)
+      const std::shared_ptr<rosbag2_interfaces::srv::Stop::Response>/* response */)
     {
       if (!in_recording_) {
         RCLCPP_WARN(node->get_logger(),
           "Received Stop request while not in recording. Ignoring request.");
-        set_service_error(response, "Recorder is already stopped.");
       } else {
         try {
           this->stop();
-          set_service_success(response);
         } catch (const std::exception & e) {
           RCLCPP_ERROR(node->get_logger(), "Error during Stop request: %s", e.what());
-          set_service_error(response, e.what());
         }
       }
     }

@@ -354,26 +354,6 @@ private:
   void publish_clock_update();
   void publish_clock_update(const rclcpp::Time & time);
 
-  /// \brief Helper wrapper function to set a service response as success.
-  template<typename ResponseT>
-  void set_service_success(
-    ResponseT & response,
-    int32_t return_code = kServiceReturnCodeSuccess) const
-  {
-    response->return_code = return_code;
-    response->error_string.clear();
-  }
-
-  /// \brief Helper wrapper function to set a service response as error.
-  template<typename ResponseT>
-  void set_service_error(
-    ResponseT & response, const std::string & error_string,
-    int32_t error_code = kServiceReturnCodeError) const
-  {
-    response->return_code = error_code;
-    response->error_string = error_string;
-  }
-
   Player * owner_;
   rosbag2_transport::PlayOptions play_options_;
   static constexpr const char * kDefaultReadSplitTopicName = "events/read_split";
@@ -427,9 +407,6 @@ private:
   std::shared_ptr<PlayerServiceClientManager> player_service_client_manager_;
 
   std::unique_ptr<PlayerProgressBar> progress_bar_;
-
-  static constexpr int32_t kServiceReturnCodeSuccess = 0;
-  static constexpr int32_t kServiceReturnCodeError = 1;
 
   static BagMessageComparator get_bag_message_comparator(const MessageOrder & order);
 
@@ -2157,22 +2134,10 @@ void PlayerImpl::create_control_services()
   srv_stop_ = owner_->create_service<rosbag2_interfaces::srv::Stop>(
     "~/stop",
     [this](
-      rosbag2_interfaces::srv::Stop::Request::ConstSharedPtr/* request */,
-      rosbag2_interfaces::srv::Stop::Response::SharedPtr response)
+      rosbag2_interfaces::srv::Stop::Request::ConstSharedPtr,
+      rosbag2_interfaces::srv::Stop::Response::SharedPtr)
     {
-      if (!is_in_playback_) {
-        RCLCPP_WARN(owner_->get_logger(),
-           "Received Stop request while not in playback. Ignoring request.");
-        set_service_error(response, "Player is already stopped.");
-      } else {
-        try {
-          owner_->stop();
-          set_service_success(response);
-        } catch (const std::exception & e) {
-          RCLCPP_ERROR(owner_->get_logger(), "Error during Stop request: %s", e.what());
-          set_service_error(response, e.what());
-        }
-      }
+      owner_->stop();
     });
 }
 
