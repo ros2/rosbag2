@@ -72,6 +72,7 @@ public:
     return available_for_recording;
   }
 
+  using rosbag2_transport::Recorder::get_static_topics;
   using rosbag2_transport::Recorder::get_storage_options;
   using rosbag2_transport::Recorder::get_record_options;
 };

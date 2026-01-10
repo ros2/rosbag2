@@ -106,10 +106,11 @@ namespace rosbag2_transport
 TopicFilter::TopicFilter(
   RecordOptions record_options,
   rclcpp::node_interfaces::NodeGraphInterface::SharedPtr node_graph,
-  bool allow_unknown_types)
+  bool allow_unknown_types,
+  const std::vector<std::pair<std::string, std::string>> & static_topic_names_and_types)
 : record_options_(std::move(record_options)),
   allow_unknown_types_(allow_unknown_types),
-  node_graph_(node_graph)
+  node_graph_(std::move(node_graph))
 {
   if (record_options_.actions.size() > 0) {
     for ( auto & action_name : record_options_.actions ) {
@@ -128,21 +129,27 @@ TopicFilter::TopicFilter(
         action_interface_names.begin(), action_interface_names.end());
     }
   }
+
+  static_topics_and_services_.reserve(static_topic_names_and_types.size());
+  for (const auto & [static_topic_name, _] : static_topic_names_and_types) {
+    static_topics_and_services_.push_back(static_topic_name);
+  }
 }
 
 TopicFilter::~TopicFilter() = default;
 
 std::unordered_map<std::string, std::string> TopicFilter::filter_topics(
-  const std::map<std::string, std::vector<std::string>> & topic_names_and_types)
+  const std::map<std::string, std::vector<std::string>> & all_topic_names_and_types)
 {
   std::unordered_map<std::string, std::string> filtered_topics;
-  for (const auto & [topic_name, topic_types] : topic_names_and_types) {
+  for (const auto & [topic_name, topic_types] : all_topic_names_and_types) {
     if (take_topic(topic_name, topic_types)) {
       filtered_topics.insert(std::make_pair(topic_name, topic_types[0]));
     }
   }
   return filtered_topics;
 }
+
 
 bool TopicFilter::topic_selected_by_lists_or_regex(
   const std::string & topic_name,
@@ -158,6 +165,7 @@ bool TopicFilter::topic_selected_by_lists_or_regex(
     // Regular topic
     if (!record_options_.all_topics &&
       record_options_.topics.empty() &&
+      static_topics_and_services_.empty() &&
       record_options_.topic_types.empty() &&
       record_options_.regex.empty() &&
       !record_options_.include_hidden_topics)
@@ -170,6 +178,7 @@ bool TopicFilter::topic_selected_by_lists_or_regex(
     if (!record_options_.all_topics) {
       // Not in include topic list. Note: all_topics shall override include topic lists
       if (!topic_in_list(topic_name, record_options_.topics) &&
+        !topic_in_list(topic_name, static_topics_and_services_) &&
         !topic_type_in_list(topic_type, record_options_.topic_types))
       {
         // Not match include regex
@@ -209,6 +218,7 @@ bool TopicFilter::topic_selected_by_lists_or_regex(
     // Service event topic
     if (!record_options_.all_services &&
       record_options_.services.empty() &&
+      static_topics_and_services_.empty() &&
       record_options_.regex.empty())
     {
       // Note: This check is needed to avoid extra checks and service name conversion in case
@@ -221,7 +231,9 @@ bool TopicFilter::topic_selected_by_lists_or_regex(
 
     if (!record_options_.all_services) {
       // Not in include service list
-      if (!topic_in_list(topic_name, record_options_.services)) {
+      if (!topic_in_list(topic_name, record_options_.services) &&
+        !topic_in_list(topic_name, static_topics_and_services_))
+      {
         // Not match include regex
         if (!record_options_.regex.empty()) {
           std::regex include_regex(record_options_.regex);

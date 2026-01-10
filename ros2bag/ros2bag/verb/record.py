@@ -71,6 +71,14 @@ def add_recorder_arguments(parser: ArgumentParser) -> None:
         '--topics', type=str, default=[], metavar='Topic', nargs='+',
         help='Space-delimited list of topics to record.')
     parser.add_argument(
+        '--static-topics-path', type=FileType('r'),
+        help='Path to a YAML file with statically defining topic names and types.'
+             'Recorder will expect a YAML file in the following format:\n'
+             'static_topics_and_types_list:\n'
+             ' - [/topic_name1, topic_type1]\n'
+             ' - [/topic_name2, topic_type2]\n'
+             ' - [/topic_name3, topic_type3]')
+    parser.add_argument(
         '--services', type=str, metavar='ServiceName', nargs='+',
         help='Space-delimited list of services to record.')
     parser.add_argument(
@@ -247,12 +255,13 @@ def add_recorder_arguments(parser: ArgumentParser) -> None:
 
 def check_necessary_argument(args):
     # At least one options out of --all, --all-topics, --all-services, --all-actions, --services,
-    # --actions --topics, --topic-types or --regex must be used
+    # --actions --topics, --topic-types, --static-topics-path or --regex must be used
     if not (args.all or args.all_topics or args.all_services or args.all_actions or
             (args.services and len(args.services) > 0) or
             (args.actions and len(args.actions) > 0) or
             (args.topics and len(args.topics) > 0) or
-            (args.topic_types and len(args.topic_types) > 0) or args.regex):
+            (args.topic_types and len(args.topic_types) > 0) or args.regex or
+            args.static_topics_path):
         return False
     return True
 
@@ -265,7 +274,8 @@ def validate_parsed_arguments(args, uri) -> str:
 
     if not check_necessary_argument(args):
         return print_error('Need to specify at least one option out of --all, --all-topics, '
-                           '--all-services, --services, --topics, --topic-types or --regex')
+                           '--all-services, --services, --topics, --topic-types,'
+                           '--static-topics-path or --regex')
 
     if args.exclude_regex and not \
             (args.all or args.all_topics or args.topic_types or args.all_services or
@@ -381,6 +391,10 @@ class RecordVerb(VerbExtension):
             key_value_pairs = [pair.split('=') for pair in args.custom_data]
             custom_data = {pair[0]: pair[1] for pair in key_value_pairs}
 
+        static_topics_uri = ''
+        if args.static_topics_path:
+            static_topics_uri = args.static_topics_path.name
+
         storage_config_file = ''
         if args.storage_config_file:
             storage_config_file = args.storage_config_file.name
@@ -398,6 +412,7 @@ class RecordVerb(VerbExtension):
             custom_data=custom_data
         )
         record_options = RecordOptions()
+        record_options.static_topics_uri = static_topics_uri
         record_options.all_topics = args.all_topics or args.all
         record_options.all_services = args.all_services or args.all
         record_options.all_actions = args.all_actions or args.all

@@ -598,6 +598,16 @@ if(BUILD_TESTING)
     rosbag2_test_common::rosbag2_test_common
     rcutils::rcutils
   )
+
+  ament_add_gmock(test_record_static_topics
+    test/rosbag2_transport/test_record_static_topics.cpp)
+  target_link_libraries(test_record_static_topics
+    ${PROJECT_NAME}
+    ${test_msgs_TARGTES}
+    rosbag2_test_common::rosbag2_test_common
+    test_msgs::test_msgs_includes
+  )
+
 endif()
 
 ament_package()

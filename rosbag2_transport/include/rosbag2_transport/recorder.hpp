@@ -270,6 +270,12 @@ public:
 
 protected:
   ROSBAG2_TRANSPORT_PUBLIC
+  void read_static_topics() noexcept;
+
+  ROSBAG2_TRANSPORT_PUBLIC
+  const std::vector<std::pair<std::string, std::string>> & get_static_topics() noexcept;
+
+  ROSBAG2_TRANSPORT_PUBLIC
   std::unordered_map<std::string, std::string> get_requested_or_available_topics();
 
   ROSBAG2_TRANSPORT_PUBLIC

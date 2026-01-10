@@ -81,6 +81,8 @@ public:
   bool start_paused = false;
   /// \brief Use simulated time (if true).
   bool use_sim_time = false;
+  /// \brief URI of where to read static topics from.
+  std::string static_topics_uri = "";
   /// \brief Disable keyboard controls if true. This parameter is only used during construction of
   /// the Recorder class to decide whether to initialize KeyboardHandler class or not.
   bool disable_keyboard_controls = false;
