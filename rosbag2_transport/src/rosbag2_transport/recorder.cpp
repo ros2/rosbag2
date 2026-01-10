@@ -847,6 +847,7 @@ RecorderImpl::get_requested_or_available_topics()
   if (record_options_.all_topics || !record_options_.topics.empty() ||
     !record_options_.topic_types.empty() ||
     record_options_.all_services || !record_options_.services.empty() ||
+    record_options_.all_actions || !record_options_.actions.empty() ||
     !record_options_.regex.empty())
   {
     all_topics_and_types = node->get_topic_names_and_types();

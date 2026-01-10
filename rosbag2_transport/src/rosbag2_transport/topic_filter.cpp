@@ -261,6 +261,7 @@ bool TopicFilter::topic_selected_by_lists_or_regex(
 
     // Check if topics for action need to be recorded
     if (!record_options_.all_actions &&
+      static_topics_and_services_.empty() &&
       record_options_.actions.empty() &&
       record_options_.regex.empty())
     {
@@ -270,7 +271,9 @@ bool TopicFilter::topic_selected_by_lists_or_regex(
     // Convert topic name to action name
     auto action_name = rosbag2_cpp::action_interface_name_to_action_name(topic_name);
 
-    if (!record_options_.all_actions) {
+    if (!record_options_.all_actions &&
+      !topic_in_list(topic_name, static_topics_and_services_))
+    {
       // Not in include action interface list
       if (include_action_interface_names_.find(topic_name) ==
         include_action_interface_names_.end())
