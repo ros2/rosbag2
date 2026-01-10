@@ -187,7 +187,11 @@ TEST_P(RecordFixture, record_end_to_end_test_with_static_topics_only) {
     fs::absolute(fs::path(_SRC_RESOURCES_DIR_PATH) / "static_topics_list.yaml").generic_string();
 
   auto process_handle = start_execution(
-    get_base_record_command() + " --static-topics-path " + static_topics_uri);
+    // Note: Use --include-unpublished-topics to record static topics even if there are no
+    // publishers in the node graph at time of recording. This is needed to avoid race conditions
+    // since node graph need to spin for some time to discover all publishers.
+    get_base_record_command() + " --include-unpublished-topics" +
+      " --static-topics-path " + static_topics_uri);
   auto cleanup_process_handle = rcpputils::make_scope_exit(
     [process_handle]() {
       stop_execution(process_handle);
