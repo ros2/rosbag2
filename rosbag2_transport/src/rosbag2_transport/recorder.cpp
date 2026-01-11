@@ -287,26 +287,13 @@ void RecorderImpl::stop()
 void RecorderImpl::record()
 {
   std::lock_guard<std::mutex> state_lock(start_stop_transition_mutex_);
-<<<<<<< HEAD
-  if (in_recording_.exchange(true)) {
-    RCLCPP_WARN_STREAM(
-      node->get_logger(),
+  if (in_recording_) {
+    RCLCPP_WARN_STREAM(node->get_logger(),
       "Called Recorder::record() while already in recording, dismissing request.");
     return;
   }
-  paused_ = record_options_.start_paused;
-=======
-  if (in_recording_) {
-    RCLCPP_WARN_STREAM(node->get_logger(),
-      "Called Recorder::record(uri) while already in recording, dismissing request.");
-    return;
-  }
-  if (!uri.empty()) {
-    storage_options_.uri = uri;
-  }
   RCLCPP_INFO(node->get_logger(), "Starting recording to '%s'", storage_options_.uri.c_str());
 
->>>>>>> 4da63db (Add Record, Stop, StartDiscovery, StopDiscovery and IsDiscoveryRunning services for Recorder (#2248))
   topic_qos_profile_overrides_ = record_options_.topic_qos_profile_overrides;
   if (record_options_.rmw_serialization_format.empty()) {
     throw std::runtime_error("No serialization format specified!");

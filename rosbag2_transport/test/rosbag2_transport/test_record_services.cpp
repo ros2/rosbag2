@@ -82,15 +82,12 @@ public:
     const auto record_topics =
       is_discovery_disabled_ ? std::vector<std::string>{} : std::vector<std::string>{test_topic_};
     rosbag2_transport::RecordOptions record_options =
-<<<<<<< HEAD
-    {false, false, false, {test_topic_}, {}, {}, {}, {}, {}, "rmw_format", 100ms};
-=======
     {
-      false, false, false, is_discovery_disabled_, record_topics,
-      {}, {}, {}, {}, {}, {}, {}, {}, {},
+      false, false, is_discovery_disabled_, record_topics,
+      {}, {}, {}, {}, {},
       "rmw_format", 100ms
     };
->>>>>>> 4da63db (Add Record, Stop, StartDiscovery, StopDiscovery and IsDiscoveryRunning services for Recorder (#2248))
+
     storage_options_.snapshot_mode = snapshot_mode_;
     storage_options_.max_cache_size = 700;
     recorder_ = std::make_shared<rosbag2_transport::Recorder>(
