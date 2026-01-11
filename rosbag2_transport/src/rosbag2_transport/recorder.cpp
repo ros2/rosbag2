@@ -63,7 +63,11 @@ public:
 
   ~RecorderImpl();
 
-  void record();
+  /// \brief Start recording.
+  /// \details The record(uri) method will return almost immediately and recording will happen in
+  /// background.
+  /// \param uri If provided, it will override the storage_options.uri provided during construction.
+  void record(const std::string & uri = "");
 
   /// @brief Stopping recording and closing writer.
   /// The record() can be called again after stop().
@@ -284,13 +288,16 @@ void RecorderImpl::stop()
   }
 }
 
-void RecorderImpl::record()
+void RecorderImpl::record(const std::string & uri)
 {
   std::lock_guard<std::mutex> state_lock(start_stop_transition_mutex_);
   if (in_recording_) {
     RCLCPP_WARN_STREAM(node->get_logger(),
-      "Called Recorder::record() while already in recording, dismissing request.");
+    "Called Recorder::record(uri) while already in recording, dismissing request.");
     return;
+  }
+  if (!uri.empty()) {
+    storage_options_.uri = uri;
   }
   RCLCPP_INFO(node->get_logger(), "Starting recording to '%s'", storage_options_.uri.c_str());
 
