@@ -285,12 +285,15 @@ TEST_P(RecordFixture, record_end_to_end_with_splitting_bagsize_split_is_at_least
   constexpr const int message_size = 512 * 1024;  // 512KB
   const auto message = create_string_message(message_str, message_size);
   constexpr const int message_count = bagfile_split_size * expected_splits / message_size;
+  rclcpp::QoS qos = rclcpp::SystemDefaultsQoS().keep_last(message_count).reliable();
 
   rosbag2_test_common::PublicationManager pub_manager;
-  pub_manager.setup_publisher(topic_name, message, message_count);
+  pub_manager.setup_publisher(topic_name, message, message_count, qos);
 
   std::stringstream command;
-  command << get_base_record_command() <<
+  // TODO(morlov): remove " --max-cache-size 0" when split by size will take in to account
+  //  cached messages
+  command << get_base_record_command() << " --max-cache-size 0" <<
     " --max-bag-size " << bagfile_split_size <<
     " --topics " << topic_name;
   auto process_handle = start_execution(command.str());
