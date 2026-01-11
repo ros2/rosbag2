@@ -44,7 +44,13 @@ public:
   std::string regex = "";
   std::string exclude_regex = "";
   std::string node_prefix = "";
+  /// \brief Compression mode. Valid values are "file", "message" or "" (no compression).
+  /// \Note: To use compression mode "message", the underlying storage must support this parameter.
+  /// For mcap storage, need to use specific compression options provided via
+  /// StorageOptions::storage_config_uri.
   std::string compression_mode = "";
+  /// \brief Compression format. E.g., "zstd", "bz2", "lz4", etc. Shall be used together with
+  /// compression_mode parameter.
   std::string compression_format = "";
   uint64_t compression_queue_size = 0;
   /// \brief // The number of compression threads
@@ -54,12 +60,23 @@ public:
   /// and THREAD_PRIORITY_NORMAL=0. For POSIX compatible OSes this is the "nice" value.
   /// The nice value range is -20 to +19 where -20 is highest, 0 default and +19 is lowest.
   int32_t compression_threads_priority = 0;
+  /// \brief Path to a YAML file containing topic QoS profile overrides.
+  /// The YAML file must map topic names to rclcpp::QoS profiles.
   std::unordered_map<std::string, rclcpp::QoS> topic_qos_profile_overrides{};
+  /// \brief Include hidden topics. i.e., starting any token of the name with an underscore.
   bool include_hidden_topics = false;
+  /// \brief Include unpublished topics. i.e., topics that have no publishers (only subscribers).
   bool include_unpublished_topics = false;
+  /// \brief Ignore leaf topics. i.e., topics that have no subscribers.
   bool ignore_leaf_topics = false;
+  /// \brief Start recording in paused state if true.
+  /// \Note This parameter is only used during construction of the Recorder class. To pause
+  /// or resume an ongoing recording use the pause and resume services or direct public API.
   bool start_paused = false;
+  /// \brief Use simulated time (if true).
   bool use_sim_time = false;
+  /// \brief Disable keyboard controls if true. This parameter is only used during construction of
+  /// the Recorder class to decide whether to initialize KeyboardHandler class or not.
   bool disable_keyboard_controls = false;
 };
 

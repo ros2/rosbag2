@@ -30,11 +30,16 @@
 
 #include "rosbag2_cpp/writer.hpp"
 
+#include "rosbag2_interfaces/srv/is_discovery_running.hpp"
 #include "rosbag2_interfaces/srv/is_paused.hpp"
 #include "rosbag2_interfaces/srv/pause.hpp"
+#include "rosbag2_interfaces/srv/record.hpp"
 #include "rosbag2_interfaces/srv/resume.hpp"
 #include "rosbag2_interfaces/srv/snapshot.hpp"
 #include "rosbag2_interfaces/srv/split_bagfile.hpp"
+#include "rosbag2_interfaces/srv/start_discovery.hpp"
+#include "rosbag2_interfaces/srv/stop_discovery.hpp"
+#include "rosbag2_interfaces/srv/stop.hpp"
 
 #include "rosbag2_interfaces/msg/write_split_event.hpp"
 
@@ -154,6 +159,18 @@ public:
   ROSBAG2_TRANSPORT_PUBLIC
   bool is_paused();
 
+  /// \brief Start discovery
+  ROSBAG2_TRANSPORT_PUBLIC
+  void start_discovery();
+
+  /// \brief Stop discovery
+  ROSBAG2_TRANSPORT_PUBLIC
+  void stop_discovery();
+
+  /// Return the current discovery state.
+  ROSBAG2_TRANSPORT_PUBLIC
+  bool is_discovery_running() const;
+
   inline constexpr static const auto kPauseResumeToggleKey = KeyboardHandler::KeyCode::SPACE;
 
 protected:
@@ -168,12 +185,6 @@ protected:
 
   ROSBAG2_TRANSPORT_PUBLIC
   rosbag2_transport::RecordOptions & get_record_options();
-
-  ROSBAG2_TRANSPORT_PUBLIC
-  void start_discovery();
-
-  ROSBAG2_TRANSPORT_PUBLIC
-  void stop_discovery();
 
 private:
   std::unique_ptr<RecorderImpl> pimpl_;
