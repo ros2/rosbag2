@@ -289,16 +289,10 @@ void RecorderImpl::stop()
 void RecorderImpl::record()
 {
   std::lock_guard<std::mutex> state_lock(start_stop_transition_mutex_);
-<<<<<<< HEAD
-  if (in_recording_.exchange(true)) {
-    RCLCPP_WARN_STREAM(
-      node->get_logger(),
-      "Called Recorder::record() while already in recording, dismissing request.");
-=======
+
   if (in_recording_) {
     RCLCPP_WARN_STREAM(node->get_logger(),
-      "Called Recorder::record(uri) while already in recording, dismissing request.");
->>>>>>> 4da63db (Add Record, Stop, StartDiscovery, StopDiscovery and IsDiscoveryRunning services for Recorder (#2248))
+      "Called Recorder::record() while already in recording, dismissing request.");
     return;
   }
   RCLCPP_INFO(node->get_logger(), "Starting recording to '%s'", storage_options_.uri.c_str());
