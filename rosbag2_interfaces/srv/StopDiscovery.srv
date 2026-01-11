@@ -1,0 +1,5 @@
+---
+# Return code. Returns 1 when discovery is not running, otherwise 0.
+int32 return_code
+# Error string. Empty if no error occurred.
+string error_string
