@@ -1,0 +1,8 @@
+# if provided, it will override the storage_options.uri provided during construction.
+# Empty by default.
+string uri
+---
+# Return code. Returns 1 when recording is already running or in case of error, otherwise 0.
+int32 return_code
+# Error string. Empty if no error occurred.
+string error_string

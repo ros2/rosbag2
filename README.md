@@ -131,6 +131,18 @@ The Rosbag2 recorder provides the following services for remote control, which c
   * Triggers a split to a new file, even if none of the configured split criteria (such as `--max-bag-size` or `--max-bag-duration`) have been met yet
 * `~/snapshot [rosbag2_interfaces/srv/Snapshot]`
   * enabled if `--snapshot-mode` is specified. Takes no arguments, triggers a snapshot.
+* `~/record [rosbag2_interfaces/srv/Record]`
+  * Start recording. Optionally takes a `uri` argument to specify the output location. If the recorder is already recording, the request will be rejected.
+* `~/stop [rosbag2_interfaces/srv/Stop]`
+  * Stop the recorder. This will finalize the current bag file and write metadata. Recording can be restarted with the `~/record` service.
+* `~/is_discovery_running [rosbag2_interfaces/srv/IsDiscoveryRunning]`
+  * Returns whether topic discovery is currently running.
+* `~/start_discovery [rosbag2_interfaces/srv/StartDiscovery]`
+  * Start topic discovery to automatically find and subscribe to new topics. Has no effect if discovery is already running or if the recorder is not in recording state.
+* `~/stop_discovery [rosbag2_interfaces/srv/StopDiscovery]`
+  * Stop topic discovery. Existing subscriptions will be maintained, but new topics will not be discovered automatically.
+
+These services enable full remote control of the recording process, allowing you to start and stop recording sessions, manage topic discovery, and control the recording state without restarting the recorder node.
 
 #### Snapshot mode
 
