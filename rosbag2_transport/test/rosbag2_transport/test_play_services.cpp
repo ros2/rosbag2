@@ -427,7 +427,8 @@ TEST_F(PlaySrvsTest, stop_in_pause) {
   ASSERT_TRUE(player_->is_paused());
   // Make sure that player reached out main play loop
   player_->wait_for_playback_to_start();
-  service_call_stop();
+  Stop::Response::SharedPtr stop_response = service_call_stop();
+  ASSERT_EQ(stop_response->return_code, 0);
   // playback shall successfully finish after "Stop" without rclcpp::shutdown()
   player_->wait_for_playback_to_finish();
   expect_messages(false);
@@ -462,7 +463,11 @@ TEST_F(PlaySrvsTest, stop_in_active_play) {
   // if we happened to call stop() after the next message started being processed in the callback
   lk.unlock();
   // Now call stop() while player is in active playback mode
-  service_call_stop();
+  Stop::Response::SharedPtr stop_response = service_call_stop();
+  ASSERT_EQ(stop_response->return_code, 0);
   // playback shall successfully finish after "Stop" without rclcpp::shutdown()
   player_->wait_for_playback_to_finish(10s);
+  // The second stop() call after playback has already stopped shall return return_code = 1
+  stop_response = service_call_stop();
+  ASSERT_EQ(stop_response->return_code, 1);
 }

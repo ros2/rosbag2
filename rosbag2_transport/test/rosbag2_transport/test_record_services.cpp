@@ -18,6 +18,7 @@
 #include <string>
 #include <vector>
 #include <utility>
+#include <type_traits>
 
 #include "rclcpp/rclcpp.hpp"
 
@@ -41,6 +42,15 @@
 #include "record_integration_fixture.hpp"
 
 using namespace ::testing;  // NOLINT
+
+
+template<class T, class = void>
+struct type_has_return_code : std::false_type {};
+
+template<class T>
+struct type_has_return_code<T, std::void_t<decltype(std::declval<T &>().return_code)>>
+  : std::true_type
+{};
 
 class RecordSrvsTest : public RecordIntegrationTestFixture
 {
@@ -163,6 +173,16 @@ public:
     if (!response) {
       return ::testing::AssertionFailure() << "Service call returned unsuccessful response";
     }
+
+    if constexpr (type_has_return_code<typename Srv::Response>::value) {
+      if (response->return_code) {  // success is indicated by return_code == 0 or non-empty
+        return ::testing::AssertionFailure() << "Service call return_code = " <<
+               response->return_code;
+      } else {
+        return ::testing::AssertionSuccess();
+      }
+    }
+    // No further checks possible for services with empty response
     return ::testing::AssertionSuccess();
   }
 
@@ -372,6 +392,7 @@ TEST_F(RecordSrvsTest, record_stop)
 
   EXPECT_TRUE(successful_service_request<Stop>(cli_stop_));
   EXPECT_TRUE(mock_writer.closed_was_called());
+  EXPECT_FALSE(successful_service_request<Stop>(cli_stop_));  // second stop should fail
 
   auto record_response = std::make_shared<Record::Response>();
   EXPECT_TRUE(successful_service_request<Record>(cli_record_, record_response));
