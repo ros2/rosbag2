@@ -2,8 +2,8 @@
 Changelog for package rosbag2_storage_mcap
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.26.10 (2026-01-21)
+--------------------
 * Bugfix for MCAPStorage::seek(time) advance in time is current (`#2157 <https://github.com/ros2/rosbag2/issues/2157>`_) (`#2160 <https://github.com/ros2/rosbag2/issues/2160>`_)
   Co-authored-by: Michael Orlov <morlovmr@gmail.com>
 * Contributors: mergify[bot]

@@ -2,8 +2,8 @@
 Changelog for package rosbag2_transport
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.26.10 (2026-01-21)
+--------------------
 * [jazzy] Add Record, Stop, StartDiscovery, StopDiscovery and IsDiscoveryRunning services for Recorder (backport `#2248 <https://github.com/ros2/rosbag2/issues/2248>`_) (`#2309 <https://github.com/ros2/rosbag2/issues/2309>`_)
   Co-authored-by: Michael Orlov <morlovmr@gmail.com>
 * [kilted] Use QoS override settings for inner Rosbag2 publishing topics (backport `#2286 <https://github.com/ros2/rosbag2/issues/2286>`_) (`#2302 <https://github.com/ros2/rosbag2/issues/2302>`_) (`#2307 <https://github.com/ros2/rosbag2/issues/2307>`_)

@@ -2,8 +2,8 @@
 Changelog for package rosbag2_storage
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.26.10 (2026-01-21)
+--------------------
 * Fix decoder and encode mismatch fails YAML deserialization. (`#2277 <https://github.com/ros2/rosbag2/issues/2277>`_) (`#2298 <https://github.com/ros2/rosbag2/issues/2298>`_)
   Co-authored-by: Tomoya Fujita <Tomoya.Fujita@sony.com>
 * Throw YAML::Exception during conversion if the data type mismatches. (`#2262 <https://github.com/ros2/rosbag2/issues/2262>`_) (`#2304 <https://github.com/ros2/rosbag2/issues/2304>`_)

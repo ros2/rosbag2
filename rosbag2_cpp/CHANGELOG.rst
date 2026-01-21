@@ -2,8 +2,8 @@
 Changelog for package rosbag2
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.26.10 (2026-01-21)
+--------------------
 * Workaround for flaky bagsize_split_is_at_least_specified_size test (`#2311 <https://github.com/ros2/rosbag2/issues/2311>`_) (`#2315 <https://github.com/ros2/rosbag2/issues/2315>`_)
   Co-authored-by: Michael Orlov <morlovmr@gmail.com>
 * [kilted] Upstream minor fixes from Apex.AI (backport `#2240 <https://github.com/ros2/rosbag2/issues/2240>`_) (`#2294 <https://github.com/ros2/rosbag2/issues/2294>`_) (`#2301 <https://github.com/ros2/rosbag2/issues/2301>`_)

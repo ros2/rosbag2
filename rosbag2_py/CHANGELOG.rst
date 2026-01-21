@@ -2,8 +2,8 @@
 Changelog for package rosbag2_py
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.26.10 (2026-01-21)
+--------------------
 * [kilted] Upstream minor fixes from Apex.AI (backport `#2240 <https://github.com/ros2/rosbag2/issues/2240>`_) (`#2294 <https://github.com/ros2/rosbag2/issues/2294>`_) (`#2301 <https://github.com/ros2/rosbag2/issues/2301>`_)
   Co-authored-by: mergify[bot] <37929162+mergify[bot]@users.noreply.github.com>
   Co-authored-by: Michael Orlov <morlovmr@gmail.com>
