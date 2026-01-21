@@ -15,16 +15,17 @@
 #include <memory>
 #include <vector>
 
-#include "rosbag2_cpp/logging.hpp"
+#include "rcutils/time.h"
 #include "rosbag2_cpp/cache/cache_buffer_interface.hpp"
 #include "rosbag2_cpp/cache/message_cache_buffer.hpp"
+#include "rosbag2_cpp/logging.hpp"
 
 namespace rosbag2_cpp
 {
 namespace cache
 {
 MessageCacheBuffer::MessageCacheBuffer(size_t max_cache_size, uint32_t max_cache_duration)
-: max_bytes_size_(max_cache_size), max_cache_duration_ns_(max_cache_duration * 1'000'000'000ULL)
+: max_bytes_size_(max_cache_size), max_cache_duration_ns_(RCUTILS_S_TO_NS(max_cache_duration))
 {
   if (max_bytes_size_ == 0 && max_cache_duration_ns_ == 0) {
     throw std::invalid_argument("Invalid arguments for the MessageCacheBuffer. "
@@ -40,21 +41,32 @@ bool MessageCacheBuffer::push(CacheBufferInterface::buffer_element_t msg)
     return false;
   }
 
+  rcutils_time_point_value_t prospected_buffer_duration = 0;
+  // Calculate the prospected buffer duration if we add this message to the buffer in case of
+  // time-limited buffering.
+  if (max_cache_duration_ns_ > 0 && buffer_.size() > 0) {  //  If we have at least 1 message
+    // Note: the oldest messages are at the front of the vector
+    prospected_buffer_duration = msg->recv_timestamp - buffer_.front()->recv_timestamp;
+    if (prospected_buffer_duration < 0) {
+      ROSBAG2_CPP_LOG_ERROR_STREAM("Can't calculate prospected cache buffer duration: "
+        << "oldest message timestamp " << buffer_.front()->recv_timestamp
+        << " is earlier than new message timestamp " << msg->recv_timestamp
+        << ". Dropping new message!");
+      // Note: We drop the newly adding message in this case, as we can't determine
+      // whether adding it would exceed the time limit. However, the next message may have
+      // a correct timestamp and be added to the buffer.
+      return false;
+    }
+  }
+
   bool pushed = false;
+
   if (!drop_messages_) {
-    // Check if adding this message would exceed the time limit
-    if (max_cache_duration_ns_ > 0 && buffer_.size() > 1) {  // If we have at least 2 messages
-      // Note: the newest messages are at the back of the vector
-      auto current_buffer_duration =
-        buffer_.back()->recv_timestamp - buffer_.front()->recv_timestamp;
-      if (current_buffer_duration < 0) {
-        ROSBAG2_CPP_LOG_ERROR_STREAM("Inconsistent timestamps in cache buffer: "
-          << "oldest message timestamp " << buffer_.front()->recv_timestamp
-          << " is earlier than newest message timestamp " << buffer_.back()->recv_timestamp
-          << "Dropping message!");
-        drop_messages_ = true;
-      }
-      if (static_cast<uint64_t>(current_buffer_duration) >= max_cache_duration_ns_) {
+    // Check if cache is limited by time and adding this message would exceed the time limit
+    if (max_cache_duration_ns_ > 0) {
+      // Note: The casting to uint64_t is safe here, as we have already checked that
+      // prospected_buffer_duration is not negative.
+      if (static_cast<uint64_t>(prospected_buffer_duration) > max_cache_duration_ns_) {
         drop_messages_ = true;
       }
     }

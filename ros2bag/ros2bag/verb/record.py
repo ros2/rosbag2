@@ -322,6 +322,13 @@ def validate_parsed_arguments(args, uri) -> str:
     if args.stats_max_publishing_rate < 0 or args.stats_max_publishing_rate > 1000.0:
         return print_error('stats_max_publishing_rate must be between 0 and 1000.')
 
+    if args.max_cache_size < 0:
+        return print_error('max_cache_size must be a non-negative integer.')
+
+    if args.max_cache_size > 4294967295:
+        return print_error('max_cache_size must not exceed 4294967295 bytes '
+                           '(~4 GiB, uint32_t max).')
+
     if args.max_cache_duration < 0:
         return print_error('max_cache_duration must be a non-negative integer.')
 

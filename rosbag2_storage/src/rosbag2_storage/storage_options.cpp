@@ -15,7 +15,6 @@
 #include <string>
 #include <unordered_map>
 
-#include "rclcpp/duration.hpp"
 #include "rosbag2_storage/storage_options.hpp"
 
 namespace YAML

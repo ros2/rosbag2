@@ -146,16 +146,22 @@ These services enable full remote control of the recording process, allowing you
 
 #### Snapshot mode
 
-The Recorder provides a "snapshot mode", enabled via `--snapshot-mode` or `StorageOptions.snapshot_mode`, which does not write messages to disk as they come in, but instead keeps an in-memory circular buffer of size `--max-cache-size`.
-This entire buffer can be dumped to disk on request, saving data only in specified circumstances such as a detected error condition or point of interest, capturing the "last N bytes" of incoming data, therefore making sure that you can trigger snapshot after the fact of the event.
+The Recorder provides a "snapshot mode", enabled via `--snapshot-mode` or
+`StorageOptions.snapshot_mode`. It does not write messages to disk as they arrive, but keeps an
+in-memory circular buffer bounded by `--max-cache-size` (bytes) and optionally
+`--max-cache-duration` (seconds). The entire buffer can be dumped to disk on request, saving data
+only in specified circumstances (e.g., a detected error condition or point of interest). This
+captures the "last N bytes" or "last T seconds" of incoming data, allowing you to trigger a
+snapshot after the event.
 
 The snapshot is taken by calling the `~/snapshot` service on the recorder, described previously.\
 Triggering a snapshot via CLI:
-```
+
+```bash
 $ ros2 service call /rosbag2_recorder/snapshot rosbag2_interfaces/srv/Snapshot
 ```
 
-#### Time-limited buffering with --max-cache-duration
+#### Time-based snapshot and time-limited buffering with --max-cache-duration
 
 Rosbag2 supports generic time-limited buffering for both regular recording and snapshot mode:
 
@@ -166,8 +172,10 @@ Rosbag2 supports generic time-limited buffering for both regular recording and s
     - Size bound: respects `--max-cache-size` (bytes).
 
 Configuring bounds options:
-- Time-only buffer: `--max-cache-size 0 --max-cache-duration > 0`
-- Size-only buffer: `--max-cache-duration 0 --max-cache-size > 0`
+- Time-only buffer: set `--max-cache-size` to `0` and `--max-cache-duration` to a positive value.
+- Size-only buffer: set `--max-cache-duration` to `0` and `--max-cache-size` to a positive value.
+- Time-and-size bounded buffer: set both `--max-cache-size` and `--max-cache-duration` to a 
+  positive values.
 - In snapshot mode, at least one bound must be enabled.
 
 Double-buffering notes:
@@ -182,19 +190,19 @@ Double-buffering notes:
 Examples:
 - Regular recording, time-only buffer (keep last 30 seconds in cache, regardless of size):
   ```
-  ros2 bag record -a --max-cache-size 0 --max-cache-duration 30
+  $ ros2 bag record -a --max-cache-size 0 --max-cache-duration 30
   ```
 - Snapshot mode, size-only buffer (keep last ~100 MB of recent messages):
   ```
-  ros2 bag record -a --snapshot-mode --max-cache-size 100000000 --max-cache-duration 0
+  $ ros2 bag record -a --snapshot-mode --max-cache-size 100000000 --max-cache-duration 0
   ```
 - Snapshot mode, time-and-size bounded (keep last 10 seconds, max 50 MB):
   ```
-  ros2 bag record -a --snapshot-mode --max-cache-size 50000000 --max-cache-duration 10
+  $ ros2 bag record -a --snapshot-mode --max-cache-size 50000000 --max-cache-duration 10
   ```
 - Snapshot mode, time-only buffer (keep last 7 seconds regardless of size):
   ```
-  ros2 bag record -a --snapshot-mode --max-cache-size 0 --max-cache-duration 7
+  $ ros2 bag record -a --snapshot-mode --max-cache-size 0 --max-cache-duration 7
   ```
 
 Operational behavior:
@@ -583,7 +591,6 @@ def generate_launch_description():
             ]
         )
     ])
-}
 ```
 
 Here's an example YAML configuration for both composable player and recorder:
@@ -696,10 +703,13 @@ pushd /my/bag/base_dir && ros2 bag record ...
 In launch:
 
 ```python
-ExecuteProcess(
+import launch.actions
+
+launch.actions.ExecuteProcess(
   cmd=['ros2', 'bag', 'record', ...],
-  cwd=my_base_dir,
+  cwd='my_base_dir',
 ),
+```
 
 You can fully customize the output bag name, without any Rosbag2 special features.
 
@@ -707,5 +717,5 @@ For example, you want a timestamp on the bag directory name, but want a custom p
 
 ```bash
 $ ros2 bag record -a -o mybag_"$(date +"%Y_%m_%d-%H_%M_%S")"
-... creates e.g. mybag_2025_02_21-15_35_35
 ```
+... creates e.g. mybag_2025_02_21-15_35_35
