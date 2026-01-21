@@ -164,8 +164,6 @@ TEST_F(TemporaryDirectoryFixture, can_record_again_after_stop_with_real_storage)
 
 TEST_F(RecordIntegrationTestFixture, can_record_again_after_stop)
 {
-  GTEST_SKIP() << "Skipping test `can_record_again_after_stop` in rosbag2_transport, until "
-                  "https://github.com/ros2/rosbag2/issues/1914 will be resolved.";
   auto basic_type_message = get_messages_basic_types()[0];
   basic_type_message->uint64_value = 5;
   basic_type_message->int64_value = -1;
