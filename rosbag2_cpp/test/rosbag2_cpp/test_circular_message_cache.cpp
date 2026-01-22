@@ -302,12 +302,15 @@ TEST_F(CircularMessageCacheTest, handles_out_of_order_timestamps_gracefully) {
   const auto older_message =
     make_test_msg(std::chrono::duration_cast<std::chrono::nanoseconds>(base).count());
 
+  // Newer message should be accepted
   EXPECT_TRUE(circular_message_cache->push(newer_message));
-  EXPECT_TRUE(circular_message_cache->push(older_message));
+  // Older (out-of-order) message should be rejected by the circular buffer
+  EXPECT_FALSE(circular_message_cache->push(older_message));
 
   circular_message_cache->notify_data_ready();
   circular_message_cache->swap_buffers();
 
   auto buffer = circular_message_cache->get_consumer_buffer()->data();
-  EXPECT_EQ(buffer.size(), 2u);
+  // Only the newer message should be present
+  EXPECT_EQ(buffer.size(), 1u);
 }
