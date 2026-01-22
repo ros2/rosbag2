@@ -24,9 +24,9 @@
 #include <thread>
 
 #include "rcutils/time.h"
+#include "rosbag2_cpp/cache/message_cache_buffer.hpp"
 #include "rosbag2_storage/ros_helper.hpp"
 #include "rosbag2_storage/serialized_bag_message.hpp"
-#include "rosbag2_cpp/cache/message_cache_buffer.hpp"
 
 #include "mock_cache_consumer.hpp"
 #include "mock_message_cache.hpp"

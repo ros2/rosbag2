@@ -190,6 +190,13 @@ TEST_F(CircularMessageCacheTest, time_only_buffer_drops_old_messages_by_duration
   const auto span_ns = newest - oldest;
   EXPECT_GT(span_ns, 0);
   EXPECT_LE(span_ns, RCUTILS_S_TO_NS(max_buffer_duration));
+
+  // Verify we kept the newest messages (last 1-second window)
+  const auto expected_newest = base + ((message_count - 1) * messages_interval);
+  EXPECT_EQ(newest, std::chrono::duration_cast<std::chrono::nanoseconds>(expected_newest).count());
+  // Oldest should be 1 second before newest
+  const auto expected_oldest = expected_newest - 1s;
+  EXPECT_EQ(oldest, std::chrono::duration_cast<std::chrono::nanoseconds>(expected_oldest).count());
 }
 
 TEST_F(CircularMessageCacheTest, size_only_buffer_drops_old_messages_by_size) {
