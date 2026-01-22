@@ -134,6 +134,7 @@ ament_export_dependencies(
 )
 
 if(BUILD_TESTING)
+  add_definitions(-D_SRC_RESOURCES_DIR_PATH="${CMAKE_CURRENT_SOURCE_DIR}/test/rosbag2_cpp/bags")
   find_package(ament_cmake_gmock REQUIRED)
   find_package(ament_lint_auto REQUIRED)
   find_package(test_msgs REQUIRED)

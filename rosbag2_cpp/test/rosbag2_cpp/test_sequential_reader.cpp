@@ -272,9 +272,22 @@ TEST_P(ParametrizedTemporaryDirectoryFixture, get_metadata_include_topics_with_z
   auto metadata_from_yaml = metadata_io.read_metadata(bag_path.string());
   auto first_storage = bag_path / metadata_from_yaml.relative_file_paths[0];
 
+  if (storage_id == "mcap") {
+    // For MCAP, use a pre-made bag with zero messages
+    // _SRC_RESOURCES_DIR_PATH defined in CMakeLists.txt
+    const fs::path base{_SRC_RESOURCES_DIR_PATH};
+    // TODO(jrms): The test passes with bags recorded with the previous versions of the MCAP cpp
+    //  Seems the newer versions of the MCAP cpp writer do not write topics with zero messages?
+    //  I also noticed that message definition for the `"std_msgs/msg/String"` type is missing in
+    //  the new version of the bag.
+    // first_storage = base / "bag_with_no_msgs_v1_4_1.mcap";
+    // first_storage = base / "bag_with_no_msgs_v2_0_1.mcap";
+    first_storage = base / "bag_with_no_msgs_v2_0_2.mcap";
+  }
+
   rosbag2_storage::StorageFactory factory;
   rosbag2_storage::StorageOptions options;
-  options.uri = first_storage.string();
+  options.uri = first_storage.string();  // bag_with_no_msgs_v1_4_1.mcap
   options.storage_id = storage_id;
   auto reader = factory.open_read_only(options);
   auto metadata = reader->get_metadata();
