@@ -39,10 +39,18 @@ public:
   // A value of 0 indicates that bagfile splitting will not be used.
   uint64_t max_bagfile_duration = 0;
 
-  // The cache size indiciates how many messages can maximally be hold in cache
-  // before these being written to disk.
-  // A value of 0 disables caching and every write happens directly to disk.
+  // The cache size. Indicates how many messages can maximally be held in cache before these being
+  // written to disk. Works together with max_cache_duration bound if set.
+  // A value of 0 disables size-based caching and every write happens directly to disk if
+  // max_cache_duration is also set to 0.
   uint64_t max_cache_size = 0;
+
+  // Maximum cache duration in seconds. Used for time-limited buffering (applies to both snapshot
+  // mode and regular caching). A value of 0 indicates that buffering will be limited by the
+  // max_cache_size only. When greater than 0, the cache buffer maintains messages within
+  // this time window and drops newer messages if cache overflow happened.
+  // Works together with max_cache_size bound if set.
+  uint32_t max_cache_duration = 0;
 
   // Preset storage configuration. Preset settings can be overriden with
   // corresponding settings specified through storage_config_uri file

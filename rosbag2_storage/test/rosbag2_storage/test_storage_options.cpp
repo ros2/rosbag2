@@ -26,6 +26,7 @@ TEST(storage_options, test_yaml_serialization)
   original.max_bagfile_size = 5;
   original.max_bagfile_duration = 120;
   original.max_cache_size = 1024;
+  original.max_cache_duration = 30;
   original.storage_preset_profile = "profile";
   original.storage_config_uri = "config_uri";
   original.snapshot_mode = true;
@@ -47,6 +48,7 @@ TEST(storage_options, test_yaml_serialization)
   ASSERT_EQ(original.max_bagfile_size, reconstructed.max_bagfile_size);
   ASSERT_EQ(original.max_bagfile_duration, reconstructed.max_bagfile_duration);
   ASSERT_EQ(original.max_cache_size, reconstructed.max_cache_size);
+  ASSERT_EQ(original.max_cache_duration, reconstructed.max_cache_duration);
   ASSERT_EQ(original.storage_preset_profile, reconstructed.storage_preset_profile);
   ASSERT_EQ(original.storage_config_uri, reconstructed.storage_config_uri);
   ASSERT_EQ(original.snapshot_mode, reconstructed.snapshot_mode);
