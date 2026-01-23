@@ -86,7 +86,7 @@ static_topics_and_types_list:
 ```
 
 For topics from the static topics list, subscriptions will be created even if they are not
-discoverable via ROS graph. 
+discoverable via the ROS graph and even if publishers do not yet exist on those topics.
 
 If not further specified, `ros2 bag record` will create a new folder named to the current time stamp and stores all data within this folder.
 A user defined name can be given with `-o, --output`.

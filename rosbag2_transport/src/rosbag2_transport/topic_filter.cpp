@@ -150,7 +150,6 @@ std::unordered_map<std::string, std::string> TopicFilter::filter_topics(
   return filtered_topics;
 }
 
-
 bool TopicFilter::topic_selected_by_lists_or_regex(
   const std::string & topic_name,
   const std::string & topic_type)
@@ -337,7 +336,8 @@ bool TopicFilter::take_topic(
     return false;
   }
 
-  if (!record_options_.include_unpublished_topics && node_graph_ &&
+  if (!topic_in_list(topic_name, static_topics_and_services_) &&
+    !record_options_.include_unpublished_topics && node_graph_ &&
     topic_is_unpublished(topic_name, *node_graph_))
   {
     return false;
