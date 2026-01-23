@@ -98,6 +98,20 @@ bool MessageCacheCircularBuffer::push(CacheBufferInterface::buffer_element_t msg
   return true;
 }
 
+bool MessageCacheCircularBuffer::push_front(CacheBufferInterface::buffer_element_t msg)
+{
+  if (!msg || !msg->serialized_data) {
+    ROSBAG2_CPP_LOG_ERROR("Attempted to push null message into circular buffer. Dropping message!");
+    return false;
+  }
+
+  // Prepend message to front of buffer and update size
+  buffer_bytes_size_ += msg->serialized_data->buffer_length;
+  buffer_.push_front(msg);
+
+  return true;
+}
+
 void MessageCacheCircularBuffer::clear()
 {
   buffer_.clear();

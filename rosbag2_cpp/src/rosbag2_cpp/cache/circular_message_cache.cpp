@@ -114,31 +114,27 @@ void CircularMessageCache::swap_buffers()
     consumer_buffer_->clear();
     std::swap(producer_buffer_, consumer_buffer_);
 
-    // Merge latest transient local message for each topic into consumer buffer
-    // Update timestamps to match the current snapshot time window to avoid timeline issues
+    // Prepend transient local messages to the front of the consumer buffer
     const auto & consumer_data = consumer_buffer_->data();
     rcutils_time_point_value_t snapshot_start_time = 0;
 
     // Use the front message timestamp as the snapshot start time for transient local messages.
-    // This may not be the absolute earliest timestamp in the buffer (messages can arrive
-    // out of order), but it's close enough - typically within 1-2ms of the true minimum.
-    // This avoids the overhead of searching through all messages for the exact minimum.
     if (!consumer_data.empty()) {
       snapshot_start_time = consumer_data.front()->recv_timestamp;
     }
 
-    // Add transient local messages with updated timestamp
+    // Push transient local messages to the front with updated timestamps
+    // Note: This will not respect the buffer size constraint - transient messages are added
+    // unconditionally and may cause the buffer to exceed max_bytes_size
     for (const auto & topic_msg_pair : transient_local_messages_) {
       if (snapshot_start_time > 0) {
-        // Create a copy with updated timestamp to match snapshot window
         auto updated_msg = std::make_shared<rosbag2_storage::SerializedBagMessage>();
         *updated_msg = *topic_msg_pair.second;
         updated_msg->recv_timestamp = snapshot_start_time;
         updated_msg->send_timestamp = snapshot_start_time;
-        consumer_buffer_->push(updated_msg);
+        consumer_buffer_->push_front(updated_msg);
       } else {
-        // If buffer is empty, use original timestamps
-        consumer_buffer_->push(topic_msg_pair.second);
+        consumer_buffer_->push_front(topic_msg_pair.second);
       }
     }
     data_ready_ = false;
