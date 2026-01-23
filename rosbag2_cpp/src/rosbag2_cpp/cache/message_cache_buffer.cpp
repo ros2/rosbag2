@@ -52,7 +52,7 @@ bool MessageCacheBuffer::push(CacheBufferInterface::buffer_element_t msg)
         << "oldest message timestamp " << buffer_.front()->recv_timestamp
         << " is earlier than new message timestamp " << msg->recv_timestamp
         << ". Dropping new message!");
-      // Note: We drop the newly adding message in this case, as we can't determine
+      // Note: We drop the new message in this case, because we can't determine
       // whether adding it would exceed the time limit. However, the next message may have
       // a correct timestamp and be added to the buffer.
       return false;
