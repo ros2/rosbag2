@@ -147,19 +147,22 @@ void SequentialWriter::open(
     throw std::runtime_error{error.str()};
   }
 
-  use_cache_ = storage_options.max_cache_size > 0u;
+  use_cache_ =
+    storage_options.max_cache_size > 0u || storage_options.max_cache_duration > 0u;
+
   if (storage_options.snapshot_mode && !use_cache_) {
     throw std::runtime_error(
-            "Max cache size must be greater than 0 when snapshot mode is enabled");
+            "Either the max cache size or the maximum cache duration must be greater than 0"
+            " when snapshot mode is enabled");
   }
 
   if (use_cache_) {
     if (storage_options.snapshot_mode) {
       message_cache_ = std::make_shared<rosbag2_cpp::cache::CircularMessageCache>(
-        storage_options.max_cache_size);
+        storage_options.max_cache_size, storage_options.max_cache_duration);
     } else {
       message_cache_ = std::make_shared<rosbag2_cpp::cache::MessageCache>(
-        storage_options.max_cache_size);
+        storage_options.max_cache_size, storage_options.max_cache_duration);
     }
     cache_consumer_ = std::make_unique<rosbag2_cpp::cache::CacheConsumer>(
       message_cache_,
@@ -487,6 +490,8 @@ bool SequentialWriter::should_split_bagfile(
   if (storage_options_.max_bagfile_size !=
     rosbag2_storage::storage_interfaces::MAX_BAGFILE_SIZE_NO_SPLIT)
   {
+    // TODO(morlov): consider cached messages size in splitting decision. Right now we only consider
+    //  the size of already written messages in storage. Add message_cache_->get_current_size() API.
     should_split = (storage_->get_bagfile_size() >= storage_options_.max_bagfile_size);
   }
 

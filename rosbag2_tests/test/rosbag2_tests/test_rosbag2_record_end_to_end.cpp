@@ -285,12 +285,15 @@ TEST_P(RecordFixture, record_end_to_end_with_splitting_bagsize_split_is_at_least
   constexpr const int message_size = 512 * 1024;  // 512KB
   const auto message = create_string_message(message_str, message_size);
   constexpr const int message_count = bagfile_split_size * expected_splits / message_size;
+  rclcpp::QoS qos = rclcpp::SystemDefaultsQoS().keep_last(message_count).reliable();
 
   rosbag2_test_common::PublicationManager pub_manager;
-  pub_manager.setup_publisher(topic_name, message, message_count);
+  pub_manager.setup_publisher(topic_name, message, message_count, qos);
 
   std::stringstream command;
-  command << get_base_record_command() <<
+  // TODO(morlov): remove " --max-cache-size 0" when split by size will take in to account
+  //  cached messages
+  command << get_base_record_command() << " --max-cache-size 0" <<
     " --max-bag-size " << bagfile_split_size <<
     " --topics " << topic_name;
   auto process_handle = start_execution(command.str());
@@ -676,6 +679,80 @@ TEST_P(RecordFixture, rosbag2_record_and_play_multiple_topics_with_filter) {
 
   // stops thread
   sub->add_subscription<test_msgs::msg::Strings>(first_topic_name, 0);
+}
+
+TEST_P(RecordFixture, record_with_max_cache_duration_only_e2e) {
+  const char * topic_name = "/e2e_time_only_cache";
+  auto message = get_messages_strings()[0];
+  message->string_value = "time_only";
+  size_t expected_count = 20;
+
+  rosbag2_test_common::PublicationManager pub_manager;
+  pub_manager.setup_publisher(topic_name, message, expected_count);
+
+  // Time-only bound: --max-cache-size 0 --max-cache-duration 5
+  std::stringstream cmd;
+  cmd << get_base_record_command()
+      << " --topics " << topic_name
+      << " --max-cache-size 0"
+      << " --max-cache-duration 5";
+
+  auto process_handle = start_execution(cmd.str());
+  auto cleanup = rcpputils::make_scope_exit([&]() {stop_execution(process_handle);});
+
+  ASSERT_TRUE(pub_manager.wait_for_matched(topic_name)) << "Expected rosbag subscription";
+  wait_for_storage_file();
+
+  pub_manager.run_publishers();
+
+  stop_execution(process_handle);
+  cleanup.cancel();
+
+  finalize_metadata_kludge();
+  wait_for_metadata();
+
+  auto msgs = get_messages_for_topic<test_msgs::msg::Strings>(topic_name);
+  EXPECT_THAT(msgs, SizeIs(Eq(expected_count)));
+  for (const auto & m : msgs) {
+    EXPECT_EQ(m->string_value, "time_only");
+  }
+}
+
+TEST_P(RecordFixture, record_with_max_cache_duration_and_size_e2e) {
+  const char * topic_name = "/e2e_dual_bounded_cache";
+  auto message = get_messages_strings()[0];
+  message->string_value = "dual_bounded";
+  size_t expected_count = 25;
+
+  rosbag2_test_common::PublicationManager pub_manager;
+  pub_manager.setup_publisher(topic_name, message, expected_count);
+
+  // Both bounds: --max-cache-size 1000 --max-cache-duration 3
+  std::stringstream cmd;
+  cmd << get_base_record_command()
+      << " --topics " << topic_name
+      << " --max-cache-size 1000"
+      << " --max-cache-duration 3";
+
+  auto process_handle = start_execution(cmd.str());
+  auto cleanup = rcpputils::make_scope_exit([&]() {stop_execution(process_handle);});
+
+  ASSERT_TRUE(pub_manager.wait_for_matched(topic_name)) << "Expected rosbag subscription";
+  wait_for_storage_file();
+
+  pub_manager.run_publishers();
+
+  stop_execution(process_handle);
+  cleanup.cancel();
+
+  finalize_metadata_kludge();
+  wait_for_metadata();
+
+  auto msgs = get_messages_for_topic<test_msgs::msg::Strings>(topic_name);
+  EXPECT_THAT(msgs, SizeIs(Eq(expected_count)));
+  for (const auto & m : msgs) {
+    EXPECT_EQ(m->string_value, "dual_bounded");
+  }
 }
 
 INSTANTIATE_TEST_SUITE_P(

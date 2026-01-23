@@ -204,9 +204,12 @@ if(BUILD_TESTING)
   ament_add_gmock(test_circular_message_cache
     test/rosbag2_cpp/test_circular_message_cache.cpp)
   if(TARGET test_circular_message_cache)
-    target_link_libraries(test_circular_message_cache ${PROJECT_NAME})
+    target_link_libraries(test_circular_message_cache
+      ${PROJECT_NAME}
+      rcutils::rcutils
+      rosbag2_storage::rosbag2_storage
+    )
   endif()
-
 
   # If compiling with gcc, run this test with sanitizers enabled
   ament_add_gmock(test_ros2_message

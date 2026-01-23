@@ -27,6 +27,7 @@
 #include "rosbag2_interfaces/msg/messages_lost_event.hpp"
 #include "rosbag2_interfaces/msg/write_split_event.hpp"
 #include "rosbag2_transport/rclcpp_publisher_wrapper.hpp"
+#include <rosbag2_transport/record_options.hpp>
 #include "rosbag2_transport/visibility_control.hpp"
 
 #ifdef _WIN32
@@ -58,12 +59,14 @@ public:
   /// \details This constructor initializes the event notifier with a node and optional publishers
   /// for split events and messages lost events.
   /// \param node Pointer to the rclcpp Node that will be used for publishing events.
+  /// \param record_options The record options used by the recorder.
   /// \param split_event_pub Optional publisher for WriteSplitEvent messages. If not provided, a
   /// new publisher will be created with the topic name "events/write_split".
   /// \param msgs_lost_event_pub Optional publisher for MessagesLostEvent messages. If not provided,
   /// a new publisher will be created with the topic name "events/rosbag2_messages_lost".
   explicit RecorderEventNotifier(
     rclcpp::Node * node,
+    const rosbag2_transport::RecordOptions & record_options = {},
     RclcppPublisherWrapper<WriteSplitEvent>::SharedPtr split_event_pub = nullptr,
     RclcppPublisherWrapper<MessagesLostEvent>::SharedPtr msgs_lost_event_pub = nullptr);
 
@@ -117,6 +120,14 @@ public:
 
   /// \brief Get the topic name used for publishing messages lost events.
   [[nodiscard]] std::string_view get_messages_lost_topic_name() const;
+
+  /// \brief Get the QoS profile used for write split event publisher.
+  /// \return The QoS profile used for publishing write split events.
+  [[nodiscard]] rclcpp::QoS get_write_split_qos() const;
+
+  /// \brief Get the QoS profile used for messages lost event publisher.
+  /// \return The QoS profile used for publishing messages lost events.
+  [[nodiscard]] rclcpp::QoS get_messages_lost_qos() const;
 
 private:
   std::unique_ptr<RecorderEventNotifierImpl> pimpl_;

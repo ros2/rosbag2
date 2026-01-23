@@ -1,1 +1,6 @@
 ---
+# Return code. Returns 1 when recording or playback is already stopped or in case of error, otherwise 0.
+int32 return_code
+
+# Error string. Empty if no error occurred.
+string error_string

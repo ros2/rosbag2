@@ -30,8 +30,7 @@ public:
     const rosbag2_storage::StorageOptions & storage_options,
     const rosbag2_cpp::ConverterOptions & converter_options) override
   {
-    snapshot_mode_ = storage_options.snapshot_mode;
-    (void) storage_options;
+    storage_options_ = storage_options;
     (void) converter_options;
     writer_close_called_ = false;
   }
@@ -63,7 +62,7 @@ public:
   void write(std::shared_ptr<const rosbag2_storage::SerializedBagMessage> message) override
   {
     std::lock_guard<std::mutex> lock(messages_mutex_);
-    if (!snapshot_mode_) {
+    if (!storage_options_.snapshot_mode) {
       messages_.push_back(message);
     } else {
       snapshot_buffer_.push_back(message);
@@ -173,6 +172,11 @@ public:
     return writer_close_called_;
   }
 
+  rosbag2_storage::StorageOptions get_storage_options() const
+  {
+    return storage_options_;
+  }
+
 private:
   std::unordered_map<
     std::string,
@@ -183,11 +187,11 @@ private:
   std::unordered_map<std::string, size_t> messages_per_topic_;
   size_t messages_per_file_ = 0;
   mutable std::mutex messages_mutex_;
-  bool snapshot_mode_ = false;
   rosbag2_cpp::bag_events::EventCallbackManager callback_manager_;
   size_t file_number_ = 0;
   size_t max_messages_per_file_ = 0;
   bool writer_close_called_{false};
+  rosbag2_storage::StorageOptions storage_options_;
 };
 
 #endif  // ROSBAG2_TRANSPORT__MOCK_SEQUENTIAL_WRITER_HPP_

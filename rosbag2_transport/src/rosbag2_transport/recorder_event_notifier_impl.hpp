@@ -31,10 +31,12 @@
 #include "rclcpp/logging.hpp"
 #include "rclcpp/node.hpp"
 #include "rclcpp/publisher.hpp"
+#include "rclcpp/qos.hpp"
 
 #include "rosbag2_interfaces/msg/messages_lost_event.hpp"
 #include "rosbag2_interfaces/msg/write_split_event.hpp"
 #include "rosbag2_cpp/bag_events.hpp"
+#include "rosbag2_storage/qos.hpp"
 #include "rosbag2_transport/rclcpp_publisher_wrapper.hpp"
 #include "rosbag2_transport/recorder_event_notifier.hpp"
 
@@ -50,26 +52,68 @@ public:
 
   explicit RecorderEventNotifierImpl(
     rclcpp::Node * node,
+    const rosbag2_transport::RecordOptions & record_options,
     RclcppPublisherWrapper<WriteSplitEvent>::SharedPtr split_event_pub = nullptr,
     RclcppPublisherWrapper<MessagesLostEvent>::SharedPtr msgs_lost_event_pub = nullptr)
-  : node(node)
+  : node_(node)
   {
     if (!node) {
       throw std::invalid_argument("Node pointer cannot be null");
     }
 
+    rosbag2_storage::Rosbag2QoS split_event_qos = rosbag2_storage::Rosbag2QoS::EventQoS();
+    rosbag2_storage::Rosbag2QoS msgs_lost_event_qos = rosbag2_storage::Rosbag2QoS::EventQoS();
+
+    // Need to expand the default relative topic name to check for QoS overrides
+    auto write_split_topic_name = rclcpp::expand_topic_or_service_name(
+      kDefaultWriteSplitTopicName, node->get_name(), node->get_namespace(), false);
+
+    if (record_options.topic_qos_profile_overrides.find(write_split_topic_name) !=
+      record_options.topic_qos_profile_overrides.end())
+    {
+      const auto & override_qos =
+        record_options.topic_qos_profile_overrides.at(write_split_topic_name);
+      split_event_qos = rosbag2_storage::Rosbag2QoS(override_qos);
+      RCLCPP_DEBUG(node_->get_logger(),
+                   "Using overridden QoS profile: \n%s\nfor '%s' topic.",
+                   split_event_qos.to_string().c_str(),
+                   write_split_topic_name.c_str());
+    }
+
+    // Need to expand the default relative topic name to check for QoS overrides
+    auto messages_lost_topic_name = rclcpp::expand_topic_or_service_name(
+      kDefaultMessagesLostTopicName, node->get_name(), node->get_namespace(), false);
+
+    if (record_options.topic_qos_profile_overrides.find(messages_lost_topic_name) !=
+      record_options.topic_qos_profile_overrides.end())
+    {
+      const auto & override_qos =
+        record_options.topic_qos_profile_overrides.at(messages_lost_topic_name);
+      msgs_lost_event_qos = rosbag2_storage::Rosbag2QoS(override_qos);
+      RCLCPP_DEBUG(node_->get_logger(),
+                   "Using overridden QoS profile: \n%s\nfor '%s' topic.",
+                   msgs_lost_event_qos.to_string().c_str(),
+                   messages_lost_topic_name.c_str());
+    }
+
+    // Store QoS profiles for getter methods
+    split_event_qos_ = split_event_qos;
+    msgs_lost_event_qos_ = msgs_lost_event_qos;
+
     if (split_event_pub) {
       split_event_pub_ = std::move(split_event_pub);
     } else {
       split_event_pub_ = RclcppPublisherWrapper<WriteSplitEvent>::make_shared(
-        node->create_publisher<WriteSplitEvent>(kDefaultWriteSplitTopicName, 1));
+        node_->create_publisher<WriteSplitEvent>(kDefaultWriteSplitTopicName,
+                                                 split_event_qos));
     }
 
     if (msgs_lost_event_pub) {
       msgs_lost_event_pub_ = std::move(msgs_lost_event_pub);
     } else {
       msgs_lost_event_pub_ = RclcppPublisherWrapper<MessagesLostEvent>::make_shared(
-        node->create_publisher<MessagesLostEvent>(kDefaultMessagesLostTopicName, 1));
+        node_->create_publisher<MessagesLostEvent>(kDefaultMessagesLostTopicName,
+                                                   msgs_lost_event_qos));
     }
 
     // Start the thread that will publish events
@@ -111,6 +155,16 @@ public:
     }
   }
 
+  [[nodiscard]] rclcpp::QoS get_write_split_qos() const
+  {
+    return split_event_qos_;
+  }
+
+  [[nodiscard]] rclcpp::QoS get_messages_lost_qos() const
+  {
+    return msgs_lost_event_qos_;
+  }
+
   /// \brief Set the maximum publishing rate for messages lost statistics.
   void set_messages_lost_statistics_max_publishing_rate(float update_rate_hz)
   {
@@ -118,7 +172,7 @@ public:
       std::unique_lock<std::mutex> pub_thread_lock(event_publisher_thread_mutex_);
       if (update_rate_hz == 0.0f) {
         disable_publishing_msgs_lost_statistics_ = true;
-        RCLCPP_DEBUG(node->get_logger(), "Messages lost statistics publishing is disabled");
+        RCLCPP_DEBUG(node_->get_logger(), "Messages lost statistics publishing is disabled");
       } else if (update_rate_hz > 0.0f) {
         if (update_rate_hz >= 1000.0f) {
           throw std::invalid_argument("Update rate must be less than 1000 Hz");
@@ -126,7 +180,7 @@ public:
         disable_publishing_msgs_lost_statistics_ = false;
         msgs_lost_stats_max_publishing_period_ =
           std::chrono::milliseconds(static_cast<int>(1000 / update_rate_hz));
-        RCLCPP_DEBUG(node->get_logger(),
+        RCLCPP_DEBUG(node_->get_logger(),
                      "Messages lost statistics publishing update rate set to %ld ms",
                      msgs_lost_stats_max_publishing_period_.count());
       } else {
@@ -159,7 +213,7 @@ public:
           log_text += "\n\t" + info.topic_name + ": " + std::to_string(info.num_messages_lost);
         }
       }
-      RCLCPP_DEBUG(node->get_logger(), "%s", log_text.c_str());
+      RCLCPP_DEBUG(node_->get_logger(), "%s", log_text.c_str());
     }
   }
 
@@ -169,7 +223,7 @@ public:
   {
     total_num_messages_lost_in_transport_.fetch_add(qos_msgs_lost_info.total_count_change);
     RCLCPP_DEBUG(
-      node->get_logger(),
+      node_->get_logger(),
       "Messages lost on transport layer for topic '%s'. Total lost: %lu",
       topic_name.c_str(), qos_msgs_lost_info.total_count);
 
@@ -202,7 +256,7 @@ public:
 
   void event_publisher_thread_main()
   {
-    RCLCPP_INFO(node->get_logger(), "Event publisher thread: Started");
+    RCLCPP_INFO(node_->get_logger(), "Event publisher thread: Started");
     while (!event_publisher_thread_should_exit_.load()) {
       std::unique_lock<std::mutex> pub_thread_lock(event_publisher_thread_mutex_);
       if (disable_publishing_msgs_lost_statistics_) {
@@ -230,14 +284,14 @@ public:
           auto message = rosbag2_interfaces::msg::WriteSplitEvent();
           message.closed_file = bag_split_info.closed_file;
           message.opened_file = bag_split_info.opened_file;
-          message.node_name = node->get_fully_qualified_name();
+          message.node_name = node_->get_fully_qualified_name();
           split_event_pub_->publish(message);
         } catch (const std::exception & e) {
-          RCLCPP_ERROR_STREAM(node->get_logger(),
+          RCLCPP_ERROR_STREAM(node_->get_logger(),
             "Failed to publish message on '" << get_write_split_topic_name() <<
             "' topic. \nError: " << e.what());
         } catch (...) {
-          RCLCPP_ERROR_STREAM(node->get_logger(),
+          RCLCPP_ERROR_STREAM(node_->get_logger(),
             "Failed to publish message on '" << get_write_split_topic_name() << "' topic.");
         }
         bag_split_info_queue_.pop();
@@ -248,7 +302,7 @@ public:
         if (!per_topic_messages_lost_statistics_.empty()) {
           try {
             auto message = rosbag2_interfaces::msg::MessagesLostEvent();
-            message.node_name = node->get_fully_qualified_name();
+            message.node_name = node_->get_fully_qualified_name();
             for (const auto &[topic, lost_stats] : per_topic_messages_lost_statistics_) {
               const auto &[transport_lost, recorder_lost] = lost_stats;
               message.messages_lost_statistics.emplace_back();
@@ -261,23 +315,25 @@ public:
             statistics_lock.unlock();
             msgs_lost_event_pub_->publish(message);
           } catch (const std::exception & e) {
-            RCLCPP_ERROR_STREAM(node->get_logger(),
+            RCLCPP_ERROR_STREAM(node_->get_logger(),
               "Failed to publish message on '" << get_messages_lost_topic_name() <<
               "' topic. \nError: " << e.what());
           } catch (...) {
-            RCLCPP_ERROR_STREAM(node->get_logger(),
+            RCLCPP_ERROR_STREAM(node_->get_logger(),
               "Failed to publish message on '" << get_messages_lost_topic_name() << "' topic.");
           }
         }
       }
     }
-    RCLCPP_INFO(node->get_logger(), "Event publisher thread: Exited");
+    RCLCPP_INFO(node_->get_logger(), "Event publisher thread: Exited");
   }
 
 private:
-  rclcpp::Node * node;
+  rclcpp::Node * node_;
   RclcppPublisherWrapper<WriteSplitEvent>::SharedPtr split_event_pub_;
   RclcppPublisherWrapper<MessagesLostEvent>::SharedPtr msgs_lost_event_pub_;
+  rclcpp::QoS split_event_qos_{1};
+  rclcpp::QoS msgs_lost_event_qos_{1};
   std::atomic<bool> event_publisher_thread_should_exit_ = false;
   std::queue<rosbag2_cpp::bag_events::BagSplitInfo> bag_split_info_queue_;
   std::mutex event_publisher_thread_mutex_;

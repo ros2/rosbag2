@@ -47,13 +47,19 @@ namespace cache
 /// Provides a "deferred-consumption" implementation of the MessageCacheInterface.
 /// When a consumer asks for a buffer, it will not receive a new buffer until some control
 /// source calls `swap_buffers` manually.
-/// This is useful for a snapshot mode, where no data is written to disk until asked for,
+/// This is useful for snapshot mode, where no data is written to disk until asked for,
 /// then the full circular buffer is dumped all at once, giving historical context.
+/// The buffer can be limited by both size (max_buffer_size) and time duration
+/// (max_buffer_duration). If both are non-zero, both bounds are enforced.
 class ROSBAG2_CPP_PUBLIC CircularMessageCache
   : public MessageCacheInterface
 {
 public:
-  explicit CircularMessageCache(size_t max_buffer_size);
+  /// \brief Parametrized constructor
+  /// \param max_buffer_size Maximum buffer size in bytes. If 0, only limited by duration.
+  /// \param max_buffer_duration Maximum buffer duration in seconds. If 0, only limited by size.
+  /// At least one parameter must be non-zero.
+  explicit CircularMessageCache(size_t max_buffer_size, uint32_t max_buffer_duration = 0);
 
   ~CircularMessageCache() override;
 

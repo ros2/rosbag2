@@ -13,6 +13,7 @@
 // limitations under the License.
 
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "rosbag2_cpp/converter_options.hpp"
@@ -81,14 +82,42 @@ PYBIND11_MODULE(_storage, m) {
   using KEY_VALUE_MAP = std::unordered_map<std::string, std::string>;
   pybind11::class_<rosbag2_storage::StorageOptions>(m, "StorageOptions")
   .def(
-    pybind11::init<
-      std::string, std::string, uint64_t, uint64_t, uint64_t, std::string, std::string, bool,
-      int64_t, int64_t, KEY_VALUE_MAP>(),
+    pybind11::init(
+      [](
+        std::string uri,
+        std::string storage_id,
+        uint64_t max_bagfile_size,
+        uint64_t max_bagfile_duration,
+        uint64_t max_cache_size,
+        uint32_t max_cache_duration,
+        std::string storage_preset_profile,
+        std::string storage_config_uri,
+        bool snapshot_mode,
+        int64_t start_time_ns,
+        int64_t end_time_ns,
+        KEY_VALUE_MAP custom_data)
+      {
+        return rosbag2_storage::StorageOptions{
+          std::move(uri),
+          std::move(storage_id),
+          max_bagfile_size,
+          max_bagfile_duration,
+          max_cache_size,
+          max_cache_duration,
+          std::move(storage_preset_profile),
+          std::move(storage_config_uri),
+          snapshot_mode,
+          start_time_ns,
+          end_time_ns,
+          std::move(custom_data),
+        };
+      }),
     pybind11::arg("uri"),
     pybind11::arg("storage_id") = "",
     pybind11::arg("max_bagfile_size") = 0,
     pybind11::arg("max_bagfile_duration") = 0,
     pybind11::arg("max_cache_size") = 0,
+    pybind11::arg("max_cache_duration") = 0,
     pybind11::arg("storage_preset_profile") = "",
     pybind11::arg("storage_config_uri") = "",
     pybind11::arg("snapshot_mode") = false,
@@ -106,6 +135,9 @@ PYBIND11_MODULE(_storage, m) {
   .def_readwrite(
     "max_cache_size",
     &rosbag2_storage::StorageOptions::max_cache_size)
+  .def_readwrite(
+    "max_cache_duration",
+    &rosbag2_storage::StorageOptions::max_cache_duration)
   .def_readwrite(
     "storage_preset_profile",
     &rosbag2_storage::StorageOptions::storage_preset_profile)

@@ -168,6 +168,15 @@ def add_recorder_arguments(parser: ArgumentParser) -> None:
              'about one second of total recorded data volume. '
              'If the value specified is 0, then every message is directly written to disk.')
     parser.add_argument(
+        '--max-cache-duration', type=int, default=0,
+        help='Maximum cache duration in seconds.\n'
+             'Default: %(default)d, indicates that buffering will be limited by the'
+             ' --max-cache-size parameter only. If the value is more than 0, the cache buffer'
+             ' will be limited by both the series of messages duration and the maximum cache size'
+             ' parameter.\n'
+             'To override the upper bound by total messages size, the --max-cache-size parameter'
+             ' can be set to 0.')
+    parser.add_argument(
         '--disable-keyboard-controls', action='store_true', default=False,
         help='disables keyboard controls for recorder')
     parser.add_argument(
@@ -313,6 +322,24 @@ def validate_parsed_arguments(args, uri) -> str:
     if args.stats_max_publishing_rate < 0 or args.stats_max_publishing_rate > 1000.0:
         return print_error('stats_max_publishing_rate must be between 0 and 1000.')
 
+    if args.max_cache_size < 0:
+        return print_error('max_cache_size must be a non-negative integer.')
+
+    if args.max_cache_size > 4294967295:
+        return print_error('max_cache_size must not exceed 4294967295 bytes '
+                           '(~4 GiB, uint32_t max).')
+
+    if args.max_cache_duration < 0:
+        return print_error('max_cache_duration must be a non-negative integer.')
+
+    if args.max_cache_duration > 4294967295:
+        return print_error('max_cache_duration must not exceed 4294967295 seconds '
+                           '(~136 years, uint32_t max).')
+
+    if args.snapshot_mode and args.max_cache_duration == 0 and args.max_cache_size == 0:
+        return print_error('In snapshot mode, either the max_cache_duration or max_cache_size'
+                           ' shall not be set to zero.')
+
     return None
 
 
@@ -364,6 +391,7 @@ class RecordVerb(VerbExtension):
             max_bagfile_size=args.max_bag_size,
             max_bagfile_duration=args.max_bag_duration,
             max_cache_size=args.max_cache_size,
+            max_cache_duration=args.max_cache_duration,
             storage_preset_profile=args.storage_preset_profile,
             storage_config_uri=storage_config_file,
             snapshot_mode=args.snapshot_mode,

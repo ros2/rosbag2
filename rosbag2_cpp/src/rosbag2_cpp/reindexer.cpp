@@ -177,14 +177,8 @@ void Reindexer::aggregate_metadata(
     metadata_.bag_size += fs::file_size(f_);
 
     // Set up reader
-    rosbag2_storage::StorageOptions temp_so = {
-      f_.string(),
-      storage_options.storage_id,
-      storage_options.max_bagfile_size,
-      storage_options.max_bagfile_duration,
-      storage_options.max_cache_size,
-      storage_options.storage_config_uri
-    };
+    rosbag2_storage::StorageOptions temp_so = storage_options;
+    temp_so.uri = f_.string();
 
     // We aren't actually interested in reading messages, so use a blank converter option
     rosbag2_cpp::ConverterOptions blank_converter_options {};
