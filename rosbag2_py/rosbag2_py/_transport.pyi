@@ -124,6 +124,7 @@ class RecordOptions:
     rmw_serialization_format: str
     services: List[str]
     start_paused: bool
+    static_topics_uri: str
     statistics_max_publishing_rate: float
     topic_polling_interval: datetime.timedelta
     topic_qos_profile_overrides: dict
