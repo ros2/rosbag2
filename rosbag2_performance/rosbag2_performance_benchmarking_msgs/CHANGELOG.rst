@@ -2,6 +2,9 @@
 Changelog for package rosbag2_performance_benchmarking_msgs
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.26.10 (2026-01-21)
+--------------------
+
 0.26.9 (2025-08-11)
 -------------------
 * Enable `rosbag2_performance_benchmarking` package to be built by default (`#2093 <https://github.com/ros2/rosbag2/issues/2093>`_) (`#2097 <https://github.com/ros2/rosbag2/issues/2097>`_)

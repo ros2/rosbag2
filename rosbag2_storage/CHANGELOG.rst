@@ -2,6 +2,19 @@
 Changelog for package rosbag2_storage
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.26.10 (2026-01-21)
+--------------------
+* Fix decoder and encode mismatch fails YAML deserialization. (`#2277 <https://github.com/ros2/rosbag2/issues/2277>`_) (`#2298 <https://github.com/ros2/rosbag2/issues/2298>`_)
+  Co-authored-by: Tomoya Fujita <Tomoya.Fujita@sony.com>
+* Throw YAML::Exception during conversion if the data type mismatches. (`#2262 <https://github.com/ros2/rosbag2/issues/2262>`_) (`#2304 <https://github.com/ros2/rosbag2/issues/2304>`_)
+  Co-authored-by: Tomoya Fujita <Tomoya.Fujita@sony.com>
+* [kilted] Upstream minor fixes from Apex.AI (backport `#2240 <https://github.com/ros2/rosbag2/issues/2240>`_) (`#2294 <https://github.com/ros2/rosbag2/issues/2294>`_) (`#2301 <https://github.com/ros2/rosbag2/issues/2301>`_)
+  Co-authored-by: mergify[bot] <37929162+mergify[bot]@users.noreply.github.com>
+  Co-authored-by: Michael Orlov <morlovmr@gmail.com>
+* fix memory leak on make_empty_serialized_message(). (`#2253 <https://github.com/ros2/rosbag2/issues/2253>`_) (`#2260 <https://github.com/ros2/rosbag2/issues/2260>`_)
+  Co-authored-by: Tomoya Fujita <Tomoya.Fujita@sony.com>
+* Contributors: mergify[bot]
+
 0.26.9 (2025-08-11)
 -------------------
 

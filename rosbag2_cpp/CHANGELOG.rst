@@ -2,6 +2,32 @@
 Changelog for package rosbag2
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.26.10 (2026-01-21)
+--------------------
+* Workaround for flaky bagsize_split_is_at_least_specified_size test (`#2311 <https://github.com/ros2/rosbag2/issues/2311>`_) (`#2315 <https://github.com/ros2/rosbag2/issues/2315>`_)
+  Co-authored-by: Michael Orlov <morlovmr@gmail.com>
+* [kilted] Upstream minor fixes from Apex.AI (backport `#2240 <https://github.com/ros2/rosbag2/issues/2240>`_) (`#2294 <https://github.com/ros2/rosbag2/issues/2294>`_) (`#2301 <https://github.com/ros2/rosbag2/issues/2301>`_)
+  Co-authored-by: mergify[bot] <37929162+mergify[bot]@users.noreply.github.com>
+  Co-authored-by: Michael Orlov <morlovmr@gmail.com>
+* [kilted] Check for nullptrs when pushing new messages to the message cache (backport `#2219 <https://github.com/ros2/rosbag2/issues/2219>`_) (`#2222 <https://github.com/ros2/rosbag2/issues/2222>`_) (`#2246 <https://github.com/ros2/rosbag2/issues/2246>`_)
+  Co-authored-by: mergify[bot] <37929162+mergify[bot]@users.noreply.github.com>
+  Co-authored-by: José Faria <jncfa@pm.me>
+  Co-authored-by: Michael Orlov <morlovmr@gmail.com>
+* [jazzy] Make topics persistent between writer's close() and open() API calls. (backport `#2229 <https://github.com/ros2/rosbag2/issues/2229>`_) (`#2243 <https://github.com/ros2/rosbag2/issues/2243>`_)
+  Co-authored-by: Michael Orlov <morlovmr@gmail.com>
+* Address flakiness in the recorder tests with small cache size (`#2203 <https://github.com/ros2/rosbag2/issues/2203>`_) (`#2207 <https://github.com/ros2/rosbag2/issues/2207>`_)
+  Co-authored-by: Michael Orlov <morlovmr@gmail.com>
+* [jazzy] Log reasoning for not found message definition only in debug log (backport `#2183 <https://github.com/ros2/rosbag2/issues/2183>`_) (`#2186 <https://github.com/ros2/rosbag2/issues/2186>`_)
+  Co-authored-by: Michael Orlov <morlovmr@gmail.com>
+* minor error checks for rosbag2_cpp (`#2127 <https://github.com/ros2/rosbag2/issues/2127>`_) (`#2146 <https://github.com/ros2/rosbag2/issues/2146>`_)
+  Co-authored-by: Tomoya Fujita <Tomoya.Fujita@sony.com>
+* Fix: Add null pointer check for reader_imp in the Reader constructor (`#2135 <https://github.com/ros2/rosbag2/issues/2135>`_) (`#2140 <https://github.com/ros2/rosbag2/issues/2140>`_)
+  Co-authored-by: YuJin Hong <150586358+dbwls99706@users.noreply.github.com>
+  Co-authored-by: yujinhong <yujin@nbyus.com>
+* [jazzy] Use rclcpp type support helpers in rosbag2_cpp (backport `#2017 <https://github.com/ros2/rosbag2/issues/2017>`_) (`#2130 <https://github.com/ros2/rosbag2/issues/2130>`_)
+  Co-authored-by: Michael Orlov <morlovmr@gmail.com>
+  Co-authored-by: Michael Orlov <michael.orlov@apex.ai>
+
 0.26.9 (2025-08-11)
 -------------------
 * [jazzy] Fix reindex duration bug when bag file durations overlap (backport `#2036 <https://github.com/ros2/rosbag2/issues/2036>`_) (`#2107 <https://github.com/ros2/rosbag2/issues/2107>`_)

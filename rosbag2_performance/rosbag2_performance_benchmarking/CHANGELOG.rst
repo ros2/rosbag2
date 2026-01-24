@@ -2,6 +2,9 @@
 Changelog for package rosbag2_performance_benchmarking
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.26.10 (2026-01-21)
+--------------------
+
 0.26.9 (2025-08-11)
 -------------------
 * Fix warning: initialize number_of_threads (`#2121 <https://github.com/ros2/rosbag2/issues/2121>`_) (`#2123 <https://github.com/ros2/rosbag2/issues/2123>`_)

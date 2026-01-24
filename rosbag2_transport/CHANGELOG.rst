@@ -2,6 +2,46 @@
 Changelog for package rosbag2_transport
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.26.10 (2026-01-21)
+--------------------
+* [jazzy] Add Record, Stop, StartDiscovery, StopDiscovery and IsDiscoveryRunning services for Recorder (backport `#2248 <https://github.com/ros2/rosbag2/issues/2248>`_) (`#2309 <https://github.com/ros2/rosbag2/issues/2309>`_)
+  Co-authored-by: Michael Orlov <morlovmr@gmail.com>
+* [kilted] Use QoS override settings for inner Rosbag2 publishing topics (backport `#2286 <https://github.com/ros2/rosbag2/issues/2286>`_) (`#2302 <https://github.com/ros2/rosbag2/issues/2302>`_) (`#2307 <https://github.com/ros2/rosbag2/issues/2307>`_)
+  Co-authored-by: mergify[bot] <37929162+mergify[bot]@users.noreply.github.com>
+* Fix decoder and encode mismatch fails YAML deserialization. (`#2277 <https://github.com/ros2/rosbag2/issues/2277>`_) (`#2298 <https://github.com/ros2/rosbag2/issues/2298>`_)
+  Co-authored-by: Tomoya Fujita <Tomoya.Fujita@sony.com>
+* [kilted] Upstream minor fixes from Apex.AI (backport `#2240 <https://github.com/ros2/rosbag2/issues/2240>`_) (`#2294 <https://github.com/ros2/rosbag2/issues/2294>`_) (`#2301 <https://github.com/ros2/rosbag2/issues/2301>`_)
+  Co-authored-by: mergify[bot] <37929162+mergify[bot]@users.noreply.github.com>
+  Co-authored-by: Michael Orlov <morlovmr@gmail.com>
+* Address flakiness in the recorder tests with small cache size (`#2203 <https://github.com/ros2/rosbag2/issues/2203>`_) (`#2207 <https://github.com/ros2/rosbag2/issues/2207>`_)
+  Co-authored-by: Michael Orlov <morlovmr@gmail.com>
+* Reduce CPU overhead in the Rosbag2 recorder discovery (`#2201 <https://github.com/ros2/rosbag2/issues/2201>`_) (`#2205 <https://github.com/ros2/rosbag2/issues/2205>`_)
+  Co-authored-by: Michael Orlov <morlovmr@gmail.com>
+  Co-authored-by: Michael Orlov <michael.orlov@apex.ai>
+* [jazzy] Fix for data races in tests with MockSequentialWriter (backport `#2192 <https://github.com/ros2/rosbag2/issues/2192>`_) (`#2196 <https://github.com/ros2/rosbag2/issues/2196>`_)
+  Co-authored-by: Michael Orlov <morlovmr@gmail.com>
+* [jazzy] Make the player respect the original messages' order with the same timestamp (backport `#2172 <https://github.com/ros2/rosbag2/issues/2172>`_) (`#2188 <https://github.com/ros2/rosbag2/issues/2188>`_)
+  Co-authored-by: Michael Orlov <morlovmr@gmail.com>
+* [jazzy] Follow-up on "Fix for multibag replay stagnation (`#2158 <https://github.com/ros2/rosbag2/issues/2158>`_)" (backport `#2182 <https://github.com/ros2/rosbag2/issues/2182>`_) (`#2189 <https://github.com/ros2/rosbag2/issues/2189>`_)
+  Co-authored-by: Michael Orlov <morlovmr@gmail.com>
+* [jazzy] Bugfix: Player can't play with read_ahead_queue_size equal 1 (backport `#2174 <https://github.com/ros2/rosbag2/issues/2174>`_) (`#2180 <https://github.com/ros2/rosbag2/issues/2180>`_)
+  Co-Authored by: Christophe Bedard <bedard.christophe@gmail.com>
+  Co-authored-by: Michael Orlov <morlovmr@gmail.com>
+* [jazzy] Fixes for multiple race conditions in player (backport `#2171 <https://github.com/ros2/rosbag2/issues/2171>`_) (`#2177 <https://github.com/ros2/rosbag2/issues/2177>`_)
+  Co-authored-by: Michael Orlov <morlovmr@gmail.com>
+* [jazzy] Fix for multibag replay stagnation (backport `#2158 <https://github.com/ros2/rosbag2/issues/2158>`_) (`#2170 <https://github.com/ros2/rosbag2/issues/2170>`_)
+  Co-authored-by: Michael Orlov <morlovmr@gmail.com>
+* Bugfix for MCAPStorage::seek(time) advance in time is current (`#2157 <https://github.com/ros2/rosbag2/issues/2157>`_) (`#2160 <https://github.com/ros2/rosbag2/issues/2160>`_)
+  Co-authored-by: Michael Orlov <morlovmr@gmail.com>
+* [jazzy] Add RecorderEventNotifier class (backport `#2144 <https://github.com/ros2/rosbag2/issues/2144>`_) (backport `#2149 <https://github.com/ros2/rosbag2/issues/2149>`_) (`#2151 <https://github.com/ros2/rosbag2/issues/2151>`_)
+  Co-authored-by: Michael Orlov <morlovmr@gmail.com>
+  Co-authored-by: mergify[bot] <37929162+mergify[bot]@users.noreply.github.com>
+* [jazzy] Bugfix for deadlock in multibag replay (backport `#2143 <https://github.com/ros2/rosbag2/issues/2143>`_) (`#2148 <https://github.com/ros2/rosbag2/issues/2148>`_)
+  Co-authored-by: Michael Orlov <morlovmr@gmail.com>
+* [jazzy] Use rclcpp type support helpers in rosbag2_cpp (backport `#2017 <https://github.com/ros2/rosbag2/issues/2017>`_) (`#2130 <https://github.com/ros2/rosbag2/issues/2130>`_)
+  Co-authored-by: Michael Orlov <michael.orlov@apex.ai>
+* Contributors: mergify[bot]
+
 0.26.9 (2025-08-11)
 -------------------
 * [jazzy] Add public API to get player's starting time and playback duration (backport `#2095 <https://github.com/ros2/rosbag2/issues/2095>`_) (`#2102 <https://github.com/ros2/rosbag2/issues/2102>`_)

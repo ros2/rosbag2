@@ -2,6 +2,12 @@
 Changelog for package rosbag2_storage_default_plugins
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.26.10 (2026-01-21)
+--------------------
+* vulnerable string concatenation with parameterized queries. (`#2290 <https://github.com/ros2/rosbag2/issues/2290>`_) (`#2297 <https://github.com/ros2/rosbag2/issues/2297>`_)
+  Co-authored-by: Tomoya Fujita <Tomoya.Fujita@sony.com>
+* Contributors: mergify[bot]
+
 0.26.9 (2025-08-11)
 -------------------
 

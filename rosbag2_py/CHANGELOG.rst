@@ -2,6 +2,15 @@
 Changelog for package rosbag2_py
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.26.10 (2026-01-21)
+--------------------
+* [kilted] Upstream minor fixes from Apex.AI (backport `#2240 <https://github.com/ros2/rosbag2/issues/2240>`_) (`#2294 <https://github.com/ros2/rosbag2/issues/2294>`_) (`#2301 <https://github.com/ros2/rosbag2/issues/2301>`_)
+  Co-authored-by: mergify[bot] <37929162+mergify[bot]@users.noreply.github.com>
+  Co-authored-by: Michael Orlov <morlovmr@gmail.com>
+* Make sure test topic is discovered by recorder in rosbag2_py test (`#2132 <https://github.com/ros2/rosbag2/issues/2132>`_) (`#2138 <https://github.com/ros2/rosbag2/issues/2138>`_)
+  Co-authored-by: Christophe Bedard <bedard.christophe@gmail.com>
+* Contributors: mergify[bot]
+
 0.26.9 (2025-08-11)
 -------------------
 * [jazzy] Add public API to get player's starting time and playback duration (backport `#2095 <https://github.com/ros2/rosbag2/issues/2095>`_) (`#2102 <https://github.com/ros2/rosbag2/issues/2102>`_)
