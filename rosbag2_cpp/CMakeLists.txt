@@ -68,6 +68,7 @@ add_library(${PROJECT_NAME} SHARED
   src/rosbag2_cpp/rmw_implemented_serialization_format_converter.cpp
   src/rosbag2_cpp/serialization_format_converter_factory.cpp
   src/rosbag2_cpp/types/introspection_message.cpp
+  src/rosbag2_cpp/typesupport_helpers.cpp
   src/rosbag2_cpp/types/introspection_message.cpp
   src/rosbag2_cpp/writer.cpp
   src/rosbag2_cpp/writers/sequential_writer.cpp
@@ -162,6 +163,17 @@ if(BUILD_TESTING)
     test/rosbag2_cpp/test_converter_factory.cpp)
   if(TARGET test_converter_factory)
     target_link_libraries(test_converter_factory ${PROJECT_NAME})
+  endif()
+
+  ament_add_gmock(test_typesupport_helpers
+    test/rosbag2_cpp/test_typesupport_helpers.cpp
+    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
+  if(TARGET test_typesupport_helpers)
+    target_link_libraries(test_typesupport_helpers
+      ${PROJECT_NAME}
+      ament_index_cpp::ament_index_cpp
+      rosidl_typesupport_cpp::rosidl_typesupport_cpp
+    )
   endif()
 
   ament_add_gmock(test_info
