@@ -13,6 +13,7 @@
 // limitations under the License.
 
 #include "rosbag2_cpp/typesupport_helpers.hpp"
+#include "rclcpp/typesupport_helpers.hpp"
 
 #include <memory>
 #include <sstream>
@@ -68,7 +69,7 @@ const std::pair<std::string, std::string> extract_type_and_package(const std::st
   std::string package_name;
   std::string type_name;
 
-  std::tie(package_name, std::ignore, type_name) = extract_type_identifier(full_type);
+  std::tie(package_name, std::ignore, type_name) = rclcpp::extract_type_identifier(full_type);
 
   return {package_name, type_name};
 }
@@ -101,8 +102,8 @@ extract_type_identifier(const std::string & full_type)
 std::shared_ptr<rcpputils::SharedLibrary>
 get_typesupport_library(const std::string & type, const std::string & typesupport_identifier)
 {
-  auto package_name = std::get<0>(extract_type_identifier(type));
-  auto library_path = get_typesupport_library_path(package_name, typesupport_identifier);
+  auto package_name = std::get<0>(rclcpp::extract_type_identifier(type));
+  auto library_path = rclcpp::get_typesupport_library_path(package_name, typesupport_identifier);
   return std::make_shared<rcpputils::SharedLibrary>(library_path);
 }
 
@@ -120,7 +121,7 @@ get_typesupport_handle(
   std::string package_name;
   std::string middle_module;
   std::string type_name;
-  std::tie(package_name, middle_module, type_name) = extract_type_identifier(type);
+  std::tie(package_name, middle_module, type_name) = rclcpp::extract_type_identifier(type);
 
   std::stringstream rcutils_dynamic_loading_error;
   rcutils_dynamic_loading_error <<
