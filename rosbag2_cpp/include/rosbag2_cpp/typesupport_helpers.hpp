@@ -29,14 +29,20 @@
 namespace rosbag2_cpp
 {
 
+[[deprecated("This function will be deleted in the next 'Lyrical Luth' ROS release."
+             " Please use the rclcpp counterpart functions.")]]
 ROSBAG2_CPP_PUBLIC
 std::shared_ptr<rcpputils::SharedLibrary>
 get_typesupport_library(const std::string & type, const std::string & typesupport_identifier);
 
+[[deprecated("This function will be deleted in the next 'Lyrical Luth' ROS release."
+             " Please use the rclcpp counterpart functions.")]]
 ROSBAG2_CPP_PUBLIC
 std::string get_typesupport_library_path(
   const std::string & package_name, const std::string & typesupport_identifier);
 
+[[deprecated("This function will be deleted in the next 'Lyrical Luth' ROS release."
+             " Please use the rclcpp counterpart functions.")]]
 ROSBAG2_CPP_PUBLIC
 const rosidl_message_type_support_t *
 get_typesupport_handle(
@@ -44,10 +50,11 @@ get_typesupport_handle(
   const std::string & typesupport_identifier,
   std::shared_ptr<rcpputils::SharedLibrary> library);
 
+[[deprecated("This function will be deleted in the next 'Lyrical Luth' ROS release."
+             " Please use the rclcpp counterpart functions.")]]
 ROSBAG2_CPP_PUBLIC
 const std::tuple<std::string, std::string, std::string>
 extract_type_identifier(const std::string & full_type);
-
 }  // namespace rosbag2_cpp
 
 #endif  // ROSBAG2_CPP__TYPESUPPORT_HELPERS_HPP_
