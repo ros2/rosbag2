@@ -603,7 +603,7 @@ if(BUILD_TESTING)
     test/rosbag2_transport/test_record_static_topics.cpp)
   target_link_libraries(test_record_static_topics
     ${PROJECT_NAME}
-    ${test_msgs_TARGTES}
+    ${test_msgs_TARGETS}
     rosbag2_test_common::rosbag2_test_common
     test_msgs::test_msgs_includes
   )

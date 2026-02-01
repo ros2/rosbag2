@@ -70,7 +70,7 @@ To record a set of predefined topics, one can specify them on the command line e
 $ ros2 bag record <topic1> <topic2> … <topicN>
 ```
 
-Press ++ctrl+c++ to stop the recording.
+Press `Ctrl+C` to stop the recording.
 
 The specified topics don't necessarily have to be present at the start time.
 The discovery function will automatically recognize if one of the specified topics appears.

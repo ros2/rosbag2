@@ -488,6 +488,7 @@ void RecorderImpl::record(const std::string & uri)
   if (!static_topics_.empty() &&
     !(record_options_.all_topics || !record_options_.topics.empty() ||
     record_options_.all_services || !record_options_.services.empty() ||
+    record_options_.all_actions || !record_options_.actions.empty() ||
     !record_options_.regex.empty()))
   {
     record_options_.is_discovery_disabled = true;
@@ -1195,27 +1196,38 @@ void RecorderImpl::read_static_topics() noexcept
       RCLCPP_INFO_STREAM(node->get_logger(),
         "Reading static topics from " << record_options_.static_topics_uri);
       YAML::Node yaml_file = YAML::LoadFile(record_options_.static_topics_uri);
-      auto bag_nodes = yaml_file["static_topics_and_types_list"];
-      if (!bag_nodes) {
+      auto list_nodes = yaml_file["static_topics_and_types_list"];
+      if (!list_nodes) {
         throw std::runtime_error(
                 "Static topics YAML file must have top-level key 'static_topics_and_types_list'");
       }
-      if (!bag_nodes.IsSequence()) {
+      if (!list_nodes.IsSequence()) {
         throw std::runtime_error(
                 "Top-level key 'static_topics_and_types_list' must contain a list of "
                 "'topic_name, topic_type' pairs");
       }
-      for (const auto & bag_node : bag_nodes) {
+      for (const auto & bag_node : list_nodes) {
         const auto topic_name = bag_node[0].as<std::string>();
         const auto topic_type = bag_node[1].as<std::string>();
         if (topic_type.empty()) {
           RCLCPP_ERROR_STREAM(node->get_logger(),
-            "Static topic " << topic_name.c_str() << " has no corresponding type");
+            "Static topic " << topic_name << " has no corresponding type");
         }
         static_topics_.emplace_back(topic_name, topic_type);
       }
     } catch (std::exception & e) {
       RCLCPP_ERROR_STREAM(node->get_logger(), "Failed to read static topics list: " << e.what());
+      // Print current static topics read so far
+      RCLCPP_INFO_STREAM(node->get_logger(),
+                         "Read " << static_topics_.size() << " static topics before failure");
+      for (const auto & [topic_name, topic_type] : static_topics_) {
+        RCLCPP_INFO_STREAM(node->get_logger(),
+                           " \ttopic: " << topic_name << " \t\t type: " << topic_type);
+      }
+      // Clear any partially read topics
+      static_topics_.clear();
+      RCLCPP_INFO_STREAM(node->get_logger(), "Cleared static topics list due to read failure.");
+      return;
     }
     RCLCPP_INFO_STREAM(node->get_logger(), "Read " << static_topics_.size() << " static topics");
   }

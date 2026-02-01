@@ -19,8 +19,8 @@
 #include <string>
 #include <unordered_map>
 #include <unordered_set>
-#include <vector>
 #include <utility>
+#include <vector>
 
 #include "rosbag2_transport/record_options.hpp"
 #include "rosbag2_transport/visibility_control.hpp"

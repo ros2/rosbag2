@@ -72,7 +72,7 @@ def add_recorder_arguments(parser: ArgumentParser) -> None:
         help='Space-delimited list of topics to record.')
     parser.add_argument(
         '--static-topics-path', type=FileType('r'),
-        help='Path to a YAML file with statically defining topic names and types.'
+        help='Path to a YAML file with statically defined topic names and types.'
              'Recorder will expect a YAML file in the following format:\n'
              'static_topics_and_types_list:\n'
              ' - [/topic_name1, topic_type1]\n'
