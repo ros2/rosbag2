@@ -1,0 +1,9 @@
+#include "BasicIdl.idl"
+
+module rosbag2_test_msgdefs {
+  module msg {
+    struct ComplexWithRelativeDep {
+      rosbag2_test_msgdefs::msg::BasicIdl a;
+    };
+  };
+};
