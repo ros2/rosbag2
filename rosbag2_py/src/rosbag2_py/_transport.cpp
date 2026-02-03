@@ -929,6 +929,7 @@ PYBIND11_MODULE(_transport, m) {
   .def_readwrite("all_topics", &RecordOptions::all_topics)
   .def_readwrite("is_discovery_disabled", &RecordOptions::is_discovery_disabled)
   .def_readwrite("topics", &RecordOptions::topics)
+  .def_readwrite("static_topics_uri", &RecordOptions::static_topics_uri)
   .def_readwrite("topic_types", &RecordOptions::topic_types)
   .def_readwrite("exclude_topic_types", &RecordOptions::exclude_topic_types)
   .def_readwrite("rmw_serialization_format", &RecordOptions::rmw_serialization_format)

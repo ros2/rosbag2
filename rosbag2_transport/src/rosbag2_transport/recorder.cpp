@@ -15,6 +15,7 @@
 #include <algorithm>
 #include <chrono>
 #include <future>
+#include <map>
 #include <memory>
 #include <regex>
 #include <stdexcept>
@@ -187,12 +188,16 @@ public:
 
   std::unordered_map<std::string, std::string> get_requested_or_available_topics();
 
+  void read_static_topics() noexcept;
+
   /// Public members for access by wrapper
   std::unordered_set<std::string> topics_warned_about_incompatibility_;
   std::shared_ptr<rosbag2_cpp::Writer> writer_;
   rosbag2_storage::StorageOptions storage_options_;
   rosbag2_transport::RecordOptions record_options_;
   std::unordered_map<std::string, std::shared_ptr<rclcpp::SubscriptionBase>> subscriptions_;
+
+  std::vector<std::pair<std::string, std::string>> static_topics_{};  // topic_name, topic_type
 
 private:
   void create_control_services();
@@ -313,6 +318,13 @@ RecorderImpl::RecorderImpl(
       "Press " << key_str << " for pausing/resuming");
   }
 
+  read_static_topics();
+  for (auto & [topic_name, _] : static_topics_) {
+    topic_name = rclcpp::expand_topic_or_service_name(
+      topic_name, node->get_name(),
+      node->get_namespace(), false);
+  }
+
   for (auto & topic : record_options_.topics) {
     topic = rclcpp::expand_topic_or_service_name(
       topic, node->get_name(),
@@ -337,7 +349,8 @@ RecorderImpl::RecorderImpl(
       node->get_namespace(), false);
   }
 
-  topic_filter_ = std::make_unique<TopicFilter>(record_options_, node->get_node_graph_interface());
+  topic_filter_ = std::make_unique<TopicFilter>(record_options, node->get_node_graph_interface(),
+      false, static_topics_);
 
   create_control_services();
 }
@@ -470,6 +483,17 @@ void RecorderImpl::record(const std::string & uri)
   if (!record_options_.use_sim_time) {
     subscribe_topics(get_requested_or_available_topics());
   }
+
+  // Disable discovery if only static topics defined
+  if (!static_topics_.empty() &&
+    !(record_options_.all_topics || !record_options_.topics.empty() ||
+    record_options_.all_services || !record_options_.services.empty() ||
+    record_options_.all_actions || !record_options_.actions.empty() ||
+    !record_options_.regex.empty()))
+  {
+    record_options_.is_discovery_disabled = true;
+  }
+
   if (!record_options_.is_discovery_disabled) {
     start_discovery();
     RCLCPP_INFO(node->get_logger(), "Listening for topics...");
@@ -819,7 +843,22 @@ void RecorderImpl::topics_discovery() noexcept
 std::unordered_map<std::string, std::string>
 RecorderImpl::get_requested_or_available_topics()
 {
-  auto all_topics_and_types = node->get_topic_names_and_types();
+  std::map<std::string, std::vector<std::string>> all_topics_and_types;
+  // Take topic names and types from graph only if inclusive filters among static topics defined
+  if (record_options_.all_topics || !record_options_.topics.empty() ||
+    !record_options_.topic_types.empty() ||
+    record_options_.all_services || !record_options_.services.empty() ||
+    record_options_.all_actions || !record_options_.actions.empty() ||
+    !record_options_.regex.empty())
+  {
+    all_topics_and_types = node->get_topic_names_and_types();
+  }
+
+  for (const auto & [static_topic_name, static_topic_type] : static_topics_) {
+    if (all_topics_and_types.find(static_topic_name) == all_topics_and_types.cend()) {
+      all_topics_and_types[static_topic_name] = {static_topic_type};
+    }
+  }
   return topic_filter_->filter_topics(all_topics_and_types);
 }
 
@@ -1150,6 +1189,50 @@ void RecorderImpl::warn_if_new_qos_for_subscribed_topic(const std::string & topi
   }
 }
 
+void RecorderImpl::read_static_topics() noexcept
+{
+  if (!record_options_.static_topics_uri.empty()) {
+    try {
+      RCLCPP_INFO_STREAM(node->get_logger(),
+        "Reading static topics from " << record_options_.static_topics_uri);
+      YAML::Node yaml_file = YAML::LoadFile(record_options_.static_topics_uri);
+      auto list_nodes = yaml_file["static_topics_and_types_list"];
+      if (!list_nodes) {
+        throw std::runtime_error(
+                "Static topics YAML file must have top-level key 'static_topics_and_types_list'");
+      }
+      if (!list_nodes.IsSequence()) {
+        throw std::runtime_error(
+                "Top-level key 'static_topics_and_types_list' must contain a list of "
+                "'topic_name, topic_type' pairs");
+      }
+      for (const auto & bag_node : list_nodes) {
+        const auto topic_name = bag_node[0].as<std::string>();
+        const auto topic_type = bag_node[1].as<std::string>();
+        if (topic_type.empty()) {
+          RCLCPP_ERROR_STREAM(node->get_logger(),
+            "Static topic " << topic_name << " has no corresponding type");
+        }
+        static_topics_.emplace_back(topic_name, topic_type);
+      }
+    } catch (std::exception & e) {
+      RCLCPP_ERROR_STREAM(node->get_logger(), "Failed to read static topics list: " << e.what());
+      // Print current static topics read so far
+      RCLCPP_INFO_STREAM(node->get_logger(),
+                         "Read " << static_topics_.size() << " static topics before failure");
+      for (const auto & [topic_name, topic_type] : static_topics_) {
+        RCLCPP_INFO_STREAM(node->get_logger(),
+                           " \ttopic: " << topic_name << " \t\t type: " << topic_type);
+      }
+      // Clear any partially read topics
+      static_topics_.clear();
+      RCLCPP_INFO_STREAM(node->get_logger(), "Cleared static topics list due to read failure.");
+      return;
+    }
+    RCLCPP_INFO_STREAM(node->get_logger(), "Read " << static_topics_.size() << " static topics");
+  }
+}
+
 ///////////////////////////////
 // Recorder public interface
 
@@ -1323,6 +1406,16 @@ bool
 Recorder::is_discovery_running() const
 {
   return pimpl_->is_discovery_running();
+}
+
+void Recorder::read_static_topics() noexcept
+{
+  return pimpl_->read_static_topics();
+}
+
+const std::vector<std::pair<std::string, std::string>> & Recorder::get_static_topics() noexcept
+{
+  return pimpl_->static_topics_;
 }
 
 std::unordered_map<std::string, std::string>

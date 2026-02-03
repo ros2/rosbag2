@@ -19,6 +19,7 @@
 #include <string>
 #include <unordered_map>
 #include <unordered_set>
+#include <utility>
 #include <vector>
 
 #include "rosbag2_transport/record_options.hpp"
@@ -46,10 +47,12 @@ public:
   /// be disabled.
   /// @param allow_unknown_types Allow unknown types, i.e. types for which type support cannot be
   /// loaded.
+  /// @param static_topic_names_and_types List of static topics and their types to always include.
   explicit TopicFilter(
     RecordOptions record_options,
     rclcpp::node_interfaces::NodeGraphInterface::SharedPtr node_graph = nullptr,
-    bool allow_unknown_types = false);
+    bool allow_unknown_types = false,
+    const std::vector<std::pair<std::string, std::string>> & static_topic_names_and_types = {});
   virtual ~TopicFilter();
 
   /// \brief Filter topics based on the options provided in the constructor
@@ -69,10 +72,10 @@ public:
   /// - exclude services list
   /// - unpublished topics
   /// - leaf topics
-  /// @param topic_names_and_types The map of topic names and their associated types to filter
+  /// @param all_topic_names_and_types The map of topic names and their associated types to filter
   /// @return The filtered map of topic names and their associated types
   std::unordered_map<std::string, std::string> filter_topics(
-    const std::map<std::string, std::vector<std::string>> & topic_names_and_types);
+    const std::map<std::string, std::vector<std::string>> & all_topic_names_and_types);
 
 protected:
   /// \brief Check if the topic is selected by include/exclude lists or regexes
@@ -135,6 +138,9 @@ private:
   /// The action name in record_options.exclude_action will be converted into the action interface
   /// name and saved in this set
   std::unordered_set<std::string> exclude_action_interface_names_;
+
+  /// List of static topics and services to always include
+  std::vector<std::string> static_topics_and_services_;
 };
 
 }  // namespace rosbag2_transport

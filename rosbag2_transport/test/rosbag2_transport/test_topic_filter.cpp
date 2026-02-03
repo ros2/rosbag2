@@ -872,3 +872,143 @@ TEST_F(TestTopicFilter, take_topic_uses_cache) {
   find_in_selected_topics_cache_it->second = false;
   EXPECT_FALSE(filter.take_topic(topic_name, {topic_type}));
 }
+
+// Minimal stub for NodeGraphInterface to simulate unpublished topics
+class UnpublishedNodeGraphStub : public rclcpp::node_interfaces::NodeGraphInterface
+{
+public:
+  // Return empty publishers for any topic to mark it unpublished
+  std::vector<rclcpp::TopicEndpointInfo> get_publishers_info_by_topic(
+    const std::string & /*topic_name*/,
+    bool /*no_mangle*/ = false) const override
+  {
+    return {};
+  }
+
+  // Return empty subscriptions; not relevant for this test
+  std::vector<rclcpp::TopicEndpointInfo> get_subscriptions_info_by_topic(
+    const std::string & /*topic_name*/,
+    bool /*no_mangle*/ = false) const override
+  {
+    return {};
+  }
+
+  // Topics/services names and types
+  std::map<std::string, std::vector<std::string>> get_topic_names_and_types(
+    bool /*no_demangle*/ = false) const override
+  {
+    return {};
+  }
+
+  std::map<std::string, std::vector<std::string>> get_service_names_and_types() const override
+  {
+    return {};
+  }
+
+  std::map<std::string, std::vector<std::string>> get_service_names_and_types_by_node(
+    const std::string & /*node_name*/,
+    const std::string & /*namespace_*/) const override
+  {
+    return {};
+  }
+
+  std::map<std::string, std::vector<std::string>> get_client_names_and_types_by_node(
+    const std::string & /*node_name*/,
+    const std::string & /*namespace_*/) const override
+  {
+    return {};
+  }
+
+  std::map<std::string, std::vector<std::string>> get_publisher_names_and_types_by_node(
+    const std::string & /*node_name*/,
+    const std::string & /*namespace_*/,
+    bool /*no_demangle*/ = false) const override
+  {
+    return {};
+  }
+
+  std::map<std::string, std::vector<std::string>> get_subscriber_names_and_types_by_node(
+    const std::string & /*node_name*/,
+    const std::string & /*namespace_*/,
+    bool /*no_demangle*/ = false) const override
+  {
+    return {};
+  }
+
+  // Node names related APIs
+  std::vector<std::string> get_node_names() const override {return {};}
+
+  std::vector<std::tuple<std::string, std::string, std::string>>
+  get_node_names_with_enclaves() const override {return {};}
+
+  std::vector<std::pair<std::string, std::string>>
+  get_node_names_and_namespaces() const override {return {};}
+
+  // Counts
+  size_t count_publishers(const std::string & /*topic_name*/) const override {return 0;}
+  size_t count_subscribers(const std::string & /*topic_name*/) const override {return 0;}
+  size_t count_clients(const std::string & /*service_name*/) const override {return 0;}
+  size_t count_services(const std::string & /*service_name*/) const override {return 0;}
+
+  // Graph condition/event APIs
+  const rcl_guard_condition_t * get_graph_guard_condition() const override {return nullptr;}
+  void notify_graph_change() override {}
+  void notify_shutdown() override {}
+  rclcpp::Event::SharedPtr get_graph_event() override {return nullptr;}
+  void wait_for_graph_change(
+    rclcpp::Event::SharedPtr /*event*/,
+    std::chrono::nanoseconds /*timeout*/) override {}
+  size_t count_graph_users() const override {return 0;}
+
+  // Parameter/service endpoint info APIs
+  std::vector<rclcpp::ServiceEndpointInfo> get_clients_info_by_service(
+    const std::string & /*service_name*/, bool /*no_mangle*/ = false) const override
+  {
+    return {};
+  }
+
+  std::vector<rclcpp::ServiceEndpointInfo> get_servers_info_by_service(
+    const std::string & /*service_name*/, bool /*no_mangle*/ = false) const override
+  {
+    return {};
+  }
+};
+
+TEST_F(TestTopicFilter, static_topics_are_not_filtered_by_unpublished_option)
+{
+  // Prepare topics: one static and one regular
+  std::map<std::string, std::vector<std::string>> topics_and_types {
+    {"/static_topic1", {"test_msgs/BasicTypes"}},
+    {"/static_topic2", {"test_msgs/BasicTypes"}},
+    {"/regular_topic1", {"test_msgs/BasicTypes"}},
+    {"/regular_topic2", {"test_msgs/BasicTypes"}},
+  };
+
+  rosbag2_transport::RecordOptions record_options;
+  record_options.topics = {"/static_topic", "/regular_topic"};
+  record_options.include_unpublished_topics = false;  // filter unpublished topics
+
+  // Provide static topic list; "/static_topic" should bypass unpublished filtering
+  std::vector<std::pair<std::string, std::string>> static_topics_and_types = {
+    {"/static_topic1", "test_msgs/BasicTypes"},
+    {"/static_topic2", "test_msgs/BasicTypes"},
+  };
+
+  auto node_graph = std::make_shared<UnpublishedNodeGraphStub>();
+
+  rosbag2_transport::TopicFilter filter{
+    record_options,
+    node_graph,
+    true,    // allow unknown types to avoid type filtering noise
+    static_topics_and_types
+  };
+
+  auto filtered_topics = filter.filter_topics(topics_and_types);
+
+  // Expect static topic remains, regular unpublished topics are filtered out
+  ASSERT_EQ(2u, filtered_topics.size());
+  EXPECT_TRUE(filtered_topics.find("/static_topic1") != filtered_topics.end());
+  EXPECT_TRUE(filtered_topics.find("/static_topic2") != filtered_topics.end());
+  EXPECT_FALSE(filtered_topics.find("/regular_topic1") != filtered_topics.end());
+  EXPECT_FALSE(filtered_topics.find("/regular_topic2") != filtered_topics.end());
+}

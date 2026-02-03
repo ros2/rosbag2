@@ -169,6 +169,57 @@ TEST_P(RecordFixture, record_end_to_end_test) {
   EXPECT_THAT(unrecorded_topic_messages, IsEmpty());
 }
 
+TEST_P(RecordFixture, record_end_to_end_test_with_static_topics_only) {
+  namespace fs = std::filesystem;
+  auto message = get_messages_strings()[0];
+  message->string_value = "test";
+  const size_t expected_test_messages = 3;
+  rclcpp::QoS qos = rclcpp::SystemDefaultsQoS().keep_last(expected_test_messages).reliable();
+  auto unrecorded_message = get_messages_strings()[0];
+  unrecorded_message->string_value = "unrecorded_content";
+
+  rosbag2_test_common::PublicationManager pub_manager;
+  pub_manager.setup_publisher("/test_topic1", message, expected_test_messages, qos);
+  pub_manager.setup_publisher("/unrecorded_topic", unrecorded_message, expected_test_messages, qos);
+
+  // _SRC_RESOURCES_DIR_PATH defined in CMakeLists.txt
+  auto const static_topics_uri =
+    fs::absolute(fs::path(_SRC_RESOURCES_DIR_PATH) / "static_topics_list.yaml").generic_string();
+
+  auto process_handle = start_execution(
+    get_base_record_command() + " --static-topics-path " + static_topics_uri);
+  auto cleanup_process_handle = rcpputils::make_scope_exit(
+    [process_handle]() {
+      stop_execution(process_handle);
+    });
+
+  ASSERT_TRUE(pub_manager.wait_for_matched("/test_topic1")) << "Expected find rosbag subscription";
+
+  wait_for_storage_file();
+
+  pub_manager.run_publishers();
+
+  stop_execution(process_handle);
+  cleanup_process_handle.cancel();
+
+  finalize_metadata_kludge();
+  wait_for_metadata();
+  auto test_topic_messages = get_messages_for_topic<test_msgs::msg::Strings>("/test_topic1");
+  EXPECT_THAT(test_topic_messages, SizeIs(expected_test_messages));
+
+  for (const auto & received_message : test_topic_messages) {
+    EXPECT_EQ(received_message->string_value, "test");
+  }
+
+  EXPECT_THAT(
+    get_serialization_format_for_topic("/test_topic1"),
+    Eq(rmw_get_serialization_format()));
+
+  auto unrecorded_topic_messages =
+    get_messages_for_topic<test_msgs::msg::Strings>("/unrecorded_topic");
+  EXPECT_THAT(unrecorded_topic_messages, IsEmpty());
+}
+
 TEST_P(RecordFixture, record_end_to_end_test_start_paused) {
   auto message = get_messages_strings()[0];
   message->string_value = "test";

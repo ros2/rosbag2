@@ -70,9 +70,23 @@ To record a set of predefined topics, one can specify them on the command line e
 $ ros2 bag record <topic1> <topic2> … <topicN>
 ```
 
-The specified topics don't necessarily have to be present at start time.
-The discovery function will automatically recognize if one of the specified topics appeared.
-In the same fashion, this auto discovery can be disabled with `--no-discovery`.
+Press `Ctrl+C` to stop the recording.
+
+The specified topics don't necessarily have to be present at the start time.
+The discovery function will automatically recognize if one of the specified topics appears.
+In the same fashion, this auto-discovery can be disabled with `--no-discovery`.\
+The topics can also be specified via a static topic list with the `--static-topics-path` option.
+Recorder will expect yaml file in the following format:
+
+```yaml
+static_topics_and_types_list:
+ - [/topic_name1, topic_type1]
+ - [/topic_name2, topic_type2]
+ - [/topic_name3, topic_type3]
+```
+
+For topics from the static topics list, subscriptions will be created even if they are not
+discoverable via the ROS graph and even if publishers do not yet exist on those topics.
 
 If not further specified, `ros2 bag record` will create a new folder named to the current time stamp and stores all data within this folder.
 A user defined name can be given with `-o, --output`.
