@@ -25,36 +25,53 @@
 #include "rosbag2_cpp/reader.hpp"
 #include "rosbag2_cpp/writer.hpp"
 #include "rosbag2_transport/reader_writer_factory.hpp"
-
-#include "logging.hpp"
 #include "rosbag2_transport/topic_filter.hpp"
 
 namespace
 {
+
+/// \brief Type for a pair of rosbag2_cpp::Reader and rosbag2_storage::StorageOptions.
+using reader_storage_options_pair_t = \
+  std::pair<std::unique_ptr<rosbag2_cpp::Reader>, const rosbag2_storage::StorageOptions>;
+
+/// \brief Type for a pair of rosbag2_cpp::Writer and rosbag2_transport::RecordOptions.
+using writer_record_options_pair_t = \
+  std::pair<std::unique_ptr<rosbag2_cpp::Writer>, rosbag2_transport::RecordOptions>;
 
 /// Find the next chronological message from all opened input bags.
 /// Updates the next_messages queue as necessary.
 /// next_messages is needed because Reader has no "peek" interface, we cannot put a message back.
 /// Returns nullptr when all input bags have been fully read.
 std::shared_ptr<rosbag2_storage::SerializedBagMessage> get_next(
-  const std::vector<std::unique_ptr<rosbag2_cpp::Reader>> & input_bags,
+  std::vector<reader_storage_options_pair_t> & input_bags,
   std::vector<std::shared_ptr<rosbag2_storage::SerializedBagMessage>> & next_messages)
 {
-  // find message with lowest timestamp
+  // Find message with the lowest timestamp
   std::shared_ptr<rosbag2_storage::SerializedBagMessage> earliest_msg = nullptr;
   size_t earliest_msg_index = -1;
   for (size_t i = 0; i < next_messages.size(); i++) {
+    auto & [reader, storage_options] = input_bags[i];
+    auto & next_msg = next_messages[i];
     // refill queue if bag not empty
-    if (next_messages[i] == nullptr && input_bags[i]->has_next()) {
-      next_messages[i] = input_bags[i]->read_next();
+    if (next_msg == nullptr && reader && reader->has_next()) {
+      next_msg = reader->read_next();
+      // If we just read a message at or past the end time, close and release reader
+      if (storage_options.end_time_ns > 0 && next_msg != nullptr &&
+        // Use strict greater than to correctly handle a case when multiple messages have the same
+        // timestamp equal to end_time_ns. That is possible with the sim time.
+        next_msg->recv_timestamp > storage_options.end_time_ns)
+      {
+        // Use reset to close and release the reader, since has_next() from the closed reader
+        // throwing exception.
+        reader.reset();
+        next_msg = nullptr;  // Clear out the just-read message that is past the end time
+      }
     }
 
-    auto & msg = next_messages[i];
-    if (msg == nullptr) {
-      continue;
-    }
-    if (earliest_msg == nullptr || msg->recv_timestamp < earliest_msg->recv_timestamp) {
-      earliest_msg = msg;
+    if (next_msg == nullptr) {continue;}
+
+    if (earliest_msg == nullptr || next_msg->recv_timestamp < earliest_msg->recv_timestamp) {
+      earliest_msg = next_msg;
       earliest_msg_index = i;
     }
   }
@@ -74,10 +91,8 @@ std::shared_ptr<rosbag2_storage::SerializedBagMessage> get_next(
 /// so this may not outlive the output_bags Writers.
 std::unordered_map<std::string, std::vector<rosbag2_cpp::Writer *>>
 setup_topic_filtering(
-  const std::vector<std::unique_ptr<rosbag2_cpp::Reader>> & input_bags,
-  const std::vector<
-    std::pair<std::unique_ptr<rosbag2_cpp::Writer>, rosbag2_transport::RecordOptions>
-  > & output_bags)
+  const std::vector<reader_storage_options_pair_t> & input_bags,
+  const std::vector<writer_record_options_pair_t> & output_bags)
 {
   std::unordered_map<std::string, std::vector<rosbag2_cpp::Writer *>> filtered_outputs;
   std::map<std::string, std::vector<std::string>> input_topics;
@@ -87,7 +102,8 @@ setup_topic_filtering(
   std::unordered_map<std::string, rosbag2_storage::MessageDefinition> message_definitions_map;
 
   for (const auto & input_bag : input_bags) {
-    auto bag_topics_and_types = input_bag->get_all_topics_and_types();
+    const auto & reader = input_bag.first;
+    auto bag_topics_and_types = reader->get_all_topics_and_types();
     for (const auto & topic_metadata : bag_topics_and_types) {
       const std::string & topic_name = topic_metadata.name;
       input_topics.try_emplace(topic_name);
@@ -104,7 +120,7 @@ setup_topic_filtering(
     }
     // Fill message_definitions_map
     std::vector<rosbag2_storage::MessageDefinition> msg_definitions;
-    input_bag->get_all_message_definitions(msg_definitions);
+    reader->get_all_message_definitions(msg_definitions);
     for (const auto & msg_definition : msg_definitions) {
       message_definitions_map[msg_definition.topic_type] = msg_definition;
     }
@@ -151,10 +167,8 @@ setup_topic_filtering(
 }
 
 void perform_rewrite(
-  const std::vector<std::unique_ptr<rosbag2_cpp::Reader>> & input_bags,
-  const std::vector<
-    std::pair<std::unique_ptr<rosbag2_cpp::Writer>, rosbag2_transport::RecordOptions>
-  > & output_bags
+  std::vector<reader_storage_options_pair_t> & input_bags,
+  const std::vector<writer_record_options_pair_t> & output_bags
 )
 {
   if (input_bags.empty() || output_bags.empty()) {
@@ -168,9 +182,9 @@ void perform_rewrite(
 
   std::shared_ptr<rosbag2_storage::SerializedBagMessage> next_msg;
   while ((next_msg = get_next(input_bags, next_messages))) {
-    auto topic_writers = topic_outputs.find(next_msg->topic_name);
-    if (topic_writers != topic_outputs.end()) {
-      for (auto writer : topic_writers->second) {
+    auto iterator = topic_outputs.find(next_msg->topic_name);
+    if (iterator != topic_outputs.end()) {
+      for (const auto writer : iterator->second) {
         writer->write(next_msg);
       }
     }
@@ -188,15 +202,17 @@ void bag_rewrite(
   > & output_options
 )
 {
-  std::vector<std::unique_ptr<rosbag2_cpp::Reader>> input_bags;
-  std::vector<
-    std::pair<std::unique_ptr<rosbag2_cpp::Writer>, rosbag2_transport::RecordOptions>
-  > output_bags;
+  std::vector<reader_storage_options_pair_t> input_bags;
+  std::vector<writer_record_options_pair_t> output_bags;
 
   for (const auto & storage_options : input_options) {
     auto reader = ReaderWriterFactory::make_reader(storage_options);
     reader->open(storage_options);
-    input_bags.push_back(std::move(reader));
+    // Seek to start time if specified
+    if (storage_options.start_time_ns > 0) {
+      reader->seek(storage_options.start_time_ns);
+    }
+    input_bags.emplace_back(std::move(reader), storage_options);
   }
 
   for (auto & [storage_options, record_options] : output_options) {
@@ -209,7 +225,7 @@ void bag_rewrite(
     zero_cache_storage_options.max_cache_size = 0u;
     auto writer = ReaderWriterFactory::make_writer(record_options);
     writer->open(zero_cache_storage_options);
-    output_bags.push_back(std::make_pair(std::move(writer), record_options));
+    output_bags.emplace_back(std::move(writer), record_options);
   }
 
   perform_rewrite(input_bags, output_bags);
