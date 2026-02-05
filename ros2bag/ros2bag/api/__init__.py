@@ -218,7 +218,7 @@ def add_multi_bag_input_arg(parser: ArgumentParser, required: bool = False) -> N
 
 
 def input_bag_arg_to_storage_options(
-    input_arg: List[List[str]],
+    input_arg: Optional[List[List[str]]] = None,
     storage_config_file: Optional[str] = None,
 ) -> List[rosbag2_py.StorageOptions]:
     """
@@ -232,6 +232,8 @@ def input_bag_arg_to_storage_options(
     :param input_arg: the values of the input argument
     :param storage_config_file: the storage config file, if any
     """
+    if input_arg is None:
+        return []
     if storage_config_file and not os.path.exists(storage_config_file):
         raise ValueError(f"File '{storage_config_file}' does not exist!")
     storage_id_options = rosbag2_py.get_registered_readers()

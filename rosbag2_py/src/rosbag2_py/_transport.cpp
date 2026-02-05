@@ -15,6 +15,7 @@
 #include <algorithm>
 #include <csignal>
 #include <chrono>
+#include <filesystem>
 #include <memory>
 #include <string>
 #include <unordered_map>
@@ -825,11 +826,58 @@ rosbag2_transport::RecordOptions bag_rewrite_default_record_options()
   return options;
 }
 
-// Simple wrapper to read the output config YAML into structs
+/// \brief Simple wrapper to read the input and output config YAML files into structs
+/// and call rosbag2_transport::bag_rewrite().
 void bag_rewrite(
   const std::vector<rosbag2_storage::StorageOptions> & input_options,
-  std::string output_config_file)
+  const std::string & input_config_file,
+  const std::string & output_config_file)
 {
+  // Validate that only one input source is provided
+  bool has_input_options = !input_options.empty();
+  bool has_input_config = !input_config_file.empty();
+
+  if (!has_input_options && !has_input_config) {
+    throw std::runtime_error(
+      "Either input_options vector or input_config_file must be provided.");
+  }
+
+  if (has_input_options && has_input_config) {
+    throw std::runtime_error("Exactly one input source must be provided: provide either"
+                             " input_options or input_config_file, but not both.");
+  }
+
+  std::vector<rosbag2_storage::StorageOptions> effective_input_options = input_options;
+
+  // Parse input options from YAML if provided
+  if (has_input_config) {
+    effective_input_options.clear();
+    YAML::Node input_yaml = YAML::LoadFile(input_config_file);
+    auto input_nodes = input_yaml["input_bags"];
+    if (!input_nodes) {
+      throw std::runtime_error("Input bag config YAML file must have top-level key 'input_bags'");
+    }
+    if (!input_nodes.IsSequence()) {
+      throw std::runtime_error(
+        "Top-level key 'input_bags' must contain a list of StorageOptions dicts.");
+    }
+
+    for (const auto & bag_node : input_nodes) {
+      rosbag2_storage::StorageOptions storage_options{};
+      YAML::convert<rosbag2_storage::StorageOptions>::decode(bag_node, storage_options);
+
+      if (storage_options.uri.empty()) {
+        throw std::runtime_error("Input bag StorageOptions must specify a non-empty 'uri'.");
+      }
+      if (!std::filesystem::exists(storage_options.uri)) {
+        throw std::runtime_error("Bag path '" + storage_options.uri + "' does not exist!");
+      }
+
+      effective_input_options.push_back(storage_options);
+    }
+  }
+
+  // Parse output options from YAML
   YAML::Node yaml_file = YAML::LoadFile(output_config_file);
   auto bag_nodes = yaml_file["output_bags"];
   if (!bag_nodes) {
@@ -850,7 +898,7 @@ void bag_rewrite(
     YAML::convert<rosbag2_transport::RecordOptions>::decode(bag_node, record_options);
     output_options.push_back(std::make_pair(storage_options, record_options));
   }
-  rosbag2_transport::bag_rewrite(input_options, output_options);
+  rosbag2_transport::bag_rewrite(effective_input_options, output_options);
 }
 
 }  // namespace rosbag2_py
@@ -1319,5 +1367,33 @@ PYBIND11_MODULE(_transport, m) {
   m.def(
     "bag_rewrite",
     &rosbag2_py::bag_rewrite,
-    "Given one or more input bags, output one or more bags with new settings.");
+    py::arg("input_options"),
+    py::arg("input_config_file"),
+    py::arg("output_config_file"),
+    R"pbdoc(
+      Rewrite one or more input bags into one or more output bags according to provided settings.
+
+      Exactly one input source must be provided:
+        \- Either `input_options`: a list of StorageOptions describing input bags.
+        \- Or `input_config_file`: path to a YAML config file containing `input_bags` entries.
+
+      The `output_config_file` must be a YAML config with an `output_bags` list, where each entry
+      may contain StorageOptions and RecordOptions fields used to configure the output bags.
+
+      Args:
+        input_options (List[StorageOptions], optional):
+          In\-memory input bag configurations. Default is an empty list.
+        input_config_file (str, optional):
+          Path to a YAML config file that defines `input_bags`. Default is empty.
+        output_config_file (str):
+          Path to a YAML config file that defines `output_bags` with StorageOptions and
+          RecordOptions.
+
+      Raises:
+        RuntimeError:
+          \- If neither or both input sources are provided.
+          \- If required YAML keys are missing or misformatted.
+          \- If any input bag URI does not exist.
+    )pbdoc"
+  );
 }

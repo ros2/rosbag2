@@ -363,44 +363,69 @@ Topic information: Topic: /chatter | Type: std_msgs/String | Count: 9 | Serializ
 ### Converting bags (merge, split, etc.) <a id="convert"></a>
 
 Rosbag2 provides a tool `ros2 bag convert` (or, `rosbag2_transport::bag_rewrite` in the C++ API).
-This allows the user to take one or more input bags, and write them out to one or more output bags with new settings.
+This allows the user to take one or more input bags, and write them out to one or more output
+bags with new settings.
 This flexible feature enables the following features:
 * Merge (multiple input bags, one output bag)
 * Split top-level bags (one input bag, multiple output bags)
-* Split internal files (by time or size - one input bag with fewer internal files, one output bag with more, smaller, internal files)
+* Split internal files (by time or size - one input bag with fewer internal files, one output bag
+  with more, smaller, internal files)
 * Compress/Decompress (output bag(s) with different compression settings than the input(s))
 * Serialization format conversion
 * ... and more!
 
 Here is an example command:
 
-```
-ros2 bag convert --input /path/to/bag1 --input /path/to/bag2 storage_id --output-options output_options.yaml
+```shell dollar
+ros2 bag convert --input /path/to/bag1 --input /path/to/bag2 storage_id \
+  --output-options output_options.yaml
 ```
 
 The `--input` argument may be specified any number of times, and takes 1 or 2 values.
 The first value is the URI of the input bag.
 If a second value is supplied, it specifies the storage implementation of the bag.
-If no storage implementation is specified, Rosbag2 will try to determine it automatically from the bag.
+If no storage implementation is specified, Rosbag2 will try to determine it automatically from
+the bag.
 
-The `--output-options` argument must point to the URI of a YAML file specifying the full recording configuration for each bag to output (`StorageOptions` + `RecordOptions`).
+Alternatively, you can provide input bags via a YAML configuration file using `--input-options`:
+
+```shell dollar
+ros2 bag convert --input-options input_options.yaml --output-options output_options.yaml
+```
+
+The input options file must contain a top-level key `input_bags`, which is a list of
+StorageOptions objects. Each entry must specify at least `uri`, and the file or directory must
+exist.
+
+Example `input_options.yaml`:
+
+```yaml
+input_bags:
+- uri: /path/to/bag_a
+  storage_id: sqlite3
+- uri: /path/to/bag_b
+  storage_id: mcap
+```
+
+**Note:** Either `--input` or `--input-options` must be provided, but not both.
+
+The `--output-options` argument must point to the URI of a YAML file specifying the full recording
+configuration for each bag to output (`StorageOptions` + `RecordOptions`).
 This file must contain a top-level key `output_bags`, which contains a list of these objects.
 
-The only required value in the output bags is `uri` and `storage_id`. All other values are options (however, if no topic selection is specified, this output bag will be empty!).
+The only required value in the output bags is `uri` and `storage_id`. All other values are
+optional (however, if no topic selection is specified, this output bag will be empty!).
 
 This example notes all fields that can have an effect, with a comment on the required ones.
 
-```
+```yaml
 output_bags:
 - uri: /output/bag1  # required
   storage_id: ""  # will use the default storage plugin, if unspecified
   max_bagfile_size: 0
   max_bagfile_duration: 0
   storage_preset_profile: ""
-  storage_config_uri: ""
-  # optional filter for msg time t [nsec since epoch]:  start_time_ns <= t <= end_time_ns
-  # start_time_ns: 1744227144744197147
-  # end_time_ns: 1744227145734665546
+  storage_config_uri: ""  
   all_topics: false
   topics: []
   topic_types: []
@@ -462,6 +487,32 @@ output_bags:
   compression_mode: file
   compression_format: zstd
 ```
+
+Example cutting a time fragment from a bag:
+
+```
+$ ros2 bag convert --input-options input.yaml --output-options output.yaml
+
+# input.yaml - extract only messages between specific timestamps
+input_bags:
+- uri: /path/to/input_bag
+  storage_id: mcap
+  start_time_ns: 1744227144744197147
+  end_time_ns: 1744227145734665546
+
+# output.yaml
+output_bags:
+- uri: /path/to/fragment_bag
+  storage_id: mcap
+  all_topics: true
+  all_services: true
+```
+
+Note: The `start_time_ns` and `end_time_ns` filter messages based on their timestamps (nanoseconds
+since epoch). Only messages with timestamp `t` where `start_time_ns <= t <= end_time_ns` will be
+included. Note that these timestamps refer to the message's receive timestamps, and it will be more
+efficient to use the `start_time_ns` and `end_time_ns` options on the input bag rather than on the
+output bag.
 
 ### Overriding QoS Profiles
 
