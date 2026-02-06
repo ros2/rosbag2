@@ -376,7 +376,7 @@ This flexible feature enables the following features:
 
 Here is an example command:
 
-```shell dollar
+```bash
 ros2 bag convert --input /path/to/bag1 --input /path/to/bag2 storage_id \
   --output-options output_options.yaml
 ```
@@ -389,7 +389,7 @@ the bag.
 
 Alternatively, you can provide input bags via a YAML configuration file using `--input-options`:
 
-```shell dollar
+```bash
 ros2 bag convert --input-options input_options.yaml --output-options output_options.yaml
 ```
 

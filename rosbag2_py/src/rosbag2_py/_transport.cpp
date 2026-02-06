@@ -1374,15 +1374,15 @@ PYBIND11_MODULE(_transport, m) {
       Rewrite one or more input bags into one or more output bags according to provided settings.
 
       Exactly one input source must be provided:
-        \- Either `input_options`: a list of StorageOptions describing input bags.
-        \- Or `input_config_file`: path to a YAML config file containing `input_bags` entries.
+        - Either `input_options`: a list of StorageOptions describing input bags.
+        - Or `input_config_file`: path to a YAML config file containing `input_bags` entries.
 
       The `output_config_file` must be a YAML config with an `output_bags` list, where each entry
       may contain StorageOptions and RecordOptions fields used to configure the output bags.
 
       Args:
         input_options (List[StorageOptions], optional):
-          In\-memory input bag configurations. Default is an empty list.
+          In-memory input bag configurations. Default is an empty list.
         input_config_file (str, optional):
           Path to a YAML config file that defines `input_bags`. Default is empty.
         output_config_file (str):
@@ -1391,9 +1391,9 @@ PYBIND11_MODULE(_transport, m) {
 
       Raises:
         RuntimeError:
-          \- If neither or both input sources are provided.
-          \- If required YAML keys are missing or misformatted.
-          \- If any input bag URI does not exist.
+          - If neither or both input sources are provided.
+          - If required YAML keys are missing or misformatted.
+          - If any input bag URI does not exist.
     )pbdoc"
   );
 }
