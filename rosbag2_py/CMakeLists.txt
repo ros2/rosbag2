@@ -115,6 +115,7 @@ pybind11_add_module(_reindexer
   src/rosbag2_py/_reindexer.cpp
 )
 target_link_libraries(_reindexer PUBLIC
+  rosbag2_compression::rosbag2_compression
   rosbag2_cpp::rosbag2_cpp
   rosbag2_storage::rosbag2_storage
 )

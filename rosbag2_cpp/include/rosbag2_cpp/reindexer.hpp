@@ -35,6 +35,12 @@
 #include "rosbag2_cpp/serialization_format_converter_factory_interface.hpp"
 #include "rosbag2_cpp/visibility_control.hpp"
 
+// Forward declaration due to  circular dependency
+namespace rosbag2_compression
+{
+class CompressionFactory;
+}
+
 #include "rosbag2_storage/metadata_io.hpp"
 #include "rosbag2_storage/storage_factory.hpp"
 #include "rosbag2_storage/storage_factory_interface.hpp"
@@ -72,9 +78,10 @@ public:
     std::unique_ptr<rosbag2_storage::StorageFactoryInterface> storage_factory =
     std::make_unique<rosbag2_storage::StorageFactory>(),
     std::unique_ptr<rosbag2_storage::MetadataIo> metadata_io =
-    std::make_unique<rosbag2_storage::MetadataIo>());
+    std::make_unique<rosbag2_storage::MetadataIo>(),
+    std::unique_ptr<rosbag2_compression::CompressionFactory> compression_factory = nullptr);
 
-  virtual ~Reindexer() = default;
+  virtual ~Reindexer();
 
   /// Use the supplied storage options to reindex a bag defined by the storage options URI.
   /*
@@ -92,6 +99,7 @@ private:
   std::string regex_bag_pattern_;
   std::filesystem::path base_folder_;   // The folder that the bag files are in
   std::shared_ptr<SerializationFormatConverterFactoryInterface> converter_factory_{};
+  std::unique_ptr<rosbag2_compression::CompressionFactory> compression_factory_{};
   void get_bag_files(
     const std::filesystem::path & base_folder,
     std::vector<std::filesystem::path> & output);
