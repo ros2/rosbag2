@@ -266,7 +266,7 @@ TEST_P(TestRewrite, test_cut_single_topic_with_start_and_end_time) {
   ASSERT_THAT(timestamps, SizeIs(Ge(4u)));
 
   // Choose a mid-window based on observed timestamps
-  // Window: [input_start_time, input_end_time),
+  // Window: [input_start_time, input_end_time],
   // expecting messages with recv_timestamp >= input_start_time and <= input_end_time
   auto input_start_time = timestamps[timestamps.size() / 4];
   auto input_end_time = timestamps[(timestamps.size() * 3) / 4];
