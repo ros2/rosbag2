@@ -35,27 +35,39 @@ namespace rosbag2_cpp
 {
 namespace cache
 {
-/**
-* This class implements a single buffer for message cache. The buffer is byte size
-* limited and won't accept any messages when current buffer byte size is already
-* over the limit set by max_cache_size. This means that buffer can at times use
-* more memory than max_cache_size, but never by more than a single message. When
-* the buffer is full, the next incoming message is dropped.
-*
-* Note that it could be reused as a template with any class that has
-* ->byte_size() - like interface
-*/
+
+/// \brief This class implements a single buffer for message cache.
+/// \details The buffer is limited by total byte size of the stored messages or by total duration
+/// of the stored messages. When the buffer is full, the next incoming message is dropped.
+/// \note When both max_cache_size and max_cache_duration are set, the buffer will drop
+/// messages when either of the limits is exceeded.
+/// \note If max_cache_size is set to zero, the buffer will be only bounded by max_cache_duration.
+/// \note If max_cache_duration is set to zero, the buffer will be only bounded by
+/// max_cache_size.
+/// \note if max_cache_size more than zero, but an individual message exceeds the buffer size,
+/// the message still will be added to the buffer. This means that buffer can at times use more
+/// memory than max_cache_size, but never by more than a single message. When the buffer is full,
+/// the next incoming message is dropped.
 class ROSBAG2_CPP_PUBLIC MessageCacheBuffer
   : public CacheBufferInterface
 {
 public:
-  explicit MessageCacheBuffer(size_t max_cache_size);
+  /// \brief Parametrized constructor
+  /// \param max_cache_size Maximum amount of memory which could be occupied by the messages stored
+  /// in the buffer. Note. If max_cache_size is zero, the buffer will be only bounded by the
+  /// max_cache_duration.
+  /// \param max_cache_duration Maximum duration in seconds of message sequence allowed to be
+  /// stored in the buffer. Note. If max_cache_duration is zero, the buffer will be only bounded by
+  /// the max_cache_size.
+  /// \throws std::invalid_argument if both max_cache_size and max_cache_duration are zero.
+  explicit MessageCacheBuffer(size_t max_cache_size, uint32_t max_cache_duration = 0);
 
-  /**
-  * If buffer size got some space left, we push message regardless of its size, but if
-  * this results in exceeding buffer size, we mark buffer to drop all new incoming messages.
-  * This flag is cleared when buffers are swapped.
-  */
+  /// \brief Pushes a new message into the buffer
+  /// \details If buffer size got some space left, we push message regardless of its size, but if
+  /// this results in exceeding buffer size or duration limits, we mark buffer to drop all new
+  /// incoming messages. This flag is cleared when buffers are swapped.
+  /// \param msg Shared pointer to the rosbag2_storage::SerializedBagMessage to add to the buffer.
+  /// \return True if message was successfully pushed, otherwise false.
   bool push(CacheBufferInterface::buffer_element_t msg) override;
 
   /// Clear buffer
@@ -69,10 +81,18 @@ public:
 
 private:
   std::vector<CacheBufferInterface::buffer_element_t> buffer_;
+
+  /// Current size in bytes of messages stored in the buffer
   size_t buffer_bytes_size_ {0u};
+
+  /// Maximum size in bytes of messages allowed to be stored in the buffer.
   const size_t max_bytes_size_;
 
-  /// set when buffer is full and should drop messages instead of inserting them
+  /// Maximum duration in nanoseconds of message sequence allowed to be stored in the buffer
+  /// Note. If max_cache_duration_ is zero, the buffer will be only bounded by the max_bytes_size_.
+  const uint64_t max_cache_duration_ns_;
+
+  /// Set when buffer is full and should drop messages instead of inserting them
   std::atomic_bool drop_messages_ {false};
 };
 

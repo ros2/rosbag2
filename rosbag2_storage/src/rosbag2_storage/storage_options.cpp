@@ -30,6 +30,7 @@ Node convert<rosbag2_storage::StorageOptions>::encode(
   node["max_bagfile_duration"] = storage_options.max_bagfile_duration;
   node["max_bag_files"] = storage_options.max_bag_files;
   node["max_cache_size"] = storage_options.max_cache_size;
+  node["max_cache_duration"] = storage_options.max_cache_duration;
   node["storage_preset_profile"] = storage_options.storage_preset_profile;
   node["storage_config_uri"] = storage_options.storage_config_uri;
   node["snapshot_mode"] = storage_options.snapshot_mode;
@@ -48,6 +49,7 @@ bool convert<rosbag2_storage::StorageOptions>::decode(
   optional_assign<uint64_t>(node, "max_bagfile_duration", storage_options.max_bagfile_duration);
   optional_assign<uint64_t>(node, "max_bag_files", storage_options.max_bag_files);
   optional_assign<uint64_t>(node, "max_cache_size", storage_options.max_cache_size);
+  optional_assign<uint32_t>(node, "max_cache_duration", storage_options.max_cache_duration);
   optional_assign<std::string>(
     node, "storage_preset_profile", storage_options.storage_preset_profile);
   optional_assign<std::string>(node, "storage_config_uri", storage_options.storage_config_uri);

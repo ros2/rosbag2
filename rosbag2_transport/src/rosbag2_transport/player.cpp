@@ -354,8 +354,29 @@ private:
   void publish_clock_update();
   void publish_clock_update(const rclcpp::Time & time);
 
+  /// \brief Helper wrapper function to set a service response as success.
+  template<typename ResponseT>
+  void set_service_success(
+    ResponseT & response,
+    int32_t return_code = kServiceReturnCodeSuccess) const
+  {
+    response->return_code = return_code;
+    response->error_string.clear();
+  }
+
+  /// \brief Helper wrapper function to set a service response as error.
+  template<typename ResponseT>
+  void set_service_error(
+    ResponseT & response, const std::string & error_string,
+    int32_t error_code = kServiceReturnCodeError) const
+  {
+    response->return_code = error_code;
+    response->error_string = error_string;
+  }
+
   Player * owner_;
   rosbag2_transport::PlayOptions play_options_;
+  static constexpr const char * kDefaultReadSplitTopicName = "events/read_split";
   rcutils_time_point_value_t play_until_timestamp_ = -1;
   LockedPriorityQueue<rosbag2_storage::SerializedBagMessageSharedPtr> message_queue_;
   using BagMessageComparator =
@@ -406,6 +427,9 @@ private:
   std::shared_ptr<PlayerServiceClientManager> player_service_client_manager_;
 
   std::unique_ptr<PlayerProgressBar> progress_bar_;
+
+  static constexpr int32_t kServiceReturnCodeSuccess = 0;
+  static constexpr int32_t kServiceReturnCodeError = 1;
 
   static BagMessageComparator get_bag_message_comparator(const MessageOrder & order);
 
@@ -1633,9 +1657,21 @@ void PlayerImpl::prepare_publishers()
   }
 
   // Create a publisher and callback for when encountering a split in the input
+  rosbag2_storage::Rosbag2QoS split_event_qos = rosbag2_storage::Rosbag2QoS::EventQoS();
+  auto read_split_topic_name = rclcpp::expand_topic_or_service_name(
+    kDefaultReadSplitTopicName, owner_->get_name(), owner_->get_namespace(), false);
+  if (play_options_.topic_qos_profile_overrides.find(read_split_topic_name) !=
+    play_options_.topic_qos_profile_overrides.end())
+  {
+    const auto & override_qos = play_options_.topic_qos_profile_overrides.at(read_split_topic_name);
+    split_event_qos = rosbag2_storage::Rosbag2QoS(override_qos);
+    RCLCPP_DEBUG(owner_->get_logger(),
+      "Using overridden QoS profile: \n%s\nfor '%s' topic.",
+      split_event_qos.to_string().c_str(), read_split_topic_name.c_str());
+  }
+
   split_event_pub_ = owner_->create_publisher<rosbag2_interfaces::msg::ReadSplitEvent>(
-    "events/read_split",
-    1);
+    kDefaultReadSplitTopicName, split_event_qos);
   rosbag2_cpp::bag_events::ReaderEventCallbacks callbacks;
   callbacks.read_split_callback =
     [this](rosbag2_cpp::bag_events::BagSplitInfo & info) {
@@ -2121,10 +2157,22 @@ void PlayerImpl::create_control_services()
   srv_stop_ = owner_->create_service<rosbag2_interfaces::srv::Stop>(
     "~/stop",
     [this](
-      rosbag2_interfaces::srv::Stop::Request::ConstSharedPtr,
-      rosbag2_interfaces::srv::Stop::Response::SharedPtr)
+      rosbag2_interfaces::srv::Stop::Request::ConstSharedPtr/* request */,
+      rosbag2_interfaces::srv::Stop::Response::SharedPtr response)
     {
-      owner_->stop();
+      if (!is_in_playback_) {
+        RCLCPP_WARN(owner_->get_logger(),
+           "Received Stop request while not in playback. Ignoring request.");
+        set_service_error(response, "Player is already stopped.");
+      } else {
+        try {
+          owner_->stop();
+          set_service_success(response);
+        } catch (const std::exception & e) {
+          RCLCPP_ERROR(owner_->get_logger(), "Error during Stop request: %s", e.what());
+          set_service_error(response, e.what());
+        }
+      }
     });
 }
 

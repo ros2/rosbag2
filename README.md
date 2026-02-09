@@ -70,9 +70,23 @@ To record a set of predefined topics, one can specify them on the command line e
 $ ros2 bag record <topic1> <topic2> … <topicN>
 ```
 
-The specified topics don't necessarily have to be present at start time.
-The discovery function will automatically recognize if one of the specified topics appeared.
-In the same fashion, this auto discovery can be disabled with `--no-discovery`.
+Press `Ctrl+C` to stop the recording.
+
+The specified topics don't necessarily have to be present at the start time.
+The discovery function will automatically recognize if one of the specified topics appears.
+In the same fashion, this auto-discovery can be disabled with `--no-discovery`.\
+The topics can also be specified via a static topic list with the `--static-topics-path` option.
+Recorder will expect yaml file in the following format:
+
+```yaml
+static_topics_and_types_list:
+ - [/topic_name1, topic_type1]
+ - [/topic_name2, topic_type2]
+ - [/topic_name3, topic_type3]
+```
+
+For topics from the static topics list, subscriptions will be created even if they are not
+discoverable via the ROS graph and even if publishers do not yet exist on those topics.
 
 If not further specified, `ros2 bag record` will create a new folder named to the current time stamp and stores all data within this folder.
 A user defined name can be given with `-o, --output`.
@@ -131,13 +145,83 @@ The Rosbag2 recorder provides the following services for remote control, which c
   * Triggers a split to a new file, even if none of the configured split criteria (such as `--max-bag-size` or `--max-bag-duration`) have been met yet
 * `~/snapshot [rosbag2_interfaces/srv/Snapshot]`
   * enabled if `--snapshot-mode` is specified. Takes no arguments, triggers a snapshot.
+* `~/record [rosbag2_interfaces/srv/Record]`
+  * Start recording. Optionally takes a `uri` argument to specify the output location. If the recorder is already recording, the request will be rejected.
+* `~/stop [rosbag2_interfaces/srv/Stop]`
+  * Stop the recorder. This will finalize the current bag file and write metadata. Recording can be restarted with the `~/record` service.
+* `~/is_discovery_running [rosbag2_interfaces/srv/IsDiscoveryRunning]`
+  * Returns whether topic discovery is currently running.
+* `~/start_discovery [rosbag2_interfaces/srv/StartDiscovery]`
+  * Start topic discovery to automatically find and subscribe to new topics. Has no effect if discovery is already running or if the recorder is not in recording state.
+* `~/stop_discovery [rosbag2_interfaces/srv/StopDiscovery]`
+  * Stop topic discovery. Existing subscriptions will be maintained, but new topics will not be discovered automatically.
+
+These services enable full remote control of the recording process, allowing you to start and stop recording sessions, manage topic discovery, and control the recording state without restarting the recorder node.
 
 #### Snapshot mode
 
-The Recorder provides a "snapshot mode", enabled via `--snapshot-mode` or `StorageOptions.snapshot_mode`, which does not write messages to disk as they come in, but instead keeps an in-memory circular buffer of size `--max-cache-size`.
-This entire buffer can be dumped to disk on request, saving data only in specified circumstances such as a detected error condition or point of interest, capturing the "last N bytes" of incoming data, therefore making sure that you can trigger snapshot after the fact of the event.
+The Recorder provides a "snapshot mode", enabled via `--snapshot-mode` or
+`StorageOptions.snapshot_mode`. It does not write messages to disk as they arrive, but keeps an
+in-memory circular buffer bounded by `--max-cache-size` (bytes) and optionally
+`--max-cache-duration` (seconds). The entire buffer can be dumped to disk on request, saving data
+only in specified circumstances (e.g., a detected error condition or point of interest). This
+captures the "last N bytes" or "last T seconds" of incoming data, allowing you to trigger a
+snapshot after the event.
 
-The snapshot is taken by calling the `~/snapshot` service on the recorder, described previously.
+The snapshot is taken by calling the `~/snapshot` service on the recorder, described previously.\
+Triggering a snapshot via CLI:
+
+```bash
+$ ros2 service call /rosbag2_recorder/snapshot rosbag2_interfaces/srv/Snapshot
+```
+
+#### Time-based snapshot and time-limited buffering with --max-cache-duration
+
+Rosbag2 supports generic time-limited buffering for both regular recording and snapshot mode:
+
+- `--max-cache-duration <seconds>`: Maximum cache duration window, in seconds.
+  - Default: `0` — buffer is limited only by `--max-cache-size`.
+  - If `> 0`: buffer is limited by both time and size:
+    - Time bound: retains only the most recent messages within the duration window.
+    - Size bound: respects `--max-cache-size` (bytes).
+
+Configuring bounds options:
+- Time-only buffer: set `--max-cache-size` to `0` and `--max-cache-duration` to a positive value.
+- Size-only buffer: set `--max-cache-duration` to `0` and `--max-cache-size` to a positive value.
+- Time-and-size bounded buffer: set both `--max-cache-size` and `--max-cache-duration` to a 
+  positive values.
+- In snapshot mode, at least one bound must be enabled.
+
+Double-buffering notes:
+- The cache uses double buffering. In pessimistic cases, memory usage can reach up to
+`2 × --max-cache-size`.
+- When time bounding is active:
+  - Snapshot mode: the recorded timespan corresponds to the current buffer window at snapshot 
+    trigger time. i.e., up to `--max-cache-duration` seconds.
+  - Non-snapshot (regular) mode: due to producer/consumer buffer swap and write cadence, the
+    effective observed timespan can be up to approximately `2 × --max-cache-duration` seconds.
+
+Examples:
+- Regular recording, time-only buffer (keep last 30 seconds in cache, regardless of size):
+  ```
+  $ ros2 bag record -a --max-cache-size 0 --max-cache-duration 30
+  ```
+- Snapshot mode, size-only buffer (keep last ~100 MB of recent messages):
+  ```
+  $ ros2 bag record -a --snapshot-mode --max-cache-size 100000000 --max-cache-duration 0
+  ```
+- Snapshot mode, time-and-size bounded (keep last 10 seconds, max 50 MB):
+  ```
+  $ ros2 bag record -a --snapshot-mode --max-cache-size 50000000 --max-cache-duration 10
+  ```
+- Snapshot mode, time-only buffer (keep last 7 seconds regardless of size):
+  ```
+  $ ros2 bag record -a --snapshot-mode --max-cache-size 0 --max-cache-duration 7
+  ```
+
+Operational behavior:
+- In snapshot mode, the file's start/end timestamps reflect the buffered messages at cache 
+  buffer swap time.
 
 #### Statistics about lost messages
 
@@ -521,7 +605,6 @@ def generate_launch_description():
             ]
         )
     ])
-}
 ```
 
 Here's an example YAML configuration for both composable player and recorder:
@@ -634,10 +717,13 @@ pushd /my/bag/base_dir && ros2 bag record ...
 In launch:
 
 ```python
-ExecuteProcess(
+import launch.actions
+
+launch.actions.ExecuteProcess(
   cmd=['ros2', 'bag', 'record', ...],
-  cwd=my_base_dir,
+  cwd='my_base_dir',
 ),
+```
 
 You can fully customize the output bag name, without any Rosbag2 special features.
 
@@ -645,5 +731,5 @@ For example, you want a timestamp on the bag directory name, but want a custom p
 
 ```bash
 $ ros2 bag record -a -o mybag_"$(date +"%Y_%m_%d-%H_%M_%S")"
-... creates e.g. mybag_2025_02_21-15_35_35
 ```
+... creates e.g. mybag_2025_02_21-15_35_35

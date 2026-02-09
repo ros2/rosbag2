@@ -12,10 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "rosbag2_transport/recorder.hpp"
-
 #include <algorithm>
+#include <chrono>
 #include <future>
+#include <map>
 #include <memory>
 #include <regex>
 #include <stdexcept>
@@ -46,6 +46,7 @@
 #include "rosbag2_transport/config_options_from_node_params.hpp"
 #include "rosbag2_transport/reader_writer_factory.hpp"
 #include "rosbag2_transport/topic_filter.hpp"
+#include "rosbag2_transport/recorder.hpp"
 #include "rosbag2_transport/recorder_event_notifier.hpp"
 
 namespace rosbag2_transport
@@ -182,7 +183,12 @@ public:
   /// Stop discovery
   void stop_discovery();
 
+  /// Return the current discovery state.
+  bool is_discovery_running() const;
+
   std::unordered_map<std::string, std::string> get_requested_or_available_topics();
+
+  void read_static_topics() noexcept;
 
   /// Public members for access by wrapper
   std::unordered_set<std::string> topics_warned_about_incompatibility_;
@@ -191,7 +197,11 @@ public:
   rosbag2_transport::RecordOptions record_options_;
   std::unordered_map<std::string, std::shared_ptr<rclcpp::SubscriptionBase>> subscriptions_;
 
+  std::vector<std::pair<std::string, std::string>> static_topics_{};  // topic_name, topic_type
+
 private:
+  void create_control_services();
+
   void topics_discovery() noexcept;
 
   std::unordered_map<std::string, std::string>
@@ -222,17 +232,42 @@ private:
 
   void warn_if_new_qos_for_subscribed_topic(const std::string & topic_name);
 
+  /// \brief Helper wrapper function to set a service response as success.
+  template<typename ResponseT>
+  void set_service_success(
+    ResponseT & response,
+    int32_t return_code = kServiceReturnCodeSuccess) const
+  {
+    response->return_code = return_code;
+    response->error_string.clear();
+  }
+
+  /// \brief Helper wrapper function to set a service response as error.
+  template<typename ResponseT>
+  void set_service_error(
+    ResponseT & response, const std::string & error_string,
+    int32_t error_code = kServiceReturnCodeError) const
+  {
+    response->return_code = error_code;
+    response->error_string = error_string;
+  }
+
   rclcpp::Node * node;
   std::unique_ptr<TopicFilter> topic_filter_;
   rclcpp::Event::SharedPtr discovery_graph_event_;
   std::future<void> discovery_future_;
   std::unordered_map<std::string, rclcpp::QoS> topic_qos_profile_overrides_;
   std::unordered_set<std::string> topic_unknown_types_;
+  rclcpp::Service<rosbag2_interfaces::srv::IsDiscoveryRunning>::SharedPtr srv_is_discovery_running_;
   rclcpp::Service<rosbag2_interfaces::srv::IsPaused>::SharedPtr srv_is_paused_;
   rclcpp::Service<rosbag2_interfaces::srv::Pause>::SharedPtr srv_pause_;
+  rclcpp::Service<rosbag2_interfaces::srv::Record>::SharedPtr srv_record_;
   rclcpp::Service<rosbag2_interfaces::srv::Resume>::SharedPtr srv_resume_;
   rclcpp::Service<rosbag2_interfaces::srv::Snapshot>::SharedPtr srv_snapshot_;
   rclcpp::Service<rosbag2_interfaces::srv::SplitBagfile>::SharedPtr srv_split_bagfile_;
+  rclcpp::Service<rosbag2_interfaces::srv::StartDiscovery>::SharedPtr srv_start_discovery_;
+  rclcpp::Service<rosbag2_interfaces::srv::Stop>::SharedPtr srv_stop_;
+  rclcpp::Service<rosbag2_interfaces::srv::StopDiscovery>::SharedPtr srv_stop_discovery_;
 
   std::mutex start_stop_transition_mutex_;
   std::mutex discovery_mutex_;
@@ -244,6 +279,8 @@ private:
     KeyboardHandler::invalid_handle;
 
   std::unique_ptr<RecorderEventNotifier> event_notifier_;
+  static constexpr int32_t kServiceReturnCodeSuccess = 0;
+  static constexpr int32_t kServiceReturnCodeError = 1;
 };
 
 RecorderImpl::RecorderImpl(
@@ -258,7 +295,7 @@ RecorderImpl::RecorderImpl(
   node(owner),
   paused_(record_options.start_paused),
   keyboard_handler_(std::move(keyboard_handler)),
-  event_notifier_(std::make_unique<RecorderEventNotifier>(node))
+  event_notifier_(std::make_unique<RecorderEventNotifier>(node, record_options))
 {
   event_notifier_->set_messages_lost_statistics_max_publishing_rate(
     record_options.statistics_max_publishing_rate);
@@ -279,6 +316,13 @@ RecorderImpl::RecorderImpl(
     RCLCPP_INFO_STREAM(
       node->get_logger(),
       "Press " << key_str << " for pausing/resuming");
+  }
+
+  read_static_topics();
+  for (auto & [topic_name, _] : static_topics_) {
+    topic_name = rclcpp::expand_topic_or_service_name(
+      topic_name, node->get_name(),
+      node->get_namespace(), false);
   }
 
   for (auto & topic : record_options_.topics) {
@@ -305,7 +349,10 @@ RecorderImpl::RecorderImpl(
       node->get_namespace(), false);
   }
 
-  topic_filter_ = std::make_unique<TopicFilter>(record_options_, node->get_node_graph_interface());
+  topic_filter_ = std::make_unique<TopicFilter>(record_options, node->get_node_graph_interface(),
+      false, static_topics_);
+
+  create_control_services();
 }
 
 RecorderImpl::~RecorderImpl()
@@ -327,7 +374,12 @@ void RecorderImpl::stop()
   }
 
   stop_discovery();
-  pause();
+  // Explicitly disable all subscription's callbacks to avoid UB and receiving new messages on
+  // deleted subscriptions. Note: The callbacks propagated to the executor and may still be in the
+  // executor's queue, but they will no longer be called after this point.
+  for (auto & [_, subscription] : subscriptions_) {
+    subscription->disable_callbacks();
+  }
   subscriptions_.clear();
   writer_->close();  // Call writer->close() to finalize current bag file and write metadata
 
@@ -353,9 +405,8 @@ void RecorderImpl::stop()
 void RecorderImpl::record(const std::string & uri)
 {
   std::lock_guard<std::mutex> state_lock(start_stop_transition_mutex_);
-  if (in_recording_.exchange(true)) {
-    RCLCPP_WARN_STREAM(
-      node->get_logger(),
+  if (in_recording_) {
+    RCLCPP_WARN_STREAM(node->get_logger(),
       "Called Recorder::record(uri) while already in recording, dismissing request.");
     return;
   }
@@ -363,7 +414,7 @@ void RecorderImpl::record(const std::string & uri)
     storage_options_.uri = uri;
   }
   RCLCPP_INFO(node->get_logger(), "Starting recording to '%s'", storage_options_.uri.c_str());
-  paused_ = record_options_.start_paused;
+
   topic_qos_profile_overrides_ = record_options_.topic_qos_profile_overrides;
   // Check serialization format options
   if (!record_options_.rmw_serialization_format.empty() &&
@@ -386,7 +437,7 @@ void RecorderImpl::record(const std::string & uri)
       "No output serialization format specified, using rmw serialization format. '%s'.",
       record_options_.output_serialization_format.c_str());
   }
-  subscriptions_.clear();
+
   event_notifier_->reset_total_num_messages_lost_in_transport();
   event_notifier_->reset_total_num_messages_lost_in_recorder();
 
@@ -418,59 +469,6 @@ void RecorderImpl::record(const std::string & uri)
     storage_options_,
     {record_options_.input_serialization_format, record_options_.output_serialization_format});
 
-  // Only expose snapshot service when mode is enabled
-  if (storage_options_.snapshot_mode) {
-    srv_snapshot_ = node->create_service<rosbag2_interfaces::srv::Snapshot>(
-      "~/snapshot",
-      [this](
-        const std::shared_ptr<rmw_request_id_t>/* request_header */,
-        const std::shared_ptr<rosbag2_interfaces::srv::Snapshot::Request>/* request */,
-        const std::shared_ptr<rosbag2_interfaces::srv::Snapshot::Response> response)
-      {
-        response->success = writer_->take_snapshot();
-      });
-  }
-
-  srv_split_bagfile_ = node->create_service<rosbag2_interfaces::srv::SplitBagfile>(
-    "~/split_bagfile",
-    [this](
-      const std::shared_ptr<rmw_request_id_t>/* request_header */,
-      const std::shared_ptr<rosbag2_interfaces::srv::SplitBagfile::Request>/* request */,
-      const std::shared_ptr<rosbag2_interfaces::srv::SplitBagfile::Response>/* response */)
-    {
-      writer_->split_bagfile();
-    });
-
-  srv_pause_ = node->create_service<rosbag2_interfaces::srv::Pause>(
-    "~/pause",
-    [this](
-      const std::shared_ptr<rmw_request_id_t>/* request_header */,
-      const std::shared_ptr<rosbag2_interfaces::srv::Pause::Request>/* request */,
-      const std::shared_ptr<rosbag2_interfaces::srv::Pause::Response>/* response */)
-    {
-      pause();
-    });
-
-  srv_resume_ = node->create_service<rosbag2_interfaces::srv::Resume>(
-    "~/resume",
-    [this](
-      const std::shared_ptr<rmw_request_id_t>/* request_header */,
-      const std::shared_ptr<rosbag2_interfaces::srv::Resume::Request>/* request */,
-      const std::shared_ptr<rosbag2_interfaces::srv::Resume::Response>/* response */)
-    {
-      resume();
-    });
-
-  srv_is_paused_ = node->create_service<rosbag2_interfaces::srv::IsPaused>(
-    "~/is_paused",
-    [this](
-      const std::shared_ptr<rmw_request_id_t>/* request_header */,
-      const std::shared_ptr<rosbag2_interfaces::srv::IsPaused::Request>/* request */,
-      const std::shared_ptr<rosbag2_interfaces::srv::IsPaused::Response> response)
-    {
-      response->paused = is_paused();
-    });
-
   rosbag2_cpp::bag_events::WriterEventCallbacks callbacks;
   callbacks.write_split_callback =
     [this](rosbag2_cpp::bag_events::BagSplitInfo & info) {
@@ -482,20 +480,227 @@ void RecorderImpl::record(const std::string & uri)
     };
   writer_->add_event_callbacks(callbacks);
 
-  RCLCPP_INFO(node->get_logger(), "Listening for topics...");
   if (!record_options_.use_sim_time) {
     subscribe_topics(get_requested_or_available_topics());
   }
+
+  // Disable discovery if only static topics defined
+  if (!static_topics_.empty() &&
+    !(record_options_.all_topics || !record_options_.topics.empty() ||
+    record_options_.all_services || !record_options_.services.empty() ||
+    record_options_.all_actions || !record_options_.actions.empty() ||
+    !record_options_.regex.empty()))
+  {
+    record_options_.is_discovery_disabled = true;
+  }
+
   if (!record_options_.is_discovery_disabled) {
     start_discovery();
+    RCLCPP_INFO(node->get_logger(), "Listening for topics...");
   }
-  if (record_options_.start_paused) {
-    RCLCPP_INFO(
-      node->get_logger(), "Wait for recording: Press %s to start.",
-      enum_key_code_to_str(Recorder::kPauseResumeToggleKey).c_str());
+  if (paused_.load()) {
+    if (!record_options_.disable_keyboard_controls) {
+      RCLCPP_INFO(
+        node->get_logger(), "Wait for recording: Press %s to start.",
+        enum_key_code_to_str(Recorder::kPauseResumeToggleKey).c_str());
+    }
   } else {
     RCLCPP_INFO(node->get_logger(), "Recording...");
   }
+  in_recording_ = true;
+}
+
+void RecorderImpl::create_control_services()
+{
+  // Only expose snapshot service when mode is enabled
+  if (storage_options_.snapshot_mode) {
+    srv_snapshot_ = node->create_service<rosbag2_interfaces::srv::Snapshot>(
+      "~/snapshot",
+      [this](
+        const std::shared_ptr<rmw_request_id_t>/* request_header */,
+        const std::shared_ptr<rosbag2_interfaces::srv::Snapshot::Request>/* request */,
+        const std::shared_ptr<rosbag2_interfaces::srv::Snapshot::Response> response)
+      {
+        std::lock_guard<std::mutex> state_lock(start_stop_transition_mutex_);
+        if (!in_recording_.load()) {
+          RCLCPP_WARN(node->get_logger(),
+            "Received Snapshot request while not in recording. Ignoring request.");
+          response->success = false;
+        } else {
+          try {
+            response->success = writer_->take_snapshot();
+          } catch (std::exception & e) {
+            RCLCPP_ERROR(node->get_logger(), "Error during Snapshot request: %s", e.what());
+            response->success = false;
+          }
+        }
+      }
+    );
+  }
+
+  srv_split_bagfile_ = node->create_service<rosbag2_interfaces::srv::SplitBagfile>(
+    "~/split_bagfile",
+    [this](
+      const std::shared_ptr<rmw_request_id_t>/* request_header */,
+      const std::shared_ptr<rosbag2_interfaces::srv::SplitBagfile::Request>/* request */,
+      const std::shared_ptr<rosbag2_interfaces::srv::SplitBagfile::Response>/* response */)
+    {
+      std::lock_guard<std::mutex> state_lock(start_stop_transition_mutex_);
+      if (!in_recording_.load()) {
+        RCLCPP_WARN(node->get_logger(),
+          "Received SplitBagfile request while not in recording. Ignoring request.");
+      } else {
+        try {
+          writer_->split_bagfile();
+        } catch (const std::exception & e) {
+          RCLCPP_ERROR(node->get_logger(), "Error during SplitBagfile request: %s", e.what());
+        }
+      }
+    }
+  );
+
+  srv_start_discovery_ = node->create_service<rosbag2_interfaces::srv::StartDiscovery>(
+    "~/start_discovery",
+    [this](
+      const std::shared_ptr<rmw_request_id_t>/* request_header */,
+      const std::shared_ptr<rosbag2_interfaces::srv::StartDiscovery::Request>/* request */,
+      const std::shared_ptr<rosbag2_interfaces::srv::StartDiscovery::Response> response)
+    {
+      std::lock_guard<std::mutex> state_lock(start_stop_transition_mutex_);
+      if (!in_recording_.load()) {
+        RCLCPP_WARN(node->get_logger(),
+          "Received StartDiscovery request while not in recording. Ignoring request.");
+        set_service_error(response, "Recorder is not currently recording.");
+      } else if (discovery_running_.load()) {
+        RCLCPP_WARN(node->get_logger(),
+          "Received StartDiscovery request while discovery is already running. Ignoring request.");
+        set_service_error(response, "Discovery is already running.");
+      } else {
+        try {
+          this->start_discovery();
+          set_service_success(response);
+        } catch (const std::exception & e) {
+          RCLCPP_ERROR(node->get_logger(), "Error during StartDiscovery request: %s", e.what());
+          set_service_error(response, e.what());
+        }
+      }
+    }
+  );
+
+  srv_stop_discovery_ = node->create_service<rosbag2_interfaces::srv::StopDiscovery>(
+    "~/stop_discovery",
+    [this](
+      const std::shared_ptr<rmw_request_id_t>/* request_header */,
+      const std::shared_ptr<rosbag2_interfaces::srv::StopDiscovery::Request>/* request */,
+      const std::shared_ptr<rosbag2_interfaces::srv::StopDiscovery::Response> response)
+    {
+      if (!discovery_running_.load()) {
+        RCLCPP_WARN(node->get_logger(),
+          "Received StopDiscovery request while discovery is not running. Ignoring request.");
+        set_service_error(response, "Discovery is not running.");
+      } else {
+        try {
+          this->stop_discovery();
+          set_service_success(response);
+        } catch (const std::exception & e) {
+          RCLCPP_ERROR(node->get_logger(), "Error during StopDiscovery request: %s", e.what());
+          set_service_error(response, e.what());
+        }
+      }
+    }
+  );
+
+  srv_is_discovery_running_ = node->create_service<rosbag2_interfaces::srv::IsDiscoveryRunning>(
+    "~/is_discovery_running",
+    [this](
+      const std::shared_ptr<rmw_request_id_t>/* request_header */,
+      const std::shared_ptr<rosbag2_interfaces::srv::IsDiscoveryRunning::Request>/* request */,
+      const std::shared_ptr<rosbag2_interfaces::srv::IsDiscoveryRunning::Response> response)
+    {
+      response->running = is_discovery_running();
+    });
+
+  srv_record_ = node->create_service<rosbag2_interfaces::srv::Record>(
+    "~/record",
+    [this](
+      const std::shared_ptr<rmw_request_id_t>/* request_header */,
+      const std::shared_ptr<rosbag2_interfaces::srv::Record::Request> request,
+      const std::shared_ptr<rosbag2_interfaces::srv::Record::Response> response)
+    {
+      if (in_recording_) {
+        RCLCPP_WARN(node->get_logger(),
+          "Received Record request while already recording. Ignoring request.");
+        set_service_error(response, "Recorder is already recording.");
+      } else {
+        try {
+          this->record(request->uri);
+          set_service_success(response);
+        } catch (const std::exception & e) {
+          RCLCPP_ERROR(node->get_logger(), "Error during Record request: %s", e.what());
+          set_service_error(response, e.what());
+        }
+      }
+    }
+  );
+
+  srv_stop_ = node->create_service<rosbag2_interfaces::srv::Stop>(
+    "~/stop",
+    [this](
+      const std::shared_ptr<rmw_request_id_t>/* request_header */,
+      const std::shared_ptr<rosbag2_interfaces::srv::Stop::Request>/* request */,
+      const std::shared_ptr<rosbag2_interfaces::srv::Stop::Response> response)
+    {
+      if (!in_recording_) {
+        RCLCPP_WARN(node->get_logger(),
+          "Received Stop request while not in recording. Ignoring request.");
+        set_service_error(response, "Recorder is already stopped.");
+      } else {
+        try {
+          this->stop();
+          set_service_success(response);
+        } catch (const std::exception & e) {
+          RCLCPP_ERROR(node->get_logger(), "Error during Stop request: %s", e.what());
+          set_service_error(response, e.what());
+        }
+      }
+    }
+  );
+
+  srv_pause_ = node->create_service<rosbag2_interfaces::srv::Pause>(
+    "~/pause",
+    [this](
+      const std::shared_ptr<rmw_request_id_t>/* request_header */,
+      const std::shared_ptr<rosbag2_interfaces::srv::Pause::Request>/* request */,
+      const std::shared_ptr<rosbag2_interfaces::srv::Pause::Response>/* response */)
+    {
+      std::lock_guard<std::mutex> state_lock(start_stop_transition_mutex_);
+      // Note: We don't check if we are in recording here, as pausing when not recording is a valid
+      // operation and can be used to set the initial state before starting recording.
+      this->pause();
+    });
+
+  srv_resume_ = node->create_service<rosbag2_interfaces::srv::Resume>(
+    "~/resume",
+    [this](
+      const std::shared_ptr<rmw_request_id_t>/* request_header */,
+      const std::shared_ptr<rosbag2_interfaces::srv::Resume::Request>/* request */,
+      const std::shared_ptr<rosbag2_interfaces::srv::Resume::Response>/* response */)
+    {
+      std::lock_guard<std::mutex> state_lock(start_stop_transition_mutex_);
+      // Note: We don't check if we are in recording here, as resuming when not recording is no-op
+      // and valid operation that can be used to set the initial state before starting recording.
+      this->resume();
+    });
+
+  srv_is_paused_ = node->create_service<rosbag2_interfaces::srv::IsPaused>(
+    "~/is_paused",
+    [this](
+      const std::shared_ptr<rmw_request_id_t>/* request_header */,
+      const std::shared_ptr<rosbag2_interfaces::srv::IsPaused::Request>/* request */,
+      const std::shared_ptr<rosbag2_interfaces::srv::IsPaused::Response> response)
+    {
+      response->paused = is_paused();
+    });
 }
 
 const rosbag2_cpp::Writer & RecorderImpl::get_writer_handle()
@@ -582,6 +787,11 @@ void RecorderImpl::stop_discovery()
   }
 }
 
+bool RecorderImpl::is_discovery_running() const
+{
+  return discovery_running_.load();
+}
+
 void RecorderImpl::topics_discovery() noexcept
 {
   try {
@@ -633,7 +843,22 @@ void RecorderImpl::topics_discovery() noexcept
 std::unordered_map<std::string, std::string>
 RecorderImpl::get_requested_or_available_topics()
 {
-  auto all_topics_and_types = node->get_topic_names_and_types();
+  std::map<std::string, std::vector<std::string>> all_topics_and_types;
+  // Take topic names and types from graph only if inclusive filters among static topics defined
+  if (record_options_.all_topics || !record_options_.topics.empty() ||
+    !record_options_.topic_types.empty() ||
+    record_options_.all_services || !record_options_.services.empty() ||
+    record_options_.all_actions || !record_options_.actions.empty() ||
+    !record_options_.regex.empty())
+  {
+    all_topics_and_types = node->get_topic_names_and_types();
+  }
+
+  for (const auto & [static_topic_name, static_topic_type] : static_topics_) {
+    if (all_topics_and_types.find(static_topic_name) == all_topics_and_types.cend()) {
+      all_topics_and_types[static_topic_name] = {static_topic_type};
+    }
+  }
   return topic_filter_->filter_topics(all_topics_and_types);
 }
 
@@ -964,6 +1189,50 @@ void RecorderImpl::warn_if_new_qos_for_subscribed_topic(const std::string & topi
   }
 }
 
+void RecorderImpl::read_static_topics() noexcept
+{
+  if (!record_options_.static_topics_uri.empty()) {
+    try {
+      RCLCPP_INFO_STREAM(node->get_logger(),
+        "Reading static topics from " << record_options_.static_topics_uri);
+      YAML::Node yaml_file = YAML::LoadFile(record_options_.static_topics_uri);
+      auto list_nodes = yaml_file["static_topics_and_types_list"];
+      if (!list_nodes) {
+        throw std::runtime_error(
+                "Static topics YAML file must have top-level key 'static_topics_and_types_list'");
+      }
+      if (!list_nodes.IsSequence()) {
+        throw std::runtime_error(
+                "Top-level key 'static_topics_and_types_list' must contain a list of "
+                "'topic_name, topic_type' pairs");
+      }
+      for (const auto & bag_node : list_nodes) {
+        const auto topic_name = bag_node[0].as<std::string>();
+        const auto topic_type = bag_node[1].as<std::string>();
+        if (topic_type.empty()) {
+          RCLCPP_ERROR_STREAM(node->get_logger(),
+            "Static topic " << topic_name << " has no corresponding type");
+        }
+        static_topics_.emplace_back(topic_name, topic_type);
+      }
+    } catch (std::exception & e) {
+      RCLCPP_ERROR_STREAM(node->get_logger(), "Failed to read static topics list: " << e.what());
+      // Print current static topics read so far
+      RCLCPP_INFO_STREAM(node->get_logger(),
+                         "Read " << static_topics_.size() << " static topics before failure");
+      for (const auto & [topic_name, topic_type] : static_topics_) {
+        RCLCPP_INFO_STREAM(node->get_logger(),
+                           " \ttopic: " << topic_name << " \t\t type: " << topic_type);
+      }
+      // Clear any partially read topics
+      static_topics_.clear();
+      RCLCPP_INFO_STREAM(node->get_logger(), "Cleared static topics list due to read failure.");
+      return;
+    }
+    RCLCPP_INFO_STREAM(node->get_logger(), "Read " << static_topics_.size() << " static topics");
+  }
+}
+
 ///////////////////////////////
 // Recorder public interface
 
@@ -1131,6 +1400,22 @@ bool
 Recorder::is_paused()
 {
   return pimpl_->is_paused();
+}
+
+bool
+Recorder::is_discovery_running() const
+{
+  return pimpl_->is_discovery_running();
+}
+
+void Recorder::read_static_topics() noexcept
+{
+  return pimpl_->read_static_topics();
+}
+
+const std::vector<std::pair<std::string, std::string>> & Recorder::get_static_topics() noexcept
+{
+  return pimpl_->static_topics_;
 }
 
 std::unordered_map<std::string, std::string>

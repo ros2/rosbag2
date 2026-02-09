@@ -169,3 +169,36 @@ TEST_F(SqliteWrapperTestFixture, table_exists) {
   EXPECT_TRUE(db_.table_exists("test_table"));
   EXPECT_FALSE(db_.table_exists("non_existent_table"));
 }
+
+TEST_F(SqliteWrapperTestFixture, table_exists_prevents_sql_injection) {
+  db_.prepare_statement("CREATE TABLE test_table (timestamp INTEGER, data BLOB);")
+  ->execute_and_reset();
+
+  // Test various SQL injection attempts - these should all safely return false
+  // instead of executing malicious SQL
+  EXPECT_FALSE(db_.table_exists("table_name; DROP TABLE test_table"));
+  EXPECT_FALSE(db_.table_exists("table' OR '1'='1"));
+  EXPECT_FALSE(db_.table_exists("'; DELETE FROM test_table; --"));
+
+  // Verify the table still exists after injection attempts
+  EXPECT_TRUE(db_.table_exists("test_table"));
+}
+
+TEST_F(SqliteWrapperTestFixture, field_exists_prevents_sql_injection) {
+  db_.prepare_statement("CREATE TABLE test_table (timestamp INTEGER, data BLOB);")
+  ->execute_and_reset();
+
+  // Test SQL injection attempts in both field_name and table_name parameters
+  EXPECT_FALSE(db_.field_exists("test_table", "field'; DROP TABLE test_table; --"));
+  EXPECT_FALSE(db_.field_exists("test_table", "field' OR '1'='1"));
+
+  // SQL injection in table name should still throw for non-existent table
+  EXPECT_THROW(
+    db_.field_exists("table'; DROP TABLE test_table; --", "data"),
+    rosbag2_storage_plugins::SqliteException);
+
+  // Verify the table and its fields still exist after injection attempts
+  EXPECT_TRUE(db_.table_exists("test_table"));
+  EXPECT_TRUE(db_.field_exists("test_table", "data"));
+  EXPECT_TRUE(db_.field_exists("test_table", "timestamp"));
+}

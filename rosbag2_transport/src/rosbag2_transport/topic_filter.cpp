@@ -106,10 +106,11 @@ namespace rosbag2_transport
 TopicFilter::TopicFilter(
   RecordOptions record_options,
   rclcpp::node_interfaces::NodeGraphInterface::SharedPtr node_graph,
-  bool allow_unknown_types)
+  bool allow_unknown_types,
+  const std::vector<std::pair<std::string, std::string>> & static_topic_names_and_types)
 : record_options_(std::move(record_options)),
   allow_unknown_types_(allow_unknown_types),
-  node_graph_(node_graph)
+  node_graph_(std::move(node_graph))
 {
   if (record_options_.actions.size() > 0) {
     for ( auto & action_name : record_options_.actions ) {
@@ -128,15 +129,20 @@ TopicFilter::TopicFilter(
         action_interface_names.begin(), action_interface_names.end());
     }
   }
+
+  static_topics_and_services_.reserve(static_topic_names_and_types.size());
+  for (const auto & [static_topic_name, _] : static_topic_names_and_types) {
+    static_topics_and_services_.push_back(static_topic_name);
+  }
 }
 
 TopicFilter::~TopicFilter() = default;
 
 std::unordered_map<std::string, std::string> TopicFilter::filter_topics(
-  const std::map<std::string, std::vector<std::string>> & topic_names_and_types)
+  const std::map<std::string, std::vector<std::string>> & all_topic_names_and_types)
 {
   std::unordered_map<std::string, std::string> filtered_topics;
-  for (const auto & [topic_name, topic_types] : topic_names_and_types) {
+  for (const auto & [topic_name, topic_types] : all_topic_names_and_types) {
     if (take_topic(topic_name, topic_types)) {
       filtered_topics.insert(std::make_pair(topic_name, topic_types[0]));
     }
@@ -158,6 +164,7 @@ bool TopicFilter::topic_selected_by_lists_or_regex(
     // Regular topic
     if (!record_options_.all_topics &&
       record_options_.topics.empty() &&
+      static_topics_and_services_.empty() &&
       record_options_.topic_types.empty() &&
       record_options_.regex.empty() &&
       !record_options_.include_hidden_topics)
@@ -170,6 +177,7 @@ bool TopicFilter::topic_selected_by_lists_or_regex(
     if (!record_options_.all_topics) {
       // Not in include topic list. Note: all_topics shall override include topic lists
       if (!topic_in_list(topic_name, record_options_.topics) &&
+        !topic_in_list(topic_name, static_topics_and_services_) &&
         !topic_type_in_list(topic_type, record_options_.topic_types))
       {
         // Not match include regex
@@ -209,6 +217,7 @@ bool TopicFilter::topic_selected_by_lists_or_regex(
     // Service event topic
     if (!record_options_.all_services &&
       record_options_.services.empty() &&
+      static_topics_and_services_.empty() &&
       record_options_.regex.empty())
     {
       // Note: This check is needed to avoid extra checks and service name conversion in case
@@ -221,7 +230,9 @@ bool TopicFilter::topic_selected_by_lists_or_regex(
 
     if (!record_options_.all_services) {
       // Not in include service list
-      if (!topic_in_list(topic_name, record_options_.services)) {
+      if (!topic_in_list(topic_name, record_options_.services) &&
+        !topic_in_list(topic_name, static_topics_and_services_))
+      {
         // Not match include regex
         if (!record_options_.regex.empty()) {
           std::regex include_regex(record_options_.regex);
@@ -249,6 +260,7 @@ bool TopicFilter::topic_selected_by_lists_or_regex(
 
     // Check if topics for action need to be recorded
     if (!record_options_.all_actions &&
+      static_topics_and_services_.empty() &&
       record_options_.actions.empty() &&
       record_options_.regex.empty())
     {
@@ -258,7 +270,9 @@ bool TopicFilter::topic_selected_by_lists_or_regex(
     // Convert topic name to action name
     auto action_name = rosbag2_cpp::action_interface_name_to_action_name(topic_name);
 
-    if (!record_options_.all_actions) {
+    if (!record_options_.all_actions &&
+      !topic_in_list(topic_name, static_topics_and_services_))
+    {
       // Not in include action interface list
       if (include_action_interface_names_.find(topic_name) ==
         include_action_interface_names_.end())
@@ -322,7 +336,8 @@ bool TopicFilter::take_topic(
     return false;
   }
 
-  if (!record_options_.include_unpublished_topics && node_graph_ &&
+  if (!topic_in_list(topic_name, static_topics_and_services_) &&
+    !record_options_.include_unpublished_topics && node_graph_ &&
     topic_is_unpublished(topic_name, *node_graph_))
   {
     return false;

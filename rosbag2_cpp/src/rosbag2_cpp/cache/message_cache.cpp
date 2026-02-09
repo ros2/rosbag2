@@ -28,10 +28,10 @@ namespace rosbag2_cpp
 namespace cache
 {
 
-MessageCache::MessageCache(size_t max_buffer_size)
+MessageCache::MessageCache(size_t max_buffer_size, uint32_t max_buffer_duration)
 {
-  producer_buffer_ = std::make_shared<MessageCacheBuffer>(max_buffer_size);
-  consumer_buffer_ = std::make_shared<MessageCacheBuffer>(max_buffer_size);
+  producer_buffer_ = std::make_shared<MessageCacheBuffer>(max_buffer_size, max_buffer_duration);
+  consumer_buffer_ = std::make_shared<MessageCacheBuffer>(max_buffer_size, max_buffer_duration);
 }
 
 MessageCache::~MessageCache()
@@ -41,11 +41,15 @@ MessageCache::~MessageCache()
   // exceptional situations.
   flushing_ = true;
   cache_condition_var_.notify_one();
-  log_dropped();
+  MessageCache::log_dropped();
 }
 
 bool MessageCache::push(std::shared_ptr<const rosbag2_storage::SerializedBagMessage> msg)
 {
+  if (!msg) {
+    ROSBAG2_CPP_LOG_ERROR("Attempted to push null message into cache. Dropping message!");
+    return false;
+  }
   // While pushing, we keep track of inserted and dropped messages as well
   bool pushed = false;
   {
@@ -53,13 +57,13 @@ bool MessageCache::push(std::shared_ptr<const rosbag2_storage::SerializedBagMess
     pushed = producer_buffer_->push(msg);
     data_ready_ = true;  // Don't use notify_data_ready() here for the sake of performance.
   }
-  // Notify the consumer that data is ready
-  cache_condition_var_.notify_one();
 
-  if (!pushed) {
+  if (pushed) {
+    // Notify the consumer that data is ready
+    cache_condition_var_.notify_one();
+  } else {
     messages_dropped_per_topic_[msg->topic_name]++;
   }
-
   return pushed;
 }
 

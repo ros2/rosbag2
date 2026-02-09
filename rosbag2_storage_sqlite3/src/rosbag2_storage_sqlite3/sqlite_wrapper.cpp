@@ -155,17 +155,15 @@ std::string SqliteWrapper::query_pragma_value(const std::string & key)
 
 bool SqliteWrapper::table_exists(const std::string & table_name)
 {
-  auto query =
-    "SELECT count(*) FROM sqlite_master WHERE type='table' AND name='" + table_name + "';";
-  auto query_result = prepare_statement(query)->execute_query<int>();
+  auto query = "SELECT count(*) FROM sqlite_master WHERE type='table' AND name=?;";
+  auto query_result = prepare_statement(query)->bind(table_name)->execute_query<int>();
   return std::get<0>(*query_result.begin());
 }
 
 bool SqliteWrapper::field_exists(const std::string & table_name, const std::string & field_name)
 {
-  auto query = "SELECT INSTR(sql, '" + field_name + "') FROM sqlite_master WHERE type='table' AND "
-    "name='" + table_name + "';";
-  auto query_result = prepare_statement(query)->execute_query<int>();
+  auto query = "SELECT INSTR(sql, ?) FROM sqlite_master WHERE type='table' AND name=?;";
+  auto query_result = prepare_statement(query)->bind(field_name, table_name)->execute_query<int>();
   auto query_result_begin = query_result.begin();
   if (query_result_begin == query_result.end()) {
     std::stringstream errmsg;

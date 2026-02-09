@@ -1,0 +1,4 @@
+static_topics_and_types_list:
+  - [/topic_name1, test_msgs/msg/Strings]
+  - [/topic_name2, test_msgs/msg/Strings]
+  - [/topic_name3, test_msgs/msg/Strings]

@@ -71,6 +71,14 @@ def add_recorder_arguments(parser: ArgumentParser) -> None:
         '--topics', type=str, default=[], metavar='Topic', nargs='+',
         help='Space-delimited list of topics to record.')
     parser.add_argument(
+        '--static-topics-path', type=FileType('r'),
+        help='Path to a YAML file with statically defined topic names and types.'
+             'Recorder will expect a YAML file in the following format:\n'
+             'static_topics_and_types_list:\n'
+             ' - [/topic_name1, topic_type1]\n'
+             ' - [/topic_name2, topic_type2]\n'
+             ' - [/topic_name3, topic_type3]')
+    parser.add_argument(
         '--services', type=str, metavar='ServiceName', nargs='+',
         help='Space-delimited list of services to record.')
     parser.add_argument(
@@ -173,6 +181,15 @@ def add_recorder_arguments(parser: ArgumentParser) -> None:
              'about one second of total recorded data volume. '
              'If the value specified is 0, then every message is directly written to disk.')
     parser.add_argument(
+        '--max-cache-duration', type=int, default=0,
+        help='Maximum cache duration in seconds.\n'
+             'Default: %(default)d, indicates that buffering will be limited by the'
+             ' --max-cache-size parameter only. If the value is more than 0, the cache buffer'
+             ' will be limited by both the series of messages duration and the maximum cache size'
+             ' parameter.\n'
+             'To override the upper bound by total messages size, the --max-cache-size parameter'
+             ' can be set to 0.')
+    parser.add_argument(
         '--disable-keyboard-controls', action='store_true', default=False,
         help='disables keyboard controls for recorder')
     parser.add_argument(
@@ -243,12 +260,13 @@ def add_recorder_arguments(parser: ArgumentParser) -> None:
 
 def check_necessary_argument(args):
     # At least one options out of --all, --all-topics, --all-services, --all-actions, --services,
-    # --actions --topics, --topic-types or --regex must be used
+    # --actions --topics, --topic-types, --static-topics-path or --regex must be used
     if not (args.all or args.all_topics or args.all_services or args.all_actions or
             (args.services and len(args.services) > 0) or
             (args.actions and len(args.actions) > 0) or
             (args.topics and len(args.topics) > 0) or
-            (args.topic_types and len(args.topic_types) > 0) or args.regex):
+            (args.topic_types and len(args.topic_types) > 0) or args.regex or
+            args.static_topics_path):
         return False
     return True
 
@@ -261,7 +279,8 @@ def validate_parsed_arguments(args, uri) -> str:
 
     if not check_necessary_argument(args):
         return print_error('Need to specify at least one option out of --all, --all-topics, '
-                           '--all-services, --services, --topics, --topic-types or --regex')
+                           '--all-services, --services, --topics, --topic-types,'
+                           '--static-topics-path or --regex')
 
     if args.exclude_regex and not \
             (args.all or args.all_topics or args.topic_types or args.all_services or
@@ -318,6 +337,24 @@ def validate_parsed_arguments(args, uri) -> str:
     if args.stats_max_publishing_rate < 0 or args.stats_max_publishing_rate > 1000.0:
         return print_error('stats_max_publishing_rate must be between 0 and 1000.')
 
+    if args.max_cache_size < 0:
+        return print_error('max_cache_size must be a non-negative integer.')
+
+    if args.max_cache_size > 4294967295:
+        return print_error('max_cache_size must not exceed 4294967295 bytes '
+                           '(~4 GiB, uint32_t max).')
+
+    if args.max_cache_duration < 0:
+        return print_error('max_cache_duration must be a non-negative integer.')
+
+    if args.max_cache_duration > 4294967295:
+        return print_error('max_cache_duration must not exceed 4294967295 seconds '
+                           '(~136 years, uint32_t max).')
+
+    if args.snapshot_mode and args.max_cache_duration == 0 and args.max_cache_size == 0:
+        return print_error('In snapshot mode, either the max_cache_duration or max_cache_size'
+                           ' shall not be set to zero.')
+
     return None
 
 
@@ -359,6 +396,10 @@ class RecordVerb(VerbExtension):
             key_value_pairs = [pair.split('=') for pair in args.custom_data]
             custom_data = {pair[0]: pair[1] for pair in key_value_pairs}
 
+        static_topics_uri = ''
+        if args.static_topics_path:
+            static_topics_uri = args.static_topics_path.name
+
         storage_config_file = ''
         if args.storage_config_file:
             storage_config_file = args.storage_config_file.name
@@ -368,14 +409,16 @@ class RecordVerb(VerbExtension):
             storage_id=args.storage,
             max_bagfile_size=args.max_bag_size,
             max_bagfile_duration=args.max_bag_duration,
-            max_cache_size=args.max_cache_size,
             max_bag_files=args.max_bag_files,
+            max_cache_size=args.max_cache_size,
+            max_cache_duration=args.max_cache_duration,
             storage_preset_profile=args.storage_preset_profile,
             storage_config_uri=storage_config_file,
             snapshot_mode=args.snapshot_mode,
             custom_data=custom_data
         )
         record_options = RecordOptions()
+        record_options.static_topics_uri = static_topics_uri
         record_options.all_topics = args.all_topics or args.all
         record_options.all_services = args.all_services or args.all
         record_options.all_actions = args.all_actions or args.all
