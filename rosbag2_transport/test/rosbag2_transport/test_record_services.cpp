@@ -14,6 +14,7 @@
 
 #include <gmock/gmock.h>
 
+#include <atomic>
 #include <memory>
 #include <string>
 #include <vector>
@@ -21,6 +22,7 @@
 #include <type_traits>
 
 #include "rclcpp/rclcpp.hpp"
+#include "rosgraph_msgs/msg/clock.hpp"
 
 #include "rosbag2_interfaces/srv/is_discovery_running.hpp"
 #include "rosbag2_interfaces/srv/is_paused.hpp"
@@ -42,6 +44,16 @@
 #include "record_integration_fixture.hpp"
 
 using namespace ::testing;  // NOLINT
+using namespace std::chrono_literals;
+
+builtin_interfaces::msg::Time to_builtin_time(const rclcpp::Time & time)
+{
+  builtin_interfaces::msg::Time msg;
+  const auto nsec = time.nanoseconds();
+  msg.sec = static_cast<int32_t>(nsec / 1000000000LL);
+  msg.nanosec = static_cast<uint32_t>(nsec % 1000000000LL);
+  return msg;
+}
 
 
 template<class T, class = void>
@@ -66,10 +78,14 @@ public:
   using Stop = rosbag2_interfaces::srv::Stop;
   using StopDiscovery = rosbag2_interfaces::srv::StopDiscovery;
 
-  explicit RecordSrvsTest(bool snapshot_mode = false, bool is_discovery_disabled = false)
+  explicit RecordSrvsTest(
+    bool snapshot_mode = false,
+    bool is_discovery_disabled = false,
+    bool use_sim_time = false)
   : RecordIntegrationTestFixture(),
     snapshot_mode_(snapshot_mode),
-    is_discovery_disabled_(is_discovery_disabled)
+    is_discovery_disabled_(is_discovery_disabled),
+    use_sim_time_(use_sim_time)
   {}
 
   ~RecordSrvsTest() override
@@ -88,6 +104,9 @@ public:
   {
     RecordIntegrationTestFixture::SetUp();
     client_node_ = std::make_shared<rclcpp::Node>("test_record_client");
+    if (use_sim_time_) {
+      client_node_->set_parameter(rclcpp::Parameter("use_sim_time", true));
+    }
 
     const auto record_topics =
       is_discovery_disabled_ ? std::vector<std::string>{} : std::vector<std::string>{test_topic_};
@@ -97,10 +116,14 @@ public:
       {}, {}, {}, {}, {}, {}, {}, {}, {},
       "rmw_format", 100ms
     };
+    record_options.use_sim_time = use_sim_time_;
     storage_options_.snapshot_mode = snapshot_mode_;
     storage_options_.max_cache_size = 700;
     recorder_ = std::make_shared<rosbag2_transport::Recorder>(
       std::move(writer_), storage_options_, record_options, recorder_name_);
+    if (use_sim_time_) {
+      recorder_->set_parameter(rclcpp::Parameter("use_sim_time", true));
+    }
     recorder_->record();
 
     auto string_message = get_messages_strings()[1];
@@ -133,6 +156,16 @@ public:
       std::cerr << "Failed to start spinning nodes: '" <<
         recorder_->get_name() << ", " << client_node_->get_name() << "'" << std::endl;
       throw std::runtime_error("Failed to start spinning nodes");
+    }
+
+    if (use_sim_time_) {
+      clock_pub_ = client_node_->create_publisher<rosgraph_msgs::msg::Clock>("/clock", 10);
+      current_sim_time_ = rclcpp::Time(1, 0, RCL_ROS_TIME);
+      publish_clock(current_sim_time_);
+      ASSERT_TRUE(
+        rosbag2_test_common::wait_until_condition(
+          [this]() {return recorder_->get_clock()->started();},
+          std::chrono::seconds(5)));
     }
 
     if (!is_discovery_disabled_) {
@@ -204,6 +237,26 @@ public:
     return successful_service_request<Srv>(cli, request, response);
   }
 
+  void publish_clock(const rclcpp::Time & time)
+  {
+    if (!use_sim_time_) {
+      return;
+    }
+    rosgraph_msgs::msg::Clock msg;
+    msg.clock = time;
+    clock_pub_->publish(msg);
+    std::this_thread::sleep_for(std::chrono::milliseconds(5));
+  }
+
+  void advance_sim_time(const rclcpp::Duration & delta)
+  {
+    if (!use_sim_time_) {
+      return;
+    }
+    current_sim_time_ = current_sim_time_ + delta;
+    publish_clock(current_sim_time_);
+  }
+
 public:
   // Basic configuration
   const std::string recorder_name_ = "rosbag2_recorder_for_test_srvs";
@@ -231,6 +284,9 @@ public:
 
   bool snapshot_mode_;
   bool is_discovery_disabled_;
+  bool use_sim_time_;
+  rclcpp::Publisher<rosgraph_msgs::msg::Clock>::SharedPtr clock_pub_;
+  rclcpp::Time current_sim_time_{0, 0, RCL_ROS_TIME};
 };
 
 class RecordSrvsSnapshotTest : public RecordSrvsTest
@@ -238,6 +294,14 @@ class RecordSrvsSnapshotTest : public RecordSrvsTest
 protected:
   RecordSrvsSnapshotTest()
   : RecordSrvsTest(true /*snapshot_mode*/) {}
+};
+
+class RecordSrvsSimTimeTest : public RecordSrvsTest
+{
+protected:
+  RecordSrvsSimTimeTest()
+  : RecordSrvsTest(false /*snapshot_mode*/, false /*is_discovery_disabled*/, true /*use_sim_time*/)
+  {}
 };
 
 TEST_F(RecordSrvsSnapshotTest, trigger_snapshot)
@@ -277,14 +341,14 @@ TEST_F(RecordSrvsTest, split_bagfile)
 {
   auto & writer = recorder_->get_writer_handle();
   auto & mock_writer = dynamic_cast<MockSequentialWriter &>(writer.get_implementation_handle());
-  bool callback_called = false;
+  std::atomic<bool> callback_called{false};
   std::string closed_file, opened_file;
   rosbag2_cpp::bag_events::WriterEventCallbacks callbacks;
   callbacks.write_split_callback =
     [&callback_called, &closed_file, &opened_file](rosbag2_cpp::bag_events::BagSplitInfo & info) {
       closed_file = info.closed_file;
       opened_file = info.opened_file;
-      callback_called = true;
+      callback_called.store(true);
     };
   mock_writer.add_event_callbacks(callbacks);
 
@@ -297,31 +361,76 @@ TEST_F(RecordSrvsTest, split_bagfile)
     EXPECT_LE((clock::now() - start), timeout) << "Failed to capture messages in time";
   }
 
-  ASSERT_FALSE(callback_called);
+  ASSERT_FALSE(callback_called.load());
   EXPECT_TRUE(successful_service_request<SplitBagfile>(cli_split_bagfile_));
 
   // Confirm that the callback was called and the file names have been sent with the event
-  ASSERT_TRUE(callback_called);
+  ASSERT_TRUE(callback_called.load());
   EXPECT_EQ(closed_file, "BagFile0");
   EXPECT_EQ(opened_file, "BagFile1");
+}
+
+TEST_F(RecordSrvsSimTimeTest, split_bagfile_respects_future_timestamp)
+{
+  auto & writer = recorder_->get_writer_handle();
+  auto & mock_writer = dynamic_cast<MockSequentialWriter &>(writer.get_implementation_handle());
+  std::atomic<bool> callback_called{false};
+  rosbag2_cpp::bag_events::WriterEventCallbacks callbacks;
+  callbacks.write_split_callback =
+    [&callback_called](rosbag2_cpp::bag_events::BagSplitInfo & /*info*/) {
+      callback_called.store(true);
+    };
+  mock_writer.add_event_callbacks(callbacks);
+
+  // Wait for messages to make sure the recorder is actively writing.
+  std::chrono::duration<int> timeout = std::chrono::seconds(10);
+  using clock = std::chrono::steady_clock;
+  auto start = clock::now();
+  while (mock_writer.get_number_of_recorded_messages() == 0) {
+    std::this_thread::sleep_for(std::chrono::milliseconds(30));
+    EXPECT_LE((clock::now() - start), timeout) << "Failed to capture messages in time";
+  }
+
+  // Schedule a split in the future
+  auto request = std::make_shared<SplitBagfile::Request>();
+  auto target_time = current_sim_time_ + rclcpp::Duration(0, 200000000);
+  request->split_time = to_builtin_time(target_time);
+  auto response = std::make_shared<SplitBagfile::Response>();
+  ASSERT_TRUE(successful_service_request<SplitBagfile>(cli_split_bagfile_, request, response));
+
+  // Confirm that the callback has not yet been called
+  EXPECT_FALSE(callback_called.load());
+
+  // Advance time to trigger the scheduled split
+  auto delta = target_time - current_sim_time_;
+  advance_sim_time(delta);
+  ASSERT_TRUE(
+    rosbag2_test_common::wait_until_condition(
+      [&callback_called]() {return callback_called.load();},
+      std::chrono::seconds(2)))
+    << "Timed out waiting for scheduled split to occur.";
 }
 
 TEST_F(RecordSrvsTest, split_bagfile_ignored_when_not_recording)
 {
   auto & writer = recorder_->get_writer_handle();
   auto & mock_writer = dynamic_cast<MockSequentialWriter &>(writer.get_implementation_handle());
-  bool callback_called = false;
+  std::atomic<bool> callback_called{false};
   rosbag2_cpp::bag_events::WriterEventCallbacks callbacks;
   callbacks.write_split_callback =
     [&callback_called](rosbag2_cpp::bag_events::BagSplitInfo & /*info*/) {
-      callback_called = true;
+      callback_called.store(true);
     };
   mock_writer.add_event_callbacks(callbacks);
   ASSERT_TRUE(successful_service_request<Stop>(cli_stop_));
   ASSERT_TRUE(mock_writer.closed_was_called());
-  EXPECT_FALSE(callback_called);
-  EXPECT_TRUE(successful_service_request<SplitBagfile>(cli_split_bagfile_));
-  EXPECT_FALSE(callback_called);
+  EXPECT_FALSE(callback_called.load());
+  auto request = std::make_shared<SplitBagfile::Request>();
+  auto response = std::make_shared<SplitBagfile::Response>();
+  ASSERT_TRUE(successful_service_request<SplitBagfile>(cli_split_bagfile_, request, response));
+  EXPECT_EQ(0, response->return_code);
+  EXPECT_TRUE(response->error_string.empty());
+  EXPECT_FALSE(callback_called.load());
 }
 
 TEST_F(RecordSrvsTest, pause_resume)
@@ -342,6 +451,31 @@ TEST_F(RecordSrvsTest, pause_resume)
   is_paused_response = std::make_shared<IsPaused::Response>();
   EXPECT_TRUE(successful_service_request<IsPaused>(cli_is_paused_, is_paused_response));
   EXPECT_FALSE(is_paused_response->paused);
+}
+
+TEST_F(RecordSrvsSimTimeTest, resume_can_be_scheduled_in_future)
+{
+  ASSERT_TRUE(successful_service_request<Pause>(cli_pause_));
+  ASSERT_TRUE(recorder_->is_paused());
+
+  // Schedule a resume in the future
+  auto request = std::make_shared<Resume::Request>();
+  auto target_time = current_sim_time_ + rclcpp::Duration(0, 200000000);
+  request->resume_time = to_builtin_time(target_time);
+  auto response = std::make_shared<Resume::Response>();
+  ASSERT_TRUE(successful_service_request<Resume>(cli_resume_, request, response));
+
+  // Confirm that the recorder is still paused
+  EXPECT_TRUE(recorder_->is_paused());
+
+  // Advance time to trigger the scheduled resume
+  auto delta = target_time - current_sim_time_;
+  advance_sim_time(delta);
+  ASSERT_TRUE(
+    rosbag2_test_common::wait_until_condition(
+      [this]() {return !recorder_->is_paused();},
+      std::chrono::seconds(2)))
+    << "Timed out waiting for scheduled resume.";
 }
 
 class RecordSrvsDiscoveryTest : public RecordSrvsTest
@@ -423,4 +557,34 @@ TEST_F(RecordSrvsTest, record_with_uri)
   EXPECT_TRUE(record_response->error_string.empty());
 
   EXPECT_EQ(mock_writer.get_storage_options().uri, test_uri);
+}
+
+TEST_F(RecordSrvsSimTimeTest, record_can_be_scheduled_in_future)
+{
+  auto & writer = recorder_->get_writer_handle();
+  auto & mock_writer = dynamic_cast<MockSequentialWriter &>(writer.get_implementation_handle());
+
+  ASSERT_TRUE(successful_service_request<Stop>(cli_stop_));
+  ASSERT_TRUE(mock_writer.closed_was_called());
+
+  // Schedule a record in the future
+  auto request = std::make_shared<Record::Request>();
+  auto target_time = current_sim_time_ + rclcpp::Duration(0, 200000000);
+  request->start_time = to_builtin_time(target_time);
+  auto response = std::make_shared<Record::Response>();
+  ASSERT_TRUE(successful_service_request<Record>(cli_record_, request, response));
+  EXPECT_EQ(0, response->return_code);
+  EXPECT_TRUE(response->error_string.empty());
+
+  // Confirm that the writer is still closed
+  EXPECT_TRUE(mock_writer.closed_was_called());
+
+  // Advance time to trigger the scheduled record start
+  auto delta = target_time - current_sim_time_;
+  advance_sim_time(delta);
+  ASSERT_TRUE(
+    rosbag2_test_common::wait_until_condition(
+      [&mock_writer]() {return !mock_writer.closed_was_called();},
+      std::chrono::seconds(2)))
+    << "Timed out waiting for scheduled record start.";
 }

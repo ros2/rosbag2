@@ -1,1 +1,10 @@
+# Timestamp in the future when to split bag file.
+# If empty or time in the past, split bag file immediately.
+builtin_interfaces/Time split_time
 ---
+# Return code. Returns 1 when recording is not running and split_time is due immediately or
+# in case of error, otherwise 0.
+int32 return_code
+
+# Error string. Empty if no error occurred.
+string error_string

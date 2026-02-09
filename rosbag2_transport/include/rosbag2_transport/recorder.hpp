@@ -126,6 +126,8 @@ public:
   /// \details The record() method will return almost immediately and recording will happen in
   /// background.
   /// \param uri If provided, it will override the storage_options.uri provided during construction.
+  /// \return true if the request successfully started recording.
+  /// \throws std::exception if recording could not be started.
   ROSBAG2_TRANSPORT_PUBLIC
   void record(const std::string & uri = "");
 
@@ -202,6 +204,12 @@ public:
     const rcutils_time_point_value_t & pub_timestamp,
     const rcutils_time_point_value_t & recv_timestamp,
     uint32_t sequence_number = 0);
+
+  //// @brief Split the current bagfile and open a new one.
+  /// @return true if split was successful, false if recording is not active.
+  /// \throws std::exception if underlying writer fails to split the bagfile.
+  ROSBAG2_TRANSPORT_PUBLIC
+  bool split_bagfile();
 
   /// @brief Updates recorder about lost messages on transport layer.
   /// @details This a direct recorder API and this method is expected to be called when messages

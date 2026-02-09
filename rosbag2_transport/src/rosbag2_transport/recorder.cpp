@@ -12,11 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include "rosbag2_transport/recorder.hpp"
+
 #include <algorithm>
 #include <chrono>
 #include <future>
 #include <map>
 #include <memory>
+#include <optional>
+#include <queue>
 #include <regex>
 #include <stdexcept>
 #include <string>
@@ -25,29 +29,24 @@
 #include <utility>
 #include <vector>
 
+#include "builtin_interfaces/msg/time.hpp"
 #include "rcutils/allocator.h"
-
-#include "rclcpp/logging.hpp"
 #include "rclcpp/clock.hpp"
 #include "rclcpp/event.hpp"
-
+#include "rclcpp/logging.hpp"
 #include "rmw/types.h"
-
 #include "rosbag2_cpp/bag_events.hpp"
-#include "rosbag2_cpp/writer.hpp"
 #include "rosbag2_cpp/service_utils.hpp"
-
+#include "rosbag2_cpp/writer.hpp"
 #include "rosbag2_interfaces/srv/snapshot.hpp"
-
-#include "rosbag2_storage/yaml.hpp"
 #include "rosbag2_storage/qos.hpp"
-
+#include "rosbag2_storage/yaml.hpp"
 #include "logging.hpp"
 #include "rosbag2_transport/config_options_from_node_params.hpp"
 #include "rosbag2_transport/reader_writer_factory.hpp"
-#include "rosbag2_transport/topic_filter.hpp"
-#include "rosbag2_transport/recorder.hpp"
+#include "rosbag2_transport/recorder_delayed_action_task_runner.hpp"
 #include "rosbag2_transport/recorder_event_notifier.hpp"
+#include "rosbag2_transport/topic_filter.hpp"
 
 namespace rosbag2_transport
 {
@@ -68,7 +67,7 @@ public:
   /// \details The record(uri) method will return almost immediately and recording will happen in
   /// background.
   /// \param uri If provided, it will override the storage_options.uri provided during construction.
-  void record(const std::string & uri = "");
+  bool record(const std::string & uri = "");
 
   /// @brief Add a new channel (topic) to the rosbag2 writer to be recorded.
   /// \details This is a direct Recorder API equivalent to the rosbag2_cpp::Writer::add_topic().
@@ -162,6 +161,9 @@ public:
   /// The record(uri) can be called again after stop().
   void stop();
 
+  //// @brief Split the current bagfile and open a new one.
+  bool split_bagfile();
+
   /// Get a const reference to the underlying rosbag2 writer.
   const rosbag2_cpp::Writer & get_writer_handle();
 
@@ -252,6 +254,26 @@ private:
     response->error_string = error_string;
   }
 
+  /// \brief Convert a builtin_interfaces::msg::Time to an optional rclcpp::Time.
+  /// \param time_msg The time message to convert.
+  /// \return An optional rclcpp::Time. If time_msg is zero, returns std::nullopt.
+  std::optional<rclcpp::Time> optional_time_from_request(
+    const builtin_interfaces::msg::Time & time_msg) const;
+
+  /// \brief Determine if an action task should be executed immediately based on the target time.
+  /// \param target_time The time at which the action task should be executed.
+  /// \return true if the action task should be executed immediately, false otherwise.
+  bool should_execute_immediately(const std::optional<rclcpp::Time> & target_time) const;
+
+  /// \brief Schedule an action task to be executed at a target time by delayed action task runner.
+  /// \param target_time The time at which the action task should be executed.
+  /// \param action_task The action task to be executed.
+  /// \param description A human-readable description of the action task.
+  void schedule_action_task(
+    const rclcpp::Time & target_time,
+    std::function<void()> action_task,
+    const std::string & description);
+
   rclcpp::Node * node;
   std::unique_ptr<TopicFilter> topic_filter_;
   rclcpp::Event::SharedPtr discovery_graph_event_;
@@ -279,6 +301,7 @@ private:
     KeyboardHandler::invalid_handle;
 
   std::unique_ptr<RecorderEventNotifier> event_notifier_;
+  RecorderDelayedActionTaskRunner action_task_runner_;
   static constexpr int32_t kServiceReturnCodeSuccess = 0;
   static constexpr int32_t kServiceReturnCodeError = 1;
 };
@@ -295,7 +318,8 @@ RecorderImpl::RecorderImpl(
   node(owner),
   paused_(record_options.start_paused),
   keyboard_handler_(std::move(keyboard_handler)),
-  event_notifier_(std::make_unique<RecorderEventNotifier>(node, record_options))
+  event_notifier_(std::make_unique<RecorderEventNotifier>(node, record_options)),
+  action_task_runner_(node)
 {
   event_notifier_->set_messages_lost_statistics_max_publishing_rate(
     record_options.statistics_max_publishing_rate);
@@ -352,6 +376,7 @@ RecorderImpl::RecorderImpl(
   topic_filter_ = std::make_unique<TopicFilter>(record_options, node->get_node_graph_interface(),
       false, static_topics_);
 
+  action_task_runner_.start();
   create_control_services();
 }
 
@@ -362,6 +387,7 @@ RecorderImpl::~RecorderImpl()
   {
     keyboard_handler_->delete_key_press_callback(toggle_paused_key_callback_handle_);
   }
+  action_task_runner_.stop();
   stop();
 }
 
@@ -402,13 +428,13 @@ void RecorderImpl::stop()
   }
 }
 
-void RecorderImpl::record(const std::string & uri)
+bool RecorderImpl::record(const std::string & uri)
 {
   std::lock_guard<std::mutex> state_lock(start_stop_transition_mutex_);
   if (in_recording_) {
     RCLCPP_WARN_STREAM(node->get_logger(),
       "Called Recorder::record(uri) while already in recording, dismissing request.");
-    return;
+    return false;
   }
   if (!uri.empty()) {
     storage_options_.uri = uri;
@@ -508,6 +534,20 @@ void RecorderImpl::record(const std::string & uri)
     RCLCPP_INFO(node->get_logger(), "Recording...");
   }
   in_recording_ = true;
+  return true;
+}
+
+bool RecorderImpl::split_bagfile()
+{
+  std::lock_guard<std::mutex> state_lock(start_stop_transition_mutex_);
+  if (!in_recording_.load()) {
+    RCLCPP_WARN(node->get_logger(),
+    "Received SplitBagfile request while not in recording. Ignoring request.");
+    return false;
+  }
+
+  writer_->split_bagfile();
+  return true;
 }
 
 void RecorderImpl::create_control_services()
@@ -542,19 +582,27 @@ void RecorderImpl::create_control_services()
     "~/split_bagfile",
     [this](
       const std::shared_ptr<rmw_request_id_t>/* request_header */,
-      const std::shared_ptr<rosbag2_interfaces::srv::SplitBagfile::Request>/* request */,
-      const std::shared_ptr<rosbag2_interfaces::srv::SplitBagfile::Response>/* response */)
+      const std::shared_ptr<rosbag2_interfaces::srv::SplitBagfile::Request> request,
+      const std::shared_ptr<rosbag2_interfaces::srv::SplitBagfile::Response> response)
     {
-      std::lock_guard<std::mutex> state_lock(start_stop_transition_mutex_);
-      if (!in_recording_.load()) {
-        RCLCPP_WARN(node->get_logger(),
-          "Received SplitBagfile request while not in recording. Ignoring request.");
-      } else {
+      auto split_time = optional_time_from_request(request->split_time);
+      if (should_execute_immediately(split_time)) {
         try {
-          writer_->split_bagfile();
+          (void)this->split_bagfile();
+          set_service_success(response);
         } catch (const std::exception & e) {
           RCLCPP_ERROR(node->get_logger(), "Error during SplitBagfile request: %s", e.what());
+          set_service_error(response, e.what());
         }
+      } else {
+        auto action_task = [this]() {
+          try {
+            (void)this->split_bagfile();
+          } catch (const std::exception & e) {
+            RCLCPP_ERROR(node->get_logger(), "Error during SplitBagfile request: %s", e.what());
+          }
+        };
+        schedule_action_task(*split_time, std::move(action_task), "split bagfile");
       }
     }
   );
@@ -627,20 +675,31 @@ void RecorderImpl::create_control_services()
       const std::shared_ptr<rosbag2_interfaces::srv::Record::Request> request,
       const std::shared_ptr<rosbag2_interfaces::srv::Record::Response> response)
     {
-      if (in_recording_) {
-        RCLCPP_WARN(node->get_logger(),
-          "Received Record request while already recording. Ignoring request.");
-        set_service_error(response, "Recorder is already recording.");
-      } else {
+      auto start_time = optional_time_from_request(request->start_time);
+      auto uri = request->uri;
+      if (should_execute_immediately(start_time)) {
         try {
-          this->record(request->uri);
-          set_service_success(response);
+          if (this->record(uri)) {
+            set_service_success(response);
+          } else {
+            set_service_error(response, "Error starting on Record request");
+          }
         } catch (const std::exception & e) {
           RCLCPP_ERROR(node->get_logger(), "Error during Record request: %s", e.what());
           set_service_error(response, e.what());
         }
+      } else {
+        auto action_task = [this, uri]() {
+          try {
+            (void)this->record(uri);
+          } catch (const std::exception & e) {
+            RCLCPP_ERROR(node->get_logger(), "Error starting on Record request: %s", e.what());
+          }
+        };
+        schedule_action_task(*start_time, std::move(action_task), "start recording");
+        set_service_success(response);
       }
-    }
+      }
   );
 
   srv_stop_ = node->create_service<rosbag2_interfaces::srv::Stop>(
@@ -683,13 +742,33 @@ void RecorderImpl::create_control_services()
     "~/resume",
     [this](
       const std::shared_ptr<rmw_request_id_t>/* request_header */,
-      const std::shared_ptr<rosbag2_interfaces::srv::Resume::Request>/* request */,
-      const std::shared_ptr<rosbag2_interfaces::srv::Resume::Response>/* response */)
+      const std::shared_ptr<rosbag2_interfaces::srv::Resume::Request> request,
+      const std::shared_ptr<rosbag2_interfaces::srv::Resume::Response> response)
     {
-      std::lock_guard<std::mutex> state_lock(start_stop_transition_mutex_);
-      // Note: We don't check if we are in recording here, as resuming when not recording is no-op
-      // and valid operation that can be used to set the initial state before starting recording.
-      this->resume();
+      auto resume_time = optional_time_from_request(request->resume_time);
+      if (should_execute_immediately(resume_time)) {
+        std::lock_guard<std::mutex> state_lock(start_stop_transition_mutex_);
+        if (!in_recording_.load()) {
+          RCLCPP_WARN(node->get_logger(),
+            "Received Resume request while not in recording. Ignoring request.");
+          set_service_error(response, "Called 'Resume' request while not recording. "
+                                      "Request ignored.");
+        } else {
+          this->resume();
+          set_service_success(response);
+        }
+      } else {
+        auto action_task = [this]() {
+          std::lock_guard<std::mutex> state_lock(start_stop_transition_mutex_);
+          if (!in_recording_.load()) {
+            RCLCPP_WARN(node->get_logger(),
+              "Skipping scheduled Resume request while not recording.");
+            return;
+          }
+          this->resume();
+        };
+        schedule_action_task(*resume_time, std::move(action_task), "resume recording");
+      }
     });
 
   srv_is_paused_ = node->create_service<rosbag2_interfaces::srv::IsPaused>(
@@ -701,6 +780,31 @@ void RecorderImpl::create_control_services()
     {
       response->paused = is_paused();
     });
+}
+
+std::optional<rclcpp::Time> RecorderImpl::optional_time_from_request(
+  const builtin_interfaces::msg::Time & time_msg) const
+{
+  if (time_msg.sec == 0 && time_msg.nanosec == 0) {
+    return std::nullopt;
+  }
+  return rclcpp::Time(time_msg, node->get_clock()->get_clock_type());
+}
+
+bool RecorderImpl::should_execute_immediately(const std::optional<rclcpp::Time> & target_time) const
+{
+  if (!target_time.has_value()) {
+    return true;
+  }
+  return *target_time <= node->now();
+}
+
+void RecorderImpl::schedule_action_task(
+  const rclcpp::Time & target_time,
+  std::function<void()> action_task,
+  const std::string & description)
+{
+  action_task_runner_.schedule(target_time, std::move(action_task), description);
 }
 
 const rosbag2_cpp::Writer & RecorderImpl::get_writer_handle()
@@ -1295,7 +1399,7 @@ Recorder::~Recorder() = default;
 
 void Recorder::record(const std::string & uri)
 {
-  pimpl_->record(uri);
+  (void)pimpl_->record(uri);
 }
 
 void Recorder::add_channel(
@@ -1342,6 +1446,11 @@ void Recorder::write_message(
 {
   pimpl_->write_message(
     std::move(serialized_data), topic_name, pub_timestamp, recv_timestamp, sequence_number);
+}
+
+bool Recorder::split_bagfile()
+{
+  return pimpl_->split_bagfile();
 }
 
 void Recorder::on_messages_lost_in_transport(

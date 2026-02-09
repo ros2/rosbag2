@@ -1,1 +1,11 @@
+# Timestamp in the future when to resume recording.
+# If empty or time in the past, resumes recording immediately.
+# Note: The resume_time is not supported by player and shall be set to zero when using Resume
+# request with player.
+builtin_interfaces/Time resume_time
 ---
+# Return code. Returns 1 when recording is not running or in case of error, otherwise 0.
+int32 return_code
+
+# Error string. Empty if no error occurred.
+string error_string
