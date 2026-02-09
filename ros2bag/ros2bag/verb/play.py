@@ -262,12 +262,9 @@ class PlayVerb(VerbExtension):
         if args.bag_path:
             storage_options.append(StorageOptions(
                 uri=args.bag_path,
-                storage_id=args.storage,
+                storage_id='',
                 storage_config_uri=storage_config_file,
             ))
-            if args.storage:
-                print(print_warn('--storage option is deprecated, use -i,--input to '
-                                 'provide an input bag with a specific storage ID'))
         try:
             storage_options.extend(
                 input_bag_arg_to_storage_options(args.input or [], storage_config_file))
