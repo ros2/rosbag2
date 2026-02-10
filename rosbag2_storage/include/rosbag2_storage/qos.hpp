@@ -57,6 +57,18 @@ public:
   /// \return string representation of this QoS profile.
   [[nodiscard]] std::string to_string() const;
 
+  /// \brief Get a QoS profile suitable for unit tests.
+  /// \param depth The history depth to use.
+  /// \return A reliable QoS profile to be used in most unit tests.
+  static Rosbag2QoS UnitTestQoS(size_t depth = 20)
+  {
+    return Rosbag2QoS(rclcpp::QoS(depth)
+             .reliable()
+             .durability_volatile());
+  }
+
+  /// \brief Get a QoS profile suitable for service events.
+  /// \return A reliable, QoS profile to be used with service events in Rosbag2.
   static Rosbag2QoS EventQoS()
   {
     return Rosbag2QoS(rclcpp::QoS(3)
