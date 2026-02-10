@@ -42,7 +42,9 @@ Node convert<rosbag2_storage::StorageOptions>::encode(
 bool convert<rosbag2_storage::StorageOptions>::decode(
   const Node & node, rosbag2_storage::StorageOptions & storage_options)
 {
-  storage_options.uri = node["uri"].as<std::string>();
+  if (node["uri"] && !node["uri"].IsNull()) {
+    storage_options.uri = node["uri"].as<std::string>();
+  }
   optional_assign<std::string>(node, "storage_id", storage_options.storage_id);
   optional_assign<uint64_t>(node, "max_bagfile_size", storage_options.max_bagfile_size);
   optional_assign<uint64_t>(node, "max_bagfile_duration", storage_options.max_bagfile_duration);

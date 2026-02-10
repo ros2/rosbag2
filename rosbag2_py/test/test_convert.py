@@ -29,7 +29,7 @@ def test_no_toplevel_key(tmpdir):
     with output_options_path.open('w') as f:
         f.write(output_options_content)
     with pytest.raises(RuntimeError):
-        bag_rewrite([], str(output_options_path))
+        bag_rewrite([], '', str(output_options_path))
 
 
 def test_output_bags_not_a_list(tmpdir):
@@ -38,7 +38,7 @@ def test_output_bags_not_a_list(tmpdir):
     with output_options_path.open('w') as f:
         f.write(output_options_content)
     with pytest.raises(RuntimeError):
-        bag_rewrite([], str(output_options_path))
+        bag_rewrite([], '', str(output_options_path))
 
 
 @pytest.mark.parametrize('storage_id', TESTED_STORAGE_IDS)
@@ -65,7 +65,7 @@ output_bags:
 """
     with output_options_path.open('w') as f:
         f.write(output_options_content)
-    bag_rewrite(input_options, str(output_options_path))
+    bag_rewrite(input_options, '', str(output_options_path))
     assert output_uri_1.exists()
     assert output_uri_1.isdir()
     assert (output_uri_1 / 'metadata.yaml').exists()
@@ -73,3 +73,84 @@ output_bags:
     assert output_uri_2.exists()
     assert output_uri_2.isdir()
     assert (output_uri_2 / 'metadata.yaml').exists()
+
+
+@pytest.mark.parametrize('storage_id', TESTED_STORAGE_IDS)
+def test_input_options_yaml_parsing(tmpdir, storage_id):
+    """Test that input options can be loaded from YAML file."""
+    bag_a_path = RESOURCES_PATH / storage_id / 'convert_a'
+    bag_b_path = RESOURCES_PATH / storage_id / 'convert_b'
+
+    # Write input options YAML
+    input_options_path = tmpdir / 'input_options.yml'
+    input_options_content = f"""
+input_bags:
+- uri: {bag_a_path}
+  storage_id: {storage_id}
+- uri: {bag_b_path}
+  storage_id: {storage_id}
+"""
+    with input_options_path.open('w') as f:
+        f.write(input_options_content)
+
+    # Write output YAML
+    output_uri = tmpdir / storage_id / 'converted_from_input_yaml'
+    output_options_path = tmpdir / 'out.yml'
+    output_options_content = f"""
+output_bags:
+- uri: {output_uri}
+  storage_id: {storage_id}
+  all_topics: true
+  all_services: true
+"""
+    with output_options_path.open('w') as f:
+        f.write(output_options_content)
+
+    # Call bag_rewrite with input config file (empty input_options vector)
+    bag_rewrite([], str(input_options_path), str(output_options_path))
+
+    assert output_uri.exists()
+    assert os.path.isdir(output_uri)
+    assert (output_uri / 'metadata.yaml').exists()
+
+
+def test_input_options_yaml_missing_uri(tmpdir):
+    """Test that missing URI in input YAML raises error."""
+    input_options_path = tmpdir / 'bad_input.yml'
+    input_options_content = """
+input_bags:
+- storage_id: mcap
+"""
+    with input_options_path.open('w') as f:
+        f.write(input_options_content)
+
+    output_options_path = tmpdir / 'out.yml'
+    output_options_content = """
+output_bags:
+- uri: /tmp/test
+  storage_id: mcap
+  all_topics: true
+"""
+    with output_options_path.open('w') as f:
+        f.write(output_options_content)
+
+    with pytest.raises(RuntimeError,
+                       match="Input bag StorageOptions must specify a non-empty 'uri'."):
+        bag_rewrite([], str(input_options_path), str(output_options_path))
+
+
+def test_both_input_sources_provided(tmpdir):
+    """Test that providing both input_options and input_config_file raises error."""
+    bag_path = RESOURCES_PATH / TESTED_STORAGE_IDS[0] / 'convert_a'
+    input_options = [StorageOptions(uri=str(bag_path))]
+
+    input_config_path = tmpdir / 'input.yml'
+    with input_config_path.open('w') as f:
+        f.write('input_bags: []')
+
+    output_options_path = tmpdir / 'out.yml'
+    with output_options_path.open('w') as f:
+        f.write('output_bags: []')
+
+    with pytest.raises(RuntimeError, match='Exactly one input source must be provided.*'):
+        bag_rewrite(input_options, str(input_config_path), str(output_options_path))

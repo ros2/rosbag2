@@ -248,6 +248,89 @@ TEST_P(TestRewrite, test_compress) {
   EXPECT_TRUE(fs::is_regular_file(first_storage));
 }
 
+TEST_P(TestRewrite, test_cut_single_topic_with_start_and_end_time) {
+  use_input_a();
+
+  // Scan input bag for a single topic (a_empty) to compute expected counts in a time window
+  rosbag2_storage::StorageOptions scan_opts = input_bags_[0];
+  auto scan_reader = rosbag2_transport::ReaderWriterFactory::make_reader(scan_opts);
+  scan_reader->open(scan_opts);
+
+  std::vector<rcutils_time_point_value_t> timestamps;
+  while (scan_reader->has_next()) {
+    auto msg = scan_reader->read_next();
+    if (msg && msg->topic_name == "a_empty") {
+      timestamps.push_back(msg->recv_timestamp);
+    }
+  }
+  ASSERT_THAT(timestamps, SizeIs(Ge(4u)));
+
+  // Choose a mid-window based on observed timestamps
+  // Window: [input_start_time, input_end_time],
+  // expecting messages with recv_timestamp >= input_start_time and <= input_end_time
+  auto input_start_time = timestamps[timestamps.size() / 4];
+  auto input_end_time = timestamps[(timestamps.size() * 3) / 4];
+
+  size_t expected_msg_count = 0;
+  for (auto current_timestamp : timestamps) {
+    // Note: In the test bag there are multiple messages with the same timestamp as the start and
+    // end time. We will count all of them to include all messages in the [t_start, t_end] interval.
+    if (current_timestamp >= input_start_time && current_timestamp <= input_end_time) {
+      expected_msg_count++;
+    }
+  }
+
+  // Prepare output with topic filter to just a_empty
+  rosbag2_storage::StorageOptions output_storage;
+  output_storage.uri = (output_dir_ / "cut_window").string();
+  output_storage.storage_id = storage_id_;
+  rosbag2_transport::RecordOptions record_options;
+  record_options.all_topics = false;
+  record_options.topics = {"a_empty"};
+  output_bags_.emplace_back(output_storage, record_options);
+
+  // Apply cutting limits on input reader
+  input_bags_[0].start_time_ns = input_start_time;
+  input_bags_[0].end_time_ns = input_end_time;
+
+  rosbag2_transport::bag_rewrite(input_bags_, output_bags_);
+
+  auto reader = rosbag2_transport::ReaderWriterFactory::make_reader(output_storage);
+  reader->open(output_storage);
+  const auto metadata = reader->get_metadata();
+  EXPECT_THAT(metadata.topics_with_message_count, SizeIs(1));
+  EXPECT_EQ(metadata.topics_with_message_count[0].topic_metadata.name, "a_empty");
+
+  EXPECT_EQ(metadata.message_count, expected_msg_count) <<
+    "input_start_time: " << input_start_time << ", input_end_time: " << input_end_time;
+
+  // If the count is wrong, print out timestamps for debugging
+  if (metadata.message_count != expected_msg_count) {
+    // Print first and last timestamp for debugging
+    auto first_msg = reader->read_next();
+    auto last_msg = first_msg;
+    size_t msg_count = 1;
+    std::cerr << "Output msg timestamp: " << first_msg->recv_timestamp <<
+      " msg_count: " << msg_count << std::endl;
+    while (reader->has_next()) {
+      msg_count++;
+      last_msg = reader->read_next();
+      std::cerr << "Output msg timestamp: " << last_msg->recv_timestamp <<
+        " msg_count: " << msg_count << std::endl;
+    }
+    std::cerr << "First msg timestamp: " << first_msg->recv_timestamp << std::endl;
+    std::cerr << "Last msg timestamp: " << last_msg->recv_timestamp << std::endl;
+    std::cerr << "Message count: " << msg_count << std::endl;
+    // Print original timestamps for debugging
+    std::cerr << std::endl << "Original timestamps:" << std::endl;
+    msg_count = 0;
+    for (auto ts : timestamps) {
+      msg_count++;
+      std::cerr << "Original msg timestamp: " << ts << " msg_count: " << msg_count << std::endl;
+    }
+  }
+}
+
 INSTANTIATE_TEST_SUITE_P(
   ParametrizedRewriteTests,
   TestRewrite,

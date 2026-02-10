@@ -64,7 +64,9 @@ public:
   // Defaults to disabled.
   bool snapshot_mode = false;
 
-  // Start and end time for cutting
+  // Start and end time for cutting. Used in the writers to limit the range of stored messages.
+  // As well as in the "ros2 bag convert" CLI aka "bag_rewrite" utility to limit the range of the
+  // reading and writing messages.
   int64_t start_time_ns = -1;
   int64_t end_time_ns = -1;
 
