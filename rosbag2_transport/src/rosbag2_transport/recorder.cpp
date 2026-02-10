@@ -44,7 +44,7 @@
 #include "logging.hpp"
 #include "rosbag2_transport/config_options_from_node_params.hpp"
 #include "rosbag2_transport/reader_writer_factory.hpp"
-#include "rosbag2_transport/recorder_delayed_action_task_runner.hpp"
+#include "rosbag2_transport/delayed_action_task_runner.hpp"
 #include "rosbag2_transport/recorder_event_notifier.hpp"
 #include "rosbag2_transport/topic_filter.hpp"
 
@@ -301,7 +301,7 @@ private:
     KeyboardHandler::invalid_handle;
 
   std::unique_ptr<RecorderEventNotifier> event_notifier_;
-  RecorderDelayedActionTaskRunner action_task_runner_;
+  DelayedActionTaskRunner action_task_runner_;
   static constexpr int32_t kServiceReturnCodeSuccess = 0;
   static constexpr int32_t kServiceReturnCodeError = 1;
 };

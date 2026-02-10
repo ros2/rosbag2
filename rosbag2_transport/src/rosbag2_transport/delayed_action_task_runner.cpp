@@ -12,32 +12,31 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "rosbag2_transport/recorder_delayed_action_task_runner.hpp"
-
 #include <utility>
 
-#include "recorder_delayed_action_task_runner_impl.hpp"
+#include "rosbag2_transport/delayed_action_task_runner.hpp"
+#include "delayed_action_task_runner_impl.hpp"
 
 namespace rosbag2_transport
 {
 
-RecorderDelayedActionTaskRunner::RecorderDelayedActionTaskRunner(rclcpp::Node * node)
-: pimpl_(std::make_unique<RecorderDelayedActionTaskRunnerImpl>(node))
+DelayedActionTaskRunner::DelayedActionTaskRunner(rclcpp::Node * node)
+: pimpl_(std::make_unique<DelayedActionTaskRunnerImpl>(node))
 {}
 
-RecorderDelayedActionTaskRunner::~RecorderDelayedActionTaskRunner() = default;
+DelayedActionTaskRunner::~DelayedActionTaskRunner() = default;
 
-void RecorderDelayedActionTaskRunner::start()
+void DelayedActionTaskRunner::start()
 {
   pimpl_->start();
 }
 
-void RecorderDelayedActionTaskRunner::stop()
+void DelayedActionTaskRunner::stop()
 {
   pimpl_->stop();
 }
 
-void RecorderDelayedActionTaskRunner::schedule(
+void DelayedActionTaskRunner::schedule(
   const rclcpp::Time & scheduled_time,
   std::function<void()> action,
   const std::string & description)

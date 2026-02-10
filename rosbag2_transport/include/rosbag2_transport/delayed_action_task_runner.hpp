@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef ROSBAG2_TRANSPORT__RECORDER_DELAYED_ACTION_TASK_RUNNER_HPP_
-#define ROSBAG2_TRANSPORT__RECORDER_DELAYED_ACTION_TASK_RUNNER_HPP_
+#ifndef ROSBAG2_TRANSPORT__DELAYED_ACTION_TASK_RUNNER_HPP_
+#define ROSBAG2_TRANSPORT__DELAYED_ACTION_TASK_RUNNER_HPP_
 
 #include <functional>
 #include <memory>
@@ -28,18 +28,18 @@ class Node;
 
 namespace rosbag2_transport
 {
-class RecorderDelayedActionTaskRunnerImpl;
-/// @brief Background helper that runs recorder actions at specific ROS times.
+class DelayedActionTaskRunnerImpl;
+/// @brief Background helper that runs actions at specific ROS times.
 /// @details Uses a dedicated thread with a priority queue to execute callbacks once the
 /// recorder node clock reaches a scheduled timestamp. Keeps the recorder waitset/service
 /// threads free from long sleeps.
-class RecorderDelayedActionTaskRunner
+class DelayedActionTaskRunner
 {
 public:
   /// @brief Construct a runner bound to the provided node.
   /// @param node Node used for logging and to query current time.
-  explicit RecorderDelayedActionTaskRunner(rclcpp::Node * node);
-  ~RecorderDelayedActionTaskRunner();
+  explicit DelayedActionTaskRunner(rclcpp::Node * node);
+  ~DelayedActionTaskRunner();
 
   /// @brief Start the background thread.
   /// @note Subsequent calls are no-ops while the thread is running.
@@ -59,9 +59,9 @@ public:
     const std::string & description);
 
 private:
-  std::unique_ptr<RecorderDelayedActionTaskRunnerImpl> pimpl_;
+  std::unique_ptr<DelayedActionTaskRunnerImpl> pimpl_;
 };
 
 }  // namespace rosbag2_transport
 
-#endif  // ROSBAG2_TRANSPORT__RECORDER_DELAYED_ACTION_TASK_RUNNER_HPP_
+#endif  // ROSBAG2_TRANSPORT__DELAYED_ACTION_TASK_RUNNER_HPP_

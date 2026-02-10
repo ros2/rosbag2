@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef ROSBAG2_TRANSPORT__RECORDER_DELAYED_ACTION_TASK_RUNNER_IMPL_HPP_
-#define ROSBAG2_TRANSPORT__RECORDER_DELAYED_ACTION_TASK_RUNNER_IMPL_HPP_
+#ifndef ROSBAG2_TRANSPORT__DELAYED_ACTION_TASK_RUNNER_IMPL_HPP_
+#define ROSBAG2_TRANSPORT__DELAYED_ACTION_TASK_RUNNER_IMPL_HPP_
 
 #include <atomic>
 #include <chrono>
@@ -32,14 +32,14 @@
 namespace rosbag2_transport
 {
 
-class RecorderDelayedActionTaskRunnerImpl
+class DelayedActionTaskRunnerImpl
 {
 public:
-  explicit RecorderDelayedActionTaskRunnerImpl(rclcpp::Node * node)
+  explicit DelayedActionTaskRunnerImpl(rclcpp::Node * node)
   : node_(node)
   {}
 
-  ~RecorderDelayedActionTaskRunnerImpl()
+  ~DelayedActionTaskRunnerImpl()
   {
     stop();
   }
@@ -48,8 +48,8 @@ public:
   {
     std::lock_guard<std::mutex> state_lock(start_stop_mutex_);
     if (is_running_.exchange(true)) {
-      RCLCPP_ERROR(node_->get_logger(),
-                  "RecorderDelayedActionTaskRunner is already running");
+      RCLCPP_WARN(node_->get_logger(),
+                  "DelayedActionTaskRunner is already running");
       return;
     }
 
@@ -57,7 +57,7 @@ public:
     if (thread_.joinable()) {
       RCLCPP_WARN(
         node_->get_logger(),
-        "RecorderDelayedActionTaskRunner thread is joinable but was "
+        "DelayedActionTaskRunner thread is joinable but was "
         "marked as not running. Joining...");
       exit_.store(true);
       cv_.notify_all();
@@ -66,15 +66,13 @@ public:
 
     setup_clock_jump_callback();
     exit_.store(false);
-    thread_ = std::thread(&RecorderDelayedActionTaskRunnerImpl::thread_main, this);
+    thread_ = std::thread(&DelayedActionTaskRunnerImpl::thread_main, this);
   }
 
   void stop()
   {
     std::lock_guard<std::mutex> state_lock(start_stop_mutex_);
     if (!is_running_.exchange(false)) {
-      RCLCPP_ERROR(node_->get_logger(),
-                  "RecorderDelayedActionTaskRunner is already stopped");
       return;
     }
 
@@ -95,14 +93,14 @@ public:
     std::function<void()> action_task,
     const std::string & description)
   {
-    ScheduledActionTask scheduled_action_task{
-      scheduled_time,
-      std::move(action_task),
-      description,
-      next_id_++
-    };
     {
       std::lock_guard<std::mutex> lock(mutex_);
+      ScheduledActionTask scheduled_action_task{
+        scheduled_time,
+        std::move(action_task),
+        description,
+        next_id_++
+      };
       queue_.push(std::move(scheduled_action_task));
     }
     cv_.notify_all();
@@ -215,7 +213,7 @@ private:
     } catch (...) {
       RCLCPP_ERROR(
         node_->get_logger(),
-        "Scheduled action_task '%s' failed due to an unknown error.",
+        "Scheduled action_task '%s' failed due to unknown error.",
           action_task.description.c_str());
     }
   }
@@ -256,4 +254,4 @@ private:
 
 }  // namespace rosbag2_transport
 
-#endif  // ROSBAG2_TRANSPORT__RECORDER_DELAYED_ACTION_TASK_RUNNER_IMPL_HPP_
+#endif  // ROSBAG2_TRANSPORT__DELAYED_ACTION_TASK_RUNNER_IMPL_HPP_
