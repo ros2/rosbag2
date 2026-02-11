@@ -57,6 +57,9 @@ Node convert<rosbag2_transport::RecordOptions>::encode(
   node["include_hidden_topics"] = record_options.include_hidden_topics;
   node["include_unpublished_topics"] = record_options.include_unpublished_topics;
   node["disable_keyboard_controls"] = record_options.disable_keyboard_controls;
+  node["ignore_leaf_topics"] = record_options.ignore_leaf_topics;
+  node["start_paused"] = record_options.start_paused;
+  node["use_sim_time"] = record_options.use_sim_time;
   return node;
 }
 
@@ -124,6 +127,9 @@ bool convert<rosbag2_transport::RecordOptions>::decode(
   optional_assign<bool>(
     node, "disable_keyboard_controls",
     record_options.disable_keyboard_controls);
+  optional_assign<bool>(node, "ignore_leaf_topics", record_options.ignore_leaf_topics);
+  optional_assign<bool>(node, "start_paused", record_options.start_paused);
+  optional_assign<bool>(node, "use_sim_time", record_options.use_sim_time);
   return true;
 }
 
