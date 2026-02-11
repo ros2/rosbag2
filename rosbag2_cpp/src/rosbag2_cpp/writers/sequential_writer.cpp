@@ -542,23 +542,23 @@ void SequentialWriter::delete_oldest_files_if_needed()
         ROSBAG2_CPP_LOG_INFO(
           "Deleted oldest bagfile: %s (%lu bytes, %lu ns)",
           oldest_file.path.c_str(), file_size, file_duration_ns);
-      }
 
-      // Adjust per-topic message counts to reflect only retained files
-      const auto & oldest_topic_counts = per_file_topic_message_counts_.front();
-      for (const auto & [topic_name, count] : oldest_topic_counts) {
-        auto it = topics_names_to_info_.find(topic_name);
-        if (it != topics_names_to_info_.end()) {
-          auto & topic_info = it->second;
-          topic_info.message_count -= count;
+        // Adjust per-topic message counts to reflect only retained files
+        const auto & oldest_topic_counts = per_file_topic_message_counts_.front();
+        for (const auto & [topic_name, count] : oldest_topic_counts) {
+          auto it = topics_names_to_info_.find(topic_name);
+          if (it != topics_names_to_info_.end()) {
+            auto & topic_info = it->second;
+            topic_info.message_count -= count;
+          }
         }
-      }
-      per_file_topic_message_counts_.pop_front();
+        per_file_topic_message_counts_.pop_front();
 
-      // Remove from metadata
-      metadata_.relative_file_paths.erase(metadata_.relative_file_paths.begin());
-      metadata_.files.erase(metadata_.files.begin());
-      metadata_.starting_time = metadata_.files.front().starting_time;
+        // Remove from metadata
+        metadata_.relative_file_paths.erase(metadata_.relative_file_paths.begin());
+        metadata_.files.erase(metadata_.files.begin());
+        metadata_.starting_time = metadata_.files.front().starting_time;
+      }
     }
   }
 }
