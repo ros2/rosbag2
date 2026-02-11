@@ -15,6 +15,7 @@
 #ifndef ROSBAG2_CPP__WRITERS__SEQUENTIAL_WRITER_HPP_
 #define ROSBAG2_CPP__WRITERS__SEQUENTIAL_WRITER_HPP_
 
+#include <deque>
 #include <memory>
 #include <mutex>
 #include <string>
@@ -197,9 +198,15 @@ protected:
   // Per-file per-topic message counts for accurate adjustment during circular deletion.
   // Each element corresponds to a file in metadata_.files (same index).
   // Used to decrement topics_names_to_info_ counts when oldest files are pruned.
-  std::vector<std::unordered_map<std::string, size_t>> per_file_topic_message_counts_;
+  std::deque<std::unordered_map<std::string, size_t>> per_file_topic_message_counts_;
 
-  // Delete oldest bagfiles if split count exceeds limit
+  /**
+   * Delete oldest bagfiles if the number of files exceeds the max_bag_files limit.
+   *
+   * Only called after split_bagfile(), so max_bagfile_size is guaranteed to be set.
+   * Adjusts per-topic message counts in topics_names_to_info_, which are used to
+   * compute metadata.message_count and topics_with_message_count during finalization.
+   */
   void delete_oldest_files_if_needed();
 
   // Checks if the current recording bagfile needs to be split and rolled over to a new file.
