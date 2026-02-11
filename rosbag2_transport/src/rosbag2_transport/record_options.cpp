@@ -60,6 +60,9 @@ Node convert<rosbag2_transport::RecordOptions>::encode(
   node["topic_qos_profile_overrides"] = qos_overrides;
   node["include_hidden_topics"] = record_options.include_hidden_topics;
   node["include_unpublished_topics"] = record_options.include_unpublished_topics;
+  node["ignore_leaf_topics"] = record_options.ignore_leaf_topics;
+  node["start_paused"] = record_options.start_paused;
+  node["use_sim_time"] = record_options.use_sim_time;
   return node;
 }
 
@@ -91,6 +94,9 @@ bool convert<rosbag2_transport::RecordOptions>::decode(
   optional_assign<bool>(
     node, "include_unpublished_topics",
     record_options.include_unpublished_topics);
+  optional_assign<bool>(node, "ignore_leaf_topics", record_options.ignore_leaf_topics);
+  optional_assign<bool>(node, "start_paused", record_options.start_paused);
+  optional_assign<bool>(node, "use_sim_time", record_options.use_sim_time);
   return true;
 }
 
