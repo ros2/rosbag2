@@ -81,17 +81,10 @@ public:
   /// \brief Disable keyboard controls if true. This parameter is only used during construction of
   /// the Recorder class to decide whether to initialize KeyboardHandler class or not.
   bool disable_keyboard_controls = false;
-<<<<<<< HEAD
-=======
-  /// \brief Maximum rate in times per second (Hz) at which the statistics about lost messages
-  /// will be published. If set to 0, no statistics will be published. The value must be greater
-  /// than or equal to 0 and less than or equal to 1000.
-  float statistics_max_publishing_rate = 1.0f;
 
   /// Note: Please don't forget to update the YAML serialization and deserialization logic in
   /// `record_options.cpp` and the test case `test_yaml_serialization_deserialization`
   /// in `test_record_options.cpp` when updating the fields in RecordOptions.
->>>>>>> 1a684e2 (Add missing "RecordOptions" fields to the encode/decode functions (#2334))
 };
 
 }  // namespace rosbag2_transport

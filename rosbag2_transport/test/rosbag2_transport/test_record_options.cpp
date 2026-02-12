@@ -51,9 +51,7 @@ TEST(record_options, test_yaml_serialization_deserialization)
   original.ignore_leaf_topics = true;
   original.start_paused = true;
   original.use_sim_time = true;
-  original.static_topics_uri = "/static/topics.yaml";
   original.disable_keyboard_controls = true;
-  original.statistics_max_publishing_rate = 5.0f;
 
   auto node = YAML::convert<rosbag2_transport::RecordOptions>::encode(original);
 
@@ -76,10 +74,6 @@ TEST(record_options, test_yaml_serialization_deserialization)
   CHECK(exclude_service_events);
   CHECK(exclude_actions);
   CHECK(rmw_serialization_format);
-<<<<<<< HEAD
-=======
-  CHECK(input_serialization_format);
-  CHECK(output_serialization_format);
   CHECK(topic_polling_interval);
   CHECK(regex);
   CHECK(exclude_regex);
@@ -95,12 +89,7 @@ TEST(record_options, test_yaml_serialization_deserialization)
   CHECK(ignore_leaf_topics);
   CHECK(start_paused);
   CHECK(use_sim_time);
-  CHECK(static_topics_uri);
   CHECK(disable_keyboard_controls);
->>>>>>> 1a684e2 (Add missing "RecordOptions" fields to the encode/decode functions (#2334))
-  #undef CHECK
-  ASSERT_FLOAT_EQ(original.statistics_max_publishing_rate,
-                  reconstructed.statistics_max_publishing_rate);
 }
 
 TEST(record_options, test_yaml_decode_for_all_and_exclude)
