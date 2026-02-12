@@ -63,11 +63,7 @@ def add_recorder_arguments(parser: ArgumentParser) -> None:
         help="Storage identifier to be used, defaults to '%(default)s'.")
 
     # Topic filter arguments
-    topics_args_group = parser.add_mutually_exclusive_group()
-    topics_args_group.add_argument(
-        'topics_positional', type=str, default=[], metavar='[Topic ...]', nargs='*',
-        help='Space-delimited list of topics to record. (deprecated)')
-    topics_args_group.add_argument(
+    parser.add_argument(
         '--topics', type=str, default=[], metavar='Topic', nargs='+',
         help='Space-delimited list of topics to record.')
     parser.add_argument(
@@ -272,11 +268,6 @@ def check_necessary_argument(args):
 
 
 def validate_parsed_arguments(args, uri) -> str:
-    if args.topics_positional:
-        print(print_warn('Positional "topics" argument deprecated. '
-                         'Please use optional "--topics" argument instead.'), flush=True)
-        args.topics = args.topics_positional
-
     if not check_necessary_argument(args):
         return print_error('Need to specify at least one option out of --all, --all-topics, '
                            '--all-services, --services, --topics, --topic-types,'

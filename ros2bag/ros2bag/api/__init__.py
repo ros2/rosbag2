@@ -184,18 +184,12 @@ def add_standard_multi_reader_args(parser: ArgumentParser) -> None:
     """
     # Let user provide an input bag path using an optional positional arg, but require them to use
     # --input to provide an input bag with a specific storage ID
-    reader_choices = rosbag2_py.get_registered_readers()
     parser.add_argument(
         'bag_path',
         nargs='?',
         type=check_path_exists,
         help='Bag to open. '
              'Use --input instead to provide an input bag with a specific storage ID.')
-    parser.add_argument(
-        '-s', '--storage', default='', choices=reader_choices,
-        help='Storage implementation of bag. '
-             'By default attempts to detect automatically - use this argument to override.'
-             ' (deprecated: use --input to provide an input bag with a specific storage ID)')
     add_multi_bag_input_arg(parser, required=False)
 
 

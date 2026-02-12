@@ -33,16 +33,6 @@ def test_arguments_parser():
     return parser
 
 
-def test_recorder_positional_topics_list_argument(test_arguments_parser):
-    """Test recorder positional topics list argument parser."""
-    output_path = RESOURCES_PATH / 'ros2bag_tmp_file'
-    args = test_arguments_parser.parse_args(
-        ['topic1', 'topic2', '--output', output_path.as_posix()]
-    )
-    assert ['topic1', 'topic2'] == args.topics_positional
-    assert output_path.as_posix() == args.output
-
-
 def test_recorder_optional_topics_list_argument(test_arguments_parser):
     """Test recorder optional --topics list argument parser."""
     output_path = RESOURCES_PATH / 'ros2bag_tmp_file'
@@ -73,25 +63,25 @@ def test_recorder_actions_list_argument(test_arguments_parser):
     assert output_path.as_posix() == args.output
 
 
-def test_recorder_services_and_positional_topics_list_arguments(test_arguments_parser):
-    """Test recorder --services list and positional topics list arguments parser."""
+def test_recorder_services_and_topics_list_arguments(test_arguments_parser):
+    """Test recorder --services list and --topics list arguments parser."""
     output_path = RESOURCES_PATH / 'ros2bag_tmp_file'
     args = test_arguments_parser.parse_args(
         ['--output', output_path.as_posix(),
-         '--services', 'service1', 'service2', '--', 'topic1', 'topic2'])
+         '--services', 'service1', 'service2', '--topics', 'topic1', 'topic2'])
     assert ['service1', 'service2'] == args.services
-    assert ['topic1', 'topic2'] == args.topics_positional
+    assert ['topic1', 'topic2'] == args.topics
     assert output_path.as_posix() == args.output
 
 
-def test_recorder_actions_and_positional_topics_list_arguments(test_arguments_parser):
-    """Test recorder --actions list and positional topics list arguments parser."""
+def test_recorder_actions_and_topics_list_arguments(test_arguments_parser):
+    """Test recorder --actions list and --topics list arguments parser."""
     output_path = RESOURCES_PATH / 'ros2bag_tmp_file'
     args = test_arguments_parser.parse_args(
         ['--output', output_path.as_posix(),
-         '--actions', 'action1', 'action2', '--', 'topic1', 'topic2'])
+         '--actions', 'action1', 'action2', '--topics', 'topic1', 'topic2'])
     assert ['action1', 'action2'] == args.actions
-    assert ['topic1', 'topic2'] == args.topics_positional
+    assert ['topic1', 'topic2'] == args.topics
     assert output_path.as_posix() == args.output
 
 
