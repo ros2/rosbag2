@@ -39,6 +39,13 @@ public:
   // A value of 0 indicates that bagfile splitting will not be used.
   uint64_t max_bagfile_duration = 0;
 
+  // Maximum number of bag files to retain before deleting the oldest.
+  // A value of 0 disables deletion (unlimited files).
+  // This feature is only available when the bag split is active.
+  // Requires --max-bag-size or --max-bag-duration to be set or usage of the bag split via
+  // direct recorder API or service calls.
+  uint64_t max_bag_files = 0;
+
   // The cache size. Indicates how many messages can maximally be held in cache before these being
   // written to disk. Works together with max_cache_duration bound if set.
   // A value of 0 disables size-based caching and every write happens directly to disk if

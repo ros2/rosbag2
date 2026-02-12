@@ -88,6 +88,7 @@ PYBIND11_MODULE(_storage, m) {
         std::string storage_id,
         uint64_t max_bagfile_size,
         uint64_t max_bagfile_duration,
+        uint64_t max_bag_files,
         uint64_t max_cache_size,
         uint32_t max_cache_duration,
         std::string storage_preset_profile,
@@ -102,6 +103,7 @@ PYBIND11_MODULE(_storage, m) {
           std::move(storage_id),
           max_bagfile_size,
           max_bagfile_duration,
+          max_bag_files,
           max_cache_size,
           max_cache_duration,
           std::move(storage_preset_profile),
@@ -116,6 +118,7 @@ PYBIND11_MODULE(_storage, m) {
     pybind11::arg("storage_id") = "",
     pybind11::arg("max_bagfile_size") = 0,
     pybind11::arg("max_bagfile_duration") = 0,
+    pybind11::arg("max_bag_files") = 0,
     pybind11::arg("max_cache_size") = 0,
     pybind11::arg("max_cache_duration") = 0,
     pybind11::arg("storage_preset_profile") = "",
@@ -132,6 +135,9 @@ PYBIND11_MODULE(_storage, m) {
   .def_readwrite(
     "max_bagfile_duration",
     &rosbag2_storage::StorageOptions::max_bagfile_duration)
+  .def_readwrite(
+    "max_bag_files",
+    &rosbag2_storage::StorageOptions::max_bag_files)
   .def_readwrite(
     "max_cache_size",
     &rosbag2_storage::StorageOptions::max_cache_size)

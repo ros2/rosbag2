@@ -1108,6 +1108,114 @@ TEST_F(SequentialWriterTest, split_event_calls_on_writer_close)
   EXPECT_TRUE(opened_file.empty());
 }
 
+TEST_F(SequentialWriterTest, circular_logging_limits_number_of_files_by_max_bag_files)
+{
+  // Configure frequent splits and a small retention window
+  const uint64_t max_bagfile_size = 6;   // split every 6 writes (even for 2 topics)
+  const uint64_t max_bag_files = 3;      // retain at most 3 files
+  const int message_count = 30;          // enough writes to exceed retention
+
+  auto sequential_writer = std::make_unique<rosbag2_cpp::writers::SequentialWriter>(
+    std::move(storage_factory_), converter_factory_, std::move(metadata_io_));
+  writer_ = std::make_unique<rosbag2_cpp::Writer>(std::move(sequential_writer));
+
+  auto message1 = std::make_shared<rosbag2_storage::SerializedBagMessage>();
+  message1->topic_name = "test_topic_1";
+  auto message2 = std::make_shared<rosbag2_storage::SerializedBagMessage>();
+  message2->topic_name = "test_topic_2";
+
+  storage_options_.max_cache_size = 0;             // direct writes
+  storage_options_.max_bagfile_size = max_bagfile_size;
+  storage_options_.max_bag_files = max_bag_files;  // enable bag file count circular limit
+
+  writer_->open(storage_options_, {"rmw_format", "rmw_format"});
+  writer_->create_topic({0u, "test_topic_1", "test_msgs/BasicTypes", "", {}, ""});
+  writer_->create_topic({0u, "test_topic_2", "test_msgs/BasicTypes", "", {}, ""});
+
+  // Alternate messages between topics
+  for (int i = 0; i < message_count; ++i) {
+    writer_->write((i % 2 == 0) ? message1 : message2);
+  }
+  writer_->close();
+
+  // After circular deletion, only max_bag_files files should remain in metadata
+  ASSERT_LE(fake_metadata_.files.size(), max_bag_files);
+  ASSERT_EQ(fake_metadata_.files.size(), fake_metadata_.relative_file_paths.size());
+
+  // Verify message counts reflect only retained files (not full session totals)
+  // 30 messages / 6 per file = 5 files total, 2 deleted, 3 retained with 6 messages each
+  const size_t expected_total_count = max_bag_files * max_bagfile_size;  // 18 total
+  const size_t expected_per_topic_count = expected_total_count / 2;       // 9 per topic
+  EXPECT_EQ(fake_metadata_.message_count, expected_total_count);
+
+  // Verify per-topic message counts are also adjusted correctly
+  ASSERT_EQ(fake_metadata_.topics_with_message_count.size(), 2u);
+  size_t topic1_count = 0, topic2_count = 0;
+  for (const auto & topic_info : fake_metadata_.topics_with_message_count) {
+    if (topic_info.topic_metadata.name == "test_topic_1") {
+      topic1_count = topic_info.message_count;
+    } else if (topic_info.topic_metadata.name == "test_topic_2") {
+      topic2_count = topic_info.message_count;
+    }
+  }
+  EXPECT_EQ(topic1_count, expected_per_topic_count);
+  EXPECT_EQ(topic2_count, expected_per_topic_count);
+}
+
+TEST_P(
+  ParametrizedTemporaryDirectoryFixture,
+  circular_logging_deletes_oldest_files_with_real_storage)
+{
+  // Integration test: verify max_bag_files actually deletes files from disk
+  const uint64_t max_bag_files = 3;
+  const size_t total_files_to_create = 6;
+  std::string topic_name = "circular_bag_topic";
+
+  rosbag2_storage::StorageOptions storage_options;
+  storage_options.uri = (fs::path(temporary_dir_path_) / "circular_bag").generic_string();
+  storage_options.storage_id = GetParam();
+  storage_options.max_bag_files = max_bag_files;
+
+  rosbag2_cpp::writers::SequentialWriter writer{};
+  writer.open(storage_options, rosbag2_cpp::ConverterOptions{});
+  rosbag2_storage::TopicMetadata topic_metadata {
+    0U, topic_name, "test_msgs/BasicTypes", "cdr", {}, ""
+  };
+  writer.create_topic(topic_metadata);
+
+  // Use manual splits instead of max_bagfile_size because storage plugins enforce
+  // minimum split sizes (sqlite3: 86KB, mcap: 1KB) which would require large writes
+  for (size_t i = 0; i < total_files_to_create; i++) {
+    if (i > 0) {
+      writer.split_bagfile();
+    }
+
+    auto msg = make_test_msg();
+    msg->topic_name = topic_name;
+    msg->recv_timestamp = static_cast<rcutils_time_point_value_t>(i * 100);
+    msg->send_timestamp = msg->recv_timestamp;
+    writer.write(msg);
+  }
+  writer.close();
+
+  // Count bag files on disk
+  size_t file_count = 0;
+  const std::string expected_ext = (GetParam() == "mcap") ? ".mcap" : ".db3";
+  for (const auto & entry : fs::directory_iterator(storage_options.uri)) {
+    const auto ext = entry.path().extension().generic_string();
+    if (ext == expected_ext) {
+      file_count++;
+    }
+  }
+  EXPECT_EQ(file_count, max_bag_files);
+
+  // Verify metadata matches
+  rosbag2_storage::MetadataIo metadata_io;
+  auto metadata = metadata_io.read_metadata(storage_options.uri);
+  EXPECT_EQ(metadata.relative_file_paths.size(), max_bag_files);
+  EXPECT_EQ(metadata.files.size(), max_bag_files);
+}
+
 TEST_F(SequentialWriterTest, all_event_callbacks_can_be_installed) {
   auto sequential_writer = std::make_unique<rosbag2_cpp::writers::SequentialWriter>(
     std::move(storage_factory_), converter_factory_, std::move(metadata_io_));
