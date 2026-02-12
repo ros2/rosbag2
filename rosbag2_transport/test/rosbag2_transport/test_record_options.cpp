@@ -19,15 +19,18 @@
 
 using namespace ::testing;  // NOLINT
 
-TEST(record_options, test_yaml_serialization)
+
+TEST(record_options, test_yaml_serialization_deserialization)
 {
-  rosbag2_transport::RecordOptions original;
+ rosbag2_transport::RecordOptions original;
   original.all_topics = true;
   original.all_services = true;
   original.is_discovery_disabled = true;
   original.topics = {"topic", "other_topic"};
+  original.topic_types = {"type_a", "type_b"};
   original.services = {"service", "other_service"};
   original.exclude_topics = {"exclude_topic1", "exclude_topic2"};
+  original.exclude_topic_types = {"exclude_type1", "exclude_type2"};
   original.exclude_service_events = {"exclude_service1", "exclude_service2"};
   original.rmw_serialization_format = "cdr";
   original.topic_polling_interval = std::chrono::milliseconds{200};
@@ -38,11 +41,16 @@ TEST(record_options, test_yaml_serialization)
   original.compression_format = "h264";
   original.compression_queue_size = 2;
   original.compression_threads = 123;
+  original.compression_threads_priority = -10;
   original.topic_qos_profile_overrides.emplace("topic", rclcpp::QoS(10).transient_local());
   original.include_hidden_topics = true;
   original.include_unpublished_topics = true;
+  original.ignore_leaf_topics = true;
+  original.start_paused = true;
+  original.use_sim_time = true;
+  original.disable_keyboard_controls = true;
 
-  auto node = YAML::convert<rosbag2_transport::RecordOptions>().encode(original);
+  auto node = YAML::convert<rosbag2_transport::RecordOptions>::encode(original);
 
   std::stringstream serializer;
   serializer << node;
@@ -54,11 +62,28 @@ TEST(record_options, test_yaml_serialization)
   CHECK(all_services);
   CHECK(is_discovery_disabled);
   CHECK(topics);
+  CHECK(topic_types);
   CHECK(services);
   CHECK(exclude_topics);
+  CHECK(exclude_topic_types);
   CHECK(exclude_service_events);
   CHECK(rmw_serialization_format);
-  #undef CHECK
+  CHECK(topic_polling_interval);
+  CHECK(regex);
+  CHECK(exclude_regex);
+  CHECK(node_prefix);
+  CHECK(compression_mode);
+  CHECK(compression_format);
+  CHECK(compression_queue_size);
+  CHECK(compression_threads);
+  CHECK(compression_threads_priority);
+  CHECK(topic_qos_profile_overrides);
+  CHECK(include_hidden_topics);
+  CHECK(include_unpublished_topics);
+  CHECK(ignore_leaf_topics);
+  CHECK(start_paused);
+  CHECK(use_sim_time);
+  CHECK(disable_keyboard_controls);
 }
 
 TEST(record_options, test_yaml_decode_for_all_and_exclude)
