@@ -25,6 +25,7 @@
 #include <vector>
 
 #include "rosbag2_cpp/reindexer.hpp"
+#include "rosbag2_compression/compression_factory.hpp"
 #include "rosbag2_storage/storage_options.hpp"
 
 #include "./pybind11.hpp"

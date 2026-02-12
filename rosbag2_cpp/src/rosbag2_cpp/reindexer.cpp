@@ -32,6 +32,7 @@
 #include <vector>
 
 #include "rcpputils/asserts.hpp"
+#include "rosbag2_compression/compression_factory.hpp"
 
 #include "rosbag2_cpp/logging.hpp"
 #include "rosbag2_cpp/reader.hpp"
@@ -45,12 +46,16 @@ namespace rosbag2_cpp
 {
 Reindexer::Reindexer(
   std::unique_ptr<rosbag2_storage::StorageFactoryInterface> storage_factory,
-  std::unique_ptr<rosbag2_storage::MetadataIo> metadata_io)
+  std::unique_ptr<rosbag2_storage::MetadataIo> metadata_io,
+  std::unique_ptr<rosbag2_compression::CompressionFactory> compression_factory)
 : storage_factory_(std::move(storage_factory)),
-  metadata_io_(std::move(metadata_io))
+  metadata_io_(std::move(metadata_io)),
+  compression_factory_(std::move(compression_factory))
 {
-  regex_bag_pattern_ = R"(.+_(\d+)\.([a-zA-Z0-9])+)";
+  regex_bag_pattern_ = R"(.+_(\d+)\.([a-zA-Z0-9]+)(?:\.([a-zA-Z0-9]+))?)";
 }
+
+Reindexer::~Reindexer() = default;
 
 /// Determine which path should be placed first in a vector ordered by file number.
 /**
@@ -176,9 +181,29 @@ void Reindexer::aggregate_metadata(
 
     metadata_.bag_size += fs::file_size(f_);
 
+    // Check for compressed file source
+    auto file_string = f_.generic_string();
+    std::string uri_to_read = file_string;
+    std::string original_filename = f_.filename().string();
+    
+    if (file_string.size() > 5 && file_string.substr(file_string.size() - 5) == ".zstd") {
+      if (!compression_factory_) {
+        compression_factory_ = std::make_unique<rosbag2_compression::CompressionFactory>();
+      }
+      
+      // Decompress to /tmp
+      auto decompressor = compression_factory_->create_decompressor("zstd");
+      uri_to_read = decompressor->decompress_uri(file_string);
+      
+      if (metadata_.compression_format.empty()) {
+        metadata_.compression_format = "zstd";
+        metadata_.compression_mode = "FILE";
+      }
+    }
+
     // Set up reader
     rosbag2_storage::StorageOptions temp_so = storage_options;
-    temp_so.uri = f_.string();
+    temp_so.uri = uri_to_read;
 
     // We aren't actually interested in reading messages, so use a blank converter option
     rosbag2_cpp::ConverterOptions blank_converter_options {};
@@ -225,6 +250,13 @@ void Reindexer::aggregate_metadata(
         }
       }
     }
+
+    rosbag2_storage::FileInformation file_info;
+    file_info.path = original_filename;
+    file_info.starting_time = temp_metadata.starting_time;
+    file_info.duration = temp_metadata.duration;
+    file_info.message_count = temp_metadata.message_count;
+    metadata_.files.push_back(file_info);
 
     bag_reader->close();
   }

@@ -52,6 +52,7 @@ find_package(rosidl_runtime_c REQUIRED)
 find_package(rosidl_runtime_cpp REQUIRED)
 find_package(rosidl_typesupport_cpp REQUIRED)
 find_package(rosidl_typesupport_introspection_cpp REQUIRED)
+find_package(rosbag2_compression REQUIRED)
 
 add_library(${PROJECT_NAME} SHARED
   src/rosbag2_cpp/cache/cache_consumer.cpp
@@ -89,6 +90,7 @@ target_link_libraries(${PROJECT_NAME} PUBLIC
 )
 target_link_libraries(${PROJECT_NAME} PRIVATE
   ament_index_cpp::ament_index_cpp
+  rosbag2_compression::rosbag2_compression
   rosidl_typesupport_cpp::rosidl_typesupport_cpp
 )
 
