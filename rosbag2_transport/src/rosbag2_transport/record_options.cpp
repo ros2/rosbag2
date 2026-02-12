@@ -47,18 +47,18 @@ Node convert<rosbag2_transport::RecordOptions>::encode(
   node["is_discovery_disabled"] = is_discovery_disabled;
   node["topics"] = topics;
   node["topic_types"] = topic_types;
-  node["exclude_topic_types"] = exclude_topic_types;
   node["services"] = services;
   node["actions"] = actions;
+  node["exclude_topics"] = exclude_topics;
+  node["exclude_topic_types"] = exclude_topic_types;
+  node["exclude_services"] = exclude_service_events;
+  node["exclude_actions"] = exclude_actions;
   node["rmw_serialization_format"] = rmw_serialization_format;
   node["input_serialization_format"] = input_serialization_format;
   node["output_serialization_format"] = output_serialization_format;
   node["topic_polling_interval"] = topic_polling_interval;
   node["regex"] = regex;
   node["exclude_regex"] = exclude_regex;
-  node["exclude_topics"] = exclude_topics;
-  node["exclude_services"] = exclude_service_events;
-  node["exclude_actions"] = exclude_actions;
   node["node_prefix"] = node_prefix;
   node["compression_mode"] = compression_mode;
   node["compression_format"] = compression_format;
@@ -69,11 +69,11 @@ Node convert<rosbag2_transport::RecordOptions>::encode(
     convert<std::unordered_map<std::string, rclcpp::QoS>>::encode(topic_qos_profile_overrides);
   node["include_hidden_topics"] = include_hidden_topics;
   node["include_unpublished_topics"] = include_unpublished_topics;
-  node["static_topics_uri"] = static_topics_uri;
-  node["disable_keyboard_controls"] = disable_keyboard_controls;
   node["ignore_leaf_topics"] = ignore_leaf_topics;
   node["start_paused"] = start_paused;
   node["use_sim_time"] = use_sim_time;
+  node["static_topics_uri"] = static_topics_uri;
+  node["disable_keyboard_controls"] = disable_keyboard_controls;
   node["statistics_max_publishing_rate"] = statistics_max_publishing_rate;
   return node;
 }
@@ -112,6 +112,10 @@ bool convert<rosbag2_transport::RecordOptions>::decode(
   optional_assign<std::vector<std::string>>(node, "topic_types", topic_types);
   optional_assign<std::vector<std::string>>(node, "services", services);
   optional_assign<std::vector<std::string>>(node, "actions", actions);
+  optional_assign<std::vector<std::string>>(node, "exclude_topics", exclude_topics);
+  optional_assign<std::vector<std::string>>(node, "exclude_topic_types", exclude_topic_types);
+  optional_assign<std::vector<std::string>>(node, "exclude_services", exclude_service_events);
+  optional_assign<std::vector<std::string>>(node, "exclude_actions", exclude_actions);
   optional_assign<std::string>(
     node, "rmw_serialization_format", rmw_serialization_format);
   optional_assign<std::string>(
@@ -126,10 +130,6 @@ bool convert<rosbag2_transport::RecordOptions>::decode(
   // Map exclude to the "exclude_regex" for backward compatability.
   optional_assign<std::string>(node, "exclude", exclude_regex);
   optional_assign<std::string>(node, "exclude_regex", exclude_regex);
-  optional_assign<std::vector<std::string>>(node, "exclude_topics", exclude_topics);
-  optional_assign<std::vector<std::string>>(node, "exclude_topic_types", exclude_topic_types);
-  optional_assign<std::vector<std::string>>(node, "exclude_services", exclude_service_events);
-  optional_assign<std::vector<std::string>>(node, "exclude_actions", exclude_actions);
   optional_assign<std::string>(node, "node_prefix", node_prefix);
   optional_assign<std::string>(node, "compression_mode", compression_mode);
   optional_assign<std::string>(node, "compression_format", compression_format);
@@ -146,11 +146,11 @@ bool convert<rosbag2_transport::RecordOptions>::decode(
 
   optional_assign<bool>(node, "include_hidden_topics", include_hidden_topics);
   optional_assign<bool>(node, "include_unpublished_topics", include_unpublished_topics);
-  optional_assign<std::string>(node, "static_topics_uri", static_topics_uri);
-  optional_assign<bool>(node, "disable_keyboard_controls", disable_keyboard_controls);
   optional_assign<bool>(node, "ignore_leaf_topics", ignore_leaf_topics);
   optional_assign<bool>(node, "start_paused", start_paused);
   optional_assign<bool>(node, "use_sim_time", use_sim_time);
+  optional_assign<std::string>(node, "static_topics_uri", static_topics_uri);
+  optional_assign<bool>(node, "disable_keyboard_controls", disable_keyboard_controls);
   optional_assign<float>(node, "statistics_max_publishing_rate", statistics_max_publishing_rate);
   return true;
 }

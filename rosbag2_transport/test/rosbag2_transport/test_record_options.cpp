@@ -89,6 +89,7 @@ TEST(record_options, test_yaml_serialization_deserialization)
   CHECK(compression_queue_size);
   CHECK(compression_threads);
   CHECK(compression_threads_priority);
+  CHECK(topic_qos_profile_overrides);
   CHECK(include_hidden_topics);
   CHECK(include_unpublished_topics);
   CHECK(ignore_leaf_topics);
@@ -98,8 +99,7 @@ TEST(record_options, test_yaml_serialization_deserialization)
   CHECK(disable_keyboard_controls);
   #undef CHECK
   ASSERT_FLOAT_EQ(original.statistics_max_publishing_rate,
-    reconstructed.statistics_max_publishing_rate);
-  ASSERT_EQ(original.topic_qos_profile_overrides, reconstructed.topic_qos_profile_overrides);
+                  reconstructed.statistics_max_publishing_rate);
 }
 
 TEST(record_options, test_yaml_decode_for_all_and_exclude)
