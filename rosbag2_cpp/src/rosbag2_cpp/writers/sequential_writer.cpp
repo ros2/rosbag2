@@ -556,16 +556,17 @@ void SequentialWriter::delete_oldest_files_if_needed()
         ROSBAG2_CPP_LOG_ERROR(
           "Failed to delete oldest bagfile: %s. Error: %s",
                               file_path.generic_string().c_str(), ec.message().c_str());
-      } else {
-        ROSBAG2_CPP_LOG_INFO(
-          "Deleted oldest bagfile: %s (%lu bytes, %lu ns)",
-                             oldest_file.path.c_str(), file_size, file_duration_ns);
+        break;  // Keep file in tracking; retry on next split to avoid tight loop
       }
+      ROSBAG2_CPP_LOG_INFO(
+        "Deleted oldest bagfile: %s (%lu bytes, %lu ns)",
+                           oldest_file.path.c_str(), file_size, file_duration_ns);
+      remove_oldest_file_from_tracking();
     } else {
       ROSBAG2_CPP_LOG_ERROR("Oldest bagfile to delete not found: %s",
                             file_path.generic_string().c_str());
+      remove_oldest_file_from_tracking();
     }
-    remove_oldest_file_from_tracking();
   }
 }
 
