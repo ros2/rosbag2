@@ -1,4 +1,4 @@
-# Design: Support transient-local ("latched") messages in rosbag2 recorder
+# Design: Support repeating transient-local ("latched") messages in Rosbag2 recorder
 Status: Draft\
 Author: Michael Orlov
 
