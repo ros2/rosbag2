@@ -18,7 +18,8 @@
 
 using namespace ::testing;  // NOLINT
 
-TEST(record_options, test_yaml_serialization)
+
+TEST(record_options, test_yaml_serialization_deserialization)
 {
   rosbag2_transport::RecordOptions original;
   original.all = true;
@@ -36,8 +37,11 @@ TEST(record_options, test_yaml_serialization)
   original.topic_qos_profile_overrides.emplace("topic", rclcpp::QoS(10).transient_local());
   original.include_hidden_topics = true;
   original.include_unpublished_topics = true;
+  original.ignore_leaf_topics = true;
+  original.start_paused = true;
+  original.use_sim_time = true;
 
-  auto node = YAML::convert<rosbag2_transport::RecordOptions>().encode(original);
+  auto node = YAML::convert<rosbag2_transport::RecordOptions>::encode(original);
 
   std::stringstream serializer;
   serializer << node;
@@ -49,5 +53,19 @@ TEST(record_options, test_yaml_serialization)
   CHECK(is_discovery_disabled);
   CHECK(topics);
   CHECK(rmw_serialization_format);
+  CHECK(topic_polling_interval);
+  CHECK(regex);
+  CHECK(exclude);
+  CHECK(node_prefix);
+  CHECK(compression_mode);
+  CHECK(compression_format);
+  CHECK(compression_queue_size);
+  CHECK(compression_threads);
+  CHECK(topic_qos_profile_overrides);
+  CHECK(include_hidden_topics);
+  CHECK(include_unpublished_topics);
+  CHECK(ignore_leaf_topics);
+  CHECK(start_paused);
+  CHECK(use_sim_time);
   #undef CMP
 }

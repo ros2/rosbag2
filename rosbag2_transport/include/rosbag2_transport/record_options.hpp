@@ -49,6 +49,10 @@ public:
   bool ignore_leaf_topics = false;
   bool start_paused = false;
   bool use_sim_time = false;
+
+  /// Note: Please don't forget to update the YAML serialization and deserialization logic in
+  /// `record_options.cpp` and the test case `test_yaml_serialization_deserialization`
+  /// in `test_record_options.cpp` when updating the fields in RecordOptions.
 };
 
 }  // namespace rosbag2_transport
