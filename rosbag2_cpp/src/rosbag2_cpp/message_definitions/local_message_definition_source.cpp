@@ -136,7 +136,8 @@ static std::set<std::string> parse_msg_dependencies(
 /// to the specified package context.
 /// \param text The IDL definition text to parse.
 /// \param package_context The package context to use for relative type references.
-/// \param namespace_hint An optional namespace hint to infix for relative type references (e.g. "msg").
+/// \param namespace_hint An optional namespace hint to infix for relative type references
+/// (e.g. "msg").
 /// \return A set of message type dependencies in the format "package_name/msg/TypeName".
 static std::set<std::string> parse_idl_dependencies(
   const std::string & text,
