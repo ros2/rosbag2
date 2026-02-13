@@ -21,23 +21,10 @@ using namespace ::testing;  // NOLINT
 
 TEST(record_options, test_yaml_serialization_deserialization)
 {
-<<<<<<< HEAD
   rosbag2_transport::RecordOptions original;
   original.all = true;
   original.is_discovery_disabled = true;
   original.topics = {"topic", "other_topic"};
-=======
- rosbag2_transport::RecordOptions original;
-  original.all_topics = true;
-  original.all_services = true;
-  original.is_discovery_disabled = true;
-  original.topics = {"topic", "other_topic"};
-  original.topic_types = {"type_a", "type_b"};
-  original.services = {"service", "other_service"};
-  original.exclude_topics = {"exclude_topic1", "exclude_topic2"};
-  original.exclude_topic_types = {"exclude_type1", "exclude_type2"};
-  original.exclude_service_events = {"exclude_service1", "exclude_service2"};
->>>>>>> 1d1e32e ([jazzy] Add missing "RecordOptions" fields to the encode/decode functions (backport #2334) (#2338))
   original.rmw_serialization_format = "cdr";
   original.topic_polling_interval = std::chrono::milliseconds{200};
   original.regex = "[xyz]/topic";
@@ -47,14 +34,12 @@ TEST(record_options, test_yaml_serialization_deserialization)
   original.compression_format = "h264";
   original.compression_queue_size = 2;
   original.compression_threads = 123;
-  original.compression_threads_priority = -10;
   original.topic_qos_profile_overrides.emplace("topic", rclcpp::QoS(10).transient_local());
   original.include_hidden_topics = true;
   original.include_unpublished_topics = true;
   original.ignore_leaf_topics = true;
   original.start_paused = true;
   original.use_sim_time = true;
-  original.disable_keyboard_controls = true;
 
   auto node = YAML::convert<rosbag2_transport::RecordOptions>::encode(original);
 
@@ -67,65 +52,20 @@ TEST(record_options, test_yaml_serialization_deserialization)
   CHECK(all);
   CHECK(is_discovery_disabled);
   CHECK(topics);
-<<<<<<< HEAD
-  CHECK(rmw_serialization_format);
-  #undef CMP
-=======
-  CHECK(topic_types);
-  CHECK(services);
-  CHECK(exclude_topics);
-  CHECK(exclude_topic_types);
-  CHECK(exclude_service_events);
   CHECK(rmw_serialization_format);
   CHECK(topic_polling_interval);
   CHECK(regex);
-  CHECK(exclude_regex);
+  CHECK(exclude);
   CHECK(node_prefix);
   CHECK(compression_mode);
   CHECK(compression_format);
   CHECK(compression_queue_size);
   CHECK(compression_threads);
-  CHECK(compression_threads_priority);
   CHECK(topic_qos_profile_overrides);
   CHECK(include_hidden_topics);
   CHECK(include_unpublished_topics);
   CHECK(ignore_leaf_topics);
   CHECK(start_paused);
   CHECK(use_sim_time);
-  CHECK(disable_keyboard_controls);
-}
-
-TEST(record_options, test_yaml_decode_for_all_and_exclude)
-{
-  std::string serialized_record_options =
-    "  all: true\n"
-    "  all_topics: false\n"
-    "  topics: []\n"
-    "  rmw_serialization_format: \"\"  # defaults to using the format of the input topic\n"
-    "  regex: \"[xyz]/topic\"\n"
-    "  exclude: \"[x]/topic\"\n";
-
-  YAML::Node loaded_node = YAML::Load(serialized_record_options);
-  auto record_options = loaded_node.as<rosbag2_transport::RecordOptions>();
-  ASSERT_EQ(record_options.all_topics, true);
-  ASSERT_EQ(record_options.all_services, true);
-  ASSERT_EQ(record_options.regex, "[xyz]/topic");
-  ASSERT_EQ(record_options.exclude_regex, "[x]/topic");
-}
-
-TEST(record_options, test_large_serialization)
-{
-  rosbag2_transport::RecordOptions options;
-  options.topics = std::vector<std::string>(100000, "test_topic");
-  options.services = std::vector<std::string>(100000, "test_service");
-
-  ASSERT_NO_THROW({
-    auto node = YAML::convert<rosbag2_transport::RecordOptions>().encode(options);
-    std::stringstream serializer;
-    serializer << node;
-    auto recreated_node = YAML::Load(serializer.str()).as<rosbag2_transport::RecordOptions>();
-    ASSERT_EQ(options.topics, recreated_node.topics);
-    ASSERT_EQ(options.services, recreated_node.services);
-  });
->>>>>>> 1d1e32e ([jazzy] Add missing "RecordOptions" fields to the encode/decode functions (backport #2334) (#2338))
+  #undef CMP
 }

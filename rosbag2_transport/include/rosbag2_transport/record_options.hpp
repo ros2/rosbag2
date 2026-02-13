@@ -49,16 +49,10 @@ public:
   bool ignore_leaf_topics = false;
   bool start_paused = false;
   bool use_sim_time = false;
-<<<<<<< HEAD
-=======
-  /// \brief Disable keyboard controls if true. This parameter is only used during construction of
-  /// the Recorder class to decide whether to initialize KeyboardHandler class or not.
-  bool disable_keyboard_controls = false;
 
   /// Note: Please don't forget to update the YAML serialization and deserialization logic in
   /// `record_options.cpp` and the test case `test_yaml_serialization_deserialization`
   /// in `test_record_options.cpp` when updating the fields in RecordOptions.
->>>>>>> 1d1e32e ([jazzy] Add missing "RecordOptions" fields to the encode/decode functions (backport #2334) (#2338))
 };
 
 }  // namespace rosbag2_transport
