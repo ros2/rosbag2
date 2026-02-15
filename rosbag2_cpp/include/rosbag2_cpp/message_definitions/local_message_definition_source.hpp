@@ -107,7 +107,9 @@ public:
 private:
   struct MessageSpec
   {
-    MessageSpec(Format format, std::string text, const std::string & package_context);
+    MessageSpec(
+      Format format, std::string text, const std::string & package_context,
+      const std::string & namespace_hint);
     const std::set<std::string> dependencies;
     const std::string text;
     Format format{Format::UNKNOWN};
@@ -188,8 +190,8 @@ ROSBAG2_CPP_PUBLIC
 std::set<std::string> parse_definition_dependencies(
   LocalMessageDefinitionSource::Format format,
   const std::string & text,
-  const std::string & package_context);
-
+  const std::string & package_context,
+  const std::string & namespace_hint);
 }  // namespace rosbag2_cpp
 
 #ifdef _WIN32

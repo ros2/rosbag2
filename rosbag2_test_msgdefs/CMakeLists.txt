@@ -15,6 +15,7 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/nested_sub_dir/AnotherBasicMsg.msg"
   "msg/ComplexMsg.msg"
   "msg/ComplexMsgDependsOnIdl.msg"
+  "msg/ComplexWithRelativeDep.idl"
   "srv/BasicSrv.srv"
   "srv/ComplexSrvMsg.srv"
   "srv/ComplexSrvIdl.srv"
