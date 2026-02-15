@@ -391,9 +391,7 @@ std::string SequentialWriter::split_bagfile_local(bool execute_callbacks)
 {
   auto closed_file = storage_->get_relative_file_path();
   switch_to_next_storage();
-  if (!storage_options_.snapshot_mode) {
-    prepend_transient_local_messages(last_received_timestamp_, last_sent_timestamp_);
-  }
+  prepend_transient_local_messages(last_received_timestamp_, last_sent_timestamp_);
   auto opened_file = storage_->get_relative_file_path();
 
   if (execute_callbacks) {

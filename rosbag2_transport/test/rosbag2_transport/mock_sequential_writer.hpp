@@ -157,6 +157,13 @@ public:
     return copy_of_messages_per_topic;
   }
 
+  std::unordered_map<std::string, size_t> transient_local_topic_depths() const
+  {
+    std::lock_guard<std::mutex> lock(messages_mutex_);
+    auto copy_of_transient_local_topic_depths = transient_local_topic_depths_;
+    return copy_of_transient_local_topic_depths;
+  }
+
   size_t get_messages_per_topic(const std::string & topic_name) const
   {
     std::lock_guard<std::mutex> lock(messages_mutex_);

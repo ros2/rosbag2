@@ -1108,6 +1108,100 @@ TEST_F(SequentialWriterTest, split_event_calls_on_writer_close)
   EXPECT_TRUE(opened_file.empty());
 }
 
+TEST_F(SequentialWriterTest, split_prepends_transient_local_messages_to_next_bag)
+{
+  auto sequential_writer = std::make_unique<rosbag2_cpp::writers::SequentialWriter>(
+    std::move(storage_factory_), converter_factory_, std::move(metadata_io_));
+  writer_ = std::make_unique<rosbag2_cpp::Writer>(std::move(sequential_writer));
+
+  storage_options_.max_cache_size = 0;
+  writer_->open(storage_options_, {"rmw_format", "rmw_format"});
+
+  const std::string topic_name = "latched_topic";
+  writer_->create_transient_local_topic({0u, topic_name, "test_msgs/BasicTypes", "", {}, ""}, 1);
+
+  auto first_message = std::make_shared<rosbag2_storage::SerializedBagMessage>();
+  first_message->topic_name = topic_name;
+  first_message->recv_timestamp = 100;
+  first_message->send_timestamp = 100;
+
+  auto second_message = std::make_shared<rosbag2_storage::SerializedBagMessage>();
+  second_message->topic_name = topic_name;
+  second_message->recv_timestamp = 200;
+  second_message->send_timestamp = 200;
+
+  writer_->write(first_message);
+  writer_->write(second_message);
+
+  std::vector<std::shared_ptr<const rosbag2_storage::SerializedBagMessage>> prepended_messages;
+  EXPECT_CALL(*storage_,
+    write(An<const std::vector<std::shared_ptr<const rosbag2_storage::SerializedBagMessage>> &>()))
+  .WillOnce(Invoke(
+      [&prepended_messages](
+        const std::vector<std::shared_ptr<const rosbag2_storage::SerializedBagMessage>> & messages)
+      {
+        prepended_messages = messages;
+      }));
+
+  writer_->split_bagfile();
+
+  ASSERT_EQ(prepended_messages.size(), 1u);
+  EXPECT_EQ(prepended_messages[0]->topic_name, topic_name);
+  EXPECT_EQ(prepended_messages[0]->recv_timestamp, 200);
+  EXPECT_EQ(prepended_messages[0]->send_timestamp, 200);
+}
+
+TEST_F(SequentialWriterTest, snapshot_split_prepends_transient_local_messages_to_next_bag)
+{
+  auto sequential_writer = std::make_unique<rosbag2_cpp::writers::SequentialWriter>(
+    std::move(storage_factory_), converter_factory_, std::move(metadata_io_));
+  writer_ = std::make_unique<rosbag2_cpp::Writer>(std::move(sequential_writer));
+
+  storage_options_.max_bagfile_size = 0;
+  storage_options_.max_cache_size = 1024;
+  storage_options_.snapshot_mode = true;
+  writer_->open(storage_options_, {"rmw_format", "rmw_format"});
+
+  const std::string latched_topic = "latched_topic";
+  const std::string data_topic = "data_topic";
+
+  writer_->create_transient_local_topic(
+    {0u, latched_topic, "test_msgs/BasicTypes", "", {}, ""}, 1);
+  writer_->create_topic({0u, data_topic, "test_msgs/BasicTypes", "", {}, ""});
+
+  auto latched_message = std::make_shared<rosbag2_storage::SerializedBagMessage>();
+  latched_message->topic_name = latched_topic;
+  latched_message->recv_timestamp = 100;
+  latched_message->send_timestamp = 100;
+  latched_message->serialized_data = rosbag2_storage::make_serialized_message("L", 1);
+
+  auto data_message = std::make_shared<rosbag2_storage::SerializedBagMessage>();
+  data_message->topic_name = data_topic;
+  data_message->recv_timestamp = 150;
+  data_message->send_timestamp = 150;
+  data_message->serialized_data = rosbag2_storage::make_serialized_message("D", 1);
+
+  writer_->write(latched_message);
+  writer_->write(data_message);
+
+  std::vector<std::shared_ptr<const rosbag2_storage::SerializedBagMessage>> prepended_messages;
+  EXPECT_CALL(*storage_,
+    write(An<const std::vector<std::shared_ptr<const rosbag2_storage::SerializedBagMessage>> &>()))
+  .WillOnce(Invoke(
+      [&prepended_messages](
+        const std::vector<std::shared_ptr<const rosbag2_storage::SerializedBagMessage>> & messages)
+      {
+        prepended_messages = messages;
+      }));
+
+  writer_->take_snapshot();
+
+  ASSERT_EQ(prepended_messages.size(), 1u);
+  EXPECT_EQ(prepended_messages[0]->topic_name, latched_topic);
+  EXPECT_EQ(prepended_messages[0]->recv_timestamp, 150);
+  EXPECT_EQ(prepended_messages[0]->send_timestamp, 150);
+}
+
 TEST_F(SequentialWriterTest, circular_logging_limits_number_of_files_by_max_bag_files)
 {
   // Configure frequent splits and a small retention window
