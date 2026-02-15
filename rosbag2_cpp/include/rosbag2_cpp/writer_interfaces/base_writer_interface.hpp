@@ -15,8 +15,8 @@
 #ifndef ROSBAG2_CPP__WRITER_INTERFACES__BASE_WRITER_INTERFACE_HPP_
 #define ROSBAG2_CPP__WRITER_INTERFACES__BASE_WRITER_INTERFACE_HPP_
 
-#include <memory>
 #include <cstddef>
+#include <memory>
 
 #include "rosbag2_cpp/bag_events.hpp"
 #include "rosbag2_cpp/converter_options.hpp"

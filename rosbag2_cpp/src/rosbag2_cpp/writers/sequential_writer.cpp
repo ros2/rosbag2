@@ -554,6 +554,7 @@ void SequentialWriter::prepend_transient_local_messages(
   for (const auto & message : adjusted_messages) {
     if (topics_names_to_info_.find(message->topic_name) != topics_names_to_info_.end()) {
       topics_names_to_info_[message->topic_name].message_count++;
+      per_file_topic_message_counts_.back()[message->topic_name]++;
     }
   }
 }
@@ -697,6 +698,8 @@ void SequentialWriter::write_messages(
     auto transient_messages = transient_local_cache_->get_messages_sorted_by_timestamp();
     merged_messages.reserve(messages.size() + transient_messages.size());
 
+    // Only prepend transient messages whose timestamps predate the snapshot window.
+    // Messages inside the window are already present in the snapshot buffer.
     for (const auto & transient_message : transient_messages) {
       if (transient_message->recv_timestamp < snapshot_earliest_recv_timestamp) {
         merged_messages.emplace_back(

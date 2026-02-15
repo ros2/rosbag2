@@ -218,7 +218,6 @@ if(BUILD_TESTING)
     target_link_libraries(test_transient_local_messages_cache ${PROJECT_NAME})
   endif()
 
-
   # If compiling with gcc, run this test with sanitizers enabled
   ament_add_gmock(test_ros2_message
     test/rosbag2_cpp/types/test_ros2_message.cpp

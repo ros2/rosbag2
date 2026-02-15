@@ -15,10 +15,10 @@
 #ifndef ROSBAG2_CPP__WRITER_HPP_
 #define ROSBAG2_CPP__WRITER_HPP_
 
+#include <cstddef>
 #include <memory>
 #include <mutex>
 #include <string>
-#include <cstddef>
 #include <unordered_map>
 #include <vector>
 
