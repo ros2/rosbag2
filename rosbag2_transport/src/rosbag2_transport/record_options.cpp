@@ -39,8 +39,6 @@ Node convert<rosbag2_transport::RecordOptions>::encode(
     compression_threads_priority, topic_qos_profile_overrides,
     include_hidden_topics, include_unpublished_topics, ignore_leaf_topics,
     start_paused, use_sim_time, static_topics_uri, disable_keyboard_controls,
-    statistics_max_publishing_rate] = record_options;
-    start_paused, use_sim_time, static_topics_uri, disable_keyboard_controls,
     statistics_max_publishing_rate, repeat_transient_local_messages] = record_options;
   Node node;
   node["all_topics"] = all_topics;
@@ -96,8 +94,6 @@ bool convert<rosbag2_transport::RecordOptions>::decode(
     compression_mode, compression_format, compression_queue_size, compression_threads,
     compression_threads_priority, topic_qos_profile_overrides,
     include_hidden_topics, include_unpublished_topics, ignore_leaf_topics,
-    start_paused, use_sim_time, static_topics_uri, disable_keyboard_controls,
-    statistics_max_publishing_rate] = record_options;
     start_paused, use_sim_time, static_topics_uri, disable_keyboard_controls,
     statistics_max_publishing_rate, repeat_transient_local_messages] = record_options;
 
@@ -159,7 +155,6 @@ bool convert<rosbag2_transport::RecordOptions>::decode(
   optional_assign<float>(node, "statistics_max_publishing_rate", statistics_max_publishing_rate);
   optional_assign<std::unordered_map<std::string, size_t>>(
     node, "repeat_transient_local_messages", repeat_transient_local_messages);
-  optional_assign<float>(node, "statistics_max_publishing_rate", statistics_max_publishing_rate);
   return true;
 }
 
