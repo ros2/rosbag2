@@ -18,6 +18,7 @@
 #include <memory>
 #include <mutex>
 #include <string>
+#include <cstddef>
 #include <unordered_map>
 #include <vector>
 
@@ -114,6 +115,15 @@ public:
    */
   void create_topic(
     const rosbag2_storage::TopicMetadata & topic_with_type,
+    const rosbag2_storage::MessageDefinition & message_definition);
+
+  void create_transient_local_topic(
+    const rosbag2_storage::TopicMetadata & topic_with_type,
+    size_t num_last_messages);
+
+  void create_transient_local_topic(
+    const rosbag2_storage::TopicMetadata & topic_with_type,
+    size_t num_last_messages,
     const rosbag2_storage::MessageDefinition & message_definition);
 
   /**

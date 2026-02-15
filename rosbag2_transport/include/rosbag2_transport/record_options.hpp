@@ -91,6 +91,10 @@ public:
   /// than or equal to 0 and less than or equal to 1000.
   float statistics_max_publishing_rate = 1.0f;
 
+  /// \brief Per-topic retention depth for repeating transient-local messages on split/snapshot.
+  /// Empty map disables the feature.
+  std::unordered_map<std::string, size_t> repeat_transient_local_messages{};
+
   /// Note: Please don't forget to update the YAML serialization and deserialization logic in
   /// `record_options.cpp` and the test case `test_yaml_serialization_deserialization`
   /// in `test_record_options.cpp` when updating the fields in RecordOptions.
@@ -105,7 +109,7 @@ struct ROSBAG2_TRANSPORT_PUBLIC convert<rosbag2_transport::RecordOptions>
 {
   static Node encode(const rosbag2_transport::RecordOptions & storage_options);
   static bool decode(
-    const Node & node, rosbag2_transport::RecordOptions & storage_options, int version = 9);
+    const Node & node, rosbag2_transport::RecordOptions & storage_options, int version = 10);
 };
 }  // namespace YAML
 

@@ -16,6 +16,7 @@
 #define ROSBAG2_CPP__WRITER_INTERFACES__BASE_WRITER_INTERFACE_HPP_
 
 #include <memory>
+#include <cstddef>
 
 #include "rosbag2_cpp/bag_events.hpp"
 #include "rosbag2_cpp/converter_options.hpp"
@@ -46,6 +47,15 @@ public:
 
   virtual void create_topic(
     const rosbag2_storage::TopicMetadata & topic_with_type,
+    const rosbag2_storage::MessageDefinition & message_definition) = 0;
+
+  virtual void create_transient_local_topic(
+    const rosbag2_storage::TopicMetadata & topic_with_type,
+    size_t num_last_messages) = 0;
+
+  virtual void create_transient_local_topic(
+    const rosbag2_storage::TopicMetadata & topic_with_type,
+    size_t num_last_messages,
     const rosbag2_storage::MessageDefinition & message_definition) = 0;
 
   virtual void remove_topic(const rosbag2_storage::TopicMetadata & topic_with_type) = 0;
