@@ -391,7 +391,12 @@ std::string SequentialWriter::split_bagfile_local(bool execute_callbacks)
 {
   auto closed_file = storage_->get_relative_file_path();
   switch_to_next_storage();
-  prepend_transient_local_messages(last_received_timestamp_, last_sent_timestamp_);
+  // In non-snapshot mode, prepend cached transient-local messages to the new bag file so that
+  // transient-local topics appear in every split. In snapshot mode the merge happens
+  // later inside write_messages() where the circular buffer is flushed together with the snapshot.
+  if (!storage_options_.snapshot_mode) {
+    prepend_transient_local_messages(last_received_timestamp_, last_sent_timestamp_);
+  }
   auto opened_file = storage_->get_relative_file_path();
 
   if (execute_callbacks) {
