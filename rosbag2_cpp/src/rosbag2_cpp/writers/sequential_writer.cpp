@@ -759,9 +759,9 @@ void SequentialWriter::write_messages(
     }
 
     const auto first_msg_timestamp = std::chrono::time_point<std::chrono::high_resolution_clock>(
-      std::chrono::nanoseconds(messages_to_write->front()->recv_timestamp));
+      std::chrono::nanoseconds((*messages_to_write)[first_msg_index]->recv_timestamp));
     const auto last_msg_timestamp = std::chrono::time_point<std::chrono::high_resolution_clock>(
-      std::chrono::nanoseconds(messages_to_write->back()->recv_timestamp));
+      std::chrono::nanoseconds((*messages_to_write)[last_msg_index]->recv_timestamp));
     metadata_.files.back().starting_time = first_msg_timestamp;
     metadata_.files.back().duration = last_msg_timestamp - first_msg_timestamp;
   }
