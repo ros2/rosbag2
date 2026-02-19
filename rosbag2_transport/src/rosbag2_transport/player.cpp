@@ -644,7 +644,7 @@ bool PlayerImpl::play()
             }
             readers_->seek(starting_time_);
             progress_bar_->update(clock_->is_paused() ?
-                                 PlayerStatus::PAUSED : PlayerStatus::RUNNING);
+                                  PlayerStatus::PAUSED : PlayerStatus::RUNNING);
 
             load_storage_content_ = true;
             storage_loading_future_ = std::async(
@@ -1077,7 +1077,7 @@ bool PlayerImpl::wait_for_playback_to_start(std::chrono::duration<double> timeou
   auto is_in_playback_lk = try_lock_with_timeout(is_in_playback_mutex_, timeout);
   if (!is_in_playback_lk.owns_lock()) {
     RCLCPP_DEBUG(owner_->get_logger(),
-                 "Timeout occurred. The ready_to_play_from_queue_mutex_ hasn't been acquired.");
+                 "Timeout occurred. The is_in_playback_mutex_ hasn't been acquired.");
     return false;
   }
   if (timeout.count() < 0) {
@@ -1111,9 +1111,13 @@ bool PlayerImpl::wait_for_playback_to_start(std::chrono::duration<double> timeou
     lock_duration = std::chrono::steady_clock::now() - start;
     residual_time = timeout > lock_duration ?
       timeout - lock_duration : std::chrono::microseconds(1);
-    return ready_to_play_from_queue_cv_.wait_for(
+
+    ready_to_play_from_queue_cv_.wait_for(
       ready_to_play_lock, residual_time, [this] {return is_ready_to_play_from_queue_;}
     );
+    RCLCPP_DEBUG(owner_->get_logger(), "is_ready_to_play_from_queue_: %s",
+                 is_ready_to_play_from_queue_ ? "true" : "false");
+    return is_ready_to_play_from_queue_;
   }
 }
 
@@ -1304,10 +1308,23 @@ void PlayerImpl::play_messages_from_queue()
     message_ptr = take_next_message_from_queue();
   }
   // Note: We are still under the lock of main_play_loop_mutex_ here
-  { // Notify seek() that we are NOT ready for playback anymore. The seek() will wait until
-    // play_messages_from_queue() will be called again in the next iteration of the play loop
-    // in Player::play(). This is to avoid race condition between seek() and
-    // play_messages_from_queue() when play_options_.loop = true
+  {
+    // Lock is_in_playback_mutex_ here to make sure that we won't have a race condition between
+    // wait_for_playback_to_start() and when we started and finished playback before checking for
+    // the is_ready_to_play_from_queue_ in the wait_for_playback_to_start() function.
+    // i.e., to make sure that when wait_for_playback_to_start() is about to check for the
+    // is_ready_to_play_from_queue_ after being notified that playback is started, the playback
+    // thread won't just finish and reset the state of the is_ready_to_play_from_queue_ to false
+    // before wait_for_playback_to_start() will check it.
+    rcpputils::unique_lock<std::mutex> is_in_playback_lk(is_in_playback_mutex_);
+
+    // Set is_ready_to_play_from_queue_ to false at the end of play_messages_from_queue() to
+    // make sure that we won't have a race condition between seek() and play_messages_from_queue()
+    // when play_options_.loop = true. i.e., To avoid overriding the seek operation when play loops
+    // back to the beginning, the main_play_loop_mutex_ unlocked, and the seek(timestamp) is called.
+    // In this case, the readers and queues would be reset to the beginning of the bag in the
+    // following initialization of play loop before play_messages_from_queue() is called again,
+    // effectively dismissing the seek operation.
     std::lock_guard<std::mutex> lk(ready_to_play_from_queue_mutex_);
     is_ready_to_play_from_queue_ = false;
   }
