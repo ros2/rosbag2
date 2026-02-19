@@ -38,26 +38,6 @@ namespace fs = std::filesystem;
 class ComposableRecorderIntegrationTests : public CompositionManagerTestFixture
 {
 public:
-  std::string get_bag_file_name(int split_index) const
-  {
-    std::stringstream bag_file_name;
-    bag_file_name << get_test_name() << "_" << GetParam() << "_" << split_index;
-
-    return bag_file_name.str();
-  }
-
-  fs::path get_bag_file_path(int split_index)
-  {
-    return root_bag_path_ / get_relative_bag_file_path(split_index);
-  }
-
-  fs::path get_relative_bag_file_path(int split_index) const
-  {
-    const auto storage_id = GetParam();
-    return fs::path(
-      rosbag2_test_common::bag_filename_for_storage_id(get_bag_file_name(split_index), storage_id));
-  }
-
   void wait_for_metadata(std::chrono::duration<float> timeout = std::chrono::seconds(10)) const
   {
     rosbag2_storage::MetadataIo metadata_io;
@@ -76,68 +56,35 @@ public:
 
   void wait_for_storage_file(std::chrono::duration<float> timeout = std::chrono::seconds(10))
   {
-    // Filename format: {counter}_{bag_base_dir}_{timestamp}.{ext}
-    // format_storage_uri extracts prefix from directory name
-    // by removing timestamp pattern if present
-    // Get bag_base_dir from root_bag_path_ directory name
+    using rosbag2_cpp::writers::TIMESTAMP_PATTERN;
     std::string dir_name = root_bag_path_.filename().generic_string();
-    // Remove timestamp pattern if present (same logic as format_storage_uri)
-    static std::regex timestamp_pattern("_" + std::string(rosbag2_cpp::writers::TIMESTAMP_PATTERN) +
-      "$");
+    static std::regex timestamp_pattern("_" + std::string(TIMESTAMP_PATTERN) + "$");
     const std::string bag_base_dir = std::regex_replace(dir_name, timestamp_pattern, "");
 
     const auto storage_id = GetParam();
-    const std::string extension = (storage_id == "sqlite3") ? ".db3" : ".mcap";
-
     // Build regex pattern for first file: 0_{bag_base_dir}_{timestamp}.{ext}
     // Escape dot in extension for regex (replace . with \.)
-    std::string escaped_extension;
-    for (char c : extension) {
-      if (c == '.') {
-        escaped_extension += "\\.";
-      } else {
-        escaped_extension += c;
-      }
-    }
+    std::string escaped_extension = (storage_id == "sqlite3") ? "\\.db3" : "\\.mcap";
 
-    std::stringstream pattern_stream;
-    pattern_stream << R"(0_)" << bag_base_dir << R"(_)" <<
-      rosbag2_cpp::writers::TIMESTAMP_PATTERN << escaped_extension;
-    const std::string pattern_str = pattern_stream.str();
-    std::regex file_pattern(pattern_str);
+    std::stringstream pattern_ss;
+    pattern_ss << R"(0_)" << bag_base_dir << R"(_)" << TIMESTAMP_PATTERN << escaped_extension;
+    std::regex file_pattern(pattern_ss.str());
 
     const auto start_time = std::chrono::steady_clock::now();
-    std::vector<std::string> found_files;
     while (std::chrono::steady_clock::now() - start_time < timeout && rclcpp::ok()) {
-      // Search for matching file in directory
       if (fs::exists(root_bag_path_) && fs::is_directory(root_bag_path_)) {
-        found_files.clear();
         for (const auto & entry : fs::directory_iterator(root_bag_path_)) {
           if (entry.is_regular_file()) {
-            const std::string filename = entry.path().filename().generic_string();
-            found_files.push_back(filename);
-            if (std::regex_match(filename, file_pattern)) {
-              return;  // Found matching file
+            if (std::regex_match(entry.path().filename().generic_string(), file_pattern)) {
+              return;
             }
           }
         }
       }
-      std::this_thread::sleep_for(50ms);  // wait a bit to not query constantly
+      std::this_thread::sleep_for(50ms);
     }
-
-    // Build error message with debug info
-    std::stringstream error_msg;
-    error_msg << "Could not find storage file matching pattern: \"" << pattern_str <<
-      "\" in directory: \"" << root_bag_path_.generic_string() << "\"";
-    if (!found_files.empty()) {
-      error_msg << ". Found files: [";
-      for (size_t i = 0; i < found_files.size(); ++i) {
-        if (i > 0) {error_msg << ", ";}
-        error_msg << "\"" << found_files[i] << "\"";
-      }
-      error_msg << "]";
-    }
-    ASSERT_TRUE(false) << error_msg.str();
+    ASSERT_TRUE(false) << "Could not find storage file in directory: \"" <<
+      root_bag_path_.generic_string() << "\"";
   }
 
   template<typename MessageT>

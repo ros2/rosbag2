@@ -49,10 +49,6 @@ Reindexer::Reindexer(
 : storage_factory_(std::move(storage_factory)),
   metadata_io_(std::move(metadata_io))
 {
-  // Support both old format (prefix_index.ext) and new format (index_prefix_timestamp.ext[.zstd])
-  // Use separate regex patterns for better maintainability and debugging
-  new_format_regex_ = R"((\d+)_(.*)_(\d{4}_\d{2}_\d{2}-\d{2}_\d{2}_\d{2})(\.[a-zA-Z0-9]+){1,2})";
-  old_format_regex_ = R"((.*)_(\d+)(\.[a-zA-Z0-9]+){1,2})";
 }
 
 /// Determine which path should be placed first in a vector ordered by file number.
@@ -64,8 +60,8 @@ bool Reindexer::compare_relative_file(
   const fs::path & first_path,
   const fs::path & second_path)
 {
-  std::regex new_format_rule(new_format_regex_, std::regex_constants::ECMAScript);
-  std::regex old_format_rule(old_format_regex_, std::regex_constants::ECMAScript);
+  std::regex new_format_rule(new_file_format_regex_str_, std::regex_constants::ECMAScript);
+  std::regex old_format_rule(old_file_format_regex_str_, std::regex_constants::ECMAScript);
 
   std::smatch first_match;
   std::smatch second_match;
@@ -136,8 +132,8 @@ void Reindexer::get_bag_files(
     throw std::runtime_error("Empty directory.");
   }
 
-  std::regex new_format_rule(new_format_regex_, std::regex_constants::ECMAScript);
-  std::regex old_format_rule(old_format_regex_, std::regex_constants::ECMAScript);
+  std::regex new_format_rule(new_file_format_regex_str_, std::regex_constants::ECMAScript);
+  std::regex old_format_rule(old_file_format_regex_str_, std::regex_constants::ECMAScript);
   // Get all file names in directory
   for (const auto & entry : fs::directory_iterator(base_folder)) {
     auto found_file = entry.path().filename();

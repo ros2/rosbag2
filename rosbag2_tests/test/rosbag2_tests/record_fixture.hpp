@@ -30,6 +30,7 @@
 #include "rosbag2_cpp/reader.hpp"
 #include "rosbag2_storage/default_storage_id.hpp"
 #include "rosbag2_storage/storage_filter.hpp"
+#include "rosbag2_test_common/bag_files_helpers.hpp"
 #include "rosbag2_test_common/memory_management.hpp"
 #include "rosbag2_test_common/temporary_directory_fixture.hpp"
 #include "rosbag2_test_common/tested_storage_ids.hpp"
@@ -89,37 +90,10 @@ public:
     return test_name;
   }
 
-  std::string get_bag_file_name(int split_index) const
-  {
-    std::stringstream bag_file_name;
-    bag_file_name << get_test_name() << "_" << GetParam() << "_" << split_index;
-
-    return bag_file_name.str();
-  }
-
   std::filesystem::path get_compressed_bag_file_path(int split_index)
   {
-    // For timestamped filename format, get the actual bag file path and add compression extension
-    try {
-      auto actual_path = get_actual_bag_file_path(split_index);
-      return std::filesystem::path(actual_path.generic_string() + ".zstd");
-    } catch (const std::runtime_error &) {
-      // Fallback to old method if metadata is not available
-      return std::filesystem::path(get_bag_file_path(split_index).generic_string() + ".zstd");
-    }
-  }
-
-  std::filesystem::path get_bag_file_path(int split_index)
-  {
-    return root_bag_path_ / get_relative_bag_file_path(split_index);
-  }
-
-  std::filesystem::path get_relative_bag_file_path(int split_index)
-  {
-    const auto storage_id = GetParam();
     return std::filesystem::path(
-      rosbag2_test_common::bag_filename_for_storage_id(
-        get_bag_file_name(split_index), storage_id));
+      get_actual_bag_file_path(split_index).generic_string() + ".zstd");
   }
 
   void wait_for_metadata(std::chrono::duration<float> timeout = std::chrono::seconds(5)) const
@@ -140,30 +114,12 @@ public:
 
   std::filesystem::path get_actual_bag_file_path(int split_index = 0) const
   {
-    // Read metadata to get actual file name (timestamped format)
     rosbag2_storage::MetadataIo metadata_io;
     const auto bag_path = root_bag_path_.generic_string();
-
-    // Wait for metadata file to exist
-    const auto start_time = std::chrono::steady_clock::now();
-    while (std::chrono::steady_clock::now() - start_time < std::chrono::seconds(10)) {
-      if (metadata_io.metadata_file_exists(bag_path)) {
-        break;
-      }
-      std::this_thread::sleep_for(std::chrono::milliseconds(50));
-    }
-
-    if (!metadata_io.metadata_file_exists(bag_path)) {
-      throw std::runtime_error("Metadata file not found for bag: " + bag_path);
-    }
-
+    rosbag2_test_common::wait_for_metadata(root_bag_path_, std::chrono::seconds(10));
     auto metadata = metadata_io.read_metadata(bag_path);
-    if (metadata.files.empty() || split_index >= static_cast<int>(metadata.files.size())) {
-      throw std::runtime_error("No file found at split_index " + std::to_string(split_index));
-    }
-
-    // Return full path to the actual file
-    return fs::path(bag_path) / metadata.files[split_index].path;
+    return rosbag2_test_common::get_bag_file_path_from_metadata(root_bag_path_, metadata,
+      split_index);
   }
 
   void wait_for_storage_file(std::chrono::duration<float> timeout = std::chrono::seconds(10))

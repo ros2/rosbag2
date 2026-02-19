@@ -20,7 +20,6 @@
 #include <string>
 #include <thread>
 
-#include "rosbag2_storage/metadata_io.hpp"
 #include "rosbag2_test_common/process_execution_helpers.hpp"
 #include "rosbag2_test_common/tested_storage_ids.hpp"
 
@@ -38,24 +37,6 @@ public:
   }
 
   std::string bags_path_;
-
-  std::string get_actual_cdr_test_filename() const
-  {
-    // Read metadata to get actual filename for cdr_test bag
-    rosbag2_storage::MetadataIo metadata_io;
-    const auto cdr_test_path = fs::path(bags_path_) / "cdr_test";
-
-    if (!metadata_io.metadata_file_exists(cdr_test_path.generic_string())) {
-      throw std::runtime_error("Metadata file not found for cdr_test bag");
-    }
-
-    auto metadata = metadata_io.read_metadata(cdr_test_path.generic_string());
-    if (metadata.files.empty()) {
-      throw std::runtime_error("No files found in cdr_test bag metadata");
-    }
-
-    return metadata.files[0].path;
-  }
 };
 
 TEST_P(InfoEndToEndTestFixture, info_end_to_end_test) {
@@ -63,7 +44,7 @@ TEST_P(InfoEndToEndTestFixture, info_end_to_end_test) {
   auto exit_code = execute_and_wait_until_completion("ros2 bag info cdr_test", bags_path_);
   std::string output = internal::GetCapturedStdout();
   auto expected_storage = GetParam();
-  auto expected_file = get_actual_cdr_test_filename();
+  auto expected_file = rosbag2_test_common::bag_filename_for_storage_id("cdr_test_0", GetParam());
   std::string expected_ros_distro = "unknown";
 
   EXPECT_THAT(exit_code, Eq(EXIT_SUCCESS));
@@ -201,7 +182,7 @@ TEST_P(InfoEndToEndTestFixture, info_basic_types_and_arrays_with_verbose_option_
     "ros2 bag info cdr_test --verbose", bags_path_);
   std::string output = internal::GetCapturedStdout();
   auto expected_storage = GetParam();
-  auto expected_file = get_actual_cdr_test_filename();
+  auto expected_file = rosbag2_test_common::bag_filename_for_storage_id("cdr_test_0", GetParam());
   std::string expected_ros_distro = "unknown";
 
   EXPECT_THAT(exit_code, Eq(EXIT_SUCCESS));

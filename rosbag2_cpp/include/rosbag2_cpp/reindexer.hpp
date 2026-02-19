@@ -34,6 +34,7 @@
 #include "rosbag2_cpp/serialization_format_converter_factory.hpp"
 #include "rosbag2_cpp/serialization_format_converter_factory_interface.hpp"
 #include "rosbag2_cpp/visibility_control.hpp"
+#include "rosbag2_cpp/writers/sequential_writer.hpp"
 
 #include "rosbag2_storage/metadata_io.hpp"
 #include "rosbag2_storage/storage_factory.hpp"
@@ -89,8 +90,10 @@ protected:
   std::vector<rosbag2_storage::TopicMetadata> topics_metadata_{};
 
 private:
-  std::string new_format_regex_;
-  std::string old_format_regex_;
+  const std::string new_file_format_regex_str_ =
+    R"((\d+)_(.*)_)" + std::string(rosbag2_cpp::writers::TIMESTAMP_PATTERN) +
+    R"((\.[a-zA-Z0-9]+){1,2})";
+  const std::string old_file_format_regex_str_ = R"((.*)_(\d+)(\.[a-zA-Z0-9]+){1,2})";
   std::filesystem::path base_folder_;   // The folder that the bag files are in
   std::shared_ptr<SerializationFormatConverterFactoryInterface> converter_factory_{};
   void get_bag_files(

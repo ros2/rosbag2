@@ -301,10 +301,6 @@ void SequentialWriter::remove_topic(const rosbag2_storage::TopicMetadata & topic
 std::string SequentialWriter::format_storage_uri(
   const std::string & base_folder, uint64_t storage_count)
 {
-  // Right now `base_folder_` is always just the folder name for where to install the bagfile.
-  // The name of the folder needs to be queried in case
-  // SequentialWriter is opened with a relative path.
-
   // Extract prefix from directory name by removing timestamp pattern if present
   // This handles the case when --output is not specified and default timestamped directory is used
   // Currently, the default timestamp format is `YYYY_MM_DD-HH_MM_SS`
@@ -318,31 +314,24 @@ std::string SequentialWriter::format_storage_uri(
   static std::regex timestamp_pattern("_" + std::string(TIMESTAMP_PATTERN) + "$");
   std::string prefix = std::regex_replace(dir_name, timestamp_pattern, "");
 
-  // Generate timestamp at file creation time
-  // Timestamp is generated in local time.
-  // During DST switches the same string may occur twice.
-  // The sequence counter is part of the filename, so duplicates
-  // still remain distinguishable.
-  auto now = std::chrono::system_clock::now();
-  auto time_t = std::chrono::system_clock::to_time_t(now);
-  std::tm tm_buf;
+  // Generate timestamp in local time.
+  // Note: During DST switches the same string may occur twice. However, we're also adding the
+  // sequence counter as part of the filename, so duplicates still remain distinguishable.
+  auto time_t = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
+  std::tm timestamp{};
 #ifdef _WIN32
-  localtime_s(&tm_buf, &time_t);
+  localtime_s(&timestamp, &time_t);
 #else
-  localtime_r(&time_t, &tm_buf);
+  localtime_r(&time_t, &timestamp);
 #endif
 
-  std::stringstream timestamp_stream;
-  timestamp_stream << std::put_time(&tm_buf, "%Y_%m_%d-%H_%M_%S");
-  std::string timestamp = timestamp_stream.str();
-
   // Generate filename in format {storage_count}_{prefix}_{timestamp}
-  // Note: Underscores are used as separators. If the prefix contains underscores,
-  // this creates theoretical ambiguity when parsing filenames. However, parsing is
-  // typically done by matching the timestamp pattern from the end, which avoids
-  // ambiguity in practice.
+  // Note: Underscores are used as separators. If the prefix contains underscores, this creates
+  // theoretical ambiguity when parsing filenames. However, parsing is typically done by matching
+  // the timestamp pattern from the end, which avoids ambiguity in practice.
   std::stringstream storage_file_name;
-  storage_file_name << storage_count << "_" << prefix << "_" << timestamp;
+  storage_file_name << storage_count << "_" << prefix << "_" <<
+    std::put_time(&timestamp, "%Y_%m_%d-%H_%M_%S");
 
   return (fs::path(base_folder) / storage_file_name.str()).generic_string();
 }
