@@ -96,20 +96,9 @@ public:
       get_actual_bag_file_path(split_index).generic_string() + ".zstd");
   }
 
-  void wait_for_metadata(std::chrono::duration<float> timeout = std::chrono::seconds(5)) const
+  void wait_for_metadata(std::chrono::duration<float> timeout = std::chrono::seconds(10)) const
   {
-    rosbag2_storage::MetadataIo metadata_io;
-    const auto start_time = std::chrono::steady_clock::now();
-    const auto bag_path = root_bag_path_.generic_string();
-
-    while (std::chrono::steady_clock::now() - start_time < timeout && rclcpp::ok()) {
-      if (metadata_io.metadata_file_exists(bag_path)) {
-        return;
-      }
-      std::this_thread::sleep_for(50ms);
-    }
-    ASSERT_EQ(metadata_io.metadata_file_exists(bag_path), true)
-      << "Could not find metadata file.";
+    rosbag2_test_common::wait_for_metadata(root_bag_path_, timeout);
   }
 
   std::filesystem::path get_actual_bag_file_path(int split_index = 0) const
@@ -124,32 +113,7 @@ public:
 
   void wait_for_storage_file(std::chrono::duration<float> timeout = std::chrono::seconds(10))
   {
-    // For timestamped filename format, wait for any bag file (.db3 or .mcap) to appear in directory
-    const auto start_time = std::chrono::steady_clock::now();
-    while (std::chrono::steady_clock::now() - start_time < timeout && rclcpp::ok()) {
-      if (std::filesystem::exists(root_bag_path_) &&
-        std::filesystem::is_directory(root_bag_path_))
-      {
-        for (const auto & entry : std::filesystem::directory_iterator(root_bag_path_)) {
-          if (entry.is_regular_file()) {
-            const auto & path = entry.path();
-            const auto extension = path.extension();
-            // Check for bag files (.db3, .mcap) or compressed files
-            if (extension == ".db3" || extension == ".mcap" ||
-              path.filename().generic_string().find(".db3.") != std::string::npos ||
-              path.filename().generic_string().find(".mcap.") != std::string::npos)
-            {
-              return;  // Found a bag file
-            }
-          }
-        }
-      }
-      std::this_thread::sleep_for(50ms);
-    }
-
-    // If we get here, no bag file was found
-    ASSERT_TRUE(false) << "Could not find any storage file in directory: \"" <<
-      root_bag_path_.generic_string() << "\" within " << timeout.count() << " seconds";
+    rosbag2_test_common::wait_for_storage_file(root_bag_path_, timeout);
   }
 
   template<typename MessageT>
