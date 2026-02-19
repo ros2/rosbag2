@@ -1309,6 +1309,10 @@ void PlayerImpl::play_messages_from_queue()
   }
   // Note: We are still under the lock of main_play_loop_mutex_ here
   {
+    // Unlock main_play_loop_lk to avoid potential deadlocks with stop() and seek() which also try
+    // to lock is_in_playback_mutex_ first and then main_play_loop_mutex_.
+    if (main_play_loop_lk.owns_lock()) {main_play_loop_lk.unlock();}
+
     // Lock is_in_playback_mutex_ here to make sure that we won't have a race condition between
     // wait_for_playback_to_start() and when we started and finished playback before checking for
     // the is_ready_to_play_from_queue_ in the wait_for_playback_to_start() function.
