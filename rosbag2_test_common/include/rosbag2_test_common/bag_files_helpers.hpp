@@ -83,33 +83,45 @@ inline void wait_for_metadata(
   }
 }
 
-/// Wait for any storage file (.db3 or .mcap) to appear in bag_path. Throws on timeout.
-inline void wait_for_storage_file(
+/// Count storage files (.db3 or .mcap) in bag_path.
+inline size_t count_storage_files(const std::filesystem::path & bag_path)
+{
+  size_t count = 0;
+  if (std::filesystem::exists(bag_path) && std::filesystem::is_directory(bag_path)) {
+    for (const auto & entry : std::filesystem::directory_iterator(bag_path)) {
+      if (entry.is_regular_file()) {
+        const auto & path = entry.path();
+        const auto extension = path.extension();
+        if (extension == ".db3" || extension == ".mcap" ||
+          path.filename().generic_string().find(".db3.") != std::string::npos ||
+          path.filename().generic_string().find(".mcap.") != std::string::npos)
+        {
+          ++count;
+        }
+      }
+    }
+  }
+  return count;
+}
+
+/// Wait until at least `expected_count` storage files appear in bag_path. Throws on timeout.
+inline void wait_for_storage_files(
   const std::filesystem::path & bag_path,
+  size_t expected_count = 1,
   std::chrono::duration<float> timeout = std::chrono::seconds(10))
 {
   const auto start_time = std::chrono::steady_clock::now();
 
   while (std::chrono::steady_clock::now() - start_time < timeout) {
-    if (std::filesystem::exists(bag_path) && std::filesystem::is_directory(bag_path)) {
-      for (const auto & entry : std::filesystem::directory_iterator(bag_path)) {
-        if (entry.is_regular_file()) {
-          const auto & path = entry.path();
-          const auto extension = path.extension();
-          if (extension == ".db3" || extension == ".mcap" ||
-            path.filename().generic_string().find(".db3.") != std::string::npos ||
-            path.filename().generic_string().find(".mcap.") != std::string::npos)
-          {
-            return;
-          }
-        }
-      }
+    if (count_storage_files(bag_path) >= expected_count) {
+      return;
     }
     std::this_thread::sleep_for(std::chrono::milliseconds(50));
   }
 
   throw std::runtime_error(
-    "Could not find any storage file in directory: " + bag_path.generic_string());
+    "Timed out waiting for " + std::to_string(expected_count) +
+    " storage file(s) in: " + bag_path.generic_string());
 }
 
 }  // namespace rosbag2_test_common

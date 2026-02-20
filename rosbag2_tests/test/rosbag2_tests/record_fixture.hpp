@@ -113,7 +113,13 @@ public:
 
   void wait_for_storage_file(std::chrono::duration<float> timeout = std::chrono::seconds(10))
   {
-    rosbag2_test_common::wait_for_storage_file(root_bag_path_, timeout);
+    rosbag2_test_common::wait_for_storage_files(root_bag_path_, 1, timeout);
+  }
+
+  void wait_for_storage_files(
+    size_t count, std::chrono::duration<float> timeout = std::chrono::seconds(30))
+  {
+    rosbag2_test_common::wait_for_storage_files(root_bag_path_, count, timeout);
   }
 
   template<typename MessageT>

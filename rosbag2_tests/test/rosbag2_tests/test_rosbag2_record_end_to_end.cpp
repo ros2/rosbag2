@@ -358,7 +358,8 @@ TEST_P(RecordFixture, record_end_to_end_with_splitting_bagsize_split_is_at_least
 
   pub_manager.run_publishers();
 
-  wait_for_storage_file();
+  // Wait for all expected split files before stopping the recorder
+  wait_for_storage_files(expected_splits);
 
   stop_execution(process_handle);
   cleanup_process_handle.cancel();
