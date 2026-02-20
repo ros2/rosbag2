@@ -84,7 +84,7 @@ PYBIND11_MODULE(_storage, m) {
     pybind11::arg("storage_id") = "",
     pybind11::arg("max_bagfile_size") = 0,
     pybind11::arg("max_bagfile_duration") = 0,
-    pybind11::arg("max_cache_size") = 0,
+    pybind11::arg("max_cache_size") = 100 * 1024 * 1024,
     pybind11::arg("storage_preset_profile") = "",
     pybind11::arg("storage_config_uri") = "",
     pybind11::arg("snapshot_mode") = false)

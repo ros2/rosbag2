@@ -38,10 +38,12 @@ public:
   // A value of 0 indicates that bagfile splitting will not be used.
   uint64_t max_bagfile_duration = 0;
 
-  // The cache size indiciates how many messages can maximally be hold in cache
-  // before these being written to disk.
+  // The cache size indicates how many bytes of messages to hold in each buffer
+  // of cache before writing to disk. Uses double buffering, so peak memory
+  // usage can be up to twice this value.
   // A value of 0 disables caching and every write happens directly to disk.
-  uint64_t max_cache_size = 0;
+  // Defaults to 100 MiB, matching the ros2 bag record CLI default.
+  uint64_t max_cache_size = 100u * 1024u * 1024u;
 
   // Preset storage configuration. Preset settings can be overriden with
   // corresponding settings specified through storage_config_uri file
