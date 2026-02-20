@@ -131,7 +131,8 @@ public:
 
   void wait_for_storage_file(std::chrono::duration<float> timeout = std::chrono::seconds(10))
   {
-    const auto storage_path = get_bag_file_path(0);
+    auto storage_path = get_bag_file_path(0);
+    storage_path += ".active";
     const auto start_time = std::chrono::steady_clock::now();
     while (std::chrono::steady_clock::now() - start_time < timeout && rclcpp::ok()) {
       if (std::filesystem::exists(storage_path)) {

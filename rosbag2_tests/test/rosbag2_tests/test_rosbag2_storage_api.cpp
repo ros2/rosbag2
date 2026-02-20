@@ -120,7 +120,7 @@ public:
 
 TEST_P(Rosbag2StorageAPITests, get_bagfile_size_read_write_interface)
 {
-  const std::string FILE_EXTENSION = (GetParam() == "mcap") ? ".mcap" : ".db3";
+  const std::string FILE_EXTENSION = (GetParam() == "mcap") ? ".mcap.active" : ".db3.active";
   fs::path full_bagfile_path = root_bag_path_;
   full_bagfile_path.replace_extension(FILE_EXTENSION);
 

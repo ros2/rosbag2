@@ -157,6 +157,9 @@ SqliteStorage::~SqliteStorage()
   if (active_transaction_) {
     commit_transaction();
   }
+  if (is_read_write(storage_mode_) && database_) {
+    std::filesystem::rename(relative_path_ + ".active", relative_path_);
+  }
 }
 
 SqliteStorage::PresetProfile SqliteStorage::parse_preset_profile(const std::string & profile_string)
@@ -210,9 +213,10 @@ void SqliteStorage::open(
               "Failed to read from bag: File '" + relative_path_ + "' does not exist!");
     }
   }
+  std::string path = is_read_write(io_flag) ? (relative_path_ + ".active") : relative_path_;
 
   try {
-    database_ = std::make_unique<SqliteWrapper>(relative_path_, io_flag, std::move(pragmas));
+    database_ = std::make_unique<SqliteWrapper>(path, io_flag, std::move(pragmas));
   } catch (const SqliteException & e) {
     throw std::runtime_error("Failed to setup storage. Error: " + std::string(e.what()));
   }
