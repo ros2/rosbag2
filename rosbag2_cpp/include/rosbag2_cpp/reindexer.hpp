@@ -90,10 +90,10 @@ protected:
   std::vector<rosbag2_storage::TopicMetadata> topics_metadata_{};
 
 private:
-  const std::string new_file_format_regex_str_ =
+  const std::string kNewFileFormatRegexStr =
     R"((\d+)_(.*)_)" + std::string(rosbag2_cpp::writers::TIMESTAMP_PATTERN) +
     R"((\.[a-zA-Z0-9]+){1,2})";
-  const std::string old_file_format_regex_str_ = R"((.*)_(\d+)(\.[a-zA-Z0-9]+){1,2})";
+  const std::string kOldFileFormatRegexStr = R"((.*)_(\d+)(\.[a-zA-Z0-9]+){1,2})";
   std::filesystem::path base_folder_;   // The folder that the bag files are in
   std::shared_ptr<SerializationFormatConverterFactoryInterface> converter_factory_{};
   void get_bag_files(

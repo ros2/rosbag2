@@ -23,7 +23,6 @@
 
 #include "rosbag2_storage/bag_metadata.hpp"
 #include "rosbag2_storage/metadata_io.hpp"
-
 #include "rosbag2_test_common/tested_storage_ids.hpp"
 
 namespace rosbag2_test_common
@@ -31,44 +30,23 @@ namespace rosbag2_test_common
 
 /// Get the full path to a bag file using already-loaded metadata.
 inline std::filesystem::path get_bag_file_path_from_metadata(
-  const std::filesystem::path & bag_path,
+  const std::filesystem::path & root_bag_path,
   const rosbag2_storage::BagMetadata & metadata,
   int split_index = 0)
 {
   if (metadata.files.empty() || split_index >= static_cast<int>(metadata.files.size())) {
     throw std::runtime_error("No file found at split_index " + std::to_string(split_index));
   }
-  return bag_path / metadata.files[split_index].path;
-}
-
-/// Get the full path to a compressed bag file using already-loaded metadata.
-inline std::filesystem::path get_compressed_bag_file_path(
-  const std::filesystem::path & bag_path,
-  const rosbag2_storage::BagMetadata & metadata,
-  int split_index = 0)
-{
-  return std::filesystem::path(
-    get_bag_file_path_from_metadata(bag_path, metadata, split_index).generic_string() + ".zstd");
-}
-
-/// Get the relative path for a bag file in the old naming format (name_index.ext).
-inline std::filesystem::path get_relative_bag_file_path(
-  const std::string & bag_name,
-  int split_index,
-  const std::string & storage_id)
-{
-  std::stringstream bag_file_name;
-  bag_file_name << bag_name << "_" << split_index;
-  return std::filesystem::path(bag_filename_for_storage_id(bag_file_name.str(), storage_id));
+  return root_bag_path / metadata.files[split_index].path;
 }
 
 /// Wait for metadata.yaml to appear in bag_path. Throws on timeout.
 inline void wait_for_metadata(
-  const std::filesystem::path & bag_path,
+  const std::filesystem::path & root_bag_path,
   std::chrono::duration<float> timeout = std::chrono::seconds(5))
 {
   rosbag2_storage::MetadataIo metadata_io;
-  const auto bag_path_str = bag_path.generic_string();
+  const auto bag_path_str = root_bag_path.generic_string();
   const auto start_time = std::chrono::steady_clock::now();
 
   while (std::chrono::steady_clock::now() - start_time < timeout) {
@@ -83,20 +61,23 @@ inline void wait_for_metadata(
   }
 }
 
-/// Count storage files (.db3 or .mcap) in bag_path.
-inline size_t count_storage_files(const std::filesystem::path & bag_path)
+/// Count the number of storage files in bag_path.
+/// Storage files are identified by their extensions, which are determined by the known storage ids.
+inline size_t count_storage_files(const std::filesystem::path & root_bag_path)
 {
   size_t count = 0;
-  if (std::filesystem::exists(bag_path) && std::filesystem::is_directory(bag_path)) {
-    for (const auto & entry : std::filesystem::directory_iterator(bag_path)) {
+  if (std::filesystem::exists(root_bag_path) && std::filesystem::is_directory(root_bag_path)) {
+    for (const auto & entry : std::filesystem::directory_iterator(root_bag_path)) {
       if (entry.is_regular_file()) {
         const auto & path = entry.path();
-        const auto extension = path.extension();
-        if (extension == ".db3" || extension == ".mcap" ||
-          path.filename().generic_string().find(".db3.") != std::string::npos ||
-          path.filename().generic_string().find(".mcap.") != std::string::npos)
-        {
-          ++count;
+        const auto extension = path.extension().generic_string();
+        const auto filename = path.filename().generic_string();
+
+        for (const auto & [storage_id, ext] : kTestedStorageIDsWithExtensions) {
+          if (extension == ext || filename.find(ext) != std::string::npos) {
+            ++count;
+            break;
+          }
         }
       }
     }
@@ -106,22 +87,21 @@ inline size_t count_storage_files(const std::filesystem::path & bag_path)
 
 /// Wait until at least `expected_count` storage files appear in bag_path. Throws on timeout.
 inline void wait_for_storage_files(
-  const std::filesystem::path & bag_path,
+  const std::filesystem::path & root_bag_path,
   size_t expected_count = 1,
   std::chrono::duration<float> timeout = std::chrono::seconds(10))
 {
   const auto start_time = std::chrono::steady_clock::now();
 
   while (std::chrono::steady_clock::now() - start_time < timeout) {
-    if (count_storage_files(bag_path) >= expected_count) {
+    if (count_storage_files(root_bag_path) >= expected_count) {
       return;
     }
     std::this_thread::sleep_for(std::chrono::milliseconds(50));
   }
 
-  throw std::runtime_error(
-    "Timed out waiting for " + std::to_string(expected_count) +
-    " storage file(s) in: " + bag_path.generic_string());
+  throw std::runtime_error("Timed out waiting for " + std::to_string(expected_count) +
+    " storage file(s) in: " + root_bag_path.generic_string());
 }
 
 }  // namespace rosbag2_test_common

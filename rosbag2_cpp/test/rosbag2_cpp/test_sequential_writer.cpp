@@ -161,23 +161,35 @@ public:
   const std::string bag_base_dir_ = "test_bag";
   size_t num_messages_to_lose_ = 0;
 
+  /// \brief Checks if the filename in the given path matches the expected pattern for a bag file
+  /// created by SequentialWriter.
+  /// \details Strips the directory and extension from the path, then checks if the filename starts
+  /// with the expected counter and bag base directory, followed by a timestamp in
+  /// the "YYYY_MM_DD-HH_MM_SS" format. The expected filename pattern is constructed as follows:
+  /// {expected_counter}_{prefix}_{timestamp}.extension
+  /// \param path the full path to the bag file
+  /// \param prefix the expected bag base directory prefix in the filename
+  /// \param expected_counter the expected counter value that should be at the start of the filename
+  /// \return true if the filename matches the expected pattern, false otherwise
   static bool matches_filename_pattern(
-    const std::string & path, const std::string & prefix,
-    size_t expected_counter)
+    const std::string & path, const std::string & prefix, size_t expected_counter)
   {
-    std::string filename_no_ext =
-      fs::path(fs::path(path).filename()).stem().generic_string();
+    std::string filename_no_ext = fs::path(fs::path(path).filename()).stem().generic_string();
     std::string expected_prefix = std::to_string(expected_counter) + "_" + prefix + "_";
+    // Check if filename starts with expected prefix
     if (filename_no_ext.size() < expected_prefix.size() ||
       filename_no_ext.substr(0, expected_prefix.size()) != expected_prefix)
     {
       return false;
     }
+    // Extract the timestamp part of the filename and validate its format
     size_t timestamp_start = expected_prefix.size();
-    if (filename_no_ext.size() < timestamp_start + 19) {
+    const std::string kTimestampFormat = "YYYY_MM_DD-HH_MM_SS";
+    const size_t kTimestampLength = kTimestampFormat.length();
+    if (filename_no_ext.size() < timestamp_start + kTimestampLength) {
       return false;
     }
-    std::string timestamp = filename_no_ext.substr(timestamp_start, 19);
+    std::string timestamp = filename_no_ext.substr(timestamp_start, kTimestampLength);
     static const std::regex timestamp_pattern(rosbag2_cpp::writers::TIMESTAMP_PATTERN);
     return std::regex_match(timestamp, timestamp_pattern);
   }
@@ -195,8 +207,7 @@ public:
 
   static std::string extract_timestamp_from_filename(const std::string & path)
   {
-    std::string filename_no_ext =
-      fs::path(fs::path(path).filename()).stem().generic_string();
+    std::string filename_no_ext = fs::path(fs::path(path).filename()).stem().generic_string();
     static std::regex pattern("_" + std::string(rosbag2_cpp::writers::TIMESTAMP_PATTERN) + "$");
     std::smatch match;
     if (std::regex_search(filename_no_ext, match, pattern)) {
@@ -1285,7 +1296,7 @@ TEST_P(
 
   // Count bag files on disk
   size_t file_count = 0;
-  const std::string expected_ext = (GetParam() == "mcap") ? ".mcap" : ".db3";
+  const auto expected_ext = rosbag2_test_common::kTestedStorageIDsToExtensions.at(GetParam());
   for (const auto & entry : fs::directory_iterator(storage_options.uri)) {
     const auto ext = entry.path().extension().generic_string();
     if (ext == expected_ext) {
@@ -1385,13 +1396,11 @@ TEST_F(SequentialWriterTest, filename_extracts_prefix_from_timestamped_directory
   const auto & path = fake_metadata_.relative_file_paths[0];
 
   EXPECT_TRUE(matches_filename_pattern(path, "rosbag2", 0))
-    << "Filename '" << path <<
-    "' should use 'rosbag2' as prefix (timestamp pattern removed)";
+    << "Filename '" << path << "' should use 'rosbag2' as prefix (timestamp pattern removed)";
 
   // Verify timestamp is present in filename
   std::string filename_timestamp = extract_timestamp_from_filename(path);
-  EXPECT_FALSE(filename_timestamp.empty())
-    << "Filename should contain timestamp";
+  ASSERT_FALSE(filename_timestamp.empty()) << "Filename should contain timestamp";
   EXPECT_TRUE(timestamp_matches(filename_timestamp, recorded_time))
     << "Timestamp in filename '" << filename_timestamp << "' should match recorded time";
 }

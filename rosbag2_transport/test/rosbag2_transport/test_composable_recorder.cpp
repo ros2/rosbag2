@@ -54,17 +54,19 @@ public:
       << "Could not find metadata file: \"" << bag_path.c_str() << "\"";
   }
 
-  void wait_for_storage_file(std::chrono::duration<float> timeout = std::chrono::seconds(10))
+  void wait_for_storage_file(std::chrono::duration<float> timeout = std::chrono::seconds(10)) const
   {
     using rosbag2_cpp::writers::TIMESTAMP_PATTERN;
     std::string dir_name = root_bag_path_.filename().generic_string();
+    // Remove timestamp pattern if present (same logic as format_storage_uri() in SequentialWriter)
     static std::regex timestamp_pattern("_" + std::string(TIMESTAMP_PATTERN) + "$");
     const std::string bag_base_dir = std::regex_replace(dir_name, timestamp_pattern, "");
 
     const auto storage_id = GetParam();
-    // Build regex pattern for first file: 0_{bag_base_dir}_{timestamp}.{ext}
-    // Escape dot in extension for regex (replace . with \.)
-    std::string escaped_extension = (storage_id == "sqlite3") ? "\\.db3" : "\\.mcap";
+    // Build regex pattern for first file:0_{bag_base_dir}_{timestamp}.{ext}
+    // Escape dot in extension for regex (replace . with \\.)
+    const auto extension = rosbag2_test_common::kTestedStorageIDsToExtensions.at(storage_id);
+    const std::string escaped_extension = "\\" + extension;
 
     std::stringstream pattern_ss;
     pattern_ss << R"(0_)" << bag_base_dir << R"(_)" << TIMESTAMP_PATTERN << escaped_extension;
@@ -72,11 +74,12 @@ public:
 
     const auto start_time = std::chrono::steady_clock::now();
     while (std::chrono::steady_clock::now() - start_time < timeout && rclcpp::ok()) {
+      // Search for matching file in directory
       if (fs::exists(root_bag_path_) && fs::is_directory(root_bag_path_)) {
         for (const auto & entry : fs::directory_iterator(root_bag_path_)) {
           if (entry.is_regular_file()) {
             if (std::regex_match(entry.path().filename().generic_string(), file_pattern)) {
-              return;
+              return;  // Found matching file
             }
           }
         }

@@ -18,33 +18,25 @@
 #include <gmock/gmock.h>
 
 #include <filesystem>
-#include <future>
 #include <memory>
 #include <string>
-#include <unordered_map>
 #include <vector>
 
 #include "rclcpp/rclcpp.hpp"
 
 #include "rosbag2_compression/sequential_compression_reader.hpp"
 #include "rosbag2_cpp/reader.hpp"
-#include "rosbag2_storage/default_storage_id.hpp"
 #include "rosbag2_storage/storage_filter.hpp"
 #include "rosbag2_test_common/bag_files_helpers.hpp"
 #include "rosbag2_test_common/memory_management.hpp"
 #include "rosbag2_test_common/temporary_directory_fixture.hpp"
 #include "rosbag2_test_common/tested_storage_ids.hpp"
 
-#include "test_msgs/msg/arrays.hpp"
-#include "test_msgs/msg/basic_types.hpp"
-#include "test_msgs/message_fixtures.hpp"
-
 using namespace ::testing;  // NOLINT
 using namespace std::chrono_literals;  // NOLINT
 using namespace rosbag2_test_common;  // NOLINT
 
 namespace fs = std::filesystem;
-
 
 class RecordFixture : public ParametrizedTemporaryDirectoryFixture
 {
@@ -75,13 +67,13 @@ public:
     rclcpp::shutdown();
   }
 
-  std::string get_base_record_command() const
+  [[nodiscard]] std::string get_base_record_command() const
   {
     return "ros2 bag record --storage " + GetParam() + " --output " +
            root_bag_path_.generic_string();
   }
 
-  std::string get_test_name() const
+  static std::string get_test_name()
   {
     const auto * test_info = UnitTest::GetInstance()->current_test_info();
     std::string test_name = test_info->name();
@@ -90,10 +82,9 @@ public:
     return test_name;
   }
 
-  std::filesystem::path get_compressed_bag_file_path(int split_index)
+  [[nodiscard]] std::filesystem::path get_compressed_bag_file_path(int split_index) const
   {
-    return std::filesystem::path(
-      get_actual_bag_file_path(split_index).generic_string() + ".zstd");
+    return load_metadata_and_get_bag_file_path(split_index).generic_string() + ".zstd";
   }
 
   void wait_for_metadata(std::chrono::duration<float> timeout = std::chrono::seconds(10)) const
@@ -101,23 +92,23 @@ public:
     rosbag2_test_common::wait_for_metadata(root_bag_path_, timeout);
   }
 
-  std::filesystem::path get_actual_bag_file_path(int split_index = 0) const
+  [[nodiscard]] std::filesystem::path load_metadata_and_get_bag_file_path(int split_index = 0) const
   {
+    // Read metadata to get actual file name (timestamped format)
     rosbag2_storage::MetadataIo metadata_io;
     const auto bag_path = root_bag_path_.generic_string();
     rosbag2_test_common::wait_for_metadata(root_bag_path_, std::chrono::seconds(10));
     auto metadata = metadata_io.read_metadata(bag_path);
-    return rosbag2_test_common::get_bag_file_path_from_metadata(root_bag_path_, metadata,
-      split_index);
+    return get_bag_file_path_from_metadata(root_bag_path_, metadata, split_index);
   }
 
-  void wait_for_storage_file(std::chrono::duration<float> timeout = std::chrono::seconds(10))
+  void wait_for_storage_file(std::chrono::duration<float> timeout = std::chrono::seconds(10)) const
   {
     rosbag2_test_common::wait_for_storage_files(root_bag_path_, 1, timeout);
   }
 
   void wait_for_storage_files(
-    size_t count, std::chrono::duration<float> timeout = std::chrono::seconds(30))
+    size_t count, std::chrono::duration<float> timeout = std::chrono::seconds(30)) const
   {
     rosbag2_test_common::wait_for_storage_files(root_bag_path_, count, timeout);
   }
@@ -147,7 +138,7 @@ public:
     return messages;
   }
 
-  std::string get_serialization_format_for_topic(const std::string & topic_name)
+  [[nodiscard]] std::string get_serialization_format_for_topic(const std::string & topic_name) const
   {
     auto reader = rosbag2_cpp::Reader{};
     reader.open(root_bag_path_.generic_string());
@@ -169,7 +160,7 @@ public:
     // This is necessary as the process is killed hard on Windows and doesn't write a metadata file
   #ifdef _WIN32
     rosbag2_storage::BagMetadata metadata{};
-    metadata.storage_identifier = rosbag2_storage::get_default_storage_id();
+    metadata.storage_identifier = GetParam();
 
     // For timestamped filename format, scan directory for actual files instead of guessing paths
     if (std::filesystem::exists(root_bag_path_) && std::filesystem::is_directory(root_bag_path_)) {
@@ -177,8 +168,10 @@ public:
         if (entry.is_regular_file()) {
           const auto & path = entry.path();
           const auto extension = path.extension();
+          const auto & expected_ext =
+            rosbag2_test_common::kTestedStorageIDsToExtensions.at(GetParam());
           // Include db3, mcap files and compressed files
-          if (extension == ".db3" || extension == ".mcap" ||
+          if (extension == expected_ext ||
             (!compression_format.empty() &&
             path.string().find(compression_format) != std::string::npos))
           {
@@ -199,7 +192,7 @@ public:
       // Fallback to old logic if directory doesn't exist
       for (int i = 0; i <= expected_splits; i++) {
         try {
-          std::filesystem::path bag_file_path = get_actual_bag_file_path(i);
+          std::filesystem::path bag_file_path = load_metadata_and_get_bag_file_path(i);
           if (!compression_format.empty()) {
             bag_file_path = std::filesystem::path(bag_file_path.generic_string() + ".zstd");
           }

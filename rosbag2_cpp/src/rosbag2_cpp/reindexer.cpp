@@ -60,8 +60,8 @@ bool Reindexer::compare_relative_file(
   const fs::path & first_path,
   const fs::path & second_path)
 {
-  std::regex new_format_rule(new_file_format_regex_str_, std::regex_constants::ECMAScript);
-  std::regex old_format_rule(old_file_format_regex_str_, std::regex_constants::ECMAScript);
+  std::regex new_format_rule(kNewFileFormatRegexStr, std::regex_constants::ECMAScript);
+  std::regex old_format_rule(kOldFileFormatRegexStr, std::regex_constants::ECMAScript);
 
   std::smatch first_match;
   std::smatch second_match;
@@ -132,8 +132,8 @@ void Reindexer::get_bag_files(
     throw std::runtime_error("Empty directory.");
   }
 
-  std::regex new_format_rule(new_file_format_regex_str_, std::regex_constants::ECMAScript);
-  std::regex old_format_rule(old_file_format_regex_str_, std::regex_constants::ECMAScript);
+  std::regex new_format_rule(kNewFileFormatRegexStr, std::regex_constants::ECMAScript);
+  std::regex old_format_rule(kOldFileFormatRegexStr, std::regex_constants::ECMAScript);
   // Get all file names in directory
   for (const auto & entry : fs::directory_iterator(base_folder)) {
     auto found_file = entry.path().filename();
@@ -148,11 +148,11 @@ void Reindexer::get_bag_files(
   }
 
   // Sort relative file path by number
-  std::sort(
-    output.begin(), output.end(),
-    [&, this](fs::path a, fs::path b) {
+  std::sort(output.begin(), output.end(),
+    [&, this](const fs::path & a, const fs::path & b) {
       return compare_relative_file(a, b);
-    });
+    }
+  );
 }
 
 /// Prepare a fresh BagMetadata object for reindexing.

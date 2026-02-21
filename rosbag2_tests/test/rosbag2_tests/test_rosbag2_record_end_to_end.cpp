@@ -21,13 +21,15 @@
 
 #include "rclcpp/rclcpp.hpp"
 #include "rcpputils/scope_exit.hpp"
+#include "record_fixture.hpp"
 #include "rosbag2_compression_zstd/zstd_decompressor.hpp"
 #include "rosbag2_storage/metadata_io.hpp"
 #include "rosbag2_test_common/publication_manager.hpp"
 #include "rosbag2_test_common/subscription_manager.hpp"
 #include "rosbag2_test_common/process_execution_helpers.hpp"
 
-#include "record_fixture.hpp"
+#include "test_msgs/msg/arrays.hpp"
+#include "test_msgs/message_fixtures.hpp"
 
 namespace fs = std::filesystem;
 
@@ -105,7 +107,7 @@ TEST_P(RecordFixture, record_end_to_end_test_with_zstd_file_compression) {
 
   const auto decompressed_uri = decompressor.decompress_uri(
     compressed_bag_file_path.generic_string());
-  const auto bag_path = get_actual_bag_file_path(0);
+  const auto bag_path = load_metadata_and_get_bag_file_path(0);
 
   ASSERT_EQ(decompressed_uri, bag_path) <<
     "Expected decompressed URI to be same as uncompressed bag file path!";

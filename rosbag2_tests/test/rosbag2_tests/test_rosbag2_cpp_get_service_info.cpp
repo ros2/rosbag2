@@ -179,17 +179,17 @@ TEST_P(Rosbag2CPPGetServiceInfoTest, get_service_info_for_bag_with_topics_only) 
   }
 
   rosbag2_cpp::Info info;
-  std::pair<std::vector<std::shared_ptr<rosbag2_cpp::rosbag2_service_info_t>>,
-    std::vector<std::shared_ptr<rosbag2_cpp::rosbag2_action_info_t>>>
-    ret_service_action_infos;
+  std::pair<
+    std::vector<std::shared_ptr<rosbag2_cpp::rosbag2_service_info_t>>,
+    std::vector<std::shared_ptr<rosbag2_cpp::rosbag2_action_info_t>>
+  > ret_service_action_infos;
   rosbag2_storage::MetadataIo metadata_io;
   auto metadata = metadata_io.read_metadata(root_bag_path_.generic_string());
   const std::string recorded_bag_uri =
-    rosbag2_test_common::get_bag_file_path_from_metadata(root_bag_path_, metadata)
-    .generic_string();
+    rosbag2_test_common::get_bag_file_path_from_metadata(root_bag_path_, metadata).generic_string();
   ASSERT_NO_THROW(
-    ret_service_action_infos = info.read_service_and_action_info(
-      recorded_bag_uri, storage_id)) << recorded_bag_uri;
+    ret_service_action_infos = info.read_service_and_action_info(recorded_bag_uri, storage_id)
+  ) << recorded_bag_uri;
 
   EXPECT_TRUE(ret_service_action_infos.first.empty());
 }
@@ -247,18 +247,19 @@ TEST_P(Rosbag2CPPGetServiceInfoTest, get_service_info_for_bag_with_services_only
   }
 
   rosbag2_cpp::Info info;
-  std::pair<std::vector<std::shared_ptr<rosbag2_cpp::rosbag2_service_info_t>>,
-    std::vector<std::shared_ptr<rosbag2_cpp::rosbag2_action_info_t>>>
-    ret_service_action_infos;
+  std::pair<
+    std::vector<std::shared_ptr<rosbag2_cpp::rosbag2_service_info_t>>,
+    std::vector<std::shared_ptr<rosbag2_cpp::rosbag2_action_info_t>>
+  > ret_service_action_infos;
 
   rosbag2_storage::MetadataIo metadata_io;
   auto metadata = metadata_io.read_metadata(root_bag_path_.generic_string());
   const std::string recorded_bag_uri =
-    rosbag2_test_common::get_bag_file_path_from_metadata(root_bag_path_, metadata)
-    .generic_string();
+    rosbag2_test_common::get_bag_file_path_from_metadata(root_bag_path_, metadata).generic_string();
   ASSERT_NO_THROW(
     ret_service_action_infos = info.read_service_and_action_info(
-    recorded_bag_uri, storage_id)) << recorded_bag_uri;
+    recorded_bag_uri, storage_id)
+  ) << recorded_bag_uri;
 
   ASSERT_EQ(ret_service_action_infos.first.size(), 1);
   EXPECT_EQ(ret_service_action_infos.first[0]->name, "/test_service");
@@ -341,18 +342,18 @@ TEST_P(Rosbag2CPPGetServiceInfoTest, get_service_info_for_bag_with_topics_and_se
   }
 
   rosbag2_cpp::Info info;
-  std::pair<std::vector<std::shared_ptr<rosbag2_cpp::rosbag2_service_info_t>>,
-    std::vector<std::shared_ptr<rosbag2_cpp::rosbag2_action_info_t>>>
-    ret_service_action_infos;
+  std::pair<
+    std::vector<std::shared_ptr<rosbag2_cpp::rosbag2_service_info_t>>,
+    std::vector<std::shared_ptr<rosbag2_cpp::rosbag2_action_info_t>>
+  > ret_service_action_infos;
 
   rosbag2_storage::MetadataIo metadata_io;
   auto metadata = metadata_io.read_metadata(root_bag_path_.generic_string());
   const std::string recorded_bag_uri =
-    rosbag2_test_common::get_bag_file_path_from_metadata(root_bag_path_, metadata)
-    .generic_string();
+    rosbag2_test_common::get_bag_file_path_from_metadata(root_bag_path_, metadata).generic_string();
   ASSERT_NO_THROW(
-    ret_service_action_infos = info.read_service_and_action_info(
-      recorded_bag_uri, storage_id)) << recorded_bag_uri;
+    ret_service_action_infos = info.read_service_and_action_info(recorded_bag_uri, storage_id)
+  ) << recorded_bag_uri;
   ASSERT_EQ(ret_service_action_infos.first.size(), 2);
   if (ret_service_action_infos.first[0]->name == "/test_service2") {
     EXPECT_EQ(ret_service_action_infos.first[1]->name, "/test_service1");

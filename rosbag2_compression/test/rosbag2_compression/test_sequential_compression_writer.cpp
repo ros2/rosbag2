@@ -142,6 +142,46 @@ public:
     writer_ = std::make_unique<rosbag2_cpp::Writer>(std::move(sequential_writer));
   }
 
+  /// \brief Validate that the given path matches the expected regex for compressed files.
+  bool path_match_expected_compressed_file_regex(const std::string & path) const
+  {
+    // New filename format: {counter}_{bag_base_dir}_{timestamp}.{compressor}
+    // Timestamp is generated at runtime, so validate using regex
+    // Use static to avoid recompiling regex on each test run
+    static const std::string file_pattern_str =
+      R"(\d+_)" + bag_base_dir_ + R"(_)" +
+      std::string(rosbag2_cpp::writers::TIMESTAMP_PATTERN) +
+      R"(\.)" + std::string(DefaultTestCompressor);
+    static const std::regex file_pattern(file_pattern_str);
+    return std::regex_match(path, file_pattern);
+  }
+
+  /// \brief Validate that the given path matches the expected regex for uncompressed files.
+  bool path_match_expected_file_regex(const std::string & path) const
+  {
+    // New filename format: {counter}_{bag_base_dir}_{timestamp}
+    // Timestamp is generated at runtime, so validate using regex
+    // Use static to avoid recompiling regex on each test run
+    static const std::string file_pattern_str =
+      R"(\d+_)" + bag_base_dir_ + R"(_)" +
+      std::string(rosbag2_cpp::writers::TIMESTAMP_PATTERN);
+    static const std::regex file_pattern(file_pattern_str);
+    return std::regex_match(path, file_pattern);
+  }
+
+  /// \brief Validate that the given file name starts with the expected counter and bag base
+  /// directory.
+  ::testing::AssertionResult file_counter_at_start(const std::string & path, size_t counter) const
+  {
+    std::stringstream expected_prefix;
+    expected_prefix << counter << "_" << bag_base_dir_ << "_";
+    if (path.find(expected_prefix.str()) == 0) {
+      return ::testing::AssertionSuccess();
+    }
+    return ::testing::AssertionFailure() << "Path '" << path <<
+           "' does not start with expected prefix '" << expected_prefix.str() << "'";
+  }
+
   std::unique_ptr<StrictMock<MockStorageFactory>> storage_factory_;
   std::shared_ptr<NiceMock<MockStorage>> storage_;
   std::shared_ptr<StrictMock<MockConverterFactory>> converter_factory_;
@@ -162,28 +202,6 @@ public:
   const uint64_t kDefaultCompressionQueueSize = 1;
   const uint64_t kDefaultCompressionQueueThreads = 4;
   const int32_t kDefaultCompressionQueueThreadsPriority = 0;
-
-  bool path_match_expected_regex(const std::string & path) const
-  {
-    static const std::string file_pattern_str =
-      R"(\d+_)" + bag_base_dir_ + R"(_)" +
-      std::string(rosbag2_cpp::writers::TIMESTAMP_PATTERN) +
-      R"(\.)" + std::string(DefaultTestCompressor);
-    static const std::regex file_pattern(file_pattern_str);
-    return std::regex_match(path, file_pattern);
-  }
-
-  ::testing::AssertionResult file_counter_at_start(
-    const std::string & path, size_t counter) const
-  {
-    std::stringstream expected_prefix;
-    expected_prefix << counter << "_" << bag_base_dir_ << "_";
-    if (path.find(expected_prefix.str()) == 0) {
-      return ::testing::AssertionSuccess();
-    }
-    return ::testing::AssertionFailure() << "Path '" << path <<
-           "' does not start with expected prefix '" << expected_prefix.str() << "'";
-  }
 };
 
 TEST_F(SequentialCompressionWriterTest, open_throws_on_empty_storage_options_uri)
@@ -331,8 +349,10 @@ TEST_F(SequentialCompressionWriterTest, writer_creates_correct_metadata_relative
 
   size_t counter = 0;
   for (const auto & path : intercepted_write_metadata_.relative_file_paths) {
-    EXPECT_TRUE(path_match_expected_regex(path)) <<
+    // Verify that filename matches expected format
+    EXPECT_TRUE(path_match_expected_compressed_file_regex(path)) <<
       "Path '" << path << "' does not match expected pattern for file " << counter;
+    // Verify that counter is at the correct position
     EXPECT_TRUE(file_counter_at_start(path, counter));
     counter++;
   }
@@ -572,16 +592,11 @@ TEST_P(SequentialCompressionWriterTest, split_event_calls_callback_with_msg_comp
   ASSERT_GE(opened_files.size(), num_splits + 1);
   ASSERT_GE(closed_files.size(), num_splits + 1);
 
-  static const std::string file_pattern_str =
-    R"(\d+_)" + bag_base_dir_ + R"(_)" +
-    std::string(rosbag2_cpp::writers::TIMESTAMP_PATTERN);
-  static const std::regex file_pattern(file_pattern_str);
-
   for (size_t i = 0; i < num_splits + 1; i++) {
     // Verify closed file format
     fs::path closed_path(closed_files[i]);
     std::string closed_filename = closed_path.filename().generic_string();
-    EXPECT_TRUE(std::regex_match(closed_filename, file_pattern)) <<
+    EXPECT_TRUE(path_match_expected_file_regex(closed_filename)) <<
       "Closed file '" << closed_filename << "' does not match expected pattern for file " << i;
     EXPECT_TRUE(file_counter_at_start(closed_filename, i));
 
@@ -592,7 +607,7 @@ TEST_P(SequentialCompressionWriterTest, split_event_calls_callback_with_msg_comp
     } else {
       fs::path opened_path(opened_files[i]);
       std::string opened_filename = opened_path.filename().generic_string();
-      EXPECT_TRUE(std::regex_match(opened_filename, file_pattern)) <<
+      EXPECT_TRUE(path_match_expected_file_regex(opened_filename)) <<
         "Opened file '" << opened_filename << "' does not match expected pattern for file " << i;
       EXPECT_TRUE(file_counter_at_start(opened_filename, i + 1));
     }
@@ -659,16 +674,11 @@ TEST_P(SequentialCompressionWriterTest, split_event_calls_callback_with_file_com
   ASSERT_GE(opened_files.size(), num_splits + 1);
   ASSERT_GE(closed_files.size(), num_splits + 1);
 
-  static const std::string opened_file_pattern_str =
-    R"(\d+_)" + bag_base_dir_ + R"(_)" +
-    std::string(rosbag2_cpp::writers::TIMESTAMP_PATTERN);
-  static const std::regex opened_file_pattern(opened_file_pattern_str);
-
   for (size_t i = 0; i < num_splits + 1; i++) {
     // Verify closed file format
     fs::path closed_path(closed_files[i]);
     std::string closed_filename = closed_path.filename().generic_string();
-    EXPECT_TRUE(path_match_expected_regex(closed_filename)) <<
+    EXPECT_TRUE(path_match_expected_compressed_file_regex(closed_filename)) <<
       "Closed file '" << closed_filename << "' does not match expected pattern for file " << i;
     EXPECT_TRUE(file_counter_at_start(closed_filename, i));
 
@@ -679,7 +689,7 @@ TEST_P(SequentialCompressionWriterTest, split_event_calls_callback_with_file_com
     } else {
       fs::path opened_path(opened_files[i]);
       std::string opened_filename = opened_path.filename().generic_string();
-      EXPECT_TRUE(std::regex_match(opened_filename, opened_file_pattern)) <<
+      EXPECT_TRUE(path_match_expected_file_regex(opened_filename)) <<
         "Opened file '" << opened_filename << "' does not match expected pattern for file " << i;
       EXPECT_TRUE(file_counter_at_start(opened_filename, i + 1));
     }
@@ -786,16 +796,11 @@ TEST_F(SequentialCompressionWriterTest, snapshot_writes_to_new_file_with_file_co
   ASSERT_EQ(opened_files.size(), 2);
   ASSERT_EQ(closed_files.size(), 2);
 
-  static const std::string opened_file_pattern_str =
-    R"(\d+_)" + bag_base_dir_ + R"(_)" +
-    std::string(rosbag2_cpp::writers::TIMESTAMP_PATTERN);
-  static const std::regex opened_file_pattern(opened_file_pattern_str);
-
   for (size_t i = 0; i < 2; i++) {
     // Verify closed file format
     fs::path closed_path(closed_files[i]);
     std::string closed_filename = closed_path.filename().generic_string();
-    EXPECT_TRUE(path_match_expected_regex(closed_filename)) <<
+    EXPECT_TRUE(path_match_expected_compressed_file_regex(closed_filename)) <<
       "Closed file '" << closed_filename << "' does not match expected pattern for file " << i;
     EXPECT_TRUE(file_counter_at_start(closed_filename, i));
 
@@ -806,7 +811,7 @@ TEST_F(SequentialCompressionWriterTest, snapshot_writes_to_new_file_with_file_co
     } else {
       fs::path opened_path(opened_files[i]);
       std::string opened_filename = opened_path.filename().generic_string();
-      EXPECT_TRUE(std::regex_match(opened_filename, opened_file_pattern)) <<
+      EXPECT_TRUE(path_match_expected_file_regex(opened_filename)) <<
         "Opened file '" << opened_filename << "' does not match expected pattern for file " << i;
       EXPECT_TRUE(file_counter_at_start(opened_filename, i + 1));
     }
