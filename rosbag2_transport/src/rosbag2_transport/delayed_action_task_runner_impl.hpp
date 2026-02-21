@@ -48,8 +48,7 @@ public:
   {
     std::lock_guard<std::mutex> state_lock(start_stop_mutex_);
     if (is_running_.exchange(true)) {
-      RCLCPP_WARN(node_->get_logger(),
-                  "DelayedActionTaskRunner is already running");
+      RCLCPP_WARN(node_->get_logger(), "DelayedActionTaskRunner is already running");
       return;
     }
 
@@ -57,8 +56,7 @@ public:
     if (thread_.joinable()) {
       RCLCPP_WARN(
         node_->get_logger(),
-        "DelayedActionTaskRunner thread is joinable but was "
-        "marked as not running. Joining...");
+        "DelayedActionTaskRunner thread is joinable but was marked as not running. Joining...");
       exit_.store(true);
       cv_.notify_all();
       thread_.join();

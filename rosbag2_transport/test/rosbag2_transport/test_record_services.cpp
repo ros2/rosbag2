@@ -772,8 +772,9 @@ TEST_F(RecordSrvsTest, split_bagfile_ignored_when_not_recording)
   EXPECT_FALSE(callback_called.load());
   auto request = std::make_shared<SplitBagfile::Request>();
   auto response = std::make_shared<SplitBagfile::Response>();
-  ASSERT_FALSE(successful_service_request<SplitBagfile>(cli_split_bagfile_, request, response));
+  ASSERT_TRUE(successful_service_request<SplitBagfile>(cli_split_bagfile_, request, response));
   EXPECT_EQ(SplitBagfile::Response::RETURN_CODE_NOT_RECORDING, response->return_code);
+  EXPECT_TRUE(response->error_string.empty());
   EXPECT_FALSE(callback_called.load());
 }
 
@@ -790,7 +791,11 @@ TEST_F(RecordSrvsTest, pause_resume)
   EXPECT_TRUE(successful_service_request<IsPaused>(cli_is_paused_, is_paused_response));
   EXPECT_TRUE(is_paused_response->paused);
 
-  EXPECT_TRUE(successful_service_request<Resume>(cli_resume_));
+  auto request = std::make_shared<Resume::Request>();
+  auto response = std::make_shared<Resume::Response>();
+  EXPECT_TRUE(successful_service_request<Resume>(cli_resume_, request, response));
+  EXPECT_EQ(0, response->return_code);
+  EXPECT_TRUE(response->error_string.empty());
   EXPECT_FALSE(recorder_->is_paused());
   is_paused_response = std::make_shared<IsPaused::Response>();
   EXPECT_TRUE(successful_service_request<IsPaused>(cli_is_paused_, is_paused_response));
@@ -911,7 +916,7 @@ TEST_F(RecordSrvsSimTimeTest, record_can_be_scheduled_in_future)
 
   // Schedule a record in the future
   auto request = std::make_shared<Record::Request>();
-  auto target_time = current_sim_time_ + rclcpp::Duration(0, 200000000);
+  auto target_time = current_sim_time_ + rclcpp::Duration(std::chrono::milliseconds(200));
   request->start_time = target_time;
   auto response = std::make_shared<Record::Response>();
   ASSERT_TRUE(successful_service_request<Record>(cli_record_, request, response));

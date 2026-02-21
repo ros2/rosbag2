@@ -126,7 +126,6 @@ public:
   /// \details The record() method will return almost immediately and recording will happen in
   /// background.
   /// \param uri If provided, it will override the storage_options.uri provided during construction.
-  /// \return true if the request successfully started recording.
   /// \throws std::exception if recording could not be started.
   ROSBAG2_TRANSPORT_PUBLIC
   void record(const std::string & uri = "");

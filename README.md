@@ -133,12 +133,14 @@ See storage plugin documentation for more detail:
 
 #### Controlling recordings via services
 
-The Rosbag2 recorder provides the following services for remote control, which can be called via `ros2 service` commandline, or from your nodes:
+The Rosbag2 recorder provides the following services for remote control, which can be called via
+`ros2 service` commandline, or from your nodes:
 
 * `~/is_paused [rosbag2_interfaces/srv/IsPaused]`
   * Returns whether recording is currently paused.
 * `~/pause [rosbag2_interfaces/srv/Pause]`
-  * Pauses recording. All messages that have already arrived will be written, but all messages that arrive after pausing will be discarded. Has no effect if already paused. Takes no arguments.
+  * Pauses recording. All messages that have already arrived will be written, but all messages that
+    arrive after pausing will be discarded. Has no effect if already paused. Takes no arguments.
 * `~/resume [rosbag2_interfaces/srv/Resume]`
   * Resume recording if paused. Has no effect if not paused. Takes no arguments.
 * `~/split_bagfile [rosbag2_interfaces/srv/SplitBagfile]`

@@ -16,11 +16,11 @@
 
 #include <algorithm>
 #include <chrono>
+#include <functional>
 #include <future>
 #include <map>
 #include <memory>
 #include <optional>
-#include <queue>
 #include <regex>
 #include <stdexcept>
 #include <string>
@@ -40,7 +40,6 @@
 #include "rosbag2_cpp/writer.hpp"
 #include "rosbag2_interfaces/srv/snapshot.hpp"
 #include "rosbag2_storage/qos.hpp"
-#include "rosbag2_storage/yaml.hpp"
 #include "logging.hpp"
 #include "rosbag2_transport/config_options_from_node_params.hpp"
 #include "rosbag2_transport/reader_writer_factory.hpp"
@@ -66,6 +65,7 @@ public:
   /// \brief Start recording.
   /// \details The record(uri) method will return almost immediately and recording will happen in
   /// background.
+  /// \return true if recording started successfully, false if recorder is already running.
   /// \param uri If provided, it will override the storage_options.uri provided during construction.
   bool record(const std::string & uri = "");
 
@@ -161,6 +161,8 @@ public:
   void stop();
 
   //// @brief Split the current bagfile and open a new one.
+  /// @return true if split was successful, false if recording is not active.
+  /// \throws std::exception if underlying writer fails to split the bagfile.
   bool split_bagfile();
 
   /// Get a const reference to the underlying rosbag2 writer.
@@ -207,19 +209,19 @@ private:
 
   enum class SplitMode : int32_t
   {
-    NodeTime = 0,
-    PublishTime = 1,
-    ReceiveTime = 2,
+    NodeTime = SplitBagFileRequest::SPLIT_MODE_NODE_TIME,
+    PublishTime = SplitBagFileRequest::SPLIT_MODE_PUBLISH_TIME,
+    ReceiveTime = SplitBagFileRequest::SPLIT_MODE_RECEIVE_TIME,
   };
 
   /// \brief Return codes for split bag file operation.
   enum class SplitBagFileReturnCode : int32_t
   {
-    Success = 0,
-    NotRecording = 1,
-    InvalidSplitMode = 2,
-    InvalidTrackingTopic = 3,
-    SplitFailed = 4
+    Success = SplitBagFileResponse::RETURN_CODE_SUCCESS,
+    NotRecording = SplitBagFileResponse::RETURN_CODE_NOT_RECORDING,
+    InvalidSplitMode = SplitBagFileResponse::RETURN_CODE_INVALID_SPLIT_MODE,
+    InvalidTrackingTopic = SplitBagFileResponse::RETURN_CODE_INVALID_TRACKING_TOPIC,
+    SplitFailed = SplitBagFileResponse::RETURN_CODE_SPLIT_FAILED
   };
 
   /// \brief Pending bag split state for timestamp-based split requests.
@@ -373,14 +375,31 @@ private:
   /// \return true if the action task should be executed immediately, false otherwise.
   bool should_execute_immediately(const std::optional<rclcpp::Time> & target_time) const;
 
-  /// \brief Schedule an action task to be executed at a target time by delayed action task runner.
-  /// \param target_time The time at which the action task should be executed.
-  /// \param action_task The action task to be executed.
-  /// \param description A human-readable description of the action task.
-  void schedule_action_task(
-    const rclcpp::Time & target_time,
-    std::function<void()> action_task,
-    const std::string & description);
+  // *INDENT-OFF*
+  /// \brief Handle a pending bag split request based on publish/receive timestamps.
+  void handle_pending_bag_split_request(const std::string & topic_name,
+                                        const rcutils_time_point_value_t & publish_time,
+                                        const rcutils_time_point_value_t & receive_time) noexcept;
+
+  /// \brief Handle a timer-based bag split request.
+  /// \param split_time The time at which to split the bag file. If std::nullopt, split immediately.
+  /// \param response The service response to populate.
+  void handle_timer_bag_split_request(std::optional<rclcpp::Time> split_time,
+                                      SplitBagFileCallbackResponse & response);
+
+  /// \brief Handle a timestamp-based bag split request.
+  /// \param split_time The time at which to split the bag file. If std::nullopt, split immediately.
+  /// \param split_mode The mode to use for the split (publish time, receive time).
+  /// \param topic_name The topic to track for the split. If empty, track all topics.
+  /// \param response The service response to populate.
+  void handle_timestamp_bag_split_request(const std::optional<rclcpp::Time> & split_time,
+                                          SplitMode split_mode,
+                                          const std::string & topic_name,
+                                          SplitBagFileCallbackResponse & response);
+  // *INDENT-ON*
+
+  /// \brief Attempt an immediate split of the bag file.
+  void attempt_immediate_bag_split(SplitBagFileCallbackResponse & response);
 
   rclcpp::Node * node;
   std::unique_ptr<TopicFilter> topic_filter_;
@@ -427,32 +446,6 @@ private:
   static_assert(static_cast<int32_t>(SplitBagFileReturnCode::Success) == kServiceReturnCodeSuccess,
                 "SplitBagFileReturnCode::Success expected to be equal kServiceReturnCodeSuccess");
   static constexpr int32_t kServiceReturnCodeError = 1;
-
-  // *INDENT-OFF*
-  /// \brief Handle a pending bag split request based on publish/receive timestamps.
-  void handle_pending_bag_split_request(const std::string & topic_name,
-                                        const rcutils_time_point_value_t & publish_time,
-                                        const rcutils_time_point_value_t & receive_time) noexcept;
-
-  /// \brief Handle a timer-based bag split request.
-  /// \param split_time The time at which to split the bag file. If std::nullopt, split immediately.
-  /// \param response The service response to populate.
-  void handle_timer_bag_split_request(std::optional<rclcpp::Time> split_time,
-                                      SplitBagFileCallbackResponse & response);
-
-  /// \brief Handle a timestamp-based bag split request.
-  /// \param split_time The time at which to split the bag file. If std::nullopt, split immediately.
-  /// \param split_mode The mode to use for the split (publish time, receive time).
-  /// \param topic_name The topic to track for the split. If empty, track all topics.
-  /// \param response The service response to populate.
-  void handle_timestamp_bag_split_request(const std::optional<rclcpp::Time> & split_time,
-                                          SplitMode split_mode,
-                                          const std::string & topic_name,
-                                          SplitBagFileCallbackResponse & response);
-  // *INDENT-ON*
-
-  /// \brief Attempt an immediate split of the bag file.
-  void attempt_immediate_bag_split(SplitBagFileCallbackResponse & response);
 };  // class RecorderImpl
 
 RecorderImpl::RecorderImpl(
@@ -760,8 +753,6 @@ void RecorderImpl::create_control_services()
           split_tracking_topic_name = rclcpp::expand_topic_or_service_name(
             request->tracking_topic_name, node->get_name(), node->get_namespace(), false);
         } catch (const std::exception & e) {
-          RCLCPP_ERROR(node->get_logger(), "Error during 'SplitBagfile' request: %s", e.what());
-          set_service_error(response, e.what());
           RCLCPP_ERROR(node->get_logger(),
                        "Invalid split topic name '%s' for SplitBagfile request: %s",
                        request->tracking_topic_name.c_str(), e.what());
@@ -846,38 +837,29 @@ void RecorderImpl::create_control_services()
       const std::shared_ptr<rosbag2_interfaces::srv::Record::Request> request,
       const std::shared_ptr<rosbag2_interfaces::srv::Record::Response> response)
     {
-      if (in_recording_.load()) {
-        RCLCPP_WARN(node->get_logger(),
-          "Received Record request while already recording. Ignoring request.");
-        set_service_error(response, "Recorder is already recording.");
-      } else {
-        auto start_time = optional_time_from_request(request->start_time);
-        auto uri = request->uri;
-        if (should_execute_immediately(start_time)) {
-          bool record_success = false;
-          try {
-            record_success = this->record(uri);
-            if (record_success) {
-              set_service_success(response);
-            } else {
-              set_service_error(response, "Error starting on Record request");
-            }
-          } catch (const std::exception & e) {
-            RCLCPP_ERROR(node->get_logger(), "Error during Record request: %s", e.what());
-            set_service_error(response, e.what());
+      auto start_time = optional_time_from_request(request->start_time);
+      auto uri = request->uri;
+      if (should_execute_immediately(start_time)) {
+        try {
+          if (this->record(uri)) {
+            set_service_success(response);
+          } else {
+            set_service_error(response, "Error starting on Record request");
           }
-        } else {
-          auto action_task = [this, uri]() {
-            try {
-              (void)this->record(uri);
-            } catch (const std::exception & e) {
-              RCLCPP_ERROR(node->get_logger(), "Error starting on Record request: %s", e.what());
-            }
-          };
-          action_task_runner_.schedule(
-            start_time.value(), std::move(action_task), "Start recording");
-          set_service_success(response);
+        } catch (const std::exception & e) {
+          RCLCPP_ERROR(node->get_logger(), "Error starting on 'Record' request: %s", e.what());
+          set_service_error(response, e.what());
         }
+      } else {
+        auto action_task = [this, uri]() {
+          try {
+            (void)this->record(uri);
+          } catch (const std::exception & e) {
+            RCLCPP_ERROR(node->get_logger(), "Error starting on Record request: %s", e.what());
+          }
+        };
+        action_task_runner_.schedule(start_time.value(), std::move(action_task), "Start recording");
+        set_service_success(response);
       }
     }
   );
@@ -976,11 +958,11 @@ std::optional<rclcpp::Time> RecorderImpl::optional_time_from_request(
 std::optional<RecorderImpl::SplitMode> RecorderImpl::get_split_mode(int32_t split_mode)
 {
   switch (split_mode) {
-    case 0:  // SPLIT_MODE_NODE_TIME
+    case SplitBagFileRequest::SPLIT_MODE_NODE_TIME:
       return SplitMode::NodeTime;
-    case 1:  // SPLIT_MODE_PUBLISH_TIME
+    case SplitBagFileRequest::SPLIT_MODE_PUBLISH_TIME:
       return SplitMode::PublishTime;
-    case 2:  // SPLIT_MODE_RECEIVE_TIME
+    case SplitBagFileRequest::SPLIT_MODE_RECEIVE_TIME:
       return SplitMode::ReceiveTime;
     default:
       return std::nullopt;
@@ -1480,73 +1462,38 @@ RecorderImpl::create_subscription(
       on_messages_lost_in_transport(topic_name, msgs_lost_info);
     };
 
+  auto subscription_callback =
+    [this, topic_name, topic_type](std::shared_ptr<const rclcpp::SerializedMessage> message,
+    const rclcpp::MessageInfo & mi)
+    {
+      rcutils_time_point_value_t recv_timestamp{0};
+      rcutils_time_point_value_t send_timestamp{0};
 #ifdef _WIN32
-  if (std::string(rmw_get_implementation_identifier()).find("rmw_connextdds") !=
-    std::string::npos)
-  {
-    return node->create_generic_subscription(
-      topic_name,
-      topic_type,
-      qos,
-      [this, topic_name, topic_type](std::shared_ptr<const rclcpp::SerializedMessage> message,
-      const rclcpp::MessageInfo &) {
-        rcutils_time_point_value_t recv_timestamp{node->now().nanoseconds()};
-        rcutils_time_point_value_t send_timestamp{0};
-        last_seen_timestamps_.update(topic_name, send_timestamp, recv_timestamp);
-        if (!paused_.load()) {
-          bag_message->send_timestamp = send_timestamp;
-          bag_message->recv_timestamp = recv_timestamp;
-          writer_->write(
-            std::move(message), topic_name, topic_type, node->now().nanoseconds(),
-            0);
-          // Handle pending bag split request if it is existing
-          handle_pending_bag_split_request(topic_name, send_timestamp, recv_timestamp);
-        }
-      },
-      sub_options);
-  }
+      if (std::string(rmw_get_implementation_identifier()).find("rmw_connextdds") !=
+        std::string::npos)
+      {
+        recv_timestamp = node->now().nanoseconds();
+        send_timestamp = 0;
+      }
+#else
+      if (record_options_.use_sim_time) {
+        recv_timestamp = node->now().nanoseconds();
+      } else {
+        recv_timestamp = mi.get_rmw_message_info().received_timestamp;
+      }
+      send_timestamp = mi.get_rmw_message_info().source_timestamp;
 #endif
+      last_seen_timestamps_.update(topic_name, send_timestamp, recv_timestamp);
 
-  if (record_options_.use_sim_time) {
-    return node->create_generic_subscription(
-      topic_name,
-      topic_type,
-      qos,
-      [this, topic_name, topic_type](std::shared_ptr<const rclcpp::SerializedMessage> message,
-      const rclcpp::MessageInfo & mi) {
-        rcutils_time_point_value_t recv_timestamp = node->now().nanoseconds();
-        rcutils_time_point_value_t send_timestamp = mi.get_rmw_message_info().source_timestamp;
-        last_seen_timestamps_.update(topic_name, send_timestamp, recv_timestamp);
-        if (!paused_.load()) {
-          writer_->write(
-            std::move(message), topic_name, topic_type, node->now().nanoseconds(),
-            mi.get_rmw_message_info().source_timestamp);
-          // Handle pending bag split request if it is existing
-          handle_pending_bag_split_request(topic_name, send_timestamp, recv_timestamp);
-        }
-      },
-      sub_options);
-  } else {
-    return node->create_generic_subscription(
-      topic_name,
-      topic_type,
-      qos,
-      [this, topic_name, topic_type](std::shared_ptr<const rclcpp::SerializedMessage> message,
-      const rclcpp::MessageInfo & mi) {
-        rcutils_time_point_value_t recv_timestamp = mi.get_rmw_message_info().received_timestamp;
-        rcutils_time_point_value_t send_timestamp = mi.get_rmw_message_info().source_timestamp;
-        last_seen_timestamps_.update(topic_name, send_timestamp, recv_timestamp);
-        if (!paused_.load()) {
-          writer_->write(
-            std::move(message), topic_name, topic_type,
-            mi.get_rmw_message_info().received_timestamp,
-            mi.get_rmw_message_info().source_timestamp);
-          // Handle pending bag split request if it is existing
-          handle_pending_bag_split_request(topic_name, send_timestamp, recv_timestamp);
-        }
-      },
-      sub_options);
-  }
+      if (!paused_.load()) {
+        writer_->write(std::move(message), topic_name, topic_type, recv_timestamp, send_timestamp);
+        // Handle pending bag split request if it is existing
+        handle_pending_bag_split_request(topic_name, send_timestamp, recv_timestamp);
+      }
+    };
+
+  return node->create_generic_subscription(
+    topic_name, topic_type, qos, subscription_callback, sub_options);
 }
 
 std::vector<rclcpp::QoS> RecorderImpl::offered_qos_profiles_for_topic(

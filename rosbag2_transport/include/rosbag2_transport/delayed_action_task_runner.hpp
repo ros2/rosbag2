@@ -20,6 +20,23 @@
 #include <string>
 
 #include "rclcpp/time.hpp"
+#include "rosbag2_transport/visibility_control.hpp"
+
+#ifdef _WIN32
+#  pragma warning(push)
+// Suppress warning "rosbag2_transport::DelayedActionTaskRunner::pimpl_': class
+// 'std::unique_ptr>' needs to have dll-interface to be used by clients of class
+// 'rosbag2_transport::DelayedActionTaskRunner'"
+// Justification:
+// 1. We never inline code in the header that actually calls methods on
+// DelayedActionTaskRunnerImpl.
+// 2. While the `DelayedActionTaskRunnerImpl` is defined in the
+// `delayed_action_task_runner_impl.hpp` file, we include it only in the
+// `delayed_action_task_runner.cpp` file, and it does not leak into the external API.
+// 3. The pimpl design pattern imply that implementation details are hidden and shouldn't be
+// exposed with the dll-interface.
+#  pragma warning(disable:4251)
+#endif
 
 namespace rclcpp
 {
@@ -31,9 +48,8 @@ namespace rosbag2_transport
 class DelayedActionTaskRunnerImpl;
 /// @brief Background helper that runs actions at specific ROS times.
 /// @details Uses a dedicated thread with a priority queue to execute callbacks once the
-/// recorder node clock reaches a scheduled timestamp. Keeps the recorder waitset/service
-/// threads free from long sleeps.
-class DelayedActionTaskRunner
+/// node clock reaches a scheduled timestamp. Keeps waitset/service threads free from long sleeps.
+class ROSBAG2_TRANSPORT_PUBLIC DelayedActionTaskRunner
 {
 public:
   /// @brief Construct a runner bound to the provided node.
@@ -63,5 +79,9 @@ private:
 };
 
 }  // namespace rosbag2_transport
+
+#ifdef _WIN32
+#  pragma warning(pop)
+#endif
 
 #endif  // ROSBAG2_TRANSPORT__DELAYED_ACTION_TASK_RUNNER_HPP_
