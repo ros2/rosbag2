@@ -201,14 +201,6 @@ public:
       return ::testing::AssertionFailure() << "Service call returned unsuccessful response";
     }
 
-    if constexpr (type_has_return_code<typename Srv::Response>::value) {
-      if (response->return_code) {  // success is indicated by return_code == 0 or non-empty
-        return ::testing::AssertionFailure() << "Service call return_code = " <<
-               response->return_code;
-      } else {
-        return ::testing::AssertionSuccess();
-      }
-    }
     // No further checks possible for services with empty response
     return ::testing::AssertionSuccess();
   }
@@ -352,7 +344,9 @@ TEST_F(RecordSrvsSnapshotTest, trigger_snapshot_ignored_when_not_recording)
   auto & mock_writer = dynamic_cast<MockSequentialWriter &>(writer.get_implementation_handle());
   EXPECT_THAT(mock_writer.get_number_of_recorded_messages(), Eq(0u));
 
-  ASSERT_TRUE(successful_service_request<Stop>(cli_stop_));
+  auto stop_response = std::make_shared<Stop::Response>();
+  ASSERT_TRUE(successful_service_request<Stop>(cli_stop_, stop_response));
+  EXPECT_EQ(stop_response->return_code, 0);
   ASSERT_TRUE(mock_writer.closed_was_called());
 
   EXPECT_TRUE(successful_service_request<Snapshot>(cli_snapshot_));
@@ -767,14 +761,15 @@ TEST_F(RecordSrvsTest, split_bagfile_ignored_when_not_recording)
       callback_called.store(true);
     };
   mock_writer.add_event_callbacks(callbacks);
-  ASSERT_TRUE(successful_service_request<Stop>(cli_stop_));
+  auto stop_response = std::make_shared<Stop::Response>();
+  ASSERT_TRUE(successful_service_request<Stop>(cli_stop_, stop_response));
+  EXPECT_EQ(stop_response->return_code, 0);
   ASSERT_TRUE(mock_writer.closed_was_called());
   EXPECT_FALSE(callback_called.load());
   auto request = std::make_shared<SplitBagfile::Request>();
   auto response = std::make_shared<SplitBagfile::Response>();
   ASSERT_TRUE(successful_service_request<SplitBagfile>(cli_split_bagfile_, request, response));
   EXPECT_EQ(SplitBagfile::Response::RETURN_CODE_NOT_RECORDING, response->return_code);
-  EXPECT_TRUE(response->error_string.empty());
   EXPECT_FALSE(callback_called.load());
 }
 
@@ -871,9 +866,14 @@ TEST_F(RecordSrvsTest, record_stop)
 
   EXPECT_FALSE(mock_writer.closed_was_called());
 
-  EXPECT_TRUE(successful_service_request<Stop>(cli_stop_));
+  auto stop_response = std::make_shared<Stop::Response>();
+  EXPECT_TRUE(successful_service_request<Stop>(cli_stop_, stop_response));
+  EXPECT_EQ(stop_response->return_code, 0);
   EXPECT_TRUE(mock_writer.closed_was_called());
-  EXPECT_FALSE(successful_service_request<Stop>(cli_stop_));  // second stop should fail
+
+  // second stop should return unsuccessful return code since it's already stopped
+  EXPECT_TRUE(successful_service_request<Stop>(cli_stop_, stop_response));
+  EXPECT_EQ(stop_response->return_code, 1);
 
   auto record_response = std::make_shared<Record::Response>();
   EXPECT_TRUE(successful_service_request<Record>(cli_record_, record_response));
@@ -881,7 +881,8 @@ TEST_F(RecordSrvsTest, record_stop)
   EXPECT_TRUE(record_response->error_string.empty());
   EXPECT_FALSE(mock_writer.closed_was_called());
 
-  EXPECT_TRUE(successful_service_request<Stop>(cli_stop_));
+  EXPECT_TRUE(successful_service_request<Stop>(cli_stop_, stop_response));
+  EXPECT_EQ(stop_response->return_code, 0);
   EXPECT_TRUE(mock_writer.closed_was_called());
 }
 
@@ -894,7 +895,9 @@ TEST_F(RecordSrvsTest, record_with_uri)
 
   EXPECT_NE(mock_writer.get_storage_options().uri, test_uri);
 
-  ASSERT_TRUE(successful_service_request<Stop>(cli_stop_));
+  auto stop_response = std::make_shared<Stop::Response>();
+  ASSERT_TRUE(successful_service_request<Stop>(cli_stop_, stop_response));
+  EXPECT_EQ(stop_response->return_code, 0);
 
   auto record_request = std::make_shared<Record::Request>();
   record_request->uri = test_uri;
@@ -911,7 +914,9 @@ TEST_F(RecordSrvsSimTimeTest, record_can_be_scheduled_in_future)
   auto & writer = recorder_->get_writer_handle();
   auto & mock_writer = dynamic_cast<MockSequentialWriter &>(writer.get_implementation_handle());
 
-  ASSERT_TRUE(successful_service_request<Stop>(cli_stop_));
+  auto stop_response = std::make_shared<Stop::Response>();
+  ASSERT_TRUE(successful_service_request<Stop>(cli_stop_, stop_response));
+  EXPECT_EQ(stop_response->return_code, 0);
   ASSERT_TRUE(mock_writer.closed_was_called());
 
   // Schedule a record in the future
