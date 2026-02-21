@@ -65,8 +65,9 @@ public:
   /// \brief Start recording.
   /// \details The record(uri) method will return almost immediately and recording will happen in
   /// background.
-  /// \return true if recording started successfully, false if recorder is already running.
   /// \param uri If provided, it will override the storage_options.uri provided during construction.
+  /// \return true if recording started successfully, false if recorder is already running.
+  /// \throws std::exception if recording could not be started.
   bool record(const std::string & uri = "");
 
   /// @brief Add a new channel (topic) to the rosbag2 writer to be recorded.
@@ -844,7 +845,7 @@ void RecorderImpl::create_control_services()
           if (this->record(uri)) {
             set_service_success(response);
           } else {
-            set_service_error(response, "Error starting on Record request");
+            set_service_error(response, "Called record(uri) while already in recording.");
           }
         } catch (const std::exception & e) {
           RCLCPP_ERROR(node->get_logger(), "Error starting on 'Record' request: %s", e.what());

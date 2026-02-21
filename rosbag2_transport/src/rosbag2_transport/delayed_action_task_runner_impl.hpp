@@ -53,18 +53,18 @@ public:
     }
 
     // Double-check thread state for safety
-    if (thread_.joinable()) {
+    if (runner_thread_.joinable()) {
       RCLCPP_WARN(
         node_->get_logger(),
         "DelayedActionTaskRunner thread is joinable but was marked as not running. Joining...");
       exit_.store(true);
       cv_.notify_all();
-      thread_.join();
+      runner_thread_.join();
     }
 
     setup_clock_jump_callback();
     exit_.store(false);
-    thread_ = std::thread(&DelayedActionTaskRunnerImpl::thread_main, this);
+    runner_thread_ = std::thread(&DelayedActionTaskRunnerImpl::runner_thread_main, this);
   }
 
   void stop()
@@ -76,13 +76,13 @@ public:
 
     exit_.store(true);
     cv_.notify_all();
-    if (thread_.joinable()) {
-      thread_.join();
+    if (runner_thread_.joinable()) {
+      runner_thread_.join();
     }
     clock_jump_callback_.reset();
     {
-      std::lock_guard<std::mutex> lock(mutex_);
-      queue_ = decltype(queue_)();
+      std::lock_guard<std::mutex> lock(task_queue_mutex_);
+      task_queue_ = decltype(task_queue_)();
     }
   }
 
@@ -92,21 +92,20 @@ public:
     const std::string & description)
   {
     {
-      std::lock_guard<std::mutex> lock(mutex_);
-      ScheduledActionTask scheduled_action_task{
+      std::lock_guard<std::mutex> lock(task_queue_mutex_);
+      ScheduledActionTask scheduled_action_task {
         scheduled_time,
         std::move(action_task),
         description,
         next_id_++
       };
-      queue_.push(std::move(scheduled_action_task));
+      task_queue_.push(std::move(scheduled_action_task));
     }
     cv_.notify_all();
-    RCLCPP_INFO(
-      node_->get_logger(),
-      "Scheduled '%s' for %.9f seconds",
-      description.c_str(),
-      scheduled_time.seconds());
+    RCLCPP_INFO(node_->get_logger(),
+                "Scheduled '%s' for %.9f seconds",
+                description.c_str(),
+                scheduled_time.seconds());
   }
 
 private:
@@ -129,7 +128,7 @@ private:
     }
   };
 
-  bool is_ros_time_active() const
+  [[nodiscard]] bool is_ros_time_active() const
   {
     bool ros_time_active = false;
     if (node_->get_clock()->get_clock_type() == RCL_ROS_TIME) {
@@ -148,49 +147,49 @@ private:
     return ros_time_active;
   }
 
-  void thread_main()
+  void runner_thread_main()
   {
-    std::unique_lock<std::mutex> lock(mutex_);
+    std::unique_lock<std::mutex> lock(task_queue_mutex_);
     while (!exit_) {
-      if (queue_.empty()) {
+      if (task_queue_.empty()) {
         cv_.wait(lock, [this]() {
-            return exit_ || !queue_.empty();
+            return exit_ || !task_queue_.empty();
         });
         continue;
       }
 
-      const auto next_action = queue_.top();
+      const auto next_action_task = task_queue_.top();
       auto now = node_->now();
-      if (next_action.deadline <= now) {
-        queue_.pop();
+      if (next_action_task.deadline <= now) {
+        task_queue_.pop();
         lock.unlock();
-        execute_scheduled_action_task(next_action);
+        execute_scheduled_action_task(next_action_task);
         lock.lock();
         continue;
       }
 
-      const auto remaining = next_action.deadline - now;
-      if (remaining.nanoseconds() <= 0) {
+      const auto remaining_time = next_action_task.deadline - now;
+      if (remaining_time.nanoseconds() <= 0) {
         continue;
       }
 
       if (is_ros_time_active()) {
         cv_.wait(
           lock,
-          [this, &next_action]() {
-            return exit_ || queue_.empty() ||
-                   (queue_.top().sequence_id != next_action.sequence_id) ||
-                   (queue_.top().deadline <= node_->now());
+          [this, &next_action_task]() {
+            return exit_ || task_queue_.empty() ||
+                   (task_queue_.top().sequence_id != next_action_task.sequence_id) ||
+                   (task_queue_.top().deadline <= node_->now());
           });
       } else {
-        const auto remaining_ns = std::chrono::nanoseconds(remaining.nanoseconds());
+        const auto remaining_ns = std::chrono::nanoseconds(remaining_time.nanoseconds());
         const auto steady_deadline = std::chrono::steady_clock::now() + remaining_ns;
         cv_.wait_until(
           lock,
           steady_deadline,
-          [this, &next_action]() {
-            return exit_ || queue_.empty() ||
-                   queue_.top().sequence_id != next_action.sequence_id;
+          [this, &next_action_task]() {
+            return exit_ || task_queue_.empty() ||
+                   task_queue_.top().sequence_id != next_action_task.sequence_id;
           });
       }
     }
@@ -212,7 +211,7 @@ private:
       RCLCPP_ERROR(
         node_->get_logger(),
         "Scheduled action_task '%s' failed due to unknown error.",
-          action_task.description.c_str());
+        action_task.description.c_str());
     }
   }
 
@@ -237,16 +236,16 @@ private:
   }
 
   rclcpp::Node * node_;
-  std::thread thread_;
+  std::thread runner_thread_;
   std::atomic_bool exit_{true};
   std::atomic_bool is_running_{false};
   std::mutex start_stop_mutex_;
-  std::mutex mutex_;
+  std::mutex task_queue_mutex_;
   std::condition_variable cv_;
   uint64_t next_id_{0};
-  std::priority_queue<ScheduledActionTask, std::vector<ScheduledActionTask>,
-    ScheduledActionTaskComparator>
-  queue_;
+  std::priority_queue<
+    ScheduledActionTask, std::vector<ScheduledActionTask>, ScheduledActionTaskComparator>
+  task_queue_;
   rclcpp::JumpHandler::SharedPtr clock_jump_callback_;
 };
 

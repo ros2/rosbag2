@@ -55,6 +55,8 @@ public:
   /// @brief Construct a runner bound to the provided node.
   /// @param node Node used for logging and to query current time.
   explicit DelayedActionTaskRunner(rclcpp::Node * node);
+
+  /// @brief Default destructor.
   ~DelayedActionTaskRunner();
 
   /// @brief Start the background thread.

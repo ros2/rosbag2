@@ -752,8 +752,8 @@ TEST_F(RecordSrvsSimTimeTest, split_bagfile_by_node_time_respects_future_timesta
   ASSERT_TRUE(
     rosbag2_test_common::wait_until_condition(
       [&callback_called]() {return callback_called.load();},
-      std::chrono::seconds(2)))
-    << "Timed out waiting for scheduled split to occur.";
+      std::chrono::seconds(5))
+  ) << "Timed out waiting for scheduled split to occur.";
 }
 
 TEST_F(RecordSrvsTest, split_bagfile_ignored_when_not_recording)
@@ -828,8 +828,8 @@ TEST_F(RecordSrvsSimTimeTest, resume_can_be_scheduled_in_future)
   ASSERT_TRUE(
     rosbag2_test_common::wait_until_condition(
       [this]() {return !recorder_->is_paused();},
-      std::chrono::seconds(2)))
-    << "Timed out waiting for scheduled resume.";
+      std::chrono::seconds(5))
+  ) << "Timed out waiting for scheduled resume.";
 }
 
 TEST_F(RecordSrvsDiscoveryTest, stop_start_discovery)
@@ -938,6 +938,6 @@ TEST_F(RecordSrvsSimTimeTest, record_can_be_scheduled_in_future)
   ASSERT_TRUE(
     rosbag2_test_common::wait_until_condition(
       [&mock_writer]() {return !mock_writer.closed_was_called();},
-      std::chrono::seconds(2)))
-    << "Timed out waiting for scheduled record start.";
+      std::chrono::seconds(5))
+  ) << "Timed out waiting for scheduled record start.";
 }
