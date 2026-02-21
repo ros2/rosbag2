@@ -16,9 +16,12 @@
 
 #include <filesystem>
 #include <memory>
+#include <regex>
+#include <sstream>
 
 #include "composition_manager_test_fixture.hpp"
 #include "rosbag2_cpp/reader.hpp"
+#include "rosbag2_cpp/writers/sequential_writer.hpp"
 #include "rosbag2_test_common/publication_manager.hpp"
 #include "rosbag2_test_common/memory_management.hpp"
 #include "rosbag2_test_common/tested_storage_ids.hpp"
@@ -35,26 +38,6 @@ namespace fs = std::filesystem;
 class ComposableRecorderIntegrationTests : public CompositionManagerTestFixture
 {
 public:
-  std::string get_bag_file_name(int split_index) const
-  {
-    std::stringstream bag_file_name;
-    bag_file_name << get_test_name() << "_" << GetParam() << "_" << split_index;
-
-    return bag_file_name.str();
-  }
-
-  fs::path get_bag_file_path(int split_index)
-  {
-    return root_bag_path_ / get_relative_bag_file_path(split_index);
-  }
-
-  fs::path get_relative_bag_file_path(int split_index) const
-  {
-    const auto storage_id = GetParam();
-    return fs::path(
-      rosbag2_test_common::bag_filename_for_storage_id(get_bag_file_name(split_index), storage_id));
-  }
-
   void wait_for_metadata(std::chrono::duration<float> timeout = std::chrono::seconds(10)) const
   {
     rosbag2_storage::MetadataIo metadata_io;
@@ -71,18 +54,40 @@ public:
       << "Could not find metadata file: \"" << bag_path.c_str() << "\"";
   }
 
-  void wait_for_storage_file(std::chrono::duration<float> timeout = std::chrono::seconds(10))
+  void wait_for_storage_file(std::chrono::duration<float> timeout = std::chrono::seconds(10)) const
   {
-    const auto storage_path = get_bag_file_path(0);
+    using rosbag2_cpp::writers::TIMESTAMP_PATTERN;
+    std::string dir_name = root_bag_path_.filename().generic_string();
+    // Remove timestamp pattern if present (same logic as format_storage_uri() in SequentialWriter)
+    static std::regex timestamp_pattern("_" + std::string(TIMESTAMP_PATTERN) + "$");
+    const std::string bag_base_dir = std::regex_replace(dir_name, timestamp_pattern, "");
+
+    const auto storage_id = GetParam();
+    // Build regex pattern for first file:0_{bag_base_dir}_{timestamp}.{ext}
+    // Escape dot in extension for regex (replace . with \\.)
+    const auto extension = rosbag2_test_common::kTestedStorageIDsToExtensions.at(storage_id);
+    const std::string escaped_extension = "\\" + extension;
+
+    std::stringstream pattern_ss;
+    pattern_ss << R"(0_)" << bag_base_dir << R"(_)" << TIMESTAMP_PATTERN << escaped_extension;
+    std::regex file_pattern(pattern_ss.str());
+
     const auto start_time = std::chrono::steady_clock::now();
     while (std::chrono::steady_clock::now() - start_time < timeout && rclcpp::ok()) {
-      if (fs::exists(storage_path)) {
-        return;
+      // Search for matching file in directory
+      if (fs::exists(root_bag_path_) && fs::is_directory(root_bag_path_)) {
+        for (const auto & entry : fs::directory_iterator(root_bag_path_)) {
+          if (entry.is_regular_file()) {
+            if (std::regex_match(entry.path().filename().generic_string(), file_pattern)) {
+              return;  // Found matching file
+            }
+          }
+        }
       }
-      std::this_thread::sleep_for(50ms);  // wait a bit to not query constantly
+      std::this_thread::sleep_for(50ms);
     }
-    ASSERT_EQ(fs::exists(storage_path), true)
-      << "Could not find storage file: \"" << storage_path.generic_string() << "\"";
+    ASSERT_TRUE(false) << "Could not find storage file in directory: \"" <<
+      root_bag_path_.generic_string() << "\"";
   }
 
   template<typename MessageT>

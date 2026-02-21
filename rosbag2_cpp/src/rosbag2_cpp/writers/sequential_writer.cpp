@@ -16,8 +16,11 @@
 
 #include <algorithm>
 #include <chrono>
+#include <ctime>
 #include <filesystem>
+#include <iomanip>
 #include <memory>
+#include <regex>
 #include <stdexcept>
 #include <string>
 #include <sstream>
@@ -298,12 +301,37 @@ void SequentialWriter::remove_topic(const rosbag2_storage::TopicMetadata & topic
 std::string SequentialWriter::format_storage_uri(
   const std::string & base_folder, uint64_t storage_count)
 {
-  // Right now `base_folder_` is always just the folder name for where to install the bagfile.
-  // The name of the folder needs to be queried in case
-  // SequentialWriter is opened with a relative path.
+  // Extract prefix from directory name by removing timestamp pattern if present
+  // This handles the case when --output is not specified and default timestamped directory is used
+  // Currently, the default timestamp format is `YYYY_MM_DD-HH_MM_SS`
+  std::string dir_name = fs::path(base_folder).filename().generic_string();
+  // Handle edge case where filename() returns empty (e.g., base_folder is "/" or ".")
+  // This should not happen in practice since base_folder is validated in open(), but
+  // we add this check for defensive programming.
+  if (dir_name.empty()) {
+    dir_name = "rosbag2";  // Use default prefix
+  }
+  static std::regex timestamp_pattern("_" + std::string(TIMESTAMP_PATTERN) + "$");
+  std::string prefix = std::regex_replace(dir_name, timestamp_pattern, "");
+
+  // Generate timestamp in local time.
+  // Note: During DST switches the same string may occur twice. However, we're also adding the
+  // sequence counter as part of the filename, so duplicates still remain distinguishable.
+  auto time_t = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
+  std::tm timestamp{};
+#ifdef _WIN32
+  localtime_s(&timestamp, &time_t);
+#else
+  localtime_r(&time_t, &timestamp);
+#endif
+
+  // Generate filename in format {storage_count}_{prefix}_{timestamp}
+  // Note: Underscores are used as separators. If the prefix contains underscores, this creates
+  // theoretical ambiguity when parsing filenames. However, parsing is typically done by matching
+  // the timestamp pattern from the end, which avoids ambiguity in practice.
   std::stringstream storage_file_name;
-  storage_file_name << fs::path(base_folder).filename().generic_string() << "_" <<
-    storage_count;
+  storage_file_name << storage_count << "_" << prefix << "_" <<
+    std::put_time(&timestamp, "%Y_%m_%d-%H_%M_%S");
 
   return (fs::path(base_folder) / storage_file_name.str()).generic_string();
 }

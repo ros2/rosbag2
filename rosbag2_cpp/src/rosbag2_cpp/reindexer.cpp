@@ -49,7 +49,6 @@ Reindexer::Reindexer(
 : storage_factory_(std::move(storage_factory)),
   metadata_io_(std::move(metadata_io))
 {
-  regex_bag_pattern_ = R"(.+_(\d+)\.([a-zA-Z0-9])+)";
 }
 
 /// Determine which path should be placed first in a vector ordered by file number.
@@ -61,7 +60,8 @@ bool Reindexer::compare_relative_file(
   const fs::path & first_path,
   const fs::path & second_path)
 {
-  std::regex regex_rule(regex_bag_pattern_, std::regex_constants::ECMAScript);
+  std::regex new_format_rule(kNewFileFormatRegexStr, std::regex_constants::ECMAScript);
+  std::regex old_format_rule(kOldFileFormatRegexStr, std::regex_constants::ECMAScript);
 
   std::smatch first_match;
   std::smatch second_match;
@@ -69,25 +69,50 @@ bool Reindexer::compare_relative_file(
   auto first_path_string = first_path.generic_string();
   auto second_path_string = second_path.generic_string();
 
-  auto first_regex_good = std::regex_match(first_path_string, first_match, regex_rule);
-  auto second_regex_good = std::regex_match(second_path_string, second_match, regex_rule);
+  // Try new format first, then old format
+  auto first_regex_good = std::regex_match(first_path_string, first_match, new_format_rule);
+  auto first_is_new_format = first_regex_good;
+
+  if (!first_regex_good) {
+    first_regex_good = std::regex_match(first_path_string, first_match, old_format_rule);
+  }
+
+  auto second_regex_good = std::regex_match(second_path_string, second_match, new_format_rule);
+  auto second_is_new_format = second_regex_good;
+
+  if (!second_regex_good) {
+    second_regex_good = std::regex_match(second_path_string, second_match, old_format_rule);
+  }
 
   if (!first_regex_good) {
     std::stringstream ss;
     ss << "Path " << first_path.generic_string() <<
-      "didn't meet expected naming convention: " << regex_bag_pattern_;
+      " didn't match any expected naming convention";
     std::string error_text = ss.str();
     throw std::runtime_error(error_text.c_str());
   } else if (!second_regex_good) {
     std::stringstream ss;
     ss << "Path " << second_path.generic_string() <<
-      "didn't meet expected naming convention: " << regex_bag_pattern_;
+      " didn't match any expected naming convention";
     std::string error_text = ss.str();
     throw std::runtime_error(error_text.c_str());
   }
 
-  auto first_file_num = std::stoul(first_match.str(1), nullptr, 10);
-  auto second_file_num = std::stoul(second_match.str(1), nullptr, 10);
+  // Extract file number - new format uses group 1, old format uses group 2
+  uint64_t first_file_num = 0;
+  uint64_t second_file_num = 0;
+
+  if (first_is_new_format) {
+    first_file_num = std::stoull(first_match.str(1), nullptr, 10);
+  } else {
+    first_file_num = std::stoull(first_match.str(2), nullptr, 10);
+  }
+
+  if (second_is_new_format) {
+    second_file_num = std::stoull(second_match.str(1), nullptr, 10);
+  } else {
+    second_file_num = std::stoull(second_match.str(2), nullptr, 10);
+  }
 
   return first_file_num < second_file_num;
 }
@@ -107,24 +132,27 @@ void Reindexer::get_bag_files(
     throw std::runtime_error("Empty directory.");
   }
 
-  std::regex regex_rule(regex_bag_pattern_, std::regex_constants::ECMAScript);
+  std::regex new_format_rule(kNewFileFormatRegexStr, std::regex_constants::ECMAScript);
+  std::regex old_format_rule(kOldFileFormatRegexStr, std::regex_constants::ECMAScript);
   // Get all file names in directory
   for (const auto & entry : fs::directory_iterator(base_folder)) {
     auto found_file = entry.path().filename();
     ROSBAG2_CPP_LOG_DEBUG_STREAM("Found file: " << found_file.generic_string());
 
-    if (std::regex_match(found_file.generic_string(), regex_rule)) {
+    if (std::regex_match(found_file.generic_string(), new_format_rule) ||
+      std::regex_match(found_file.generic_string(), old_format_rule))
+    {
       auto full_path = base_folder / found_file;
       output.emplace_back(full_path);
     }
   }
 
   // Sort relative file path by number
-  std::sort(
-    output.begin(), output.end(),
-    [&, this](fs::path a, fs::path b) {
+  std::sort(output.begin(), output.end(),
+    [&, this](const fs::path & a, const fs::path & b) {
       return compare_relative_file(a, b);
-    });
+    }
+  );
 }
 
 /// Prepare a fresh BagMetadata object for reindexing.

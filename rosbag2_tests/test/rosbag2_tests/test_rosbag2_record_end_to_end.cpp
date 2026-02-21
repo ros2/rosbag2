@@ -21,13 +21,15 @@
 
 #include "rclcpp/rclcpp.hpp"
 #include "rcpputils/scope_exit.hpp"
+#include "record_fixture.hpp"
 #include "rosbag2_compression_zstd/zstd_decompressor.hpp"
 #include "rosbag2_storage/metadata_io.hpp"
 #include "rosbag2_test_common/publication_manager.hpp"
 #include "rosbag2_test_common/subscription_manager.hpp"
 #include "rosbag2_test_common/process_execution_helpers.hpp"
 
-#include "record_fixture.hpp"
+#include "test_msgs/msg/arrays.hpp"
+#include "test_msgs/message_fixtures.hpp"
 
 namespace fs = std::filesystem;
 
@@ -105,7 +107,7 @@ TEST_P(RecordFixture, record_end_to_end_test_with_zstd_file_compression) {
 
   const auto decompressed_uri = decompressor.decompress_uri(
     compressed_bag_file_path.generic_string());
-  const auto bag_path = get_bag_file_path(0).generic_string();
+  const auto bag_path = load_metadata_and_get_bag_file_path(0);
 
   ASSERT_EQ(decompressed_uri, bag_path) <<
     "Expected decompressed URI to be same as uncompressed bag file path!";
@@ -358,7 +360,8 @@ TEST_P(RecordFixture, record_end_to_end_with_splitting_bagsize_split_is_at_least
 
   pub_manager.run_publishers();
 
-  wait_for_storage_file();
+  // Wait for all expected split files before stopping the recorder
+  wait_for_storage_files(expected_splits);
 
   stop_execution(process_handle);
   cleanup_process_handle.cancel();
@@ -426,10 +429,24 @@ TEST_P(RecordFixture, record_end_to_end_with_splitting_max_size_not_reached) {
   ASSERT_TRUE(fs::exists(bagfile_path)) <<
     "Expected bag file: \"" << bagfile_path.generic_string() << "\" to exist.";
 
-  // Check that the next bagfile does not exist.
-  const auto next_bag_file = get_bag_file_path(1);
-  EXPECT_FALSE(fs::exists(next_bag_file)) << "Expected next bag file: \"" <<
-    next_bag_file.generic_string() << "\" to not exist!";
+  // Count actual bag files in directory (excluding metadata files)
+  std::vector<std::string> found_bag_files;
+  std::string bag_files_list_str;
+  for (const auto & entry : fs::directory_iterator(root_bag_path_)) {
+    if (entry.is_regular_file()) {
+      const auto & path = entry.path();
+      const auto filename = path.filename().generic_string();
+      // Skip metadata file
+      if (filename == "metadata.yaml") {
+        continue;
+      }
+      found_bag_files.push_back(filename);
+      bag_files_list_str += filename + ", ";
+    }
+  }
+
+  EXPECT_EQ(found_bag_files.size(), 1u) << "Expected 1 bag file, but found " <<
+    found_bag_files.size() << " bag files in directory. {" << bag_files_list_str << "}";
 }
 
 TEST_P(RecordFixture, record_end_to_end_with_splitting_splits_bagfile) {
