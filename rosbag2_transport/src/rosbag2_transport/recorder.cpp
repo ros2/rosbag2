@@ -1475,6 +1475,12 @@ RecorderImpl::create_subscription(
       {
         recv_timestamp = node->now().nanoseconds();
         send_timestamp = 0;
+      } else if (record_options_.use_sim_time) {
+        recv_timestamp = node->now().nanoseconds();
+        send_timestamp = mi.get_rmw_message_info().source_timestamp;
+      } else {
+        recv_timestamp = mi.get_rmw_message_info().received_timestamp;
+        send_timestamp = mi.get_rmw_message_info().source_timestamp;
       }
 #else
       if (record_options_.use_sim_time) {
