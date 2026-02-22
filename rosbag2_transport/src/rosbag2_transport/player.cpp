@@ -780,22 +780,20 @@ size_t PlayerImpl::burst(const size_t num_messages)
 
 void PlayerImpl::seek(rcutils_time_point_value_t time_point)
 {
-  {
-    rcpputils::unique_lock<std::mutex> is_in_playback_lk(is_in_playback_mutex_);
-    if (!is_in_playback_) {
-      RCLCPP_WARN(owner_->get_logger(), "Called seek, but player is not playing.");
-      return;
-    }
+  rcpputils::unique_lock<std::mutex> is_in_playback_lk(is_in_playback_mutex_);
+  if (!is_in_playback_) {
+    RCLCPP_WARN(owner_->get_logger(), "Called seek, but player is not playing.");
+    return;
   }
+
+  // Wait for player to be ready for playback messages from queue i.e. wait for Player:play() to
+  // be called if not yet and queue to be filled with messages.
+  std::unique_lock<std::mutex> lk(ready_to_play_from_queue_mutex_);
+  ready_to_play_from_queue_cv_.wait(lk, [this] {return is_ready_to_play_from_queue_;});
+
   // Temporary stop playback in play_messages_from_queue() and block play_next()
   std::lock_guard<std::mutex> main_play_loop_lk(main_play_loop_mutex_);
   skip_message_in_main_play_loop_ = true;
-  // Wait for player to be ready for playback messages from queue i.e. wait for Player:play() to
-  // be called if not yet and queue to be filled with messages.
-  {
-    std::unique_lock<std::mutex> lk(ready_to_play_from_queue_mutex_);
-    ready_to_play_from_queue_cv_.wait(lk, [this] {return is_ready_to_play_from_queue_;});
-  }
   cancel_wait_for_next_message_ = true;
   // if given seek value is earlier than the beginning of the bag, then clamp
   // it to the beginning of the bag
