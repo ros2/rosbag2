@@ -789,8 +789,6 @@ TEST_F(RecordSrvsTest, pause_resume)
   auto request = std::make_shared<Resume::Request>();
   auto response = std::make_shared<Resume::Response>();
   EXPECT_TRUE(successful_service_request<Resume>(cli_resume_, request, response));
-  EXPECT_EQ(0, response->return_code);
-  EXPECT_TRUE(response->error_string.empty());
   EXPECT_FALSE(recorder_->is_paused());
   is_paused_response = std::make_shared<IsPaused::Response>();
   EXPECT_TRUE(successful_service_request<IsPaused>(cli_is_paused_, is_paused_response));

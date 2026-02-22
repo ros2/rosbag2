@@ -911,28 +911,14 @@ void RecorderImpl::create_control_services()
       auto resume_time = optional_time_from_request(request->resume_time);
       if (should_execute_immediately(resume_time)) {
         std::lock_guard<std::mutex> state_lock(start_stop_transition_mutex_);
-        if (!in_recording_.load()) {
-          RCLCPP_WARN(node->get_logger(),
-            "Received Resume request while not in recording. Ignoring request.");
-          set_service_error(response, "Called 'Resume' request while not recording. "
-                                      "Request ignored.");
-        } else {
-          this->resume();
-          set_service_success(response);
-        }
+        this->resume();
       } else {
         auto action_task = [this]() {
           std::lock_guard<std::mutex> state_lock(start_stop_transition_mutex_);
-          if (!in_recording_.load()) {
-            RCLCPP_WARN(node->get_logger(),
-              "Skipping scheduled Resume request while not recording.");
-            return;
-          }
           this->resume();
         };
-        action_task_runner_.schedule(resume_time.value(),
-                                     std::move(action_task),
-                                     "Resume recording");
+        action_task_runner_.schedule(
+          resume_time.value(), std::move(action_task), "Resume recording");
       }
     });
 
