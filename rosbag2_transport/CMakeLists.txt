@@ -46,6 +46,7 @@ find_package(yaml-cpp REQUIRED)
 add_library(${PROJECT_NAME} SHARED
   src/rosbag2_transport/bag_rewrite.cpp
   src/rosbag2_transport/recorder_event_notifier.cpp
+  src/rosbag2_transport/delayed_action_task_runner.cpp
   src/rosbag2_transport/player.cpp
   src/rosbag2_transport/play_options.cpp
   src/rosbag2_transport/player_progress_bar.cpp
