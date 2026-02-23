@@ -906,7 +906,7 @@ void RecorderImpl::create_control_services()
     [this](
       const std::shared_ptr<rmw_request_id_t>/* request_header */,
       const std::shared_ptr<rosbag2_interfaces::srv::Resume::Request> request,
-      const std::shared_ptr<rosbag2_interfaces::srv::Resume::Response> response)
+      const std::shared_ptr<rosbag2_interfaces::srv::Resume::Response>/* response */)
     {
       auto resume_time = optional_time_from_request(request->resume_time);
       if (should_execute_immediately(resume_time)) {
