@@ -509,6 +509,7 @@ void RecorderImpl::create_control_services()
     "~/resume",
     [this](
       const std::shared_ptr<rmw_request_id_t>/* request_header */,
+<<<<<<< HEAD
       const std::shared_ptr<rosbag2_interfaces::srv::Resume::Request>/* request */,
       const std::shared_ptr<rosbag2_interfaces::srv::Resume::Response>/* response */)
     {
@@ -516,6 +517,23 @@ void RecorderImpl::create_control_services()
       // Note: We don't check if we are in recording here, as resuming when not recording is no-op
       // and valid operation that can be used to set the initial state before starting recording.
       this->resume();
+=======
+      const std::shared_ptr<rosbag2_interfaces::srv::Resume::Request> request,
+      const std::shared_ptr<rosbag2_interfaces::srv::Resume::Response>/* response */)
+    {
+      auto resume_time = optional_time_from_request(request->resume_time);
+      if (should_execute_immediately(resume_time)) {
+        std::lock_guard<std::mutex> state_lock(start_stop_transition_mutex_);
+        this->resume();
+      } else {
+        auto action_task = [this]() {
+          std::lock_guard<std::mutex> state_lock(start_stop_transition_mutex_);
+          this->resume();
+        };
+        action_task_runner_.schedule(
+          resume_time.value(), std::move(action_task), "Resume recording");
+      }
+>>>>>>> 826f72f (Allow pause/resume service calls while not in recording (#2349))
     });
 
   srv_is_paused_ = node->create_service<rosbag2_interfaces::srv::IsPaused>(
