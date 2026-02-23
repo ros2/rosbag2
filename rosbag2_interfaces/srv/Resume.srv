@@ -4,8 +4,3 @@
 # request with player.
 builtin_interfaces/Time resume_time
 ---
-# Return code. Returns 1 when recording is not running or in case of error, otherwise 0.
-int32 return_code
-
-# Error string. Empty if no error occurred.
-string error_string

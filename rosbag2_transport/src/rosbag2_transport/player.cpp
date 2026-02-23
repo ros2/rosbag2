@@ -2077,17 +2077,10 @@ void PlayerImpl::create_control_services()
   srv_resume_ = owner_->create_service<rosbag2_interfaces::srv::Resume>(
     "~/resume",
     [this](
-      rosbag2_interfaces::srv::Resume::Request::ConstSharedPtr request,
-      rosbag2_interfaces::srv::Resume::Response::SharedPtr response)
+      rosbag2_interfaces::srv::Resume::Request::ConstSharedPtr /*request*/,
+      rosbag2_interfaces::srv::Resume::Response::SharedPtr /*response*/)
     {
-      if (!(request->resume_time.sec == 0 && request->resume_time.nanosec == 0)) {
-        response->return_code = 1;
-        response->error_string =
-        "'Resume' request with resume_time is not supported yet. Request ignored.";
-      } else {
-        owner_->resume();
-        response->return_code = 0;
-      }
+      owner_->resume();
     });
   srv_toggle_paused_ = owner_->create_service<rosbag2_interfaces::srv::TogglePaused>(
     "~/toggle_paused",
