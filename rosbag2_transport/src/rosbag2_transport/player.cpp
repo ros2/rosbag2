@@ -2059,8 +2059,13 @@ void PlayerImpl::create_control_services()
   srv_resume_ = owner_->create_service<rosbag2_interfaces::srv::Resume>(
     "~/resume",
     [this](
+<<<<<<< HEAD
       rosbag2_interfaces::srv::Resume::Request::ConstSharedPtr,
       rosbag2_interfaces::srv::Resume::Response::SharedPtr)
+=======
+      rosbag2_interfaces::srv::Resume::Request::ConstSharedPtr /*request*/,
+      rosbag2_interfaces::srv::Resume::Response::SharedPtr /*response*/)
+>>>>>>> 826f72f (Allow pause/resume service calls while not in recording (#2349))
     {
       owner_->resume();
     });
