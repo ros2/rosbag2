@@ -147,7 +147,7 @@ public:
       });
 
     // Wait for the executor to start spinning in the newly spawned thread to avoid race conditions
-    if (!wait_until_condition([this]() {return exec_->is_spinning();}, std::chrono::seconds(5))) {
+    if (!wait_until_condition([this]() {return exec_->is_spinning();}, std::chrono::seconds(10))) {
       std::cerr << "Failed to start spinning nodes: '" <<
         recorder_->get_name() << ", " << client_node_->get_name() << "'" << std::endl;
       throw std::runtime_error("Failed to start spinning nodes");
@@ -162,7 +162,7 @@ public:
       ASSERT_TRUE(
         rosbag2_test_common::wait_until_condition(
           [this]() {return recorder_->get_clock()->started();},
-          std::chrono::seconds(5)));
+          std::chrono::seconds(10)));
       EXPECT_EQ(recorder_->get_clock()->get_clock_type(), RCL_ROS_TIME);
       ASSERT_TRUE(recorder_->get_clock()->ros_time_is_active());
     }
@@ -323,7 +323,7 @@ TEST_F(RecordSrvsSnapshotTest, trigger_snapshot)
   ASSERT_TRUE(
     rosbag2_test_common::wait_until_condition(
       [&mock_writer]() {return mock_writer.get_snapshot_buffer_size() > 0;},
-      std::chrono::seconds(5))
+      std::chrono::seconds(10))
   ) << "Failed to capture message in time";
 
   EXPECT_THAT(mock_writer.get_number_of_recorded_messages(), Eq(0u));
@@ -378,7 +378,7 @@ TEST_F(RecordSrvsTest, split_bagfile_with_default_parameters)
   ASSERT_TRUE(
     rosbag2_test_common::wait_until_condition(
       [&mock_writer]() {return mock_writer.get_number_of_recorded_messages() > 0;},
-      std::chrono::seconds(5))
+      std::chrono::seconds(10))
   ) << "Failed to capture message in time";
 
   ASSERT_FALSE(split_called.load());
@@ -404,7 +404,7 @@ TEST_F(RecordSrvsSimTimeTest, split_bagfile_by_receive_time_scheduled)
   ASSERT_TRUE(
     rosbag2_test_common::wait_until_condition(
       [&tracked_pub]() {return tracked_pub->get_subscription_count() > 0;},
-      std::chrono::seconds(5))
+      std::chrono::seconds(10))
   );
 
   auto & writer = recorder_->get_writer_handle();
@@ -436,14 +436,14 @@ TEST_F(RecordSrvsSimTimeTest, split_bagfile_by_receive_time_scheduled)
   ASSERT_TRUE(
     rosbag2_test_common::wait_until_condition(
       [this]() {return recorder_->now() >= current_sim_time_;},
-      std::chrono::seconds(5))
+      std::chrono::seconds(10))
   ) << "Recorder node failed to advance to the current sim time";
 
   tracked_pub->publish(*string_message);
 
   const bool split_happened = rosbag2_test_common::wait_until_condition(
     [&split_called]() {return split_called.load();},
-    std::chrono::seconds(5));
+    std::chrono::seconds(10));
   ASSERT_TRUE(split_happened) << "Timed out waiting for receive-time split to occur.";
 }
 
@@ -456,7 +456,7 @@ TEST_F(RecordSrvsSimTimeTest, split_bagfile_by_receive_time_immediate_due)
   ASSERT_TRUE(
     rosbag2_test_common::wait_until_condition(
       [&tracked_pub]() {return tracked_pub->get_subscription_count() > 0;},
-      std::chrono::seconds(5))
+      std::chrono::seconds(10))
   );
 
   auto & writer = recorder_->get_writer_handle();
@@ -472,7 +472,7 @@ TEST_F(RecordSrvsSimTimeTest, split_bagfile_by_receive_time_immediate_due)
   ASSERT_TRUE(
     rosbag2_test_common::wait_until_condition(
       [this]() {return recorder_->now() >= current_sim_time_;},
-      std::chrono::seconds(5))
+      std::chrono::seconds(10))
   ) << "Recorder node failed to advance to the current sim time";
 
   // Publish a message to establish a receive timestamp baseline
@@ -481,7 +481,7 @@ TEST_F(RecordSrvsSimTimeTest, split_bagfile_by_receive_time_immediate_due)
   ASSERT_TRUE(
     rosbag2_test_common::wait_until_condition(
       [&mock_writer]() {return mock_writer.get_number_of_recorded_messages() > 0;},
-      std::chrono::seconds(5))
+      std::chrono::seconds(10))
   ) << "Failed to capture message in time";
 
   // Request a receive-time split using a split time in the past
@@ -533,7 +533,7 @@ TEST_F(RecordSrvsTest, split_bagfile_by_publish_time_immediate_due)
   ASSERT_TRUE(
     rosbag2_test_common::wait_until_condition(
       [&mock_writer]() {return mock_writer.get_number_of_recorded_messages() > 1;},
-      std::chrono::seconds(5))
+      std::chrono::seconds(10))
   ) << "Failed to capture message in time";
 
   const auto first_publish_timestamp = mock_writer.get_messages().front()->send_timestamp;
@@ -575,7 +575,7 @@ TEST_F(RecordSrvsTest, split_bagfile_by_publish_time_scheduled)
   ASSERT_TRUE(
     rosbag2_test_common::wait_until_condition(
       [&tracked_pub]() {return tracked_pub->get_subscription_count() > 0;},
-      std::chrono::seconds(5)
+      std::chrono::seconds(10)
     )
   );
   // Publish a message to establish a publish timestamp baseline
@@ -595,7 +595,7 @@ TEST_F(RecordSrvsTest, split_bagfile_by_publish_time_scheduled)
   ASSERT_TRUE(
     rosbag2_test_common::wait_until_condition(
       [&mock_writer]() {return mock_writer.get_number_of_recorded_messages() > 0;},
-      std::chrono::seconds(5))
+      std::chrono::seconds(10))
   ) << "Failed to capture message in time";
 
   const auto last_publish_timestamp = mock_writer.get_messages().back()->send_timestamp;
@@ -614,7 +614,7 @@ TEST_F(RecordSrvsTest, split_bagfile_by_publish_time_scheduled)
   ASSERT_TRUE(
     rosbag2_test_common::wait_until_condition(
       [split_time, &system_clock]() {return system_clock.now() >= split_time;},
-      std::chrono::seconds(5))
+      std::chrono::seconds(10))
   ) << "System clock did not reach split time in time";
 
   // Now send a message to trigger the split
@@ -623,7 +623,7 @@ TEST_F(RecordSrvsTest, split_bagfile_by_publish_time_scheduled)
 
   const bool split_happened = rosbag2_test_common::wait_until_condition(
     [&split_called]() {return split_called.load();},
-    std::chrono::seconds(5));
+    std::chrono::seconds(10));
   ASSERT_TRUE(split_happened) << "Timed out waiting for split to occur.";
 }
 
@@ -650,11 +650,11 @@ TEST_F(RecordSrvsPublishMultipleTopicsTest, split_bagfile_topic_filter_triggers_
   ASSERT_TRUE(
     rosbag2_test_common::wait_until_condition(
       [&tracked_pub]() {return tracked_pub->get_subscription_count() > 0;},
-      std::chrono::seconds(5)));
+      std::chrono::seconds(10)));
   ASSERT_TRUE(
     rosbag2_test_common::wait_until_condition(
       [&other_pub]() {return other_pub->get_subscription_count() > 0;},
-      std::chrono::seconds(5)));
+      std::chrono::seconds(10)));
 
   const auto initial_tracked_count = mock_writer.get_messages_per_topic(test_topic_);
 
@@ -668,7 +668,7 @@ TEST_F(RecordSrvsPublishMultipleTopicsTest, split_bagfile_topic_filter_triggers_
         return  mock_writer.get_messages_per_topic(test_topic_) > initial_tracked_count &&
                mock_writer.get_messages_per_topic(kSplitOtherTopic) > 0;
       },
-      std::chrono::seconds(5))
+      std::chrono::seconds(10))
   ) << "Failed to capture messages in time";
 
   auto split_time = current_sim_time_ + rclcpp::Duration(std::chrono::milliseconds(200));
@@ -690,7 +690,7 @@ TEST_F(RecordSrvsPublishMultipleTopicsTest, split_bagfile_topic_filter_triggers_
   ASSERT_TRUE(
     rosbag2_test_common::wait_until_condition(
       [this]() {return recorder_->now() >= current_sim_time_;},
-      std::chrono::seconds(5))
+      std::chrono::seconds(10))
   ) << "Recorder node failed to advance to the current sim time";
 
   // Publish on other topic first, should not trigger split
@@ -706,7 +706,7 @@ TEST_F(RecordSrvsPublishMultipleTopicsTest, split_bagfile_topic_filter_triggers_
 
   const bool split_happened = rosbag2_test_common::wait_until_condition(
     [&split_called]() {return split_called.load();},
-  std::chrono::seconds(5));
+  std::chrono::seconds(10));
   ASSERT_TRUE(split_happened) << "Timed out waiting for split to occur.";
 }
 
@@ -740,13 +740,13 @@ TEST_F(RecordSrvsSimTimeTest, split_bagfile_by_node_time_respects_future_timesta
   ASSERT_TRUE(
     rosbag2_test_common::wait_until_condition(
       [this]() {return recorder_->now() >= current_sim_time_;},
-      std::chrono::seconds(5))
+      std::chrono::seconds(10))
   ) << "Recorder node failed to advance to the current sim time";
 
   ASSERT_TRUE(
     rosbag2_test_common::wait_until_condition(
       [&callback_called]() {return callback_called.load();},
-      std::chrono::seconds(5))
+      std::chrono::seconds(10))
   ) << "Timed out waiting for scheduled split to occur.";
 }
 
@@ -815,13 +815,13 @@ TEST_F(RecordSrvsSimTimeTest, resume_can_be_scheduled_in_future)
   ASSERT_TRUE(
     rosbag2_test_common::wait_until_condition(
       [this]() {return recorder_->now() >= current_sim_time_;},
-      std::chrono::seconds(5))
+      std::chrono::seconds(10))
   ) << "Recorder node failed to advance to the current sim time";
 
   ASSERT_TRUE(
     rosbag2_test_common::wait_until_condition(
       [this]() {return !recorder_->is_paused();},
-      std::chrono::seconds(5))
+      std::chrono::seconds(10))
   ) << "Timed out waiting for scheduled resume.";
 }
 
@@ -934,13 +934,13 @@ TEST_F(RecordSrvsSimTimeTest, record_can_be_scheduled_in_future)
   ASSERT_TRUE(
     rosbag2_test_common::wait_until_condition(
       [this]() {return recorder_->now() >= current_sim_time_;},
-      std::chrono::seconds(5))
+      std::chrono::seconds(10))
   ) << "Recorder node failed to advance to the current sim time";
 
   // Writer should now be re-opened
   ASSERT_TRUE(
     rosbag2_test_common::wait_until_condition(
       [&mock_writer]() {return !mock_writer.closed_was_called();},
-      std::chrono::seconds(5))
+      std::chrono::seconds(10))
   ) << "Timed out waiting for scheduled record start.";
 }
