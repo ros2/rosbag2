@@ -18,9 +18,8 @@
 #include "rosbag2_storage/metadata_io.hpp"
 #include "rosbag2_storage/ros_helper.hpp"
 #include "rosbag2_storage/storage_interfaces/read_write_interface.hpp"
-#include "rosbag2_storage_mcap/visibility_control.hpp"
-
 #include "rosbag2_storage/yaml.hpp"
+#include "rosbag2_storage_mcap/visibility_control.hpp"
 
 #include <mcap/mcap.hpp>
 
