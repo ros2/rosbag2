@@ -40,8 +40,6 @@ find_package(rosbag2_cpp REQUIRED)
 find_package(rosbag2_interfaces REQUIRED)
 find_package(rosbag2_storage REQUIRED)
 find_package(rmw_implementation_cmake REQUIRED)
-find_package(yaml_cpp_vendor REQUIRED)
-find_package(yaml-cpp REQUIRED)
 
 add_library(${PROJECT_NAME} SHARED
   src/rosbag2_transport/bag_rewrite.cpp
@@ -76,7 +74,6 @@ target_link_libraries(${PROJECT_NAME} PRIVATE
   rcutils::rcutils
   rmw::rmw
   rosbag2_compression::rosbag2_compression
-  yaml-cpp::yaml-cpp
 )
 
 rclcpp_components_register_node(
