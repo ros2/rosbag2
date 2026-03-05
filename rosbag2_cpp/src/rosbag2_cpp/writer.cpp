@@ -188,6 +188,29 @@ void Writer::write(
   return write(serialized_bag_message, topic_name, type_name, rmw_get_serialization_format());
 }
 
+void Writer::write(
+  std::shared_ptr<const rclcpp::SerializedMessage> message,
+  const std::string & topic_name,
+  const std::string & type_name,
+  const rclcpp::Time & time)
+{
+  auto serialized_bag_message = std::make_shared<rosbag2_storage::SerializedBagMessage>();
+  serialized_bag_message->topic_name = topic_name;
+  serialized_bag_message->time_stamp = time.nanoseconds();
+  // point to actual data and keep reference to original message to avoid premature releasing
+  serialized_bag_message->serialized_data = std::shared_ptr<rcutils_uint8_array_t>(
+    new rcutils_uint8_array_t(message->get_rcl_serialized_message()),
+    [message](rcutils_uint8_array_t * data) {
+      (void)message;
+      if (data != nullptr) {
+        data->buffer = nullptr;
+        delete data;
+      }
+    });
+
+  return write(serialized_bag_message, topic_name, type_name, rmw_get_serialization_format());
+}
+
 void Writer::add_event_callbacks(bag_events::WriterEventCallbacks & callbacks)
 {
   writer_impl_->add_event_callbacks(callbacks);
