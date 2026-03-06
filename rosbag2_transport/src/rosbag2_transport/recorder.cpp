@@ -204,6 +204,10 @@ public:
   std::vector<std::pair<std::string, std::string>> static_topics_{};  // topic_name, topic_type
 
 private:
+  using ResumeRequest = rosbag2_interfaces::srv::Resume::Request;
+  using ResumeResponse = rosbag2_interfaces::srv::Resume::Response;
+  using ResumeCallbackResponse = ResumeResponse::SharedPtr;
+
   using SplitBagFileResponse = rosbag2_interfaces::srv::SplitBagfile::Response;
   using SplitBagFileRequest = rosbag2_interfaces::srv::SplitBagfile::Request;
   using SplitBagFileCallbackResponse = SplitBagFileResponse::SharedPtr;
@@ -213,6 +217,13 @@ private:
     NodeTime = SplitBagFileRequest::SPLIT_MODE_NODE_TIME,
     PublishTime = SplitBagFileRequest::SPLIT_MODE_PUBLISH_TIME,
     ReceiveTime = SplitBagFileRequest::SPLIT_MODE_RECEIVE_TIME,
+  };
+
+  enum class ResumeMode : int32_t
+  {
+    NodeTime = ResumeRequest::RESUME_MODE_NODE_TIME,
+    PublishTime = ResumeRequest::RESUME_MODE_PUBLISH_TIME,
+    ReceiveTime = ResumeRequest::RESUME_MODE_RECEIVE_TIME,
   };
 
   /// \brief Return codes for split bag file operation.
@@ -225,12 +236,29 @@ private:
     SplitFailed = SplitBagFileResponse::RETURN_CODE_SPLIT_FAILED
   };
 
+  /// \brief Return codes for resume operation.
+  enum class ResumeReturnCode : int32_t
+  {
+    Success = ResumeResponse::RETURN_CODE_SUCCESS,
+    InvalidResumeMode = ResumeResponse::RETURN_CODE_INVALID_RESUME_MODE,
+    InvalidTrackingTopic = ResumeResponse::RETURN_CODE_INVALID_TRACKING_TOPIC,
+    ResumeFailed = ResumeResponse::RETURN_CODE_RESUME_FAILED
+  };
+
   /// \brief Pending bag split state for timestamp-based split requests.
   struct PendingBagSplitState
   {
     std::string tracking_topic_name{};
     int64_t time_ns = kNoPendingPublishSplit;
     SplitMode mode = SplitMode::NodeTime;
+  };
+
+  /// \brief Pending resume state for timestamp-based resume requests.
+  struct PendingResumeState
+  {
+    std::string tracking_topic_name{};
+    int64_t time_ns = kNoPendingResumeRequest;
+    ResumeMode mode = ResumeMode::NodeTime;
   };
 
   /// \brief Class to track last seen publish and receive timestamps for topics.
@@ -300,10 +328,20 @@ private:
   /// \return An optional SplitMode enum. If the integer is invalid, returns std::nullopt.
   static std::optional<SplitMode> get_split_mode(int32_t split_mode);
 
+  /// \brief Convert an integer resume mode to the corresponding ResumeMode enum.
+  /// \param resume_mode The integer resume mode from the service request.
+  /// \return An optional ResumeMode enum. If the integer is invalid, returns std::nullopt.
+  static std::optional<ResumeMode> get_resume_mode(int32_t resume_mode);
+
   /// \brief Convert a SplitMode enum to a human-readable string.
   /// \param split_mode The SplitMode enum.
   /// \return A string representation of the SplitMode.
   static const char * to_string(SplitMode split_mode);
+
+  /// \brief Convert a ResumeMode enum to a human-readable string.
+  /// \param resume_mode The ResumeMode enum.
+  /// \return A string representation of the ResumeMode.
+  static const char * to_string(ResumeMode resume_mode);
 
   /// \brief Convert enum class to its underlying type.
   template<typename E>
@@ -377,6 +415,29 @@ private:
   bool should_execute_immediately(const std::optional<rclcpp::Time> & target_time) const;
 
   // *INDENT-OFF*
+  /// \brief Handle a pending resume request based on publish/receive timestamps.
+  void handle_pending_resume_request(const std::string & topic_name,
+                                     const rcutils_time_point_value_t & publish_time,
+                                     const rcutils_time_point_value_t & receive_time) noexcept;
+
+  /// \brief Handle a timer-based resume request.
+  /// \param resume_time The time at which to resume recording. If std::nullopt, resume
+  /// immediately.
+  /// \param response The service response to populate.
+  void handle_timer_resume_request(std::optional<rclcpp::Time> resume_time,
+                                   ResumeCallbackResponse & response);
+
+  /// \brief Handle a timestamp-based resume request.
+  /// \param resume_time The time at which to resume recording. If std::nullopt, resume
+  /// immediately.
+  /// \param resume_mode The mode to use for the resume (publish time, receive time).
+  /// \param topic_name The topic to track for the resume. If empty, track all topics.
+  /// \param response The service response to populate.
+  void handle_timestamp_resume_request(const std::optional<rclcpp::Time> & resume_time,
+                                       ResumeMode resume_mode,
+                                       const std::string & topic_name,
+                                       ResumeCallbackResponse & response);
+
   /// \brief Handle a pending bag split request based on publish/receive timestamps.
   void handle_pending_bag_split_request(const std::string & topic_name,
                                         const rcutils_time_point_value_t & publish_time,
@@ -431,12 +492,19 @@ private:
   std::unique_ptr<RecorderEventNotifier> event_notifier_;
   DelayedActionTaskRunner action_task_runner_;
   static constexpr int64_t kNoPendingPublishSplit = -1;
+  static constexpr int64_t kNoPendingResumeRequest = -1;
 
   /// \brief Mutex to protect access to the pending bag split request.
   std::mutex pending_bag_split_request_mutex_;
 
   /// \brief Pending bag split request.
   std::unique_ptr<PendingBagSplitState> pending_bag_split_request_;
+
+  /// \brief Mutex to protect access to the pending resume request.
+  std::mutex pending_resume_request_mutex_;
+
+  /// \brief Pending resume request.
+  std::unique_ptr<PendingResumeState> pending_resume_request_;
 
   /// \brief Keeps last seen publish and receive timestamps for each topic.
   /// Used for handling pending split requests based on message timestamps.
@@ -446,6 +514,9 @@ private:
   // Ensure service return code mapping stays consistent with `SplitBagFileReturnCode`
   static_assert(static_cast<int32_t>(SplitBagFileReturnCode::Success) == kServiceReturnCodeSuccess,
                 "SplitBagFileReturnCode::Success expected to be equal kServiceReturnCodeSuccess");
+  // Ensure service return code mapping stays consistent with `ResumeReturnCode`
+  static_assert(static_cast<int32_t>(ResumeReturnCode::Success) == kServiceReturnCodeSuccess,
+                "ResumeReturnCode::Success expected to be equal kServiceReturnCodeSuccess");
   static constexpr int32_t kServiceReturnCodeError = 1;
 };  // class RecorderImpl
 
@@ -906,20 +977,41 @@ void RecorderImpl::create_control_services()
     [this](
       const std::shared_ptr<rmw_request_id_t>/* request_header */,
       const std::shared_ptr<rosbag2_interfaces::srv::Resume::Request> request,
-      const std::shared_ptr<rosbag2_interfaces::srv::Resume::Response>/* response */)
+      std::shared_ptr<rosbag2_interfaces::srv::Resume::Response> response)
     {
       auto resume_time = optional_time_from_request(request->resume_time);
-      if (should_execute_immediately(resume_time)) {
-        std::lock_guard<std::mutex> state_lock(start_stop_transition_mutex_);
-        this->resume();
-      } else {
-        auto action_task = [this]() {
-          std::lock_guard<std::mutex> state_lock(start_stop_transition_mutex_);
-          this->resume();
-        };
-        action_task_runner_.schedule(
-          resume_time.value(), std::move(action_task), "Resume recording");
+      const auto resume_mode = get_resume_mode(request->resume_mode);
+      if (!resume_mode.has_value()) {
+        RCLCPP_ERROR(node->get_logger(),
+                     "Invalid resume_mode %d for Resume request.", request->resume_mode);
+        set_service_error(response,
+                          "Invalid resume_mode for Resume request.",
+                          to_underlying_type(ResumeReturnCode::InvalidResumeMode));
+        return;
       }
+      if (resume_mode.value() == ResumeMode::NodeTime) {
+        handle_timer_resume_request(resume_time, response);
+        return;
+      }
+      std::string resume_tracking_topic_name;
+      if (!request->tracking_topic_name.empty()) {
+        try {
+          resume_tracking_topic_name = rclcpp::expand_topic_or_service_name(
+            request->tracking_topic_name, node->get_name(), node->get_namespace(), false);
+        } catch (const std::exception & e) {
+          RCLCPP_ERROR(node->get_logger(),
+                       "Invalid tracking topic name '%s' for Resume request: %s",
+                       request->tracking_topic_name.c_str(), e.what());
+          set_service_error(response,
+                            "Invalid tracking_topic_name for Resume request.",
+                            to_underlying_type(ResumeReturnCode::InvalidTrackingTopic));
+          return;
+        }
+      }
+      handle_timestamp_resume_request(resume_time,
+                                      resume_mode.value(),
+                                      resume_tracking_topic_name,
+                                      response);
     });
 
   srv_is_paused_ = node->create_service<rosbag2_interfaces::srv::IsPaused>(
@@ -956,6 +1048,20 @@ std::optional<RecorderImpl::SplitMode> RecorderImpl::get_split_mode(int32_t spli
   }
 }
 
+std::optional<RecorderImpl::ResumeMode> RecorderImpl::get_resume_mode(int32_t resume_mode)
+{
+  switch (resume_mode) {
+    case ResumeRequest::RESUME_MODE_NODE_TIME:
+      return ResumeMode::NodeTime;
+    case ResumeRequest::RESUME_MODE_PUBLISH_TIME:
+      return ResumeMode::PublishTime;
+    case ResumeRequest::RESUME_MODE_RECEIVE_TIME:
+      return ResumeMode::ReceiveTime;
+    default:
+      return std::nullopt;
+  }
+}
+
 const char * RecorderImpl::to_string(SplitMode split_mode)
 {
   switch (split_mode) {
@@ -970,12 +1076,108 @@ const char * RecorderImpl::to_string(SplitMode split_mode)
   }
 }
 
+const char * RecorderImpl::to_string(ResumeMode resume_mode)
+{
+  switch (resume_mode) {
+    case ResumeMode::NodeTime:
+      return "node";
+    case ResumeMode::PublishTime:
+      return "publish";
+    case ResumeMode::ReceiveTime:
+      return "receive";
+    default:
+      return "unknown";
+  }
+}
+
 bool RecorderImpl::should_execute_immediately(const std::optional<rclcpp::Time> & target_time) const
 {
   if (!target_time.has_value()) {
     return true;
   }
   return *target_time <= node->now();
+}
+
+void RecorderImpl::handle_timer_resume_request(
+  std::optional<rclcpp::Time> resume_time,
+  ResumeCallbackResponse & response)
+{
+  if (should_execute_immediately(resume_time)) {
+    this->resume();
+    set_service_success(response);
+  } else {
+    auto action_task = [this]() {
+        this->resume();
+      };
+    action_task_runner_.schedule(resume_time.value(), std::move(action_task), "Resume recording");
+    set_service_success(response);
+  }
+}
+
+void RecorderImpl::handle_timestamp_resume_request(
+  const std::optional<rclcpp::Time> & resume_time,
+  ResumeMode resume_mode,
+  const std::string & topic_name,
+  ResumeCallbackResponse & response)
+{
+  if (!resume_time.has_value()) {
+    this->resume();
+    set_service_success(response);
+    return;
+  }
+
+  if (resume_mode == ResumeMode::NodeTime) {  // Sanity check
+    // Should not happen; handled separately
+    RCLCPP_ERROR(node->get_logger(),
+                 "Internal error: NodeTime resume mode should be handled separately.");
+    set_service_error(response,
+                      "Internal error: NodeTime resume mode should be handled separately.",
+                      to_underlying_type(ResumeReturnCode::InvalidResumeMode));
+    return;
+  }
+
+  const auto resume_req_ns = resume_time->nanoseconds();
+  const bool use_receive_timestamp_for_resume = resume_mode == ResumeMode::ReceiveTime;
+  const std::string on_topic_str = topic_name.empty() ? "" : " on '" + topic_name + "' topic";
+
+  // Check if resume is already due
+  // Get last seen timestamps for the requested topic (or global if no topic specified)
+  auto [last_pub_timestamp, last_recv_timestamp] = last_seen_timestamps_.get(topic_name);
+  if ((!use_receive_timestamp_for_resume && last_pub_timestamp >= resume_req_ns) ||
+    (use_receive_timestamp_for_resume && last_recv_timestamp >= resume_req_ns))
+  {
+    // Resume is already due
+    RCLCPP_INFO(node->get_logger(),
+                "Timestamp-based resume request%s already due (req=%.9f s). Resuming now.",
+                on_topic_str.c_str(), resume_time->seconds());
+    this->resume();
+    set_service_success(response);
+    return;
+  }
+
+  {  // Schedule pending resume request
+    std::lock_guard<std::mutex> lock(pending_resume_request_mutex_);
+    if (pending_resume_request_) {
+      RCLCPP_WARN(node->get_logger(),
+                  "Overriding pending resume request (%.9f s) with newer request (%.9f s).",
+                  RCUTILS_NS_TO_S(static_cast<double>(pending_resume_request_->time_ns)),
+                  RCUTILS_NS_TO_S(static_cast<double>(resume_req_ns)));
+    }
+    pending_resume_request_ = std::make_unique<PendingResumeState>();
+    pending_resume_request_->tracking_topic_name = topic_name;
+    pending_resume_request_->mode = resume_mode;
+    pending_resume_request_->time_ns = resume_req_ns;
+  }
+
+  RCLCPP_INFO(node->get_logger(),
+              "Scheduled timestamp-based resume at %.9f seconds using %s timestamps%s.",
+              resume_time->seconds(), to_string(resume_mode), on_topic_str.c_str());
+
+  RCLCPP_DEBUG(node->get_logger(), "use_recv_for_resume = %s, last publish time: %ld ns, last "
+               "receive time: %ld ns, requested resume time: %ld ns",
+               use_receive_timestamp_for_resume ? "true" : "false",
+               last_pub_timestamp, last_recv_timestamp, resume_req_ns);
+  set_service_success(response);
 }
 
 void RecorderImpl::attempt_immediate_bag_split(SplitBagFileCallbackResponse & response)
@@ -998,9 +1200,6 @@ void RecorderImpl::handle_timer_bag_split_request(
   std::optional<rclcpp::Time> split_time,
   SplitBagFileCallbackResponse & response)
 {
-  if (!split_time.has_value()) {
-    split_time = node->now();
-  }
   if (should_execute_immediately(split_time)) {
     attempt_immediate_bag_split(response);
   } else {
@@ -1078,6 +1277,46 @@ void RecorderImpl::handle_timestamp_bag_split_request(
                use_receive_timestamp_for_split ? "true" : "false",
                last_pub_timestamp, last_recv_timestamp, split_req_ns);
   set_service_success(response);
+}
+
+void RecorderImpl::handle_pending_resume_request(
+  const std::string & topic_name,
+  const rcutils_time_point_value_t & publish_time,
+  const rcutils_time_point_value_t & receive_time) noexcept
+{
+  std::lock_guard<std::mutex> pending_resume_state_lock(pending_resume_request_mutex_);
+  // if we have a valid pending resume request, check if it applies to this message
+  if (pending_resume_request_ && pending_resume_request_->time_ns != kNoPendingResumeRequest) {
+    const bool matches_pending_topic =
+      pending_resume_request_->tracking_topic_name.empty() ||
+      pending_resume_request_->tracking_topic_name == topic_name;
+    if (!matches_pending_topic) {
+      return;
+    }
+    const bool use_pub_time = pending_resume_request_->mode == ResumeMode::PublishTime;
+    const rcutils_time_point_value_t & message_time = use_pub_time ? publish_time : receive_time;
+
+    if (message_time < 0) {
+      RCLCPP_WARN_ONCE(node->get_logger(),
+                       "Message timestamp is invalid; cannot evaluate resume request.");
+      return;
+    }
+
+    if (message_time >= pending_resume_request_->time_ns) {
+      RCLCPP_DEBUG(node->get_logger(),
+                   "Performing %s-time resume at message time %ld ns (threshold %ld ns).",
+                   to_string(pending_resume_request_->mode),
+                   message_time,
+                   pending_resume_request_->time_ns);
+      this->resume();
+      pending_resume_request_.reset();
+    } else {
+      // Not yet time to resume
+      RCLCPP_DEBUG(node->get_logger(),
+                   "Pending resume at %ld ns not yet reached (message time %ld ns).",
+                   pending_resume_request_->time_ns, message_time);
+    }
+  }
 }
 
 void RecorderImpl::handle_pending_bag_split_request(
@@ -1384,6 +1623,7 @@ void RecorderImpl::write_message(
   uint32_t sequence_number)
 {
   last_seen_timestamps_.update(topic_name, pub_timestamp, recv_timestamp);
+  handle_pending_resume_request(topic_name, pub_timestamp, recv_timestamp);
 
   if (!paused_.load()) {
     auto bag_message = std::make_shared<rosbag2_storage::SerializedBagMessage>();
@@ -1477,6 +1717,7 @@ RecorderImpl::create_subscription(
       send_timestamp = mi.get_rmw_message_info().source_timestamp;
 #endif
       last_seen_timestamps_.update(topic_name, send_timestamp, recv_timestamp);
+      handle_pending_resume_request(topic_name, send_timestamp, recv_timestamp);
 
       if (!paused_.load()) {
         writer_->write(std::move(message), topic_name, topic_type, recv_timestamp, send_timestamp);
