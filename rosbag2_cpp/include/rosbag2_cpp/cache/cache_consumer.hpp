@@ -17,6 +17,7 @@
 
 #include <atomic>
 #include <functional>
+#include <future>
 #include <memory>
 #include <mutex>
 #include <thread>
@@ -77,12 +78,18 @@ public:
   /// \brief shut down the consumer thread
   void stop();
 
+  /// \brief Stop the consumer thread asynchronously.
+  /// \details This is useful when the caller does not want to block while waiting for the consumer
+  /// thread to finish processing the remaining messages in the cache. The returned future will be
+  /// set once the consumer thread has finished processing and has been stopped.
+  std::future<void> stop_async();
+
 private:
   std::shared_ptr<MessageCacheInterface> message_cache_;
   consume_callback_function_t consume_callback_;
 
   /// Write buffer data to a storage
-  void exec_consuming();
+  void exec_consuming() const;
 
   /// Consumer thread shutdown sync
   std::atomic_bool is_stop_issued_ {false};

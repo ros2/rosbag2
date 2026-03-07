@@ -118,14 +118,14 @@ bool Writer::take_snapshot()
 
 void Writer::split_bagfile()
 {
-  std::lock_guard<std::mutex> writer_lock(writer_mutex_);
+  // std::lock_guard<std::mutex> writer_lock(writer_mutex_);
   return writer_impl_->split_bagfile();
 }
 
 void Writer::write(std::shared_ptr<const rosbag2_storage::SerializedBagMessage> message)
 {
   std::lock_guard<std::mutex> writer_lock(writer_mutex_);
-  writer_impl_->write(message);
+  writer_impl_->write(std::move(message));
 }
 
 void Writer::write(
@@ -155,7 +155,8 @@ void Writer::write(
   const rclcpp::Time & time,
   uint32_t sequence_number)
 {
-  write(message, topic_name, type_name, time.nanoseconds(), time.nanoseconds(), sequence_number);
+  write(std::move(message), topic_name, type_name, time.nanoseconds(), time.nanoseconds(),
+      sequence_number);
 }
 
 void Writer::write(

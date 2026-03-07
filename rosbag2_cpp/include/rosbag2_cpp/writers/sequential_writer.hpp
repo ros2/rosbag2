@@ -167,6 +167,9 @@ protected:
   std::unique_ptr<rosbag2_storage::StorageFactoryInterface> storage_factory_;
   std::shared_ptr<SerializationFormatConverterFactoryInterface> converter_factory_;
   std::shared_ptr<rosbag2_storage::storage_interfaces::ReadWriteInterface> storage_;
+  /// storage_mutex_ protects storage_ and all operations on it, including split_bagfile() and
+  /// any other operations that may be called from write() or create{remove}_topic()
+  std::mutex storage_mutex_;
   std::unique_ptr<rosbag2_storage::MetadataIo> metadata_io_;
   std::unique_ptr<Converter> converter_;
 
@@ -178,7 +181,22 @@ protected:
   /// \brief Flush the cache, update metadata and close the storage.
   void flush_cache_update_metadata_and_close_storage();
 
+  /// \brief Close the current bag file and rolls over to a new one.
+  /// \details Splits the current bag file by closing the current storage and opening a new one
+  /// with a new URI.
+  /// \return the URI of the newly opened bag file after the split is complete.
   std::string split_bagfile_local(bool execute_callbacks = true);
+
+  /// \brief Close the current bag file and rolls over to a new one asynchronously.
+  /// \details Splits the current bag file by closing the current storage and opening a new one
+  /// with a new URI.
+  /// \note It is safe to call write() and create{remove}_topic() while the split is in progress,
+  /// the new messages and topics will be stored in a separate cache buffer and written to the new
+  /// bag file once it is opened.
+  /// \return The future that contains the URI of the newly opened bag file after the split is
+  /// complete.
+  std::future<std::string> split_bagfile_async_local(bool execute_callbacks = true);
+
 
   /**
    * \brief Write cached transient-local messages to the current storage.

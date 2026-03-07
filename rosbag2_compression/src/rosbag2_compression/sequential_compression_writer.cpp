@@ -29,6 +29,7 @@
 
 #include "rosbag2_cpp/info.hpp"
 
+#include "rosbag2_cpp/writers/sequential_writer.hpp"
 #include "rosbag2_storage/storage_options.hpp"
 #include "rosbag2_storage/storage_interfaces/read_write_interface.hpp"
 
@@ -385,7 +386,8 @@ void SequentialCompressionWriter::split_bagfile()
 
   // Grab last file before calling common splitting logic, which pushes the new filename
   const auto last_file_relative_to_bag = metadata_.relative_file_paths.back();
-  const auto new_file = SequentialWriter::split_bagfile_local(false);
+  auto split_future = SequentialWriter::split_bagfile_async_local(false);
+  const auto new_file = split_future.get();
 
   // If we're in FILE compression mode, push this file's name on to the queue so another
   // thread will handle compressing it.  If not, we can just carry on.

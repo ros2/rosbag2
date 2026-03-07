@@ -371,6 +371,10 @@ std::string SequentialWriter::format_storage_uri(
 
 void SequentialWriter::switch_to_next_storage()
 {
+  // TODO(morlov): Check that writer is open before switching to next storage.
+  //  If not open, throw exception or just return without doing anything.
+  //  Also consider adding open_close_state_mutex_ to protect against race conditions
+  //  for deleting cache_consumer_ and message_cache_
   // consume remaining message cache
   if (use_cache_) {
     cache_consumer_->stop();
@@ -392,12 +396,12 @@ void SequentialWriter::switch_to_next_storage()
   next_file_index_++;
   // TODO(morlov): If we would ever remove the upper level writer mutex lock, consider protecting
   //  storage_ with mutex to avoid race conditions with write(msg) call when we are switching to
-  //  next storage and not using cache.
+  //  next storage and not using cache. Also need to rule out race condition for storage_ with
+  //  close() call and create{remove}_topic.
   storage_ = storage_factory_->open_read_write(storage_options_);
   if (!storage_) {
     std::stringstream errmsg;
     errmsg << "Failed to rollover bagfile to new file: \"" << storage_options_.uri << "\"!";
-
     throw std::runtime_error(errmsg.str());
   }
 
@@ -431,20 +435,105 @@ void SequentialWriter::switch_to_next_storage()
 
 std::string SequentialWriter::split_bagfile_local(bool execute_callbacks)
 {
-  auto closed_file = storage_->get_relative_file_path();
-  switch_to_next_storage();
-  // In non-snapshot mode, write cached transient-local messages to the new bag file so that
-  // transient-local topics appear in every split. In snapshot mode the merge happens
-  // later inside write_messages() where the circular buffer is flushed together with the snapshot.
-  if (!storage_options_.snapshot_mode) {
-    write_transient_local_messages(last_recv_timestamp_, last_sent_timestamp_);
-  }
-  auto opened_file = storage_->get_relative_file_path();
+  auto split_future = split_bagfile_async_local(execute_callbacks);
+  // Wait for split to complete
+  std::string newly_opened_file_uri = split_future.get();
+  return newly_opened_file_uri;
+}
 
-  if (execute_callbacks) {
-    execute_bag_split_callbacks(closed_file, opened_file);
+std::future<std::string> SequentialWriter::split_bagfile_async_local(bool execute_callbacks)
+{
+  auto closed_file = storage_->get_relative_file_path();
+  std::future<void> cache_flush_future_result;
+
+  // TODO(morlov): Check that writer is open before switching to next storage.
+  //  If not open, throw exception or just return without doing anything.
+  //  Also consider adding open_close_state_mutex_ to protect against race conditions
+  //  for deleting cache_consumer_ and message_cache_
+  // consume remaining message cache
+  if (use_cache_) {
+    cache_flush_future_result = cache_consumer_->stop_async();
+    message_cache_->log_dropped();
   }
-  return opened_file;
+
+  std::future<std::string> split_future_result =
+    std::async(std::launch::async,
+      [this, closed_file, execute_callbacks,
+      cache_flush_future_result = std::move(cache_flush_future_result)]() mutable
+      {
+        if (use_cache_ && cache_flush_future_result.valid()) {
+          cache_flush_future_result.get();  // Ensure cache is fully flushed before proceeding
+        }
+        finalize_metadata();
+        storage_->update_metadata(metadata_);
+
+        // Check for overflow: if next_file_index_ is 0, we've wrapped around (very unlikely
+        // but possible)
+        if (next_file_index_ == 0) {
+          ROSBAG2_CPP_LOG_WARN_STREAM(
+          "File index counter has overflowed (wrapped to 0). "
+          "This should not happen in practice, but continuing with index 0. "
+          "If circular logging is enabled, ensure old files are deleted to avoid conflicts.");
+        }
+
+        storage_options_.uri = format_storage_uri(base_folder_, next_file_index_);
+        next_file_index_++;
+        // TODO(morlov): If we would ever remove the upper level writer mutex lock, consider
+        //  protecting storage_ with mutex to avoid race conditions with write(msg) call when
+        //  we are switching to next storage and not using cache. Also need to rule out race
+        //  condition for storage_ with close() call and create{remove}_topic.
+        storage_ = storage_factory_->open_read_write(storage_options_);
+        if (!storage_) {
+          std::stringstream errmsg;
+          errmsg << "Failed to rollover bagfile to new file: \"" << storage_options_.uri << "\"!";
+          throw std::runtime_error(errmsg.str());
+        }
+
+        rosbag2_storage::FileInformation file_info{};
+        file_info.starting_time =
+        std::chrono::time_point<std::chrono::high_resolution_clock>(
+          std::chrono::nanoseconds::max());
+        file_info.path = strip_parent_path(storage_->get_relative_file_path());
+        metadata_.files.push_back(file_info);
+        metadata_.relative_file_paths.push_back(file_info.path);
+        per_file_topic_message_counts_.emplace_back();  // Initialize tracking for new file
+
+        // Delete oldest files if circular buffer limit exceeded (after new file is added)
+        delete_oldest_files_if_needed();
+
+        finalize_metadata();
+        storage_->update_metadata(metadata_);
+        {
+        // Re-register all topics since we rolled-over to a new bagfile.
+          std::lock_guard<std::mutex> lock(topics_info_mutex_);
+          for (const auto & topic : topics_names_to_info_) {
+            auto const & md = topic_names_to_message_definitions_[topic.first];
+            storage_->create_topic(topic.second.topic_metadata, md);
+          }
+        }
+
+        if (use_cache_) {
+        // restart consumer thread for cache
+          cache_consumer_->start();
+        }
+
+        auto opened_file = storage_->get_relative_file_path();
+
+        if (execute_callbacks) {
+          execute_bag_split_callbacks(closed_file, opened_file);
+        }
+
+        // In non-snapshot mode, write cached transient-local messages to the new bag file so that
+        // transient-local topics appear in every split. In snapshot mode the merge happens
+        // later inside write_messages() where the circular buffer is flushed together with the
+        // snapshot.
+        if (!storage_options_.snapshot_mode) {
+          write_transient_local_messages(last_recv_timestamp_, last_sent_timestamp_);
+        }
+        return opened_file;
+      }
+    );
+  return split_future_result;
 }
 
 void SequentialWriter::execute_bag_split_callbacks(
