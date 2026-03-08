@@ -38,16 +38,33 @@ CacheConsumer::~CacheConsumer()
 
 void CacheConsumer::stop()
 {
-  message_cache_->begin_flushing();
-  is_stop_issued_ = true;
+  issue_stop().get();
+}
 
-  ROSBAG2_CPP_LOG_INFO_STREAM(
-    "Writing remaining messages from cache to the bag. It may take a while");
+std::future<void> CacheConsumer::stop_async()
+{
+  auto stop_future = issue_stop();
+  return std::async(std::launch::async, [stop_future]() mutable {
+             stop_future.get();
+  });
+}
 
-  if (consumer_thread_.joinable()) {
-    consumer_thread_.join();
+void CacheConsumer::start()
+{
+  std::lock_guard<std::mutex> lock(start_stop_mutex_);
+  if (shared_stop_future_.valid()) {
+    shared_stop_future_.get();
+    shared_stop_future_ = std::shared_future<void>();
   }
-  message_cache_->done_flushing();
+
+  is_stop_issued_ = false;
+  if (!consumer_thread_.joinable()) {
+    consumer_thread_ = std::thread(&CacheConsumer::exec_consuming, this);
+  }
+}
+
+void CacheConsumer::flush_remaining_messages() const
+{
   // Swap buffers one last time to make sure that all messages are flushed. This is necessary in
   // case stop is called while consumer_thread_ is processing the consumer buffer, which means that
   // the producer buffer may have some messages which has not yet dumped to the storage.
@@ -59,52 +76,30 @@ void CacheConsumer::stop()
   message_cache_->release_consumer_buffer();
 }
 
-std::future<void> CacheConsumer::stop_async()
+std::shared_future<void> CacheConsumer::issue_stop()
 {
-  // TODO(morlov): Handle the case when stop_async is called multiple times before the consumer
-  //  thread is stopped. In this case, we may end up with multiple threads trying to flush the cache
-  //  and write to storage at the same time, which can cause issues. We can handle this by keeping
-  //  track of whether a stop has already been issued and in progress and block until the
-  //  previous stop will finish.
-  //  However, need to take in to account that non-async stop can be called while async stop is
-  //  still flushing the cache, or wise versa, so need to make sure that these two functions are
-  //  properly synchronized. Perhaps the best way to handle this is to have a single stop function
-  //  which will be called by both async and non-async versions, and this function will handle the
-  //  synchronization and flushing of the cache.
+  std::lock_guard<std::mutex> lock(start_stop_mutex_);
+  if (shared_stop_future_.valid()) {
+    return shared_stop_future_;
+  }
+
   message_cache_->begin_flushing();
   is_stop_issued_ = true;
 
   ROSBAG2_CPP_LOG_INFO_STREAM(
     "Writing remaining messages from cache to the bag. It may take a while");
 
-  std::future<void> stop_future =
-    std::async(std::launch::async, [this]()
-      {
+  shared_stop_future_ = std::async(std::launch::async, [this]() {
         if (consumer_thread_.joinable()) {
           consumer_thread_.join();
         }
         message_cache_->done_flushing();
-        // Swap buffers one last time to make sure that all messages are flushed. This is necessary
-        // in case stop is called while consumer_thread_ is processing the consumer buffer, which
-        // means that the producer buffer may have some messages which has not yet dumped to the
-        // storage.
-        message_cache_->swap_buffers();
-        // Get the current consumer buffer.
-        auto consumer_buffer = message_cache_->get_consumer_buffer();
-        consume_callback_(consumer_buffer->data());
-        consumer_buffer->clear();
-        message_cache_->release_consumer_buffer();
-      }
-    );
-  return stop_future;
-}
-
-void CacheConsumer::start()
-{
-  is_stop_issued_ = false;
-  if (!consumer_thread_.joinable()) {
-    consumer_thread_ = std::thread(&CacheConsumer::exec_consuming, this);
-  }
+        // Flush remaining messages. This is necessary in case stop is called while consumer_thread_
+        // is processing the consumer buffer, which means that the producer buffer may have some
+        // messages which has not yet dumped to the storage.
+        flush_remaining_messages();
+    }).share();
+  return shared_stop_future_;
 }
 
 void CacheConsumer::exec_consuming() const

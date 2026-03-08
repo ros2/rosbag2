@@ -91,8 +91,22 @@ private:
   /// Write buffer data to a storage
   void exec_consuming() const;
 
+  /// \brief Flush any remaining messages in the cache to the storage.
+  /// \details This is used when stopping the consumer thread to make sure that all messages that
+  /// were in the cache at the time of stop are flushed to the storage before the thread is stopped.
+  /// This is necessary in case stop is called while consumer_thread_ is processing the consumer
+  /// buffer, which means that the producer buffer may have some messages which has not yet dumped
+  /// to the storage.
+  void flush_remaining_messages() const;
+
+  /// \brief Issue a stop command to the consumer thread and return a future that will be set once
+  /// the thread has finished processing and has been stopped.
+  std::shared_future<void> issue_stop();
+
   /// Consumer thread shutdown sync
   std::atomic_bool is_stop_issued_ {false};
+  std::mutex start_stop_mutex_;
+  std::shared_future<void> shared_stop_future_;
   std::thread consumer_thread_;
 };
 

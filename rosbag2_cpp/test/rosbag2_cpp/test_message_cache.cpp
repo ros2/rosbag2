@@ -14,7 +14,9 @@
 
 #include <gmock/gmock.h>
 
+#include <atomic>
 #include <chrono>
+#include <future>
 #include <numeric>
 #include <memory>
 #include <string>
@@ -112,6 +114,78 @@ TEST_F(MessageCacheTest, message_cache_writes_full_producer_buffer) {
 
   mock_cache_consumer->stop();
   EXPECT_EQ(consumed_message_count, message_count - should_be_dropped_count);
+}
+
+TEST_F(MessageCacheTest, cache_consumer_repeated_stop_async_calls_share_in_progress_stop) {
+  auto mock_message_cache = std::make_shared<NiceMock<MockMessageCache>>(cache_size_);
+  std::promise<void> callback_started_promise;
+  auto callback_started = callback_started_promise.get_future();
+  std::promise<void> release_callback_promise;
+  auto release_callback = release_callback_promise.get_future().share();
+  std::atomic<size_t> callback_invocations {0};
+  std::atomic<size_t> consumed_message_count {0};
+
+  auto cb = [&callback_started_promise, release_callback, &callback_invocations,
+      &consumed_message_count](
+    const std::vector<std::shared_ptr<const rosbag2_storage::SerializedBagMessage>> & msgs)
+    {
+      consumed_message_count += msgs.size();
+      if (callback_invocations.fetch_add(1) == 0) {
+        callback_started_promise.set_value();
+        release_callback.wait();
+      }
+    };
+
+  auto cache_consumer = std::make_unique<NiceMock<MockCacheConsumer>>(mock_message_cache, cb);
+  ASSERT_TRUE(mock_message_cache->push(make_test_msg()));
+  ASSERT_EQ(callback_started.wait_for(1s), std::future_status::ready);
+
+  auto first_stop_future = cache_consumer->stop_async();
+  auto second_stop_future = cache_consumer->stop_async();
+
+  release_callback_promise.set_value();
+
+  EXPECT_NO_THROW(first_stop_future.get());
+  EXPECT_NO_THROW(second_stop_future.get());
+  EXPECT_EQ(callback_invocations.load(), 2u);
+  EXPECT_EQ(consumed_message_count.load(), 1u);
+}
+
+TEST_F(MessageCacheTest, cache_consumer_stop_waits_for_in_progress_async_stop) {
+  auto mock_message_cache = std::make_shared<NiceMock<MockMessageCache>>(cache_size_);
+  std::promise<void> callback_started_promise;
+  auto callback_started = callback_started_promise.get_future();
+  std::promise<void> release_callback_promise;
+  auto release_callback = release_callback_promise.get_future().share();
+  std::atomic<size_t> callback_invocations {0};
+  std::atomic<size_t> consumed_message_count {0};
+
+  auto cb = [&callback_started_promise, release_callback, &callback_invocations,
+      &consumed_message_count](
+    const std::vector<std::shared_ptr<const rosbag2_storage::SerializedBagMessage>> & msgs)
+    {
+      consumed_message_count += msgs.size();
+      if (callback_invocations.fetch_add(1) == 0) {
+        callback_started_promise.set_value();
+        release_callback.wait();
+      }
+    };
+
+  auto cache_consumer = std::make_unique<NiceMock<MockCacheConsumer>>(mock_message_cache, cb);
+  ASSERT_TRUE(mock_message_cache->push(make_test_msg()));
+  ASSERT_EQ(callback_started.wait_for(1s), std::future_status::ready);
+
+  auto async_stop_future = cache_consumer->stop_async();
+  auto sync_stop_future = std::async(std::launch::async, [&cache_consumer]() {
+        cache_consumer->stop();
+    });
+
+  release_callback_promise.set_value();
+
+  EXPECT_NO_THROW(async_stop_future.get());
+  EXPECT_NO_THROW(sync_stop_future.get());
+  EXPECT_EQ(callback_invocations.load(), 2u);
+  EXPECT_EQ(consumed_message_count.load(), 1u);
 }
 
 TEST_F(MessageCacheTest, message_cache_rejects_null_message) {
