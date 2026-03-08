@@ -105,6 +105,12 @@ public:
   rosbag2_transport::RecordOptions record_options_;
   std::unordered_map<std::string, std::shared_ptr<rclcpp::SubscriptionBase>> subscriptions_;
 
+<<<<<<< HEAD
+=======
+  std::vector<std::pair<std::string, std::string>> static_topics_{};  // topic_name, topic_type
+  Recorder::OnStartRecordingCallback on_start_recording_callback_{};
+
+>>>>>>> 1cdee91 (Add set_on_start_recording_callback() (#2340))
 private:
   void create_control_services();
 
@@ -337,6 +343,27 @@ void RecorderImpl::record(const std::string & uri)
     RCLCPP_INFO(node->get_logger(), "Recording...");
   }
   in_recording_ = true;
+<<<<<<< HEAD
+=======
+
+  if (on_start_recording_callback_) {
+    on_start_recording_callback_();
+  }
+  return true;
+}
+
+bool RecorderImpl::split_bagfile()
+{
+  std::lock_guard<std::mutex> state_lock(start_stop_transition_mutex_);
+  if (!in_recording_.load()) {
+    RCLCPP_WARN(node->get_logger(),
+    "Received SplitBagfile request while not in recording. Ignoring request.");
+    return false;
+  }
+
+  writer_->split_bagfile();
+  return true;
+>>>>>>> 1cdee91 (Add set_on_start_recording_callback() (#2340))
 }
 
 void RecorderImpl::create_control_services()
@@ -1030,6 +1057,24 @@ Recorder::is_discovery_running() const
   return pimpl_->is_discovery_running();
 }
 
+<<<<<<< HEAD
+=======
+void Recorder::set_on_start_recording_callback(OnStartRecordingCallback callback) const
+{
+  pimpl_->on_start_recording_callback_ = std::move(callback);
+}
+
+void Recorder::read_static_topics() noexcept
+{
+  return pimpl_->read_static_topics();
+}
+
+const std::vector<std::pair<std::string, std::string>> & Recorder::get_static_topics() noexcept
+{
+  return pimpl_->static_topics_;
+}
+
+>>>>>>> 1cdee91 (Add set_on_start_recording_callback() (#2340))
 std::unordered_map<std::string, std::string>
 Recorder::get_requested_or_available_topics()
 {
