@@ -22,6 +22,7 @@
 #include <unordered_set>
 #include <utility>
 #include <vector>
+#include <functional>
 
 #include "keyboard_handler/keyboard_handler.hpp"
 
@@ -170,6 +171,14 @@ public:
   /// Return the current discovery state.
   ROSBAG2_TRANSPORT_PUBLIC
   bool is_discovery_running() const;
+
+  /// \brief Type alias for the callback to be invoked when recording is started.
+  using OnStartRecordingCallback = std::function<void()>;
+
+  /// \brief Set the callback to be invoked when recording is started.
+  /// \param callback The callback to be invoked when recording is started.
+  ROSBAG2_TRANSPORT_PUBLIC
+  void set_on_start_recording_callback(OnStartRecordingCallback callback) const;
 
   inline constexpr static const auto kPauseResumeToggleKey = KeyboardHandler::KeyCode::SPACE;
 
