@@ -14,11 +14,8 @@
 
 #include <gmock/gmock.h>
 
-<<<<<<< HEAD
-=======
+
 #include <atomic>
-#include <filesystem>
->>>>>>> bbc78d2 ([kilted] Add on start recording callback for Recorder (backport #2340) (#2360))
 #include <memory>
 #include <string>
 #include <unordered_map>
