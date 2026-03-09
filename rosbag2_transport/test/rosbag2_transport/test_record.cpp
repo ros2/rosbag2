@@ -259,6 +259,7 @@ TEST_F(RecordIntegrationTestFixture,
   rosbag2_transport::RecordOptions record_options{};
   record_options.is_discovery_disabled = true;
   record_options.disable_keyboard_controls = true;
+  record_options.rmw_serialization_format = "cdr";
 
   std::atomic_size_t recording_started_callback_count{0};
   auto recorder = std::make_shared<rosbag2_transport::Recorder>(
