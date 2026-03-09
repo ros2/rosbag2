@@ -24,6 +24,16 @@ find_package(rosbag2_cpp REQUIRED)
 find_package(rosbag2_transport REQUIRED)
 find_package(example_interfaces REQUIRED)
 
+add_executable(simple_bag_recorder src/simple_bag_recorder.cpp)
+target_link_libraries(simple_bag_recorder
+  rosbag2_transport::rosbag2_transport
+)
+
+install(TARGETS
+  simple_bag_recorder
+  DESTINATION lib/${PROJECT_NAME}
+)
+
 add_executable(simple_bag_writer src/simple_bag_writer.cpp)
 target_link_libraries(simple_bag_writer
   rclcpp::rclcpp
