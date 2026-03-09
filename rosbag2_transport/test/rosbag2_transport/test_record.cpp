@@ -14,6 +14,8 @@
 
 #include <gmock/gmock.h>
 
+
+#include <atomic>
 #include <memory>
 #include <string>
 #include <unordered_map>
@@ -212,6 +214,32 @@ TEST_F(RecordIntegrationTestFixture, can_record_again_after_stop)
     const uint64_t expected_u64_value = i % num_messages_to_publish;
     EXPECT_THAT(basic_type_messages[i]->uint64_value, Eq(expected_u64_value));
   }
+}
+
+TEST_F(RecordIntegrationTestFixture,
+  recording_started_callback_is_called_each_time_recording_starts)
+{
+  rosbag2_transport::RecordOptions record_options{};
+  record_options.is_discovery_disabled = true;
+  record_options.disable_keyboard_controls = true;
+  record_options.rmw_serialization_format = "cdr";
+
+  std::atomic_size_t recording_started_callback_count{0};
+  auto recorder = std::make_shared<rosbag2_transport::Recorder>(
+    std::move(writer_),
+    storage_options_,
+    record_options);
+  recorder->set_on_start_recording_callback(
+    [&recording_started_callback_count]() {++recording_started_callback_count;});
+
+  EXPECT_EQ(recording_started_callback_count.load(), 0U);
+
+  recorder->record();
+  EXPECT_EQ(recording_started_callback_count.load(), 1U);
+
+  recorder->stop();
+  recorder->record();
+  EXPECT_EQ(recording_started_callback_count.load(), 2U);
 }
 
 TEST_F(RecordIntegrationTestFixture, qos_is_stored_in_metadata)
