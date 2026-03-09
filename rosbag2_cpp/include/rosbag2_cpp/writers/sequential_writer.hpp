@@ -217,8 +217,6 @@ protected:
   void execute_bag_split_callbacks(
     const std::string & closed_file, const std::string & opened_file);
 
-  void switch_to_next_storage();
-
   /// \brief Helper method to generate a storage URI for a new bag file based on the base folder
   /// and the current storage count.
   /// \details The storage URI is expected to be in the format of
