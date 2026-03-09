@@ -543,11 +543,6 @@ bool PlayerImpl::play()
               ready_to_play_from_queue_cv_.notify_all();
             }
             readers_->seek(starting_time_);
-<<<<<<< HEAD
-=======
-            progress_bar_->update(clock_->is_paused() ?
-                                  PlayerStatus::PAUSED : PlayerStatus::RUNNING);
->>>>>>> db4c7da (Address race condition in the "wait_for_playback_to_start()" (#2344))
 
             load_storage_content_ = true;
             storage_loading_future_ = std::async(
