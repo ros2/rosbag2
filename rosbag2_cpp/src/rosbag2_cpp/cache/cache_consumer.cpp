@@ -93,11 +93,11 @@ std::shared_future<void> CacheConsumer::issue_stop()
         if (consumer_thread_.joinable()) {
           consumer_thread_.join();
         }
-        message_cache_->done_flushing();
         // Flush remaining messages. This is necessary in case stop is called while consumer_thread_
         // is processing the consumer buffer, which means that the producer buffer may have some
         // messages which has not yet dumped to the storage.
         flush_remaining_messages();
+        message_cache_->done_flushing();
     }).share();
   return shared_stop_future_;
 }

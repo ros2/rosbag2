@@ -15,6 +15,8 @@
 #ifndef ROSBAG2_CPP__WRITERS__SEQUENTIAL_WRITER_HPP_
 #define ROSBAG2_CPP__WRITERS__SEQUENTIAL_WRITER_HPP_
 
+#include <functional>
+#include <future>
 #include <deque>
 #include <memory>
 #include <mutex>
@@ -157,6 +159,11 @@ public:
   void split_bagfile() override;
 
   /**
+   * \brief Starts closing the current backed storage and opening the next bagfile asynchronously.
+   */
+  void split_bagfile_async() override;
+
+  /**
    * \brief Check if a callback is registered for the given event.
    * \return True if there is any callback registered for the event, false otherwise.
    */
@@ -295,6 +302,13 @@ protected:
    */
   void on_messages_lost(std::shared_ptr<std::vector<bag_events::MessagesLostInfo>> msgs_lost_info);
 
+  /// Wait for a previously started asynchronous bag split to finish.
+  void wait_for_pending_split();
+
+  /// Start a new asynchronous split after waiting for any previously started split to finish.
+  std::shared_future<std::string> start_split_bagfile_async(
+    const std::function<std::future<std::string>()> & split_launcher);
+
   /**
    * \brief Helper method to write messages while also updating tracked metadata.
    * \param messages The list of messages to write.
@@ -303,7 +317,12 @@ protected:
     const std::vector<std::shared_ptr<const rosbag2_storage::SerializedBagMessage>> & messages);
 
 private:
+  void clear_completed_split_future();
+
   std::mutex lost_messages_callbacks_mutex_;
+  std::mutex split_bagfile_mutex_;
+  std::shared_future<std::string> split_bagfile_future_;
+  //  split_bagfile_shared_future_
   bool is_first_message_ {true};
   std::atomic_bool is_open_{false};
   rcutils_time_point_value_t last_recv_timestamp_{0};

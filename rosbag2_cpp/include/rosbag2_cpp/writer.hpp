@@ -138,6 +138,11 @@ public:
   void split_bagfile();
 
   /**
+   * Start closing the current bag file and opening the next bag file asynchronously.
+   */
+  void split_bagfile_async();
+
+  /**
    * \brief Removes a new topic in the underlying storage.
    * \details Expected to be used if creation of subscription fails and cleanup is needed.
    * \note If writer is not open, this will just remove the topic information locally.

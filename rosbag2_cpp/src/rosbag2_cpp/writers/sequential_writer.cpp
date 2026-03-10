@@ -69,7 +69,13 @@ SequentialWriter::~SequentialWriter()
   // Callbacks likely was created after SequentialWriter object and may point to the already
   // destructed objects.
   callback_manager_.delete_all_callbacks();
-  SequentialWriter::close();
+  try {
+    SequentialWriter::close();
+  } catch (const std::exception & e) {
+    ROSBAG2_CPP_LOG_WARN_STREAM("Failed to close writer in destructor: " << e.what());
+  } catch (...) {
+    ROSBAG2_CPP_LOG_WARN("Failed to close writer in destructor due to an unknown error.");
+  }
 }
 
 void SequentialWriter::init_metadata()
@@ -105,6 +111,9 @@ void SequentialWriter::open(
   if (is_open_) {
     return;  // The writer already opened
   }
+
+  wait_for_pending_split();
+
   if (storage_options.uri.empty()) {
     throw std::runtime_error("Can't open rosbag2_cpp::SequentialWriter. The input URI is empty");
   }
@@ -221,6 +230,8 @@ void SequentialWriter::close()
     return;  // The writer is not open
   }
 
+  wait_for_pending_split();
+
   flush_cache_update_metadata_and_close_storage();
 
   if (!metadata_.relative_file_paths.empty()) {
@@ -272,6 +283,7 @@ void SequentialWriter::create_topic(
   const rosbag2_storage::TopicMetadata & topic_with_type,
   const rosbag2_storage::MessageDefinition & message_definition)
 {
+  wait_for_pending_split();
   rosbag2_storage::TopicInformation info{};
   {
     std::lock_guard<std::mutex> lock(topics_info_mutex_);
@@ -313,6 +325,7 @@ void SequentialWriter::create_transient_local_topic(
 
 void SequentialWriter::remove_topic(const rosbag2_storage::TopicMetadata & topic_with_type)
 {
+  wait_for_pending_split();
   if (transient_local_cache_->has_topic(topic_with_type.name)) {
     transient_local_cache_->remove_topic(topic_with_type.name);
   }
@@ -372,9 +385,7 @@ std::string SequentialWriter::format_storage_uri(
 std::string SequentialWriter::split_bagfile_local(bool execute_callbacks)
 {
   auto split_future = split_bagfile_async_local(execute_callbacks);
-  // Wait for split to complete
-  std::string newly_opened_file_uri = split_future.get();
-  return newly_opened_file_uri;
+  return split_future.get();
 }
 
 std::future<std::string> SequentialWriter::split_bagfile_async_local(bool execute_callbacks)
@@ -483,11 +494,22 @@ void SequentialWriter::execute_bag_split_callbacks(
 
 void SequentialWriter::split_bagfile()
 {
-  (void)split_bagfile_local();
+  split_bagfile_async();
+  wait_for_pending_split();
+}
+
+void SequentialWriter::split_bagfile_async()
+{
+  (void)start_split_bagfile_async(
+    [this]() {
+      return split_bagfile_async_local();
+    });
 }
 
 void SequentialWriter::write(std::shared_ptr<const rosbag2_storage::SerializedBagMessage> message)
 {
+  wait_for_pending_split();
+
   if (!is_open_) {
     throw std::runtime_error("Bag is not open. Call open() before writing.");
   }
@@ -566,6 +588,8 @@ void SequentialWriter::write(std::shared_ptr<const rosbag2_storage::SerializedBa
 
 bool SequentialWriter::take_snapshot()
 {
+  wait_for_pending_split();
+
   if (!storage_options_.snapshot_mode) {
     ROSBAG2_CPP_LOG_WARN("SequentialWriter take_snapshot called when snapshot mode is disabled");
     return false;
@@ -889,6 +913,67 @@ void SequentialWriter::on_messages_lost(
     callback_manager_.execute_callbacks(
       bag_events::BagEvent::MESSAGES_LOST,
       std::move(msgs_lost_info));
+  }
+}
+
+void SequentialWriter::wait_for_pending_split()
+{
+  while (true) {
+    std::shared_future<std::string> split_future;
+    {
+      std::lock_guard<std::mutex> lock(split_bagfile_mutex_);
+      if (!split_bagfile_future_.valid()) {
+        return;
+      }
+      split_future = split_bagfile_future_;
+    }
+
+    try {
+      split_future.get();
+    } catch (...) {
+      clear_completed_split_future();
+      throw;
+    }
+
+    clear_completed_split_future();
+  }
+}
+
+std::shared_future<std::string> SequentialWriter::start_split_bagfile_async(
+  const std::function<std::future<std::string>()> & split_launcher)
+{
+  while (true) {
+    std::shared_future<std::string> split_future;
+    {
+      std::lock_guard<std::mutex> lock(split_bagfile_mutex_);
+      if (!split_bagfile_future_.valid()) {
+        if (!is_open_.load()) {
+          return {};
+        }
+        split_bagfile_future_ = split_launcher().share();
+        return split_bagfile_future_;
+      }
+      split_future = split_bagfile_future_;
+    }
+
+    try {
+      split_future.get();
+    } catch (...) {
+      clear_completed_split_future();
+      throw;
+    }
+
+    clear_completed_split_future();
+  }
+}
+
+void SequentialWriter::clear_completed_split_future()
+{
+  std::lock_guard<std::mutex> lock(split_bagfile_mutex_);
+  if (split_bagfile_future_.valid() &&
+    split_bagfile_future_.wait_for(std::chrono::seconds(0)) == std::future_status::ready)
+  {
+    split_bagfile_future_ = std::shared_future<std::string>{};
   }
 }
 

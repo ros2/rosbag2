@@ -73,6 +73,12 @@ public:
    */
   virtual void split_bagfile() = 0;
 
+  /**
+   * Start closing the current bagfile and opening the next bagfile asynchronously.
+   * Subsequent split requests must wait until the previous asynchronous split completes.
+   */
+  virtual void split_bagfile_async() = 0;
+
   virtual void add_event_callbacks(const bag_events::WriterEventCallbacks & callbacks) = 0;
 
   /**
