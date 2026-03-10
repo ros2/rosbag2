@@ -269,7 +269,9 @@ public:
   [[nodiscard]] bool has_callback_for_event(bag_events::BagEvent event) const;
 
 private:
-  std::mutex writer_mutex_;
+  /// \brief mutex to protect access to the underlying writer_impl_.
+  /// Shall be locked each time when need to have access to the writer_impl_.
+  mutable std::mutex writer_mutex_;
   std::unique_ptr<rosbag2_cpp::writer_interfaces::BaseWriterInterface> writer_impl_;
 };
 

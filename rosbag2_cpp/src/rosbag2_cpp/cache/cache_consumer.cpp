@@ -98,6 +98,7 @@ std::shared_future<void> CacheConsumer::issue_stop()
         // messages which has not yet dumped to the storage.
         flush_remaining_messages();
         message_cache_->done_flushing();
+        ROSBAG2_CPP_LOG_INFO_STREAM("Finished writing remaining messages from cache to the bag.");
     }).share();
   return shared_stop_future_;
 }

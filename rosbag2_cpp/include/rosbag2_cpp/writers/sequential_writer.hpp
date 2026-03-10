@@ -250,6 +250,9 @@ protected:
   /// it is safe to access without topics_info_mutex_ losck as all external API calls are protected
   /// with \sa writer_mutex_ on \sa rosbag2_cpp::Writer level.
   std::unordered_map<std::string, rosbag2_storage::TopicInformation> topics_names_to_info_;
+
+  /// \brief Mutex to protect the topics_names_to_info_ map when adding or deleting items and when
+  /// accessing it from CacheConsumer callback or bag split
   std::mutex topics_info_mutex_;
 
   LocalMessageDefinitionSource message_definitions_;
@@ -317,12 +320,34 @@ protected:
     const std::vector<std::shared_ptr<const rosbag2_storage::SerializedBagMessage>> & messages);
 
 private:
+  /// \brief Clear the future that tracks the completion of an asynchronous bag split operation.
   void clear_completed_split_future();
 
+  /// \brief Check if there is an ongoing asynchronous bag split operation.
+  /// \return true if there is an ongoing split operation, false otherwise.
+  bool split_bagfile_in_progress();
+
   std::mutex lost_messages_callbacks_mutex_;
+
+  /// \brief Mutex to protect the split bagfile process, ensuring that only one split operation can
+  /// occur at a time.
   std::mutex split_bagfile_mutex_;
-  std::shared_future<std::string> split_bagfile_future_;
-  //  split_bagfile_shared_future_
+
+  /// \brief Future to track the completion of an asynchronous bag split operation.
+  /// It holds the URI of the newly opened bag file once the split is complete. This allows write()
+  /// and create{remove}_topic() to check if a split is in progress and wait for it to finish
+  /// before proceeding with operations that interact with the storage. The future is set when
+  /// split_bagfile_async() is called and is cleared once the split operation is complete and the
+  /// new bag file is ready for writing.
+  std::shared_future<std::string> split_bagfile_shared_future_;
+
+  /// \brief Mutex to protect the metadata_ and split_bagfile_future_ members, which are accessed
+  /// and modified together in the split bagfile process. This ensures that the metadata is updated
+  /// consistently with the bagfile splits and prevents race conditions between write() and
+  /// split_bagfile() operations.
+  std::mutex metadata_mutex_;
+
+
   bool is_first_message_ {true};
   std::atomic_bool is_open_{false};
   rcutils_time_point_value_t last_recv_timestamp_{0};

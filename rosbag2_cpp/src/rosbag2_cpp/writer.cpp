@@ -46,6 +46,9 @@ Writer::Writer(std::unique_ptr<rosbag2_cpp::writer_interfaces::BaseWriterInterfa
 
 Writer::~Writer()
 {
+  // Need to protect with mutex lock to avoid destructing writer_impl and other operations like
+  // write, split_bagfile, etc. running concurrently which may lead to the undefined behavior.
+  std::lock_guard<std::mutex> writer_lock(writer_mutex_);
   writer_impl_.reset();
 }
 
@@ -194,11 +197,13 @@ void Writer::write(
 
 void Writer::add_event_callbacks(bag_events::WriterEventCallbacks & callbacks)
 {
+  std::lock_guard<std::mutex> writer_lock(writer_mutex_);
   writer_impl_->add_event_callbacks(callbacks);
 }
 
 bool Writer::has_callback_for_event(bag_events::BagEvent event) const
 {
+  std::lock_guard<std::mutex> writer_lock(writer_mutex_);
   return writer_impl_->has_callback_for_event(event);
 }
 

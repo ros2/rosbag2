@@ -15,6 +15,7 @@
 #include <gmock/gmock.h>
 
 #include <chrono>
+#include <future>
 #include <ctime>
 #include <filesystem>
 #include <iomanip>
@@ -1407,6 +1408,56 @@ TEST_F(SequentialWriterTest, split_bagfile_async_rolls_over_to_new_file)
   ASSERT_GE(fake_metadata_.relative_file_paths.size(), 2u);
   EXPECT_TRUE(matches_filename_pattern(fake_metadata_.relative_file_paths[0], bag_base_dir_, 0));
   EXPECT_TRUE(matches_filename_pattern(fake_metadata_.relative_file_paths[1], bag_base_dir_, 1));
+}
+
+TEST_F(SequentialWriterTest, writer_with_cache_can_write_while_async_split_is_in_progress)
+{
+  std::atomic<size_t> open_call_count{0};
+  auto split_open_started = std::make_shared<std::promise<void>>();
+  auto split_open_started_future = split_open_started->get_future();
+  auto allow_split_open = std::make_shared<std::promise<void>>();
+  auto allow_split_open_future = allow_split_open->get_future().share();
+
+  ON_CALL(*storage_factory_, open_read_write(_)).WillByDefault(
+    Invoke(
+      [this, &open_call_count, split_open_started, allow_split_open_future](
+        const rosbag2_storage::StorageOptions & storage_options)
+      {
+        fake_storage_size_ = 0;
+        fake_storage_uri_ = storage_options.uri;
+        if (++open_call_count == 2) {
+          split_open_started->set_value();
+          allow_split_open_future.wait();
+        }
+        return storage_;
+      }));
+
+  auto sequential_writer = std::make_unique<rosbag2_cpp::writers::SequentialWriter>(
+    std::move(storage_factory_), converter_factory_, std::move(metadata_io_));
+  writer_ = std::make_unique<rosbag2_cpp::Writer>(std::move(sequential_writer));
+
+  storage_options_.max_cache_size = 1024u;
+
+  writer_->open(storage_options_, {"rmw_format", "rmw_format"});
+  writer_->create_topic({0u, "test_topic", "test_msgs/BasicTypes", "", {}, ""});
+
+  writer_->split_bagfile_async();
+  ASSERT_EQ(
+    split_open_started_future.wait_for(std::chrono::seconds(2)),
+    std::future_status::ready);
+
+  auto write_future = std::async(std::launch::async, [this]() {
+        writer_->write(make_test_msg());
+  });
+
+  EXPECT_EQ(write_future.wait_for(std::chrono::milliseconds(200)), std::future_status::ready);
+
+  allow_split_open->set_value();
+  EXPECT_NO_THROW(write_future.get());
+  writer_->close();
+
+  EXPECT_EQ(fake_metadata_.message_count, 1u);
+  ASSERT_GE(fake_metadata_.relative_file_paths.size(), 2u);
 }
 
 TEST_F(SequentialWriterTest, circular_logging_limits_number_of_files_by_max_bag_files)
