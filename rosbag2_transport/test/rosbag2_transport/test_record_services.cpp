@@ -180,6 +180,9 @@ public:
     ASSERT_TRUE(cli_start_discovery_->wait_for_service(service_wait_timeout_));
     ASSERT_TRUE(cli_stop_->wait_for_service(service_wait_timeout_));
     ASSERT_TRUE(cli_stop_discovery_->wait_for_service(service_wait_timeout_));
+
+    // Remove client_node_ from the executor
+    exec_->remove_node(client_node_);
   }
 
   /// Send a service request, and expect it to successfully return within a reasonable timeout
@@ -189,13 +192,35 @@ public:
     typename Srv::Request::SharedPtr request,
     typename Srv::Response::SharedPtr & response)
   {
+    // Create a separate executor for service calls to avoid "already spinning" error
+    rclcpp::executors::SingleThreadedExecutor exec;
+    exec.add_node(client_node_);
+
     auto future = cli->async_send_request(request);
-    if (future.wait_for(service_call_timeout_) != std::future_status::ready) {
-      return ::testing::AssertionFailure() << "Service call timed out";
+
+    auto guard = rcpputils::make_scope_exit(
+      [&]() {
+      // Cleanup and remove node from executor to avoid potential issues with pending requests
+      // and dangling nodes in the executor. Required to avoid client internal state leak.
+        cli->remove_pending_request(future);
+    });
+
+    const auto ret = exec.spin_until_future_complete(future, service_call_timeout_);
+
+    if (ret != rclcpp::FutureReturnCode::SUCCESS) {
+      cli->remove_pending_request(future);
+      if (ret == rclcpp::FutureReturnCode::TIMEOUT) {
+        return ::testing::AssertionFailure() << "Service call timed out";
+      } else if (ret == rclcpp::FutureReturnCode::INTERRUPTED) {
+        return ::testing::AssertionFailure() << "Service call interrupted";
+      }
+      return ::testing::AssertionFailure() << "Service call failed with unknown error";
     }
+
     if (!future.valid()) {
       return ::testing::AssertionFailure() << "Service call returned invalid future";
     }
+
     response = future.get();
     if (!response) {
       return ::testing::AssertionFailure() << "Service call returned unsuccessful response";
@@ -246,8 +271,9 @@ public:
 public:
   // Basic configuration
   const std::string recorder_name_ = "rosbag2_recorder_for_test_srvs";
-  const std::chrono::seconds service_wait_timeout_ {2};
-  const std::chrono::seconds service_call_timeout_ {2};
+  // Wait longer due to potential service latency after pause/resume operations
+  const std::chrono::seconds service_wait_timeout_ {10};
+  const std::chrono::seconds service_call_timeout_ {10};
   const std::string test_topic_ = kTestTopic;
 
   // Orchestration
