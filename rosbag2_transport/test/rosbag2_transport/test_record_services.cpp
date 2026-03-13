@@ -140,7 +140,6 @@ public:
     exec_ = std::make_shared<rclcpp::executors::SingleThreadedExecutor>();
 
     exec_->add_node(recorder_);
-    exec_->add_node(client_node_);
     spin_thread_ = std::thread(
       [this]() {
         exec_->spin();
@@ -180,9 +179,6 @@ public:
     ASSERT_TRUE(cli_start_discovery_->wait_for_service(service_wait_timeout_));
     ASSERT_TRUE(cli_stop_->wait_for_service(service_wait_timeout_));
     ASSERT_TRUE(cli_stop_discovery_->wait_for_service(service_wait_timeout_));
-
-    // Remove client_node_ from the executor
-    exec_->remove_node(client_node_);
   }
 
   /// Send a service request, and expect it to successfully return within a reasonable timeout
@@ -197,13 +193,6 @@ public:
     exec.add_node(client_node_);
 
     auto future = cli->async_send_request(request);
-
-    auto guard = rcpputils::make_scope_exit(
-      [&]() {
-      // Cleanup and remove node from executor to avoid potential issues with pending requests
-      // and dangling nodes in the executor. Required to avoid client internal state leak.
-        cli->remove_pending_request(future);
-    });
 
     const auto ret = exec.spin_until_future_complete(future, service_call_timeout_);
 
