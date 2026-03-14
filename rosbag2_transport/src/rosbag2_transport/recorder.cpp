@@ -626,7 +626,11 @@ void RecorderImpl::stop()
     std::lock_guard<std::mutex> lock(pending_bag_split_request_mutex_);
     pending_bag_split_request_.reset();
   }
-
+  {  // Clear pending resume request if any
+    std::lock_guard<std::mutex> lock(pending_resume_request_mutex_);
+    pending_resume_request_.reset();
+  }
+  
   last_seen_timestamps_.reset();  // Clear last seen timestamps
 
   in_recording_ = false;
