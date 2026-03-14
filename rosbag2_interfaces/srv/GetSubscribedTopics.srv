@@ -1,0 +1,3 @@
+---
+# Fully qualified names of topics currently subscribed by the recorder.
+string[] topics

@@ -20,6 +20,7 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/MessagesLostEvent.msg"
   "srv/Burst.srv"
   "srv/GetRate.srv"
+  "srv/GetSubscribedTopics.srv"
   "srv/IsDiscoveryRunning.srv"
   "srv/IsPaused.srv"
   "srv/Pause.srv"
