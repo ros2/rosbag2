@@ -2077,9 +2077,31 @@ void PlayerImpl::create_control_services()
   srv_resume_ = owner_->create_service<rosbag2_interfaces::srv::Resume>(
     "~/resume",
     [this](
-      rosbag2_interfaces::srv::Resume::Request::ConstSharedPtr /*request*/,
-      rosbag2_interfaces::srv::Resume::Response::SharedPtr /*response*/)
+      rosbag2_interfaces::srv::Resume::Request::ConstSharedPtr request,
+      rosbag2_interfaces::srv::Resume::Response::SharedPtr response)
     {
+      using ResumeRequest = rosbag2_interfaces::srv::Resume::Request;
+      using ResumeResponse = rosbag2_interfaces::srv::Resume::Response;
+
+      switch (request->resume_mode) {
+        case ResumeRequest::RESUME_MODE_NODE_TIME:
+          break;
+        case ResumeRequest::RESUME_MODE_PUBLISH_TIME:
+        case ResumeRequest::RESUME_MODE_RECEIVE_TIME:
+          response->return_code = ResumeResponse::RETURN_CODE_INVALID_RESUME_MODE;
+          response->error_string =
+          "Resume modes publish_time and receive_time are not supported by player.";
+          return;
+        default:
+          response->return_code = ResumeResponse::RETURN_CODE_INVALID_RESUME_MODE;
+          response->error_string = "Invalid resume_mode for Resume request.";
+          return;
+      }
+      if (!request->tracking_topic_name.empty()) {
+        response->return_code = ResumeResponse::RETURN_CODE_INVALID_TRACKING_TOPIC;
+        response->error_string = "tracking_topic_name is not supported by player Resume service.";
+        return;
+      }
       owner_->resume();
     });
   srv_toggle_paused_ = owner_->create_service<rosbag2_interfaces::srv::TogglePaused>(
