@@ -182,6 +182,8 @@ The Rosbag2 recorder provides the following services for remote control, which c
   * Start topic discovery to automatically find and subscribe to new topics. Has no effect if discovery is already running or if the recorder is not in recording state.
 * `~/stop_discovery [rosbag2_interfaces/srv/StopDiscovery]`
   * Stop topic discovery. Existing subscriptions will be maintained, but new topics will not be discovered automatically.
+* `~/get_subscribed_topics [rosbag2_interfaces/srv/GetSubscribedTopics]`
+  * Returns the list of fully qualified names of topics currently subscribed by the recorder.
 
 These services enable full remote control of the recording process, allowing you to start and stop recording sessions, manage topic discovery, and control the recording state without restarting the recorder node.
 

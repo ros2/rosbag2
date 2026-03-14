@@ -38,6 +38,7 @@
 #include "rosbag2_cpp/bag_events.hpp"
 #include "rosbag2_cpp/service_utils.hpp"
 #include "rosbag2_cpp/writer.hpp"
+#include "rosbag2_interfaces/srv/get_subscribed_topics.hpp"
 #include "rosbag2_interfaces/srv/snapshot.hpp"
 #include "rosbag2_storage/qos.hpp"
 #include "logging.hpp"
@@ -193,6 +194,8 @@ public:
   std::unordered_map<std::string, std::string> get_requested_or_available_topics();
 
   void read_static_topics() noexcept;
+
+  std::vector<std::string> get_subscribed_topics() const;
 
   /// Public members for access by wrapper
   std::unordered_set<std::string> topics_warned_about_incompatibility_;
@@ -409,6 +412,8 @@ private:
   std::future<void> discovery_future_;
   std::unordered_map<std::string, rclcpp::QoS> topic_qos_profile_overrides_;
   std::unordered_set<std::string> topic_unknown_types_;
+  rclcpp::Service<rosbag2_interfaces::srv::GetSubscribedTopics>::SharedPtr
+    srv_get_subscribed_topics_;
   rclcpp::Service<rosbag2_interfaces::srv::IsDiscoveryRunning>::SharedPtr srv_is_discovery_running_;
   rclcpp::Service<rosbag2_interfaces::srv::IsPaused>::SharedPtr srv_is_paused_;
   rclcpp::Service<rosbag2_interfaces::srv::Pause>::SharedPtr srv_pause_;
@@ -422,6 +427,7 @@ private:
 
   std::mutex start_stop_transition_mutex_;
   std::mutex discovery_mutex_;
+  mutable std::mutex subscriptions_mutex_;
   std::atomic<bool> discovery_running_ = false;
   std::atomic_uchar paused_ = 0;
   std::atomic<bool> in_recording_ = false;
@@ -550,7 +556,10 @@ void RecorderImpl::stop()
   for (auto & [_, subscription] : subscriptions_) {
     subscription->disable_callbacks();
   }
-  subscriptions_.clear();
+  {
+    std::lock_guard<std::mutex> subscriptions_lock(subscriptions_mutex_);
+    subscriptions_.clear();
+  }
   writer_->close();  // Call writer->close() to finalize current bag file and write metadata
   {  // Clear pending split request if any
     std::lock_guard<std::mutex> lock(pending_bag_split_request_mutex_);
@@ -936,6 +945,17 @@ void RecorderImpl::create_control_services()
     {
       response->paused = is_paused();
     });
+
+  srv_get_subscribed_topics_ =
+    node->create_service<rosbag2_interfaces::srv::GetSubscribedTopics>(
+     "~/get_subscribed_topics",
+    [this](
+      const std::shared_ptr<rmw_request_id_t>/* request_header */,
+      const std::shared_ptr<rosbag2_interfaces::srv::GetSubscribedTopics::Request>/* request */,
+      std::shared_ptr<rosbag2_interfaces::srv::GetSubscribedTopics::Response> response)
+    {
+      response->topics = this->get_subscribed_topics();
+    });
 }
 
 std::optional<rclcpp::Time> RecorderImpl::optional_time_from_request(
@@ -1243,8 +1263,13 @@ void RecorderImpl::topics_discovery() noexcept
     }
     bool should_update_subscriptions = true;
     while (rclcpp::ok() && discovery_running_) {
+      size_t subscriptions_count = 0u;
+      {
+        std::lock_guard<std::mutex> subscriptions_lock(subscriptions_mutex_);
+        subscriptions_count = subscriptions_.size();
+      }
       if (!record_options_.topics.empty() &&
-        subscriptions_.size() == record_options_.topics.size())
+        subscriptions_count == record_options_.topics.size())
       {
         RCLCPP_INFO(
           node->get_logger(), "All requested topics are subscribed. Stopping discovery...");
@@ -1297,12 +1322,31 @@ std::unordered_map<std::string, std::string>
 RecorderImpl::get_missing_topics(const std::unordered_map<std::string, std::string> & all_topics)
 {
   std::unordered_map<std::string, std::string> missing_topics;
+  std::unordered_set<std::string> subscribed_topics;
+  {
+    std::lock_guard<std::mutex> subscriptions_lock(subscriptions_mutex_);
+    for (const auto & [topic_name, _] : subscriptions_) {
+      subscribed_topics.insert(topic_name);
+    }
+  }
   for (const auto & [topic_name, topic_type] : all_topics) {
-    if (subscriptions_.find(topic_name) == subscriptions_.end()) {
+    if (subscribed_topics.find(topic_name) == subscribed_topics.end()) {
       missing_topics.emplace(topic_name, topic_type);
     }
   }
   return missing_topics;
+}
+
+std::vector<std::string> RecorderImpl::get_subscribed_topics() const
+{
+  std::lock_guard<std::mutex> subscriptions_lock(subscriptions_mutex_);
+  std::vector<std::string> topics;
+  topics.reserve(subscriptions_.size());
+  for (const auto & [topic_name, _] : subscriptions_) {
+    topics.emplace_back(topic_name);
+  }
+  std::sort(topics.begin(), topics.end());
+  return topics;
 }
 
 
@@ -1419,8 +1463,11 @@ uint64_t RecorderImpl::get_total_num_messages_lost_in_transport() const
 
 void RecorderImpl::subscribe_topic(const rosbag2_storage::TopicMetadata & topic)
 {
-  if (subscriptions_.find(topic.name) != subscriptions_.end()) {
-    return;
+  {
+    std::lock_guard<std::mutex> subscriptions_lock(subscriptions_mutex_);
+    if (subscriptions_.find(topic.name) != subscriptions_.end()) {
+      return;
+    }
   }
   // Need to create topic in writer before we are trying to create subscription. Since in
   // callback for subscription we are calling writer_->write(bag_message); and it could happened
@@ -1431,7 +1478,10 @@ void RecorderImpl::subscribe_topic(const rosbag2_storage::TopicMetadata & topic)
 
   auto subscription = create_subscription(topic.name, topic.type, subscription_qos);
   if (subscription) {
-    subscriptions_.insert({topic.name, subscription});
+    {
+      std::lock_guard<std::mutex> subscriptions_lock(subscriptions_mutex_);
+      subscriptions_.insert({topic.name, subscription});
+    }
     if (node->get_logger().get_effective_level() == rclcpp::Logger::Level::Debug) {
       RCLCPP_DEBUG_STREAM(node->get_logger(),
         "Subscribed to topic '" << topic.name << "' with QoS:\n" << subscription_qos.to_string());
@@ -1573,16 +1623,20 @@ rclcpp::QoS RecorderImpl::subscription_qos_for_topic(const std::string & topic_n
 
 void RecorderImpl::warn_if_new_qos_for_subscribed_topic(const std::string & topic_name)
 {
-  auto existing_subscription = subscriptions_.find(topic_name);
-  if (existing_subscription == subscriptions_.end()) {
-    // Not subscribed yet
-    return;
+  std::shared_ptr<rclcpp::SubscriptionBase> existing_subscription;
+  {
+    std::lock_guard<std::mutex> subscriptions_lock(subscriptions_mutex_);
+    auto iterator = subscriptions_.find(topic_name);
+    if (iterator == subscriptions_.end()) {
+      return;
+    }
+    existing_subscription = iterator->second;
   }
   if (topics_warned_about_incompatibility_.count(topic_name) > 0) {
     // Already warned about this topic
     return;
   }
-  const auto actual_qos = existing_subscription->second->get_actual_qos();
+  const auto actual_qos = existing_subscription->get_actual_qos();
   const auto & used_profile = actual_qos.get_rmw_qos_profile();
   auto publishers_info = node->get_publishers_info_by_topic(topic_name);
   for (const auto & info : publishers_info) {
@@ -1841,6 +1895,12 @@ Recorder::is_discovery_running() const
 void Recorder::set_on_start_recording_callback(OnStartRecordingCallback callback) const
 {
   pimpl_->on_start_recording_callback_ = std::move(callback);
+}
+
+std::vector<std::string>
+Recorder::get_subscribed_topics() const
+{
+  return pimpl_->get_subscribed_topics();
 }
 
 void Recorder::read_static_topics() noexcept
