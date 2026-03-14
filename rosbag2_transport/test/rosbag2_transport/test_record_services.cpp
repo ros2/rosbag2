@@ -789,23 +789,28 @@ TEST_F(RecordSrvsTest, pause_resume)
   auto request = std::make_shared<Resume::Request>();
   auto response = std::make_shared<Resume::Response>();
   EXPECT_TRUE(successful_service_request<Resume>(cli_resume_, request, response));
+  EXPECT_EQ(Resume::Response::RETURN_CODE_SUCCESS, response->return_code);
+  EXPECT_TRUE(response->error_string.empty());
   EXPECT_FALSE(recorder_->is_paused());
   is_paused_response = std::make_shared<IsPaused::Response>();
   EXPECT_TRUE(successful_service_request<IsPaused>(cli_is_paused_, is_paused_response));
   EXPECT_FALSE(is_paused_response->paused);
 }
 
-TEST_F(RecordSrvsSimTimeTest, resume_can_be_scheduled_in_future)
+TEST_F(RecordSrvsSimTimeTest, resume_by_node_time_respects_future_timestamp)
 {
-  ASSERT_TRUE(successful_service_request<Pause>(cli_pause_));
+  recorder_->pause();
   ASSERT_TRUE(recorder_->is_paused());
 
   // Schedule a resume in the future
   auto request = std::make_shared<Resume::Request>();
   auto target_resume_time = current_sim_time_ + rclcpp::Duration(std::chrono::milliseconds(200));
   request->resume_time = target_resume_time;
+  request->resume_mode = Resume::Request::RESUME_MODE_NODE_TIME;
   auto response = std::make_shared<Resume::Response>();
   ASSERT_TRUE(successful_service_request<Resume>(cli_resume_, request, response));
+  EXPECT_EQ(Resume::Response::RETURN_CODE_SUCCESS, response->return_code);
+  EXPECT_TRUE(response->error_string.empty());
 
   // Confirm that the recorder is still paused
   EXPECT_TRUE(recorder_->is_paused());
@@ -823,6 +828,265 @@ TEST_F(RecordSrvsSimTimeTest, resume_can_be_scheduled_in_future)
       [this]() {return !recorder_->is_paused();},
       std::chrono::seconds(10))
   ) << "Timed out waiting for scheduled resume.";
+}
+
+TEST_F(RecordSrvsSimTimeTest, resume_by_receive_time_immediate_due)
+{
+  auto string_message = get_messages_strings()[1];
+  auto tracked_pub =
+    client_node_->create_publisher<test_msgs::msg::Strings>(test_topic_,
+                                                            Rosbag2QoS::UnitTestQoS());
+  ASSERT_TRUE(
+    rosbag2_test_common::wait_until_condition(
+      [&tracked_pub]() {return tracked_pub->get_subscription_count() > 0;},
+      std::chrono::seconds(10))
+  );
+
+  auto & writer = recorder_->get_writer_handle();
+  auto & mock_writer = dynamic_cast<MockSequentialWriter &>(writer.get_implementation_handle());
+
+  ASSERT_TRUE(
+    rosbag2_test_common::wait_until_condition(
+      [this]() {return recorder_->now() >= current_sim_time_;},
+      std::chrono::seconds(10))
+  ) << "Recorder node failed to advance to the current sim time";
+
+  // Publish a message to establish a receive timestamp baseline.
+  tracked_pub->publish(*string_message);
+  ASSERT_TRUE(
+    rosbag2_test_common::wait_until_condition(
+      [&mock_writer]() {return mock_writer.get_number_of_recorded_messages() > 0;},
+      std::chrono::seconds(5))
+  ) << "Failed to capture message in time";
+
+  recorder_->pause();
+  ASSERT_TRUE(recorder_->is_paused());
+
+  // Request a receive-time resume using a resume time in the past.
+  // Recorded messages have current_sim_time_ as their receive timestamp.
+  auto resume_time = current_sim_time_ - rclcpp::Duration(std::chrono::milliseconds(100));
+
+  auto request = std::make_shared<Resume::Request>();
+  request->resume_time = resume_time;
+  request->resume_mode = Resume::Request::RESUME_MODE_RECEIVE_TIME;
+  request->tracking_topic_name.clear();
+  auto response = std::make_shared<Resume::Response>();
+  ASSERT_TRUE(successful_service_request<Resume>(cli_resume_, request, response));
+  EXPECT_EQ(Resume::Response::RETURN_CODE_SUCCESS, response->return_code);
+  EXPECT_TRUE(response->error_string.empty());
+
+  // Since the resume time is in the past, resume should happen immediately before
+  // returning response to the service call.
+  EXPECT_FALSE(recorder_->is_paused());
+}
+
+TEST_F(RecordSrvsTest, resume_by_publish_time_immediate_due)
+{
+#ifdef _WIN32
+  if (std::string(rmw_get_implementation_identifier()).find("rmw_connextdds") !=
+    std::string::npos)
+  {
+    GTEST_SKIP() << "Skipping test on Windows with Connext due to known issue with send "
+      "timestamps being zero.";
+  }
+#endif
+
+  rosbag2_test_common::PublicationManager pub_manager;
+  auto string_message = get_messages_strings()[1];
+  pub_manager.setup_publisher(test_topic_, string_message, 2);
+  ASSERT_TRUE(pub_manager.wait_for_matched(test_topic_.c_str()));
+  pub_manager.run_publishers();
+
+  auto & writer = recorder_->get_writer_handle();
+  auto & mock_writer = dynamic_cast<MockSequentialWriter &>(writer.get_implementation_handle());
+  ASSERT_TRUE(
+    rosbag2_test_common::wait_until_condition(
+      [&mock_writer]() {return mock_writer.get_number_of_recorded_messages() > 1;},
+      std::chrono::seconds(10))
+  ) << "Failed to capture published messages in time";
+
+  recorder_->pause();
+  ASSERT_TRUE(recorder_->is_paused());
+
+  const auto first_publish_timestamp = mock_writer.get_messages().front()->send_timestamp;
+  // Request a publish-time split using a split time in the past. Note: we published at least two
+  // messages, so adding 1 nanosecond to the first message's timestamp guarantees that there is at
+  // least one message with a publish timestamp >= split_time
+  const auto resume_time =
+    rclcpp::Time(first_publish_timestamp + 1, client_node_->get_clock()->get_clock_type());
+
+  auto request = std::make_shared<Resume::Request>();
+  request->resume_time = resume_time;
+  request->resume_mode = Resume::Request::RESUME_MODE_PUBLISH_TIME;
+  request->tracking_topic_name = test_topic_;
+  auto response = std::make_shared<Resume::Response>();
+  ASSERT_TRUE(successful_service_request<Resume>(cli_resume_, request, response));
+  EXPECT_EQ(Resume::Response::RETURN_CODE_SUCCESS, response->return_code);
+  EXPECT_TRUE(response->error_string.empty());
+
+  // Since the resume time is in the past, resume should happen immediately before
+  // returning response to the service call.
+  EXPECT_FALSE(recorder_->is_paused());
+}
+
+TEST_F(RecordSrvsTest, resume_by_publish_time_scheduled)
+{
+#ifdef _WIN32
+  if (std::string(rmw_get_implementation_identifier()).find("rmw_connextdds") !=
+    std::string::npos)
+  {
+    GTEST_SKIP() << "Skipping test on Windows with Connext due to known issue with send "
+      "timestamps being zero.";
+  }
+#endif
+
+  auto string_message = get_messages_strings()[1];
+  auto tracked_pub =
+    client_node_->create_publisher<test_msgs::msg::Strings>(test_topic_,
+                                                            Rosbag2QoS::UnitTestQoS());
+  ASSERT_TRUE(
+    rosbag2_test_common::wait_until_condition(
+      [&tracked_pub]() {return tracked_pub->get_subscription_count() > 0;},
+      std::chrono::seconds(10)
+    )
+  );
+
+  // Publish a message to establish a publish timestamp baseline.
+  tracked_pub->publish(*string_message);
+
+  auto & writer = recorder_->get_writer_handle();
+  auto & mock_writer = dynamic_cast<MockSequentialWriter &>(writer.get_implementation_handle());
+  ASSERT_TRUE(
+    rosbag2_test_common::wait_until_condition(
+      [&mock_writer]() {return mock_writer.get_number_of_recorded_messages() > 0;},
+      std::chrono::seconds(10))
+  ) << "Failed to capture message in time";
+
+  recorder_->pause();
+  ASSERT_TRUE(recorder_->is_paused());
+
+  const auto last_publish_timestamp = mock_writer.get_messages().back()->send_timestamp;
+  auto resume_time = rclcpp::Time(last_publish_timestamp + RCUTILS_MS_TO_NS(200), RCL_SYSTEM_TIME);
+
+  auto request = std::make_shared<Resume::Request>();
+  request->resume_time = resume_time;
+  request->resume_mode = Resume::Request::RESUME_MODE_PUBLISH_TIME;
+  request->tracking_topic_name = test_topic_;
+  auto response = std::make_shared<Resume::Response>();
+  ASSERT_TRUE(successful_service_request<Resume>(cli_resume_, request, response));
+  EXPECT_EQ(Resume::Response::RETURN_CODE_SUCCESS, response->return_code);
+  EXPECT_TRUE(response->error_string.empty());
+
+  // Confirm that recorder is still paused before reaching resume time.
+  EXPECT_TRUE(recorder_->is_paused());
+
+  // Wait until resume time is reached.
+  rclcpp::Clock system_clock(RCL_SYSTEM_TIME);
+  ASSERT_TRUE(
+    rosbag2_test_common::wait_until_condition(
+      [resume_time, &system_clock]() {return system_clock.now() >= resume_time;},
+      std::chrono::seconds(10))
+  ) << "System clock did not reach resume time in time";
+
+  // Publish on tracked topic to trigger resume from subscription callback.
+  // The publish timestamp of this message will be >= resume_time
+  tracked_pub->publish(*string_message);
+
+  ASSERT_TRUE(
+    rosbag2_test_common::wait_until_condition(
+      [this]() {return !recorder_->is_paused();},
+      std::chrono::seconds(10))
+  ) << "Timed out waiting for publish-time resume to occur.";
+}
+
+TEST_F(RecordSrvsPublishMultipleTopicsTest, resume_topic_filter_triggers_on_tracked_topic)
+{
+  auto string_message = get_messages_strings()[1];
+  auto tracked_pub =
+    client_node_->create_publisher<test_msgs::msg::Strings>(test_topic_,
+                                                            Rosbag2QoS::UnitTestQoS());
+  auto other_pub =
+    client_node_->create_publisher<test_msgs::msg::Strings>(kSplitOtherTopic,
+                                                            Rosbag2QoS::UnitTestQoS());
+
+  ASSERT_TRUE(
+    rosbag2_test_common::wait_until_condition(
+      [&tracked_pub]() {return tracked_pub->get_subscription_count() > 0;},
+      std::chrono::seconds(10)));
+  ASSERT_TRUE(
+    rosbag2_test_common::wait_until_condition(
+      [&other_pub]() {return other_pub->get_subscription_count() > 0;},
+      std::chrono::seconds(10)));
+
+  auto & writer = recorder_->get_writer_handle();
+  auto & mock_writer = dynamic_cast<MockSequentialWriter &>(writer.get_implementation_handle());
+  const auto initial_tracked_count = mock_writer.get_messages_per_topic(test_topic_);
+
+  // Publish a message on each topic to establish a receive timestamp baseline.
+  other_pub->publish(*string_message);
+  tracked_pub->publish(*string_message);
+  ASSERT_TRUE(
+    rosbag2_test_common::wait_until_condition(
+      [this, &mock_writer, initial_tracked_count]() {
+        return  mock_writer.get_messages_per_topic(test_topic_) > initial_tracked_count &&
+               mock_writer.get_messages_per_topic(kSplitOtherTopic) > 0;
+      },
+      std::chrono::seconds(10))
+  ) << "Failed to capture messages in time";
+
+  // Pause the recorder
+  recorder_->pause();
+  ASSERT_TRUE(recorder_->is_paused());
+
+  auto request = std::make_shared<Resume::Request>();
+  const auto target_resume_time = current_sim_time_ +
+    rclcpp::Duration(std::chrono::milliseconds(200));
+  request->resume_time = target_resume_time;
+  request->resume_mode = Resume::Request::RESUME_MODE_RECEIVE_TIME;
+  request->tracking_topic_name = test_topic_;
+  auto response = std::make_shared<Resume::Response>();
+  ASSERT_TRUE(successful_service_request<Resume>(cli_resume_, request, response));
+  EXPECT_EQ(Resume::Response::RETURN_CODE_SUCCESS, response->return_code);
+  EXPECT_TRUE(response->error_string.empty());
+
+  // Advance simulated time past the resume time and publish a message on other topic first.
+  publish_clock(target_resume_time + rclcpp::Duration(std::chrono::milliseconds(10)));
+  ASSERT_TRUE(
+    rosbag2_test_common::wait_until_condition(
+      [this]() {return recorder_->now() >= current_sim_time_;},
+      std::chrono::seconds(10))
+  ) << "Recorder node failed to advance to the current sim time";
+
+  // Publish on other topic first, should not trigger resume.
+  other_pub->publish(*string_message);
+  EXPECT_FALSE(
+    rosbag2_test_common::wait_until_condition(
+      [this]() {return !recorder_->is_paused();},
+      std::chrono::milliseconds(500))
+  ) << "Resume should not trigger for messages on non-tracked topics.";
+
+  // Now publish on tracked topic, should trigger resume.
+  tracked_pub->publish(*string_message);
+  ASSERT_TRUE(
+    rosbag2_test_common::wait_until_condition(
+      [this]() {return !recorder_->is_paused();},
+      std::chrono::seconds(10))
+  ) << "Timed out waiting for receive-time resume to occur on tracked topic.";
+}
+
+TEST_F(RecordSrvsTest, resume_returns_invalid_mode_for_bad_request)
+{
+  recorder_->pause();
+  ASSERT_TRUE(recorder_->is_paused());
+
+  auto request = std::make_shared<Resume::Request>();
+  request->resume_mode = 99;  // Invalid resume mode
+  auto response = std::make_shared<Resume::Response>();
+  ASSERT_TRUE(successful_service_request<Resume>(cli_resume_, request, response));
+
+  EXPECT_EQ(Resume::Response::RETURN_CODE_INVALID_RESUME_MODE, response->return_code);
+  EXPECT_FALSE(response->error_string.empty());
+  EXPECT_TRUE(recorder_->is_paused());
 }
 
 TEST_F(RecordSrvsDiscoveryTest, stop_start_discovery)
