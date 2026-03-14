@@ -142,7 +142,29 @@ The Rosbag2 recorder provides the following services for remote control, which c
   * Pauses recording. All messages that have already arrived will be written, but all messages that
     arrive after pausing will be discarded. Has no effect if already paused. Takes no arguments.
 * `~/resume [rosbag2_interfaces/srv/Resume]`
-  * Resume recording if paused. Has no effect if not paused. Takes no arguments.
+  * Resume recording immediately or schedule resume based on a requested time and mode.
+  * The `publish_time` and `receive_time` resume modes are supported only by the recorder.
+  * Resume modes:
+    - **Node time**: uses the recorder node clock; resumes immediately if `resume_time` is unset
+      or in the past, or is scheduled in the future via the task runner.
+    - **Publish time**: pending resume evaluated against the message source/publication timestamp.
+    - **Receive time**: pending resume evaluated against the recorder receive timestamp.
+  * Topic tracking:
+    - `tracking_topic_name` optionally scopes publish/receive-time evaluation to a single topic.
+      If empty, the evaluation considers all recorded topics.
+  * Pending resume policy:
+    - If a pending timestamp-based resume exists and a new resume request arrives, the newer
+      request overrides the existing pending one.
+    - A timestamp-based resume is performed when a message with a timestamp >= requested
+      `resume_time` is processed on the tracked scope.
+  * Request fields:
+    - `resume_time`: target time; unset or past times cause immediate resume.
+    - `resume_mode`: one of `node_time`, `publish_time`, `receive_time`.
+    - `tracking_topic_name`: optional topic for timestamp-based evaluation.
+  * Response fields:
+    - `return_code`: `success`, `invalid_resume_mode`, `invalid_tracking_topic`, or
+      `resume_failed`.
+    - `error_string`: empty on success, otherwise describes the failure.
 * `~/split_bagfile [rosbag2_interfaces/srv/SplitBagfile]`
   * Triggers a split to a new file, either immediately or scheduled based on mode and time.
   * Split modes:
@@ -355,6 +377,19 @@ The Rosbag2 player provides the following services for remote control, which can
   * Play a single next message from the bag. Only works while paused.
 * `~/resume [rosbag2_interfaces/srv/Resume]`
   * Resume playback if paused.
+  * The newer `publish_time` and `receive_time` resume modes are recorder-only.
+  * Player only supports `resume_mode = node_time`.
+  * `resume_time` is not supported by player and must be zero for player resume requests.
+  * `tracking_topic_name` is not supported by player and must be empty.
+  * If `resume_mode` is `publish_time` or `receive_time`, player rejects the request with
+    `return_code = invalid_resume_mode` and a descriptive `error_string`.
+  * If `resume_mode` has any other invalid value, player also returns
+    `return_code = invalid_resume_mode`.
+  * If `tracking_topic_name` is set, player rejects the request with
+    `return_code = invalid_tracking_topic` and a descriptive `error_string`.
+  * Response fields:
+    - `return_code`: `success`, `invalid_resume_mode`, or `invalid_tracking_topic`.
+    - `error_string`: empty on success, otherwise describes the failure.
 * `~/seek [rosbag2_interfaces/srv/Seek]`
   * Change the play head to the specified timestamp. Can be forward or backward in time, the next played message is the next immediately after the seeked timestamp.
 * `~/set_rate [rosbag2_interfaces/srv/SetRate]`
