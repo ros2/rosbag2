@@ -32,6 +32,7 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "srv/SetRate.srv"
   "srv/Snapshot.srv"
   "srv/SplitBagfile.srv"
+  "srv/SubscribeToTopics.srv"
   "srv/StartDiscovery.srv"
   "srv/Stop.srv"
   "srv/StopDiscovery.srv"

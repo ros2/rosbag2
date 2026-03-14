@@ -35,6 +35,7 @@
 #include "rosbag2_interfaces/srv/resume.hpp"
 #include "rosbag2_interfaces/srv/snapshot.hpp"
 #include "rosbag2_interfaces/srv/split_bagfile.hpp"
+#include "rosbag2_interfaces/srv/subscribe_to_topics.hpp"
 #include "rosbag2_interfaces/srv/start_discovery.hpp"
 #include "rosbag2_interfaces/srv/stop_discovery.hpp"
 #include "rosbag2_interfaces/srv/stop.hpp"
@@ -76,6 +77,7 @@ public:
   using Resume = rosbag2_interfaces::srv::Resume;
   using Snapshot = rosbag2_interfaces::srv::Snapshot;
   using SplitBagfile = rosbag2_interfaces::srv::SplitBagfile;
+  using SubscribeToTopics = rosbag2_interfaces::srv::SubscribeToTopics;
   using StartDiscovery = rosbag2_interfaces::srv::StartDiscovery;
   using Stop = rosbag2_interfaces::srv::Stop;
   using StopDiscovery = rosbag2_interfaces::srv::StopDiscovery;
@@ -139,6 +141,8 @@ public:
     cli_resume_ = client_node_->create_client<Resume>(ns + "/resume");
     cli_snapshot_ = client_node_->create_client<Snapshot>(ns + "/snapshot");
     cli_split_bagfile_ = client_node_->create_client<SplitBagfile>(ns + "/split_bagfile");
+    cli_subscribe_to_topics_ = client_node_->create_client<SubscribeToTopics>(
+      ns + "/subscribe_to_topics");
     cli_start_discovery_ = client_node_->create_client<StartDiscovery>(ns + "/start_discovery");
     cli_stop_ = client_node_->create_client<Stop>(ns + "/stop");
     cli_stop_discovery_ = client_node_->create_client<StopDiscovery>(ns + "/stop_discovery");
@@ -183,6 +187,7 @@ public:
     ASSERT_TRUE(cli_record_->wait_for_service(service_wait_timeout_));
     ASSERT_TRUE(cli_resume_->wait_for_service(service_wait_timeout_));
     ASSERT_TRUE(cli_split_bagfile_->wait_for_service(service_wait_timeout_));
+    ASSERT_TRUE(cli_subscribe_to_topics_->wait_for_service(service_wait_timeout_));
     ASSERT_TRUE(cli_start_discovery_->wait_for_service(service_wait_timeout_));
     ASSERT_TRUE(cli_stop_->wait_for_service(service_wait_timeout_));
     ASSERT_TRUE(cli_stop_discovery_->wait_for_service(service_wait_timeout_));
@@ -271,6 +276,7 @@ public:
   rclcpp::Client<Resume>::SharedPtr cli_resume_;
   rclcpp::Client<Snapshot>::SharedPtr cli_snapshot_;
   rclcpp::Client<SplitBagfile>::SharedPtr cli_split_bagfile_;
+  rclcpp::Client<SubscribeToTopics>::SharedPtr cli_subscribe_to_topics_;
   rclcpp::Client<StartDiscovery>::SharedPtr cli_start_discovery_;
   rclcpp::Client<Stop>::SharedPtr cli_stop_;
   rclcpp::Client<StopDiscovery>::SharedPtr cli_stop_discovery_;
@@ -338,6 +344,145 @@ TEST_F(RecordSrvsTest, get_subscribed_topics_empty_when_not_recording)
   );
   EXPECT_THAT(response->topics, IsEmpty());
   EXPECT_EQ(recorder_->get_subscribed_topics(), response->topics);
+}
+
+class RecordSrvsSubscibeToTopicsTest : public RecordSrvsTest
+{
+protected:
+  RecordSrvsSubscibeToTopicsTest()
+  : RecordSrvsTest(false /*snapshot_mode*/, false /*is_discovery_disabled*/,
+      false /*use_sim_time*/, {/*no topics*/})
+  {}
+};
+
+// TODO(morlov): review RecordSrvsSubscibeToTopicsTest cases
+TEST_F(RecordSrvsSubscibeToTopicsTest, subscribe_to_topics_adds_requested_topic)
+{
+  const std::string additional_topic = test_topic_ + "_secondary";
+  rosbag2_test_common::PublicationManager pub_manager;
+  pub_manager.setup_publisher(additional_topic, get_messages_strings()[1], 5);
+  pub_manager.run_publishers();
+
+  auto request = std::make_shared<SubscribeToTopics::Request>();
+  request->topics = {additional_topic};
+  auto response = std::make_shared<SubscribeToTopics::Response>();
+  ASSERT_TRUE(successful_service_request<SubscribeToTopics>(cli_subscribe_to_topics_, request,
+    response));
+  EXPECT_EQ(0, response->return_code);
+  EXPECT_TRUE(response->error_string.empty());
+  EXPECT_THAT(response->subscribed_topics, ElementsAre(additional_topic));
+  EXPECT_THAT(response->unavailable_topics, IsEmpty());
+  EXPECT_THAT(recorder_->get_subscribed_topics(), Contains(additional_topic));
+}
+
+TEST_F(RecordSrvsSubscibeToTopicsTest, subscribe_to_topics_reports_missing_topics)
+{
+  const std::string missing_topic = "/subscribe_topics_missing";
+  auto request = std::make_shared<SubscribeToTopics::Request>();
+  request->topics = {missing_topic};
+  auto response = std::make_shared<SubscribeToTopics::Response>();
+  ASSERT_TRUE(successful_service_request<SubscribeToTopics>(cli_subscribe_to_topics_, request,
+    response));
+  EXPECT_EQ(1, response->return_code);
+  EXPECT_FALSE(response->error_string.empty());
+  EXPECT_THAT(response->subscribed_topics, IsEmpty());
+  EXPECT_THAT(response->unavailable_topics, ElementsAre(missing_topic));
+  EXPECT_THAT(recorder_->get_subscribed_topics(), Not(Contains(missing_topic)));
+}
+
+TEST_F(RecordSrvsSubscibeToTopicsTest, subscribe_to_topics_rejects_mismatched_topic_types)
+{
+  const std::string additional_topic = test_topic_ + "_with_types";
+  auto request = std::make_shared<SubscribeToTopics::Request>();
+  request->topics = {test_topic_, additional_topic};
+  request->topic_types = {"std_msgs/msg/String"};
+  auto response = std::make_shared<SubscribeToTopics::Response>();
+  ASSERT_TRUE(successful_service_request<SubscribeToTopics>(cli_subscribe_to_topics_, request,
+    response));
+  EXPECT_EQ(1, response->return_code);
+  EXPECT_FALSE(response->error_string.empty());
+  EXPECT_THAT(response->subscribed_topics, IsEmpty());
+  EXPECT_THAT(response->unavailable_topics, IsEmpty());
+}
+
+TEST_F(RecordSrvsSubscibeToTopicsTest, subscribe_to_topics_reports_already_subscribed_topics)
+{
+  rosbag2_test_common::PublicationManager pub_manager;
+  auto string_message = get_messages_strings()[1];
+  pub_manager.setup_publisher(test_topic_, string_message, 3);
+  // ASSERT_TRUE(pub_manager.wait_for_matched(test_topic_.c_str()));
+  // pub_manager.run_publishers();
+
+  auto request = std::make_shared<SubscribeToTopics::Request>();
+  request->topics = {test_topic_};
+  auto response = std::make_shared<SubscribeToTopics::Response>();
+  ASSERT_TRUE(successful_service_request<SubscribeToTopics>(cli_subscribe_to_topics_, request,
+    response));
+  EXPECT_EQ(0, response->return_code);
+  EXPECT_TRUE(response->error_string.empty());
+  EXPECT_THAT(response->subscribed_topics, ElementsAre(test_topic_));
+  EXPECT_THAT(response->unavailable_topics, IsEmpty());
+  EXPECT_THAT(recorder_->get_subscribed_topics(), Contains(test_topic_));
+}
+
+TEST_F(RecordSrvsSubscibeToTopicsTest,
+  subscribe_to_topics_includes_previously_subscribed_topics_in_response)
+{
+  const std::string additional_topic = test_topic_ + "_tertiary";
+  rosbag2_test_common::PublicationManager pub_manager;
+  auto string_message = get_messages_strings()[1];
+  pub_manager.setup_publisher(test_topic_, string_message, 3);
+  pub_manager.setup_publisher(additional_topic, string_message, 5);
+  pub_manager.run_publishers();
+
+  auto request = std::make_shared<SubscribeToTopics::Request>();
+  request->topics = {test_topic_, additional_topic};
+  auto response = std::make_shared<SubscribeToTopics::Response>();
+  ASSERT_TRUE(successful_service_request<SubscribeToTopics>(cli_subscribe_to_topics_, request,
+    response));
+  EXPECT_EQ(0, response->return_code);
+  EXPECT_TRUE(response->error_string.empty());
+  EXPECT_THAT(response->subscribed_topics, UnorderedElementsAre(test_topic_, additional_topic));
+  EXPECT_THAT(response->unavailable_topics, IsEmpty());
+  EXPECT_THAT(recorder_->get_subscribed_topics(),
+    AllOf(Contains(test_topic_), Contains(additional_topic)));
+}
+
+TEST_F(RecordSrvsSubscibeToTopicsTest,
+  subscribe_to_topics_allows_specified_type_when_not_discovered)
+{
+  const std::string undiscovered_topic = "/subscribe_topics_with_type_only";
+  rosbag2_test_common::PublicationManager pub_manager;
+  pub_manager.setup_publisher(undiscovered_topic, get_messages_strings()[1], 5);
+  pub_manager.run_publishers();
+
+  auto request = std::make_shared<SubscribeToTopics::Request>();
+  request->topics = {undiscovered_topic};
+  request->topic_types = {"test_msgs/msg/Strings"};
+  auto response = std::make_shared<SubscribeToTopics::Response>();
+  ASSERT_TRUE(successful_service_request<SubscribeToTopics>(cli_subscribe_to_topics_, request,
+    response));
+  EXPECT_EQ(0, response->return_code);
+  EXPECT_TRUE(response->error_string.empty());
+  EXPECT_THAT(response->subscribed_topics, ElementsAre(undiscovered_topic));
+  EXPECT_THAT(response->unavailable_topics, IsEmpty());
+  EXPECT_THAT(recorder_->get_subscribed_topics(), Contains(undiscovered_topic));
+}
+
+TEST_F(RecordSrvsSubscibeToTopicsTest, subscribe_to_topics_fails_when_not_recording)
+{
+  ASSERT_TRUE(successful_service_request<Stop>(cli_stop_));
+  EXPECT_THAT(recorder_->get_subscribed_topics(), IsEmpty());
+
+  auto request = std::make_shared<SubscribeToTopics::Request>();
+  request->topics = {test_topic_};
+  auto response = std::make_shared<SubscribeToTopics::Response>();
+  ASSERT_TRUE(successful_service_request<SubscribeToTopics>(cli_subscribe_to_topics_, request,
+    response));
+  EXPECT_EQ(1, response->return_code);
+  EXPECT_FALSE(response->error_string.empty());
+  EXPECT_THAT(response->subscribed_topics, IsEmpty());
+  EXPECT_THAT(response->unavailable_topics, ElementsAre(test_topic_));
 }
 
 class RecordSrvsDiscoveryTest : public RecordSrvsTest
