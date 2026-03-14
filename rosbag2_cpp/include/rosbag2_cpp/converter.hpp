@@ -69,24 +69,32 @@ public:
 
   ~Converter();
 
-  /**
-   * Converts the given SerializedBagMessage into the output format of the converter. The
-   * serialization format of the input message must be identical to the input format of the
-   * converter.
-   *
-   * \param message Message to convert
-   * \returns Converted message
-   */
+  /// \brief Converts the given SerializedBagMessage into the output format of the converter. The
+  /// serialization format of the input message must be identical to the input format of the
+  /// converter.
+  /// \param message Message to convert
+  /// \returns Converted message
   std::shared_ptr<rosbag2_storage::SerializedBagMessage>
   convert(std::shared_ptr<const rosbag2_storage::SerializedBagMessage> message);
 
+  /// \brief Register a topic and its type with the converter.
+  /// \param topic The name of the topic.
+  /// \param type The type of the topic.
   void add_topic(const std::string & topic, const std::string & type);
+
+  /// \return The input serialization format of the converter.
+  std::string get_input_serialization_format() const;
+
+  /// \return The output serialization format of the converter.
+  std::string get_output_serialization_format() const;
 
 private:
   std::shared_ptr<SerializationFormatConverterFactoryInterface> converter_factory_;
   std::unique_ptr<converter_interfaces::SerializationFormatDeserializer> input_converter_;
   std::unique_ptr<converter_interfaces::SerializationFormatSerializer> output_converter_;
   std::unordered_map<std::string, ConverterTypeSupport> topics_and_types_;
+  std::string input_serialization_format_;
+  std::string output_serialization_format_;
 };
 
 }  // namespace rosbag2_cpp
