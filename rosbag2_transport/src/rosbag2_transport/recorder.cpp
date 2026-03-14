@@ -1014,6 +1014,8 @@ void RecorderImpl::create_control_services()
         if (!in_recording_.load()) {
           RCLCPP_WARN(node->get_logger(),
           "Received 'SubscribeToTopics' request while not in recording. Ignoring request.");
+          // TODO(morlov): More consistent would be to add all requested topics into the
+          //   unavailable_topics list instead of just one.
           response->unavailable_topics = request->topics;
           set_service_error(response, "Recorder is not currently recording.");
           return;
@@ -1054,6 +1056,8 @@ std::unordered_map<std::string, std::string> RecorderImpl::collect_requested_top
     const std::string requested_type =
       request->topic_types.empty() ? "" : request->topic_types[topic_index];
 
+    // TODO(morlov): The validated_topic is not a very good name to reflect what this variable is
+    //  assigned to. Consider renaming it to the expanded_topic_name or exp_topic_name
     std::string validated_topic;
     try {
       validated_topic = rclcpp::expand_topic_or_service_name(
@@ -1064,7 +1068,8 @@ std::unordered_map<std::string, std::string> RecorderImpl::collect_requested_top
         requested_topic.c_str(), ex.what());
       response->unavailable_topics.emplace_back(requested_topic);
       continue;
-    }
+    }  // TODO(morlov): Need to add another catch `catch (const std::exception & ex)` or
+       //  catch (...). We don't want to have unhandled exception inside service call handler.
 
     if (requested_topics_with_types.find(validated_topic) != requested_topics_with_types.end()) {
       RCLCPP_WARN(node->get_logger(),
