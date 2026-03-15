@@ -21,6 +21,7 @@ find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(rosbag2_cpp REQUIRED)
 find_package(example_interfaces REQUIRED)
+find_package(std_msgs REQUIRED)
 
 add_executable(simple_bag_recorder src/simple_bag_recorder.cpp)
 target_link_libraries(simple_bag_recorder
@@ -55,6 +56,28 @@ target_link_libraries(data_generator_executable
 
 install(TARGETS
   data_generator_executable
+  DESTINATION lib/${PROJECT_NAME}
+)
+
+add_executable(byte_burst_publisher src/byte_burst_publisher.cpp)
+target_link_libraries(byte_burst_publisher
+  rclcpp::rclcpp
+  ${std_msgs_TARGETS}
+)
+
+install(TARGETS
+  byte_burst_publisher
+  DESTINATION lib/${PROJECT_NAME}
+)
+
+add_executable(byte_subscriber_probe src/byte_subscriber_probe.cpp)
+target_link_libraries(byte_subscriber_probe
+  rclcpp::rclcpp
+  ${std_msgs_TARGETS}
+)
+
+install(TARGETS
+  byte_subscriber_probe
   DESTINATION lib/${PROJECT_NAME}
 )
 
