@@ -46,7 +46,7 @@ int main(int argc, char ** argv)
     for (int i = 0; i < small_count; ++i) {
       pub->publish(msg);
     }
-    RCLCPP_INFO(node->get_logger(), "published %d small messages", small_count);
+    RCLCPP_INFO(node->get_logger(), "published %ld small messages", small_count);
   } else if (mode == "big") {
     std::vector<rclcpp::Publisher<std_msgs::msg::ByteMultiArray>::SharedPtr> pubs;
     if (create_many_topics) {
@@ -75,7 +75,7 @@ int main(int argc, char ** argv)
       big_pub->publish(msg);
     }
     RCLCPP_INFO(
-      node->get_logger(), "published %d big messages of %d MiB", big_count, big_mib);
+      node->get_logger(), "published %ld big messages of %ld MiB", big_count, big_mib);
   } else {
     RCLCPP_ERROR(node->get_logger(), "unknown mode: %s", mode.c_str());
     rclcpp::shutdown();
