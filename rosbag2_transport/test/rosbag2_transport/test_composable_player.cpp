@@ -105,7 +105,7 @@ public:
     auto result = std::make_shared<srvPlay::Response>();
     EXPECT_NO_THROW({result = play_future.get();});
     EXPECT_TRUE(result);
-    return result->success;
+    return result->return_code == rosbag2_interfaces::srv::Play::Response::RETURN_CODE_SUCCESS;
   }
 
 protected:
