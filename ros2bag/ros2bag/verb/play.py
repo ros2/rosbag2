@@ -211,8 +211,8 @@ class PlayVerb(VerbExtension):
         parser.add_argument(
             '--persistent',
             action='store_true', default=False,
-            help='Keep the player process running after playback stops, allowing future play/resume'
-                 ' via service calls API.'
+            help='Keep the player process running after playback stops, allowing future '
+                 'play/resume via service calls API.'
         )
         progress_bar_group.add_argument(
             '--progress-bar-update-rate', type=int, metavar='Hz', default=3,
