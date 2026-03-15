@@ -15,6 +15,7 @@
 from argparse import FileType
 import signal
 import threading
+import time
 
 from rclpy.qos import InvalidQoSProfileException
 from ros2bag.api import add_standard_multi_reader_args
@@ -207,6 +208,12 @@ class PlayVerb(VerbExtension):
             choices=['debug', 'info', 'warn', 'error', 'fatal'],
             help='Logging level.')
         progress_bar_group = parser.add_argument_group('Progress bar', 'Settings for progress bar')
+        parser.add_argument(
+            '--persistent',
+            action='store_true', default=False,
+            help='Keep the player process running after playback stops, allowing future play/resume'
+                 ' via service calls API.'
+        )
         progress_bar_group.add_argument(
             '--progress-bar-update-rate', type=int, metavar='Hz', default=3,
             help='Print a progress bar for the playback with a specified maximum update rate in '
@@ -351,10 +358,13 @@ class PlayVerb(VerbExtension):
             player.play()
             # Wait for playback to finish with periodic checks for termination
             while not termination_requested.is_set():
-                # Use a short timeout to periodically check the termination flag
-                if player.wait_for_playback_to_finish_exclusively(0.1):
-                    break  # Playback finished naturally
-
+                if args.persistent:
+                    # In persistent mode, just wait until termination is requested
+                    time.sleep(0.1)
+                else:
+                    # Use a short timeout to periodically check the termination flag
+                    if player.wait_for_playback_to_finish_exclusively(0.1):
+                        break  # Playback finished naturally
             # If termination was requested, the player stop will be called in the 'finally' block
         except KeyboardInterrupt:
             pass
