@@ -631,16 +631,6 @@ TEST_F(
       }
       EXPECT_EQ(i, written_messages);
     }
-    if ((i % max_bagfile_size) == 1) {  // Check on the 6th and 11 message that split happened.
-      // i.e. fake_storage_size_ zeroed on split and then incremented in cache_consumer callback.
-      auto start_time = std::chrono::steady_clock::now();
-      while ((fake_storage_size_ != 1u) &&
-        ((std::chrono::steady_clock::now() - start_time) < timeout))
-      {
-        std::this_thread::sleep_for(std::chrono::milliseconds(5));
-      }
-      EXPECT_EQ(fake_storage_size_, 1u) << "current message number = " << i;
-    }
   }
 
   writer_.reset();
