@@ -336,6 +336,65 @@ TEST_F(SequentialWriterTest, write_does_not_use_converters_if_input_and_output_f
   writer_->write(message);
 }
 
+TEST_F(SequentialWriterTest, writer_uses_correct_serialization_format_in_metadata) {
+  // First open writer with conversion and verify metadata uses the output serialization format.
+  // Then open again with no conversion and verify metadata uses the input serialization format
+  // for both yaml file and storage.
+  auto sequential_writer = std::make_unique<rosbag2_cpp::writers::SequentialWriter>(
+    std::move(storage_factory_), converter_factory_, std::move(metadata_io_));
+  writer_ = std::make_unique<rosbag2_cpp::Writer>(std::move(sequential_writer));
+
+  std::string storage_serialization_format = "rmw2_format";
+  std::string input_format = "rmw1_format";
+
+  auto format1_converter = std::make_unique<StrictMock<MockConverter>>();
+  auto format2_converter = std::make_unique<StrictMock<MockConverter>>();
+  EXPECT_CALL(*format1_converter, serialize(_, _, _)).Times(2);
+  EXPECT_CALL(*format2_converter, deserialize(_, _, _)).Times(2);
+
+  EXPECT_CALL(*converter_factory_, load_serializer(storage_serialization_format))
+  .WillOnce(Return(ByMove(std::move(format1_converter))));
+  EXPECT_CALL(*converter_factory_, load_deserializer(input_format))
+  .WillOnce(Return(ByMove(std::move(format2_converter))));
+
+  auto message = std::make_shared<rosbag2_storage::SerializedBagMessage>();
+  message->topic_name = "test_topic";
+  std::string msg_content = "Hello";
+  message->serialized_data =
+    rosbag2_storage::make_serialized_message(msg_content.c_str(), msg_content.length());
+
+  writer_->create_topic({0u, "test_topic", "test_msgs/msg/BasicTypes", input_format, {}, ""});
+  writer_->open(storage_options_, {input_format, storage_serialization_format});
+  writer_->write(message);
+  writer_->write(message);
+  writer_->close();
+
+  ASSERT_EQ(fake_metadata_.topics_with_message_count.size(), 1u);
+  EXPECT_EQ(fake_metadata_.topics_with_message_count[0].topic_metadata.serialization_format,
+            storage_serialization_format);
+
+  for (const auto & metadata : v_intercepted_update_metadata_) {
+    ASSERT_EQ(metadata.topics_with_message_count.size(), 1u);
+    EXPECT_EQ(metadata.topics_with_message_count[0].topic_metadata.serialization_format,
+              storage_serialization_format);
+  }
+
+  // Open again with no conversion and verify metadata uses the input serialization format
+  storage_options_.uri += "(1)";  // Add suffix to create a new bag folder in the scope of the test
+  writer_->open(storage_options_, {input_format, input_format});
+  writer_->write(message);
+  const auto & metadata = v_intercepted_update_metadata_.back();
+  ASSERT_EQ(metadata.topics_with_message_count.size(), 1u);
+  EXPECT_EQ(metadata.topics_with_message_count[0].topic_metadata.serialization_format,
+            input_format);
+
+  writer_->close();
+
+  ASSERT_EQ(fake_metadata_.topics_with_message_count.size(), 1u);
+  EXPECT_EQ(fake_metadata_.topics_with_message_count[0].topic_metadata.serialization_format,
+            input_format);
+}
+
 TEST_F(SequentialWriterTest, metadata_io_writes_metadata_file_in_destructor) {
   EXPECT_CALL(*metadata_io_, write_metadata(_, _)).Times(1);
   auto sequential_writer = std::make_unique<rosbag2_cpp::writers::SequentialWriter>(

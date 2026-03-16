@@ -180,12 +180,18 @@ void SequentialWriter::open(
   metadata_.topics_with_message_count.reserve(topics_names_to_info_.size());
   for (auto & [topic_name, topic_info] : topics_names_to_info_) {
     topic_info.message_count = 0U;
-    auto const & md = topic_names_to_message_definitions_[topic_name];
-    storage_->create_topic(topic_info.topic_metadata, md);
+
     metadata_.topics_with_message_count.push_back(topic_info);
+    // Adjust serialization format if converter is used. Note: Do not modify the serialization
+    // format in the original topics_names_to_info_ map, since it is persist
+    // across close()->open() calls.
+    auto & topic_metadata = metadata_.topics_with_message_count.back().topic_metadata;
     if (converter_) {
+      topic_metadata.serialization_format = converter_->get_output_serialization_format();
       converter_->add_topic(topic_name, topic_info.topic_metadata.type);
     }
+    auto const & md = topic_names_to_message_definitions_[topic_name];
+    storage_->create_topic(topic_metadata, md);
   }
   storage_->update_metadata(metadata_);
   next_file_index_ = 1;  // First file is 0, next will be 1
@@ -273,11 +279,13 @@ void SequentialWriter::create_topic(
   }
 
   if (is_open_.load()) {
-    storage_->create_topic(topic_with_type, message_definition);
-    metadata_.topics_with_message_count.push_back(info);
+    // Adjust serialization format if converter is used
     if (converter_) {
-      converter_->add_topic(topic_with_type.name, topic_with_type.type);
+      info.topic_metadata.serialization_format = converter_->get_output_serialization_format();
+      converter_->add_topic(info.topic_metadata.name, info.topic_metadata.type);
     }
+    storage_->create_topic(info.topic_metadata, message_definition);
+    metadata_.topics_with_message_count.push_back(info);
   }
 }
 
@@ -632,9 +640,16 @@ void SequentialWriter::finalize_metadata()
   metadata_.topics_with_message_count.reserve(topics_names_to_info_.size());
   metadata_.message_count = 0;
 
-  for (const auto & topic : topics_names_to_info_) {
-    metadata_.topics_with_message_count.push_back(topic.second);
-    metadata_.message_count += topic.second.message_count;
+  for (const auto & [_, topic_info] : topics_names_to_info_) {
+    metadata_.topics_with_message_count.push_back(topic_info);
+    metadata_.message_count += topic_info.message_count;
+    if (converter_) {
+      // Adjust serialization format if converter is used. Note: Do not modify the serialization
+      // format in the original topics_names_to_info_ map, since it is persist
+      // across close()->open() calls.
+      metadata_.topics_with_message_count.back().topic_metadata.serialization_format =
+        converter_->get_output_serialization_format();
+    }
   }
 }
 
