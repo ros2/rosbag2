@@ -129,7 +129,11 @@ void MessageCache::begin_flushing()
 
 void MessageCache::done_flushing()
 {
+  std::lock_guard<std::mutex> lock(producer_buffer_mutex_);
   flushing_ = false;
+  // Messages may have been accepted into the producer buffer while the consumer was flushing the
+  // previous buffer during a bag split. Preserve readiness for the restarted consumer thread.
+  data_ready_ = data_ready_ || !producer_buffer_->data().empty();
 }
 
 void MessageCache::log_dropped()

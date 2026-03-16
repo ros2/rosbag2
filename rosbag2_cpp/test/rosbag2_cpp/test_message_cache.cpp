@@ -188,6 +188,51 @@ TEST_F(MessageCacheTest, cache_consumer_stop_waits_for_in_progress_async_stop) {
   EXPECT_EQ(consumed_message_count.load(), 1u);
 }
 
+TEST_F(MessageCacheTest, done_flushing_preserves_ready_state_for_messages_added_during_flush) {
+  auto message_cache = std::make_shared<rosbag2_cpp::cache::MessageCache>(cache_size_);
+  std::promise<void> waiter_started_promise;
+  auto waiter_started = waiter_started_promise.get_future();
+
+  auto waiting_consumer = std::async(std::launch::async,
+      [message_cache, &waiter_started_promise]() {
+        waiter_started_promise.set_value();
+        message_cache->wait_for_data();
+  });
+  ASSERT_EQ(waiter_started.wait_for(1s), std::future_status::ready);
+
+  message_cache->begin_flushing();
+  ASSERT_TRUE(message_cache->push(make_test_msg()));
+  ASSERT_EQ(waiting_consumer.wait_for(1s), std::future_status::ready);
+  EXPECT_NO_THROW(waiting_consumer.get());
+
+  // In flushing mode the swap drains the pre-flush buffer, so the message pushed during flushing
+  // remains in the producer buffer and must still wake the restarted consumer afterward.
+  message_cache->swap_buffers();
+  auto consumer_buffer = message_cache->get_consumer_buffer();
+  EXPECT_TRUE(consumer_buffer->data().empty());
+  consumer_buffer->clear();
+  message_cache->release_consumer_buffer();
+
+  message_cache->done_flushing();
+
+  auto restarted_consumer = std::async(std::launch::async, [message_cache]() {
+        message_cache->wait_for_data();
+  });
+
+  const auto status = restarted_consumer.wait_for(1s);
+  if (status != std::future_status::ready) {
+    message_cache->notify_data_ready();
+  }
+  EXPECT_EQ(status, std::future_status::ready);
+  EXPECT_NO_THROW(restarted_consumer.get());
+
+  message_cache->swap_buffers();
+  consumer_buffer = message_cache->get_consumer_buffer();
+  ASSERT_EQ(consumer_buffer->data().size(), 1u);
+  consumer_buffer->clear();
+  message_cache->release_consumer_buffer();
+}
+
 TEST_F(MessageCacheTest, message_cache_rejects_null_message) {
   auto message_cache = std::make_shared<rosbag2_cpp::cache::MessageCache>(500);
 
