@@ -1,4 +1,4 @@
-// Copyright 2025 Open Source Robotics Foundation
+// Copyright 2026 Open Source Robotics Foundation
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,54 +12,31 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <memory>
-
-#include "example_interfaces/msg/string.hpp"
-#include "rclcpp/rclcpp.hpp"
-
-#include "rosbag2_compression/compression_options.hpp"
-#include "rosbag2_compression/sequential_compression_writer.hpp"
-
-#include "rosbag2_cpp/writer.hpp"
-
-using std::placeholders::_1;
-
-class CompressedBagRecorder : public rclcpp::Node {
-public:
-  CompressedBagRecorder()
-  : Node("compressed_bag_recorder")
-  {
-    rosbag2_compression::CompressionOptions compression_options;
-
-    compression_options.compression_format = "zstd";
-    compression_options.compression_mode = rosbag2_compression::CompressionMode::FILE;
-
-    auto compressed_writer = std::make_unique<rosbag2_compression::SequentialCompressionWriter>(
-      compression_options);
-
-    writer_ = std::make_unique<rosbag2_cpp::Writer>(std::move(compressed_writer));
-    writer_->open("my_bag");
-
-    subscription_ = this->create_subscription<example_interfaces::msg::String>(
-      "chatter", 10, std::bind(&CompressedBagRecorder::topic_callback, this, _1));
-  }
-
-private:
-  void topic_callback(std::shared_ptr<const rclcpp::SerializedMessage> msg) const
-  {
-    rclcpp::Time time_stamp = this->now();
-
-    writer_->write(msg, "chatter", "example_interfaces/msg/String", time_stamp);
-  }
-
-  rclcpp::Subscription<example_interfaces::msg::String>::SharedPtr subscription_;
-  std::unique_ptr<rosbag2_cpp::Writer> writer_;
-};
+#include "rosbag2_transport/reader_writer_factory.hpp"
+#include "rosbag2_transport/recorder.hpp"
 
 int main(int argc, char *argv[])
 {
   rclcpp::init(argc, argv);
-  rclcpp::spin(std::make_shared<CompressedBagRecorder>());
+
+  rosbag2_storage::StorageOptions storage_options;
+  storage_options.uri = "my_bag";
+
+  rosbag2_transport::RecordOptions record_options;
+  record_options.all_topics = true;
+  record_options.rmw_serialization_format = "cdr";
+  record_options.compression_format = "zstd";
+  record_options.compression_mode = "file";
+
+  // Calling ReaderWriterFactory creates a writer with compression parameters
+  auto writer = rosbag2_transport::ReaderWriterFactory::make_writer(record_options);
+  auto recorder = std::make_shared<rosbag2_transport::Recorder>(
+    std::move(writer), storage_options, record_options);
+
+  recorder->record();
+  rclcpp::spin(recorder);
+
+  recorder->stop();
   rclcpp::shutdown();
   return 0;
 }

@@ -24,11 +24,19 @@ find_package(rosbag2_cpp REQUIRED)
 find_package(rosbag2_transport REQUIRED)
 find_package(example_interfaces REQUIRED)
 
+add_executable(compressed_bag_recorder src/compressed_bag_recorder.cpp)
+target_link_libraries(compressed_bag_recorder
+  rosbag2_transport::rosbag2_transport
+)
+
+install(TARGETS
+  compressed_bag_recorder
+  DESTINATION lib/${PROJECT_NAME}
+)
+
 add_executable(simple_bag_recorder src/simple_bag_recorder.cpp)
 target_link_libraries(simple_bag_recorder
-  rclcpp::rclcpp
-  rosbag2_cpp::rosbag2_cpp
-  ${example_interfaces_TARGETS}
+  rosbag2_transport::rosbag2_transport
 )
 
 install(TARGETS
@@ -36,8 +44,20 @@ install(TARGETS
   DESTINATION lib/${PROJECT_NAME}
 )
 
-add_executable(compressed_bag_recorder src/compressed_bag_recorder.cpp)
-target_link_libraries(compressed_bag_recorder
+add_executable(simple_bag_writer src/simple_bag_writer.cpp)
+target_link_libraries(simple_bag_writer
+  rclcpp::rclcpp
+  rosbag2_cpp::rosbag2_cpp
+  ${example_interfaces_TARGETS}
+)
+
+install(TARGETS
+  simple_bag_writer
+  DESTINATION lib/${PROJECT_NAME}
+)
+
+add_executable(compressed_bag_writer.cpp src/compressed_bag_writer.cpp)
+target_link_libraries(compressed_bag_writer.cpp
   rclcpp::rclcpp
   rosbag2_cpp::rosbag2_cpp
   rosbag2_compression::rosbag2_compression
@@ -45,7 +65,7 @@ target_link_libraries(compressed_bag_recorder
 )
 
 install(TARGETS
-  compressed_bag_recorder
+  compressed_bag_writer.cpp
   DESTINATION lib/${PROJECT_NAME}
 )
 

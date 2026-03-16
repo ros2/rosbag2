@@ -1,4 +1,4 @@
-# Copyright 2023 Open Source Robotics Foundation, Inc.
+# Copyright 2026 Open Source Robotics Foundation, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,52 +13,33 @@
 # limitations under the License.
 import rclpy
 from rclpy.executors import ExternalShutdownException
-from rclpy.node import Node
-from rclpy.serialization import serialize_message
 import rosbag2_py
-from std_msgs.msg import String
-
-
-class SimpleBagRecorder(Node):
-
-    def __init__(self):
-        super().__init__('simple_bag_recorder')
-        self.writer = rosbag2_py.SequentialWriter()
-
-        storage_options = rosbag2_py.StorageOptions(
-            uri='my_bag',
-            storage_id='sqlite3')
-        converter_options = rosbag2_py.ConverterOptions('', '')
-        self.writer.open(storage_options, converter_options)
-
-        topic_info = rosbag2_py.TopicMetadata(
-            id=0,
-            name='chatter',
-            type='std_msgs/msg/String',
-            serialization_format='cdr')
-        self.writer.create_topic(topic_info)
-
-        self.subscription = self.create_subscription(
-            String,
-            'chatter',
-            self.topic_callback,
-            10)
-        self.subscription
-
-    def topic_callback(self, msg):
-        self.writer.write(
-            'chatter',
-            serialize_message(msg),
-            self.get_clock().now().nanoseconds)
 
 
 def main(args=None):
+    rclpy.init(args=args)
+
+    storage_options = rosbag2_py.StorageOptions(uri='my_bag')
+
+    record_options = rosbag2_py.RecordOptions()
+    record_options.all_topics = True
+    record_options.is_discovery_disabled = False
+    record_options.rmw_serialization_format = 'cdr'
+
+    recorder = rosbag2_py.Recorder(
+        storage_options,
+        record_options,
+        'info',
+        'simple_recorder_demo')
+
+    recorder.start_spin()
+    recorder.record()
+
     try:
-        with rclpy.init(args=args):
-            sbr = SimpleBagRecorder()
-            rclpy.spin(sbr)
+        while rclpy.ok():
+            pass
     except (KeyboardInterrupt, ExternalShutdownException):
-        pass
+        recorder.stop_spin()
 
 
 if __name__ == '__main__':

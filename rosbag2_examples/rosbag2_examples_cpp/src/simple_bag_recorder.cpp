@@ -1,4 +1,4 @@
-// Copyright 2021 Open Source Robotics Foundation
+// Copyright 2026 Open Source Robotics Foundation
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,44 +12,27 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <memory>
+#include "rosbag2_transport/recorder.hpp"
 
-#include "example_interfaces/msg/string.hpp"
-#include "rclcpp/rclcpp.hpp"
-
-#include "rosbag2_cpp/writer.hpp"
-
-using std::placeholders::_1;
-
-class SimpleBagRecorder : public rclcpp::Node
-{
-public:
-  SimpleBagRecorder()
-  : Node("simple_bag_recorder")
-  {
-    writer_ = std::make_unique<rosbag2_cpp::Writer>();
-
-    writer_->open("my_bag");
-
-    subscription_ = create_subscription<example_interfaces::msg::String>(
-      "chatter", 10, std::bind(&SimpleBagRecorder::topic_callback, this, _1));
-  }
-
-private:
-  void topic_callback(std::shared_ptr<const rclcpp::SerializedMessage> msg) const
-  {
-    rclcpp::Time time_stamp = this->now();
-    writer_->write(msg, "chatter", "example_interfaces/msg/String", time_stamp);
-  }
-
-  rclcpp::Subscription<example_interfaces::msg::String>::SharedPtr subscription_;
-  std::unique_ptr<rosbag2_cpp::Writer> writer_;
-};
-
-int main(int argc, char * argv[])
+int main(int argc, char *argv[])
 {
   rclcpp::init(argc, argv);
-  rclcpp::spin(std::make_shared<SimpleBagRecorder>());
+
+  rosbag2_storage::StorageOptions storage_options;
+  storage_options.uri = "my_bag";
+
+  rosbag2_transport::RecordOptions record_options;
+  record_options.all_topics = true;
+  record_options.rmw_serialization_format = "cdr";
+
+  auto writer = std::make_unique<rosbag2_cpp::Writer>();
+  auto recorder = std::make_shared<rosbag2_transport::Recorder>(
+    std::move(writer), storage_options, record_options);
+
+  recorder->record();
+  rclcpp::spin(recorder);
+
+  recorder->stop();
   rclcpp::shutdown();
   return 0;
 }

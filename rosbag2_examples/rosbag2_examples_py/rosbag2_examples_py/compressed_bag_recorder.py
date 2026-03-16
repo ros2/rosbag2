@@ -1,4 +1,4 @@
-# Copyright 2025 Open Source Robotics Foundation, Inc.
+# Copyright 2026 Open Source Robotics Foundation, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -11,60 +11,37 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 import rclpy
 from rclpy.executors import ExternalShutdownException
-from rclpy.node import Node
-from rclpy.serialization import serialize_message
 import rosbag2_py
-from std_msgs.msg import String
-
-
-class CompressedBagRecorder(Node):
-
-    def __init__(self):
-        super().__init__('compressed_bag_recorder')
-
-        compression_options = rosbag2_py.CompressionOptions(
-            compression_format='zstd',
-            compression_mode=rosbag2_py.CompressionMode.MESSAGE)
-
-        storage_options = rosbag2_py.StorageOptions(
-            uri='my_bag',
-            storage_id='sqlite3')
-        converter_options = rosbag2_py.ConverterOptions('', '')
-
-        self.compressed_writer = rosbag2_py.SequentialCompressionWriter(compression_options)
-        self.compressed_writer.open(storage_options, converter_options)
-
-        topic_info = rosbag2_py.TopicMetadata(
-            id=0,
-            name='chatter',
-            type='std_msgs/msg/String',
-            serialization_format='cdr')
-        self.compressed_writer.create_topic(topic_info)
-
-        self.subscription = self.create_subscription(
-            String,
-            'chatter',
-            self.topic_callback,
-            10)
-        self.subscription
-
-    def topic_callback(self, msg):
-        self.compressed_writer.write(
-            'chatter',
-            serialize_message(msg),
-            self.get_clock().now().nanoseconds)
 
 
 def main(args=None):
+    rclpy.init(args=args)
+
+    storage_options = rosbag2_py.StorageOptions(uri='my_bag')
+
+    record_options = rosbag2_py.RecordOptions()
+    record_options.all_topics = True
+    record_options.is_discovery_disabled = False
+    record_options.rmw_serialization_format = 'cdr'
+    record_options.compression_format = 'zstd'
+    record_options.compression_mode = 'file'
+
+    recorder = rosbag2_py.Recorder(
+        storage_options,
+        record_options,
+        'info',
+        'compressed_recorder_demo')
+
+    recorder.start_spin()
+    recorder.record()
+
     try:
-        with rclpy.init(args=args):
-            cbr = CompressedBagRecorder()
-            rclpy.spin(cbr)
+        while (rclpy.ok()):
+            pass
     except (KeyboardInterrupt, ExternalShutdownException):
-        pass
+        recorder.stop_spin()
 
 
 if __name__ == '__main__':
