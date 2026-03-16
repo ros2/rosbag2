@@ -803,7 +803,7 @@ bool RecorderImpl::split_bagfile()
     return false;
   }
 
-  writer_->split_bagfile();
+  writer_->split_bagfile_async();
   return true;
 }
 
