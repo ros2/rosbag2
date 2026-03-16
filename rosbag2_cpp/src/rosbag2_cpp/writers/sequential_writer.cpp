@@ -185,36 +185,40 @@ void SequentialWriter::open(
   is_open_ = true;
 }
 
+void SequentialWriter::flush_cache_update_metadata_and_close_storage()
+{
+  if (use_cache_) {
+    // destructor will flush message cache
+    cache_consumer_.reset();
+    message_cache_.reset();
+  }
+  finalize_metadata();
+  if (storage_) {
+    storage_->update_metadata(metadata_);
+    storage_.reset();  // Destroy storage before calling WRITE_SPLIT callback to make sure that
+    // bag file was closed before callback call.
+  }
+}
+
 void SequentialWriter::close()
 {
   // Note. close and open methods protected with mutex on upper rosbag2_cpp::writer level.
   if (!is_open_.exchange(false)) {
     return;  // The writer is not open
   }
-  if (use_cache_) {
-    // destructor will flush message cache
-    cache_consumer_.reset();
-    message_cache_.reset();
-  }
 
-  if (!base_folder_.empty()) {
-    finalize_metadata();
-    if (storage_) {
-      storage_->update_metadata(metadata_);
-    }
-    metadata_io_->write_metadata(base_folder_, metadata_);
-  }
+  flush_cache_update_metadata_and_close_storage();
 
-  if (storage_) {
-    storage_.reset();  // Destroy storage before calling WRITE_SPLIT callback to make sure that
-    // bag file was closed before callback call.
-  }
   if (!metadata_.relative_file_paths.empty()) {
     // Take the latest file name from metadata in case if it was updated after compression in
     // derived class
     auto closed_file =
       (fs::path(base_folder_) / metadata_.relative_file_paths.back()).generic_string();
     execute_bag_split_callbacks(closed_file, "");
+  }
+
+  if (!base_folder_.empty()) {
+    metadata_io_->write_metadata(base_folder_, metadata_);
   }
 
   // Zero message counts for all topics
