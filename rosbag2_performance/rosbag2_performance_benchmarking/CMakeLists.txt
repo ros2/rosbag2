@@ -42,8 +42,8 @@ add_executable(results_writer
 
 target_link_libraries(writer_benchmark
   rclcpp::rclcpp
-  ${rosbag2_performance_benchmarking_msgs_TARGETS}
-  ${sensor_msgs_TARGETS}
+  rosbag2_performance_benchmarking_msgs::rosbag2_performance_benchmarking_msgs
+  sensor_msgs::sensor_msgs
   rosbag2_compression::rosbag2_compression
   rosbag2_cpp::rosbag2_cpp
   rosbag2_storage::rosbag2_storage
@@ -52,8 +52,8 @@ target_link_libraries(writer_benchmark
 target_link_libraries(benchmark_publishers
   rclcpp::rclcpp
   rosbag2_storage::rosbag2_storage
-  ${rosbag2_performance_benchmarking_msgs_TARGETS}
-  ${sensor_msgs_TARGETS}
+  rosbag2_performance_benchmarking_msgs::rosbag2_performance_benchmarking_msgs
+  sensor_msgs::sensor_msgs
 )
 
 target_link_libraries(results_writer
