@@ -168,7 +168,7 @@ if(BUILD_TESTING)
     test/rosbag2_cpp/test_info.cpp
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
   if(TARGET test_info)
-    target_link_libraries(test_info ${PROJECT_NAME} rosbag2_test_common::rosbag2_test_common ${test_msgs_TARGETS})
+    target_link_libraries(test_info ${PROJECT_NAME} rosbag2_test_common::rosbag2_test_common test_msgs::test_msgs)
   endif()
 
   ament_add_gmock(test_sequential_reader
@@ -178,8 +178,8 @@ if(BUILD_TESTING)
       ${PROJECT_NAME}
       rosbag2_storage::rosbag2_storage
       rosbag2_test_common::rosbag2_test_common
-      ${test_msgs_TARGETS}
-      ${std_msgs_TARGETS}
+      test_msgs::test_msgs
+      std_msgs::std_msgs
     )
   endif()
 
@@ -232,7 +232,7 @@ if(BUILD_TESTING)
       rosidl_runtime_cpp::rosidl_runtime_cpp
       rosidl_typesupport_introspection_cpp::rosidl_typesupport_introspection_cpp
       rosidl_typesupport_cpp::rosidl_typesupport_cpp
-      ${test_msgs_TARGETS}
+      test_msgs::test_msgs
     )
   endif()
 
@@ -243,7 +243,7 @@ if(BUILD_TESTING)
       ${PROJECT_NAME}
       rosbag2_storage::rosbag2_storage
       rosbag2_test_common::rosbag2_test_common
-      ${test_msgs_TARGETS}
+      test_msgs::test_msgs
     )
   endif()
 
@@ -256,7 +256,7 @@ if(BUILD_TESTING)
     target_link_libraries(test_serialization_converter
       ${PROJECT_NAME}
       rosbag2_storage::rosbag2_storage
-      ${std_msgs_TARGETS}
+      std_msgs::std_msgs
     )
   endif()
 
@@ -301,7 +301,7 @@ if(BUILD_TESTING)
     target_link_libraries(test_service_utils
       ${PROJECT_NAME}
       rosbag2_test_common::rosbag2_test_common
-      ${test_msgs_TARGETS}
+      test_msgs::test_msgs
     )
   endif()
 
@@ -311,7 +311,7 @@ if(BUILD_TESTING)
     target_link_libraries(test_action_utils
       ${PROJECT_NAME}
       rosbag2_test_common::rosbag2_test_common
-      ${test_msgs_TARGETS}
+      test_msgs::test_msgs
     )
   endif()
 
