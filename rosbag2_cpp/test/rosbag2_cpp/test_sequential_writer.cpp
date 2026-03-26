@@ -1450,6 +1450,115 @@ TEST_F(SequentialWriterTest, writer_with_cache_can_write_while_async_split_is_in
   ASSERT_GE(fake_metadata_.relative_file_paths.size(), 2u);
 }
 
+TEST_F(SequentialWriterTest, writer_with_cache_supports_multi_thread_writes_during_async_split)
+{
+  std::atomic<size_t> open_call_count{0};
+  auto split_open_started = std::make_shared<std::promise<void>>();
+  auto split_open_started_future = split_open_started->get_future();
+  auto allow_split_open = std::make_shared<std::promise<void>>();
+  auto allow_split_open_future = allow_split_open->get_future().share();
+
+  ON_CALL(*storage_factory_, open_read_write(_)).WillByDefault(
+    Invoke(
+      [this, &open_call_count, split_open_started, allow_split_open_future](
+        const rosbag2_storage::StorageOptions & storage_options)
+      {
+        fake_storage_size_ = 0;
+        fake_storage_uri_ = storage_options.uri;
+        if (++open_call_count == 2) {
+          split_open_started->set_value();
+          allow_split_open_future.wait();
+        }
+        return storage_;
+      }));
+
+  auto sequential_writer = std::make_unique<rosbag2_cpp::writers::SequentialWriter>(
+    std::move(storage_factory_), converter_factory_, std::move(metadata_io_));
+  writer_ = std::make_unique<rosbag2_cpp::Writer>(std::move(sequential_writer));
+
+  storage_options_.max_cache_size = 4 * 1024 * 1024;
+
+  writer_->open(storage_options_, {"rmw_format", "rmw_format"});
+  writer_->create_topic({0u, "test_topic", "test_msgs/BasicTypes", "", {}, ""});
+
+  ASSERT_TRUE(writer_->split_bagfile_async());
+  ASSERT_EQ(
+    split_open_started_future.wait_for(std::chrono::seconds(5)),
+    std::future_status::ready);
+
+  constexpr size_t kThreadCount = 4;
+  constexpr size_t kWritesPerThread = 50;
+  std::vector<std::future<void>> write_futures;
+  write_futures.reserve(kThreadCount);
+
+  for (size_t thread_idx = 0; thread_idx < kThreadCount; ++thread_idx) {
+    write_futures.emplace_back(std::async(std::launch::async, [this, thread_idx]() {
+        auto message = std::make_shared<rosbag2_storage::SerializedBagMessage>();
+        message->topic_name = "test_topic";
+        const auto msg_content = "thread_" + std::to_string(thread_idx);
+        message->serialized_data = rosbag2_storage::make_serialized_message(
+            msg_content.c_str(), msg_content.size());
+        for (size_t i = 0; i < kWritesPerThread; ++i) {
+          writer_->write(message);
+        }
+    }));
+  }
+
+  for (auto & write_future : write_futures) {
+    EXPECT_EQ(write_future.wait_for(std::chrono::seconds(5)), std::future_status::ready);
+    EXPECT_NO_THROW(write_future.get());
+  }
+
+  allow_split_open->set_value();
+  writer_->close();
+
+  const size_t expected_message_count = kThreadCount * kWritesPerThread;
+  EXPECT_EQ(fake_metadata_.message_count, expected_message_count);
+  ASSERT_GE(fake_metadata_.relative_file_paths.size(), 2u);
+}
+
+TEST_F(SequentialWriterTest, split_bagfile_async_rejects_concurrent_split_requests_when_busy)
+{
+  std::atomic<size_t> open_call_count{0};
+  auto split_open_started = std::make_shared<std::promise<void>>();
+  auto split_open_started_future = split_open_started->get_future();
+  auto allow_split_open = std::make_shared<std::promise<void>>();
+  auto allow_split_open_future = allow_split_open->get_future().share();
+
+  ON_CALL(*storage_factory_, open_read_write(_)).WillByDefault(
+    Invoke(
+      [this, &open_call_count, split_open_started, allow_split_open_future](
+        const rosbag2_storage::StorageOptions & storage_options)
+      {
+        fake_storage_size_ = 0;
+        fake_storage_uri_ = storage_options.uri;
+        if (++open_call_count == 2) {
+          split_open_started->set_value();
+          allow_split_open_future.wait();
+        }
+        return storage_;
+      }));
+
+  auto sequential_writer = std::make_unique<rosbag2_cpp::writers::SequentialWriter>(
+    std::move(storage_factory_), converter_factory_, std::move(metadata_io_));
+  writer_ = std::make_unique<rosbag2_cpp::Writer>(std::move(sequential_writer));
+
+  storage_options_.max_cache_size = 1024u;
+
+  writer_->open(storage_options_, {"rmw_format", "rmw_format"});
+  writer_->create_topic({0u, "test_topic", "test_msgs/BasicTypes", "", {}, ""});
+
+  ASSERT_TRUE(writer_->split_bagfile_async());
+  ASSERT_EQ(
+    split_open_started_future.wait_for(std::chrono::seconds(5)),
+    std::future_status::ready);
+
+  EXPECT_FALSE(writer_->split_bagfile_async());
+
+  allow_split_open->set_value();
+  writer_->close();
+}
+
 TEST_F(SequentialWriterTest, circular_logging_limits_number_of_files_by_max_bag_files)
 {
   // Configure frequent splits and a small retention window
