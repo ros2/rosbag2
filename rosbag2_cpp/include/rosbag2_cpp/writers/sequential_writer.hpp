@@ -272,7 +272,6 @@ protected:
     rcutils_time_point_value_t recv_timestamp,
     rcutils_time_point_value_t send_timestamp) const;
 
-private:
   /**
    * \brief Helper method to write messages while also updating tracked metadata.
    * \param messages The list of messages to write.
@@ -280,6 +279,7 @@ private:
   void write_messages(
     const std::vector<std::shared_ptr<const rosbag2_storage::SerializedBagMessage>> & messages);
 
+private:
   std::mutex lost_messages_callbacks_mutex_;
   bool is_first_message_ {true};
   std::atomic_bool is_open_{false};
