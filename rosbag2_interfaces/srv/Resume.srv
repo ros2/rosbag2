@@ -1,1 +1,30 @@
+# Resume mode to interpret resume_time:
+# 0 = node_time, 1 = publish_time, 2 = receive_time.
+int32 RESUME_MODE_NODE_TIME=0
+int32 RESUME_MODE_PUBLISH_TIME=1
+int32 RESUME_MODE_RECEIVE_TIME=2
+
+# Timestamp in the future when to resume recording/playback.
+# If empty or time in the past, resumes recording/playback immediately.
+# Note: The resume_time is not supported by player and shall be set to zero when using Resume with
+# player.
+builtin_interfaces/Time resume_time
+
+# Resume mode to use for the resume_time request.
+int32 resume_mode
+
+# Topic name to use for timestamp-based resume evaluation.
+# If empty, evaluate using messages from all topics.
+string tracking_topic_name
 ---
+# Return codes for Resume response.
+int32 RETURN_CODE_SUCCESS=0
+int32 RETURN_CODE_INVALID_RESUME_MODE=1
+int32 RETURN_CODE_INVALID_TRACKING_TOPIC=2
+int32 RETURN_CODE_RESUME_FAILED=3
+
+# Return code. Use RETURN_CODE_SUCCESS on success; otherwise use one of the error codes.
+int32 return_code
+
+# Error string. Empty if no error occurred.
+string error_string

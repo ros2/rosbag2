@@ -18,30 +18,25 @@
 #include <gmock/gmock.h>
 
 #include <filesystem>
-#include <future>
 #include <memory>
 #include <string>
-#include <unordered_map>
 #include <vector>
 
 #include "rclcpp/rclcpp.hpp"
 
 #include "rosbag2_compression/sequential_compression_reader.hpp"
 #include "rosbag2_cpp/reader.hpp"
-#include "rosbag2_storage/default_storage_id.hpp"
 #include "rosbag2_storage/storage_filter.hpp"
+#include "rosbag2_test_common/bag_files_helpers.hpp"
 #include "rosbag2_test_common/memory_management.hpp"
 #include "rosbag2_test_common/temporary_directory_fixture.hpp"
 #include "rosbag2_test_common/tested_storage_ids.hpp"
-
-#include "test_msgs/msg/arrays.hpp"
-#include "test_msgs/msg/basic_types.hpp"
-#include "test_msgs/message_fixtures.hpp"
 
 using namespace ::testing;  // NOLINT
 using namespace std::chrono_literals;  // NOLINT
 using namespace rosbag2_test_common;  // NOLINT
 
+namespace fs = std::filesystem;
 
 class RecordFixture : public ParametrizedTemporaryDirectoryFixture
 {
@@ -72,13 +67,13 @@ public:
     rclcpp::shutdown();
   }
 
-  std::string get_base_record_command() const
+  [[nodiscard]] std::string get_base_record_command() const
   {
     return "ros2 bag record --storage " + GetParam() + " --output " +
            root_bag_path_.generic_string();
   }
 
-  std::string get_test_name() const
+  static std::string get_test_name()
   {
     const auto * test_info = UnitTest::GetInstance()->current_test_info();
     std::string test_name = test_info->name();
@@ -87,60 +82,35 @@ public:
     return test_name;
   }
 
-  std::string get_bag_file_name(int split_index) const
+  [[nodiscard]] std::filesystem::path get_compressed_bag_file_path(int split_index) const
   {
-    std::stringstream bag_file_name;
-    bag_file_name << get_test_name() << "_" << GetParam() << "_" << split_index;
-
-    return bag_file_name.str();
+    return load_metadata_and_get_bag_file_path(split_index).generic_string() + ".zstd";
   }
 
-  std::filesystem::path get_compressed_bag_file_path(int split_index)
+  void wait_for_metadata(std::chrono::duration<float> timeout = std::chrono::seconds(10)) const
   {
-    return std::filesystem::path(get_bag_file_path(split_index).generic_string() + ".zstd");
+    rosbag2_test_common::wait_for_metadata(root_bag_path_, timeout);
   }
 
-  std::filesystem::path get_bag_file_path(int split_index)
+  [[nodiscard]] std::filesystem::path load_metadata_and_get_bag_file_path(int split_index = 0) const
   {
-    return root_bag_path_ / get_relative_bag_file_path(split_index);
-  }
-
-  std::filesystem::path get_relative_bag_file_path(int split_index)
-  {
-    const auto storage_id = GetParam();
-    return std::filesystem::path(
-      rosbag2_test_common::bag_filename_for_storage_id(
-        get_bag_file_name(split_index), storage_id));
-  }
-
-  void wait_for_metadata(std::chrono::duration<float> timeout = std::chrono::seconds(5)) const
-  {
+    // Read metadata to get actual file name (timestamped format)
     rosbag2_storage::MetadataIo metadata_io;
-    const auto start_time = std::chrono::steady_clock::now();
     const auto bag_path = root_bag_path_.generic_string();
-
-    while (std::chrono::steady_clock::now() - start_time < timeout && rclcpp::ok()) {
-      if (metadata_io.metadata_file_exists(bag_path)) {
-        return;
-      }
-      std::this_thread::sleep_for(50ms);
-    }
-    ASSERT_EQ(metadata_io.metadata_file_exists(bag_path), true)
-      << "Could not find metadata file.";
+    rosbag2_test_common::wait_for_metadata(root_bag_path_, std::chrono::seconds(10));
+    auto metadata = metadata_io.read_metadata(bag_path);
+    return get_bag_file_path_from_metadata(root_bag_path_, metadata, split_index);
   }
 
-  void wait_for_storage_file(std::chrono::duration<float> timeout = std::chrono::seconds(10))
+  void wait_for_storage_file(std::chrono::duration<float> timeout = std::chrono::seconds(10)) const
   {
-    const auto storage_path = get_bag_file_path(0);
-    const auto start_time = std::chrono::steady_clock::now();
-    while (std::chrono::steady_clock::now() - start_time < timeout && rclcpp::ok()) {
-      if (std::filesystem::exists(storage_path)) {
-        return;
-      }
-      std::this_thread::sleep_for(50ms);  // wait a bit to not query constantly
-    }
-    ASSERT_EQ(std::filesystem::exists(storage_path), true)
-      << "Could not find storage file: \"" << storage_path.generic_string() << "\"";
+    rosbag2_test_common::wait_for_storage_files(root_bag_path_, 1, timeout);
+  }
+
+  void wait_for_storage_files(
+    size_t count, std::chrono::duration<float> timeout = std::chrono::seconds(30)) const
+  {
+    rosbag2_test_common::wait_for_storage_files(root_bag_path_, count, timeout);
   }
 
   template<typename MessageT>
@@ -168,7 +138,7 @@ public:
     return messages;
   }
 
-  std::string get_serialization_format_for_topic(const std::string & topic_name)
+  [[nodiscard]] std::string get_serialization_format_for_topic(const std::string & topic_name) const
   {
     auto reader = rosbag2_cpp::Reader{};
     reader.open(root_bag_path_.generic_string());
@@ -190,17 +160,50 @@ public:
     // This is necessary as the process is killed hard on Windows and doesn't write a metadata file
   #ifdef _WIN32
     rosbag2_storage::BagMetadata metadata{};
-    metadata.storage_identifier = rosbag2_storage::get_default_storage_id();
-    for (int i = 0; i <= expected_splits; i++) {
-      std::filesystem::path bag_file_path;
-      if (!compression_format.empty()) {
-        bag_file_path = get_bag_file_path(i);
-      } else {
-        bag_file_path = get_compressed_bag_file_path(i);
-      }
+    metadata.storage_identifier = GetParam();
 
-      if (std::filesystem::exists(bag_file_path)) {
-        metadata.relative_file_paths.push_back(bag_file_path.generic_string());
+    // For timestamped filename format, scan directory for actual files instead of guessing paths
+    if (std::filesystem::exists(root_bag_path_) && std::filesystem::is_directory(root_bag_path_)) {
+      for (const auto & entry : std::filesystem::directory_iterator(root_bag_path_)) {
+        if (entry.is_regular_file()) {
+          const auto & path = entry.path();
+          const auto extension = path.extension();
+          const auto & expected_ext =
+            rosbag2_test_common::kTestedStorageIDsToExtensions.at(GetParam());
+          // Include db3, mcap files and compressed files
+          if (extension == expected_ext ||
+            (!compression_format.empty() &&
+            path.string().find(compression_format) != std::string::npos))
+          {
+            metadata.relative_file_paths.push_back(path.filename().generic_string());
+
+            // Create file info
+            rosbag2_storage::FileInformation file_info;
+            file_info.path = path.filename().generic_string();
+            file_info.starting_time = std::chrono::time_point<std::chrono::high_resolution_clock>(
+              std::chrono::nanoseconds(0));
+            file_info.duration = std::chrono::nanoseconds(0);
+            file_info.message_count = 0;
+            metadata.files.push_back(file_info);
+          }
+        }
+      }
+    } else {
+      // Fallback to old logic if directory doesn't exist
+      for (int i = 0; i <= expected_splits; i++) {
+        try {
+          std::filesystem::path bag_file_path = load_metadata_and_get_bag_file_path(i);
+          if (!compression_format.empty()) {
+            bag_file_path = std::filesystem::path(bag_file_path.generic_string() + ".zstd");
+          }
+
+          if (std::filesystem::exists(bag_file_path)) {
+            metadata.relative_file_paths.push_back(bag_file_path.generic_string());
+          }
+        } catch (const std::runtime_error &) {
+          // Skip if file path cannot be determined
+          continue;
+        }
       }
     }
     metadata.duration = std::chrono::nanoseconds(0);

@@ -54,6 +54,8 @@ Converter::Converter(
     throw std::runtime_error(
             "Could not find converter for format " + converter_options.output_serialization_format);
   }
+  input_serialization_format_ = converter_options.input_serialization_format;
+  output_serialization_format_ = converter_options.output_serialization_format;
 }
 
 Converter::~Converter()
@@ -105,6 +107,16 @@ void Converter::add_topic(const std::string & topic, const std::string & type)
     *type_support.introspection_type_support_library);
 
   topics_and_types_.insert({topic, type_support});
+}
+
+std::string Converter::get_input_serialization_format() const
+{
+  return input_serialization_format_;
+}
+
+std::string Converter::get_output_serialization_format() const
+{
+  return output_serialization_format_;
 }
 
 }  // namespace rosbag2_cpp

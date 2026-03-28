@@ -16,8 +16,11 @@
 
 #include <algorithm>
 #include <chrono>
+#include <ctime>
 #include <filesystem>
+#include <iomanip>
 #include <memory>
+#include <regex>
 #include <stdexcept>
 #include <string>
 #include <sstream>
@@ -178,16 +181,37 @@ void SequentialWriter::open(
   metadata_.topics_with_message_count.reserve(topics_names_to_info_.size());
   for (auto & [topic_name, topic_info] : topics_names_to_info_) {
     topic_info.message_count = 0U;
-    auto const & md = topic_names_to_message_definitions_[topic_name];
-    storage_->create_topic(topic_info.topic_metadata, md);
+
     metadata_.topics_with_message_count.push_back(topic_info);
+    // Adjust serialization format if converter is used. Note: Do not modify the serialization
+    // format in the original topics_names_to_info_ map, since it is persist
+    // across close()->open() calls.
+    auto & topic_metadata = metadata_.topics_with_message_count.back().topic_metadata;
     if (converter_) {
+      topic_metadata.serialization_format = converter_->get_output_serialization_format();
       converter_->add_topic(topic_name, topic_info.topic_metadata.type);
     }
+    auto const & md = topic_names_to_message_definitions_[topic_name];
+    storage_->create_topic(topic_metadata, md);
   }
   storage_->update_metadata(metadata_);
   next_file_index_ = 1;  // First file is 0, next will be 1
   is_open_ = true;
+}
+
+void SequentialWriter::flush_cache_update_metadata_and_close_storage()
+{
+  if (use_cache_) {
+    // destructor will flush message cache
+    cache_consumer_.reset();
+    message_cache_.reset();
+  }
+  finalize_metadata();
+  if (storage_) {
+    storage_->update_metadata(metadata_);
+    storage_.reset();  // Destroy storage before calling WRITE_SPLIT callback to make sure that
+    // bag file was closed before callback call.
+  }
 }
 
 void SequentialWriter::close()
@@ -196,30 +220,19 @@ void SequentialWriter::close()
   if (!is_open_.exchange(false)) {
     return;  // The writer is not open
   }
-  if (use_cache_) {
-    // destructor will flush message cache
-    cache_consumer_.reset();
-    message_cache_.reset();
-  }
 
-  if (!base_folder_.empty()) {
-    finalize_metadata();
-    if (storage_) {
-      storage_->update_metadata(metadata_);
-    }
-    metadata_io_->write_metadata(base_folder_, metadata_);
-  }
+  flush_cache_update_metadata_and_close_storage();
 
-  if (storage_) {
-    storage_.reset();  // Destroy storage before calling WRITE_SPLIT callback to make sure that
-    // bag file was closed before callback call.
-  }
   if (!metadata_.relative_file_paths.empty()) {
     // Take the latest file name from metadata in case if it was updated after compression in
     // derived class
     auto closed_file =
       (fs::path(base_folder_) / metadata_.relative_file_paths.back()).generic_string();
     execute_bag_split_callbacks(closed_file, "");
+  }
+
+  if (!base_folder_.empty()) {
+    metadata_io_->write_metadata(base_folder_, metadata_);
   }
 
   // Zero message counts for all topics
@@ -271,11 +284,13 @@ void SequentialWriter::create_topic(
   }
 
   if (is_open_.load()) {
-    storage_->create_topic(topic_with_type, message_definition);
-    metadata_.topics_with_message_count.push_back(info);
+    // Adjust serialization format if converter is used
     if (converter_) {
-      converter_->add_topic(topic_with_type.name, topic_with_type.type);
+      info.topic_metadata.serialization_format = converter_->get_output_serialization_format();
+      converter_->add_topic(info.topic_metadata.name, info.topic_metadata.type);
     }
+    storage_->create_topic(info.topic_metadata, message_definition);
+    metadata_.topics_with_message_count.push_back(info);
   }
 }
 
@@ -317,12 +332,37 @@ void SequentialWriter::remove_topic(const rosbag2_storage::TopicMetadata & topic
 std::string SequentialWriter::format_storage_uri(
   const std::string & base_folder, uint64_t storage_count)
 {
-  // Right now `base_folder_` is always just the folder name for where to install the bagfile.
-  // The name of the folder needs to be queried in case
-  // SequentialWriter is opened with a relative path.
+  // Extract prefix from directory name by removing timestamp pattern if present
+  // This handles the case when --output is not specified and default timestamped directory is used
+  // Currently, the default timestamp format is `YYYY_MM_DD-HH_MM_SS`
+  std::string dir_name = fs::path(base_folder).filename().generic_string();
+  // Handle edge case where filename() returns empty (e.g., base_folder is "/" or ".")
+  // This should not happen in practice since base_folder is validated in open(), but
+  // we add this check for defensive programming.
+  if (dir_name.empty()) {
+    dir_name = "rosbag2";  // Use default prefix
+  }
+  static std::regex timestamp_pattern("_" + std::string(TIMESTAMP_PATTERN) + "$");
+  std::string prefix = std::regex_replace(dir_name, timestamp_pattern, "");
+
+  // Generate timestamp in local time.
+  // Note: During DST switches the same string may occur twice. However, we're also adding the
+  // sequence counter as part of the filename, so duplicates still remain distinguishable.
+  auto time_t = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
+  std::tm timestamp{};
+#ifdef _WIN32
+  localtime_s(&timestamp, &time_t);
+#else
+  localtime_r(&time_t, &timestamp);
+#endif
+
+  // Generate filename in format {storage_count}_{prefix}_{timestamp}
+  // Note: Underscores are used as separators. If the prefix contains underscores, this creates
+  // theoretical ambiguity when parsing filenames. However, parsing is typically done by matching
+  // the timestamp pattern from the end, which avoids ambiguity in practice.
   std::stringstream storage_file_name;
-  storage_file_name << fs::path(base_folder).filename().generic_string() << "_" <<
-    storage_count;
+  storage_file_name << storage_count << "_" << prefix << "_" <<
+    std::put_time(&timestamp, "%Y_%m_%d-%H_%M_%S");
 
   return (fs::path(base_folder) / storage_file_name.str()).generic_string();
 }
@@ -682,9 +722,16 @@ void SequentialWriter::finalize_metadata()
   metadata_.topics_with_message_count.reserve(topics_names_to_info_.size());
   metadata_.message_count = 0;
 
-  for (const auto & topic : topics_names_to_info_) {
-    metadata_.topics_with_message_count.push_back(topic.second);
-    metadata_.message_count += topic.second.message_count;
+  for (const auto & [_, topic_info] : topics_names_to_info_) {
+    metadata_.topics_with_message_count.push_back(topic_info);
+    metadata_.message_count += topic_info.message_count;
+    if (converter_) {
+      // Adjust serialization format if converter is used. Note: Do not modify the serialization
+      // format in the original topics_names_to_info_ map, since it is persist
+      // across close()->open() calls.
+      metadata_.topics_with_message_count.back().topic_metadata.serialization_format =
+        converter_->get_output_serialization_format();
+    }
   }
 }
 

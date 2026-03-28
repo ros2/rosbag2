@@ -163,7 +163,9 @@ void SequentialCompressionWriter::compression_thread_fn()
         (fs::path(base_folder_) / (closed_file_relative_to_bag + compressor_ext)).generic_string();
       std::string new_file;
       // To determine, a new_file we can't rely on the metadata_.relative_file_paths.back(),
-      // because other compressor threads may have already pushed a new item above.
+      // because other compressor threads may have already pushed a new item above. To overcome
+      // this, we will search for closed filename in metadata_.relative_file_paths and take the
+      // next one as a new_file.
       {
         std::lock_guard<std::recursive_mutex> lock(storage_mutex_);
         auto iter = std::find(
@@ -176,13 +178,7 @@ void SequentialCompressionWriter::compression_thread_fn()
           }
         }
       }
-      if (!new_file.empty()) {
-        // The new_file is empty when we compressed the last file after calling close().
-        // Note: We shall not call 'execute_bag_split_callbacks(closed_file, new_file)' for the
-        // last compressed file because it will be called inside base class
-        // SequentialWriter::close().
-        SequentialWriter::execute_bag_split_callbacks(closed_file, new_file);
-      }
+      SequentialWriter::execute_bag_split_callbacks(closed_file, new_file);
     }
   }
 }
@@ -277,25 +273,24 @@ void SequentialCompressionWriter::close()
     if (compression_options_.compression_mode == rosbag2_compression::CompressionMode::FILE &&
       should_compress_last_file_)
     {
-      std::lock_guard<std::recursive_mutex> lock(storage_mutex_);
-      std::lock_guard<std::mutex> compressor_lock(compressor_queue_mutex_);
       try {
-        // Storage must be closed before file can be compressed.
-        if (use_cache_) {
-          // destructor will flush message cache
-          cache_consumer_.reset();
-          message_cache_.reset();
-        }
-        finalize_metadata();
-        if (storage_) {
-          storage_->update_metadata(metadata_);
-          storage_.reset();  // Storage will be closed in storage_ destructor
-        }
+        // Stop compressor threads. We will do compression of the last file in the current thread
+        // to avoid the race condition. If we pushed the last file to the compressor queue
+        // and then called stop_compressor_threads(), the compressor thread may not have had time
+        // to pop the file from the queue and compress it before we stopped the threads.
+        // That would result in the last file not being compressed.
+        stop_compressor_threads();  // Note: The metadata_.relative_file_paths will be updated with
+        // compressed filename when compressor threads will finish.
 
+        {  // Storage must be closed before file can be compressed.
+          std::lock_guard<std::recursive_mutex> lock(storage_mutex_);
+          SequentialWriter::flush_cache_update_metadata_and_close_storage();
+        }
         if (!metadata_.relative_file_paths.empty()) {
-          std::string file = metadata_.relative_file_paths.back();
-          compressor_file_queue_.push(file);
-          compressor_condition_.notify_one();
+          const auto compressor =
+            compression_factory_->create_compressor(compression_options_.compression_format);
+          rcpputils::check_true(compressor != nullptr, "Could not create compressor.");
+          compress_file(*compressor, metadata_.relative_file_paths.back());
         }
       } catch (const std::runtime_error & e) {
         ROSBAG2_COMPRESSION_LOG_WARN_STREAM("Could not compress the last bag file.\n" << e.what());
@@ -304,6 +299,11 @@ void SequentialCompressionWriter::close()
   }
   stop_compressor_threads();  // Note: The metadata_.relative_file_paths will be updated with
   // compressed filename when compressor threads will finish.
+
+  //  Note: We need to call the base class close() after compressing the last file because the
+  //  base class close() will call the execute_bag_split_callbacks(closed_file, ""); with the last
+  //  file, and if we called it before compressing the last file, the callback would be called
+  //  with the uncompressed file name, which is not the desired behavior.
   SequentialWriter::close();
 }
 

@@ -28,8 +28,6 @@ find_package(mcap_vendor REQUIRED)
 find_package(pluginlib REQUIRED)
 find_package(rcutils REQUIRED)
 find_package(rosbag2_storage REQUIRED)
-find_package(yaml_cpp_vendor REQUIRED)
-find_package(yaml-cpp REQUIRED)
 
 ament_python_install_package(ros2bag_mcap_cli)
 
@@ -47,7 +45,6 @@ target_link_libraries(${PROJECT_NAME} PRIVATE
   pluginlib::pluginlib
   rcutils::rcutils
   rosbag2_storage::rosbag2_storage
-  yaml-cpp::yaml-cpp
 )
 
 set(MCAP_COMPILE_DEFS)
@@ -107,8 +104,7 @@ if(BUILD_TESTING)
     ${PROJECT_NAME}
     rosbag2_storage::rosbag2_storage
     rosbag2_test_common::rosbag2_test_common
-    ${std_msgs_TARGETS}
-    yaml-cpp::yaml-cpp
+    std_msgs::std_msgs
   )
   target_compile_definitions(test_mcap_storage PRIVATE ${MCAP_COMPILE_DEFS})
 
@@ -117,7 +113,7 @@ if(BUILD_TESTING)
     ${PROJECT_NAME}
     rosbag2_storage::rosbag2_storage
     rosbag2_test_common::rosbag2_test_common
-    ${std_msgs_TARGETS}
+    std_msgs::std_msgs
   )
   target_compile_definitions(test_mcap_topic_filter PRIVATE ${MCAP_COMPILE_DEFS})
 

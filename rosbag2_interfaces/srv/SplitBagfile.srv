@@ -1,1 +1,29 @@
+# Split mode to interpret split_time:
+# 0 = node_time, 1 = publish_time, 2 = receive_time.
+int32 SPLIT_MODE_NODE_TIME=0
+int32 SPLIT_MODE_PUBLISH_TIME=1
+int32 SPLIT_MODE_RECEIVE_TIME=2
+
+# Timestamp in the future when to split bag file.
+# If empty or time in the past, split bag file immediately.
+builtin_interfaces/Time split_time
+
+# Split mode to use for the split_time request.
+int32 split_mode
+
+# Topic name to use for timestamp-based split evaluation.
+# If empty, evaluate using messages from all topics.
+string tracking_topic_name
 ---
+# Return codes for SplitBagfile response.
+int32 RETURN_CODE_SUCCESS=0
+int32 RETURN_CODE_NOT_RECORDING=1
+int32 RETURN_CODE_INVALID_SPLIT_MODE=2
+int32 RETURN_CODE_INVALID_TRACKING_TOPIC=3
+int32 RETURN_CODE_SPLIT_FAILED=4
+
+# Return code. Use RETURN_CODE_SUCCESS on success; otherwise use one of the error codes.
+int32 return_code
+
+# Error string. Empty if no error occurred.
+string error_string

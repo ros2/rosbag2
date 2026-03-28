@@ -22,6 +22,7 @@
 #include <unordered_set>
 #include <utility>
 #include <vector>
+#include <functional>
 
 #include "keyboard_handler/keyboard_handler.hpp"
 
@@ -126,6 +127,7 @@ public:
   /// \details The record() method will return almost immediately and recording will happen in
   /// background.
   /// \param uri If provided, it will override the storage_options.uri provided during construction.
+  /// \throws std::exception if recording could not be started.
   ROSBAG2_TRANSPORT_PUBLIC
   void record(const std::string & uri = "");
 
@@ -203,6 +205,12 @@ public:
     const rcutils_time_point_value_t & recv_timestamp,
     uint32_t sequence_number = 0);
 
+  //// @brief Split the current bagfile and open a new one.
+  /// @return true if split was successful, false if recording is not active.
+  /// \throws std::exception if underlying writer fails to split the bagfile.
+  ROSBAG2_TRANSPORT_PUBLIC
+  bool split_bagfile();
+
   /// @brief Updates recorder about lost messages on transport layer.
   /// @details This a direct recorder API and this method is expected to be called when messages
   /// are lost in the transport layer.
@@ -265,6 +273,14 @@ public:
   /// Return the current discovery state.
   ROSBAG2_TRANSPORT_PUBLIC
   bool is_discovery_running() const;
+
+  /// \brief Type alias for the callback to be invoked when recording is started.
+  using OnStartRecordingCallback = std::function<void()>;
+
+  /// \brief Set the callback to be invoked when recording is started.
+  /// \param callback The callback to be invoked when recording is started.
+  ROSBAG2_TRANSPORT_PUBLIC
+  void set_on_start_recording_callback(OnStartRecordingCallback callback) const;
 
   inline constexpr static const auto kPauseResumeToggleKey = KeyboardHandler::KeyCode::SPACE;
 
