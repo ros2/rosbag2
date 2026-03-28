@@ -593,7 +593,8 @@ void SequentialWriter::prepend_transient_local_messages(
   const auto prepend_time = std::chrono::time_point<std::chrono::high_resolution_clock>(
     std::chrono::nanoseconds(recv_timestamp));
   metadata_.starting_time = std::min(metadata_.starting_time, prepend_time);
-  metadata_.files.back().starting_time = std::min(metadata_.files.back().starting_time, prepend_time);
+  metadata_.files.back().starting_time = std::min(metadata_.files.back().starting_time,
+        prepend_time);
 
   std::lock_guard<std::mutex> lock(topics_info_mutex_);
   for (const auto & message : adjusted_messages) {
@@ -796,7 +797,7 @@ void SequentialWriter::write_messages(
     size_t last_msg_index = messages_to_write->size() - 1;
     // If some messages were lost, we need to find the last message that was written
     if (!lost_messages_idx.empty()) {
-      for (size_t i = messages_to_write->size(); i-- > first_msg_index;) {
+      for (size_t i = messages_to_write->size(); i-- > first_msg_index; ) {
         auto is_lost = std::binary_search(lost_messages_idx.begin(), lost_messages_idx.end(), i);
         if (!is_lost) {
           last_msg_index = i;
