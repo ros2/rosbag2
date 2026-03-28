@@ -59,6 +59,7 @@ add_library(${PROJECT_NAME} SHARED
   src/rosbag2_cpp/cache/message_cache_circular_buffer.cpp
   src/rosbag2_cpp/cache/message_cache.cpp
   src/rosbag2_cpp/cache/circular_message_cache.cpp
+  src/rosbag2_cpp/cache/transient_local_messages_cache.cpp
   src/rosbag2_cpp/clocks/time_controller_clock.cpp
   src/rosbag2_cpp/converter.cpp
   src/rosbag2_cpp/info.cpp
@@ -209,6 +210,12 @@ if(BUILD_TESTING)
       rcutils::rcutils
       rosbag2_storage::rosbag2_storage
     )
+  endif()
+
+  ament_add_gmock(test_transient_local_messages_cache
+    test/rosbag2_cpp/test_transient_local_messages_cache.cpp)
+  if(TARGET test_transient_local_messages_cache)
+    target_link_libraries(test_transient_local_messages_cache ${PROJECT_NAME})
   endif()
 
   # If compiling with gcc, run this test with sanitizers enabled

@@ -39,7 +39,7 @@ Node convert<rosbag2_transport::RecordOptions>::encode(
     compression_threads_priority, topic_qos_profile_overrides,
     include_hidden_topics, include_unpublished_topics, ignore_leaf_topics,
     start_paused, use_sim_time, static_topics_uri, disable_keyboard_controls,
-    statistics_max_publishing_rate] = record_options;
+    statistics_max_publishing_rate, repeat_transient_local_messages] = record_options;
   Node node;
   node["all_topics"] = all_topics;
   node["all_services"] = all_services;
@@ -75,6 +75,7 @@ Node convert<rosbag2_transport::RecordOptions>::encode(
   node["static_topics_uri"] = static_topics_uri;
   node["disable_keyboard_controls"] = disable_keyboard_controls;
   node["statistics_max_publishing_rate"] = statistics_max_publishing_rate;
+  node["repeat_transient_local_messages"] = repeat_transient_local_messages;
   return node;
 }
 
@@ -94,7 +95,7 @@ bool convert<rosbag2_transport::RecordOptions>::decode(
     compression_threads_priority, topic_qos_profile_overrides,
     include_hidden_topics, include_unpublished_topics, ignore_leaf_topics,
     start_paused, use_sim_time, static_topics_uri, disable_keyboard_controls,
-    statistics_max_publishing_rate] = record_options;
+    statistics_max_publishing_rate, repeat_transient_local_messages] = record_options;
 
   optional_assign<bool>(node, "all_topics", all_topics);
   optional_assign<bool>(node, "all_services", all_services);
@@ -152,6 +153,8 @@ bool convert<rosbag2_transport::RecordOptions>::decode(
   optional_assign<std::string>(node, "static_topics_uri", static_topics_uri);
   optional_assign<bool>(node, "disable_keyboard_controls", disable_keyboard_controls);
   optional_assign<float>(node, "statistics_max_publishing_rate", statistics_max_publishing_rate);
+  optional_assign<std::unordered_map<std::string, size_t>>(
+    node, "repeat_transient_local_messages", repeat_transient_local_messages);
   return true;
 }
 
