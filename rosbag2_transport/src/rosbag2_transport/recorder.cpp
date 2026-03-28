@@ -583,8 +583,7 @@ RecorderImpl::RecorderImpl(
       node->get_namespace(), false);
     expanded_repeat_transient_local_messages[expanded_topic_name] = depth;
   }
-  record_options_.repeat_transient_local_messages =
-    std::move(expanded_repeat_transient_local_messages);
+  record_options_.repeat_transient_local_messages = std::move(expanded_repeat_transient_local_messages);
 
   for (auto & service : record_options_.services) {
     service = rclcpp::expand_topic_or_service_name(
