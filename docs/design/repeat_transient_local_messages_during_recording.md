@@ -23,10 +23,10 @@ Rosbag2 supports QoS override files for recording/playback when defaults don’t
 - Auto-detect all transient-local topics and repeat them by default.
 
 ## User-facing interface
-Add `ros2 bag record --repeat-tl` with per-topic message counts, e.g.:
+Add `ros2 bag record --repeat-transient-local` with per-topic message counts, e.g.:
 
 ```shell
-$ ros2 bag record -a --repeat-tl /map=1 /tf_static=5
+$ ros2 bag record -a --repeat-transient-local /map=1 /tf_static=5
 ```
 
 Semantics:
@@ -35,9 +35,9 @@ Semantics:
 - If `=N` omitted, default N=1.
 - Only affects recording output (does not change playback).
 - QoS convenience:
-  - If `--repeat-tl` is used and no explicit QoS override exists for that topic, recorder
-    should request Transient Local durability for that subscription (to actually receive the
-    cached sample), consistent with ROS docs.
+  - If `--repeat-transient-local` is used and no explicit QoS override exists for that topic,
+    recorder should request Transient Local durability for that subscription (to actually receive
+    the cached sample), consistent with ROS docs.
 
 ## Design overview
 
@@ -50,7 +50,7 @@ transient-local messages are preserved independently of regular message traffic.
 **Key principles:**
 
 1. **Separate storage:** `TransientLocalMessagesCache` maintains per-topic FIFO queues with
-   user-specified depths from `--repeat-tl` option.
+   user-specified depths from `--repeat-transient-local` option.
 
 2. **Dual write path:** Messages from transient-local topics are written to both:
    - Main cache (`MessageCache` or `CircularMessageCache`) - preserves original sequences.
@@ -163,7 +163,7 @@ Deduplication criteria:
   - Empty map disables feature (preserves current behavior).
 
 **ros2bag CLI:**
-- Add `add_repeat_transient_local_arg` function to parse `--repeat-tl` arguments.
+- Add `add_repeat_transient_local_arg` function to parse `--repeat-transient-local` arguments.
 - Populate `RecordOptions.repeat_transient_local_messages` map with topic names and depths.
 - Pass configuration (`RecordOptions`) through the existing `rosbag2_transport::Recorder`
   constructors (no API changes required for constructors).
@@ -224,7 +224,7 @@ Deduplication criteria:
     ensure no duplicates in snapshot output.
 
 **Workflow summary:**
-1. User specifies `--repeat-tl /topic=N` on command line.
+1. User specifies `--repeat-transient-local /topic=N` on command line.
 2. CLI parser populates `RecordOptions.repeat_transient_local_messages["/topic"] = N`.
 3. Recorder calls `writer_->create_transient_local_topic("/topic", N)` during setup.
 4. The `SequentialWriter` creates topic in storage and registers it in internal cache with depth N.
@@ -239,7 +239,8 @@ Deduplication criteria:
 
 ### Determinism
 
-- Opt-in feature via `--repeat-tl` flag preserves default "record what happened" behavior.
+- Opt-in feature via `--repeat-transient-local` flag preserves default "record what happened"
+  behavior.
 - Timestamp adjustment based on observable bag file timeline.
 - Deduplication by timespan of the snapshot buffer ensures deterministic output: same message does
   not appear twice.
@@ -249,14 +250,14 @@ Deduplication criteria:
 ## Error handling
 
 **Invalid configuration:**
-- Topic in `--repeat-tl` not recorded: log warning, continue recording other topics.
+- Topic in `--repeat-transient-local` not recorded: log warning, continue recording other topics.
 - Queue depth <= 0: reject with error message.
 
 **Memory pressure:**
 - Bounded by user-specified depths per topic, no unbounded growth possible.
 
 **QoS mismatch:**
-- `--repeat-tl` specified but publisher does not offer Transient Local: log warning.
+- `--repeat-transient-local` specified but publisher does not offer Transient Local: log warning.
 
 ## Performance considerations
 
@@ -331,7 +332,7 @@ pre-sorted.
   - End-to-end recording with multiple transient-local topics.
 
 ### Phase 6: CLI and documentation
-- Add `--repeat-tl` parsing.
+- Add `--repeat-transient-local` parsing.
 - Update user documentation README.md file with usage examples and best practices.
 
 ### Test strategy
@@ -382,7 +383,7 @@ pre-sorted.
 
 - Edge cases:
   - Empty cache (no messages received before split/snapshot).
-  - Topic in `--repeat-tl` but never published.
+  - Topic in `--repeat-transient-local` but never published.
   - Queue depth of 1 versus larger depths.
   - Multiple transient-local topics with mixed depths.
   - Transient-local message larger than cache capacity.
@@ -414,11 +415,10 @@ original message sequences.
      recording and not playback.
    - `--repeat-tl` is more concise and consistent with ROS 1 `--repeat-latched`, but less
      descriptive. `--repeat-transient-local` is more explicit but verbose.
-   - Proposed: `--repeat-tl` for brevity, with clear documentation and examples to explain the
-   feature and its relation to Transient Local durability. This strikes a balance between
-   familiarity and clarity while keeping the CLI concise.
+   - Proposed: `--repeat-transient-local` as a more concise and explicit option. Users got 
+     confused with the `--repeat-tl` and don't understand what does it mean.
 
-2. Should we support regex patterns in `--repeat-tl` (e.g., `/tf_*`)?
+2. Should we support regex patterns in `--repeat-transient-local` (e.g., `/tf_*`)?
    - Deferred to future work based on user feedback. Initial implementation focuses on explicit
      topic names for simplicity and clarity.
 
