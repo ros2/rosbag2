@@ -1,5 +1,4 @@
 # Design: Support repeating transient-local ("latched") messages in Rosbag2 recorder
-Status: Draft\
 Author: Michael Orlov
 
 ## Problem
@@ -17,7 +16,9 @@ Rosbag2 supports QoS override files for recording/playback when defaults don’t
 ## Goals
 - Provide an opt-in “repeat latched” experience for recorder splits and snapshots.
 - Fix snapshot-mode eviction for selected transient-local topics under cache pressure.
-- Keep default behavior deterministic: “repeat” must be explicitly requested.
+- Keep default behavior deterministic: “repeat” must be explicitly requested. Meaning that
+  transient local messages shall not be repeated by default, since it would introduce extra 
+  messages that were not really published at the time of recording.
 
 ## Non-goals
 - Auto-detect all transient-local topics and repeat them by default.
@@ -143,7 +144,7 @@ In the `CacheConsumer::exec_consuming()` method when snapshot mode is active and
 - `T_earliest` = timestamps (`receive_timestamp` and `send_timestamp`) from the first message in 
   the consumer buffer. i.e., the message with the earliest `recv_timestamp` that will be written to
   storage during this snapshot.
-- For transient-local messages with `msg::recv_timestamp` < `T_earliest::::recv_timestamp`
+- For transient-local messages with `msg::recv_timestamp` < `T_earliest::recv_timestamp`
   - Overwrite `msg::recv_timestamp` to `T_earliest::recv_timestamp`
   - Overwrite `msg::send_timestamp` to `T_earliest::send_timestamp`
 
@@ -203,8 +204,8 @@ Deduplication criteria:
 **rosbag2_cpp (SequentialWriter modifications):**
 - Add private member: `std::shared_ptr<TransientLocalMessagesCache> transient_local_cache_`
 - Implement `create_transient_local_topic()` methods:
-  - Register topic in `transient_local_cache_` with specified queue depth`
-  - Forward to regular `create_topic()` to register in storage`
+  - Register topic in `transient_local_cache_` with specified queue depth.
+  - Forward to regular `create_topic()` to register in storage.
 - Modify `write()` method:
   - After writing to storage, check if topic is registered as transient-local. If yes, also push
     message to `transient_local_cache_`.
@@ -276,7 +277,7 @@ pre-sorted.
   - Thread-safe push and retrieval operations.
   - Messages sorted by timestamp for deterministic output.
 - Extend `RecordOptions` structure in `rosbag2_storage`.
-  - Add `repeat_transient_local_messages` map field/
+  - Add `repeat_transient_local_messages` map field.
 - Unit tests:
   - Verify per-topic queue behavior and eviction at capacity.
   - Verify thread safety under concurrent access.
@@ -298,7 +299,7 @@ pre-sorted.
 - Implement `prepend_transient_local_messages()` in `SequentialWriter`.
   - Retrieve messages from cache after opening new storage.
   - Adjust timestamps to T_last (last message from previous bag).
-  - Write adjusted messages to new storage file/
+  - Write adjusted messages to new storage file.
 - Modify `split_bagfile()` to call prepend logic when not in snapshot mode.
 - Integration tests:
   - End-to-end split recording with transient-local topics.
@@ -325,7 +326,7 @@ pre-sorted.
 - Extend `Recorder` to parse `repeat_transient_local_messages` from options.
 - For each transient-local topic during subscription setup:
   - Call `writer_->create_transient_local_topic()` instead of regular `create_topic()`.
-- No changes needed in message callback (dual-write handled by Writer)/
+- No changes needed in message callback (dual-write handled by Writer).
 - Integration tests:
   - Verify correct API calls during recorder initialization.
   - Verify transient-local topics registered with correct depths.
