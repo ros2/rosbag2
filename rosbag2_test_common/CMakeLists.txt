@@ -36,7 +36,7 @@ target_link_libraries(${PROJECT_NAME} INTERFACE
   rclcpp::rclcpp
   rclcpp_action::rclcpp_action
   rcutils::rcutils
-  test_msgs::test_msgs
+  ${test_msgs_TARGETS}
 )
 
 install(

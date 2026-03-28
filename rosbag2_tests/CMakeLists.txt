@@ -53,7 +53,7 @@ if(BUILD_TESTING)
       rosbag2_compression_zstd::rosbag2_compression_zstd
       rosbag2_storage::rosbag2_storage
       rosbag2_test_common::rosbag2_test_common
-      test_msgs::test_msgs
+      ${test_msgs_TARGETS}
     )
     ament_add_test_label(test_rosbag2_record_end_to_end xfail)
   endif()
@@ -64,10 +64,10 @@ if(BUILD_TESTING)
   if(TARGET test_rosbag2_play_end_to_end)
     target_link_libraries(test_rosbag2_play_end_to_end
       rclcpp::rclcpp
-      rosbag2_interfaces::rosbag2_interfaces
+      ${rosbag2_interfaces_TARGETS}
       rosbag2_storage::rosbag2_storage
       rosbag2_test_common::rosbag2_test_common
-      test_msgs::test_msgs
+      ${test_msgs_TARGETS}
     )
     if(WIN32)
         ament_add_test_label(test_rosbag2_play_end_to_end xfail)
@@ -91,7 +91,7 @@ if(BUILD_TESTING)
     target_link_libraries(test_converter
       rosbag2_cpp::rosbag2_cpp
       rosbag2_test_common::rosbag2_test_common
-      test_msgs::test_msgs
+      ${test_msgs_TARGETS}
     )
   endif()
 
@@ -103,7 +103,7 @@ if(BUILD_TESTING)
       rosbag2_cpp::rosbag2_cpp
       rosbag2_storage::rosbag2_storage
       rosbag2_test_common::rosbag2_test_common
-      std_msgs::std_msgs
+      ${std_msgs_TARGETS}
     )
   endif()
 
@@ -116,7 +116,7 @@ if(BUILD_TESTING)
       rosbag2_cpp::rosbag2_cpp
       rosbag2_storage::rosbag2_storage
       rosbag2_test_common::rosbag2_test_common
-      test_msgs::test_msgs
+      ${test_msgs_TARGETS}
     )
   endif()
 
@@ -129,7 +129,7 @@ if(BUILD_TESTING)
       rosbag2_storage::rosbag2_storage
       rosbag2_test_common::rosbag2_test_common
       rosbag2_transport::rosbag2_transport
-      test_msgs::test_msgs
+      ${test_msgs_TARGETS}
     )
   endif()
 
@@ -139,7 +139,7 @@ if(BUILD_TESTING)
     target_link_libraries(test_rosbag2_storage_api
       rosbag2_storage::rosbag2_storage
       rosbag2_test_common::rosbag2_test_common
-      std_msgs::std_msgs
+      ${std_msgs_TARGETS}
     )
   endif()
 

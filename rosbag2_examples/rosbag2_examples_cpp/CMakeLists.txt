@@ -28,7 +28,7 @@ add_executable(simple_bag_recorder src/simple_bag_recorder.cpp)
 target_link_libraries(simple_bag_recorder
   rclcpp::rclcpp
   rosbag2_cpp::rosbag2_cpp
-  example_interfaces::example_interfaces
+  ${example_interfaces_TARGETS}
 )
 
 install(TARGETS
@@ -41,7 +41,7 @@ target_link_libraries(compressed_bag_recorder
   rclcpp::rclcpp
   rosbag2_cpp::rosbag2_cpp
   rosbag2_compression::rosbag2_compression
-  example_interfaces::example_interfaces
+  ${example_interfaces_TARGETS}
 )
 
 install(TARGETS
@@ -52,7 +52,7 @@ install(TARGETS
 add_executable(compressed_bag_rewriter src/compressed_bag_rewriter.cpp)
 target_link_libraries(compressed_bag_rewriter
   rosbag2_transport::rosbag2_transport
-  example_interfaces::example_interfaces
+  ${example_interfaces_TARGETS}
 )
 
 install(TARGETS
@@ -65,7 +65,7 @@ target_link_libraries(simple_bag_reader
   rclcpp::rclcpp
   rosbag2_cpp::rosbag2_cpp
   rosbag2_transport::rosbag2_transport
-  example_interfaces::example_interfaces
+  ${example_interfaces_TARGETS}
 )
 
 install(TARGETS
@@ -77,7 +77,7 @@ add_executable(data_generator_node src/data_generator_node.cpp)
 target_link_libraries(data_generator_node
   rclcpp::rclcpp
   rosbag2_cpp::rosbag2_cpp
-  example_interfaces::example_interfaces
+  ${example_interfaces_TARGETS}
 )
 
 install(TARGETS
@@ -89,7 +89,7 @@ add_executable(data_generator_executable src/data_generator_executable.cpp)
 target_link_libraries(data_generator_executable
   rclcpp::rclcpp
   rosbag2_cpp::rosbag2_cpp
-  example_interfaces::example_interfaces
+  ${example_interfaces_TARGETS}
 )
 
 install(TARGETS
