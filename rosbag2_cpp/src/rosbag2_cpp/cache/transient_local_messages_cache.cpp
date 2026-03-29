@@ -72,13 +72,9 @@ std::vector<rosbag2_storage::SerializedBagMessageConstSharedPtr>
 TransientLocalMessagesCache::get_messages_sorted_by_timestamp() const
 {
   std::vector<rosbag2_storage::SerializedBagMessageConstSharedPtr> messages;
+  messages.reserve(this->size());
   {
     std::lock_guard<std::mutex> lock(mutex_);
-    size_t total_count = 0;
-    for (const auto & [_, topic_queue] : topic_queues_) {
-      total_count += topic_queue.messages.size();
-    }
-    messages.reserve(total_count);
     for (const auto & [_, topic_queue] : topic_queues_) {
       messages.insert(messages.end(), topic_queue.messages.begin(), topic_queue.messages.end());
     }
