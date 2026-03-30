@@ -431,11 +431,11 @@ std::string SequentialWriter::split_bagfile_local(bool execute_callbacks)
 {
   auto closed_file = storage_->get_relative_file_path();
   switch_to_next_storage();
-  // In non-snapshot mode, prepend cached transient-local messages to the new bag file so that
+  // In non-snapshot mode, write cached transient-local messages to the new bag file so that
   // transient-local topics appear in every split. In snapshot mode the merge happens
   // later inside write_messages() where the circular buffer is flushed together with the snapshot.
   if (!storage_options_.snapshot_mode) {
-    prepend_transient_local_messages(last_received_timestamp_, last_sent_timestamp_);
+    write_transient_local_messages(last_recv_timestamp_, last_sent_timestamp_);
   }
   auto opened_file = storage_->get_relative_file_path();
 
@@ -533,7 +533,7 @@ void SequentialWriter::write(std::shared_ptr<const rosbag2_storage::SerializedBa
     on_messages_lost(std::move(msgs_lost_info));
   }
 
-  last_received_timestamp_ = message->recv_timestamp;
+  last_recv_timestamp_ = message->recv_timestamp;
   last_sent_timestamp_ = message->send_timestamp;
 }
 
@@ -557,7 +557,7 @@ SequentialWriter::get_writeable_message(
   return converter_ ? converter_->convert(message) : message;
 }
 
-void SequentialWriter::prepend_transient_local_messages(
+void SequentialWriter::write_transient_local_messages(
   rcutils_time_point_value_t recv_timestamp,
   rcutils_time_point_value_t send_timestamp)
 {

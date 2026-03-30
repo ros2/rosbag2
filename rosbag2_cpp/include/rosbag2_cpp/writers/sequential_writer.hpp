@@ -180,7 +180,19 @@ protected:
 
   std::string split_bagfile_local(bool execute_callbacks = true);
 
-  void prepend_transient_local_messages(
+  /**
+   * \brief Write cached transient-local messages to the current storage.
+   *
+   * Retrieves all cached transient-local messages, adjusts their timestamps to the
+   * provided values, writes them to the current storage, and updates metadata
+   * (message counts, starting time) accordingly.
+   *
+   * Called after a bag split to ensure transient-local topics appear in the new bag file.
+   *
+   * \param recv_timestamp The receive timestamp to assign to all transient-local messages.
+   * \param send_timestamp The send timestamp to assign to all transient-local messages.
+   */
+  void write_transient_local_messages(
     rcutils_time_point_value_t recv_timestamp,
     rcutils_time_point_value_t send_timestamp);
 
@@ -278,7 +290,7 @@ private:
   std::mutex lost_messages_callbacks_mutex_;
   bool is_first_message_ {true};
   std::atomic_bool is_open_{false};
-  rcutils_time_point_value_t last_received_timestamp_{0};
+  rcutils_time_point_value_t last_recv_timestamp_{0};
   rcutils_time_point_value_t last_sent_timestamp_{0};
 
   bag_events::EventCallbackManager callback_manager_;
