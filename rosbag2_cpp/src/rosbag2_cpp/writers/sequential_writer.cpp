@@ -574,9 +574,11 @@ void SequentialWriter::write_transient_local_messages(
     msg->send_timestamp = send_timestamp;
   }
 
-  storage_->write_messages(transient_messages);
-  metadata_.message_count += transient_messages.size();
-  metadata_.files.back().message_count += transient_messages.size();
+  rosbag2_storage::SerializedBagMessages const_messages(
+    transient_messages.begin(), transient_messages.end());
+  storage_->write_messages(const_messages);
+  metadata_.message_count += const_messages.size();
+  metadata_.files.back().message_count += const_messages.size();
   const auto prepend_time = std::chrono::time_point<std::chrono::high_resolution_clock>(
     std::chrono::nanoseconds(recv_timestamp));
   metadata_.starting_time = std::min(metadata_.starting_time, prepend_time);
@@ -584,7 +586,7 @@ void SequentialWriter::write_transient_local_messages(
     std::min(metadata_.files.back().starting_time, prepend_time);
 
   std::lock_guard<std::mutex> lock(topics_info_mutex_);
-  for (const auto & message : transient_messages) {
+  for (const auto & message : const_messages) {
     if (topics_names_to_info_.find(message->topic_name) != topics_names_to_info_.end()) {
       topics_names_to_info_[message->topic_name].message_count++;
       per_file_topic_message_counts_.back()[message->topic_name]++;
