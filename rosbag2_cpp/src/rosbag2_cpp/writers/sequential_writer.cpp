@@ -576,21 +576,49 @@ void SequentialWriter::write_transient_local_messages(
 
   rosbag2_storage::SerializedBagMessages const_messages(
     transient_messages.begin(), transient_messages.end());
-  storage_->write_messages(const_messages);
-  metadata_.message_count += const_messages.size();
-  metadata_.files.back().message_count += const_messages.size();
+  auto lost_messages_idx = storage_->write_messages(const_messages);
+  auto written_messages_count = const_messages.size() - lost_messages_idx.size();
+
+  metadata_.message_count += written_messages_count;
+  metadata_.files.back().message_count += written_messages_count;
   const auto prepend_time = std::chrono::time_point<std::chrono::high_resolution_clock>(
     std::chrono::nanoseconds(recv_timestamp));
   metadata_.starting_time = std::min(metadata_.starting_time, prepend_time);
   metadata_.files.back().starting_time =
     std::min(metadata_.files.back().starting_time, prepend_time);
 
-  std::lock_guard<std::mutex> lock(topics_info_mutex_);
-  for (const auto & message : const_messages) {
-    if (topics_names_to_info_.find(message->topic_name) != topics_names_to_info_.end()) {
-      topics_names_to_info_[message->topic_name].message_count++;
-      per_file_topic_message_counts_.back()[message->topic_name]++;
+  {
+    std::lock_guard<std::mutex> lock(topics_info_mutex_);
+    for (size_t i = 0; i < const_messages.size(); i++) {
+      if (!lost_messages_idx.empty()) {
+        auto is_lost = std::binary_search(lost_messages_idx.begin(), lost_messages_idx.end(), i);
+        if (is_lost) {
+          continue;
+        }
+      }
+
+      const auto & message = const_messages[i];
+      auto topic_info_it = topics_names_to_info_.find(message->topic_name);
+      if (topic_info_it != topics_names_to_info_.end()) {
+        topic_info_it->second.message_count++;
+        per_file_topic_message_counts_.back()[message->topic_name]++;
+      }
     }
+  }
+
+  // Notify about lost messages via callback
+  if (!lost_messages_idx.empty()) {
+    std::unordered_map<std::string, size_t> lost_messages_count;
+    for (const auto & lost_message_index : lost_messages_idx) {
+      const auto & topic_name = const_messages[lost_message_index]->topic_name;
+      lost_messages_count[topic_name]++;
+    }
+    auto msgs_lost_info = std::make_shared<std::vector<bag_events::MessagesLostInfo>>();
+    msgs_lost_info->reserve(lost_messages_count.size());
+    for (const auto & [topic_name, count] : lost_messages_count) {
+      msgs_lost_info->emplace_back(bag_events::MessagesLostInfo{topic_name, count});
+    }
+    on_messages_lost(std::move(msgs_lost_info));
   }
 }
 
