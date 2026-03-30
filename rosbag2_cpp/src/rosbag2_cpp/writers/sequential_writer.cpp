@@ -582,8 +582,8 @@ void SequentialWriter::write_transient_local_messages(
   const auto prepend_time = std::chrono::time_point<std::chrono::high_resolution_clock>(
     std::chrono::nanoseconds(recv_timestamp));
   metadata_.starting_time = std::min(metadata_.starting_time, prepend_time);
-  metadata_.files.back().starting_time = std::min(metadata_.files.back().starting_time,
-        prepend_time);
+  metadata_.files.back().starting_time =
+    std::min(metadata_.files.back().starting_time, prepend_time);
 
   std::lock_guard<std::mutex> lock(topics_info_mutex_);
   for (const auto & message : transient_messages) {
