@@ -27,6 +27,7 @@
 #include "rosbag2_cpp/cache/circular_message_cache.hpp"
 #include "rosbag2_cpp/cache/message_cache.hpp"
 #include "rosbag2_cpp/cache/message_cache_interface.hpp"
+#include "rosbag2_cpp/cache/transient_local_messages_cache.hpp"
 #include "rosbag2_cpp/converter.hpp"
 #include "rosbag2_cpp/message_definitions/local_message_definition_source.hpp"
 #include "rosbag2_cpp/serialization_format_converter_factory.hpp"
@@ -112,6 +113,15 @@ public:
     const rosbag2_storage::TopicMetadata & topic_with_type,
     const rosbag2_storage::MessageDefinition & message_definition) override;
 
+  void create_transient_local_topic(
+    const rosbag2_storage::TopicMetadata & topic_with_type,
+    size_t num_last_messages) override;
+
+  void create_transient_local_topic(
+    const rosbag2_storage::TopicMetadata & topic_with_type,
+    size_t num_last_messages,
+    const rosbag2_storage::MessageDefinition & message_definition) override;
+
   /**
    * \brief Removes a new topic in the underlying storage.
    * \details Expected to be used if creation of subscription fails and cleanup is needed.
@@ -163,11 +173,16 @@ protected:
   bool use_cache_ {false};
   std::shared_ptr<rosbag2_cpp::cache::MessageCacheInterface> message_cache_;
   std::unique_ptr<rosbag2_cpp::cache::CacheConsumer> cache_consumer_;
+  std::shared_ptr<rosbag2_cpp::cache::TransientLocalMessagesCache> transient_local_cache_;
 
   /// \brief Flush the cache, update metadata and close the storage.
   void flush_cache_update_metadata_and_close_storage();
 
   std::string split_bagfile_local(bool execute_callbacks = true);
+
+  void prepend_transient_local_messages(
+    rcutils_time_point_value_t recv_timestamp,
+    rcutils_time_point_value_t send_timestamp);
 
   void execute_bag_split_callbacks(
     const std::string & closed_file, const std::string & opened_file);
@@ -252,7 +267,6 @@ protected:
    */
   void on_messages_lost(std::shared_ptr<std::vector<bag_events::MessagesLostInfo>> msgs_lost_info);
 
-private:
   /**
    * \brief Helper method to write messages while also updating tracked metadata.
    * \param messages The list of messages to write.
@@ -260,9 +274,12 @@ private:
   void write_messages(
     const std::vector<std::shared_ptr<const rosbag2_storage::SerializedBagMessage>> & messages);
 
+private:
   std::mutex lost_messages_callbacks_mutex_;
   bool is_first_message_ {true};
   std::atomic_bool is_open_{false};
+  rcutils_time_point_value_t last_received_timestamp_{0};
+  rcutils_time_point_value_t last_sent_timestamp_{0};
 
   bag_events::EventCallbackManager callback_manager_;
 };

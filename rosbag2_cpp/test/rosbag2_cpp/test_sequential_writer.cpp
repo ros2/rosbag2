@@ -68,6 +68,12 @@ public:
     message_cache_ = std::move(message_cache);
     cache_consumer_ = std::move(cache_consumer);
   }
+
+  void test_write_messages(
+    const std::vector<std::shared_ptr<const rosbag2_storage::SerializedBagMessage>> & messages)
+  {
+    write_messages(messages);
+  }
 };
 
 class SequentialWriterTest : public Test
@@ -1261,6 +1267,103 @@ TEST_F(SequentialWriterTest, split_event_calls_on_writer_close)
   EXPECT_EQ(extract_counter_from_filename(closed_file), 0u)
     << "Counter in closed filename '" << closed_file << "' does not match expected value";
   EXPECT_TRUE(opened_file.empty());
+}
+
+TEST_F(SequentialWriterTest, split_prepends_transient_local_messages_to_next_bag)
+{
+  auto sequential_writer = std::make_unique<rosbag2_cpp::writers::SequentialWriter>(
+    std::move(storage_factory_), converter_factory_, std::move(metadata_io_));
+  writer_ = std::make_unique<rosbag2_cpp::Writer>(std::move(sequential_writer));
+
+  storage_options_.max_cache_size = 0;
+  writer_->open(storage_options_, {"rmw_format", "rmw_format"});
+
+  const std::string topic_name = "latched_topic";
+  writer_->create_transient_local_topic({0u, topic_name, "test_msgs/BasicTypes", "", {}, ""}, 1);
+
+  auto first_message = std::make_shared<rosbag2_storage::SerializedBagMessage>();
+  first_message->topic_name = topic_name;
+  first_message->recv_timestamp = 100;
+  first_message->send_timestamp = 100;
+
+  auto second_message = std::make_shared<rosbag2_storage::SerializedBagMessage>();
+  second_message->topic_name = topic_name;
+  second_message->recv_timestamp = 200;
+  second_message->send_timestamp = 200;
+
+  writer_->write(first_message);
+  writer_->write(second_message);
+
+  std::vector<std::shared_ptr<const rosbag2_storage::SerializedBagMessage>> prepended_messages;
+  EXPECT_CALL(*storage_,
+    write(An<const std::vector<std::shared_ptr<const rosbag2_storage::SerializedBagMessage>> &>()))
+  .WillOnce(Invoke(
+      [&prepended_messages](
+        const std::vector<std::shared_ptr<const rosbag2_storage::SerializedBagMessage>> & messages)
+      {
+        prepended_messages = messages;
+      }));
+
+  writer_->split_bagfile();
+
+  ASSERT_EQ(prepended_messages.size(), 1u);
+  EXPECT_EQ(prepended_messages[0]->topic_name, topic_name);
+  EXPECT_EQ(prepended_messages[0]->recv_timestamp, 200);
+  EXPECT_EQ(prepended_messages[0]->send_timestamp, 200);
+}
+
+TEST_F(SequentialWriterTest, snapshot_merge_prepends_transient_local_messages)
+{
+  auto sequential_writer = std::make_unique<SequentialWriterForTest>(
+    std::move(storage_factory_), converter_factory_, std::move(metadata_io_));
+
+  storage_options_.max_cache_size = 1024;
+  storage_options_.snapshot_mode = true;
+  sequential_writer->open(storage_options_, {"rmw_format", "rmw_format"});
+
+  const std::string latched_topic = "latched_topic";
+  const std::string data_topic = "data_topic";
+
+  sequential_writer->create_transient_local_topic(
+    {0u, latched_topic, "test_msgs/BasicTypes", "", {}, ""}, 1);
+  sequential_writer->create_topic({0u, data_topic, "test_msgs/BasicTypes", "", {}, ""});
+
+  // Write a latched message to populate the transient local cache
+  auto latched_msg = std::make_shared<rosbag2_storage::SerializedBagMessage>();
+  latched_msg->topic_name = latched_topic;
+  latched_msg->recv_timestamp = 100;
+  latched_msg->send_timestamp = 100;
+  latched_msg->serialized_data = rosbag2_storage::make_serialized_message("L", 1);
+  sequential_writer->write(latched_msg);
+
+  // Simulate a snapshot buffer where the latched message was evicted
+  // (buffer starts at timestamp 200 > latched message timestamp 100)
+  auto data_msg = std::make_shared<rosbag2_storage::SerializedBagMessage>();
+  data_msg->topic_name = data_topic;
+  data_msg->recv_timestamp = 200;
+  data_msg->send_timestamp = 200;
+  data_msg->serialized_data = rosbag2_storage::make_serialized_message("D", 1);
+
+  rosbag2_storage::SerializedBagMessages written;
+  ON_CALL(*storage_, write_messages(An<const rosbag2_storage::SerializedBagMessages &>()))
+  .WillByDefault(
+    [&written](const rosbag2_storage::SerializedBagMessages & msgs) {
+      written = msgs;
+      return std::vector<size_t>{};
+    });
+
+  // Directly invoke write_messages with a buffer that doesn't contain the latched msg
+  sequential_writer->test_write_messages({data_msg});
+
+  // Verify: latched message was merged in with adjusted timestamps.
+  // Both messages end up with recv_timestamp=200 (latched adjusted to T_earliest),
+  // so stable_sort orders by topic name: "data_topic" < "latched_topic".
+  ASSERT_EQ(written.size(), 2u);
+  EXPECT_EQ(written[0]->topic_name, data_topic);
+  EXPECT_EQ(written[0]->recv_timestamp, 200);
+  EXPECT_EQ(written[1]->topic_name, latched_topic);
+  EXPECT_EQ(written[1]->recv_timestamp, 200);  // adjusted to T_earliest
+  EXPECT_EQ(written[1]->send_timestamp, 200);
 }
 
 TEST_F(SequentialWriterTest, circular_logging_limits_number_of_files_by_max_bag_files)

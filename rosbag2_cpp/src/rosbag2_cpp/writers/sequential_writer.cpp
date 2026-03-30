@@ -59,6 +59,7 @@ SequentialWriter::SequentialWriter(
   storage_(nullptr),
   metadata_io_(std::move(metadata_io)),
   converter_(nullptr),
+  transient_local_cache_(std::make_shared<rosbag2_cpp::cache::TransientLocalMessagesCache>()),
   metadata_()
 {}
 
@@ -293,8 +294,26 @@ void SequentialWriter::create_topic(
   }
 }
 
+void SequentialWriter::create_transient_local_topic(
+  const rosbag2_storage::TopicMetadata & topic_with_type,
+  size_t num_last_messages)
+{
+  transient_local_cache_->add_topic(topic_with_type.name, num_last_messages);
+  create_topic(topic_with_type);
+}
+
+void SequentialWriter::create_transient_local_topic(
+  const rosbag2_storage::TopicMetadata & topic_with_type,
+  size_t num_last_messages,
+  const rosbag2_storage::MessageDefinition & message_definition)
+{
+  transient_local_cache_->add_topic(topic_with_type.name, num_last_messages);
+  create_topic(topic_with_type, message_definition);
+}
+
 void SequentialWriter::remove_topic(const rosbag2_storage::TopicMetadata & topic_with_type)
 {
+  transient_local_cache_->remove_topic(topic_with_type.name);
   std::lock_guard<std::mutex> lock(topics_info_mutex_);
   bool erased = topics_names_to_info_.erase(topic_with_type.name) > 0;
   erased = erased && (topic_names_to_message_definitions_.erase(topic_with_type.name) > 0);
@@ -412,6 +431,12 @@ std::string SequentialWriter::split_bagfile_local(bool execute_callbacks)
 {
   auto closed_file = storage_->get_relative_file_path();
   switch_to_next_storage();
+  // In non-snapshot mode, prepend cached transient-local messages to the new bag file so that
+  // transient-local topics appear in every split. In snapshot mode the merge happens
+  // later inside write_messages() where the circular buffer is flushed together with the snapshot.
+  if (!storage_options_.snapshot_mode) {
+    prepend_transient_local_messages(last_received_timestamp_, last_sent_timestamp_);
+  }
   auto opened_file = storage_->get_relative_file_path();
 
   if (execute_callbacks) {
@@ -482,6 +507,9 @@ void SequentialWriter::write(std::shared_ptr<const rosbag2_storage::SerializedBa
     std::max(metadata_.files.back().duration, file_duration);
 
   auto converted_msg = get_writeable_message(message);
+  if (transient_local_cache_->has_topic(topic_name)) {
+    transient_local_cache_->push(topic_name, converted_msg);
+  }
 
   bool message_lost = false;
   if (storage_options_.max_cache_size == 0u) {
@@ -504,6 +532,9 @@ void SequentialWriter::write(std::shared_ptr<const rosbag2_storage::SerializedBa
     msgs_lost_info->emplace_back(bag_events::MessagesLostInfo{message->topic_name, 1});
     on_messages_lost(std::move(msgs_lost_info));
   }
+
+  last_received_timestamp_ = message->recv_timestamp;
+  last_sent_timestamp_ = message->send_timestamp;
 }
 
 bool SequentialWriter::take_snapshot()
@@ -524,6 +555,41 @@ SequentialWriter::get_writeable_message(
   std::shared_ptr<const rosbag2_storage::SerializedBagMessage> message)
 {
   return converter_ ? converter_->convert(message) : message;
+}
+
+void SequentialWriter::prepend_transient_local_messages(
+  rcutils_time_point_value_t recv_timestamp,
+  rcutils_time_point_value_t send_timestamp)
+{
+  auto transient_messages = transient_local_cache_->get_messages_sorted_by_timestamp();
+  if (transient_messages.empty()) {
+    return;
+  }
+
+  // Adjust timestamps directly in the transient_messages vector to avoid an extra allocation.
+  for (auto & msg_ptr : transient_messages) {
+    auto mutable_msg = std::make_shared<rosbag2_storage::SerializedBagMessage>(*msg_ptr);
+    mutable_msg->recv_timestamp = recv_timestamp;
+    mutable_msg->send_timestamp = send_timestamp;
+    msg_ptr = std::move(mutable_msg);
+  }
+
+  storage_->write_messages(transient_messages);
+  metadata_.message_count += transient_messages.size();
+  metadata_.files.back().message_count += transient_messages.size();
+  const auto prepend_time = std::chrono::time_point<std::chrono::high_resolution_clock>(
+    std::chrono::nanoseconds(recv_timestamp));
+  metadata_.starting_time = std::min(metadata_.starting_time, prepend_time);
+  metadata_.files.back().starting_time = std::min(metadata_.files.back().starting_time,
+        prepend_time);
+
+  std::lock_guard<std::mutex> lock(topics_info_mutex_);
+  for (const auto & message : transient_messages) {
+    if (topics_names_to_info_.find(message->topic_name) != topics_names_to_info_.end()) {
+      topics_names_to_info_[message->topic_name].message_count++;
+      per_file_topic_message_counts_.back()[message->topic_name]++;
+    }
+  }
 }
 
 bool SequentialWriter::should_split_bagfile(
@@ -663,14 +729,41 @@ void SequentialWriter::write_messages(
   if (messages.empty()) {
     return;
   }
-  auto lost_messages_idx = storage_->write_messages(messages);
-  auto written_messages_count = messages.size() - lost_messages_idx.size();
+  std::vector<std::shared_ptr<const rosbag2_storage::SerializedBagMessage>> merged_messages;
+  const auto * messages_to_write = &messages;
+
+  if (storage_options_.snapshot_mode && transient_local_cache_) {
+    const auto snapshot_earliest_recv_timestamp = messages.front()->recv_timestamp;
+    const auto snapshot_earliest_send_timestamp = messages.front()->send_timestamp;
+    auto transient_messages = transient_local_cache_->get_messages_sorted_by_timestamp();
+    merged_messages.reserve(messages.size() + transient_messages.size());
+
+    // Only prepend transient messages whose timestamps predate the snapshot window.
+    // Messages inside the window are already present in the snapshot buffer.
+    // Adjusted transient messages all receive the snapshot-earliest timestamp, so they
+    // naturally sort before (or equal to) the first snapshot message — no extra sort needed.
+    for (const auto & transient_message : transient_messages) {
+      if (transient_message->recv_timestamp < snapshot_earliest_recv_timestamp) {
+        auto msg = std::make_shared<rosbag2_storage::SerializedBagMessage>(*transient_message);
+        msg->recv_timestamp = snapshot_earliest_recv_timestamp;
+        msg->send_timestamp = snapshot_earliest_send_timestamp;
+        merged_messages.emplace_back(std::move(msg));
+      }
+    }
+
+    merged_messages.insert(merged_messages.end(), messages.begin(), messages.end());
+    messages_to_write = &merged_messages;
+  }
+
+  auto lost_messages_idx = storage_->write_messages(*messages_to_write);
+  auto written_messages_count = messages_to_write->size() - lost_messages_idx.size();
+
   if (storage_options_.snapshot_mode && written_messages_count > 0) {
     // Update FileInformation about the last file in metadata in case of snapshot mode
     size_t first_msg_index = 0;
     // If some messages were lost, we need to find the first message that was written
     if (!lost_messages_idx.empty()) {
-      for (size_t i = 0; i < messages.size(); ++i) {
+      for (size_t i = 0; i < messages_to_write->size(); ++i) {
         auto is_lost = std::binary_search(lost_messages_idx.begin(), lost_messages_idx.end(), i);
         if (!is_lost) {
           first_msg_index = i;
@@ -678,10 +771,10 @@ void SequentialWriter::write_messages(
         }
       }
     }
-    size_t last_msg_index = messages.size() - 1;
+    size_t last_msg_index = messages_to_write->size() - 1;
     // If some messages were lost, we need to find the last message that was written
     if (!lost_messages_idx.empty()) {
-      for (size_t i = messages.size() - 1; i >= first_msg_index; i--) {
+      for (size_t i = messages_to_write->size(); i-- > first_msg_index; ) {
         auto is_lost = std::binary_search(lost_messages_idx.begin(), lost_messages_idx.end(), i);
         if (!is_lost) {
           last_msg_index = i;
@@ -691,29 +784,31 @@ void SequentialWriter::write_messages(
     }
 
     const auto first_msg_timestamp = std::chrono::time_point<std::chrono::high_resolution_clock>(
-      std::chrono::nanoseconds(messages[first_msg_index]->recv_timestamp));
+      std::chrono::nanoseconds((*messages_to_write)[first_msg_index]->recv_timestamp));
     const auto last_msg_timestamp = std::chrono::time_point<std::chrono::high_resolution_clock>(
-      std::chrono::nanoseconds(messages[last_msg_index]->recv_timestamp));
+      std::chrono::nanoseconds((*messages_to_write)[last_msg_index]->recv_timestamp));
     metadata_.files.back().starting_time = first_msg_timestamp;
     metadata_.files.back().duration = last_msg_timestamp - first_msg_timestamp;
   }
+
   metadata_.files.back().message_count += written_messages_count;
   metadata_.message_count += written_messages_count;
 
   {  // Update message count for each topic in metadata
     std::lock_guard<std::mutex> lock(topics_info_mutex_);
-    for (size_t i = 0; i < messages.size(); i++) {
-      // If some messages were lost, we need to skip them
+    for (size_t i = 0; i < messages_to_write->size(); i++) {
       if (!lost_messages_idx.empty()) {
         auto is_lost = std::binary_search(lost_messages_idx.begin(), lost_messages_idx.end(), i);
         if (is_lost) {
-          continue;  // Skip lost messages
+          continue;
         }
       }
-      auto topic_info_it = topics_names_to_info_.find(messages[i]->topic_name);
+
+      const auto & msg = (*messages_to_write)[i];
+      auto topic_info_it = topics_names_to_info_.find(msg->topic_name);
       if (topic_info_it != topics_names_to_info_.end()) {
         topic_info_it->second.message_count++;
-        per_file_topic_message_counts_.back()[messages[i]->topic_name]++;
+        per_file_topic_message_counts_.back()[msg->topic_name]++;
       }
     }
   }
@@ -722,7 +817,7 @@ void SequentialWriter::write_messages(
   if (!lost_messages_idx.empty()) {
     std::unordered_map<std::string, size_t> lost_messages_count;
     for (const auto & lost_message_index : lost_messages_idx) {
-      const auto & topic_name = messages[lost_message_index]->topic_name;
+      const auto & topic_name = (*messages_to_write)[lost_message_index]->topic_name;
       lost_messages_count[topic_name]++;
     }
     auto msgs_lost_info = std::make_shared<std::vector<bag_events::MessagesLostInfo>>();

@@ -86,6 +86,24 @@ void Writer::create_topic(
   writer_impl_->create_topic(topic_with_type, message_definition);
 }
 
+void Writer::create_transient_local_topic(
+  const rosbag2_storage::TopicMetadata & topic_with_type,
+  size_t num_last_messages)
+{
+  std::lock_guard<std::mutex> writer_lock(writer_mutex_);
+  writer_impl_->create_transient_local_topic(topic_with_type, num_last_messages);
+}
+
+void Writer::create_transient_local_topic(
+  const rosbag2_storage::TopicMetadata & topic_with_type,
+  size_t num_last_messages,
+  const rosbag2_storage::MessageDefinition & message_definition)
+{
+  std::lock_guard<std::mutex> writer_lock(writer_mutex_);
+  writer_impl_->create_transient_local_topic(
+    topic_with_type, num_last_messages, message_definition);
+}
+
 void Writer::remove_topic(const rosbag2_storage::TopicMetadata & topic_with_type)
 {
   std::lock_guard<std::mutex> writer_lock(writer_mutex_);
