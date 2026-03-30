@@ -68,15 +68,17 @@ void TransientLocalMessagesCache::push(
   }
 }
 
-std::vector<rosbag2_storage::SerializedBagMessageConstSharedPtr>
+std::vector<rosbag2_storage::SerializedBagMessageSharedPtr>
 TransientLocalMessagesCache::get_messages_sorted_by_timestamp() const
 {
-  std::vector<rosbag2_storage::SerializedBagMessageConstSharedPtr> messages;
+  std::vector<rosbag2_storage::SerializedBagMessageSharedPtr> messages;
   messages.reserve(this->size());
   {
     std::lock_guard<std::mutex> lock(mutex_);
     for (const auto & [_, topic_queue] : topic_queues_) {
-      messages.insert(messages.end(), topic_queue.messages.begin(), topic_queue.messages.end());
+      for (const auto & msg : topic_queue.messages) {
+        messages.emplace_back(std::make_shared<rosbag2_storage::SerializedBagMessage>(*msg));
+      }
     }
   }
 

@@ -67,7 +67,7 @@ public:
   /// \brief Retrieve all cached messages across all topics, sorted by timestamp.
   /// Messages are sorted by recv_timestamp first, then send_timestamp, then topic_name.
   /// \return A vector of cached messages sorted by timestamp.
-  std::vector<rosbag2_storage::SerializedBagMessageConstSharedPtr>
+  std::vector<rosbag2_storage::SerializedBagMessageSharedPtr>
   get_messages_sorted_by_timestamp() const;
 
   /// \brief Clear all cached messages from all topics without removing the topic registrations.

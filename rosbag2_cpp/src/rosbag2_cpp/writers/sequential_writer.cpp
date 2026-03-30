@@ -568,12 +568,10 @@ void SequentialWriter::write_transient_local_messages(
     return;
   }
 
-  // Adjust timestamps directly in the transient_messages vector to avoid an extra allocation.
-  for (auto & msg_ptr : transient_messages) {
-    auto mutable_msg = std::make_shared<rosbag2_storage::SerializedBagMessage>(*msg_ptr);
-    mutable_msg->recv_timestamp = recv_timestamp;
-    mutable_msg->send_timestamp = send_timestamp;
-    msg_ptr = std::move(mutable_msg);
+  // Adjust timestamps directly on the mutable messages returned by the cache.
+  for (auto & msg : transient_messages) {
+    msg->recv_timestamp = recv_timestamp;
+    msg->send_timestamp = send_timestamp;
   }
 
   storage_->write_messages(transient_messages);
@@ -744,12 +742,11 @@ void SequentialWriter::write_messages(
     // Messages inside the window are already present in the snapshot buffer.
     // Adjusted transient messages all receive the snapshot-earliest timestamp, so they
     // naturally sort before (or equal to) the first snapshot message — no extra sort needed.
-    for (const auto & transient_message : transient_messages) {
+    for (auto & transient_message : transient_messages) {
       if (transient_message->recv_timestamp < snapshot_earliest_recv_timestamp) {
-        auto msg = std::make_shared<rosbag2_storage::SerializedBagMessage>(*transient_message);
-        msg->recv_timestamp = snapshot_earliest_recv_timestamp;
-        msg->send_timestamp = snapshot_earliest_send_timestamp;
-        merged_messages.emplace_back(std::move(msg));
+        transient_message->recv_timestamp = snapshot_earliest_recv_timestamp;
+        transient_message->send_timestamp = snapshot_earliest_send_timestamp;
+        merged_messages.emplace_back(std::move(transient_message));
       }
     }
 
