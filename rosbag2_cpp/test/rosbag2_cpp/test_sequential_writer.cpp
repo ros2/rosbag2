@@ -1294,14 +1294,15 @@ TEST_F(SequentialWriterTest, split_prepends_transient_local_messages_to_next_bag
   writer_->write(first_message);
   writer_->write(second_message);
 
-  std::vector<std::shared_ptr<const rosbag2_storage::SerializedBagMessage>> prepended_messages;
+  rosbag2_storage::SerializedBagMessages prepended_messages;
   EXPECT_CALL(*storage_,
-    write(An<const std::vector<std::shared_ptr<const rosbag2_storage::SerializedBagMessage>> &>()))
+    write_messages(An<const rosbag2_storage::SerializedBagMessages &>()))
   .WillOnce(Invoke(
       [&prepended_messages](
-        const std::vector<std::shared_ptr<const rosbag2_storage::SerializedBagMessage>> & messages)
+        const rosbag2_storage::SerializedBagMessages & messages)
       {
         prepended_messages = messages;
+        return std::vector<size_t>{};
       }));
 
   writer_->split_bagfile();
@@ -1356,14 +1357,13 @@ TEST_F(SequentialWriterTest, snapshot_merge_prepends_transient_local_messages)
   sequential_writer->test_write_messages({data_msg});
 
   // Verify: latched message was merged in with adjusted timestamps.
-  // Both messages end up with recv_timestamp=200 (latched adjusted to T_earliest),
-  // so stable_sort orders by topic name: "data_topic" < "latched_topic".
+  // Transient messages are prepended before snapshot messages, so latched comes first.
   ASSERT_EQ(written.size(), 2u);
-  EXPECT_EQ(written[0]->topic_name, data_topic);
-  EXPECT_EQ(written[0]->recv_timestamp, 200);
-  EXPECT_EQ(written[1]->topic_name, latched_topic);
-  EXPECT_EQ(written[1]->recv_timestamp, 200);  // adjusted to T_earliest
-  EXPECT_EQ(written[1]->send_timestamp, 200);
+  EXPECT_EQ(written[0]->topic_name, latched_topic);
+  EXPECT_EQ(written[0]->recv_timestamp, 200);  // adjusted to T_earliest
+  EXPECT_EQ(written[0]->send_timestamp, 200);
+  EXPECT_EQ(written[1]->topic_name, data_topic);
+  EXPECT_EQ(written[1]->recv_timestamp, 200);
 }
 
 TEST_F(SequentialWriterTest, circular_logging_limits_number_of_files_by_max_bag_files)
