@@ -1825,6 +1825,13 @@ rclcpp::QoS RecorderImpl::subscription_qos_for_topic(const std::string & topic_n
     RCLCPP_INFO_STREAM(
       node->get_logger(),
       "Overriding subscription profile for " << topic_name);
+    if (record_options_.repeat_transient_local_messages.count(topic_name) > 0) {
+      RCLCPP_WARN_STREAM(
+        node->get_logger(),
+        "Topic '" << topic_name << "' has both a QoS profile override and "
+        "repeat-transient-local enabled. The QoS override takes precedence; "
+        "ensure it includes transient_local durability to receive latched messages.");
+    }
     return topic_qos_profile_overrides_.at(topic_name);
   }
 
