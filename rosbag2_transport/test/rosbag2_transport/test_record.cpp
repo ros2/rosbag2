@@ -425,6 +425,43 @@ TEST_F(RecordIntegrationTestFixture, receives_latched_messages)
   EXPECT_FALSE(recorded_messages.empty());
 }
 
+TEST_F(RecordIntegrationTestFixture, repeat_latched_topics_register_requested_depth)
+{
+  auto string_message = get_messages_strings()[1];
+  std::string topic = "/latched_chatter";
+
+  rosbag2_test_common::PublicationManager pub_manager;
+  pub_manager.setup_publisher(topic, string_message, 1, rclcpp::QoS(1).transient_local());
+
+  rosbag2_transport::RecordOptions record_options;
+  record_options.topics = {topic};
+  record_options.rmw_serialization_format = "rmw_format";
+  record_options.topic_polling_interval = 100ms;
+  record_options.repeat_transient_local_messages[topic] = 3;
+
+  auto recorder = std::make_shared<rosbag2_transport::Recorder>(
+    std::move(writer_), storage_options_, record_options);
+  recorder->record();
+
+  start_async_spin(recorder);
+  auto cleanup_process_handle = rcpputils::make_scope_exit([&]() {stop_spinning();});
+
+  ASSERT_TRUE(pub_manager.wait_for_matched(topic.c_str()));
+
+  auto & writer = recorder->get_writer_handle();
+  MockSequentialWriter & mock_writer =
+    static_cast<MockSequentialWriter &>(writer.get_implementation_handle());
+
+  auto ret = rosbag2_test_common::wait_until_condition(
+    [&mock_writer, &topic]() {
+      auto transient_local_topic_depths = mock_writer.transient_local_topic_depths();
+      auto topic_depth = transient_local_topic_depths.find(topic);
+      return topic_depth != transient_local_topic_depths.end() && topic_depth->second == 3;
+    },
+    std::chrono::seconds(5));
+  EXPECT_TRUE(ret) << "failed to register transient local repeat depth for topic";
+}
+
 TEST_F(RecordIntegrationTestFixture, mixed_qos_subscribes) {
   // Ensure that rosbag2 subscribes to publishers that offer different durability policies
   const size_t arbitrary_history = 5;

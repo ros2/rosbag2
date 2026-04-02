@@ -190,6 +190,36 @@ def test_recorder_custom_data_list_argument(test_arguments_parser):
     assert output_path.as_posix() == args.output
 
 
+def test_recorder_repeat_transient_local_list_argument(test_arguments_parser):
+    """Test recorder --repeat-transient-local list argument parser."""
+    output_path = RESOURCES_PATH / 'ros2bag_tmp_file'
+    args = test_arguments_parser.parse_args(
+        ['--repeat-transient-local', '/map=2', '/tf_static', '--all-topics',
+         '--output', output_path.as_posix()]
+    )
+    assert ['/map=2', '/tf_static'] == args.repeat_transient_local
+
+    uri = args.output or datetime.datetime.now().strftime('rosbag2_%Y_%m_%d-%H_%M_%S')
+    error_str = validate_parsed_arguments(args, uri)
+    assert error_str is None
+    assert {'/map': 2, '/tf_static': 1} == args.repeat_transient_local_messages
+
+
+def test_recorder_repeat_transient_local_invalid_depth_argument(test_arguments_parser):
+    """Test recorder --repeat-transient-local invalid depth fails validation."""
+    output_path = RESOURCES_PATH / 'ros2bag_tmp_file'
+    args = test_arguments_parser.parse_args(
+        ['--repeat-transient-local', '/map=0', '--all-topics', '--output', output_path.as_posix()]
+    )
+
+    uri = args.output or datetime.datetime.now().strftime('rosbag2_%Y_%m_%d-%H_%M_%S')
+    error_str = validate_parsed_arguments(args, uri)
+    assert error_str is not None
+    expected_output = 'Depth must be greater than 0'
+    matches = expected_output in error_str
+    assert matches, ERROR_STRING_MSG.format(expected_output, error_str)
+
+
 def test_recorder_validate_exclude_regex_needs_inclusive_args(test_arguments_parser):
     """Test that --exclude-regex needs inclusive arguments."""
     output_path = RESOURCES_PATH / 'ros2bag_tmp_file'

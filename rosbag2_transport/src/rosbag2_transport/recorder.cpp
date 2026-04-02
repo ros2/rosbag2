@@ -576,6 +576,16 @@ RecorderImpl::RecorderImpl(
       node->get_namespace(), false);
   }
 
+  std::unordered_map<std::string, size_t> expanded_repeat_transient_local_messages;
+  for (const auto & [topic_name, depth] : record_options_.repeat_transient_local_messages) {
+    auto expanded_topic_name = rclcpp::expand_topic_or_service_name(
+      topic_name, node->get_name(),
+      node->get_namespace(), false);
+    expanded_repeat_transient_local_messages[expanded_topic_name] = depth;
+  }
+  record_options_.repeat_transient_local_messages =
+    std::move(expanded_repeat_transient_local_messages);
+
   for (auto & service : record_options_.services) {
     service = rclcpp::expand_topic_or_service_name(
       service, node->get_name(),
@@ -1669,7 +1679,12 @@ void RecorderImpl::subscribe_topic(const rosbag2_storage::TopicMetadata & topic)
   // Need to create topic in writer before we are trying to create subscription. Since in
   // callback for subscription we are calling writer_->write(bag_message); and it could happened
   // that callback called before we reached out the line: writer_->create_topic(topic)
-  writer_->create_topic(topic);
+  if (record_options_.repeat_transient_local_messages.count(topic.name) > 0) {
+    writer_->create_transient_local_topic(
+      topic, record_options_.repeat_transient_local_messages.at(topic.name));
+  } else {
+    writer_->create_topic(topic);
+  }
 
   rosbag2_storage::Rosbag2QoS subscription_qos{subscription_qos_for_topic(topic.name)};
 
@@ -1812,6 +1827,14 @@ rclcpp::QoS RecorderImpl::subscription_qos_for_topic(const std::string & topic_n
       "Overriding subscription profile for " << topic_name);
     return topic_qos_profile_overrides_.at(topic_name);
   }
+
+  if (record_options_.repeat_transient_local_messages.count(topic_name) > 0) {
+    auto qos = rosbag2_storage::Rosbag2QoS::adapt_request_to_offers(
+      topic_name, node->get_publishers_info_by_topic(topic_name));
+    qos.transient_local();
+    return qos;
+  }
+
   return rosbag2_storage::Rosbag2QoS::adapt_request_to_offers(
     topic_name, node->get_publishers_info_by_topic(topic_name));
 }

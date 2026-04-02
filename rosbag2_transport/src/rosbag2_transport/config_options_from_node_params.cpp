@@ -380,6 +380,40 @@ RecordOptions get_record_options_from_node_params(rclcpp::Node & node)
   record_options.disable_keyboard_controls =
     node.declare_parameter<bool>("record.disable_keyboard_controls", false);
 
+  auto repeat_transient_local = node.declare_parameter<std::vector<std::string>>(
+    "record.repeat_transient_local", std::vector<std::string>());
+  for (const auto & entry : repeat_transient_local) {
+    auto delimiter_pos = entry.find("=", 0);
+    std::string topic_name;
+    size_t queue_depth = 1;
+    if (delimiter_pos == std::string::npos) {
+      topic_name = entry;
+    } else {
+      topic_name = entry.substr(0, delimiter_pos);
+      auto depth_string = entry.substr(delimiter_pos + 1);
+      if (depth_string.empty()) {
+        throw std::invalid_argument(
+                "record.repeat_transient_local expects entries in <topic> or <topic>=<depth> "
+                "format.");
+      }
+      try {
+        queue_depth = std::stoul(depth_string);
+      } catch (const std::exception &) {
+        throw std::invalid_argument(
+                "record.repeat_transient_local depth must be a positive integer.");
+      }
+    }
+    if (topic_name.empty()) {
+      throw std::invalid_argument(
+              "record.repeat_transient_local topic name cannot be empty.");
+    }
+    if (queue_depth == 0) {
+      throw std::invalid_argument(
+              "record.repeat_transient_local depth must be greater than 0.");
+    }
+    record_options.repeat_transient_local_messages[topic_name] = queue_depth;
+  }
+
   record_options.use_sim_time = node.get_parameter("use_sim_time").get_value<bool>();
 
   if (record_options.use_sim_time && record_options.is_discovery_disabled) {
