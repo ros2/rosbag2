@@ -38,32 +38,36 @@ from rosbag2_py import StorageOptions
 import yaml
 
 
+def split_key_value(entry, default_value=''):
+    """Split a 'key=value' string. Returns (key, value) or (entry, default_value) if no '='."""
+    if '=' in entry:
+        key, value = entry.split('=', 1)
+        return key, value
+    return entry, default_value
+
+
 def parse_repeat_transient_local_topics(values):
     repeat_topics = {}
     if not values:
         return repeat_topics
 
     for value in values:
-        topic = value
-        depth = 1
-        if '=' in value:
-            topic, parsed_depth = value.split('=', 1)
-            if not parsed_depth:
-                raise ValueError(
-                    f'Invalid value for --repeat-transient-local: "{value}". '
-                    'Expected format <topic> or <topic>=<depth>.')
-            try:
-                depth = int(parsed_depth)
-            except ValueError as exc:
-                raise ValueError(
-                    f'Invalid depth for --repeat-transient-local: "{value}". '
-                    'Depth must be a positive integer.') from exc
+        topic, depth_str = split_key_value(value, '1')
 
         if not topic:
             raise ValueError(
                 f'Invalid value for --repeat-transient-local: "{value}". '
                 'Topic name must not be empty.')
-
+        if not depth_str:
+            raise ValueError(
+                f'Invalid value for --repeat-transient-local: "{value}". '
+                'Expected format <topic> or <topic>=<depth>.')
+        try:
+            depth = int(depth_str)
+        except ValueError as exc:
+            raise ValueError(
+                f'Invalid depth for --repeat-transient-local: "{value}". '
+                'Depth must be a positive integer.') from exc
         if depth <= 0:
             raise ValueError(
                 f'Invalid depth for --repeat-transient-local: "{value}". '
@@ -431,8 +435,7 @@ class RecordVerb(VerbExtension):
         # Prepare custom_data dictionary
         custom_data = {}
         if args.custom_data:
-            key_value_pairs = [pair.split('=') for pair in args.custom_data]
-            custom_data = {pair[0]: pair[1] for pair in key_value_pairs}
+            custom_data = dict(split_key_value(pair) for pair in args.custom_data)
 
         static_topics_uri = ''
         if args.static_topics_path:
