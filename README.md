@@ -110,6 +110,41 @@ _Splitting by time_: `ros2 bag record -a -d 9000` will split the bag files after
 
 If both splitting by size and duration are enabled, the bag will split at whichever threshold is reached first.
 
+#### Repeating transient-local messages on split and snapshot
+
+When a bag file is split or a snapshot is taken, consumers of the new file may need certain
+transient-local (latched) messages — such as `/map` or `/tf_static` — to be present, even if
+they were not published again during the new file's timespan.
+
+The `--repeat-transient-local` option tells the recorder to retain the last N messages for
+specified topics and prepend them when a new bag file starts (on split) or when a snapshot is
+written.
+
+Format: `--repeat-transient-local <topic>[=<depth>] [...]`
+
+The depth controls how many of the most recent messages are retained per topic. If omitted, the
+default depth is `1`.
+
+Examples:
+
+```bash
+# Repeat last message of /map and /tf_static on each bag split
+$ ros2 bag record -a --repeat-transient-local /map /tf_static
+
+# Repeat last 5 messages of /tf_static, last 1 of /map
+$ ros2 bag record -a --repeat-transient-local /tf_static=5 /map
+
+# Combined with snapshot mode
+$ ros2 bag record -a --snapshot-mode --max-cache-size 100000000 --repeat-transient-local /map
+```
+
+This option also works via node parameters as `record.repeat_transient_local`, accepting a list
+of strings in the same `<topic>` or `<topic>=<depth>` format.
+
+**Note**: If a topic has both a QoS profile override (via `--qos-profile-overrides-path`) and is
+listed in `--repeat-transient-local`, the QoS override takes precedence. Ensure the override
+includes `transient_local` durability to receive latched messages.
+
 #### Recording with compression
 
 By default Rosbag2 does not record with compression enabled. However, compression can be specified using the following CLI options.
