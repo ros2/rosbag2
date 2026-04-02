@@ -780,7 +780,7 @@ void SequentialWriter::write_messages(
       }
     }
 
-    merged_messages.insert(merged_messages.end(), messages.begin(), messages.end());
+    std::copy(messages.begin(), messages.end(), std::back_inserter(merged_messages));
     messages_to_write = &merged_messages;
   }
 
