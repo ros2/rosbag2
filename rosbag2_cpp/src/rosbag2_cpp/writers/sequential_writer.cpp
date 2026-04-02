@@ -514,7 +514,7 @@ void SequentialWriter::write(std::shared_ptr<const rosbag2_storage::SerializedBa
   }
 
   bool message_lost = false;
-  if (storage_options_.max_cache_size == 0u) {
+  if (storage_options_.max_cache_size == 0u && storage_options_.max_cache_duration == 0u) {
     // If cache size is set to zero, we write to storage directly
     if (storage_->write_message(converted_msg)) {
       metadata_.files.back().message_count++;
