@@ -15,6 +15,7 @@
 #ifndef ROSBAG2_CPP__WRITER_HPP_
 #define ROSBAG2_CPP__WRITER_HPP_
 
+#include <cstddef>
 #include <memory>
 #include <mutex>
 #include <string>
@@ -114,6 +115,15 @@ public:
    */
   void create_topic(
     const rosbag2_storage::TopicMetadata & topic_with_type,
+    const rosbag2_storage::MessageDefinition & message_definition);
+
+  void create_transient_local_topic(
+    const rosbag2_storage::TopicMetadata & topic_with_type,
+    size_t num_last_messages);
+
+  void create_transient_local_topic(
+    const rosbag2_storage::TopicMetadata & topic_with_type,
+    size_t num_last_messages,
     const rosbag2_storage::MessageDefinition & message_definition);
 
   /**

@@ -1263,6 +1263,135 @@ TEST_F(SequentialWriterTest, split_event_calls_on_writer_close)
   EXPECT_TRUE(opened_file.empty());
 }
 
+TEST_F(SequentialWriterTest, split_prepends_transient_local_messages_to_next_bag)
+{
+  auto sequential_writer = std::make_unique<rosbag2_cpp::writers::SequentialWriter>(
+    std::move(storage_factory_), converter_factory_, std::move(metadata_io_));
+  writer_ = std::make_unique<rosbag2_cpp::Writer>(std::move(sequential_writer));
+
+  storage_options_.max_cache_size = 0;
+  writer_->open(storage_options_, {"rmw_format", "rmw_format"});
+
+  const std::string topic_name = "latched_topic";
+  writer_->create_transient_local_topic({0u, topic_name, "test_msgs/BasicTypes", "", {}, ""}, 1);
+
+  auto first_message = std::make_shared<rosbag2_storage::SerializedBagMessage>();
+  first_message->topic_name = topic_name;
+  first_message->recv_timestamp = 100;
+  first_message->send_timestamp = 100;
+
+  auto second_message = std::make_shared<rosbag2_storage::SerializedBagMessage>();
+  second_message->topic_name = topic_name;
+  second_message->recv_timestamp = 200;
+  second_message->send_timestamp = 200;
+
+  rosbag2_storage::SerializedBagMessages prepended_messages;
+  // Expected to call storage_->write_messages(msgs) once from write_transient_local_messages()
+  // because we configured writer to not use cache and messages before split will be written with
+  // via storage_->write_message(msg) directly.
+  EXPECT_CALL(*storage_, write_messages(An<const rosbag2_storage::SerializedBagMessages &>()))
+  .WillOnce(Invoke(
+      [&prepended_messages](const rosbag2_storage::SerializedBagMessages & messages)
+      {
+        prepended_messages = messages;
+        return std::vector<size_t>{};
+      })
+  );
+  EXPECT_CALL(*storage_,
+    write_message(An<std::shared_ptr<const rosbag2_storage::SerializedBagMessage>>())).Times(2);
+
+  writer_->write(first_message);
+  writer_->write(second_message);
+
+  writer_->split_bagfile();
+
+  ASSERT_EQ(prepended_messages.size(), 1u);
+  EXPECT_EQ(prepended_messages[0]->topic_name, topic_name);
+  EXPECT_EQ(prepended_messages[0]->recv_timestamp, 200);
+  EXPECT_EQ(prepended_messages[0]->send_timestamp, 200);
+}
+
+TEST_F(SequentialWriterTest, snapshot_merge_prepends_transient_local_messages)
+{
+  rosbag2_storage::SerializedBagMessages written_msgs;
+
+  EXPECT_CALL(*storage_, write_messages(An<const rosbag2_storage::SerializedBagMessages &>()))
+  .WillOnce(Invoke(
+      [&written_msgs](const rosbag2_storage::SerializedBagMessages & messages)
+      {
+        written_msgs = messages;
+        return std::vector<size_t>{};
+      })
+  );
+
+  auto sequential_writer = std::make_unique<SequentialWriterForTest>(
+    std::move(storage_factory_), converter_factory_, std::move(metadata_io_));
+
+  storage_options_.max_cache_size = 0;  // Limit cache only by duration
+  storage_options_.max_cache_duration = 1;  // Limit cache duration to 1 second
+  storage_options_.snapshot_mode = true;
+  sequential_writer->open(storage_options_, {"rmw_format", "rmw_format"});
+
+  const std::string latched_topic = "latched_topic";
+  const std::string data_topic = "data_topic";
+
+  sequential_writer->create_transient_local_topic(
+    {0u, latched_topic, "test_msgs/BasicTypes", "", {}, ""}, 2);
+  sequential_writer->create_topic({0u, data_topic, "test_msgs/BasicTypes", "", {}, ""});
+
+  // Write a latched message to populate the transient local cache
+  auto latched_msg = std::make_shared<rosbag2_storage::SerializedBagMessage>();
+  latched_msg->topic_name = latched_topic;
+  latched_msg->recv_timestamp = 100;
+  latched_msg->send_timestamp = 100;
+  latched_msg->serialized_data = rosbag2_storage::make_serialized_message("A", 1);
+  sequential_writer->write(latched_msg);
+
+  // Simulate a snapshot buffer where the latched message was evicted due to cache duration limit,
+  // but still exists in the transient local cache.
+  auto data_msg = std::make_shared<rosbag2_storage::SerializedBagMessage>();
+  data_msg->topic_name = data_topic;
+  data_msg->recv_timestamp = RCUTILS_S_TO_NS(2);
+  data_msg->send_timestamp = RCUTILS_S_TO_NS(2);
+  data_msg->serialized_data = rosbag2_storage::make_serialized_message("B", 1);
+  sequential_writer->write(data_msg);
+
+  latched_msg = std::make_shared<rosbag2_storage::SerializedBagMessage>();
+  latched_msg->topic_name = latched_topic;
+  latched_msg->recv_timestamp = RCUTILS_S_TO_NS(2.5);
+  latched_msg->send_timestamp = RCUTILS_S_TO_NS(2.5);
+  latched_msg->serialized_data = rosbag2_storage::make_serialized_message("C", 1);
+  sequential_writer->write(latched_msg);
+
+  data_msg = std::make_shared<rosbag2_storage::SerializedBagMessage>();
+  data_msg->topic_name = data_topic;
+  data_msg->recv_timestamp = RCUTILS_S_TO_NS(3);
+  data_msg->send_timestamp = RCUTILS_S_TO_NS(3);
+  data_msg->serialized_data = rosbag2_storage::make_serialized_message("D", 1);
+  sequential_writer->write(data_msg);
+
+  sequential_writer->take_snapshot();
+
+  // Verify: Transient local message was merged in with adjusted timestamps.
+  // Transient messages are prepended before snapshot messages, so transient messages comes first.
+  ASSERT_EQ(written_msgs.size(), 4u);
+  EXPECT_EQ(written_msgs[0]->topic_name, latched_topic);
+  EXPECT_EQ(written_msgs[0]->recv_timestamp, RCUTILS_S_TO_NS(2));  // adjusted to T_earliest
+  EXPECT_EQ(written_msgs[0]->send_timestamp, RCUTILS_S_TO_NS(2));
+
+  EXPECT_EQ(written_msgs[1]->topic_name, data_topic);
+  EXPECT_EQ(written_msgs[1]->recv_timestamp, RCUTILS_S_TO_NS(2));
+  EXPECT_EQ(written_msgs[1]->send_timestamp, RCUTILS_S_TO_NS(2));
+
+  EXPECT_EQ(written_msgs[2]->topic_name, latched_topic);
+  EXPECT_EQ(written_msgs[2]->recv_timestamp, RCUTILS_S_TO_NS(2.5));
+  EXPECT_EQ(written_msgs[2]->send_timestamp, RCUTILS_S_TO_NS(2.5));
+
+  EXPECT_EQ(written_msgs[3]->topic_name, data_topic);
+  EXPECT_EQ(written_msgs[3]->recv_timestamp, RCUTILS_S_TO_NS(3));
+  EXPECT_EQ(written_msgs[3]->send_timestamp, RCUTILS_S_TO_NS(3));
+}
+
 TEST_F(SequentialWriterTest, circular_logging_limits_number_of_files_by_max_bag_files)
 {
   // Configure frequent splits and a small retention window

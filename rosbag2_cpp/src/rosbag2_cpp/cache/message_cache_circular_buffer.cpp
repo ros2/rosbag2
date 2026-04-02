@@ -51,6 +51,9 @@ bool MessageCacheCircularBuffer::push(CacheBufferInterface::buffer_element_t msg
   }
 
   // Remove any old items until there is room for a new message
+  // Note that the possible size_t underflow during subtraction guarded by the check
+  // msg->serialized_data->buffer_length > max_bytes_size_ above, which guarantees that
+  // msg->serialized_data->buffer_length is less than or equal to max_bytes_size_.
   while (max_bytes_size_ > 0 &&
     buffer_bytes_size_ > (max_bytes_size_ - msg->serialized_data->buffer_length))
   {
@@ -59,7 +62,7 @@ bool MessageCacheCircularBuffer::push(CacheBufferInterface::buffer_element_t msg
   }
   // Remove old messages until the time span between the oldest and newest message
   // is less than or equal to max_cache_duration_ns_.
-  if (max_cache_duration_ns_ > 0 && buffer_.size() > 0) {
+  if (max_cache_duration_ns_ > 0 && !buffer_.empty()) {
     // Note: the oldest messages are at the front of the deque
     auto prospected_buffer_duration = msg->recv_timestamp - buffer_.front()->recv_timestamp;
     if (prospected_buffer_duration < 0) {
@@ -84,11 +87,12 @@ bool MessageCacheCircularBuffer::push(CacheBufferInterface::buffer_element_t msg
         return static_cast<uint64_t>(prospected_buffer_duration) > max_cache_duration_ns_;
       };
 
-    while (buffer_.size() > 0 && prospected_buffer_duration_exceed_limit()) {
+    while (!buffer_.empty() && prospected_buffer_duration_exceed_limit()) {
       buffer_bytes_size_ -= buffer_.front()->serialized_data->buffer_length;
       buffer_.pop_front();
       // Note: the oldest messages are at the front of the deque
-      prospected_buffer_duration = msg->recv_timestamp - buffer_.front()->recv_timestamp;
+      prospected_buffer_duration =
+        buffer_.empty() ? 0 : msg->recv_timestamp - buffer_.front()->recv_timestamp;
     }
   }
   // Add a new message to the end of the buffer
