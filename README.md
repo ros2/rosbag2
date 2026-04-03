@@ -133,9 +133,6 @@ $ ros2 bag record -a --repeat-transient-local /map /tf_static
 
 # Repeat last 5 messages of /tf_static, last 1 of /map
 $ ros2 bag record -a --repeat-transient-local /tf_static=5 /map
-
-# Combined with snapshot mode
-$ ros2 bag record -a --snapshot-mode --max-cache-size 100000000 --repeat-transient-local /map
 ```
 
 This option also works via node parameters as `record.repeat_transient_local`, accepting a list

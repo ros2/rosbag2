@@ -425,7 +425,7 @@ TEST_F(RecordIntegrationTestFixture, receives_latched_messages)
   EXPECT_FALSE(recorded_messages.empty());
 }
 
-TEST_F(RecordIntegrationTestFixture, repeat_latched_topics_register_requested_depth)
+TEST_F(RecordIntegrationTestFixture, repeat_transient_local_topics_register_requested_depth)
 {
   auto string_message = get_messages_strings()[1];
   std::string topic = "/latched_chatter";

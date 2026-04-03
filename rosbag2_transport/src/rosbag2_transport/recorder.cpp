@@ -1825,25 +1825,34 @@ rclcpp::QoS RecorderImpl::subscription_qos_for_topic(const std::string & topic_n
     RCLCPP_INFO_STREAM(
       node->get_logger(),
       "Overriding subscription profile for " << topic_name);
-    if (record_options_.repeat_transient_local_messages.count(topic_name) > 0) {
+    if (record_options_.repeat_transient_local_messages.count(topic_name) > 0 &&
+      topic_qos_profile_overrides_.at(topic_name).get_rmw_qos_profile().durability !=
+      RMW_QOS_POLICY_DURABILITY_TRANSIENT_LOCAL)
+    {
       RCLCPP_WARN_STREAM(
         node->get_logger(),
-        "Topic '" << topic_name << "' has both a QoS profile override and "
-          "repeat-transient-local enabled. The QoS override takes precedence; "
-          "ensure it includes transient_local durability to receive latched messages.");
+        "Topic '" << topic_name << "' has a QoS profile override without transient_local "
+          "durability, but repeat-transient-local is enabled. The QoS override takes precedence; "
+          "repeat-transient-local will not work unless the override includes transient_local "
+          "durability.");
     }
     return topic_qos_profile_overrides_.at(topic_name);
   }
 
+  auto qos = rosbag2_storage::Rosbag2QoS::adapt_request_to_offers(
+    topic_name, node->get_publishers_info_by_topic(topic_name));
+
   if (record_options_.repeat_transient_local_messages.count(topic_name) > 0) {
-    auto qos = rosbag2_storage::Rosbag2QoS::adapt_request_to_offers(
-      topic_name, node->get_publishers_info_by_topic(topic_name));
+    if (qos.get_rmw_qos_profile().durability != RMW_QOS_POLICY_DURABILITY_TRANSIENT_LOCAL) {
+      RCLCPP_WARN_STREAM(
+        node->get_logger(),
+        "Overriding QoS durability to transient_local for topic '" << topic_name <<
+          "' because repeat-transient-local is enabled.");
+    }
     qos.transient_local();
-    return qos;
   }
 
-  return rosbag2_storage::Rosbag2QoS::adapt_request_to_offers(
-    topic_name, node->get_publishers_info_by_topic(topic_name));
+  return qos;
 }
 
 void RecorderImpl::warn_if_new_qos_for_subscribed_topic(const std::string & topic_name)
