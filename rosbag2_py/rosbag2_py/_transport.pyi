@@ -120,8 +120,8 @@ class RecordOptions:
     is_discovery_disabled: bool
     node_prefix: str
     output_serialization_format: str
-    repeat_transient_local_messages: Dict[str, int]
     regex: str
+    repeat_transient_local_messages: Dict[str, int]
     rmw_serialization_format: str
     services: List[str]
     start_paused: bool
