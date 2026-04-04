@@ -38,6 +38,46 @@ from rosbag2_py import StorageOptions
 import yaml
 
 
+def split_key_value(entry, default_value=''):
+    """Split a 'key=value' string. Returns (key, value) or (entry, default_value) if no '='."""
+    if '=' in entry:
+        key, value = entry.split('=', 1)
+        return key, value
+    return entry, default_value
+
+
+def parse_repeat_transient_local_topics(values):
+    repeat_topics = {}
+    if not values:
+        return repeat_topics
+
+    for value in values:
+        topic, depth_str = split_key_value(value, '1')
+
+        if not topic:
+            raise ValueError(
+                f'Invalid value for --repeat-transient-local: "{value}". '
+                'Topic name must not be empty.')
+        if not depth_str:
+            raise ValueError(
+                f'Invalid value for --repeat-transient-local: "{value}". '
+                'Expected format <topic> or <topic>=<depth>.')
+        try:
+            depth = int(depth_str)
+        except ValueError as exc:
+            raise ValueError(
+                f'Invalid depth for --repeat-transient-local: "{value}". '
+                'Depth must be a positive integer.') from exc
+        if depth <= 0:
+            raise ValueError(
+                f'Invalid depth for --repeat-transient-local: "{value}". '
+                'Depth must be greater than 0.')
+
+        repeat_topics[topic] = depth
+
+    return repeat_topics
+
+
 def add_recorder_arguments(parser: ArgumentParser) -> None:
     parser.formatter_class = SplitLineFormatter
     writer_choices = get_registered_writers()
@@ -209,6 +249,11 @@ def add_recorder_arguments(parser: ArgumentParser) -> None:
              'the "/rosbag2_recorder/snapshot" service is called. e.g. \n '
              'ros2 service call /rosbag2_recorder/snapshot rosbag2_interfaces/Snapshot')
     parser.add_argument(
+        '--repeat-transient-local', type=str, default=[], metavar='Topic[=Depth]', nargs='+',
+        help='Space-delimited list of transient-local topics whose last messages should be '
+             'prepended on bag split and snapshot writes. Format: <topic> or <topic>=<depth>. '
+             'Default depth is 1 when omitted.')
+    parser.add_argument(
         '--log-level', type=str, default='info',
         choices=['debug', 'info', 'warn', 'error', 'fatal'],
         help='Logging level.')
@@ -346,6 +391,12 @@ def validate_parsed_arguments(args, uri) -> str:
         return print_error('In snapshot mode, either the max_cache_duration or max_cache_size'
                            ' shall not be set to zero.')
 
+    try:
+        args.repeat_transient_local_messages = parse_repeat_transient_local_topics(
+            args.repeat_transient_local)
+    except ValueError as exc:
+        return print_error(str(exc))
+
     return None
 
 
@@ -384,8 +435,7 @@ class RecordVerb(VerbExtension):
         # Prepare custom_data dictionary
         custom_data = {}
         if args.custom_data:
-            key_value_pairs = [pair.split('=') for pair in args.custom_data]
-            custom_data = {pair[0]: pair[1] for pair in key_value_pairs}
+            custom_data = dict(split_key_value(pair) for pair in args.custom_data)
 
         static_topics_uri = ''
         if args.static_topics_path:
@@ -444,6 +494,7 @@ class RecordVerb(VerbExtension):
         record_options.use_sim_time = args.use_sim_time
         record_options.disable_keyboard_controls = args.disable_keyboard_controls
         record_options.statistics_max_publishing_rate = args.stats_max_publishing_rate
+        record_options.repeat_transient_local_messages = args.repeat_transient_local_messages
 
         recorder = Recorder(storage_options, record_options, args.log_level, args.node_name)
 

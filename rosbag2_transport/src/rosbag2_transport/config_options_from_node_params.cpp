@@ -53,6 +53,17 @@ rcl_interfaces::msg::ParameterDescriptor float_param_description(
   return d;
 }
 
+/// Split a "key=value" string into a pair. If no '=' is found, returns {entry, default_value}.
+std::pair<std::string, std::string> split_key_value(
+  const std::string & entry, const std::string & default_value = "")
+{
+  auto pos = entry.find('=');
+  if (pos == std::string::npos) {
+    return {entry, default_value};
+  }
+  return {entry.substr(0, pos), entry.substr(pos + 1)};
+}
+
 template<typename T>
 typename std::enable_if<std::numeric_limits<T>::is_integer, T>::type
 declare_integer_node_params(
@@ -380,6 +391,33 @@ RecordOptions get_record_options_from_node_params(rclcpp::Node & node)
   record_options.disable_keyboard_controls =
     node.declare_parameter<bool>("record.disable_keyboard_controls", false);
 
+  auto repeat_transient_local = node.declare_parameter<std::vector<std::string>>(
+    "record.repeat_transient_local", std::vector<std::string>());
+  for (const auto & entry : repeat_transient_local) {
+    auto [topic_name, depth_str] = param_utils::split_key_value(entry, "1");
+    if (topic_name.empty()) {
+      throw std::invalid_argument(
+              "record.repeat_transient_local topic name cannot be empty.");
+    }
+    if (depth_str.empty()) {
+      throw std::invalid_argument(
+              "record.repeat_transient_local expects entries in <topic> or <topic>=<depth> "
+              "format.");
+    }
+    size_t queue_depth = 1;
+    try {
+      queue_depth = std::stoul(depth_str);
+    } catch (const std::exception &) {
+      throw std::invalid_argument(
+              "record.repeat_transient_local depth must be a positive integer.");
+    }
+    if (queue_depth == 0) {
+      throw std::invalid_argument(
+              "record.repeat_transient_local depth must be greater than 0.");
+    }
+    record_options.repeat_transient_local_messages[topic_name] = queue_depth;
+  }
+
   record_options.use_sim_time = node.get_parameter("use_sim_time").get_value<bool>();
 
   if (record_options.use_sim_time && record_options.is_discovery_disabled) {
@@ -442,15 +480,12 @@ get_storage_options_from_node_params(rclcpp::Node & node)
     "storage.custom_data",
     std::vector<std::string>());
   for (const auto & key_value_string : list_of_key_value_strings) {
-    auto delimiter_pos = key_value_string.find("=", 0);
-    if (delimiter_pos == std::string::npos) {
-      std::stringstream ss;
-      ss << "The storage.custom_data expected to be as list of the key=value strings. "
-        "The `=` not found in the " << key_value_string;
-      throw std::invalid_argument(ss.str());
+    auto [key_string, value_string] = param_utils::split_key_value(key_value_string);
+    if (value_string.empty() && key_value_string.find('=') == std::string::npos) {
+      throw std::invalid_argument(
+        "The storage.custom_data expected to be as list of the key=value strings. "
+        "The `=` not found in the " + key_value_string);
     }
-    auto key_string = key_value_string.substr(0, delimiter_pos);
-    auto value_string = key_value_string.substr(delimiter_pos + 1);
     storage_options.custom_data[key_string] = value_string;
   }
 
