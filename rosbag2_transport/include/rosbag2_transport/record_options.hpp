@@ -95,6 +95,13 @@ public:
   /// Empty map disables the feature.
   std::unordered_map<std::string, size_t> repeat_transient_local_messages{};
 
+  /// \brief Global retention depth for auto-detecting and repeating all transient-local topics
+  /// on split/snapshot. When non-zero, any subscribed topic whose publishers all offer
+  /// TRANSIENT_LOCAL durability will automatically be treated as a repeat-transient-local topic
+  /// with this depth, unless an explicit per-topic entry exists in
+  /// repeat_transient_local_messages. 0 disables the feature.
+  size_t repeat_all_transient_local_depth = 0;
+
   /// Note: Please don't forget to update the YAML serialization and deserialization logic in
   /// `record_options.cpp` and the test case `test_yaml_serialization_deserialization`
   /// in `test_record_options.cpp` when updating the fields in RecordOptions.

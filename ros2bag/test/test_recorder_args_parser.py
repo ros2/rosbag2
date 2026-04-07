@@ -220,6 +220,45 @@ def test_recorder_repeat_transient_local_invalid_depth_argument(test_arguments_p
     assert matches, ERROR_STRING_MSG.format(expected_output, error_str)
 
 
+def test_recorder_repeat_all_transient_local_argument(test_arguments_parser):
+    """Test recorder --repeat-all-transient-local argument parser."""
+    output_path = RESOURCES_PATH / 'ros2bag_tmp_file'
+    args = test_arguments_parser.parse_args(
+        ['--repeat-all-transient-local', '5', '--all-topics',
+         '--output', output_path.as_posix()]
+    )
+    assert 5 == args.repeat_all_transient_local
+
+    uri = args.output or datetime.datetime.now().strftime('rosbag2_%Y_%m_%d-%H_%M_%S')
+    error_str = validate_parsed_arguments(args, uri)
+    assert error_str is None
+
+
+def test_recorder_repeat_all_transient_local_with_per_topic(test_arguments_parser):
+    """Test --repeat-all-transient-local combined with --repeat-transient-local."""
+    output_path = RESOURCES_PATH / 'ros2bag_tmp_file'
+    args = test_arguments_parser.parse_args(
+        ['--repeat-all-transient-local', '5',
+         '--repeat-transient-local', '/map=10',
+         '--all-topics', '--output', output_path.as_posix()]
+    )
+    assert 5 == args.repeat_all_transient_local
+
+    uri = args.output or datetime.datetime.now().strftime('rosbag2_%Y_%m_%d-%H_%M_%S')
+    error_str = validate_parsed_arguments(args, uri)
+    assert error_str is None
+    assert {'/map': 10} == args.repeat_transient_local_messages
+
+
+def test_recorder_repeat_all_transient_local_default(test_arguments_parser):
+    """Test --repeat-all-transient-local defaults to 0."""
+    output_path = RESOURCES_PATH / 'ros2bag_tmp_file'
+    args = test_arguments_parser.parse_args(
+        ['--all-topics', '--output', output_path.as_posix()]
+    )
+    assert 0 == args.repeat_all_transient_local
+
+
 def test_recorder_validate_exclude_regex_needs_inclusive_args(test_arguments_parser):
     """Test that --exclude-regex needs inclusive arguments."""
     output_path = RESOURCES_PATH / 'ros2bag_tmp_file'

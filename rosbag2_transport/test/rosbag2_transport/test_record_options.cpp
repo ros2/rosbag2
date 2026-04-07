@@ -57,6 +57,7 @@ TEST(record_options, test_yaml_serialization_deserialization)
   original.disable_keyboard_controls = true;
   original.statistics_max_publishing_rate = 5.0f;
   original.repeat_transient_local_messages = {{"/map", 1}, {"/tf_static", 5}};
+  original.repeat_all_transient_local_depth = 3;
 
   auto node = YAML::convert<rosbag2_transport::RecordOptions>::encode(original);
 
@@ -99,6 +100,7 @@ TEST(record_options, test_yaml_serialization_deserialization)
   CHECK(static_topics_uri);
   CHECK(disable_keyboard_controls);
   CHECK(repeat_transient_local_messages);
+  CHECK(repeat_all_transient_local_depth);
   #undef CHECK
   ASSERT_FLOAT_EQ(original.statistics_max_publishing_rate,
                   reconstructed.statistics_max_publishing_rate);

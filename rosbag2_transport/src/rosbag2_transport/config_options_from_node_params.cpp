@@ -418,6 +418,15 @@ RecordOptions get_record_options_from_node_params(rclcpp::Node & node)
     record_options.repeat_transient_local_messages[topic_name] = queue_depth;
   }
 
+  auto repeat_all_transient_local_depth = node.declare_parameter<int>(
+    "record.repeat_all_transient_local", 0);
+  if (repeat_all_transient_local_depth < 0) {
+    throw std::invalid_argument(
+            "record.repeat_all_transient_local depth must be a non-negative integer.");
+  }
+  record_options.repeat_all_transient_local_depth =
+    static_cast<size_t>(repeat_all_transient_local_depth);
+
   record_options.use_sim_time = node.get_parameter("use_sim_time").get_value<bool>();
 
   if (record_options.use_sim_time && record_options.is_discovery_disabled) {

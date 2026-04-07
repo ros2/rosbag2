@@ -1676,6 +1676,28 @@ void RecorderImpl::subscribe_topic(const rosbag2_storage::TopicMetadata & topic)
   if (subscriptions_.find(topic.name) != subscriptions_.end()) {
     return;
   }
+  // Auto-detect transient-local topics when repeat_all_transient_local_depth is set
+  if (record_options_.repeat_all_transient_local_depth > 0 &&
+    record_options_.repeat_transient_local_messages.count(topic.name) == 0)
+  {
+    auto endpoint_infos = node->get_publishers_info_by_topic(topic.name);
+    if (!endpoint_infos.empty()) {
+      bool all_transient_local = std::all_of(
+        endpoint_infos.begin(), endpoint_infos.end(),
+        [](const rclcpp::TopicEndpointInfo & info) {
+          return info.qos_profile().get_rmw_qos_profile().durability ==
+                 RMW_QOS_POLICY_DURABILITY_TRANSIENT_LOCAL;
+        });
+      if (all_transient_local) {
+        RCLCPP_INFO_STREAM(node->get_logger(),
+          "Auto-detected transient-local topic '" << topic.name <<
+          "', enabling repeat-transient-local with depth " <<
+          record_options_.repeat_all_transient_local_depth << ".");
+        record_options_.repeat_transient_local_messages[topic.name] =
+          record_options_.repeat_all_transient_local_depth;
+      }
+    }
+  }
   // Need to create topic in writer before we are trying to create subscription. Since in
   // callback for subscription we are calling writer_->write(bag_message); and it could happened
   // that callback called before we reached out the line: writer_->create_topic(topic)
