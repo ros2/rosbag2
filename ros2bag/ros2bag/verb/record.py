@@ -254,9 +254,10 @@ def add_recorder_arguments(parser: ArgumentParser) -> None:
              'prepended on bag split and snapshot writes. Format: <topic> or <topic>=<depth>. '
              'Default depth is 1 when omitted.')
     parser.add_argument(
-        '--repeat-all-transient-local', type=int, default=0, metavar='Depth',
+        '--repeat-all-transient-local', type=int, default=0, const=1,
+        nargs='?', metavar='Depth',
         help='Automatically repeat last messages for all topics whose publishers offer '
-             'TRANSIENT_LOCAL durability QoS, with the specified depth. '
+             'TRANSIENT_LOCAL durability QoS. Depth defaults to 1 when omitted. '
              'Per-topic entries from --repeat-transient-local take precedence. '
              '0 disables (default).')
     parser.add_argument(
