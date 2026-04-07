@@ -121,8 +121,8 @@ class RecordOptions:
     node_prefix: str
     output_serialization_format: str
     regex: str
-    repeat_transient_local_messages: Dict[str, int]
     repeat_all_transient_local_depth: int
+    repeat_transient_local_messages: Dict[str, int]
     rmw_serialization_format: str
     services: List[str]
     start_paused: bool
