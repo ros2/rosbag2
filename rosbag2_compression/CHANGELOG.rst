@@ -2,6 +2,13 @@
 Changelog for package rosbag2_compression
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.26.10 (2026-04-07)
+--------------------
+* Fix for a possible race condition in compression writer on close
+  (`#2362 <https://github.com/ros2/rosbag2/issues/2362>`_)
+  (`#2381 <https://github.com/ros2/rosbag2/issues/2381>`_)
+* Contributors: Michael Orlov <morlovmr@gmail.com>, mergify[bot]
+
 0.26.9 (2025-08-11)
 -------------------
 
