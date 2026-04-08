@@ -1,0 +1,35 @@
+# Fully qualified topic names to subscribe the recorder to.
+string[] topics
+
+# Optional list of topic types matching the topics list; must be the same length as `topics` when provided.
+# Entries can be empty to request type discovery when the ROS graph has a single type.
+string[] topic_types
+
+# TODO(morlov): The topic_types are defined as an auxiliary list of types in addition to another
+# list of topics, aka topic_names. They should match by index. However, in practice, this is often a
+# source of numerous errors. Need redesign the message definition to move topic_name and topic_type
+# into a simple data structure, aka TopicNameAndType, and use it as an array in the
+# SubscribeToTopics.srv request instead of the separate topics and topic_types fields?
+
+---
+
+# TODO(morlov): The return code should return 0 on success and some error code in case of an error.
+# Please note that if there are no topics discovered and none of the topics got subscribed, this is
+# still a successful call. We put all missed topics into the unavailable_topics list in response.
+# However, if some topic has an invalid name or we failed to add the topic to the subscription for
+# any other reasons, - this is a failure situation, and the client needs to be aware that something
+# is wrong with the request via the return_code.
+# Also need to put information into the error_string about failure. Similar to what
+# we are logging in case of a failed attempt to do something.
+
+# Return code. Returns 1 when none of the topics from the request got subscribed to or in case of error, otherwise 0.
+int32 return_code
+
+# Error string. Empty if no error occurred.
+string error_string
+
+# Topics that got subscribed after handling the request. This includes topics that were already subscribed to before the call.
+string[] subscribed_topics
+
+# Topics that could not be subscribed to because they were unavailable, invalid or the type was ambiguous.
+string[] unavailable_topics

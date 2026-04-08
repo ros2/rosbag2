@@ -14,6 +14,7 @@
 
 #include <gmock/gmock.h>
 
+#include <algorithm>
 #include <atomic>
 #include <filesystem>
 #include <memory>
@@ -690,6 +691,42 @@ TEST_F(RecordIntegrationTestFixture, add_channel_with_message_definition)
     encoded_message_definition
   );
   recorder->stop();
+}
+
+TEST_F(RecordIntegrationTestFixture, get_subscribed_topics_reflects_subscription_state)
+{
+  auto string_message = get_messages_strings()[0];
+  const std::string test_topic = "/get_subscribed_topics_topic";
+
+  rosbag2_test_common::PublicationManager pub_manager;
+  pub_manager.setup_publisher(test_topic, string_message, 5);
+
+  rosbag2_transport::RecordOptions record_options{};
+  record_options.topics = {test_topic};
+  record_options.input_serialization_format = "rmw_format";
+  record_options.output_serialization_format = "rmw_format";
+  record_options.topic_polling_interval = 50ms;
+
+  auto recorder = std::make_shared<rosbag2_transport::Recorder>(
+    std::move(writer_), storage_options_, record_options);
+  recorder->record();
+
+  ASSERT_TRUE(pub_manager.wait_for_matched(test_topic.c_str()));
+  pub_manager.run_publishers();
+
+  auto observed = rosbag2_test_common::wait_until_condition(
+    [&recorder, &test_topic]() {
+      auto topics = recorder->get_subscribed_topics();
+      return std::find(topics.begin(), topics.end(), test_topic) != topics.end();
+    },
+    std::chrono::seconds(5));
+  ASSERT_TRUE(observed) << "Recorder did not report expected subscription in time";
+
+  auto topics = recorder->get_subscribed_topics();
+  EXPECT_THAT(topics, Contains(test_topic));
+
+  recorder->stop();
+  EXPECT_THAT(recorder->get_subscribed_topics(), IsEmpty());
 }
 
 TEST_F(RecordIntegrationTestFixture, write_message_writes_to_bag)

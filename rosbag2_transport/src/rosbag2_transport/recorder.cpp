@@ -38,6 +38,8 @@
 #include "rosbag2_cpp/bag_events.hpp"
 #include "rosbag2_cpp/service_utils.hpp"
 #include "rosbag2_cpp/writer.hpp"
+#include "rosbag2_interfaces/srv/get_subscribed_topics.hpp"
+#include "rosbag2_interfaces/srv/subscribe_to_topics.hpp"
 #include "rosbag2_interfaces/srv/snapshot.hpp"
 #include "rosbag2_storage/qos.hpp"
 #include "logging.hpp"
@@ -193,6 +195,8 @@ public:
   std::unordered_map<std::string, std::string> get_requested_or_available_topics();
 
   void read_static_topics() noexcept;
+
+  std::vector<std::string> get_subscribed_topics() const;
 
   /// Public members for access by wrapper
   std::unordered_set<std::string> topics_warned_about_incompatibility_;
@@ -384,6 +388,32 @@ private:
 
   void warn_if_new_qos_for_subscribed_topic(const std::string & topic_name);
 
+  /// \brief A helper function to collect requested topics with types from a inner subscribe_ to
+  /// topics request.
+  /// \param request The subscribe to topics service request.
+  /// \param response The subscribe to topics service response.
+  /// \param available_topics The currently available topics in the system.
+  /// \return A map of requested topic names to their resolved types.
+  template<typename RequestT, typename ResponseT>
+  std::unordered_map<std::string, std::string> collect_requested_topics_with_types(
+    const RequestT & request,
+    ResponseT & response,
+    const std::map<std::string, std::vector<std::string>> & available_topics);
+
+  /// \brief A helper function to resolve the topic type for a subscribe to topics request.
+  /// \param requested_type The requested type for the topic.
+  /// \param validated_topic The topic name for which the type is being resolved.
+  /// \param available_types The list of available types for the topic.
+  /// \param response The subscribe to topics service response.
+  /// \return An optional string containing the resolved topic type, or std::nullopt if resolution
+  /// failed.
+  template<typename ResponseT>
+  std::optional<std::string> resolve_topic_type_for_subscribe_request(
+    const std::string & requested_type,
+    const std::string & validated_topic,
+    const std::vector<std::string> & available_types,
+    ResponseT & response) const;
+
   /// \brief Helper wrapper function to set a service response as success.
   template<typename ResponseT>
   void set_service_success(
@@ -470,6 +500,9 @@ private:
   std::future<void> discovery_future_;
   std::unordered_map<std::string, rclcpp::QoS> topic_qos_profile_overrides_;
   std::unordered_set<std::string> topic_unknown_types_;
+  rclcpp::Service<rosbag2_interfaces::srv::GetSubscribedTopics>::SharedPtr
+    srv_get_subscribed_topics_;
+  rclcpp::Service<rosbag2_interfaces::srv::SubscribeToTopics>::SharedPtr srv_subscribe_to_topics_;
   rclcpp::Service<rosbag2_interfaces::srv::IsDiscoveryRunning>::SharedPtr srv_is_discovery_running_;
   rclcpp::Service<rosbag2_interfaces::srv::IsPaused>::SharedPtr srv_is_paused_;
   rclcpp::Service<rosbag2_interfaces::srv::Pause>::SharedPtr srv_pause_;
@@ -483,6 +516,7 @@ private:
 
   std::mutex start_stop_transition_mutex_;
   std::mutex discovery_mutex_;
+  mutable std::mutex subscriptions_mutex_;
   std::atomic<bool> discovery_running_ = false;
   std::atomic_uchar paused_ = 0;
   std::atomic<bool> in_recording_ = false;
@@ -631,7 +665,10 @@ void RecorderImpl::stop()
   for (auto & [_, subscription] : subscriptions_) {
     subscription->disable_callbacks();
   }
-  subscriptions_.clear();
+  {
+    std::lock_guard<std::mutex> subscriptions_lock(subscriptions_mutex_);
+    subscriptions_.clear();
+  }
   writer_->close();  // Call writer->close() to finalize current bag file and write metadata
   {  // Clear pending split request if any
     std::lock_guard<std::mutex> lock(pending_bag_split_request_mutex_);
@@ -1042,6 +1079,172 @@ void RecorderImpl::create_control_services()
     {
       response->paused = is_paused();
     });
+
+  srv_get_subscribed_topics_ =
+    node->create_service<rosbag2_interfaces::srv::GetSubscribedTopics>(
+     "~/get_subscribed_topics",
+    [this](
+      const std::shared_ptr<rmw_request_id_t>/* request_header */,
+      const std::shared_ptr<rosbag2_interfaces::srv::GetSubscribedTopics::Request>/* request */,
+      std::shared_ptr<rosbag2_interfaces::srv::GetSubscribedTopics::Response> response)
+    {
+      response->topics = this->get_subscribed_topics();
+    });
+
+  srv_subscribe_to_topics_ =
+    node->create_service<rosbag2_interfaces::srv::SubscribeToTopics>(
+      "~/subscribe_to_topics",
+    [this](
+      const std::shared_ptr<rmw_request_id_t>/* request_header */,
+      const std::shared_ptr<rosbag2_interfaces::srv::SubscribeToTopics::Request> request,
+      std::shared_ptr<rosbag2_interfaces::srv::SubscribeToTopics::Response> response)
+    {
+      if (request->topics.empty()) {
+        RCLCPP_WARN(node->get_logger(),
+          "Received 'SubscribeToTopics' request with empty topic list. Ignoring request.");
+        set_service_error(response, "No topics specified in request.");
+        return;
+      }
+
+      if (!request->topic_types.empty() && request->topic_types.size() != request->topics.size()) {
+        RCLCPP_WARN(node->get_logger(),
+          "Received 'SubscribeToTopics' request with %zu topics and %zu topic types. "
+          "The number of topic types must be zero or match the number of topics.",
+          request->topics.size(), request->topic_types.size());
+        set_service_error(response, "'topic_types' must be empty or the same length as 'topics'.");
+        return;
+      }
+
+      {
+        std::lock_guard<std::mutex> state_lock(start_stop_transition_mutex_);
+        if (!in_recording_.load()) {
+          RCLCPP_WARN(node->get_logger(),
+          "Received 'SubscribeToTopics' request while not in recording. Ignoring request.");
+          // TODO(morlov): More consistent would be to add all requested topics into the
+          //   unavailable_topics list instead of just one.
+          response->unavailable_topics = request->topics;
+          set_service_error(response, "Recorder is not currently recording.");
+          return;
+        }
+      }
+
+      const auto available_topics = node->get_topic_names_and_types();
+      const auto requested_topics_with_types =
+      collect_requested_topics_with_types(request, response, available_topics);
+
+      const auto missing_topics = get_missing_topics(requested_topics_with_types);
+      subscribe_topics(missing_topics);
+
+      response->subscribed_topics.reserve(requested_topics_with_types.size());
+      for (const auto & [topic_name, _] : requested_topics_with_types) {
+        response->subscribed_topics.emplace_back(topic_name);
+      }
+
+      if (!response->subscribed_topics.empty()) {
+        set_service_success(response);
+      } else {
+        set_service_error(response, "No topics were subscribed.");
+      }
+    });
+}
+
+template<typename RequestT, typename ResponseT>
+std::unordered_map<std::string, std::string> RecorderImpl::collect_requested_topics_with_types(
+  const RequestT & request,
+  ResponseT & response,
+  const std::map<std::string, std::vector<std::string>> & available_topics)
+{
+  std::unordered_map<std::string, std::string> requested_topics_with_types;
+  requested_topics_with_types.reserve(request->topics.size());
+
+  for (size_t topic_index = 0; topic_index < request->topics.size(); ++topic_index) {
+    const auto & requested_topic = request->topics[topic_index];
+    const std::string requested_type =
+      request->topic_types.empty() ? "" : request->topic_types[topic_index];
+
+    // TODO(morlov): The validated_topic is not a very good name to reflect what this variable is
+    //  assigned to. Consider renaming it to the expanded_topic_name or exp_topic_name
+    std::string validated_topic;
+    try {
+      validated_topic = rclcpp::expand_topic_or_service_name(
+        requested_topic, node->get_name(), node->get_namespace(), false);
+    } catch (const rclcpp::exceptions::InvalidTopicNameError & ex) {
+      RCLCPP_WARN(node->get_logger(),
+        "Invalid topic '%s' in 'SubscribeToTopics' request: %s",
+        requested_topic.c_str(), ex.what());
+      response->unavailable_topics.emplace_back(requested_topic);
+      continue;
+    }  // TODO(morlov): Need to add another catch `catch (const std::exception & ex)` or
+       //  catch (...). We don't want to have unhandled exception inside service call handler.
+
+    if (requested_topics_with_types.find(validated_topic) != requested_topics_with_types.end()) {
+      RCLCPP_WARN(node->get_logger(),
+        "Topic '%s' appeared multiple times in 'SubscribeToTopics' request. Ignoring duplicates.",
+        validated_topic.c_str());
+      continue;
+    }
+
+    const auto available_it = available_topics.find(validated_topic);
+    if (available_it == available_topics.end()) {
+      RCLCPP_WARN(node->get_logger(),
+        "Topic '%s' in 'SubscribeToTopics' request is not available. Ignoring.",
+        validated_topic.c_str());
+      response->unavailable_topics.emplace_back(validated_topic);
+      continue;
+    }
+
+    const auto topic_type = resolve_topic_type_for_subscribe_request(
+      requested_type, validated_topic, available_it->second, response);
+    if (!topic_type.has_value()) {
+      continue;
+    }
+
+    requested_topics_with_types.emplace(validated_topic, topic_type.value());
+    warn_if_new_qos_for_subscribed_topic(validated_topic);
+  }
+
+  return requested_topics_with_types;
+}
+
+template<typename ResponseT>
+std::optional<std::string> RecorderImpl::resolve_topic_type_for_subscribe_request(
+  const std::string & requested_type,
+  const std::string & validated_topic,
+  const std::vector<std::string> & available_types,
+  ResponseT & response) const
+{
+  if (!requested_type.empty()) {
+    if (std::find(available_types.begin(), available_types.end(),
+        requested_type) == available_types.end())
+    {
+      RCLCPP_WARN(node->get_logger(),
+        "Requested type '%s' for topic '%s' was not found in ROS graph. Ignoring.",
+        requested_type.c_str(), validated_topic.c_str());
+      response->unavailable_topics.emplace_back(validated_topic);
+      return std::nullopt;
+    }
+    return requested_type;
+  }
+
+  if (available_types.empty()) {
+    RCLCPP_WARN(node->get_logger(),
+      "Topic '%s' in 'SubscribeToTopics' request has no type information in ROS graph. "
+      "Specify the desired type in 'topic_types' and try again.",
+      validated_topic.c_str());
+    response->unavailable_topics.emplace_back(validated_topic);
+    return std::nullopt;
+  }
+
+  if (available_types.size() > 1) {
+    RCLCPP_WARN(node->get_logger(),
+      "Topic '%s' in 'SubscribeToTopics' request has multiple types but no type was provided in "
+      "request. Specify the desired type in 'topic_types' and try again.",
+      validated_topic.c_str());
+    response->unavailable_topics.emplace_back(validated_topic);
+    return std::nullopt;
+  }
+
+  return available_types.front();
 }
 
 std::optional<rclcpp::Time> RecorderImpl::optional_time_from_request(
@@ -1496,8 +1699,13 @@ void RecorderImpl::topics_discovery() noexcept
     }
     bool should_update_subscriptions = true;
     while (rclcpp::ok() && discovery_running_) {
+      size_t subscriptions_count = 0u;
+      {
+        std::lock_guard<std::mutex> subscriptions_lock(subscriptions_mutex_);
+        subscriptions_count = subscriptions_.size();
+      }
       if (!record_options_.topics.empty() &&
-        subscriptions_.size() == record_options_.topics.size())
+        subscriptions_count == record_options_.topics.size())
       {
         RCLCPP_INFO(
           node->get_logger(), "All requested topics are subscribed. Stopping discovery...");
@@ -1550,12 +1758,31 @@ std::unordered_map<std::string, std::string>
 RecorderImpl::get_missing_topics(const std::unordered_map<std::string, std::string> & all_topics)
 {
   std::unordered_map<std::string, std::string> missing_topics;
+  std::unordered_set<std::string> subscribed_topics;
+  {
+    std::lock_guard<std::mutex> subscriptions_lock(subscriptions_mutex_);
+    for (const auto & [topic_name, _] : subscriptions_) {
+      subscribed_topics.insert(topic_name);
+    }
+  }
   for (const auto & [topic_name, topic_type] : all_topics) {
-    if (subscriptions_.find(topic_name) == subscriptions_.end()) {
+    if (subscribed_topics.find(topic_name) == subscribed_topics.end()) {
       missing_topics.emplace(topic_name, topic_type);
     }
   }
   return missing_topics;
+}
+
+std::vector<std::string> RecorderImpl::get_subscribed_topics() const
+{
+  std::lock_guard<std::mutex> subscriptions_lock(subscriptions_mutex_);
+  std::vector<std::string> topics;
+  topics.reserve(subscriptions_.size());
+  for (const auto & [topic_name, _] : subscriptions_) {
+    topics.emplace_back(topic_name);
+  }
+  std::sort(topics.begin(), topics.end());
+  return topics;
 }
 
 
@@ -1673,8 +1900,11 @@ uint64_t RecorderImpl::get_total_num_messages_lost_in_transport() const
 
 void RecorderImpl::subscribe_topic(const rosbag2_storage::TopicMetadata & topic)
 {
-  if (subscriptions_.find(topic.name) != subscriptions_.end()) {
-    return;
+  {
+    std::lock_guard<std::mutex> subscriptions_lock(subscriptions_mutex_);
+    if (subscriptions_.find(topic.name) != subscriptions_.end()) {
+      return;
+    }
   }
   // Auto-detect transient-local topics when repeat_all_transient_local_depth is set
   if (record_options_.repeat_all_transient_local_depth > 0 &&
@@ -1722,7 +1952,10 @@ void RecorderImpl::subscribe_topic(const rosbag2_storage::TopicMetadata & topic)
 
   auto subscription = create_subscription(topic.name, topic.type, subscription_qos);
   if (subscription) {
-    subscriptions_.insert({topic.name, subscription});
+    {
+      std::lock_guard<std::mutex> subscriptions_lock(subscriptions_mutex_);
+      subscriptions_.insert({topic.name, subscription});
+    }
     if (node->get_logger().get_effective_level() == rclcpp::Logger::Level::Debug) {
       RCLCPP_DEBUG_STREAM(node->get_logger(),
         "Subscribed to topic '" << topic.name << "' with QoS:\n" << subscription_qos.to_string());
@@ -1889,16 +2122,20 @@ rclcpp::QoS RecorderImpl::subscription_qos_for_topic(const std::string & topic_n
 
 void RecorderImpl::warn_if_new_qos_for_subscribed_topic(const std::string & topic_name)
 {
-  auto existing_subscription = subscriptions_.find(topic_name);
-  if (existing_subscription == subscriptions_.end()) {
-    // Not subscribed yet
-    return;
+  std::shared_ptr<rclcpp::SubscriptionBase> existing_subscription;
+  {
+    std::lock_guard<std::mutex> subscriptions_lock(subscriptions_mutex_);
+    auto iterator = subscriptions_.find(topic_name);
+    if (iterator == subscriptions_.end()) {
+      return;
+    }
+    existing_subscription = iterator->second;
   }
   if (topics_warned_about_incompatibility_.count(topic_name) > 0) {
     // Already warned about this topic
     return;
   }
-  const auto actual_qos = existing_subscription->second->get_actual_qos();
+  const auto actual_qos = existing_subscription->get_actual_qos();
   const auto & used_profile = actual_qos.get_rmw_qos_profile();
   auto publishers_info = node->get_publishers_info_by_topic(topic_name);
   for (const auto & info : publishers_info) {
@@ -2157,6 +2394,12 @@ Recorder::is_discovery_running() const
 void Recorder::set_on_start_recording_callback(OnStartRecordingCallback callback) const
 {
   pimpl_->on_start_recording_callback_ = std::move(callback);
+}
+
+std::vector<std::string>
+Recorder::get_subscribed_topics() const
+{
+  return pimpl_->get_subscribed_topics();
 }
 
 void Recorder::read_static_topics() noexcept
