@@ -1690,9 +1690,9 @@ void RecorderImpl::subscribe_topic(const rosbag2_storage::TopicMetadata & topic)
       bool all_transient_local =
         std::all_of(
           endpoint_infos.begin(), endpoint_infos.end(),
-          [](const rclcpp::TopicEndpointInfo & info) {
-            return info.qos_profile().get_rmw_qos_profile().durability ==
-              RMW_QOS_POLICY_DURABILITY_TRANSIENT_LOCAL;
+        [](const rclcpp::TopicEndpointInfo & info) {
+          return info.qos_profile().get_rmw_qos_profile().durability ==
+                 RMW_QOS_POLICY_DURABILITY_TRANSIENT_LOCAL;
           }
         );
       if (all_transient_local) {
