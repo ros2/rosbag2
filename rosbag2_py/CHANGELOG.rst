@@ -2,6 +2,12 @@
 Changelog for package rosbag2_py
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Revert "Jazzy 0.26.10 release (`#2316 <https://github.com/ros2/rosbag2/issues/2316>`_)" (`#2322 <https://github.com/ros2/rosbag2/issues/2322>`_)
+  This reverts commit 9f44315f007c5e5e9070265d4d4bd2e5a4be4b79.
+* Contributors: Michael Orlov <morlovmr@gmail.com>
+
 0.26.9 (2025-08-11)
 -------------------
 * [jazzy] Add public API to get player's starting time and playback duration (backport `#2095 <https://github.com/ros2/rosbag2/issues/2095>`_) (`#2102 <https://github.com/ros2/rosbag2/issues/2102>`_)

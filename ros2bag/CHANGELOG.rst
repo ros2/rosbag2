@@ -2,6 +2,12 @@
 Changelog for package ros2bag
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Revert "Jazzy 0.26.10 release (`#2316 <https://github.com/ros2/rosbag2/issues/2316>`_)" (`#2322 <https://github.com/ros2/rosbag2/issues/2322>`_)
+  This reverts commit 9f44315f007c5e5e9070265d4d4bd2e5a4be4b79.
+* Contributors: Michael Orlov <morlovmr@gmail.com>
+
 0.26.9 (2025-08-11)
 -------------------
 * [jazzy] Expose more of the player/recorder API through Python (backport `#2062 <https://github.com/ros2/rosbag2/issues/2062>`_) (`#2100 <https://github.com/ros2/rosbag2/issues/2100>`_)
