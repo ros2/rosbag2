@@ -676,7 +676,12 @@ bool RecorderImpl::record(const std::string & uri)
   }
   RCLCPP_INFO(node->get_logger(), "Starting recording to '%s'", storage_options_.uri.c_str());
 
-  topic_qos_profile_overrides_ = record_options_.topic_qos_profile_overrides;
+  for (const auto & kv : record_options_.topic_qos_profile_overrides) {
+    topic_qos_profile_overrides_.emplace(
+    rclcpp::expand_topic_or_service_name(
+      kv.first, node->get_name(), node->get_namespace(), false),
+    kv.second);
+  }
   // Check serialization format options
   if (!record_options_.rmw_serialization_format.empty() &&
     record_options_.output_serialization_format.empty())
@@ -1853,7 +1858,9 @@ std::string type_description_hash_for_topic(
 
 rclcpp::QoS RecorderImpl::subscription_qos_for_topic(const std::string & topic_name) const
 {
-  if (topic_qos_profile_overrides_.count(topic_name)) {
+  const auto expanded = rclcpp::expand_topic_or_service_name(
+    topic_name, node->get_name(), node->get_namespace(), false);
+  if (topic_qos_profile_overrides_.count(expanded)) {
     RCLCPP_INFO_STREAM(
       node->get_logger(),
       "Overriding subscription profile for " << topic_name);
@@ -1868,7 +1875,7 @@ rclcpp::QoS RecorderImpl::subscription_qos_for_topic(const std::string & topic_n
           "repeat-transient-local will not work unless the override includes transient_local "
           "durability.");
     }
-    return topic_qos_profile_overrides_.at(topic_name);
+    return topic_qos_profile_overrides_.at(expanded);
   }
 
   auto qos = rosbag2_storage::Rosbag2QoS::adapt_request_to_offers(

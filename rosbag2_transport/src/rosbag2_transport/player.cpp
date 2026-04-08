@@ -60,6 +60,7 @@ namespace
  * \param topic_qos_profile_overrides A map of topic to QoS profile overrides.
  * @return The QoS profile to be used for subscribing.
  */
+
 rclcpp::QoS publisher_qos_for_topic(
   const rosbag2_storage::TopicMetadata & topic,
   const std::unordered_map<std::string, rclcpp::QoS> & topic_qos_profile_overrides,
@@ -547,7 +548,12 @@ PlayerImpl::PlayerImpl(
     starting_time_, std::chrono::steady_clock::now,
     std::chrono::milliseconds{100}, play_options_.start_paused);
   set_rate(play_options_.rate);
-  topic_qos_profile_overrides_ = play_options_.topic_qos_profile_overrides;
+  for (const auto & kv : play_options_.topic_qos_profile_overrides) {
+    topic_qos_profile_overrides_.emplace(
+    rclcpp::expand_topic_or_service_name(
+      kv.first, owner_->get_name(), owner_->get_namespace(), false),
+    kv.second);
+  }
   prepare_publishers();
   configure_play_until_timestamp();
 
