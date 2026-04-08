@@ -153,6 +153,9 @@ protected:
   std::shared_ptr<rosbag2_cpp::cache::MessageCacheInterface> message_cache_;
   std::unique_ptr<rosbag2_cpp::cache::CacheConsumer> cache_consumer_;
 
+  /// \brief Flush the cache, update metadata and close the storage.
+  void flush_cache_update_metadata_and_close_storage();
+
   std::string split_bagfile_local(bool execute_callbacks = true);
 
   void execute_bag_split_callbacks(
