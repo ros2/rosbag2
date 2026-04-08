@@ -2,8 +2,8 @@
 Changelog for package rosbag2_transport
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.26.10 (2026-04-07)
+--------------------
 * [jazzy] Add on start recording callback for Recorder
   (backport `#2340 <https://github.com/ros2/rosbag2/issues/2340>`_)
 * [jazzy] Address race condition in the "wait_for_playback_to_start()"
