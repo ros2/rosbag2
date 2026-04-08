@@ -254,6 +254,14 @@ def add_recorder_arguments(parser: ArgumentParser) -> None:
              'prepended on bag split and snapshot writes. Format: <topic> or <topic>=<depth>. '
              'Default depth is 1 when omitted.')
     parser.add_argument(
+        '--repeat-all-transient-local', type=int, default=0, const=1,
+        nargs='?', metavar='Depth',
+        help='Automatically detect all topics whose publishers offer TRANSIENT_LOCAL '
+             'durability QoS and retain the last <depth> messages per topic, prepending '
+             'them on bag split and snapshot writes. Depth defaults to 1 when omitted. '
+             'Per-topic entries from --repeat-transient-local take precedence over this '
+             'default depth. 0 disables (default).')
+    parser.add_argument(
         '--log-level', type=str, default='info',
         choices=['debug', 'info', 'warn', 'error', 'fatal'],
         help='Logging level.')
@@ -391,6 +399,9 @@ def validate_parsed_arguments(args, uri) -> str:
         return print_error('In snapshot mode, either the max_cache_duration or max_cache_size'
                            ' shall not be set to zero.')
 
+    if args.repeat_all_transient_local < 0:
+        return print_error('--repeat-all-transient-local depth must be a non-negative integer.')
+
     try:
         args.repeat_transient_local_messages = parse_repeat_transient_local_topics(
             args.repeat_transient_local)
@@ -495,6 +506,7 @@ class RecordVerb(VerbExtension):
         record_options.disable_keyboard_controls = args.disable_keyboard_controls
         record_options.statistics_max_publishing_rate = args.stats_max_publishing_rate
         record_options.repeat_transient_local_messages = args.repeat_transient_local_messages
+        record_options.repeat_all_transient_local_depth = args.repeat_all_transient_local
 
         recorder = Recorder(storage_options, record_options, args.log_level, args.node_name)
 
