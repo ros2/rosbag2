@@ -261,7 +261,9 @@ def test_recorder_repeat_all_transient_local_with_per_topic(test_arguments_parse
     uri = args.output or datetime.datetime.now().strftime('rosbag2_%Y_%m_%d-%H_%M_%S')
     error_str = validate_parsed_arguments(args, uri)
     assert error_str is None
+    # Per-topic entry must take precedence over --repeat-all-transient-local depth
     assert {'/map': 10} == args.repeat_transient_local_messages
+    assert args.repeat_transient_local_messages['/map'] != args.repeat_all_transient_local
 
 
 def test_recorder_repeat_all_transient_local_default(test_arguments_parser):

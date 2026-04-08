@@ -1681,20 +1681,30 @@ void RecorderImpl::subscribe_topic(const rosbag2_storage::TopicMetadata & topic)
     record_options_.repeat_transient_local_messages.count(topic.name) == 0)
   {
     auto endpoint_infos = node->get_publishers_info_by_topic(topic.name);
-    if (!endpoint_infos.empty()) {
-      bool all_transient_local = std::all_of(
-        endpoint_infos.begin(), endpoint_infos.end(),
-        [](const rclcpp::TopicEndpointInfo & info) {
-          return info.qos_profile().get_rmw_qos_profile().durability ==
-                 RMW_QOS_POLICY_DURABILITY_TRANSIENT_LOCAL;
-        });
+    if (endpoint_infos.empty()) {
+      RCLCPP_WARN_STREAM(node->get_logger(),
+        "No publishers found for topic '" << topic.name <<
+        "', cannot determine if it is transient-local. "
+        "Use --repeat-transient-local to explicitly specify this topic.");
+    } else {
+      bool all_transient_local =
+        std::all_of(
+          endpoint_infos.begin(), endpoint_infos.end(),
+          [](const rclcpp::TopicEndpointInfo & info) {
+            return info.qos_profile().get_rmw_qos_profile().durability ==
+              RMW_QOS_POLICY_DURABILITY_TRANSIENT_LOCAL;
+          }
+        );
       if (all_transient_local) {
-        RCLCPP_INFO_STREAM(node->get_logger(),
-          "Auto-detected transient-local topic '" << topic.name <<
-          "', enabling repeat-transient-local with depth " <<
+        RCLCPP_INFO_STREAM(node->get_logger(), "Auto-detected transient-local topic '" <<
+          topic.name << "', enabling repeat-transient-local with depth " <<
           record_options_.repeat_all_transient_local_depth << ".");
         record_options_.repeat_transient_local_messages[topic.name] =
           record_options_.repeat_all_transient_local_depth;
+      } else {
+        RCLCPP_WARN_STREAM(node->get_logger(),
+          "Topic '" << topic.name << "' has publishers that do not all offer "
+          "TRANSIENT_LOCAL durability. Skipping auto repeat-transient-local for this topic.");
       }
     }
   }

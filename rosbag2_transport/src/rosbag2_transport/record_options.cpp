@@ -158,7 +158,7 @@ bool convert<rosbag2_transport::RecordOptions>::decode(
   optional_assign<float>(node, "statistics_max_publishing_rate", statistics_max_publishing_rate);
   optional_assign<std::unordered_map<std::string, size_t>>(
     node, "repeat_transient_local_messages", repeat_transient_local_messages);
-  optional_assign<size_t>(node, "repeat_all_transient_local_depth",
+  optional_assign<uint32_t>(node, "repeat_all_transient_local_depth",
     repeat_all_transient_local_depth);
   return true;
 }

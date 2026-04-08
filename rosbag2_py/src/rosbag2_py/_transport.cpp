@@ -1012,7 +1012,7 @@ PYBIND11_MODULE(_transport, m) {
   .def_readwrite("statistics_max_publishing_rate", &RecordOptions::statistics_max_publishing_rate)
   .def_readwrite("repeat_transient_local_messages", &RecordOptions::repeat_transient_local_messages)
   .def_readwrite("repeat_all_transient_local_depth",
-    &RecordOptions::repeat_all_transient_local_depth)
+                 &RecordOptions::repeat_all_transient_local_depth)
   ;
 
   py::class_<rosbag2_py::Player>(m, "Player")

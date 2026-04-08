@@ -138,6 +138,22 @@ $ ros2 bag record -a --repeat-transient-local /tf_static=5 /map
 This option also works via node parameters as `record.repeat_transient_local`, accepting a list
 of strings in the same `<topic>` or `<topic>=<depth>` format.
 
+Alternatively, `--repeat-all-transient-local [<depth>]` can be used to automatically detect and
+repeat all topics whose publishers offer `TRANSIENT_LOCAL` durability. The depth defaults to `1`
+when omitted and specifies how many of the most recent messages per topic are retained.
+Per-topic entries from `--repeat-transient-local` take precedence over this default depth.
+
+```bash
+# Auto-detect and repeat all transient-local topics (depth 1)
+$ ros2 bag record -a --repeat-all-transient-local
+
+# Auto-detect with depth 5
+$ ros2 bag record -a --repeat-all-transient-local 5
+
+# Auto-detect all, but override /map to keep last 10 messages
+$ ros2 bag record -a --repeat-all-transient-local --repeat-transient-local /map=10
+```
+
 **Note**: If a topic has both a QoS profile override (via `--qos-profile-overrides-path`) and is
 listed in `--repeat-transient-local`, the QoS override takes precedence. Ensure the override
 includes `transient_local` durability to receive latched messages.

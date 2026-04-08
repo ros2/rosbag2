@@ -256,10 +256,11 @@ def add_recorder_arguments(parser: ArgumentParser) -> None:
     parser.add_argument(
         '--repeat-all-transient-local', type=int, default=0, const=1,
         nargs='?', metavar='Depth',
-        help='Automatically repeat last messages for all topics whose publishers offer '
-             'TRANSIENT_LOCAL durability QoS. Depth defaults to 1 when omitted. '
-             'Per-topic entries from --repeat-transient-local take precedence. '
-             '0 disables (default).')
+        help='Automatically detect all topics whose publishers offer TRANSIENT_LOCAL '
+             'durability QoS and retain the last <depth> messages per topic, prepending '
+             'them on bag split and snapshot writes. Depth defaults to 1 when omitted. '
+             'Per-topic entries from --repeat-transient-local take precedence over this '
+             'default depth. 0 disables (default).')
     parser.add_argument(
         '--log-level', type=str, default='info',
         choices=['debug', 'info', 'warn', 'error', 'fatal'],

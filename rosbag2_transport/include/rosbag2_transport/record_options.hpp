@@ -100,7 +100,7 @@ public:
   /// TRANSIENT_LOCAL durability will automatically be treated as a repeat-transient-local topic
   /// with this depth, unless an explicit per-topic entry exists in
   /// repeat_transient_local_messages. 0 disables the feature.
-  size_t repeat_all_transient_local_depth = 0;
+  uint32_t repeat_all_transient_local_depth = 0;
 
   /// Note: Please don't forget to update the YAML serialization and deserialization logic in
   /// `record_options.cpp` and the test case `test_yaml_serialization_deserialization`
