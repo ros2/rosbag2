@@ -1721,13 +1721,13 @@ void RecorderImpl::subscribe_topic(const rosbag2_storage::TopicMetadata & topic)
       RCLCPP_DEBUG_STREAM(node->get_logger(),
         "Subscribed to topic '" << topic.name << "'" <<
         (repeat_it != record_options_.repeat_transient_local_messages.end() ?
-          " (repeat-transient-local, depth=" + std::to_string(repeat_it->second) + ")" : "") <<
+        " (repeat-transient-local, depth=" + std::to_string(repeat_it->second) + ")" : "") <<
         " with QoS:\n" << subscription_qos.to_string());
     } else {
       RCLCPP_INFO_STREAM(node->get_logger(),
         "Subscribed to topic '" << topic.name << "'" <<
         (repeat_it != record_options_.repeat_transient_local_messages.end() ?
-          " (repeat-transient-local, depth=" + std::to_string(repeat_it->second) + ")" : ""));
+        " (repeat-transient-local, depth=" + std::to_string(repeat_it->second) + ")" : ""));
     }
 
   } else {
