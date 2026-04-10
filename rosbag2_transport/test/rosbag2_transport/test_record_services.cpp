@@ -202,16 +202,10 @@ public:
 public:
   // Basic configuration
   const std::string recorder_name_ = "rosbag2_recorder_for_test_srvs";
-<<<<<<< HEAD
-  const std::chrono::seconds service_wait_timeout_ {2};
-  const std::chrono::seconds service_call_timeout_ {2};
-  const std::string test_topic_ = "/recorder_srvs_test_topic";
-=======
   // Wait longer due to potential service latency after pause/resume operations
   const std::chrono::seconds service_wait_timeout_ {10};
   const std::chrono::seconds service_call_timeout_ {10};
-  const std::string test_topic_ = kTestTopic;
->>>>>>> 22a408d (Address flakiness in the "rosbag2_transport::test_record_services" tests (#2368))
+  const std::string test_topic_ = "/recorder_srvs_test_topic";
 
   // Orchestration
   std::thread spin_thread_;
