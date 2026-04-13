@@ -1716,18 +1716,21 @@ void RecorderImpl::subscribe_topic(const rosbag2_storage::TopicMetadata & topic)
   auto subscription = create_subscription(topic.name, topic.type, subscription_qos);
   if (subscription) {
     subscriptions_.insert({topic.name, subscription});
-    auto repeat_it = record_options_.repeat_transient_local_messages.find(topic.name);
+    std::optional<size_t> repeat_tl_depth =
+      record_options_.repeat_transient_local_messages.count(topic.name) > 0 ?
+      std::make_optional(record_options_.repeat_transient_local_messages.at(topic.name)) :
+      std::nullopt;
     if (node->get_logger().get_effective_level() == rclcpp::Logger::Level::Debug) {
       RCLCPP_DEBUG_STREAM(node->get_logger(),
         "Subscribed to topic '" << topic.name << "'" <<
-        (repeat_it != record_options_.repeat_transient_local_messages.end() ?
-        " (repeat-transient-local, depth=" + std::to_string(repeat_it->second) + ")" : "") <<
+        (repeat_tl_depth.has_value() ?
+        " (repeat-transient-local, depth=" + std::to_string(repeat_tl_depth.value()) + ")" : "") <<
         " with QoS:\n" << subscription_qos.to_string());
     } else {
       RCLCPP_INFO_STREAM(node->get_logger(),
         "Subscribed to topic '" << topic.name << "'" <<
-        (repeat_it != record_options_.repeat_transient_local_messages.end() ?
-        " (repeat-transient-local, depth=" + std::to_string(repeat_it->second) + ")" : ""));
+        (repeat_tl_depth.has_value() ?
+        " (repeat-transient-local, depth=" + std::to_string(repeat_tl_depth.value()) + ")" : ""));
     }
 
   } else {
