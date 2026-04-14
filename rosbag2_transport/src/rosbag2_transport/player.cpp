@@ -552,9 +552,9 @@ PlayerImpl::PlayerImpl(
   for (const auto & [topic_name, qos] : play_options_.topic_qos_profile_overrides) {
     auto expanded_topic_name =
       rclcpp::expand_topic_or_service_name(topic_name,
-                                          owner_->get_name(),
-                                          owner_->get_namespace(),
-                                          false);
+                                           owner_->get_name(),
+                                           owner_->get_namespace(),
+                                           false);
     topic_qos_profile_overrides_.emplace(expanded_topic_name, qos);
   }
   prepare_publishers();

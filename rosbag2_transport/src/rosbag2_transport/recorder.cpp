@@ -602,9 +602,9 @@ RecorderImpl::RecorderImpl(
   for (const auto & [topic_name, qos] : record_options_.topic_qos_profile_overrides) {
     auto expanded_topic_name =
       rclcpp::expand_topic_or_service_name(topic_name,
-                                          node->get_name(),
-                                          node->get_namespace(),
-                                          false);
+                                           node->get_name(),
+                                           node->get_namespace(),
+                                           false);
     topic_qos_profile_overrides_.emplace(expanded_topic_name, qos);
   }
 
@@ -1867,14 +1867,14 @@ rclcpp::QoS RecorderImpl::subscription_qos_for_topic(const std::string & topic_n
   if (topic_qos_profile_overrides_.count(expanded_topic_name)) {
     RCLCPP_INFO_STREAM(
       node->get_logger(),
-      "Overriding subscription profile for " << topic_name);
-    if (record_options_.repeat_transient_local_messages.count(topic_name) > 0 &&
+      "Overriding subscription profile for " << expanded_topic_name);
+    if (record_options_.repeat_transient_local_messages.count(expanded_topic_name) > 0 &&
       topic_qos_profile_overrides_.at(expanded_topic_name).get_rmw_qos_profile().durability !=
       RMW_QOS_POLICY_DURABILITY_TRANSIENT_LOCAL)
     {
       RCLCPP_WARN_STREAM(
         node->get_logger(),
-        "Topic '" << topic_name << "' has a QoS profile override without transient_local "
+        "Topic '" << expanded_topic_name << "' has a QoS profile override without transient_local "
           "durability, but repeat-transient-local is enabled. The QoS override takes precedence; "
           "repeat-transient-local will not work unless the override includes transient_local "
           "durability.");
