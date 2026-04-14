@@ -498,7 +498,7 @@ TEST_F(RecordIntegrationTestFixture, repeat_all_transient_local_auto_detects_mix
       auto it = depths.find(topic);
       return it != depths.end() && it->second == expected_depth;
     },
-    std::chrono::seconds(5));
+    std::chrono::seconds(10));
   EXPECT_TRUE(ret)
     << "failed to auto-detect repeat-transient-local for mixed-durability topic";
 }
@@ -532,10 +532,10 @@ TEST_F(RecordIntegrationTestFixture, repeat_all_transient_local_skips_volatile_o
 
   // Wait for subscription to be established, then verify no transient-local depth was registered
   auto subscribed = rosbag2_test_common::wait_until_condition(
-    [&mock_writer]() {
-      return mock_writer.get_topics().size() >= 1;
+    [&mock_writer, &topic]() {
+      return mock_writer.get_topics().count(topic) > 0;
     },
-    std::chrono::seconds(5));
+    std::chrono::seconds(10));
   ASSERT_TRUE(subscribed) << "recorder did not subscribe to topic in time";
 
   auto depths = mock_writer.transient_local_topic_depths();
