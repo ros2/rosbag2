@@ -462,6 +462,87 @@ TEST_F(RecordIntegrationTestFixture, repeat_transient_local_topics_register_requ
   EXPECT_TRUE(ret) << "failed to register transient local repeat depth for topic";
 }
 
+TEST_F(RecordIntegrationTestFixture, repeat_all_transient_local_auto_detects_mixed_durability)
+{
+  // Verify that auto-detection enables repeat-transient-local for a topic when at least one
+  // publisher offers TRANSIENT_LOCAL, even if another publisher offers VOLATILE.
+  std::string topic = "/mixed_durability_topic";
+  const size_t expected_depth = 5;
+
+  auto publisher_node = std::make_shared<rclcpp::Node>("rosbag2_test_mixed_durability");
+  auto pub_volatile = publisher_node->create_publisher<test_msgs::msg::Strings>(
+    topic, rclcpp::QoS(1).reliable().durability_volatile());
+  auto pub_transient_local = publisher_node->create_publisher<test_msgs::msg::Strings>(
+    topic, rclcpp::QoS(1).reliable().transient_local());
+
+  rosbag2_transport::RecordOptions record_options;
+  record_options.topics = {topic};
+  record_options.rmw_serialization_format = "rmw_format";
+  record_options.topic_polling_interval = 100ms;
+  record_options.repeat_all_transient_local_depth = expected_depth;
+
+  auto recorder = std::make_shared<rosbag2_transport::Recorder>(
+    std::move(writer_), storage_options_, record_options);
+  recorder->record();
+
+  start_async_spin(recorder);
+  auto cleanup_process_handle = rcpputils::make_scope_exit([&]() {stop_spinning();});
+
+  auto & writer = recorder->get_writer_handle();
+  MockSequentialWriter & mock_writer =
+    static_cast<MockSequentialWriter &>(writer.get_implementation_handle());
+
+  auto ret = rosbag2_test_common::wait_until_condition(
+    [&mock_writer, &topic, expected_depth]() {
+      auto depths = mock_writer.transient_local_topic_depths();
+      auto it = depths.find(topic);
+      return it != depths.end() && it->second == expected_depth;
+    },
+    std::chrono::seconds(10));
+  EXPECT_TRUE(ret)
+    << "failed to auto-detect repeat-transient-local for mixed-durability topic";
+}
+
+TEST_F(RecordIntegrationTestFixture, repeat_all_transient_local_skips_volatile_only_topic)
+{
+  // Verify that auto-detection does NOT enable repeat-transient-local for a topic where
+  // all publishers offer VOLATILE durability.
+  std::string topic = "/volatile_only_topic";
+
+  auto publisher_node = std::make_shared<rclcpp::Node>("rosbag2_test_volatile_only");
+  auto pub = publisher_node->create_publisher<test_msgs::msg::Strings>(
+    topic, rclcpp::QoS(1).reliable().durability_volatile());
+
+  rosbag2_transport::RecordOptions record_options;
+  record_options.topics = {topic};
+  record_options.rmw_serialization_format = "rmw_format";
+  record_options.topic_polling_interval = 100ms;
+  record_options.repeat_all_transient_local_depth = 5;
+
+  auto recorder = std::make_shared<rosbag2_transport::Recorder>(
+    std::move(writer_), storage_options_, record_options);
+  recorder->record();
+
+  start_async_spin(recorder);
+  auto cleanup_process_handle = rcpputils::make_scope_exit([&]() {stop_spinning();});
+
+  auto & writer = recorder->get_writer_handle();
+  MockSequentialWriter & mock_writer =
+    static_cast<MockSequentialWriter &>(writer.get_implementation_handle());
+
+  // Wait for subscription to be established, then verify no transient-local depth was registered
+  auto subscribed = rosbag2_test_common::wait_until_condition(
+    [&mock_writer, &topic]() {
+      return mock_writer.get_topics().count(topic) > 0;
+    },
+    std::chrono::seconds(10));
+  ASSERT_TRUE(subscribed) << "recorder did not subscribe to topic in time";
+
+  auto depths = mock_writer.transient_local_topic_depths();
+  EXPECT_EQ(depths.find(topic), depths.end())
+    << "volatile-only topic should not be flagged as transient-local";
+}
+
 TEST_F(RecordIntegrationTestFixture, mixed_qos_subscribes) {
   // Ensure that rosbag2 subscribes to publishers that offer different durability policies
   const size_t arbitrary_history = 5;
