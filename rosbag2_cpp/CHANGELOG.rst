@@ -2,6 +2,41 @@
 Changelog for package rosbag2_cpp
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.33.1 (2026-04-14)
+-------------------
+
+* Implement ``transient-local topic`` repetition for Writer API and split/snapshot integration (`#2386 <https://github.com/ros2/rosbag2/issues/2386>`_)
+* Add `TransientLocalMessagesCache` and `RecordOptions` for repeating transient-local topics (`#2385 <https://github.com/ros2/rosbag2/issues/2385>`_)
+* Use new ROSIDL aggregate CMake target (`#2384 <https://github.com/ros2/rosbag2/issues/2384>`_)
+* Fix a possible race condition in compression writer on close (`#2362 <https://github.com/ros2/rosbag2/issues/2362>`_)
+* Fix incorrect serialization format in metadata (`#2372 <https://github.com/ros2/rosbag2/issues/2372>`_)
+* Update Rosbag2 filename format to ``index+name+timestamp`` (`#2265 <https://github.com/ros2/rosbag2/issues/2265>`_)
+* Support relative includes for IDL in local message definition (`#2241 <https://github.com/ros2/rosbag2/issues/2241>`_)
+* Implement circular logging by split count (`--max-bag-files`) (`#2218 <https://github.com/ros2/rosbag2/issues/2218>`_)
+* Add `--max-cache-duration` option for time-bounded snapshots (`#2289 <https://github.com/ros2/rosbag2/issues/2289>`_)
+* Workaround flaky ``bagsize_split_is_at_least_specified_size`` test (`#2311 <https://github.com/ros2/rosbag2/issues/2311>`_)
+* Incorporate upstream minor fixes from Apex.AI (`#2240 <https://github.com/ros2/rosbag2/issues/2240>`_)
+* Update deprecated ament_index_cpp API (`#2268 <https://github.com/ros2/rosbag2/issues/2268>`_)
+* Make topics persistent between writer's close() and open() API calls (`#2229 <https://github.com/ros2/rosbag2/issues/2229>`_)
+* Add nullptr check when pushing new messages to the message cache (`#2219 <https://github.com/ros2/rosbag2/issues/2219>`_)
+* Address recorder test flakiness by increasing cache size (`#2203 <https://github.com/ros2/rosbag2/issues/2203>`_)
+* Log reasoning for not found message definition only in debug log (`#2183 <https://github.com/ros2/rosbag2/issues/2183>`_)
+* Improve error handling in rosbag2_cpp with null checks and exception throwing (`#2127 <https://github.com/ros2/rosbag2/issues/2127>`_)
+* Add null pointer checks in ``Reader`` constructor and ``open()`` method (`#2135 <https://github.com/ros2/rosbag2/issues/2135>`_)
+* Use ``rclcpp typesupport helpers`` in ``rosbag2_cpp`` (`#2017 <https://github.com/ros2/rosbag2/issues/2017>`_)
+* Fix callback not called for MESSAGES_LOST event (`#2105 <https://github.com/ros2/rosbag2/issues/2105>`_)
+* Improve recorder's MessageCache performance (`#2104 <https://github.com/ros2/rosbag2/issues/2104>`_)
+* Fix reindex duration bug when bag file durations overlap (`#2036 <https://github.com/ros2/rosbag2/issues/2036>`_)
+* Fix CMAKE deprecation (`#2067 <https://github.com/ros2/rosbag2/issues/2067>`_)
+* Add support for searching message definitions in nested subdirectories (`#2055 <https://github.com/ros2/rosbag2/issues/2055>`_)
+* Add message loss statistics callbacks and logging (`#2039 <https://github.com/ros2/rosbag2/issues/2039>`_)
+* Use cache to determine action interface inner types (`#2052 <https://github.com/ros2/rosbag2/issues/2052>`_)
+* Fix service/action message definition issue (`#2041 <https://github.com/ros2/rosbag2/issues/2041>`_)
+* Introduce new ``BaseWriteInterface`` methods ``write_messages`` and ``write_message`` to provide operation status, deprecating old write APIs (`#2030 <https://github.com/ros2/rosbag2/issues/2030>`_)
+* Improve message publishing timing by avoiding sporadic wakeups and fixing incorrect intervals on player start (`#2025 <https://github.com/ros2/rosbag2/issues/2025>`_)
+
+* Contributors: Alejandro Hernández Cordero, Barry Xu, Chui Vanfleet, Daisuke Sato, Emerson Knapp, Hunter L. Allen, José Faria, Luke Sy, Michael Orlov, Tomoya Fujita, Tony Najjar, YuJin Hong, mosfet80
+
 0.33.0 (2025-04-25)
 -------------------
 * Upstream quality changes from Apex.AI part-2 (`#1924 <https://github.com/ros2/rosbag2/issues/1924>`_)

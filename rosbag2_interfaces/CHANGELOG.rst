@@ -2,6 +2,19 @@
 Changelog for package rosbag2_interfaces
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.33.1 (2026-04-14)
+-------------------
+
+* Add support for time based Resume service (`#2357 <https://github.com/ros2/rosbag2/issues/2357>`_)
+* Allow pause/resume service calls while not in recording (`#2349 <https://github.com/ros2/rosbag2/issues/2349>`_)
+* Implement delayed and time-based recorder and player services, adding new bag split modes (`#2330 <https://github.com/ros2/rosbag2/issues/2330>`_)
+* Add error return code to the `~/stop` service request (`#2312 <https://github.com/ros2/rosbag2/issues/2312>`_)
+* Add Record, Stop, StartDiscovery, StopDiscovery, and IsDiscoveryRunning services for Recorder (`#2248 <https://github.com/ros2/rosbag2/issues/2248>`_)
+* Publish messages lost statistics to 'events/messages_lost' topic (`#2150 <https://github.com/ros2/rosbag2/issues/2150>`_)
+* Fix CMAKE deprecation (`#2067 <https://github.com/ros2/rosbag2/issues/2067>`_)
+
+* Contributors: Michael Orlov, carlos-apex, mosfet80
+
 0.33.0 (2025-04-25)
 -------------------
 

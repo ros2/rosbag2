@@ -2,6 +2,30 @@
 Changelog for package rosbag2_py
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.33.1 (2026-04-14)
+-------------------
+
+* Add ``--repeat-all-transient-local`` flag for automatic transient-local topic detection (`#2391 <https://github.com/ros2/rosbag2/issues/2391>`_)
+* Repeat transient-local topics: Recorder, CLI, and Python bindings (`#2387 <https://github.com/ros2/rosbag2/issues/2387>`_)
+* Implement circular logging by split count (`--max-bag-files`) (`#2218 <https://github.com/ros2/rosbag2/issues/2218>`_)
+* Move to ``build_depend`` (`#2332 <https://github.com/ros2/rosbag2/issues/2332>`_)
+* Improve ``ros2 bag convert`` performance for fragment cutting and add ``--input-options`` (`#2325 <https://github.com/ros2/rosbag2/issues/2325>`_)
+* Add static topics feature for recorder (`#2319 <https://github.com/ros2/rosbag2/issues/2319>`_)
+* Add `--max-cache-duration` option for time-bounded snapshots (`#2289 <https://github.com/ros2/rosbag2/issues/2289>`_)
+* Incorporate upstream minor fixes from Apex.AI (`#2240 <https://github.com/ros2/rosbag2/issues/2240>`_)
+* Add ``input_serialization_format`` and ``output_serialization_format`` to ``RecordOptions``, deprecating ``rmw_serialization_format`` (`#2215 <https://github.com/ros2/rosbag2/issues/2215>`_)
+* Use pybind11 from deb or pixi (`#2154 <https://github.com/ros2/rosbag2/issues/2154>`_)
+* Publish messages lost statistics to 'events/messages_lost' topic (`#2150 <https://github.com/ros2/rosbag2/issues/2150>`_)
+* Ensure test topic discovery by recorder in ``rosbag2_py`` test (`#2132 <https://github.com/ros2/rosbag2/issues/2132>`_)
+* Fix CMake list append for env vars in rosbag2_py with clang (`#2116 <https://github.com/ros2/rosbag2/issues/2116>`_)
+* Add public API for player's starting time and playback duration (`#2095 <https://github.com/ros2/rosbag2/issues/2095>`_)
+* Expose more of the player and recorder API to Python, and improve signal handling (`#2062 <https://github.com/ros2/rosbag2/issues/2062>`_)
+* Add ``send_timestamp`` to Python interface for reading serialized messages (`#2061 <https://github.com/ros2/rosbag2/issues/2061>`_)
+* Refactor Python player and recorder APIs into classes (`#2047 <https://github.com/ros2/rosbag2/issues/2047>`_)
+* Fix service/action message definition issue (`#2041 <https://github.com/ros2/rosbag2/issues/2041>`_)
+
+* Contributors: Alejandro Hernández Cordero, Barry Xu, Christophe Bedard, Luke Sy, Michael Carlstrom, Michael Orlov, Om Shivam Verma, Tony Najjar
+
 0.33.0 (2025-04-25)
 -------------------
 * Upstream quality changes from Apex.AI part-2 (`#1924 <https://github.com/ros2/rosbag2/issues/1924>`_)

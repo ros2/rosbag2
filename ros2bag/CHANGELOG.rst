@@ -2,6 +2,26 @@
 Changelog for package ros2bag
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.33.1 (2026-04-14)
+-------------------
+
+* Add ``--repeat-all-transient-local`` flag for automatic transient-local topic detection (`#2391 <https://github.com/ros2/rosbag2/issues/2391>`_)
+* Repeat transient-local topics: Recorder, CLI, and Python bindings (`#2387 <https://github.com/ros2/rosbag2/issues/2387>`_)
+* Suppress multi-threaded process warning from rosbag2 flake8 (`#2329 <https://github.com/ros2/rosbag2/issues/2329>`_)
+* Remove deprecated arguments and options from ``ros2bag`` (`#2328 <https://github.com/ros2/rosbag2/issues/2328>`_)
+* Implement circular logging by split count (`--max-bag-files`) (`#2218 <https://github.com/ros2/rosbag2/issues/2218>`_)
+* Improve ``ros2 bag convert`` performance for fragment cutting and add ``--input-options`` (`#2325 <https://github.com/ros2/rosbag2/issues/2325>`_)
+* Add static topics feature for recorder (`#2319 <https://github.com/ros2/rosbag2/issues/2319>`_)
+* Add `--max-cache-duration` option for time-bounded snapshots (`#2289 <https://github.com/ros2/rosbag2/issues/2289>`_)
+* Add `rosbag2_storage_default_plugins` to `exec_depend` of `ros2bag` (`#2227 <https://github.com/ros2/rosbag2/issues/2227>`_)
+* Add ``input_serialization_format`` and ``output_serialization_format`` to ``RecordOptions``, deprecating ``rmw_serialization_format`` (`#2215 <https://github.com/ros2/rosbag2/issues/2215>`_)
+* Publish messages lost statistics to 'events/messages_lost' topic (`#2150 <https://github.com/ros2/rosbag2/issues/2150>`_)
+* Expose more of the player and recorder API to Python, and improve signal handling (`#2062 <https://github.com/ros2/rosbag2/issues/2062>`_)
+* Fix setuptools deprecations (`#2087 <https://github.com/ros2/rosbag2/issues/2087>`_)
+* Refactor Python player and recorder APIs into classes (`#2047 <https://github.com/ros2/rosbag2/issues/2047>`_)
+
+* Contributors: Christophe Bedard, Luke Sy, Michael Orlov, Tomoya Fujita, Tony Najjar, mosfet80
+
 0.33.0 (2025-04-25)
 -------------------
 * Upstream quality changes from Apex.AI part-2 (`#1924 <https://github.com/ros2/rosbag2/issues/1924>`_)

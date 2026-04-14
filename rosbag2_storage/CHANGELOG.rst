@@ -2,6 +2,24 @@
 Changelog for package rosbag2_storage
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.33.1 (2026-04-14)
+-------------------
+
+* Add `TransientLocalMessagesCache` and `RecordOptions` for repeating transient-local topics (`#2385 <https://github.com/ros2/rosbag2/issues/2385>`_)
+* Implement delayed and time-based recorder and player services, adding new bag split modes (`#2330 <https://github.com/ros2/rosbag2/issues/2330>`_)
+* Implement circular logging by split count (`--max-bag-files`) (`#2218 <https://github.com/ros2/rosbag2/issues/2218>`_)
+* Improve ``ros2 bag convert`` performance for fragment cutting and add ``--input-options`` (`#2325 <https://github.com/ros2/rosbag2/issues/2325>`_)
+* Add `--max-cache-duration` option for time-bounded snapshots (`#2289 <https://github.com/ros2/rosbag2/issues/2289>`_)
+* Throw ``YAML::Exception`` during conversion if the data type mismatches (`#2262 <https://github.com/ros2/rosbag2/issues/2262>`_)
+* Fix decoder and encode mismatch in YAML deserialization (`#2277 <https://github.com/ros2/rosbag2/issues/2277>`_)
+* Incorporate upstream minor fixes from Apex.AI (`#2240 <https://github.com/ros2/rosbag2/issues/2240>`_)
+* Fix memory leak on ``make_empty_serialized_message()`` (`#2253 <https://github.com/ros2/rosbag2/issues/2253>`_)
+* Fix CMAKE deprecation (`#2067 <https://github.com/ros2/rosbag2/issues/2067>`_)
+* Introduce new ``BaseWriteInterface`` methods ``write_messages`` and ``write_message`` to provide operation status, deprecating old write APIs (`#2030 <https://github.com/ros2/rosbag2/issues/2030>`_)
+* Fix undefined behavior in the ``rosbag2_storage`` and ``rosbag2_storage_sqlite3`` packages (`#1997 <https://github.com/ros2/rosbag2/issues/1997>`_)
+
+* Contributors: Luke Sy, Michael Orlov, Tomoya Fujita, Tony Najjar, carlos-apex, mosfet80
+
 0.33.0 (2025-04-25)
 -------------------
 * Use DDS queue depth for subscriptions as a maximum value across publishers (`#1960 <https://github.com/ros2/rosbag2/issues/1960>`_)

@@ -2,6 +2,20 @@
 Changelog for package rosbag2_performance_benchmarking
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.33.1 (2026-04-14)
+-------------------
+
+* Use new ROSIDL aggregate CMake target (`#2384 <https://github.com/ros2/rosbag2/issues/2384>`_)
+* Remove unnecessary dependencies on ``yaml_cpp_vendor`` (`#2353 <https://github.com/ros2/rosbag2/issues/2353>`_)
+* Fix warning by initializing `number_of_threads` (`#2121 <https://github.com/ros2/rosbag2/issues/2121>`_)
+* Enable ``rosbag2_performance_benchmarking`` package to be built by default (`#2093 <https://github.com/ros2/rosbag2/issues/2093>`_)
+* Fix performance benchmarking data generation and environment variable handling (`#2078 <https://github.com/ros2/rosbag2/issues/2078>`_)
+* Fix failure in ``benchmark_launch`` when calling ``Process.wait()`` twice (`#2076 <https://github.com/ros2/rosbag2/issues/2076>`_)
+* Fix incorrect results from ``prosbag2_performance_benchmarking`` for high-frequency topics (`#2077 <https://github.com/ros2/rosbag2/issues/2077>`_)
+* Fix CMAKE deprecation (`#2067 <https://github.com/ros2/rosbag2/issues/2067>`_)
+
+* Contributors: Chris Lalancette, Cristóbal Arroyo, Emerson Knapp, Michael Orlov, mosfet80
+
 0.33.0 (2025-04-25)
 -------------------
 * Upstream quality changes from Apex.AI part-2 (`#1924 <https://github.com/ros2/rosbag2/issues/1924>`_)

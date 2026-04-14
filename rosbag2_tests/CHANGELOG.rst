@@ -2,6 +2,25 @@
 Changelog for package rosbag2_tests
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.33.1 (2026-04-14)
+-------------------
+
+* Use new ROSIDL aggregate CMake target (`#2384 <https://github.com/ros2/rosbag2/issues/2384>`_)
+* Update Rosbag2 filename format to ``index+name+timestamp`` (`#2265 <https://github.com/ros2/rosbag2/issues/2265>`_)
+* Add static topics feature for recorder (`#2319 <https://github.com/ros2/rosbag2/issues/2319>`_)
+* Add `--max-cache-duration` option for time-bounded snapshots (`#2289 <https://github.com/ros2/rosbag2/issues/2289>`_)
+* Workaround flaky ``bagsize_split_is_at_least_specified_size`` test (`#2311 <https://github.com/ros2/rosbag2/issues/2311>`_)
+* Add ``input_serialization_format`` and ``output_serialization_format`` to ``RecordOptions``, deprecating ``rmw_serialization_format`` (`#2215 <https://github.com/ros2/rosbag2/issues/2215>`_)
+* Address recorder test flakiness by increasing cache size (`#2203 <https://github.com/ros2/rosbag2/issues/2203>`_)
+* Use ``rclcpp typesupport helpers`` in ``rosbag2_cpp`` (`#2017 <https://github.com/ros2/rosbag2/issues/2017>`_)
+* Expose more of the player and recorder API to Python, and improve signal handling (`#2062 <https://github.com/ros2/rosbag2/issues/2062>`_)
+* Fix CMAKE deprecation (`#2067 <https://github.com/ros2/rosbag2/issues/2067>`_)
+* Fix deadlocks in Rosbag2 player when calling stop API (`#2057 <https://github.com/ros2/rosbag2/issues/2057>`_)
+* Introduce new ``BaseWriteInterface`` methods ``write_messages`` and ``write_message`` to provide operation status, deprecating old write APIs (`#2030 <https://github.com/ros2/rosbag2/issues/2030>`_)
+* Address test flakiness by waiting for executor spin (`#2001 <https://github.com/ros2/rosbag2/issues/2001>`_)
+
+* Contributors: Christophe Bedard, Daisuke Sato, Emerson Knapp, Michael Orlov, mosfet80
+
 0.33.0 (2025-04-25)
 -------------------
 * Upstream quality changes from Apex.AI part-2 (`#1924 <https://github.com/ros2/rosbag2/issues/1924>`_)

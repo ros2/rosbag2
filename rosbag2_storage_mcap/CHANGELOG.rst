@@ -2,6 +2,18 @@
 Changelog for package rosbag2_storage_mcap
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.33.1 (2026-04-14)
+-------------------
+
+* Use new ROSIDL aggregate CMake target (`#2384 <https://github.com/ros2/rosbag2/issues/2384>`_)
+* Remove unnecessary dependencies on ``yaml_cpp_vendor`` (`#2353 <https://github.com/ros2/rosbag2/issues/2353>`_)
+* Fix MCAPStorage::seek(time) to advance when timestamp matches current time (`#2157 <https://github.com/ros2/rosbag2/issues/2157>`_)
+* Fix CMAKE deprecation (`#2067 <https://github.com/ros2/rosbag2/issues/2067>`_)
+* Introduce new ``BaseWriteInterface`` methods ``write_messages`` and ``write_message`` to provide operation status, deprecating old write APIs (`#2030 <https://github.com/ros2/rosbag2/issues/2030>`_)
+* Update ``index.ros.org/p/`` links for ``rosbag2_storage_mcap`` (`#2034 <https://github.com/ros2/rosbag2/issues/2034>`_)
+
+* Contributors: Chris Lalancette, Christophe Bedard, Emerson Knapp, Michael Orlov, mosfet80
+
 0.33.0 (2025-04-25)
 -------------------
 
