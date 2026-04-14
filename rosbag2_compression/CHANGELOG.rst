@@ -5,6 +5,7 @@ Changelog for package rosbag2_compression
 0.33.1 (2026-04-14)
 -------------------
 
+* Add validation for empty file path in compression process (`#2398 <https://github.com/ros2/rosbag2/issues/2398>`_)
 * Fix a possible race condition in compression writer on close (`#2362 <https://github.com/ros2/rosbag2/issues/2362>`_)
 * Update Rosbag2 filename format to ``index+name+timestamp`` (`#2265 <https://github.com/ros2/rosbag2/issues/2265>`_)
 * Implement circular logging by split count (`--max-bag-files`) (`#2218 <https://github.com/ros2/rosbag2/issues/2218>`_)

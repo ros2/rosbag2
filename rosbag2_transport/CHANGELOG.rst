@@ -5,6 +5,7 @@ Changelog for package rosbag2_transport
 0.33.1 (2026-04-14)
 -------------------
 
+* Refactor transient-local topic detection and logging in RecorderImpl (`#2395 <https://github.com/ros2/rosbag2/issues/2395>`_)
 * Fix race condition in ``RecordSrvsSimTimeTest`` by waiting for clock subscriber (`#2396 <https://github.com/ros2/rosbag2/issues/2396>`_)
 * Add ``--repeat-all-transient-local`` flag for automatic transient-local topic detection (`#2391 <https://github.com/ros2/rosbag2/issues/2391>`_)
 * Repeat transient-local topics: Recorder, CLI, and Python bindings (`#2387 <https://github.com/ros2/rosbag2/issues/2387>`_)
