@@ -598,6 +598,16 @@ RecorderImpl::RecorderImpl(
       node->get_namespace(), false);
   }
 
+  // Expand topic names for overriding qos profiles
+  for (const auto & [topic_name, qos] : record_options_.topic_qos_profile_overrides) {
+    auto expanded_topic_name =
+      rclcpp::expand_topic_or_service_name(topic_name,
+                                          node->get_name(),
+                                          node->get_namespace(),
+                                          false);
+    topic_qos_profile_overrides_.emplace(expanded_topic_name, qos);
+  }
+
   topic_filter_ = std::make_unique<TopicFilter>(record_options, node->get_node_graph_interface(),
       false, static_topics_);
 
@@ -676,12 +686,6 @@ bool RecorderImpl::record(const std::string & uri)
   }
   RCLCPP_INFO(node->get_logger(), "Starting recording to '%s'", storage_options_.uri.c_str());
 
-  for (const auto & kv : record_options_.topic_qos_profile_overrides) {
-    topic_qos_profile_overrides_.emplace(
-    rclcpp::expand_topic_or_service_name(
-      kv.first, node->get_name(), node->get_namespace(), false),
-    kv.second);
-  }
   // Check serialization format options
   if (!record_options_.rmw_serialization_format.empty() &&
     record_options_.output_serialization_format.empty())
@@ -1858,14 +1862,14 @@ std::string type_description_hash_for_topic(
 
 rclcpp::QoS RecorderImpl::subscription_qos_for_topic(const std::string & topic_name) const
 {
-  const auto expanded = rclcpp::expand_topic_or_service_name(
+  const auto expanded_topic_name = rclcpp::expand_topic_or_service_name(
     topic_name, node->get_name(), node->get_namespace(), false);
-  if (topic_qos_profile_overrides_.count(expanded)) {
+  if (topic_qos_profile_overrides_.count(expanded_topic_name)) {
     RCLCPP_INFO_STREAM(
       node->get_logger(),
       "Overriding subscription profile for " << topic_name);
     if (record_options_.repeat_transient_local_messages.count(topic_name) > 0 &&
-      topic_qos_profile_overrides_.at(topic_name).get_rmw_qos_profile().durability !=
+      topic_qos_profile_overrides_.at(expanded_topic_name).get_rmw_qos_profile().durability !=
       RMW_QOS_POLICY_DURABILITY_TRANSIENT_LOCAL)
     {
       RCLCPP_WARN_STREAM(
@@ -1875,7 +1879,7 @@ rclcpp::QoS RecorderImpl::subscription_qos_for_topic(const std::string & topic_n
           "repeat-transient-local will not work unless the override includes transient_local "
           "durability.");
     }
-    return topic_qos_profile_overrides_.at(expanded);
+    return topic_qos_profile_overrides_.at(expanded_topic_name);
   }
 
   auto qos = rosbag2_storage::Rosbag2QoS::adapt_request_to_offers(
