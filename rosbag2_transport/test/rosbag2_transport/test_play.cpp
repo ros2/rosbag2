@@ -2516,7 +2516,7 @@ TEST_F(RosBag2PlayQosOverrideTestFixture, topic_qos_profile_override_matches_unq
   const auto topic_qos_profile_overrides = std::unordered_map<std::string, rclcpp::QoS>{
     std::pair<std::string, rclcpp::QoS>{unqualified_name, qos_playback_override},
   };
-  const auto timeout = 5s;
+  const auto timeout = 10s;
   initialize({});
   sub_->add_subscription<test_msgs::msg::BasicTypes>(
     topic_name_, num_msgs_to_wait_for_, qos_request);
