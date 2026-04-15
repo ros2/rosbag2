@@ -2,6 +2,21 @@
 Changelog for package rosbag2_compression
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.33.1 (2026-04-14)
+-------------------
+
+* Add validation for empty file path in compression process (`#2398 <https://github.com/ros2/rosbag2/issues/2398>`_)
+* Fix a possible race condition in compression writer on close (`#2362 <https://github.com/ros2/rosbag2/issues/2362>`_)
+* Update Rosbag2 filename format to ``index+name+timestamp`` (`#2265 <https://github.com/ros2/rosbag2/issues/2265>`_)
+* Implement circular logging by split count (`--max-bag-files`) (`#2218 <https://github.com/ros2/rosbag2/issues/2218>`_)
+* Make topics persistent between writer's close() and open() API calls (`#2229 <https://github.com/ros2/rosbag2/issues/2229>`_)
+* Address recorder test flakiness by increasing cache size (`#2203 <https://github.com/ros2/rosbag2/issues/2203>`_)
+* Fix CMAKE deprecation (`#2067 <https://github.com/ros2/rosbag2/issues/2067>`_)
+* Add message loss statistics callbacks and logging (`#2039 <https://github.com/ros2/rosbag2/issues/2039>`_)
+* Introduce new ``BaseWriteInterface`` methods ``write_messages`` and ``write_message`` to provide operation status, deprecating old write APIs (`#2030 <https://github.com/ros2/rosbag2/issues/2030>`_)
+
+* Contributors: Daisuke Sato, Luke Sy, Michael Orlov, mosfet80
+
 0.33.0 (2025-04-25)
 -------------------
 * Bugfix: `ros2 bag convert` dropping messages with compression mode message (`#1975 <https://github.com/ros2/rosbag2/issues/1975>`_)

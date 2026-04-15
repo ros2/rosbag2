@@ -2,6 +2,15 @@
 Changelog for package rosbag2_test_msgdefs
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.33.1 (2026-04-14)
+-------------------
+
+* Support relative includes for IDL in local message definition (`#2241 <https://github.com/ros2/rosbag2/issues/2241>`_)
+* Fix CMAKE deprecation (`#2067 <https://github.com/ros2/rosbag2/issues/2067>`_)
+* Add support for searching message definitions in nested subdirectories (`#2055 <https://github.com/ros2/rosbag2/issues/2055>`_)
+
+* Contributors: Hunter L. Allen, Michael Orlov, mosfet80
+
 0.33.0 (2025-04-25)
 -------------------
 

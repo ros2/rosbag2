@@ -2,6 +2,13 @@
 Changelog for package rosbag2
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.33.1 (2026-04-14)
+-------------------
+
+* Fix CMAKE deprecation (`#2067 <https://github.com/ros2/rosbag2/issues/2067>`_)
+
+* Contributors: mosfet80
+
 0.33.0 (2025-04-25)
 -------------------
 

@@ -2,6 +2,20 @@
 Changelog for package rosbag2_storage_default_plugins
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.33.1 (2026-04-14)
+-------------------
+
+* Use new ROSIDL aggregate CMake target (`#2384 <https://github.com/ros2/rosbag2/issues/2384>`_)
+* Implement circular logging by split count (`--max-bag-files`) (`#2218 <https://github.com/ros2/rosbag2/issues/2218>`_)
+* Add `--max-cache-duration` option for time-bounded snapshots (`#2289 <https://github.com/ros2/rosbag2/issues/2289>`_)
+* Fix vulnerable string concatenation by using parameterized queries (`#2290 <https://github.com/ros2/rosbag2/issues/2290>`_)
+* Remove sqlite3_vendor (`#2164 <https://github.com/ros2/rosbag2/issues/2164>`_)
+* Fix CMAKE deprecation (`#2067 <https://github.com/ros2/rosbag2/issues/2067>`_)
+* Introduce new ``BaseWriteInterface`` methods ``write_messages`` and ``write_message`` to provide operation status, deprecating old write APIs (`#2030 <https://github.com/ros2/rosbag2/issues/2030>`_)
+* Fix undefined behavior in the ``rosbag2_storage`` and ``rosbag2_storage_sqlite3`` packages (`#1997 <https://github.com/ros2/rosbag2/issues/1997>`_)
+
+* Contributors: Alejandro Hernández Cordero, Emerson Knapp, Luke Sy, Michael Orlov, Tomoya Fujita, mosfet80
+
 0.33.0 (2025-04-25)
 -------------------
 * Upstream quality changes from Apex.AI part-2 (`#1924 <https://github.com/ros2/rosbag2/issues/1924>`_)

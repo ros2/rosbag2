@@ -2,6 +2,17 @@
 Changelog for package mcap_vendor
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.33.1 (2026-04-14)
+-------------------
+
+* Update mcap dependency to version 2.1.3 (`#2355 <https://github.com/ros2/rosbag2/issues/2355>`_)
+* Remove lz4 vendor package (`#2165 <https://github.com/ros2/rosbag2/issues/2165>`_)
+* Replace ``zstd_vendor`` with ``zstd_cmake_module`` (`#2166 <https://github.com/ros2/rosbag2/issues/2166>`_)
+* Fix CMAKE deprecation (`#2067 <https://github.com/ros2/rosbag2/issues/2067>`_)
+* Backport missing ``cstdint`` include (`#2008 <https://github.com/ros2/rosbag2/issues/2008>`_)
+
+* Contributors: Alejandro Hernández Cordero, Chris Lalancette, David Anthony, mosfet80
+
 0.33.0 (2025-04-25)
 -------------------
 
