@@ -695,7 +695,7 @@ void SequentialWriter::delete_oldest_files_if_needed()
         break;  // Keep file in tracking; retry on next split to avoid tight loop
       }
       ROSBAG2_CPP_LOG_INFO(
-        "Deleted oldest bagfile: %s (%lu bytes, %lu ns)",
+        "Deleted oldest bagfile: %s (%lu bytes, %lld ns)",
                            oldest_file.path.c_str(), file_size, file_duration_ns);
       remove_oldest_file_from_tracking();
     } else {
