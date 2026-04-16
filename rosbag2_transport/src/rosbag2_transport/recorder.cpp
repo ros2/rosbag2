@@ -249,7 +249,22 @@ RecorderImpl::RecorderImpl(
       node->get_namespace(), false);
   }
 
+<<<<<<< HEAD
   topic_filter_ = std::make_unique<TopicFilter>(record_options_, node->get_node_graph_interface());
+=======
+  // Expand topic names for overriding qos profiles
+  for (const auto & [topic_name, qos] : record_options_.topic_qos_profile_overrides) {
+    auto expanded_topic_name =
+      rclcpp::expand_topic_or_service_name(topic_name,
+                                           node->get_name(),
+                                           node->get_namespace(),
+                                           false);
+    topic_qos_profile_overrides_.emplace(expanded_topic_name, qos);
+  }
+
+  topic_filter_ = std::make_unique<TopicFilter>(record_options, node->get_node_graph_interface(),
+      false, static_topics_);
+>>>>>>> d2c4d6d (Fix QoS overrides ignored when topic name has no leading slash (#2394))
 
   create_control_services();
 }
@@ -303,9 +318,32 @@ void RecorderImpl::record(const std::string & uri)
   }
   RCLCPP_INFO(node->get_logger(), "Starting recording to '%s'", storage_options_.uri.c_str());
 
+<<<<<<< HEAD
   topic_qos_profile_overrides_ = record_options_.topic_qos_profile_overrides;
   if (record_options_.rmw_serialization_format.empty()) {
     throw std::runtime_error("No serialization format specified!");
+=======
+  // Check serialization format options
+  if (!record_options_.rmw_serialization_format.empty() &&
+    record_options_.output_serialization_format.empty())
+  {
+    RCLCPP_WARN(node->get_logger(),
+      "The rmw_serialization_format option is deprecated and will be removed in a future release.\n"
+      "Please use output_serialization_format instead.");
+    record_options_.output_serialization_format = record_options_.rmw_serialization_format;
+  }
+  if (record_options_.input_serialization_format.empty()) {
+    record_options_.input_serialization_format = rmw_get_serialization_format();
+    RCLCPP_WARN(node->get_logger(),
+      "No input serialization format specified, using default rmw serialization format: '%s'.",
+      record_options_.input_serialization_format.c_str());
+  }
+  if (record_options_.output_serialization_format.empty()) {
+    record_options_.output_serialization_format = rmw_get_serialization_format();
+    RCLCPP_WARN(node->get_logger(),
+      "No output serialization format specified, using rmw serialization format. '%s'.",
+      record_options_.output_serialization_format.c_str());
+>>>>>>> d2c4d6d (Fix QoS overrides ignored when topic name has no leading slash (#2394))
   }
 
   subscriptions_.clear();
@@ -890,11 +928,29 @@ std::string type_description_hash_for_topic(
 
 rclcpp::QoS RecorderImpl::subscription_qos_for_topic(const std::string & topic_name) const
 {
-  if (topic_qos_profile_overrides_.count(topic_name)) {
+  const auto expanded_topic_name = rclcpp::expand_topic_or_service_name(
+    topic_name, node->get_name(), node->get_namespace(), false);
+  if (topic_qos_profile_overrides_.count(expanded_topic_name)) {
     RCLCPP_INFO_STREAM(
       node->get_logger(),
+<<<<<<< HEAD
       "Overriding subscription profile for " << topic_name);
     return topic_qos_profile_overrides_.at(topic_name);
+=======
+      "Overriding subscription profile for " << expanded_topic_name);
+    if (record_options_.repeat_transient_local_messages.count(expanded_topic_name) > 0 &&
+      topic_qos_profile_overrides_.at(expanded_topic_name).get_rmw_qos_profile().durability !=
+      RMW_QOS_POLICY_DURABILITY_TRANSIENT_LOCAL)
+    {
+      RCLCPP_WARN_STREAM(
+        node->get_logger(),
+        "Topic '" << expanded_topic_name << "' has a QoS profile override without transient_local "
+          "durability, but repeat-transient-local is enabled. The QoS override takes precedence; "
+          "repeat-transient-local will not work unless the override includes transient_local "
+          "durability.");
+    }
+    return topic_qos_profile_overrides_.at(expanded_topic_name);
+>>>>>>> d2c4d6d (Fix QoS overrides ignored when topic name has no leading slash (#2394))
   }
   return rosbag2_storage::Rosbag2QoS::adapt_request_to_offers(
     topic_name, node->get_publishers_info_by_topic(topic_name));
