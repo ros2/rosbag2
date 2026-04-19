@@ -716,13 +716,13 @@ bool RecorderImpl::record(const std::string & uri)
   fs::path storage_path(storage_options_.uri);
   if (fs::is_directory(storage_path)) {
     RCLCPP_WARN_STREAM(node->get_logger(),
-                       "Bag directory '" << storage_path.c_str() << "' already exists.");
+                       "Bag directory '" << storage_path.string() << "' already exists.");
     for (size_t i = 1U; i < std::numeric_limits<size_t>::max(); i++) {
       fs::path new_path = storage_path;
       new_path += "(" + std::to_string(i) + ")";
       if (!fs::exists(new_path)) {
         RCLCPP_WARN_STREAM(node->get_logger(),
-                           "Changing bag directory to '" << new_path.c_str() << "'.");
+                           "Changing bag directory to '" << new_path.string() << "'.");
         storage_options_.uri = new_path.generic_string();
         storage_path = new_path;
         break;
