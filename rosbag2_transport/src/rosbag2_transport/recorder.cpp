@@ -273,7 +273,6 @@ void RecorderImpl::stop()
   }
 
   stop_discovery();
-  pause();
   subscriptions_.clear();
   writer_->close();  // Call writer->close() to finalize current bag file and write metadata
 
