@@ -2503,6 +2503,28 @@ TEST_F(RosBag2PlayQosOverrideTestFixture, topic_qos_profiles_overridden)
   play_and_wait(timeout);
 }
 
+TEST_F(RosBag2PlayQosOverrideTestFixture, topic_qos_profile_override_matches_unqualified_name)
+{
+  // Bag topic is stored as "/topic" (with slash), but the override key uses the
+  // unqualified form "topic" (no slash).
+  const auto qos_request = rclcpp::QoS{rclcpp::KeepAll()}.reliable().transient_local();
+  const auto qos_playback_override = rclcpp::QoS{rclcpp::KeepAll()}.reliable().transient_local();
+  // Strip the leading slash to simulate a user writing "my_topic" instead of "/my_topic" in YAML
+  ASSERT_FALSE(topic_name_.empty());
+  ASSERT_EQ(topic_name_.front(), '/');
+  const std::string unqualified_name = topic_name_.substr(1);
+  const auto topic_qos_profile_overrides = std::unordered_map<std::string, rclcpp::QoS>{
+    std::pair<std::string, rclcpp::QoS>{unqualified_name, qos_playback_override},
+  };
+  const auto timeout = 10s;
+  initialize({});
+  sub_->add_subscription<test_msgs::msg::BasicTypes>(
+    topic_name_, num_msgs_to_wait_for_, qos_request);
+  play_options_.topic_qos_profile_overrides = topic_qos_profile_overrides;
+  // Fails if times out - override must apply even with unqualified topic name
+  play_and_wait(timeout);
+}
+
 TEST_F(RosBag2PlayQosOverrideTestFixture, topic_qos_profiles_overridden_incompatible)
 {
   // By default playback offers RELIABILITY_RELIABLE
