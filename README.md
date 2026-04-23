@@ -634,3 +634,24 @@ For example, you want a timestamp on the bag directory name, but want a custom p
 $ ros2 bag record -a -o mybag_"$(date +"%Y_%m_%d-%H_%M_%S")"
 ... creates e.g. mybag_2025_02_21-15_35_35
 ```
+
+## Known limitations
+
+### Recorder restart after `stop()`
+
+In Kilted and Jazzy, `Recorder::stop()` / `~/stop` intentionally enforces a pause as part of 
+shutdown to mitigate undefined behavior when subscription's callbacks are propagated to the 
+executor and may still be in the executor's queue after finishing the stop() operation.
+
+As a result, the recorder can remain in the paused state after `stop()` completes. If recording is
+started again with the same recorder instance via `Recorder::record()` / `~/record`, that paused
+state is reused and the restarted recorder will remain paused until it is explicitly resumed.
+
+Workaround: if you intend to restart recording with the same recorder instance, call
+`Recorder::resume()` / `~/resume` right after the next `record()` call.
+
+```cpp
+recorder->stop();
+recorder->record();
+recorder->resume();
+```
