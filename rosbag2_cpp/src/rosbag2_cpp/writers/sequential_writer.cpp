@@ -684,18 +684,16 @@ void SequentialWriter::delete_oldest_files_if_needed()
 
     // Delete file from filesystem
     if (fs::exists(file_path)) {
-      const auto file_size = fs::file_size(file_path);
-      const auto file_duration_ns = oldest_file.duration.count();
+      const uint64_t file_size = fs::file_size(file_path);
+      const int64_t file_duration_ns = oldest_file.duration.count();
       std::error_code ec;
       bool file_removed = fs::remove(file_path, ec);
       if (!file_removed || ec) {
-        ROSBAG2_CPP_LOG_ERROR(
-          "Failed to delete oldest bagfile: %s. Error: %s",
+        ROSBAG2_CPP_LOG_ERROR("Failed to delete oldest bagfile: %s. Error: %s",
                               file_path.generic_string().c_str(), ec.message().c_str());
         break;  // Keep file in tracking; retry on next split to avoid tight loop
       }
-      ROSBAG2_CPP_LOG_INFO(
-        "Deleted oldest bagfile: %s (%lu bytes, %lu ns)",
+      ROSBAG2_CPP_LOG_INFO("Deleted oldest bagfile: %s (%lu bytes, %ld ns)",
                            oldest_file.path.c_str(), file_size, file_duration_ns);
       remove_oldest_file_from_tracking();
     } else {
