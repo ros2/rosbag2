@@ -131,12 +131,15 @@ public:
         return true;
       }
 
-      auto remaining = std::chrono::duration_cast<std::chrono::nanoseconds>(deadline -
-          clock::now());
-      if (remaining > max_wait_slice) {
-        remaining = max_wait_slice;
+      const auto now_time = clock::now();
+      if (now_time < deadline) {
+        auto remaining =
+          std::chrono::duration_cast<std::chrono::nanoseconds>(deadline - now_time);
+        if (remaining > max_wait_slice) {
+          remaining = max_wait_slice;
+        }
+        pub_node_->wait_for_graph_change(graph_event, remaining);
       }
-      pub_node_->wait_for_graph_change(graph_event, remaining);
       (void)graph_event->check_and_clear();
     }
 
