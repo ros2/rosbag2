@@ -71,6 +71,10 @@ public:
 
   /// @brief Stopping recording and closing writer.
   /// The record() can be called again after stop().
+  /// @note The stop() also enforces a pause during shutdown to mitigate undefined behavior
+  /// while the recorder is stopping and finalizing the bag file. As a result, the recorder
+  /// remains paused after stop() completes. If recording is restarted with the same recorder
+  /// instance, call resume() after record() to clear that paused state.
   void stop();
 
   const rosbag2_cpp::Writer & get_writer_handle();

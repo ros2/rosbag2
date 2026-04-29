@@ -131,6 +131,10 @@ public:
   /// @brief Stopping recording.
   /// @details The stop() is opposite to the record() operation. It will stop recording, dump
   /// all buffers to the disk and close writer. The record() can be called again after stop().
+  /// @note The stop() also enforces a pause during shutdown to mitigate undefined behavior
+  /// while the recorder is stopping and finalizing the bag file. As a result, the recorder
+  /// remains paused after stop() completes. If recording is restarted with the same recorder
+  /// instance, call resume() after record() to clear that paused state.
   ROSBAG2_TRANSPORT_PUBLIC
   void stop();
 
