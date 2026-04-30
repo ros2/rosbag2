@@ -2,8 +2,8 @@
 Changelog for package rosbag2_test_common
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.33.2 (2026-04-30)
+-------------------
 * Reduce flakiness in rosbag2 recorder end-to-end tests (`#2370 <https://github.com/ros2/rosbag2/issues/2370>`_)
 * Contributors: Michael Orlov
 
