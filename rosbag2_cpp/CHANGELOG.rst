@@ -2,6 +2,12 @@
 Changelog for package rosbag2_cpp
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.34.0 (2026-05-01)
+-------------------
+* Address clang warnings in file deletion logging in sequential_writer.cpp (`#2404 <https://github.com/ros2/rosbag2/issues/2404>`_)
+
+* Contributors: Alejandro Hernández Cordero, Michael Orlov
+
 0.33.1 (2026-04-14)
 -------------------
 

@@ -2,6 +2,13 @@
 Changelog for package rosbag2_transport
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.34.0 (2026-05-01)
+-------------------
+* Fixed compile errors in rosbag2_transport for MSVC 2022 and C++20 (`#2407 <https://github.com/ros2/rosbag2/issues/2407>`_)
+* Fix failure in overriding QoS when topic name has no leading slash (`#2394 <https://github.com/ros2/rosbag2/issues/2394>`_)
+
+* Contributors: Janosch Machowinski, Sahil Lakhmani, Michael Orlov
+
 0.33.1 (2026-04-14)
 -------------------
 
