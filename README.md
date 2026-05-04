@@ -67,7 +67,7 @@ This auto-discovery of new topics can be disabled by given the command line argu
 To record a set of predefined topics, one can specify them on the command line explicitly.
 
 ```
-$ ros2 bag record <topic1> <topic2> … <topicN>
+$ ros2 bag record --topics <topic1> <topic2> … <topicN>
 ```
 
 Press `Ctrl+C` to stop the recording.
