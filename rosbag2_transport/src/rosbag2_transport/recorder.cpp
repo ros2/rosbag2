@@ -249,6 +249,16 @@ RecorderImpl::RecorderImpl(
       node->get_namespace(), false);
   }
 
+  // Expand topic names for overriding qos profiles
+  for (const auto & [topic_name, qos] : record_options_.topic_qos_profile_overrides) {
+    auto expanded_topic_name =
+      rclcpp::expand_topic_or_service_name(topic_name,
+                                           node->get_name(),
+                                           node->get_namespace(),
+                                           false);
+    topic_qos_profile_overrides_.emplace(expanded_topic_name, qos);
+  }
+
   topic_filter_ = std::make_unique<TopicFilter>(record_options_, node->get_node_graph_interface());
 
   create_control_services();
@@ -302,7 +312,6 @@ void RecorderImpl::record(const std::string & uri)
   }
   RCLCPP_INFO(node->get_logger(), "Starting recording to '%s'", storage_options_.uri.c_str());
 
-  topic_qos_profile_overrides_ = record_options_.topic_qos_profile_overrides;
   if (record_options_.rmw_serialization_format.empty()) {
     throw std::runtime_error("No serialization format specified!");
   }
@@ -864,10 +873,12 @@ std::string type_description_hash_for_topic(
 
 rclcpp::QoS RecorderImpl::subscription_qos_for_topic(const std::string & topic_name) const
 {
-  if (topic_qos_profile_overrides_.count(topic_name)) {
+  const auto expanded_topic_name = rclcpp::expand_topic_or_service_name(
+    topic_name, node->get_name(), node->get_namespace(), false);
+  if (topic_qos_profile_overrides_.count(expanded_topic_name)) {
     RCLCPP_INFO_STREAM(
-      node->get_logger(),
-      "Overriding subscription profile for " << topic_name);
+    node->get_logger(),
+    "Overriding subscription profile for " << expanded_topic_name);
     return topic_qos_profile_overrides_.at(topic_name);
   }
   return rosbag2_storage::Rosbag2QoS::adapt_request_to_offers(
