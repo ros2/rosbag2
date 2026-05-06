@@ -641,14 +641,14 @@ void RecorderImpl::stop()
   }
 
   stop_discovery();
-  // Explicitly disable all subscription's callbacks to avoid UB and receiving new messages on
-  // deleted subscriptions. Note: The callbacks propagated to the executor and may still be in the
-  // executor's queue, but they will no longer be called after this point.
-  for (auto & [_, subscription] : subscriptions_) {
-    subscription->disable_callbacks();
-  }
   {
+    // Explicitly disable all subscription's callbacks to avoid UB and receiving new messages on
+    // deleted subscriptions. Note: The callbacks propagated to the executor and may still be in the
+    // executor's queue, but they will no longer be called after this point.
     std::lock_guard<std::mutex> subscriptions_lock(subscriptions_mutex_);
+    for (auto & [_, subscription] : subscriptions_) {
+      subscription->disable_callbacks();
+    }
     subscriptions_.clear();
   }
   writer_->close();  // Call writer->close() to finalize current bag file and write metadata
