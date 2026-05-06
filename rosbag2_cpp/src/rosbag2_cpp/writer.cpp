@@ -195,4 +195,12 @@ bool Writer::has_callback_for_event(bag_events::BagEvent event) const
   return writer_impl_->has_callback_for_event(event);
 }
 
+void Writer::write_custom_metadata(
+  const std::string & name,
+  const std::map<std::string, std::string> & kv)
+{
+  std::lock_guard<std::mutex> writer_lock(writer_mutex_);
+  writer_impl_->write_custom_metadata(name, kv);
+}
+
 }  // namespace rosbag2_cpp

@@ -213,6 +213,8 @@ public:
 #ifdef ROSBAG2_STORAGE_MCAP_HAS_UPDATE_METADATA
   void update_metadata(const rosbag2_storage::BagMetadata &) override;
 #endif
+  void write_custom_metadata(const std::string & name,
+                             const std::map<std::string, std::string> & kv) override;
 
 private:
   void read_metadata();
@@ -990,6 +992,19 @@ void MCAPStorage::remove_topic(const rosbag2_storage::TopicMetadata & topic)
     const auto & datatype = topic_it->second.topic_metadata.type;
     schema_ids_.erase(datatype);
     topics_.erase(topic.name);
+  }
+}
+
+void MCAPStorage::write_custom_metadata(const std::string & name,
+                                        const std::map<std::string, std::string> & kv)
+{
+  std::lock_guard<std::mutex> lock(mcap_storage_mutex_);
+  mcap::Metadata metadata;
+  metadata.name = name;
+  metadata.metadata.insert(kv.begin(), kv.end());
+  auto status = mcap_writer_->write(metadata);
+  if (!status.ok()) {
+    OnProblem(status);
   }
 }
 

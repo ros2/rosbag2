@@ -16,6 +16,7 @@
 #define ROSBAG2_TRANSPORT__MOCK_SEQUENTIAL_WRITER_HPP_
 
 #include <atomic>
+#include <map>
 #include <memory>
 #include <string>
 #include <unordered_map>
@@ -124,6 +125,10 @@ public:
   {
     return callback_manager_.has_callback_for_event(event);
   }
+
+  void write_custom_metadata(
+    const std::string & /*name*/,
+    const std::map<std::string, std::string> & /*kv*/) override {}
 
   size_t get_number_of_recorded_messages() const
   {

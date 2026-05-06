@@ -16,6 +16,7 @@
 #define ROSBAG2_CPP__WRITERS__SEQUENTIAL_WRITER_HPP_
 
 #include <deque>
+#include <map>
 #include <memory>
 #include <mutex>
 #include <string>
@@ -161,6 +162,15 @@ public:
    * \return True if there is any callback registered for the event, false otherwise.
    */
   [[nodiscard]] bool has_callback_for_event(bag_events::BagEvent event) const override;
+
+  /**
+   * \brief Write a custom metadata record to the bag.
+   * \param name Identifier for this metadata record.
+   * \param kv Key-value pairs to store.
+   */
+  void write_custom_metadata(
+    const std::string & name,
+    const std::map<std::string, std::string> & kv) override;
 
 protected:
   std::string base_folder_;

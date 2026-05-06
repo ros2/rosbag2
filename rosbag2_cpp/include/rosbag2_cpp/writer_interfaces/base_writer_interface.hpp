@@ -16,7 +16,9 @@
 #define ROSBAG2_CPP__WRITER_INTERFACES__BASE_WRITER_INTERFACE_HPP_
 
 #include <cstddef>
+#include <map>
 #include <memory>
+#include <string>
 
 #include "rosbag2_cpp/bag_events.hpp"
 #include "rosbag2_cpp/converter_options.hpp"
@@ -80,6 +82,15 @@ public:
    * \return True if there is any callback registered for the event, false otherwise.
    */
   [[nodiscard]] virtual bool has_callback_for_event(bag_events::BagEvent event) const = 0;
+
+  /**
+   * \brief Write a custom metadata record to the bag.
+   * \param name Identifier for this metadata record.
+   * \param kv Key-value pairs to store.
+   */
+  virtual void write_custom_metadata(
+    const std::string & name,
+    const std::map<std::string, std::string> & kv) = 0;
 };
 
 }  // namespace writer_interfaces

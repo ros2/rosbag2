@@ -19,6 +19,7 @@
 #include <ctime>
 #include <filesystem>
 #include <iomanip>
+#include <map>
 #include <memory>
 #include <regex>
 #include <stdexcept>
@@ -889,6 +890,15 @@ void SequentialWriter::add_event_callbacks(const bag_events::WriterEventCallback
 bool SequentialWriter::has_callback_for_event(bag_events::BagEvent event) const
 {
   return callback_manager_.has_callback_for_event(event);
+}
+
+void SequentialWriter::write_custom_metadata(
+  const std::string & name,
+  const std::map<std::string, std::string> & kv)
+{
+  if (storage_) {
+    storage_->write_custom_metadata(name, kv);
+  }
 }
 
 }  // namespace writers

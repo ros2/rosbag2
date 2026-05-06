@@ -15,6 +15,7 @@
 #ifndef ROSBAG2_STORAGE__STORAGE_INTERFACES__BASE_WRITE_INTERFACE_HPP_
 #define ROSBAG2_STORAGE__STORAGE_INTERFACES__BASE_WRITE_INTERFACE_HPP_
 
+#include <map>
 #include <memory>
 #include <string>
 #include <vector>
@@ -86,6 +87,14 @@ public:
   /// create_topic, which adds a topic to the internal storage references.
   /// \param topic - Metadata of the topic to remove.
   virtual void remove_topic(const TopicMetadata & topic) = 0;
+
+  /// \brief Writes a custom metadata record to the storage.
+  /// \param name - Identifier for this metadata record.
+  /// \param kv - Key-value pairs to store.
+  /// \note Not all storage backends support custom metadata. The default implementation is a no-op.
+  virtual void write_custom_metadata(
+    const std::string & /*name*/,
+    const std::map<std::string, std::string> & /*kv*/) {}
 };
 
 }  // namespace storage_interfaces
