@@ -29,7 +29,7 @@ namespace fs = std::filesystem;
 TEST_F(RecordIntegrationTestFixture, recorder_can_read_static_topics_list)
 {
   rosbag2_transport::RecordOptions record_options = rosbag2_transport::RecordOptions{
-    true, true, true, true, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, "rmw_format", 100ms};
+    true, true, true, true, {}, {}, {}, {}, {}, {}, {}, {}, {}, "rmw_format", 100ms};
 
   // _SRC_RESOURCES_DIR_PATH defined in CMakeLists.txt
   record_options.static_topics_uri =
@@ -55,7 +55,7 @@ TEST_F(RecordIntegrationTestFixture, exclude_applies_above_static_topics_list)
   rosbag2_test_common::PublicationManager pub_manager;
   pub_manager.setup_publisher("/topic_name1", string_message, 5);
   rosbag2_transport::RecordOptions record_options = rosbag2_transport::RecordOptions{
-    false, false, false, true, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, "rmw_format", 100ms};
+    false, false, false, true, {}, {}, {}, {}, {}, {}, {}, {}, {}, "rmw_format", 100ms};
   record_options.include_unpublished_topics = true;
   record_options.exclude_regex = ".*_name2.*";
 

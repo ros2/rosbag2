@@ -131,10 +131,6 @@ setup_topic_filtering(
     auto filtered_topics_and_types = topic_filter.filter_topics(input_topics);
 
     std::string output_serialization_format = record_options.output_serialization_format;
-    // Fall back to the deprecated rmw_serialization_format if output format is unspecified
-    if (!record_options.rmw_serialization_format.empty() && output_serialization_format.empty()) {
-      output_serialization_format = record_options.rmw_serialization_format;
-    }
 
     // Done filtering - set up writer
     for (const auto & [topic_name, topic_type] : filtered_topics_and_types) {

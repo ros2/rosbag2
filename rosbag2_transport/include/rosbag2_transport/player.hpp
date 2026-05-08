@@ -379,13 +379,6 @@ protected:
   ROSBAG2_TRANSPORT_PUBLIC
   size_t get_number_of_registered_on_play_msg_post_callbacks();
 
-  /// \brief Getter for the first of the currently stored storage options
-  /// \return Copy of the first item in the StorageOptions vector
-  // TODO(morlov): Remove this method in Rolling after Lyrical release
-  [[deprecated("Use rosabg2_transport::Player::get_all_storage_options() instead")]]
-  ROSBAG2_TRANSPORT_PUBLIC
-  rosbag2_storage::StorageOptions get_storage_options();
-
   /// \brief Getter for the currently stored storage options
   /// \return Copy of the currently stored storage options
   ROSBAG2_TRANSPORT_PUBLIC

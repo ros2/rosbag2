@@ -687,14 +687,6 @@ bool RecorderImpl::record(const std::string & uri)
   RCLCPP_INFO(node->get_logger(), "Starting recording to '%s'", storage_options_.uri.c_str());
 
   // Check serialization format options
-  if (!record_options_.rmw_serialization_format.empty() &&
-    record_options_.output_serialization_format.empty())
-  {
-    RCLCPP_WARN(node->get_logger(),
-      "The rmw_serialization_format option is deprecated and will be removed in a future release.\n"
-      "Please use output_serialization_format instead.");
-    record_options_.output_serialization_format = record_options_.rmw_serialization_format;
-  }
   if (record_options_.input_serialization_format.empty()) {
     record_options_.input_serialization_format = rmw_get_serialization_format();
     RCLCPP_WARN(node->get_logger(),

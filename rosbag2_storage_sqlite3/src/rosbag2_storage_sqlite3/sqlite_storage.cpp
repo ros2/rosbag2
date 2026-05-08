@@ -280,11 +280,6 @@ void SqliteStorage::commit_transaction()
   active_transaction_ = false;
 }
 
-void SqliteStorage::write(std::shared_ptr<const rosbag2_storage::SerializedBagMessage> message)
-{
-  (void)write_message(message);
-}
-
 bool
 SqliteStorage::write_message(std::shared_ptr<const rosbag2_storage::SerializedBagMessage> message)
 {
@@ -333,12 +328,6 @@ bool SqliteStorage::write_locked(
     return false;
   }
   return true;
-}
-
-void SqliteStorage::write(
-  const std::vector<std::shared_ptr<const rosbag2_storage::SerializedBagMessage>> & messages)
-{
-  (void)write_messages(messages);
 }
 
 std::vector<size_t>

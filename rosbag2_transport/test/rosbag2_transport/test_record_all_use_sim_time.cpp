@@ -97,7 +97,7 @@ TEST_F(RecordIntegrationTestFixture, record_all_with_sim_time)
 
   rosbag2_transport::RecordOptions record_options =
   {
-    false, false, false, false, {string_topic, clock_topic}, {}, {}, {}, {}, {}, {}, {}, {}, {},
+    false, false, false, false, {string_topic, clock_topic}, {}, {}, {}, {}, {}, {}, {}, {},
     "rmw_format", 100ms
   };
   record_options.use_sim_time = true;

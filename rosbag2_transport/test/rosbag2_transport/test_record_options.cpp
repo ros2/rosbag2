@@ -35,7 +35,6 @@ TEST(record_options, test_yaml_serialization_deserialization)
   original.exclude_topic_types = {"exclude_type1", "exclude_type2"};
   original.exclude_service_events = {"exclude_service1", "exclude_service2"};
   original.exclude_actions = {"exclude_action1", "exclude_action2"};
-  original.rmw_serialization_format = "cdr";
   original.input_serialization_format = "cdr";
   original.output_serialization_format = "cdr";
   original.topic_polling_interval = std::chrono::milliseconds{200};
@@ -79,7 +78,6 @@ TEST(record_options, test_yaml_serialization_deserialization)
   CHECK(exclude_topic_types);
   CHECK(exclude_service_events);
   CHECK(exclude_actions);
-  CHECK(rmw_serialization_format);
   CHECK(input_serialization_format);
   CHECK(output_serialization_format);
   CHECK(topic_polling_interval);

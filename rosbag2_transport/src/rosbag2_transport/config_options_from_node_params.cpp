@@ -327,9 +327,6 @@ RecordOptions get_record_options_from_node_params(rclcpp::Node & node)
   record_options.exclude_actions = node.declare_parameter<std::vector<std::string>>(
     "record.exclude_actions", std::vector<std::string>());
 
-  record_options.rmw_serialization_format =
-    node.declare_parameter<std::string>("record.rmw_serialization_format", "cdr");
-
   record_options.input_serialization_format =
     node.declare_parameter<std::string>("record.input_serialization_format", "cdr");
   record_options.output_serialization_format =

@@ -60,17 +60,6 @@ class ROSBAG2_CPP_PUBLIC LocalMessageDefinitionSource final
 {
 public:
   /**
-   * Concatenate the message definition with its dependencies into a self-contained schema.
-   * The format is different for MSG/SRV/ACTION and IDL definitions, and is described fully in
-   * docs/message_definition_encoding.md
-   * For SRV type, root_type must include a string '/srv/'.
-   * For ACTION type, root_type must include a string '/action/'.
-   */
-  [[deprecated("Use get_full_text_ext() instead, which allows specifying the topic name and "
-     "provides more flexibility in how the message definition is constructed.")]]
-  rosbag2_storage::MessageDefinition get_full_text(const std::string & root_type);
-
-  /**
    * \brief Try to get the message definition and concatenate it with its dependencies into a
    * self-contained schema.
    * \details The format is different for MSG/SRV/ACTION and IDL definitions, and is described

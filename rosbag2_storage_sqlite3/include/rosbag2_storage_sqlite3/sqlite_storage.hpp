@@ -63,12 +63,6 @@ public:
     const rosbag2_storage::TopicMetadata & topic,
     const rosbag2_storage::MessageDefinition & message_definition) override;
 
-  void write(std::shared_ptr<const rosbag2_storage::SerializedBagMessage> message) override;
-
-  void write(
-    const std::vector<std::shared_ptr<const rosbag2_storage::SerializedBagMessage>> & messages)
-  override;
-
   bool write_message(std::shared_ptr<const rosbag2_storage::SerializedBagMessage> message) override;
 
   std::vector<size_t>

@@ -240,10 +240,6 @@ public:
   /// \return Number of registered on_play_msg_post_callbacks
   size_t get_number_of_registered_on_play_msg_post_callbacks();
 
-  /// \brief Getter for the first of the currently stored storage options
-  /// \return Copy of the first of the currently stored storage options
-  rosbag2_storage::StorageOptions get_storage_options();
-
   /// \brief Getter for the currently stored storage options
   /// \return Copy of the currently stored storage options
   std::vector<rosbag2_storage::StorageOptions> get_all_storage_options();
@@ -2272,15 +2268,6 @@ void PlayerImpl::publish_clock_update(const rclcpp::Time & time)
   }
 }
 
-rosbag2_storage::StorageOptions PlayerImpl::get_storage_options()
-{
-  auto all_storage_options = get_all_storage_options();
-  if (all_storage_options.empty()) {
-    throw std::runtime_error("Storage options not available.");
-  }
-  return all_storage_options[0];
-}
-
 std::vector<rosbag2_storage::StorageOptions> PlayerImpl::get_all_storage_options()
 {
   return readers_->get_all_storage_options();
@@ -2539,11 +2526,6 @@ size_t Player::get_number_of_registered_on_play_msg_pre_callbacks()
 size_t Player::get_number_of_registered_on_play_msg_post_callbacks()
 {
   return pimpl_->get_number_of_registered_on_play_msg_post_callbacks();
-}
-
-rosbag2_storage::StorageOptions Player::get_storage_options()
-{
-  return pimpl_->get_storage_options();
 }
 
 std::vector<rosbag2_storage::StorageOptions> Player::get_all_storage_options()

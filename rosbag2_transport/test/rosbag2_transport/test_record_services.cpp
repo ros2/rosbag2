@@ -113,7 +113,6 @@ public:
     rosbag2_transport::RecordOptions record_options;
     record_options.is_discovery_disabled = is_discovery_disabled_;
     record_options.topics = record_topics;
-    record_options.rmw_serialization_format = "rmw_format";
     record_options.topic_polling_interval = 100ms;
     record_options.use_sim_time = use_sim_time_;
     storage_options_.snapshot_mode = snapshot_mode_;

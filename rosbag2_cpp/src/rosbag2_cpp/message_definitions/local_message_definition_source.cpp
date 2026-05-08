@@ -327,12 +327,6 @@ const LocalMessageDefinitionSource::MessageSpec & LocalMessageDefinitionSource::
   return spec;
 }
 
-rosbag2_storage::MessageDefinition LocalMessageDefinitionSource::get_full_text(
-  const std::string & root_type)
-{
-  return get_full_text_ext(root_type, std::string{});
-}
-
 rosbag2_storage::MessageDefinition LocalMessageDefinitionSource::get_full_text_ext(
   const std::string & root_type,
   const std::string & topic_name)
