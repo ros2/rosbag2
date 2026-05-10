@@ -282,6 +282,10 @@ public:
   ROSBAG2_TRANSPORT_PUBLIC
   void set_on_start_recording_callback(OnStartRecordingCallback callback) const;
 
+  /// \return List of currently subscribed topics.
+  ROSBAG2_TRANSPORT_PUBLIC
+  std::vector<std::string> get_subscribed_topics() const;
+
   inline constexpr static const auto kPauseResumeToggleKey = KeyboardHandler::KeyCode::SPACE;
 
 protected:
