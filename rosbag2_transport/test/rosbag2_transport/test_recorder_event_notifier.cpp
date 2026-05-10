@@ -95,14 +95,14 @@ TEST_F(TestRecorderEventNotifier, get_current_events_topic_names)
   const auto fqn_default_write_split =
     node_->get_node_base_interface()->resolve_topic_or_service_name(
       RecorderEventNotifier::get_default_write_split_topic_name(),
-      /*is_service=*/false,
-      /*only_expand=*/false);
+      /*is_service=*/ false,
+      /*only_expand=*/ false);
 
   const auto fqn_default_msgs_lost =
     node_->get_node_base_interface()->resolve_topic_or_service_name(
       RecorderEventNotifier::get_default_messages_lost_topic_name(),
-      /*is_service=*/false,
-      /*only_expand=*/false);
+      /*is_service=*/ false,
+      /*only_expand=*/ false);
 
   EXPECT_STREQ(notifier_->get_write_split_topic_name().data(), fqn_default_write_split.c_str());
   EXPECT_STREQ(notifier_->get_messages_lost_topic_name().data(), fqn_default_msgs_lost.c_str());
