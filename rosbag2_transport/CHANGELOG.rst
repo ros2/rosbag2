@@ -2,8 +2,8 @@
 Changelog for package rosbag2_transport
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.33.3 (2026-05-12)
+-------------------
 * Apply /bigobj to all MSVC builds in rosbag2_transport (`#2424 <https://github.com/ros2/rosbag2/issues/2424>`_) (`#2428 <https://github.com/ros2/rosbag2/issues/2428>`_)
 * Contributors: mergify[bot]
 
