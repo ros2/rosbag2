@@ -15,10 +15,10 @@ endif()
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   add_compile_options(-Wall -Wextra -Wpedantic)
 endif()
-if(CMAKE_BUILD_TYPE STREQUAL "Debug" AND MSVC)
+if(MSVC)
   # /bigobj is needed to avoid error C1128:
   #   https://msdn.microsoft.com/en-us/library/8578y171.aspx
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /bigobj")
+  add_compile_options(/bigobj)
 endif()
 
 # Windows supplies macros for min and max by default. We should only use min and max from stl
