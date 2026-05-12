@@ -125,8 +125,31 @@ public:
       throw std::runtime_error("Failed to start spinning nodes");
     }
 
+<<<<<<< HEAD
     if (!is_discovery_disabled_) {
       ASSERT_TRUE(pub_manager.wait_for_matched(test_topic_.c_str()));
+=======
+    if (use_sim_time_) {
+      clock_pub_ =
+        client_node_->create_publisher<rosgraph_msgs::msg::Clock>("/clock",
+                                                                  Rosbag2QoS::UnitTestQoS());
+      ASSERT_TRUE(
+        rosbag2_test_common::wait_until_condition(
+          [this]()
+          {
+            return clock_pub_->get_subscription_count() +
+                   clock_pub_->get_intra_process_subscription_count() > 0;
+          },
+          std::chrono::seconds(10)));
+      current_sim_time_ = rclcpp::Time(1, 0, RCL_ROS_TIME);
+      publish_clock(current_sim_time_);
+      ASSERT_TRUE(
+        rosbag2_test_common::wait_until_condition(
+          [this]() {return recorder_->get_clock()->started();},
+          std::chrono::seconds(10)));
+      EXPECT_EQ(recorder_->get_clock()->get_clock_type(), RCL_ROS_TIME);
+      ASSERT_TRUE(recorder_->get_clock()->ros_time_is_active());
+>>>>>>> 55f001a (Address flakiness in RecordSrvsSimTimeTest fixture (#2426))
     }
     pub_manager.run_publishers();
 
