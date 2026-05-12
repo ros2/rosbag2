@@ -2,6 +2,11 @@
 Changelog for package rosbag2_transport
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Apply /bigobj to all MSVC builds in rosbag2_transport (`#2424 <https://github.com/ros2/rosbag2/issues/2424>`_) (`#2428 <https://github.com/ros2/rosbag2/issues/2428>`_)
+* Contributors: mergify[bot]
+
 0.33.2 (2026-04-30)
 -------------------
 * fix: Fixed compile errors in rosbag2_transport for MSVC 2022 and C++20 (`#2407 <https://github.com/ros2/rosbag2/issues/2407>`_)
