@@ -103,9 +103,6 @@ public:
   {
     RecordIntegrationTestFixture::SetUp();
     client_node_ = std::make_shared<rclcpp::Node>("test_record_client");
-    if (use_sim_time_) {
-      client_node_->set_parameter(rclcpp::Parameter("use_sim_time", true));
-    }
 
     auto record_topics =
       is_discovery_disabled_ ? std::vector<std::string>{} : topics_to_record_;
@@ -158,7 +155,11 @@ public:
                                                                   Rosbag2QoS::UnitTestQoS());
       ASSERT_TRUE(
         rosbag2_test_common::wait_until_condition(
-          [this]() {return clock_pub_->get_subscription_count() > 0;},
+          [this]()
+          {
+            return clock_pub_->get_subscription_count() +
+                   clock_pub_->get_intra_process_subscription_count() > 0;
+          },
           std::chrono::seconds(10)));
       current_sim_time_ = rclcpp::Time(1, 0, RCL_ROS_TIME);
       publish_clock(current_sim_time_);
