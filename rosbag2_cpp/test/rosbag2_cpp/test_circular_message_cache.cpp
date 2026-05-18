@@ -164,7 +164,7 @@ TEST_F(CircularMessageCacheTest, time_only_buffer_drops_old_messages_by_duration
   // No size limit, keep ~1s window
   const uint32_t max_buffer_duration = 1;  // 1 second
   auto circular_message_cache = std::make_shared<rosbag2_cpp::cache::CircularMessageCache>(
-    /*max_buffer_size=*/0, max_buffer_duration);
+    /*max_buffer_size=*/ 0, max_buffer_duration);
 
   // Push messages with synthetic timestamps spaced 100ms
   const auto base = 1s;
