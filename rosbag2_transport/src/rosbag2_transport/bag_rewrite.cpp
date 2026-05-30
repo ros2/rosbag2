@@ -21,11 +21,14 @@
 #include <unordered_set>
 #include <utility>
 #include <vector>
+#include <cstdio>
+#include <cinttypes>
 
 #include "rosbag2_cpp/reader.hpp"
 #include "rosbag2_cpp/writer.hpp"
 #include "rosbag2_transport/reader_writer_factory.hpp"
 #include "rosbag2_transport/topic_filter.hpp"
+
 
 namespace
 {
@@ -177,8 +180,30 @@ void perform_rewrite(
 
   auto topic_outputs = setup_topic_filtering(input_bags, output_bags);
 
+  // Sum total message count across all input bags for progress reporting
+  // Sum total message count across all input bags for progress reporting
+  uint64_t total_messages = 0;
+  for (const auto & [reader, storage_options] : input_bags) {
+    if (reader) {
+      const auto & metadata = reader->get_metadata();
+      for (const auto & topic_info : metadata.topics_with_message_count) {
+        total_messages += topic_info.message_count;
+      }
+    }
+  }
+  if (total_messages > 0) {
+    fprintf(stdout, "Converting bag:   0%% (0 / %" PRIu64 " messages)", total_messages);
+    fflush(stdout);
+  } else {
+    fprintf(stdout, "Converting bag: starting (total unknown)...");
+    fflush(stdout);
+  }
+
   std::vector<std::shared_ptr<rosbag2_storage::SerializedBagMessage>> next_messages;
   next_messages.resize(input_bags.size(), nullptr);
+
+  uint64_t processed = 0;
+  int last_printed_pct = 0;
 
   std::shared_ptr<rosbag2_storage::SerializedBagMessage> next_msg;
   while ((next_msg = get_next(input_bags, next_messages))) {
@@ -188,7 +213,21 @@ void perform_rewrite(
         writer->write(next_msg);
       }
     }
+    ++processed;
+
+    if (total_messages > 0) {
+      int pct = static_cast<int>((processed * 100) / total_messages);
+      if (pct > last_printed_pct) {
+        fprintf(
+          stdout, "\rConverting bag: %3d%% (%" PRIu64 " / %" PRIu64 " messages)   ",
+          pct, processed, total_messages);
+        fflush(stdout);
+        last_printed_pct = pct;
+      }
+    }
   }
+  fprintf(
+    stdout, "\nConverting bag: done (%" PRIu64 " messages written)\n", processed);
 }
 
 }  // namespace
