@@ -982,9 +982,9 @@ void SequentialWriter::wait_for_pending_split()
       return;
     }
   }
-  // TODO(morlov): Check if do really need this cleanup
-  try {
-    split_future.get();
+
+  try {  // Wait for a pending split to finish
+    (void)split_future.get();
   } catch (...) {
     clear_completed_split_future();
     throw;
@@ -996,28 +996,15 @@ void SequentialWriter::wait_for_pending_split()
 std::shared_future<std::string> SequentialWriter::start_split_bagfile_async(
   const std::function<std::future<std::string>()> & split_launcher)
 {
-  std::shared_future<std::string> split_future;
-  {
-    std::lock_guard<std::mutex> lock(split_bagfile_mutex_);
-    if (!split_bagfile_shared_future_.valid()) {
-      if (!is_open_.load()) {
-        return {};
-      }
-      split_bagfile_shared_future_ = split_launcher().share();
-      return split_bagfile_shared_future_;
-    }
-    split_future = split_bagfile_shared_future_;
-  }
-  // TODO(morlov): Check if do really need this cleanup
-  try {
-    split_future.get();
-  } catch (...) {
-    clear_completed_split_future();
-    throw;
-  }
+  std::lock_guard<std::mutex> start_lock(split_bagfile_start_mutex_);
+  wait_for_pending_split();
 
-  clear_completed_split_future();
-  return split_future;
+  std::lock_guard<std::mutex> lock(split_bagfile_mutex_);
+  if (!is_open_.load()) {
+    return {};
+  }
+  split_bagfile_shared_future_ = split_launcher().share();
+  return split_bagfile_shared_future_;
 }
 
 void SequentialWriter::clear_completed_split_future()

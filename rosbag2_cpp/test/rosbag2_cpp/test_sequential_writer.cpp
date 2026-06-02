@@ -47,6 +47,8 @@
 #include "mock_cache_consumer.hpp"
 
 using namespace testing;  // NOLINT
+using namespace std::chrono_literals;
+
 using rosbag2_test_common::ParametrizedTemporaryDirectoryFixture;
 namespace fs = std::filesystem;
 
@@ -1465,7 +1467,7 @@ TEST_F(SequentialWriterTest, writer_with_cache_supports_multi_thread_writes_duri
       {
         fake_storage_size_ = 0;
         fake_storage_uri_ = storage_options.uri;
-        if (++open_call_count == 2) {
+        if (open_call_count.fetch_add(1) == 1) {  // Work with futures only on a second call
           split_open_started->set_value();
           allow_split_open_future.wait();
         }
@@ -1481,10 +1483,8 @@ TEST_F(SequentialWriterTest, writer_with_cache_supports_multi_thread_writes_duri
   writer_->open(storage_options_, {"rmw_format", "rmw_format"});
   writer_->create_topic({0u, "test_topic", "test_msgs/BasicTypes", "", {}, ""});
 
-  ASSERT_TRUE(writer_->split_bagfile_async());
-  ASSERT_EQ(
-    split_open_started_future.wait_for(std::chrono::seconds(5)),
-    std::future_status::ready);
+  EXPECT_NO_THROW(writer_->split_bagfile_async());
+  ASSERT_EQ(split_open_started_future.wait_for(5s), std::future_status::ready);
 
   constexpr size_t kThreadCount = 4;
   constexpr size_t kWritesPerThread = 50;
@@ -1505,21 +1505,22 @@ TEST_F(SequentialWriterTest, writer_with_cache_supports_multi_thread_writes_duri
   }
 
   for (auto & write_future : write_futures) {
-    EXPECT_EQ(write_future.wait_for(std::chrono::seconds(5)), std::future_status::ready);
+    EXPECT_EQ(write_future.wait_for(5s), std::future_status::ready);
     EXPECT_NO_THROW(write_future.get());
   }
 
   allow_split_open->set_value();
   writer_->close();
 
-  const size_t expected_message_count = kThreadCount * kWritesPerThread;
+  constexpr size_t expected_message_count = kThreadCount * kWritesPerThread;
   EXPECT_EQ(fake_metadata_.message_count, expected_message_count);
   ASSERT_GE(fake_metadata_.relative_file_paths.size(), 2u);
 }
 
-TEST_F(SequentialWriterTest, split_bagfile_async_rejects_concurrent_split_requests_when_busy)
+TEST_F(SequentialWriterTest, second_split_bagfile_async_waits_for_the_first_split_to_finish)
 {
   std::atomic<size_t> open_call_count{0};
+  std::mutex open_read_write_mutex;
   auto split_open_started = std::make_shared<std::promise<void>>();
   auto split_open_started_future = split_open_started->get_future();
   auto allow_split_open = std::make_shared<std::promise<void>>();
@@ -1527,12 +1528,14 @@ TEST_F(SequentialWriterTest, split_bagfile_async_rejects_concurrent_split_reques
 
   ON_CALL(*storage_factory_, open_read_write(_)).WillByDefault(
     Invoke(
-      [this, &open_call_count, split_open_started, allow_split_open_future](
+      [this, &open_call_count, split_open_started, allow_split_open_future, &open_read_write_mutex](
         const rosbag2_storage::StorageOptions & storage_options)
       {
+        std::unique_lock<std::mutex> lk(open_read_write_mutex, std::try_to_lock);
+        EXPECT_TRUE(lk.owns_lock()) << "open_read_write(); shall be protected from concurrent call";
         fake_storage_size_ = 0;
         fake_storage_uri_ = storage_options.uri;
-        if (++open_call_count == 2) {
+        if (open_call_count.fetch_add(1) == 1) {  // Work with futures only on a second call
           split_open_started->set_value();
           allow_split_open_future.wait();
         }
@@ -1548,15 +1551,22 @@ TEST_F(SequentialWriterTest, split_bagfile_async_rejects_concurrent_split_reques
   writer_->open(storage_options_, {"rmw_format", "rmw_format"});
   writer_->create_topic({0u, "test_topic", "test_msgs/BasicTypes", "", {}, ""});
 
-  ASSERT_TRUE(writer_->split_bagfile_async());
-  ASSERT_EQ(
-    split_open_started_future.wait_for(std::chrono::seconds(5)),
-    std::future_status::ready);
+  EXPECT_NO_THROW(writer_->split_bagfile_async());
+  ASSERT_EQ(split_open_started_future.wait_for(5s), std::future_status::ready);
 
-  EXPECT_FALSE(writer_->split_bagfile_async());
+  // Run second split in the background thread.
+  auto second_split_future = std::async(std::launch::async, [this]() {
+        writer_->split_bagfile_async();
+  });
+  // We expect that second split will be blocked until the first split will finish.
+  EXPECT_EQ(second_split_future.wait_for(500ms), std::future_status::timeout);
 
   allow_split_open->set_value();
+
+  ASSERT_EQ(split_open_started_future.wait_for(5s), std::future_status::ready);
   writer_->close();
+
+  ASSERT_GE(fake_metadata_.relative_file_paths.size(), 3u);
 }
 
 TEST_F(SequentialWriterTest, circular_logging_limits_number_of_files_by_max_bag_files)

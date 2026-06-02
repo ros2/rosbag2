@@ -329,6 +329,9 @@ private:
 
   std::mutex lost_messages_callbacks_mutex_;
 
+  /// \brief Mutex to serialize asynchronous split scheduling.
+  std::mutex split_bagfile_start_mutex_;
+
   /// \brief Mutex to protect the split bagfile process, ensuring that only one split operation can
   /// occur at a time.
   std::mutex split_bagfile_mutex_;
