@@ -1,0 +1,3 @@
+---
+# The current recording URI/path, or empty string if not recording
+string uri

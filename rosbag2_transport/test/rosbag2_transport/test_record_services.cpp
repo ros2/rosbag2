@@ -28,8 +28,10 @@
 #include "rosgraph_msgs/msg/clock.hpp"
 
 #include "rosbag2_interfaces/srv/get_subscribed_topics.hpp"
+#include "rosbag2_interfaces/srv/get_uri.hpp"
 #include "rosbag2_interfaces/srv/is_discovery_running.hpp"
 #include "rosbag2_interfaces/srv/is_paused.hpp"
+#include "rosbag2_interfaces/srv/is_recording.hpp"
 #include "rosbag2_interfaces/srv/pause.hpp"
 #include "rosbag2_interfaces/srv/record.hpp"
 #include "rosbag2_interfaces/srv/resume.hpp"
@@ -69,8 +71,10 @@ class RecordSrvsTest : public RecordIntegrationTestFixture
 {
 public:
   using GetSubscribedTopics = rosbag2_interfaces::srv::GetSubscribedTopics;
+  using GetUri = rosbag2_interfaces::srv::GetUri;
   using IsDiscoveryRunning = rosbag2_interfaces::srv::IsDiscoveryRunning;
   using IsPaused = rosbag2_interfaces::srv::IsPaused;
+  using IsRecording = rosbag2_interfaces::srv::IsRecording;
   using Pause = rosbag2_interfaces::srv::Pause;
   using Record = rosbag2_interfaces::srv::Record;
   using Resume = rosbag2_interfaces::srv::Resume;
@@ -128,9 +132,11 @@ public:
     const std::string ns = "/" + recorder_name_;
     cli_get_subscribed_topics_ = client_node_->create_client<GetSubscribedTopics>(
       ns + "/get_subscribed_topics");
+    cli_get_uri_ = client_node_->create_client<GetUri>(ns + "/get_uri");
     cli_is_discovery_running_ = client_node_->create_client<IsDiscoveryRunning>(
       ns + "/is_discovery_running");
     cli_is_paused_ = client_node_->create_client<IsPaused>(ns + "/is_paused");
+    cli_is_recording_ = client_node_->create_client<IsRecording>(ns + "/is_recording");
     cli_pause_ = client_node_->create_client<Pause>(ns + "/pause");
     cli_record_ = client_node_->create_client<Record>(ns + "/record");
     cli_resume_ = client_node_->create_client<Resume>(ns + "/resume");
@@ -181,8 +187,10 @@ public:
       ASSERT_TRUE(cli_snapshot_->wait_for_service(service_wait_timeout_));
     }
     ASSERT_TRUE(cli_get_subscribed_topics_->wait_for_service(service_wait_timeout_));
+    ASSERT_TRUE(cli_get_uri_->wait_for_service(service_wait_timeout_));
     ASSERT_TRUE(cli_is_discovery_running_->wait_for_service(service_wait_timeout_));
     ASSERT_TRUE(cli_is_paused_->wait_for_service(service_wait_timeout_));
+    ASSERT_TRUE(cli_is_recording_->wait_for_service(service_wait_timeout_));
     ASSERT_TRUE(cli_pause_->wait_for_service(service_wait_timeout_));
     ASSERT_TRUE(cli_record_->wait_for_service(service_wait_timeout_));
     ASSERT_TRUE(cli_resume_->wait_for_service(service_wait_timeout_));
@@ -284,8 +292,10 @@ public:
   // Service clients
   rclcpp::Node::SharedPtr client_node_;
   rclcpp::Client<GetSubscribedTopics>::SharedPtr cli_get_subscribed_topics_;
+  rclcpp::Client<GetUri>::SharedPtr cli_get_uri_;
   rclcpp::Client<IsDiscoveryRunning>::SharedPtr cli_is_discovery_running_;
   rclcpp::Client<IsPaused>::SharedPtr cli_is_paused_;
+  rclcpp::Client<IsRecording>::SharedPtr cli_is_recording_;
   rclcpp::Client<Pause>::SharedPtr cli_pause_;
   rclcpp::Client<Record>::SharedPtr cli_record_;
   rclcpp::Client<Resume>::SharedPtr cli_resume_;
@@ -1229,6 +1239,77 @@ TEST_F(RecordSrvsTest, record_with_uri)
   EXPECT_TRUE(record_response->error_string.empty());
 
   EXPECT_EQ(mock_writer.get_storage_options().uri, test_uri);
+}
+
+TEST_F(RecordSrvsTest, is_recording)
+{
+  // Initially recording (record() called in SetUp)
+  EXPECT_TRUE(recorder_->is_recording());
+  auto is_recording_response = std::make_shared<IsRecording::Response>();
+  EXPECT_TRUE(successful_service_request<IsRecording>(cli_is_recording_, is_recording_response));
+  EXPECT_TRUE(is_recording_response->recording);
+
+  // Stop recording
+  auto stop_response = std::make_shared<Stop::Response>();
+  ASSERT_TRUE(successful_service_request<Stop>(cli_stop_, stop_response));
+  EXPECT_EQ(stop_response->return_code, 0);
+
+  EXPECT_FALSE(recorder_->is_recording());
+  is_recording_response = std::make_shared<IsRecording::Response>();
+  EXPECT_TRUE(successful_service_request<IsRecording>(cli_is_recording_, is_recording_response));
+  EXPECT_FALSE(is_recording_response->recording);
+
+  // Start recording again
+  auto record_response = std::make_shared<Record::Response>();
+  EXPECT_TRUE(successful_service_request<Record>(cli_record_, record_response));
+  EXPECT_EQ(0, record_response->return_code);
+
+  EXPECT_TRUE(recorder_->is_recording());
+  is_recording_response = std::make_shared<IsRecording::Response>();
+  EXPECT_TRUE(successful_service_request<IsRecording>(cli_is_recording_, is_recording_response));
+  EXPECT_TRUE(is_recording_response->recording);
+}
+
+TEST_F(RecordSrvsTest, get_uri)
+{
+  static const std::string test_uri = "file:///tmp/test_bag_get_uri";
+
+  // Stop current recording and start a new one with known URI
+  auto stop_response = std::make_shared<Stop::Response>();
+  ASSERT_TRUE(successful_service_request<Stop>(cli_stop_, stop_response));
+  EXPECT_EQ(stop_response->return_code, 0);
+
+  // Not recording — URI should be empty
+  auto get_uri_response = std::make_shared<GetUri::Response>();
+  EXPECT_TRUE(successful_service_request<GetUri>(cli_get_uri_, get_uri_response));
+  EXPECT_TRUE(get_uri_response->uri.empty());
+
+  // Start recording with a specific URI
+  auto record_request = std::make_shared<Record::Request>();
+  record_request->uri = test_uri;
+  auto record_response = std::make_shared<Record::Response>();
+  EXPECT_TRUE(successful_service_request<Record>(cli_record_, record_request, record_response));
+  EXPECT_EQ(0, record_response->return_code);
+
+  // URI should match
+  get_uri_response = std::make_shared<GetUri::Response>();
+  EXPECT_TRUE(successful_service_request<GetUri>(cli_get_uri_, get_uri_response));
+  EXPECT_EQ(get_uri_response->uri, test_uri);
+
+  // Pause and check URI is still available
+  EXPECT_TRUE(successful_service_request<Pause>(cli_pause_));
+  get_uri_response = std::make_shared<GetUri::Response>();
+  EXPECT_TRUE(successful_service_request<GetUri>(cli_get_uri_, get_uri_response));
+  EXPECT_EQ(get_uri_response->uri, test_uri);
+
+  // Stop and check URI is empty again
+  stop_response = std::make_shared<Stop::Response>();
+  ASSERT_TRUE(successful_service_request<Stop>(cli_stop_, stop_response));
+  EXPECT_EQ(stop_response->return_code, 0);
+
+  get_uri_response = std::make_shared<GetUri::Response>();
+  EXPECT_TRUE(successful_service_request<GetUri>(cli_get_uri_, get_uri_response));
+  EXPECT_TRUE(get_uri_response->uri.empty());
 }
 
 TEST_F(RecordSrvsSimTimeTest, record_can_be_scheduled_in_future)

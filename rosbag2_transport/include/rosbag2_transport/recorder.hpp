@@ -31,8 +31,10 @@
 
 #include "rosbag2_cpp/writer.hpp"
 
+#include "rosbag2_interfaces/srv/get_uri.hpp"
 #include "rosbag2_interfaces/srv/is_discovery_running.hpp"
 #include "rosbag2_interfaces/srv/is_paused.hpp"
+#include "rosbag2_interfaces/srv/is_recording.hpp"
 #include "rosbag2_interfaces/srv/pause.hpp"
 #include "rosbag2_interfaces/srv/record.hpp"
 #include "rosbag2_interfaces/srv/resume.hpp"
@@ -269,6 +271,14 @@ public:
   /// \brief Stop discovery
   ROSBAG2_TRANSPORT_PUBLIC
   void stop_discovery();
+
+  /// Return whether the recorder is currently recording.
+  ROSBAG2_TRANSPORT_PUBLIC
+  bool is_recording() const;
+
+  /// Return the current recording URI, or empty string if not recording.
+  ROSBAG2_TRANSPORT_PUBLIC
+  std::string get_uri();
 
   /// Return the current discovery state.
   ROSBAG2_TRANSPORT_PUBLIC
