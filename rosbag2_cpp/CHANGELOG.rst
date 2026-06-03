@@ -2,6 +2,9 @@
 Changelog for package rosbag2
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+
 0.26.10 (2026-04-07)
 --------------------
 * Fix for a possible race condition in compression writer on close
