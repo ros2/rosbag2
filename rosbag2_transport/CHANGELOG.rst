@@ -2,6 +2,16 @@
 Changelog for package rosbag2_transport
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.26.11 (2026-06-03)
+--------------------
+* [kilted] Address flakiness in the "rosbag2_transport::test_record_services" tests (backport `#2368 <https://github.com/ros2/rosbag2/issues/2368>`_) (`#2379 <https://github.com/ros2/rosbag2/issues/2379>`_) (`#2400 <https://github.com/ros2/rosbag2/issues/2400>`_)
+  Co-authored-by: mergify[bot] <37929162+mergify[bot]@users.noreply.github.com>
+  Co-authored-by: Michael Orlov <morlovmr@gmail.com>
+* [kilted] Fix QoS overrides ignored when topic name has no leading slash (backport `#2394 <https://github.com/ros2/rosbag2/issues/2394>`_) (`#2405 <https://github.com/ros2/rosbag2/issues/2405>`_) (`#2413 <https://github.com/ros2/rosbag2/issues/2413>`_)
+  Co-authored-by: Sahil Lakhmani <126493645+lakhmanisahil@users.noreply.github.com>
+  Co-authored-by: Michael Orlov <morlovmr@gmail.com>
+* Contributors: mergify[bot]
+
 0.26.10 (2026-04-07)
 --------------------
 * [jazzy] Add on start recording callback for Recorder

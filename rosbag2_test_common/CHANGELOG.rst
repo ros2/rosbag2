@@ -2,6 +2,12 @@
 Changelog for package rosbag2_test_common
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.26.11 (2026-06-03)
+--------------------
+* Reduce flakiness in rosbag2 recorder end-to-end tests (`#2370 <https://github.com/ros2/rosbag2/issues/2370>`_) (`#2415 <https://github.com/ros2/rosbag2/issues/2415>`_)
+  Co-authored-by: Michael Orlov <morlovmr@gmail.com>
+* Contributors: mergify[bot]
+
 0.26.10 (2026-04-07)
 --------------------
 

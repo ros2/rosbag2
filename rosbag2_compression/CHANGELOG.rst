@@ -2,6 +2,13 @@
 Changelog for package rosbag2_compression
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.26.11 (2026-06-03)
+--------------------
+* Add validation for empty file path in compression process (`#2398 <https://github.com/ros2/rosbag2/issues/2398>`_) (`#2411 <https://github.com/ros2/rosbag2/issues/2411>`_)
+  (cherry picked from commit b7370e4061b398c943a3fa7bc71e6210f0d6474b)
+  Co-authored-by: Michael Orlov <morlovmr@gmail.com>
+* Contributors: mergify[bot]
+
 0.26.10 (2026-04-07)
 --------------------
 * Fix for a possible race condition in compression writer on close
