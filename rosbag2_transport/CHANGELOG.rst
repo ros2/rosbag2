@@ -2,8 +2,8 @@
 Changelog for package rosbag2_transport
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.26.11 (2026-06-03)
+--------------------
 * [kilted] Address flakiness in the "rosbag2_transport::test_record_services" tests (backport `#2368 <https://github.com/ros2/rosbag2/issues/2368>`_) (`#2379 <https://github.com/ros2/rosbag2/issues/2379>`_) (`#2400 <https://github.com/ros2/rosbag2/issues/2400>`_)
   Co-authored-by: mergify[bot] <37929162+mergify[bot]@users.noreply.github.com>
   Co-authored-by: Michael Orlov <morlovmr@gmail.com>
