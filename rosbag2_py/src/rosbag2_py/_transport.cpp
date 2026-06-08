@@ -187,7 +187,8 @@ public:
 
   void record(
     const rosbag2_storage::StorageOptions & storage_options,
-    RecordOptions & record_options)
+    RecordOptions & record_options,
+    std::string & node_name)
   {
     auto old_sigterm_handler = std::signal(
       SIGTERM, [](int /* signal */) {
@@ -207,7 +208,7 @@ public:
 
       auto writer = rosbag2_transport::ReaderWriterFactory::make_writer(record_options);
       auto recorder = std::make_shared<rosbag2_transport::Recorder>(
-        std::move(writer), storage_options, record_options);
+        std::move(writer), storage_options, record_options, node_name);
       recorder->record();
 
       exec->add_node(recorder);
@@ -376,7 +377,8 @@ PYBIND11_MODULE(_transport, m) {
   .def(py::init<>())
   .def(py::init<const std::string &>())
   .def(
-    "record", &rosbag2_py::Recorder::record, py::arg("storage_options"), py::arg("record_options"))
+    "record", &rosbag2_py::Recorder::record, py::arg("storage_options"), py::arg("record_options"),
+    py::arg("node_name") = "rosbag2_recorder")
   .def_static("cancel", &rosbag2_py::Recorder::cancel)
   ;
 
