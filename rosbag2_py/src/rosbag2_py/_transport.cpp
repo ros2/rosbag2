@@ -625,6 +625,8 @@ public:
         try {
           exec_->spin();
         } catch (...) {
+          // Subscription callbacks run on this thread. Store failures so the caller thread can
+          // poll and rethrow them; C++ exceptions do not cross thread boundaries automatically.
           store_spin_exception(std::current_exception());
           exit_ = true;
           wait_for_exit_cv_.notify_all();
@@ -661,6 +663,7 @@ public:
 
   void throw_if_spin_failed()
   {
+    // Non-blocking record users must poll this method to surface async recorder failures.
     std::exception_ptr spin_exception;
     {
       std::lock_guard<std::mutex> lock(spin_exception_mutex_);
@@ -841,6 +844,8 @@ protected:
   void store_spin_exception(std::exception_ptr exception)
   {
     std::lock_guard<std::mutex> lock(spin_exception_mutex_);
+    // Keep the first failure. Later cleanup/spin failures are usually secondary and should not
+    // mask the original storage error, e.g. "No space left on device" from writer_->write().
     if (!spin_exception_) {
       spin_exception_ = std::move(exception);
     }

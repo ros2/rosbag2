@@ -513,12 +513,15 @@ class RecordVerb(VerbExtension):
         signal.signal(signal.SIGTERM, signal_handler)
 
         record_error = None
-        cleanup_error = None
+        stop_error = None
+        stop_spin_error = None
         try:
             # Start the recorder
             recorder.start_spin()
             recorder.record()
             while not termination_requested.is_set():
+                # Async write failures happen on the recorder spin thread. Poll here so the
+                # CLI can report them from the main thread and enter the cleanup path.
                 recorder.throw_if_spin_failed()
                 time.sleep(0.1)  # Sleep for 100 msec to avoid busy loop
         except KeyboardInterrupt:
@@ -527,21 +530,27 @@ class RecordVerb(VerbExtension):
             record_error = exc
         finally:
             try:
+                # stop() finalizes storage and may fail while flushing cached data or metadata.
                 recorder.stop()
             except Exception as exc:
-                cleanup_error = exc
+                stop_error = exc
             try:
+                # stop_spin() tears down the executor thread and can fail independently from
+                # storage finalization, e.g. due to executor/node state during cleanup.
                 recorder.stop_spin()
             except Exception as exc:
-                if cleanup_error is None:
-                    cleanup_error = exc
+                stop_spin_error = exc
             signal.signal(signal.SIGTERM, signal.SIG_DFL)
             termination_requested.clear()
 
+        # Preserve each failure source separately. If recording itself failed, report that first;
+        # otherwise report cleanup failures in the order they were attempted.
         if record_error is not None:
             return print_error(str(record_error))
-        if cleanup_error is not None:
-            return print_error(str(cleanup_error))
+        if stop_error is not None:
+            return print_error(str(stop_error))
+        if stop_spin_error is not None:
+            return print_error(str(stop_spin_error))
 
         # Remove newly created directory if it is empty
         if os.path.isdir(uri) and not os.listdir(uri):
