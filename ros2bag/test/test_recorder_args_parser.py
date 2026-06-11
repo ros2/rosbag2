@@ -19,6 +19,7 @@ from pathlib import Path
 import pytest
 
 from ros2bag.verb.record import add_recorder_arguments
+from ros2bag.verb.record import RecordVerb
 from ros2bag.verb.record import validate_parsed_arguments
 
 RESOURCES_PATH = Path(__file__).parent / 'resources'
@@ -31,6 +32,42 @@ def test_arguments_parser():
     parser = argparse.ArgumentParser()
     add_recorder_arguments(parser)
     return parser
+
+
+def test_record_main_reports_async_recorder_failure(test_arguments_parser, monkeypatch, tmp_path):
+    """Test recorder failures surfaced from the spin thread are reported to the CLI caller."""
+    expected_error = 'No space left on device'
+
+    class FailingRecorder:
+
+        def __init__(self, *args, **kwargs):
+            pass
+
+        def start_spin(self):
+            pass
+
+        def record(self):
+            pass
+
+        def throw_if_spin_failed(self):
+            raise RuntimeError(expected_error)
+
+        def stop(self):
+            pass
+
+        def stop_spin(self):
+            pass
+
+    monkeypatch.setattr('ros2bag.verb.record.Recorder', FailingRecorder)
+    args = test_arguments_parser.parse_args(
+        ['--all-topics', '--output', (tmp_path / 'failed_recording').as_posix()]
+    )
+
+    result = RecordVerb().main(args=args)
+
+    assert result is not None
+    assert '[ERROR] [ros2bag]:' in result
+    assert expected_error in result
 
 
 def test_recorder_optional_topics_list_argument(test_arguments_parser):

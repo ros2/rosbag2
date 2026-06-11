@@ -15,6 +15,7 @@
 #include <algorithm>
 #include <csignal>
 #include <chrono>
+#include <exception>
 #include <filesystem>
 #include <memory>
 #include <string>
@@ -616,14 +617,22 @@ public:
       // We already have an executor spinning
       return;
     }
+    reset_spin_exception();
     exec_ = std::make_unique<rclcpp::executors::SingleThreadedExecutor>();
     exec_->add_node(recorder_);
     spin_thread_ = std::thread(
       [this]() {
-        exec_->spin();
+        try {
+          exec_->spin();
+        } catch (...) {
+          store_spin_exception(std::current_exception());
+          exit_ = true;
+          wait_for_exit_cv_.notify_all();
+        }
       });
     // Wait for the executor to start spinning to avoid race conditions
     while (!exec_->is_spinning()) {
+      throw_if_spin_failed();
       std::this_thread::sleep_for(std::chrono::milliseconds(1));
     }
   }
@@ -648,6 +657,19 @@ public:
         "storage and record options.");
     }
     recorder_->record();
+  }
+
+  void throw_if_spin_failed()
+  {
+    std::exception_ptr spin_exception;
+    {
+      std::lock_guard<std::mutex> lock(spin_exception_mutex_);
+      spin_exception = spin_exception_;
+      spin_exception_ = nullptr;
+    }
+    if (spin_exception) {
+      std::rethrow_exception(spin_exception);
+    }
   }
 
   void stop()
@@ -731,11 +753,24 @@ public:
         // can use other threads
         py::gil_scoped_release release;
         std::unique_lock<std::mutex> lock(wait_for_exit_mutex_);
-        wait_for_exit_cv_.wait(lock, [] {return rosbag2_py::Recorder::exit_.load();});
-        recorder_->stop();
+        wait_for_exit_cv_.wait(
+          lock,
+          [this] {
+            return rosbag2_py::Recorder::exit_.load() || has_spin_exception();
+          });
       }
 
+      std::exception_ptr stop_exception;
+      try {
+        recorder_->stop();
+      } catch (...) {
+        stop_exception = std::current_exception();
+      }
       stop_spin();
+      throw_if_spin_failed();
+      if (stop_exception) {
+        std::rethrow_exception(stop_exception);
+      }
     } catch (...) {
       process_deferred_signal();
       uninstall_signal_handlers();
@@ -797,6 +832,26 @@ protected:
     }
   }
 
+  void reset_spin_exception()
+  {
+    std::lock_guard<std::mutex> lock(spin_exception_mutex_);
+    spin_exception_ = nullptr;
+  }
+
+  void store_spin_exception(std::exception_ptr exception)
+  {
+    std::lock_guard<std::mutex> lock(spin_exception_mutex_);
+    if (!spin_exception_) {
+      spin_exception_ = std::move(exception);
+    }
+  }
+
+  bool has_spin_exception()
+  {
+    std::lock_guard<std::mutex> lock(spin_exception_mutex_);
+    return spin_exception_ != nullptr;
+  }
+
   static std::atomic_bool exit_;
   static std::condition_variable wait_for_exit_cv_;
   static SignalHandlerType old_sigint_handler_;
@@ -806,6 +861,8 @@ protected:
 
   std::shared_ptr<rosbag2_transport::Recorder> recorder_;
   std::mutex spin_thread_mutex_;
+  std::mutex spin_exception_mutex_;
+  std::exception_ptr spin_exception_;
   std::unique_ptr<rclcpp::executors::SingleThreadedExecutor> exec_{nullptr};
   std::thread spin_thread_;
 };
@@ -1312,6 +1369,11 @@ PYBIND11_MODULE(_transport, m) {
   .def("stop_spin", &rosbag2_py::Recorder::stop_spin,
     R"pbdoc(
       Stop the thread that spins the recorder node, if there is one.
+    )pbdoc")
+
+  .def("throw_if_spin_failed", &rosbag2_py::Recorder::throw_if_spin_failed,
+    R"pbdoc(
+      Raise any exception captured from the recorder executor spin thread.
     )pbdoc")
 
   .def("record", py::overload_cast<>(&rosbag2_py::Recorder::record),

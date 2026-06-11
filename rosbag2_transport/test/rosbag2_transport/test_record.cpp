@@ -17,7 +17,9 @@
 #include <algorithm>
 #include <atomic>
 #include <filesystem>
+#include <future>
 #include <memory>
+#include <stdexcept>
 #include <string>
 #include <unordered_map>
 #include <utility>
@@ -45,6 +47,72 @@
 using namespace ::testing;  // NOLINT
 using rosbag2_test_common::TemporaryDirectoryFixture;
 namespace fs = std::filesystem;
+
+class ThrowingSequentialWriter : public MockSequentialWriter
+{
+public:
+  void write(std::shared_ptr<const rosbag2_storage::SerializedBagMessage> message) override
+  {
+    (void)message;
+    throw std::runtime_error("No space left on device");
+  }
+};
+
+TEST_F(RecordIntegrationTestFixture, storage_write_exception_in_subscription_callback_escapes_spin)
+{
+  auto message = get_messages_strings()[0];
+  const std::string topic = "/throwing_writer_topic";
+
+  rosbag2_test_common::PublicationManager pub_manager;
+  pub_manager.setup_publisher(topic, message, 1);
+
+  auto sequential_writer = std::make_unique<ThrowingSequentialWriter>();
+  auto writer = std::make_shared<rosbag2_cpp::Writer>(std::move(sequential_writer));
+  rosbag2_transport::RecordOptions record_options =
+  {false, false, false, false, {topic},
+    {}, {}, {}, {}, {}, {}, {}, {}, "rmw_format", "rmw_format", 50ms};
+  auto recorder = std::make_shared<rosbag2_transport::Recorder>(
+    std::move(writer), storage_options_, record_options);
+  recorder->record();
+
+  rclcpp::executors::SingleThreadedExecutor exec;
+  exec.add_node(recorder);
+  auto spin_result = std::async(
+    std::launch::async,
+    [&exec]() -> std::exception_ptr {
+      try {
+        exec.spin();
+      } catch (...) {
+        return std::current_exception();
+      }
+      return nullptr;
+    });
+  auto cleanup_process_handle = rcpputils::make_scope_exit(
+    [&]() {
+      exec.cancel();
+      recorder->stop();
+    });
+
+  ASSERT_TRUE(pub_manager.wait_for_matched(topic.c_str()));
+  pub_manager.run_publishers();
+
+  ASSERT_TRUE(
+    rosbag2_test_common::wait_until_condition(
+      [&spin_result]() {
+        return spin_result.wait_for(0ms) == std::future_status::ready;
+      },
+      std::chrono::seconds(5))) << "writer exception did not stop executor spin";
+
+  auto callback_exception = spin_result.get();
+  ASSERT_NE(callback_exception, nullptr);
+  try {
+    std::rethrow_exception(callback_exception);
+  } catch (const std::runtime_error & e) {
+    EXPECT_THAT(e.what(), HasSubstr("No space left on device"));
+  } catch (...) {
+    FAIL() << "Expected std::runtime_error from recorder callback";
+  }
+}
 
 TEST_F(RecordIntegrationTestFixture, published_messages_from_multiple_topics_are_recorded)
 {

@@ -512,19 +512,36 @@ class RecordVerb(VerbExtension):
 
         signal.signal(signal.SIGTERM, signal_handler)
 
+        record_error = None
+        cleanup_error = None
         try:
             # Start the recorder
             recorder.start_spin()
             recorder.record()
             while not termination_requested.is_set():
+                recorder.throw_if_spin_failed()
                 time.sleep(0.1)  # Sleep for 100 msec to avoid busy loop
         except KeyboardInterrupt:
             pass
+        except Exception as exc:
+            record_error = exc
         finally:
-            recorder.stop()
-            recorder.stop_spin()
+            try:
+                recorder.stop()
+            except Exception as exc:
+                cleanup_error = exc
+            try:
+                recorder.stop_spin()
+            except Exception as exc:
+                if cleanup_error is None:
+                    cleanup_error = exc
             signal.signal(signal.SIGTERM, signal.SIG_DFL)
             termination_requested.clear()
+
+        if record_error is not None:
+            return print_error(str(record_error))
+        if cleanup_error is not None:
+            return print_error(str(cleanup_error))
 
         # Remove newly created directory if it is empty
         if os.path.isdir(uri) and not os.listdir(uri):
