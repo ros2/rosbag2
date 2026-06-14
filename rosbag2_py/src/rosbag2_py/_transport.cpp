@@ -634,7 +634,7 @@ public:
       });
     // Wait for the executor to start spinning to avoid race conditions
     while (!exec_->is_spinning()) {
-      throw_if_spin_failed();
+      throw_if_recording_failed();
       std::this_thread::sleep_for(std::chrono::milliseconds(1));
     }
   }
@@ -661,7 +661,7 @@ public:
     recorder_->record();
   }
 
-  void throw_if_spin_failed()
+  void throw_if_recording_failed()
   {
     // Non-blocking record users must poll this method to surface async recorder failures.
     std::exception_ptr spin_exception;
@@ -770,7 +770,7 @@ public:
         stop_exception = std::current_exception();
       }
       stop_spin();
-      throw_if_spin_failed();
+      throw_if_recording_failed();
       if (stop_exception) {
         std::rethrow_exception(stop_exception);
       }
@@ -1376,7 +1376,7 @@ PYBIND11_MODULE(_transport, m) {
       Stop the thread that spins the recorder node, if there is one.
     )pbdoc")
 
-  .def("throw_if_spin_failed", &rosbag2_py::Recorder::throw_if_spin_failed,
+  .def("throw_if_recording_failed", &rosbag2_py::Recorder::throw_if_recording_failed,
     R"pbdoc(
       Raise any exception captured from the recorder executor spin thread.
     )pbdoc")

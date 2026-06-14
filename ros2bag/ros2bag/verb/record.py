@@ -520,9 +520,9 @@ class RecordVerb(VerbExtension):
             recorder.start_spin()
             recorder.record()
             while not termination_requested.is_set():
-                # Async write failures happen on the recorder spin thread. Poll here so the
-                # CLI can report them from the main thread and enter the cleanup path.
-                recorder.throw_if_spin_failed()
+                # Async recording failures happen on the recorder executor spin thread. Poll here
+                # so the CLI can report them from the main thread and enter the cleanup path.
+                recorder.throw_if_recording_failed()
                 time.sleep(0.1)  # Sleep for 100 msec to avoid busy loop
         except KeyboardInterrupt:
             pass

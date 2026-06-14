@@ -49,7 +49,7 @@ def test_record_main_reports_async_recorder_failure(test_arguments_parser, monke
         def record(self):
             pass
 
-        def throw_if_spin_failed(self):
+        def throw_if_recording_failed(self):
             raise RuntimeError(expected_error)
 
         def stop(self):
