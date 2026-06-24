@@ -192,7 +192,7 @@ public:
   bool is_recording() const;
 
   /// Return the current recording URI, or empty string if not recording.
-  std::string get_uri();
+  std::string get_uri() const;
 
   /// Return the current discovery state.
   bool is_discovery_running() const;
@@ -494,7 +494,7 @@ private:
   rclcpp::Service<rosbag2_interfaces::srv::Stop>::SharedPtr srv_stop_;
   rclcpp::Service<rosbag2_interfaces::srv::StopDiscovery>::SharedPtr srv_stop_discovery_;
 
-  std::mutex start_stop_transition_mutex_;
+  mutable std::mutex start_stop_transition_mutex_;
   std::mutex discovery_mutex_;
   mutable std::mutex subscriptions_mutex_;
   std::atomic<bool> discovery_running_ = false;
@@ -1533,7 +1533,7 @@ bool RecorderImpl::is_recording() const
   return in_recording_.load();
 }
 
-std::string RecorderImpl::get_uri()
+std::string RecorderImpl::get_uri() const
 {
   std::lock_guard<std::mutex> state_lock(start_stop_transition_mutex_);
   return in_recording_.load() ? storage_options_.uri : std::string{};
@@ -2262,7 +2262,7 @@ Recorder::is_recording() const
 }
 
 std::string
-Recorder::get_uri()
+Recorder::get_uri() const
 {
   return pimpl_->get_uri();
 }

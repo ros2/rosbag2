@@ -278,7 +278,7 @@ public:
 
   /// Return the current recording URI, or empty string if not recording.
   ROSBAG2_TRANSPORT_PUBLIC
-  std::string get_uri();
+  std::string get_uri() const;
 
   /// Return the current discovery state.
   ROSBAG2_TRANSPORT_PUBLIC
