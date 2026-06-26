@@ -628,7 +628,10 @@ public:
           // Subscription callbacks run on this thread. Store failures so the caller thread can
           // poll and rethrow them; C++ exceptions do not cross thread boundaries automatically.
           store_spin_exception(std::current_exception());
-          exit_ = true;
+          {
+            std::lock_guard<std::mutex> lock(wait_for_exit_mutex_);
+            exit_ = true;
+          }
           wait_for_exit_cv_.notify_all();
         }
       });
