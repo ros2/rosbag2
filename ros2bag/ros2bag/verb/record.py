@@ -514,7 +514,6 @@ class RecordVerb(VerbExtension):
 
         record_error = None
         stop_error = None
-        stop_spin_error = None
         try:
             # Start the recorder
             recorder.start_spin()
@@ -534,12 +533,7 @@ class RecordVerb(VerbExtension):
                 recorder.stop()
             except Exception as exc:
                 stop_error = exc
-            try:
-                # stop_spin() tears down the executor thread and can fail independently from
-                # storage finalization, e.g. due to executor/node state during cleanup.
-                recorder.stop_spin()
-            except Exception as exc:
-                stop_spin_error = exc
+            recorder.stop_spin()
             signal.signal(signal.SIGTERM, signal.SIG_DFL)
             termination_requested.clear()
 
@@ -549,8 +543,6 @@ class RecordVerb(VerbExtension):
             return print_error(str(record_error))
         if stop_error is not None:
             return print_error(str(stop_error))
-        if stop_spin_error is not None:
-            return print_error(str(stop_spin_error))
 
         # Remove newly created directory if it is empty
         if os.path.isdir(uri) and not os.listdir(uri):
