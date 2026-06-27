@@ -430,15 +430,15 @@ TEST_F(
   writer_->write(message);
 
   EXPECT_THROW(
-    {
-      try {
-        writer_->close();
-      } catch (const std::runtime_error & e) {
-        EXPECT_STREQ(e.what(), "compressed write failed");
-        throw;
-      }
-    },
-    std::runtime_error);
+  {
+    try {
+      writer_->close();
+    } catch (const std::runtime_error & e) {
+      EXPECT_STREQ(e.what(), "compressed write failed");
+      throw;
+    }
+  },
+  std::runtime_error);
 }
 
 TEST_F(SequentialCompressionWriterTest, writer_call_metadata_update_on_bag_split)
