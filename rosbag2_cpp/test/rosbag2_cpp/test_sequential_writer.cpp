@@ -407,6 +407,47 @@ TEST_F(SequentialWriterTest, metadata_io_writes_metadata_file_in_destructor) {
   writer_.reset();
 }
 
+TEST_F(SequentialWriterTest, close_rethrows_cache_exception_after_finalizing_metadata)
+{
+  EXPECT_CALL(*storage_, update_metadata(_)).Times(2);
+  EXPECT_CALL(*metadata_io_, write_metadata(_, _)).Times(1);
+
+  auto sequential_writer = std::make_unique<SequentialWriterForTest>(
+    std::move(storage_factory_), converter_factory_, std::move(metadata_io_));
+
+  storage_options_.max_cache_size = 1024u;
+  sequential_writer->open(storage_options_, {"rmw_format", "rmw_format"});
+  sequential_writer->create_topic({0u, "test_topic", "test_msgs/BasicTypes", "", {}, ""});
+
+  auto mock_message_cache = std::make_shared<NiceMock<MockMessageCache>>(1024u);
+  auto write_messages_cb = [](
+    const std::vector<std::shared_ptr<const rosbag2_storage::SerializedBagMessage>> &) {
+      throw std::runtime_error("background write failed");
+    };
+  auto mock_cache_consumer =
+    std::make_unique<NiceMock<MockCacheConsumer>>(mock_message_cache, write_messages_cb);
+  sequential_writer->set_message_cache_and_cache_consumer(
+    mock_message_cache, std::move(mock_cache_consumer));
+
+  auto message = std::make_shared<rosbag2_storage::SerializedBagMessage>();
+  message->topic_name = "test_topic";
+  const std::string msg_content = "Hello";
+  message->serialized_data =
+    rosbag2_storage::make_serialized_message(msg_content.c_str(), msg_content.length());
+  sequential_writer->write(message);
+
+  EXPECT_THROW(
+    {
+      try {
+        sequential_writer->close();
+      } catch (const std::runtime_error & e) {
+        EXPECT_STREQ(e.what(), "background write failed");
+        throw;
+      }
+    },
+    std::runtime_error);
+}
+
 TEST_F(SequentialWriterTest, sequantial_writer_call_metadata_update_on_open_and_destruction)
 {
   const std::string test_topic_name = "test_topic";

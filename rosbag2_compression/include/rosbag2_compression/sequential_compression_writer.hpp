@@ -17,6 +17,7 @@
 
 #include <atomic>
 #include <condition_variable>
+#include <exception>
 #include <memory>
 #include <mutex>
 #include <queue>
@@ -131,6 +132,11 @@ public:
    */
   void close() override;
 
+  /**
+   * \brief Rethrow the first asynchronous writer or compression failure, if any.
+   */
+  void throw_if_background_write_failed() override;
+
 protected:
   /**
    * Compress a file and update the metadata file path.
@@ -203,11 +209,17 @@ private:
   // compression_is_running_ is false; should be run in a separate thread
   void compression_thread_fn();
 
+  void store_compression_exception(std::exception_ptr exception);
+  void throw_if_compression_failed();
+
   // Closes the current backed storage and opens the next bagfile.
   void split_bagfile() override;
 
   // Prepares the metadata by setting initial values.
   void init_metadata() override;
+
+  std::mutex compression_exception_mutex_;
+  std::exception_ptr compression_exception_;
 };
 }  // namespace rosbag2_compression
 #endif  // ROSBAG2_COMPRESSION__SEQUENTIAL_COMPRESSION_WRITER_HPP_

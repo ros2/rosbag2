@@ -257,6 +257,9 @@ public:
    */
   void add_event_callbacks(bag_events::WriterEventCallbacks & callbacks);
 
+  /// \brief Rethrow the first asynchronous background write failure, if any.
+  void throw_if_background_write_failed();
+
   /**
    * \brief Check if a callback is registered for the given event.
    * \return True if there is any callback registered for the event, false otherwise.

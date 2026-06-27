@@ -17,6 +17,7 @@
 #include <algorithm>
 #include <chrono>
 #include <ctime>
+#include <exception>
 #include <filesystem>
 #include <iomanip>
 #include <memory>
@@ -69,7 +70,12 @@ SequentialWriter::~SequentialWriter()
   // Callbacks likely was created after SequentialWriter object and may point to the already
   // destructed objects.
   callback_manager_.delete_all_callbacks();
-  SequentialWriter::close();
+  try {
+    SequentialWriter::close();
+  } catch (...) {
+    // Destructors must not let exceptions escape. Callers that need close() failures should
+    // invoke close() explicitly before destruction.
+  }
 }
 
 void SequentialWriter::init_metadata()
@@ -199,12 +205,18 @@ void SequentialWriter::open(
   is_open_ = true;
 }
 
-void SequentialWriter::flush_cache_update_metadata_and_close_storage()
+std::exception_ptr SequentialWriter::flush_cache_update_metadata_and_close_storage()
 {
+  std::exception_ptr cache_exception;
   if (use_cache_) {
-    // destructor will flush message cache
+    try {
+      cache_consumer_->stop();
+    } catch (...) {
+      cache_exception = std::current_exception();
+    }
     cache_consumer_.reset();
     message_cache_.reset();
+    use_cache_ = false;
   }
   finalize_metadata();
   if (storage_) {
@@ -212,6 +224,7 @@ void SequentialWriter::flush_cache_update_metadata_and_close_storage()
     storage_.reset();  // Destroy storage before calling WRITE_SPLIT callback to make sure that
     // bag file was closed before callback call.
   }
+  return cache_exception;
 }
 
 void SequentialWriter::close()
@@ -221,7 +234,7 @@ void SequentialWriter::close()
     return;  // The writer is not open
   }
 
-  flush_cache_update_metadata_and_close_storage();
+  auto background_write_exception = flush_cache_update_metadata_and_close_storage();
 
   if (!metadata_.relative_file_paths.empty()) {
     // Take the latest file name from metadata in case if it was updated after compression in
@@ -235,13 +248,26 @@ void SequentialWriter::close()
     metadata_io_->write_metadata(base_folder_, metadata_);
   }
 
-  // Zero message counts for all topics
-  std::lock_guard<std::mutex> lock(topics_info_mutex_);
-  for (auto & [_, topic_info] : topics_names_to_info_) {
-    topic_info.message_count = 0U;
+  {
+    // Zero message counts for all topics
+    std::lock_guard<std::mutex> lock(topics_info_mutex_);
+    for (auto & [_, topic_info] : topics_names_to_info_) {
+      topic_info.message_count = 0U;
+    }
   }
 
   converter_.reset();
+
+  if (background_write_exception) {
+    std::rethrow_exception(background_write_exception);
+  }
+}
+
+void SequentialWriter::throw_if_background_write_failed()
+{
+  if (cache_consumer_) {
+    cache_consumer_->throw_if_failed();
+  }
 }
 
 void SequentialWriter::create_topic(const rosbag2_storage::TopicMetadata & topic_with_type)

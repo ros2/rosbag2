@@ -234,6 +234,10 @@ public:
   ROSBAG2_TRANSPORT_PUBLIC
   void stop();
 
+  /// \brief Rethrow the first asynchronous recording failure, if any.
+  ROSBAG2_TRANSPORT_PUBLIC
+  void throw_if_recording_failed();
+
   ROSBAG2_TRANSPORT_PUBLIC
   const std::unordered_set<std::string> &
   topics_using_fallback_qos() const;

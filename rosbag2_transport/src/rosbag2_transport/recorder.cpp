@@ -162,6 +162,9 @@ public:
   /// The record(uri) can be called again after stop().
   void stop();
 
+  /// @brief Rethrow the first asynchronous recording failure, if any.
+  void throw_if_recording_failed();
+
   //// @brief Split the current bagfile and open a new one.
   /// @return true if split was successful, false if recording is not active.
   /// \throws std::exception if underlying writer fails to split the bagfile.
@@ -629,7 +632,15 @@ RecorderImpl::~RecorderImpl()
     keyboard_handler_->delete_key_press_callback(toggle_paused_key_callback_handle_);
   }
   action_task_runner_.stop();
-  stop();
+  try {
+    stop();
+  } catch (const std::exception & e) {
+    RCLCPP_ERROR(node->get_logger(), "Error while stopping recorder during destruction: %s",
+      e.what());
+  } catch (...) {
+    RCLCPP_ERROR(node->get_logger(),
+      "Unknown error while stopping recorder during destruction.");
+  }
 }
 
 void RecorderImpl::stop()
@@ -680,6 +691,11 @@ void RecorderImpl::stop()
                 "Number of messages lost in the recorder: %lu",
                 num_messages_lost_in_recorder);
   }
+}
+
+void RecorderImpl::throw_if_recording_failed()
+{
+  writer_->throw_if_background_write_failed();
 }
 
 bool RecorderImpl::record(const std::string & uri)
@@ -2172,6 +2188,11 @@ uint64_t Recorder::get_total_num_messages_lost_in_transport() const
 void Recorder::stop()
 {
   pimpl_->stop();
+}
+
+void Recorder::throw_if_recording_failed()
+{
+  pimpl_->throw_if_recording_failed();
 }
 
 const std::unordered_set<std::string> &

@@ -19,6 +19,7 @@
 #include <memory>
 #include <regex>
 #include <sstream>
+#include <stdexcept>
 #include <string>
 #include <utility>
 #include <vector>
@@ -395,6 +396,49 @@ TEST_F(SequentialCompressionWriterTest, writer_call_metadata_update_on_open_and_
   EXPECT_EQ(compression_mode, rosbag2_compression::CompressionMode::MESSAGE);
   EXPECT_EQ(v_intercepted_update_metadata_[0].message_count, 0u);
   EXPECT_EQ(v_intercepted_update_metadata_[1].message_count, kNumMessagesToWrite);
+}
+
+TEST_F(
+  SequentialCompressionWriterTest,
+  close_rethrows_message_compression_write_exception_after_finalizing_metadata)
+{
+  const std::string test_topic_name = "test_topic";
+  const std::string test_topic_type = "test_msgs/BasicTypes";
+
+  rosbag2_compression::CompressionOptions compression_options {
+    DefaultTestCompressor,
+    rosbag2_compression::CompressionMode::MESSAGE,
+    0,
+    1,
+    kDefaultCompressionQueueThreadsPriority
+  };
+
+  initializeFakeFileStorage();
+  ON_CALL(*storage_,
+          write_message(An<std::shared_ptr<const rosbag2_storage::SerializedBagMessage>>()))
+  .WillByDefault(Throw(std::runtime_error("compressed write failed")));
+
+  EXPECT_CALL(*storage_, update_metadata(_)).Times(2);
+  EXPECT_CALL(*metadata_io_, write_metadata(_, _)).Times(1);
+  initializeWriter(compression_options);
+
+  writer_->open(tmp_dir_storage_options_);
+  writer_->create_topic({0u, test_topic_name, test_topic_type, "", {}, ""});
+
+  auto message = std::make_shared<rosbag2_storage::SerializedBagMessage>();
+  message->topic_name = test_topic_name;
+  writer_->write(message);
+
+  EXPECT_THROW(
+    {
+      try {
+        writer_->close();
+      } catch (const std::runtime_error & e) {
+        EXPECT_STREQ(e.what(), "compressed write failed");
+        throw;
+      }
+    },
+    std::runtime_error);
 }
 
 TEST_F(SequentialCompressionWriterTest, writer_call_metadata_update_on_bag_split)

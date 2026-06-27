@@ -120,6 +120,8 @@ public:
     }
   }
 
+  void throw_if_background_write_failed() override {}
+
   bool has_callback_for_event(rosbag2_cpp::bag_events::BagEvent event) const override
   {
     return callback_manager_.has_callback_for_event(event);

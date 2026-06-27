@@ -114,6 +114,37 @@ TEST_F(MessageCacheTest, message_cache_writes_full_producer_buffer) {
   EXPECT_EQ(consumed_message_count, message_count - should_be_dropped_count);
 }
 
+TEST_F(MessageCacheTest, cache_consumer_rethrows_background_callback_failure_once)
+{
+  auto message_cache = std::make_shared<rosbag2_cpp::cache::MessageCache>(cache_size_);
+  ASSERT_TRUE(message_cache->push(make_test_msg()));
+
+  auto cache_consumer = std::make_unique<rosbag2_cpp::cache::CacheConsumer>(
+    message_cache,
+    [](const std::vector<std::shared_ptr<const rosbag2_storage::SerializedBagMessage>> &) {
+      throw std::runtime_error("No space left on device");
+    });
+
+  bool failure_observed = false;
+  const auto deadline = std::chrono::steady_clock::now() + 5s;
+  while (std::chrono::steady_clock::now() < deadline && !failure_observed) {
+    try {
+      cache_consumer->throw_if_failed();
+    } catch (const std::runtime_error & e) {
+      failure_observed =
+        std::string(e.what()).find("No space left on device") != std::string::npos;
+    }
+    if (!failure_observed) {
+      std::this_thread::sleep_for(10ms);
+    }
+  }
+
+  ASSERT_TRUE(failure_observed);
+
+  EXPECT_NO_THROW(cache_consumer->throw_if_failed());
+  EXPECT_NO_THROW(cache_consumer->stop());
+}
+
 TEST_F(MessageCacheTest, message_cache_rejects_null_message) {
   auto message_cache = std::make_shared<rosbag2_cpp::cache::MessageCache>(500);
 

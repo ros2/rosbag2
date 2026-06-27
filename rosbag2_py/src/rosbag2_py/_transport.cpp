@@ -666,7 +666,8 @@ public:
 
   void throw_if_recording_failed()
   {
-    // Non-blocking record users must poll this method to surface async recorder failures.
+    // Non-blocking record users must poll this method to surface async recorder failures from
+    // both the executor thread and any background writer threads.
     std::exception_ptr spin_exception;
     {
       std::lock_guard<std::mutex> lock(spin_exception_mutex_);
@@ -676,6 +677,7 @@ public:
     if (spin_exception) {
       std::rethrow_exception(spin_exception);
     }
+    recorder_->throw_if_recording_failed();
   }
 
   void stop()

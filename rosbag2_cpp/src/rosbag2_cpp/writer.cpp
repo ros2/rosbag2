@@ -190,6 +190,12 @@ void Writer::add_event_callbacks(bag_events::WriterEventCallbacks & callbacks)
   writer_impl_->add_event_callbacks(callbacks);
 }
 
+void Writer::throw_if_background_write_failed()
+{
+  std::lock_guard<std::mutex> writer_lock(writer_mutex_);
+  writer_impl_->throw_if_background_write_failed();
+}
+
 bool Writer::has_callback_for_event(bag_events::BagEvent event) const
 {
   return writer_impl_->has_callback_for_event(event);

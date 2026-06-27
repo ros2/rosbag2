@@ -155,7 +155,15 @@ namespace rosbag2_storage_plugins
 SqliteStorage::~SqliteStorage()
 {
   if (active_transaction_) {
-    commit_transaction();
+    try {
+      commit_transaction();
+    } catch (const std::exception & e) {
+      ROSBAG2_STORAGE_DEFAULT_PLUGINS_LOG_ERROR_STREAM(
+        "Failed to commit active SQLite transaction during destruction: " << e.what());
+    } catch (...) {
+      ROSBAG2_STORAGE_DEFAULT_PLUGINS_LOG_ERROR_STREAM(
+        "Failed to commit active SQLite transaction during destruction with an unknown error.");
+    }
   }
 }
 

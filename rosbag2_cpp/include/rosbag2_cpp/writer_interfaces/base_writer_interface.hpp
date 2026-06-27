@@ -75,6 +75,8 @@ public:
 
   virtual void add_event_callbacks(const bag_events::WriterEventCallbacks & callbacks) = 0;
 
+  virtual void throw_if_background_write_failed() = 0;
+
   /**
    * \brief Check if a callback is registered for the given event.
    * \return True if there is any callback registered for the event, false otherwise.

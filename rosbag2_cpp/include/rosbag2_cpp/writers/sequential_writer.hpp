@@ -16,6 +16,7 @@
 #define ROSBAG2_CPP__WRITERS__SEQUENTIAL_WRITER_HPP_
 
 #include <deque>
+#include <exception>
 #include <memory>
 #include <mutex>
 #include <string>
@@ -151,6 +152,8 @@ public:
    */
   void add_event_callbacks(const bag_events::WriterEventCallbacks & callbacks) override;
 
+  void throw_if_background_write_failed() override;
+
   /**
    * \brief Closes the current backed storage and opens the next bagfile.
    */
@@ -176,7 +179,8 @@ protected:
   std::shared_ptr<rosbag2_cpp::cache::TransientLocalMessagesCache> transient_local_cache_;
 
   /// \brief Flush the cache, update metadata and close the storage.
-  void flush_cache_update_metadata_and_close_storage();
+  /// \return The cache flush exception, if any, so close() can rethrow after finalization.
+  std::exception_ptr flush_cache_update_metadata_and_close_storage();
 
   std::string split_bagfile_local(bool execute_callbacks = true);
 

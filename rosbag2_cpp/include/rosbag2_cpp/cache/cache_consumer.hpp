@@ -16,6 +16,7 @@
 #define ROSBAG2_CPP__CACHE__CACHE_CONSUMER_HPP_
 
 #include <atomic>
+#include <exception>
 #include <functional>
 #include <memory>
 #include <mutex>
@@ -77,15 +78,22 @@ public:
   /// \brief shut down the consumer thread
   void stop();
 
+  /// \brief Rethrow the first exception raised by the consumer thread, if any.
+  void throw_if_failed();
+
 private:
   std::shared_ptr<MessageCacheInterface> message_cache_;
   consume_callback_function_t consume_callback_;
+
+  void store_exception(std::exception_ptr exception);
 
   /// Write buffer data to a storage
   void exec_consuming();
 
   /// Consumer thread shutdown sync
   std::atomic_bool is_stop_issued_ {false};
+  std::mutex consumer_exception_mutex_;
+  std::exception_ptr consumer_exception_;
   std::thread consumer_thread_;
 };
 

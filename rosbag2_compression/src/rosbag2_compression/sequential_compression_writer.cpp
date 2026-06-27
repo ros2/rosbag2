@@ -17,6 +17,7 @@
 #include <algorithm>
 #include <chrono>
 #include <cstring>
+#include <exception>
 #include <filesystem>
 #include <functional>
 #include <memory>
@@ -65,7 +66,12 @@ SequentialCompressionWriter::SequentialCompressionWriter(
 
 SequentialCompressionWriter::~SequentialCompressionWriter()
 {
-  SequentialCompressionWriter::close();
+  try {
+    SequentialCompressionWriter::close();
+  } catch (...) {
+    // Destructors must not let exceptions escape. Callers that need close() failures should
+    // invoke close() explicitly before destruction.
+  }
 }
 
 void SequentialCompressionWriter::compression_thread_fn()
@@ -112,74 +118,84 @@ void SequentialCompressionWriter::compression_thread_fn()
 #endif
   }
 
-  // Every thread needs to have its own compression context for thread safety.
-  auto compressor = compression_factory_->create_compressor(
-    compression_options_.compression_format);
-  rcpputils::check_true(compressor != nullptr, "Could not create compressor.");
+  try {
+    // Every thread needs to have its own compression context for thread safety.
+    auto compressor = compression_factory_->create_compressor(
+      compression_options_.compression_format);
+    rcpputils::check_true(compressor != nullptr, "Could not create compressor.");
 
-  while (true) {
-    std::shared_ptr<const rosbag2_storage::SerializedBagMessage> message;
-    std::string closed_file_relative_to_bag;
-    {
-      std::unique_lock<std::mutex> lock(compressor_queue_mutex_);
-      // *INDENT-OFF*
-      compressor_condition_.wait(
-        lock,
-        [&] {
-          return !compression_is_running_ ||
-                 !compressor_message_queue_.empty() ||
-                 !compressor_file_queue_.empty();
-        });
-      // *INDENT-ON*
-
-      if (!compressor_message_queue_.empty()) {
-        message = compressor_message_queue_.front();
-        compressor_message_queue_.pop();
-        compressor_condition_.notify_all();
-      } else if (!compressor_file_queue_.empty()) {
-        closed_file_relative_to_bag = compressor_file_queue_.front();
-        compressor_file_queue_.pop();
-      } else if (!compression_is_running_) {
-        // I woke up, all work queues are empty, and the main thread has stopped execution. Exit.
-        break;
-      }
-    }
-
-    if (message) {
-      auto compressed_message = compress_message(*compressor, message);
-
+    while (true) {
+      std::shared_ptr<const rosbag2_storage::SerializedBagMessage> message;
+      std::string closed_file_relative_to_bag;
       {
-        // Now that the message is compressed, it can be written to file using the
-        // normal method.
-        std::lock_guard<std::recursive_mutex> storage_lock(storage_mutex_);
-        SequentialWriter::write(compressed_message);
-      }
-    } else if (!closed_file_relative_to_bag.empty()) {
-      compress_file(*compressor, closed_file_relative_to_bag);
+        std::unique_lock<std::mutex> lock(compressor_queue_mutex_);
+        // *INDENT-OFF*
+        compressor_condition_.wait(
+          lock,
+          [&] {
+            return !compression_is_running_ ||
+                   !compressor_message_queue_.empty() ||
+                   !compressor_file_queue_.empty();
+          });
+        // *INDENT-ON*
 
-      // Execute callbacks from the base class
-      static const std::string compressor_ext = "." + compressor->get_compression_identifier();
-      auto closed_file =
-        (fs::path(base_folder_) / (closed_file_relative_to_bag + compressor_ext)).generic_string();
-      std::string new_file;
-      // To determine, a new_file we can't rely on the metadata_.relative_file_paths.back(),
-      // because other compressor threads may have already pushed a new item above. To overcome
-      // this, we will search for closed filename in metadata_.relative_file_paths and take the
-      // next one as a new_file.
-      {
-        std::lock_guard<std::recursive_mutex> lock(storage_mutex_);
-        auto iter = std::find(
-          metadata_.relative_file_paths.begin(), metadata_.relative_file_paths.end(),
-          closed_file_relative_to_bag + compressor_ext);
-        if (iter != metadata_.relative_file_paths.end()) {
-          ++iter;
-          if (iter != metadata_.relative_file_paths.end()) {
-            new_file = (fs::path(base_folder_) / *iter).generic_string();
-          }
+        if (!compressor_message_queue_.empty()) {
+          message = compressor_message_queue_.front();
+          compressor_message_queue_.pop();
+          compressor_condition_.notify_all();
+        } else if (!compressor_file_queue_.empty()) {
+          closed_file_relative_to_bag = compressor_file_queue_.front();
+          compressor_file_queue_.pop();
+        } else if (!compression_is_running_) {
+          // I woke up, all work queues are empty, and the main thread has stopped execution. Exit.
+          break;
         }
       }
-      SequentialWriter::execute_bag_split_callbacks(closed_file, new_file);
+
+      if (message) {
+        auto compressed_message = compress_message(*compressor, message);
+
+        {
+          // Now that the message is compressed, it can be written to file using the
+          // normal method.
+          std::lock_guard<std::recursive_mutex> storage_lock(storage_mutex_);
+          SequentialWriter::write(compressed_message);
+        }
+      } else if (!closed_file_relative_to_bag.empty()) {
+        compress_file(*compressor, closed_file_relative_to_bag);
+
+        // Execute callbacks from the base class
+        static const std::string compressor_ext = "." + compressor->get_compression_identifier();
+        auto closed_file =
+          (fs::path(base_folder_) / (closed_file_relative_to_bag + compressor_ext))
+          .generic_string();
+        std::string new_file;
+        // To determine, a new_file we can't rely on the metadata_.relative_file_paths.back(),
+        // because other compressor threads may have already pushed a new item above. To overcome
+        // this, we will search for closed filename in metadata_.relative_file_paths and take the
+        // next one as a new_file.
+        {
+          std::lock_guard<std::recursive_mutex> lock(storage_mutex_);
+          auto iter = std::find(
+            metadata_.relative_file_paths.begin(), metadata_.relative_file_paths.end(),
+            closed_file_relative_to_bag + compressor_ext);
+          if (iter != metadata_.relative_file_paths.end()) {
+            ++iter;
+            if (iter != metadata_.relative_file_paths.end()) {
+              new_file = (fs::path(base_folder_) / *iter).generic_string();
+            }
+          }
+        }
+        SequentialWriter::execute_bag_split_callbacks(closed_file, new_file);
+      }
     }
+  } catch (...) {
+    store_compression_exception(std::current_exception());
+    {
+      std::unique_lock<std::mutex> lock(compressor_queue_mutex_);
+      compression_is_running_ = false;
+    }
+    compressor_condition_.notify_all();
   }
 }
 
@@ -245,6 +261,7 @@ void SequentialCompressionWriter::stop_compressor_threads()
     }
     compression_threads_.clear();
   }
+  throw_if_compression_failed();
 }
 
 void SequentialCompressionWriter::open(
@@ -267,6 +284,7 @@ void SequentialCompressionWriter::close()
   if (!this->is_open_.exchange(false)) {
     return;  // The writer is not open
   }
+  std::exception_ptr background_write_exception;
   if (!base_folder_.empty()) {
     // Reset may be called before initializing the compressor (ex. bad options).
     // We compress the last file only if it hasn't been compressed earlier (ex. in split_bagfile()).
@@ -292,19 +310,58 @@ void SequentialCompressionWriter::close()
           rcpputils::check_true(compressor != nullptr, "Could not create compressor.");
           compress_file(*compressor, metadata_.relative_file_paths.back());
         }
-      } catch (const std::runtime_error & e) {
-        ROSBAG2_COMPRESSION_LOG_WARN_STREAM("Could not compress the last bag file.\n" << e.what());
+      } catch (...) {
+        if (!background_write_exception) {
+          background_write_exception = std::current_exception();
+        }
       }
     }
   }
-  stop_compressor_threads();  // Note: The metadata_.relative_file_paths will be updated with
-  // compressed filename when compressor threads will finish.
+  try {
+    stop_compressor_threads();  // Note: The metadata_.relative_file_paths will be updated with
+    // compressed filename when compressor threads will finish.
+  } catch (...) {
+    if (!background_write_exception) {
+      background_write_exception = std::current_exception();
+    }
+  }
 
   //  Note: We need to call the base class close() after compressing the last file because the
   //  base class close() will call the execute_bag_split_callbacks(closed_file, ""); with the last
   //  file, and if we called it before compressing the last file, the callback would be called
   //  with the uncompressed file name, which is not the desired behavior.
   SequentialWriter::close();
+
+  if (background_write_exception) {
+    std::rethrow_exception(background_write_exception);
+  }
+}
+
+void SequentialCompressionWriter::throw_if_background_write_failed()
+{
+  SequentialWriter::throw_if_background_write_failed();
+  throw_if_compression_failed();
+}
+
+void SequentialCompressionWriter::store_compression_exception(std::exception_ptr exception)
+{
+  std::lock_guard<std::mutex> lock(compression_exception_mutex_);
+  if (!compression_exception_) {
+    compression_exception_ = std::move(exception);
+  }
+}
+
+void SequentialCompressionWriter::throw_if_compression_failed()
+{
+  std::exception_ptr compression_exception;
+  {
+    std::lock_guard<std::mutex> lock(compression_exception_mutex_);
+    compression_exception = compression_exception_;
+    compression_exception_ = nullptr;
+  }
+  if (compression_exception) {
+    std::rethrow_exception(compression_exception);
+  }
 }
 
 void SequentialCompressionWriter::create_topic(
