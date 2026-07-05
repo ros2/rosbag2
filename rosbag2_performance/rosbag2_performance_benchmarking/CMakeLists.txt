@@ -3,9 +3,9 @@ project(rosbag2_performance_benchmarking)
 
 option(ENABLE_ROSBAG2_BENCHMARK_TESTS "Enables rosbag2 performance benchmark tests" OFF)
 
-# Default to C++17
+# Default to C++20
 if(NOT CMAKE_CXX_STANDARD)
-  set(CMAKE_CXX_STANDARD 17)
+  set(CMAKE_CXX_STANDARD 20)
   set(CMAKE_CXX_STANDARD_REQUIRED ON)
 endif()
 
