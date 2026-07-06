@@ -1,17 +1,6 @@
 cmake_minimum_required(VERSION 3.20)
 project(rosbag2_storage)
 
-# Default to C99
-if(NOT CMAKE_C_STANDARD)
-  set(CMAKE_C_STANDARD 99)
-endif()
-
-# Default to C++20
-if(NOT CMAKE_CXX_STANDARD)
-  set(CMAKE_CXX_STANDARD 20)
-  set(CMAKE_CXX_STANDARD_REQUIRED ON)
-endif()
-
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   add_compile_options(-Wall -Wextra -Wpedantic)
 endif()
@@ -22,6 +11,7 @@ if(WIN32)
 endif()
 
 find_package(ament_cmake REQUIRED)
+find_package(ament_cmake_ros_core REQUIRED)
 find_package(pluginlib REQUIRED)
 find_package(rcutils REQUIRED)
 find_package(rclcpp REQUIRED)
@@ -51,6 +41,7 @@ target_link_libraries(${PROJECT_NAME} PUBLIC
   yaml-cpp::yaml-cpp
 )
 target_link_libraries(${PROJECT_NAME} PRIVATE
+  ament_cmake_ros_core::ament_ros_defaults
   pluginlib::pluginlib
 )
 
@@ -90,7 +81,7 @@ if(BUILD_TESTING)
     SHARED
     test/rosbag2_storage/test_plugin.cpp
     test/rosbag2_storage/test_read_only_plugin.cpp)
-  target_link_libraries(test_plugin ${PROJECT_NAME} pluginlib::pluginlib)
+  target_link_libraries(test_plugin ament_cmake_ros_core::ament_ros_defaults ${PROJECT_NAME} pluginlib::pluginlib)
   install(
     TARGETS test_plugin
     ARCHIVE DESTINATION lib
@@ -101,19 +92,20 @@ if(BUILD_TESTING)
   ament_add_gmock(test_storage_factory
     test/rosbag2_storage/test_storage_factory.cpp)
   if(TARGET test_storage_factory)
-    target_link_libraries(test_storage_factory ${PROJECT_NAME})
+    target_link_libraries(test_storage_factory ament_cmake_ros_core::ament_ros_defaults ${PROJECT_NAME})
   endif()
 
   ament_add_gmock(test_ros_helper
     test/rosbag2_storage/test_ros_helper.cpp)
   if(TARGET test_ros_helper)
-    target_link_libraries(test_ros_helper ${PROJECT_NAME})
+    target_link_libraries(test_ros_helper ament_cmake_ros_core::ament_ros_defaults ${PROJECT_NAME})
   endif()
 
   ament_add_gmock(test_metadata_serialization
     test/rosbag2_storage/test_metadata_serialization.cpp)
   if(TARGET test_metadata_serialization)
     target_link_libraries(test_metadata_serialization
+      ament_cmake_ros_core::ament_ros_defaults
       ${PROJECT_NAME}
       rosbag2_test_common::rosbag2_test_common
     )
@@ -122,6 +114,7 @@ if(BUILD_TESTING)
   ament_add_gmock(test_storage_options
     test/rosbag2_storage/test_storage_options.cpp)
   target_link_libraries(test_storage_options
+    ament_cmake_ros_core::ament_ros_defaults
     ${PROJECT_NAME}
     rosbag2_test_common::rosbag2_test_common
   )
@@ -129,6 +122,7 @@ if(BUILD_TESTING)
   ament_add_gmock(test_qos
     test/rosbag2_storage/test_qos.cpp)
   target_link_libraries(test_qos
+    ament_cmake_ros_core::ament_ros_defaults
     ${PROJECT_NAME}
     rosbag2_test_common::rosbag2_test_common
     yaml-cpp::yaml-cpp

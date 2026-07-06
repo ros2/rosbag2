@@ -3,17 +3,6 @@ project(rosbag2_cpp)
 
 add_definitions(-D_SRC_REINDEX_DIR_PATH="${CMAKE_CURRENT_SOURCE_DIR}/test/rosbag2_cpp/reindex_test_bags")
 
-# Default to C99
-if(NOT CMAKE_C_STANDARD)
-  set(CMAKE_C_STANDARD 99)
-endif()
-
-# Default to C++20
-if(NOT CMAKE_CXX_STANDARD)
-  set(CMAKE_CXX_STANDARD 20)
-  set(CMAKE_CXX_STANDARD_REQUIRED ON)
-endif()
-
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   add_compile_options(-Wall -Wextra -Wpedantic)
 endif()
@@ -40,6 +29,7 @@ if(NOT DISABLE_SANITIZERS AND CMAKE_COMPILER_IS_GNUCXX)
 endif()
 
 find_package(ament_cmake REQUIRED)
+find_package(ament_cmake_ros_core REQUIRED)
 find_package(ament_index_cpp REQUIRED)
 find_package(pluginlib REQUIRED)
 find_package(rclcpp REQUIRED)
@@ -89,6 +79,7 @@ target_link_libraries(${PROJECT_NAME} PUBLIC
   rosidl_typesupport_introspection_cpp::rosidl_typesupport_introspection_cpp
 )
 target_link_libraries(${PROJECT_NAME} PRIVATE
+  ament_cmake_ros_core::ament_ros_defaults
   ament_index_cpp::ament_index_cpp
   rosidl_typesupport_cpp::rosidl_typesupport_cpp
 )
@@ -149,6 +140,7 @@ if(BUILD_TESTING)
     test/rosbag2_cpp/serializer_test_plugin.cpp
     test/rosbag2_cpp/converter_test_plugin.cpp)
   target_link_libraries(converter_test_plugins
+    ament_cmake_ros_core::ament_ros_defaults
     ${PROJECT_NAME}
     rosbag2_storage::rosbag2_storage
   )
@@ -162,20 +154,21 @@ if(BUILD_TESTING)
   ament_add_gmock(test_converter_factory
     test/rosbag2_cpp/test_converter_factory.cpp)
   if(TARGET test_converter_factory)
-    target_link_libraries(test_converter_factory ${PROJECT_NAME})
+    target_link_libraries(test_converter_factory ament_cmake_ros_core::ament_ros_defaults ${PROJECT_NAME})
   endif()
 
   ament_add_gmock(test_info
     test/rosbag2_cpp/test_info.cpp
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
   if(TARGET test_info)
-    target_link_libraries(test_info ${PROJECT_NAME} rosbag2_test_common::rosbag2_test_common test_msgs::test_msgs)
+    target_link_libraries(test_info ament_cmake_ros_core::ament_ros_defaults ${PROJECT_NAME} rosbag2_test_common::rosbag2_test_common test_msgs::test_msgs)
   endif()
 
   ament_add_gmock(test_sequential_reader
     test/rosbag2_cpp/test_sequential_reader.cpp test/rosbag2_cpp/fake_data.cpp)
   if(TARGET test_sequential_reader)
     target_link_libraries(test_sequential_reader
+      ament_cmake_ros_core::ament_ros_defaults
       ${PROJECT_NAME}
       rosbag2_storage::rosbag2_storage
       rosbag2_test_common::rosbag2_test_common
@@ -187,25 +180,26 @@ if(BUILD_TESTING)
   ament_add_gmock(test_storage_without_metadata_file
     test/rosbag2_cpp/test_storage_without_metadata_file.cpp)
   if(TARGET test_storage_without_metadata_file)
-    target_link_libraries(test_storage_without_metadata_file ${PROJECT_NAME} rosbag2_storage::rosbag2_storage)
+    target_link_libraries(test_storage_without_metadata_file ament_cmake_ros_core::ament_ros_defaults ${PROJECT_NAME} rosbag2_storage::rosbag2_storage)
   endif()
 
   ament_add_gmock(test_local_message_definition_source
     test/rosbag2_cpp/test_local_message_definition_source.cpp)
   if(TARGET test_local_message_definition_source)
-    target_link_libraries(test_local_message_definition_source ${PROJECT_NAME})
+    target_link_libraries(test_local_message_definition_source ament_cmake_ros_core::ament_ros_defaults ${PROJECT_NAME})
   endif()
 
   ament_add_gmock(test_message_cache
     test/rosbag2_cpp/test_message_cache.cpp)
   if(TARGET test_message_cache)
-    target_link_libraries(test_message_cache ${PROJECT_NAME})
+    target_link_libraries(test_message_cache ament_cmake_ros_core::ament_ros_defaults ${PROJECT_NAME})
   endif()
 
   ament_add_gmock(test_circular_message_cache
     test/rosbag2_cpp/test_circular_message_cache.cpp)
   if(TARGET test_circular_message_cache)
     target_link_libraries(test_circular_message_cache
+      ament_cmake_ros_core::ament_ros_defaults
       ${PROJECT_NAME}
       rcutils::rcutils
       rosbag2_storage::rosbag2_storage
@@ -215,7 +209,7 @@ if(BUILD_TESTING)
   ament_add_gmock(test_transient_local_messages_cache
     test/rosbag2_cpp/test_transient_local_messages_cache.cpp)
   if(TARGET test_transient_local_messages_cache)
-    target_link_libraries(test_transient_local_messages_cache ${PROJECT_NAME})
+    target_link_libraries(test_transient_local_messages_cache ament_cmake_ros_core::ament_ros_defaults ${PROJECT_NAME})
   endif()
 
   # If compiling with gcc, run this test with sanitizers enabled
@@ -232,6 +226,7 @@ if(BUILD_TESTING)
       PUBLIC
       $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>)
     target_link_libraries(test_ros2_message
+      ament_cmake_ros_core::ament_ros_defaults
       ament_index_cpp::ament_index_cpp
       rclcpp::rclcpp
       rcpputils::rcpputils
@@ -247,6 +242,7 @@ if(BUILD_TESTING)
     test/rosbag2_cpp/test_sequential_writer.cpp test/rosbag2_cpp/fake_data.cpp)
   if(TARGET test_sequential_writer)
     target_link_libraries(test_sequential_writer
+      ament_cmake_ros_core::ament_ros_defaults
       ${PROJECT_NAME}
       rosbag2_storage::rosbag2_storage
       rosbag2_test_common::rosbag2_test_common
@@ -261,6 +257,7 @@ if(BUILD_TESTING)
       target_link_libraries(test_serialization_converter $<$<CXX_COMPILER_ID:GNU>:-fsanitize=address,leak,undefined>)
     endif()
     target_link_libraries(test_serialization_converter
+      ament_cmake_ros_core::ament_ros_defaults
       ${PROJECT_NAME}
       rosbag2_storage::rosbag2_storage
       std_msgs::std_msgs
@@ -291,6 +288,7 @@ if(BUILD_TESTING)
     test/rosbag2_cpp/test_multifile_reader.cpp)
   if(TARGET test_multifile_reader)
     target_link_libraries(test_multifile_reader
+      ament_cmake_ros_core::ament_ros_defaults
       ${PROJECT_NAME}
       rosbag2_storage::rosbag2_storage
     )
@@ -299,13 +297,14 @@ if(BUILD_TESTING)
   ament_add_gmock(test_time_controller_clock
     test/rosbag2_cpp/test_time_controller_clock.cpp)
   if(TARGET test_time_controller_clock)
-    target_link_libraries(test_time_controller_clock ${PROJECT_NAME})
+    target_link_libraries(test_time_controller_clock ament_cmake_ros_core::ament_ros_defaults ${PROJECT_NAME})
   endif()
 
   ament_add_gmock(test_service_utils
     test/rosbag2_cpp/test_service_utils.cpp)
   if(TARGET test_service_utils)
     target_link_libraries(test_service_utils
+      ament_cmake_ros_core::ament_ros_defaults
       ${PROJECT_NAME}
       rosbag2_test_common::rosbag2_test_common
       test_msgs::test_msgs
@@ -316,6 +315,7 @@ if(BUILD_TESTING)
     test/rosbag2_cpp/test_action_utils.cpp)
   if(TARGET test_action_utils)
     target_link_libraries(test_action_utils
+      ament_cmake_ros_core::ament_ros_defaults
       ${PROJECT_NAME}
       rosbag2_test_common::rosbag2_test_common
       test_msgs::test_msgs
@@ -325,6 +325,7 @@ if(BUILD_TESTING)
   ament_add_gmock(test_reindexer test/rosbag2_cpp/test_reindexer.cpp)
   if(TARGET test_reindexer)
     target_link_libraries(test_reindexer
+      ament_cmake_ros_core::ament_ros_defaults
       ${PROJECT_NAME}
       rosbag2_storage::rosbag2_storage
       rosbag2_test_common::rosbag2_test_common

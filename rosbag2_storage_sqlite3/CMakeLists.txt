@@ -1,17 +1,6 @@
 cmake_minimum_required(VERSION 3.20)
 project(rosbag2_storage_sqlite3)
 
-# Default to C99
-if(NOT CMAKE_C_STANDARD)
-  set(CMAKE_C_STANDARD 99)
-endif()
-
-# Default to C++20
-if(NOT CMAKE_CXX_STANDARD)
-  set(CMAKE_CXX_STANDARD 20)
-  set(CMAKE_CXX_STANDARD_REQUIRED ON)
-endif()
-
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   add_compile_options(-Wall -Wextra -Wpedantic)
 endif()
@@ -22,6 +11,7 @@ if(WIN32)
 endif()
 
 find_package(ament_cmake REQUIRED)
+find_package(ament_cmake_ros_core REQUIRED)
 find_package(ament_cmake_python REQUIRED)
 find_package(pluginlib REQUIRED)
 find_package(rcpputils REQUIRED)
@@ -44,6 +34,7 @@ target_link_libraries(${PROJECT_NAME} PUBLIC
   SQLite::SQLite3
 )
 target_link_libraries(${PROJECT_NAME} PRIVATE
+  ament_cmake_ros_core::ament_ros_defaults
   pluginlib::pluginlib
   yaml-cpp::yaml-cpp
 )
@@ -95,21 +86,21 @@ if(BUILD_TESTING)
     test/rosbag2_storage_sqlite3/test_sqlite_wrapper.cpp
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
   if(TARGET test_sqlite_wrapper)
-    target_link_libraries(test_sqlite_wrapper ${TEST_LINK_LIBRARIES})
+    target_link_libraries(test_sqlite_wrapper ament_cmake_ros_core::ament_ros_defaults ${TEST_LINK_LIBRARIES})
   endif()
 
   ament_add_gmock(test_sqlite_storage
     test/rosbag2_storage_sqlite3/test_sqlite_storage.cpp
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
   if(TARGET test_sqlite_storage)
-    target_link_libraries(test_sqlite_storage ${TEST_LINK_LIBRARIES})
+    target_link_libraries(test_sqlite_storage ament_cmake_ros_core::ament_ros_defaults ${TEST_LINK_LIBRARIES})
   endif()
 
   ament_add_gmock(test_sqlite_topic_filter
     test/rosbag2_storage_sqlite3/test_sqlite_topic_filter.cpp
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
   if(TARGET test_sqlite_topic_filter)
-    target_link_libraries(test_sqlite_topic_filter ${TEST_LINK_LIBRARIES} std_msgs::std_msgs)
+    target_link_libraries(test_sqlite_topic_filter ament_cmake_ros_core::ament_ros_defaults ${TEST_LINK_LIBRARIES} std_msgs::std_msgs)
   endif()
 endif()
 

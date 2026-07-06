@@ -1,17 +1,6 @@
 cmake_minimum_required(VERSION 3.20)
 project(rosbag2_transport)
 
-# Default to C99
-if(NOT CMAKE_C_STANDARD)
-  set(CMAKE_C_STANDARD 99)
-endif()
-
-# Default to C++20
-if(NOT CMAKE_CXX_STANDARD)
-  set(CMAKE_CXX_STANDARD 20)
-  set(CMAKE_CXX_STANDARD_REQUIRED ON)
-endif()
-
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   add_compile_options(-Wall -Wextra -Wpedantic)
 endif()
@@ -27,6 +16,7 @@ if(WIN32)
 endif()
 
 find_package(ament_cmake_ros REQUIRED)
+find_package(ament_cmake_ros_core REQUIRED)
 find_package(keyboard_handler REQUIRED)
 find_package(rcl REQUIRED)
 find_package(rclcpp REQUIRED)
@@ -68,6 +58,7 @@ target_link_libraries(${PROJECT_NAME} PUBLIC
   rosbag2_storage::rosbag2_storage
 )
 target_link_libraries(${PROJECT_NAME} PRIVATE
+  ament_cmake_ros_core::ament_ros_defaults
   rcl::rcl
   rclcpp_components::component
   rcpputils::rcpputils
@@ -141,6 +132,7 @@ if(BUILD_TESTING)
 
   ament_add_gmock_executable(test_play test/rosbag2_transport/test_play.cpp)
   target_link_libraries(test_play
+    ament_cmake_ros_core::ament_ros_defaults
     rosbag2_transport
     test_msgs::test_msgs
     rosbag2_test_common::rosbag2_test_common
@@ -167,6 +159,7 @@ if(BUILD_TESTING)
 
   ament_add_gmock_executable(test_composable_player test/rosbag2_transport/test_composable_player.cpp)
   target_link_libraries(test_composable_player
+    ament_cmake_ros_core::ament_ros_defaults
     composition_interfaces::composition_interfaces
     rclcpp_components::component_manager
     rosbag2_transport
@@ -185,7 +178,7 @@ if(BUILD_TESTING)
   call_for_each_rmw_implementation(test_composable_player_for_rmw_implementation)
 
   ament_add_gmock_executable(test_play_loop test/rosbag2_transport/test_play_loop.cpp)
-  target_link_libraries(test_play_loop rosbag2_transport test_msgs::test_msgs rosbag2_test_common::rosbag2_test_common)
+  target_link_libraries(test_play_loop ament_cmake_ros_core::ament_ros_defaults rosbag2_transport test_msgs::test_msgs rosbag2_test_common::rosbag2_test_common)
   function(test_play_loop_for_rmw_implementation)
     set(rmw_implementation_env_var RMW_IMPLEMENTATION=${rmw_implementation})
     append_evars_if_rmw_zenoh(rmw_implementation_env_var ${rmw_implementation})
@@ -206,7 +199,7 @@ if(BUILD_TESTING)
   call_for_each_rmw_implementation(test_play_loop_for_rmw_implementation)
 
   ament_add_gmock_executable(test_play_publish_clock test/rosbag2_transport/test_play_publish_clock.cpp)
-  target_link_libraries(test_play_publish_clock rosbag2_transport test_msgs::test_msgs rosbag2_test_common::rosbag2_test_common)
+  target_link_libraries(test_play_publish_clock ament_cmake_ros_core::ament_ros_defaults rosbag2_transport test_msgs::test_msgs rosbag2_test_common::rosbag2_test_common)
   function(test_play_publish_clock_for_rmw_implementation)
     set(rmw_implementation_env_var RMW_IMPLEMENTATION=${rmw_implementation})
     append_evars_if_rmw_zenoh(rmw_implementation_env_var ${rmw_implementation})
@@ -227,7 +220,7 @@ if(BUILD_TESTING)
   call_for_each_rmw_implementation(test_play_publish_clock_for_rmw_implementation)
 
   ament_add_gmock_executable(test_play_timing test/rosbag2_transport/test_play_timing.cpp)
-  target_link_libraries(test_play_timing rosbag2_transport test_msgs::test_msgs rosbag2_test_common::rosbag2_test_common)
+  target_link_libraries(test_play_timing ament_cmake_ros_core::ament_ros_defaults rosbag2_transport test_msgs::test_msgs rosbag2_test_common::rosbag2_test_common)
   function(test_play_timing_for_rmw_implementation)
     set(rmw_implementation_env_var RMW_IMPLEMENTATION=${rmw_implementation})
     append_evars_if_rmw_zenoh(rmw_implementation_env_var ${rmw_implementation})
@@ -240,7 +233,7 @@ if(BUILD_TESTING)
   call_for_each_rmw_implementation(test_play_timing_for_rmw_implementation)
 
   ament_add_gmock_executable(test_play_callbacks test/rosbag2_transport/test_play_callbacks.cpp)
-  target_link_libraries(test_play_callbacks rosbag2_transport test_msgs::test_msgs rosbag2_test_common::rosbag2_test_common)
+  target_link_libraries(test_play_callbacks ament_cmake_ros_core::ament_ros_defaults rosbag2_transport test_msgs::test_msgs rosbag2_test_common::rosbag2_test_common)
   function(test_play_callbacks_for_rmw_implementation)
     set(rmw_implementation_env_var RMW_IMPLEMENTATION=${rmw_implementation})
     append_evars_if_rmw_zenoh(rmw_implementation_env_var ${rmw_implementation})
@@ -253,7 +246,7 @@ if(BUILD_TESTING)
   call_for_each_rmw_implementation(test_play_callbacks_for_rmw_implementation)
 
   ament_add_gmock_executable(test_player_stop test/rosbag2_transport/test_player_stop.cpp)
-  target_link_libraries(test_player_stop rosbag2_transport test_msgs::test_msgs rosbag2_test_common::rosbag2_test_common rmw::rmw)
+  target_link_libraries(test_player_stop ament_cmake_ros_core::ament_ros_defaults rosbag2_transport test_msgs::test_msgs rosbag2_test_common::rosbag2_test_common rmw::rmw)
   function(test_player_stop_for_rmw_implementation)
     set(rmw_implementation_env_var RMW_IMPLEMENTATION=${rmw_implementation})
     append_evars_if_rmw_zenoh(rmw_implementation_env_var ${rmw_implementation})
@@ -266,7 +259,7 @@ if(BUILD_TESTING)
   call_for_each_rmw_implementation(test_player_stop_for_rmw_implementation)
 
   ament_add_gmock_executable(test_play_seek test/rosbag2_transport/test_play_seek.cpp)
-  target_link_libraries(test_play_seek rosbag2_transport test_msgs::test_msgs rosbag2_test_common::rosbag2_test_common)
+  target_link_libraries(test_play_seek ament_cmake_ros_core::ament_ros_defaults rosbag2_transport test_msgs::test_msgs rosbag2_test_common::rosbag2_test_common)
   function(test_play_seek_for_rmw_implementation)
     set(rmw_implementation_env_var RMW_IMPLEMENTATION=${rmw_implementation})
     append_evars_if_rmw_zenoh(rmw_implementation_env_var ${rmw_implementation})
@@ -279,7 +272,7 @@ if(BUILD_TESTING)
   call_for_each_rmw_implementation(test_play_seek_for_rmw_implementation)
 
   ament_add_gmock_executable(test_play_services test/rosbag2_transport/test_play_services.cpp)
-  target_link_libraries(test_play_services rosbag2_transport test_msgs::test_msgs rosbag2_test_common::rosbag2_test_common)
+  target_link_libraries(test_play_services ament_cmake_ros_core::ament_ros_defaults rosbag2_transport test_msgs::test_msgs rosbag2_test_common::rosbag2_test_common)
   function(test_play_services_for_rmw_implementation)
     set(rmw_implementation_env_var RMW_IMPLEMENTATION=${rmw_implementation})
     append_evars_if_rmw_zenoh(rmw_implementation_env_var ${rmw_implementation})
@@ -292,7 +285,7 @@ if(BUILD_TESTING)
   call_for_each_rmw_implementation(test_play_services_for_rmw_implementation)
 
   ament_add_gmock_executable(test_play_topic_remap test/rosbag2_transport/test_play_topic_remap.cpp)
-  target_link_libraries(test_play_topic_remap rosbag2_transport test_msgs::test_msgs rosbag2_test_common::rosbag2_test_common)
+  target_link_libraries(test_play_topic_remap ament_cmake_ros_core::ament_ros_defaults rosbag2_transport test_msgs::test_msgs rosbag2_test_common::rosbag2_test_common)
   function(test_play_topic_remap_for_rmw_implementation)
     set(rmw_implementation_env_var RMW_IMPLEMENTATION=${rmw_implementation})
     append_evars_if_rmw_zenoh(rmw_implementation_env_var ${rmw_implementation})
@@ -314,7 +307,7 @@ if(BUILD_TESTING)
 
   ament_add_gmock_executable(test_play_duration test/rosbag2_transport/test_play_duration.cpp)
   target_include_directories(test_play_duration PRIVATE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src/rosbag2_transport>)
-  target_link_libraries(test_play_duration rosbag2_transport test_msgs::test_msgs rosbag2_test_common::rosbag2_test_common)
+  target_link_libraries(test_play_duration ament_cmake_ros_core::ament_ros_defaults rosbag2_transport test_msgs::test_msgs rosbag2_test_common::rosbag2_test_common)
   function(test_play_duration_for_rmw_implementation)
     set(rmw_implementation_env_var RMW_IMPLEMENTATION=${rmw_implementation})
     append_evars_if_rmw_zenoh(rmw_implementation_env_var ${rmw_implementation})
@@ -328,7 +321,7 @@ if(BUILD_TESTING)
 
   ament_add_gmock_executable(test_play_next test/rosbag2_transport/test_play_next.cpp)
   target_include_directories(test_play_next PRIVATE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src/rosbag2_transport>)
-  target_link_libraries(test_play_next rosbag2_transport test_msgs::test_msgs rosbag2_test_common::rosbag2_test_common)
+  target_link_libraries(test_play_next ament_cmake_ros_core::ament_ros_defaults rosbag2_transport test_msgs::test_msgs rosbag2_test_common::rosbag2_test_common)
   function(test_play_next_for_rmw_implementation)
     set(rmw_implementation_env_var RMW_IMPLEMENTATION=${rmw_implementation})
     append_evars_if_rmw_zenoh(rmw_implementation_env_var ${rmw_implementation})
@@ -342,7 +335,7 @@ if(BUILD_TESTING)
 
   ament_add_gmock_executable(test_play_until test/rosbag2_transport/test_play_until.cpp)
   target_include_directories(test_play_until PRIVATE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src/rosbag2_transport>)
-  target_link_libraries(test_play_until rosbag2_transport test_msgs::test_msgs rosbag2_test_common::rosbag2_test_common)
+  target_link_libraries(test_play_until ament_cmake_ros_core::ament_ros_defaults rosbag2_transport test_msgs::test_msgs rosbag2_test_common::rosbag2_test_common)
   function(test_play_until_for_rmw_implementation)
     set(rmw_implementation_env_var RMW_IMPLEMENTATION=${rmw_implementation})
     append_evars_if_rmw_zenoh(rmw_implementation_env_var ${rmw_implementation})
@@ -356,7 +349,7 @@ if(BUILD_TESTING)
 
   ament_add_gmock_executable(test_burst test/rosbag2_transport/test_burst.cpp)
   target_include_directories(test_burst PRIVATE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src/rosbag2_transport>)
-  target_link_libraries(test_burst rosbag2_transport test_msgs::test_msgs rosbag2_test_common::rosbag2_test_common)
+  target_link_libraries(test_burst ament_cmake_ros_core::ament_ros_defaults rosbag2_transport test_msgs::test_msgs rosbag2_test_common::rosbag2_test_common)
   function(test_burst_for_rmw_implementation)
     set(rmw_implementation_env_var RMW_IMPLEMENTATION=${rmw_implementation})
     append_evars_if_rmw_zenoh(rmw_implementation_env_var ${rmw_implementation})
@@ -370,7 +363,7 @@ if(BUILD_TESTING)
 
   ament_add_gmock_executable(test_record test/rosbag2_transport/test_record.cpp)
   target_include_directories(test_record PRIVATE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src/rosbag2_transport>)
-  target_link_libraries(test_record rosbag2_transport test_msgs::test_msgs rosbag2_test_common::rosbag2_test_common rmw::rmw)
+  target_link_libraries(test_record ament_cmake_ros_core::ament_ros_defaults rosbag2_transport test_msgs::test_msgs rosbag2_test_common::rosbag2_test_common rmw::rmw)
   function(test_record_for_rmw_implementation)
     set(rmw_implementation_env_var RMW_IMPLEMENTATION=${rmw_implementation})
     append_evars_if_rmw_zenoh(rmw_implementation_env_var ${rmw_implementation})
@@ -391,7 +384,7 @@ if(BUILD_TESTING)
   call_for_each_rmw_implementation(test_record_for_rmw_implementation)
 
   ament_add_gmock_executable(test_record_all test/rosbag2_transport/test_record_all.cpp)
-  target_link_libraries(test_record_all rosbag2_transport test_msgs::test_msgs rosbag2_test_common::rosbag2_test_common)
+  target_link_libraries(test_record_all ament_cmake_ros_core::ament_ros_defaults rosbag2_transport test_msgs::test_msgs rosbag2_test_common::rosbag2_test_common)
   function(test_record_all_for_rmw_implementation)
     set(rmw_implementation_env_var RMW_IMPLEMENTATION=${rmw_implementation})
     append_evars_if_rmw_zenoh(rmw_implementation_env_var ${rmw_implementation})
@@ -404,7 +397,7 @@ if(BUILD_TESTING)
   call_for_each_rmw_implementation(test_record_all_for_rmw_implementation)
 
   ament_add_gmock_executable(test_record_all_ignore_leaf_topics test/rosbag2_transport/test_record_all_ignore_leaf_topics.cpp)
-  target_link_libraries(test_record_all_ignore_leaf_topics rosbag2_transport test_msgs::test_msgs rosbag2_test_common::rosbag2_test_common)
+  target_link_libraries(test_record_all_ignore_leaf_topics ament_cmake_ros_core::ament_ros_defaults rosbag2_transport test_msgs::test_msgs rosbag2_test_common::rosbag2_test_common)
   function(test_record_all_ignore_leaf_topics_for_rmw_implementation)
     set(rmw_implementation_env_var RMW_IMPLEMENTATION=${rmw_implementation})
     append_evars_if_rmw_zenoh(rmw_implementation_env_var ${rmw_implementation})
@@ -419,6 +412,7 @@ if(BUILD_TESTING)
   ament_add_gmock_executable(test_record_all_include_unpublished_topics
     test/rosbag2_transport/test_record_all_include_unpublished_topics.cpp)
   target_link_libraries(test_record_all_include_unpublished_topics
+    ament_cmake_ros_core::ament_ros_defaults
     rosbag2_transport
     test_msgs::test_msgs
     rosbag2_test_common::rosbag2_test_common
@@ -435,7 +429,7 @@ if(BUILD_TESTING)
   call_for_each_rmw_implementation(test_record_all_include_unpublished_topics_for_rmw_implementation)
 
   ament_add_gmock_executable(test_record_all_no_discovery test/rosbag2_transport/test_record_all_no_discovery.cpp)
-  target_link_libraries(test_record_all_no_discovery rosbag2_transport test_msgs::test_msgs rosbag2_test_common::rosbag2_test_common)
+  target_link_libraries(test_record_all_no_discovery ament_cmake_ros_core::ament_ros_defaults rosbag2_transport test_msgs::test_msgs rosbag2_test_common::rosbag2_test_common)
   function(test_record_all_no_discovery_for_rmw_implementation)
     set(rmw_implementation_env_var RMW_IMPLEMENTATION=${rmw_implementation})
     append_evars_if_rmw_zenoh(rmw_implementation_env_var ${rmw_implementation})
@@ -448,7 +442,7 @@ if(BUILD_TESTING)
   call_for_each_rmw_implementation(test_record_all_no_discovery_for_rmw_implementation)
 
   ament_add_gmock_executable(test_record_all_use_sim_time test/rosbag2_transport/test_record_all_use_sim_time.cpp)
-  target_link_libraries(test_record_all_use_sim_time rosbag2_transport test_msgs::test_msgs rosbag2_test_common::rosbag2_test_common)
+  target_link_libraries(test_record_all_use_sim_time ament_cmake_ros_core::ament_ros_defaults rosbag2_transport test_msgs::test_msgs rosbag2_test_common::rosbag2_test_common)
   function(test_record_all_use_sim_time_for_rmw_implementation)
     set(rmw_implementation_env_var RMW_IMPLEMENTATION=${rmw_implementation})
     append_evars_if_rmw_zenoh(rmw_implementation_env_var ${rmw_implementation})
@@ -461,7 +455,7 @@ if(BUILD_TESTING)
   call_for_each_rmw_implementation(test_record_all_use_sim_time_for_rmw_implementation)
 
   ament_add_gmock_executable(test_keyboard_controls test/rosbag2_transport/test_keyboard_controls.cpp)
-  target_link_libraries(test_keyboard_controls rosbag2_transport test_msgs::test_msgs rosbag2_test_common::rosbag2_test_common)
+  target_link_libraries(test_keyboard_controls ament_cmake_ros_core::ament_ros_defaults rosbag2_transport test_msgs::test_msgs rosbag2_test_common::rosbag2_test_common)
   function(test_keyboard_controls_for_rmw_implementation)
     set(rmw_implementation_env_var RMW_IMPLEMENTATION=${rmw_implementation})
     append_evars_if_rmw_zenoh(rmw_implementation_env_var ${rmw_implementation})
@@ -474,7 +468,7 @@ if(BUILD_TESTING)
   call_for_each_rmw_implementation(test_keyboard_controls_for_rmw_implementation)
 
   ament_add_gmock_executable(test_record_regex test/rosbag2_transport/test_record_regex.cpp)
-  target_link_libraries(test_record_regex rosbag2_transport test_msgs::test_msgs rosbag2_test_common::rosbag2_test_common)
+  target_link_libraries(test_record_regex ament_cmake_ros_core::ament_ros_defaults rosbag2_transport test_msgs::test_msgs rosbag2_test_common::rosbag2_test_common)
   function(test_record_regex_for_rmw_implementation)
     set(rmw_implementation_env_var RMW_IMPLEMENTATION=${rmw_implementation})
     append_evars_if_rmw_zenoh(rmw_implementation_env_var ${rmw_implementation})
@@ -495,7 +489,7 @@ if(BUILD_TESTING)
   call_for_each_rmw_implementation(test_record_regex_for_rmw_implementation)
 
   ament_add_gmock_executable(test_record_services test/rosbag2_transport/test_record_services.cpp)
-  target_link_libraries(test_record_services rosbag2_transport test_msgs::test_msgs rosbag2_test_common::rosbag2_test_common)
+  target_link_libraries(test_record_services ament_cmake_ros_core::ament_ros_defaults rosbag2_transport test_msgs::test_msgs rosbag2_test_common::rosbag2_test_common)
   function(test_record_services_for_rmw_implementation)
     set(rmw_implementation_env_var RMW_IMPLEMENTATION=${rmw_implementation})
     append_evars_if_rmw_zenoh(rmw_implementation_env_var ${rmw_implementation})
@@ -509,6 +503,7 @@ if(BUILD_TESTING)
 
   ament_add_gmock_executable(test_composable_recorder test/rosbag2_transport/test_composable_recorder.cpp)
   target_link_libraries(test_composable_recorder
+    ament_cmake_ros_core::ament_ros_defaults
     composition_interfaces::composition_interfaces
     rclcpp_components::component_manager
     rosbag2_test_common::rosbag2_test_common
@@ -528,6 +523,7 @@ if(BUILD_TESTING)
 
   ament_add_gmock_executable(test_load_composable_components test/rosbag2_transport/test_load_composable_components.cpp)
   target_link_libraries(test_load_composable_components
+    ament_cmake_ros_core::ament_ros_defaults
     rosbag2_transport
     test_msgs::test_msgs
     rosbag2_test_common::rosbag2_test_common
@@ -557,34 +553,37 @@ if(BUILD_TESTING)
 
   ament_add_gmock(test_record_options
     test/rosbag2_transport/test_record_options.cpp)
-  target_link_libraries(test_record_options ${PROJECT_NAME})
+  target_link_libraries(test_record_options ament_cmake_ros_core::ament_ros_defaults ${PROJECT_NAME})
 
   ament_add_gmock(test_type_description_hash
     test/rosbag2_transport/test_type_description_hash.cpp)
-  target_link_libraries(test_type_description_hash ${PROJECT_NAME})
+  target_link_libraries(test_type_description_hash ament_cmake_ros_core::ament_ros_defaults ${PROJECT_NAME})
 
   ament_add_gmock(test_topic_filter
     test/rosbag2_transport/test_topic_filter.cpp)
   target_include_directories(test_topic_filter PRIVATE
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src/rosbag2_transport>)
   target_link_libraries(test_topic_filter
+    ament_cmake_ros_core::ament_ros_defaults
     ${PROJECT_NAME}
   )
 
   ament_add_gmock(test_rewrite
     test/rosbag2_transport/test_rewrite.cpp)
   target_link_libraries(test_rewrite
+    ament_cmake_ros_core::ament_ros_defaults
     ${PROJECT_NAME}
     rcpputils::rcpputils
     rosbag2_test_common::rosbag2_test_common
   )
 
   ament_add_gmock(test_player_progress_bar test/rosbag2_transport/test_player_progress_bar.cpp)
-  target_link_libraries(test_player_progress_bar ${PROJECT_NAME})
+  target_link_libraries(test_player_progress_bar ament_cmake_ros_core::ament_ros_defaults ${PROJECT_NAME})
 
   ament_add_gmock(test_recorder_event_notifier
     test/rosbag2_transport/test_recorder_event_notifier.cpp)
   target_link_libraries(test_recorder_event_notifier
+    ament_cmake_ros_core::ament_ros_defaults
     ${PROJECT_NAME}
     rosbag2_test_common::rosbag2_test_common
     rosbag2_interfaces::rosbag2_interfaces
@@ -592,6 +591,7 @@ if(BUILD_TESTING)
 
   ament_add_gmock(test_readers_manager test/rosbag2_transport/test_readers_manager.cpp)
   target_link_libraries(test_readers_manager
+    ament_cmake_ros_core::ament_ros_defaults
     ${PROJECT_NAME}
     rosbag2_test_common::rosbag2_test_common
     rcutils::rcutils
@@ -600,6 +600,7 @@ if(BUILD_TESTING)
   ament_add_gmock(test_record_static_topics
     test/rosbag2_transport/test_record_static_topics.cpp)
   target_link_libraries(test_record_static_topics
+    ament_cmake_ros_core::ament_ros_defaults
     ${PROJECT_NAME}
     test_msgs::test_msgs
     rosbag2_test_common::rosbag2_test_common

@@ -3,17 +3,6 @@ project(rosbag2_tests)
 
 add_definitions(-D_SRC_RESOURCES_DIR_PATH="${CMAKE_CURRENT_SOURCE_DIR}/resources")
 
-# Default to C99
-if(NOT CMAKE_C_STANDARD)
-  set(CMAKE_C_STANDARD 99)
-endif()
-
-# Default to C++20
-if(NOT CMAKE_CXX_STANDARD)
-  set(CMAKE_CXX_STANDARD 20)
-  set(CMAKE_CXX_STANDARD_REQUIRED ON)
-endif()
-
 # Windows supplies macros for min and max by default. We should only use min and max from stl
 if(WIN32)
   add_definitions(-DNOMINMAX)
@@ -24,6 +13,7 @@ if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
 endif()
 
 find_package(ament_cmake REQUIRED)
+find_package(ament_cmake_ros_core REQUIRED)
 find_package(ament_index_cpp REQUIRED)
 
 if(BUILD_TESTING)
@@ -48,6 +38,7 @@ if(BUILD_TESTING)
     TIMEOUT 180)
   if(TARGET test_rosbag2_record_end_to_end)
     target_link_libraries(test_rosbag2_record_end_to_end
+      ament_cmake_ros_core::ament_ros_defaults
       rclcpp::rclcpp
       rosbag2_compression::rosbag2_compression
       rosbag2_compression_zstd::rosbag2_compression_zstd
@@ -63,6 +54,7 @@ if(BUILD_TESTING)
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
   if(TARGET test_rosbag2_play_end_to_end)
     target_link_libraries(test_rosbag2_play_end_to_end
+      ament_cmake_ros_core::ament_ros_defaults
       rclcpp::rclcpp
       rosbag2_interfaces::rosbag2_interfaces
       rosbag2_storage::rosbag2_storage
@@ -79,6 +71,7 @@ if(BUILD_TESTING)
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
   if(TARGET test_rosbag2_info_end_to_end)
     target_link_libraries(test_rosbag2_info_end_to_end
+      ament_cmake_ros_core::ament_ros_defaults
       rosbag2_storage::rosbag2_storage
       rosbag2_test_common::rosbag2_test_common
     )
@@ -89,6 +82,7 @@ if(BUILD_TESTING)
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
   if(TARGET test_converter)
     target_link_libraries(test_converter
+      ament_cmake_ros_core::ament_ros_defaults
       rosbag2_cpp::rosbag2_cpp
       rosbag2_test_common::rosbag2_test_common
       test_msgs::test_msgs
@@ -99,6 +93,7 @@ if(BUILD_TESTING)
     test/rosbag2_tests/test_reindexer.cpp)
   if(TARGET test_reindex)
     target_link_libraries(test_reindex
+      ament_cmake_ros_core::ament_ros_defaults
       rclcpp::rclcpp
       rosbag2_cpp::rosbag2_cpp
       rosbag2_storage::rosbag2_storage
@@ -112,6 +107,7 @@ if(BUILD_TESTING)
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
   if(TARGET test_rosbag2_cpp_api)
     target_link_libraries(test_rosbag2_cpp_api
+      ament_cmake_ros_core::ament_ros_defaults
       rclcpp::rclcpp
       rosbag2_cpp::rosbag2_cpp
       rosbag2_storage::rosbag2_storage
@@ -125,6 +121,7 @@ if(BUILD_TESTING)
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
   if(TARGET test_rosbag2_cpp_get_service_info)
     target_link_libraries(test_rosbag2_cpp_get_service_info
+      ament_cmake_ros_core::ament_ros_defaults
       rosbag2_cpp::rosbag2_cpp
       rosbag2_storage::rosbag2_storage
       rosbag2_test_common::rosbag2_test_common
@@ -137,6 +134,7 @@ if(BUILD_TESTING)
     test/rosbag2_tests/test_rosbag2_storage_api.cpp)
   if(TARGET test_rosbag2_storage_api)
     target_link_libraries(test_rosbag2_storage_api
+      ament_cmake_ros_core::ament_ros_defaults
       rosbag2_storage::rosbag2_storage
       rosbag2_test_common::rosbag2_test_common
       std_msgs::std_msgs

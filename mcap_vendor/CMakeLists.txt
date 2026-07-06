@@ -3,6 +3,7 @@ project(mcap_vendor LANGUAGES C CXX)
 
 ## Dependencies
 find_package(ament_cmake REQUIRED)
+find_package(ament_cmake_ros_core REQUIRED)
 find_package(lz4_cmake_module REQUIRED)
 find_package(lz4 REQUIRED)
 find_package(zstd_cmake_module REQUIRED)
@@ -14,11 +15,6 @@ if (POLICY CMP0135)
 endif()
 
 ## Compile options
-if(NOT CMAKE_CXX_STANDARD)
-  set(CMAKE_CXX_STANDARD 20)
-  set(CMAKE_CXX_STANDARD_REQUIRED ON)
-  set(CMAKE_CXX_EXTENSIONS OFF)
-endif()
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   add_compile_options(-Wall -Wextra -Wpedantic)
 endif()
@@ -50,7 +46,7 @@ macro(build_mcap_vendor)
     "$<BUILD_INTERFACE:${_mcap_include_dir}>"
     "$<INSTALL_INTERFACE:include/${PROJECT_NAME}>"
   )
-  target_link_libraries(mcap LZ4::lz4 zstd::zstd)
+  target_link_libraries(mcap ament_cmake_ros_core::ament_ros_defaults LZ4::lz4 zstd::zstd)
 
   install(
     FILES ${_mcap_installed_headers}

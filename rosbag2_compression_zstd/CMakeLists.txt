@@ -1,17 +1,6 @@
 cmake_minimum_required(VERSION 3.20)
 project(rosbag2_compression_zstd)
 
-# Default to C99
-if(NOT CMAKE_C_STANDARD)
-  set(CMAKE_C_STANDARD 99)
-endif()
-
-# Default to C++20
-if(NOT CMAKE_CXX_STANDARD)
-  set(CMAKE_CXX_STANDARD 20)
-  set(CMAKE_CXX_STANDARD_REQUIRED ON)
-endif()
-
 # Windows supplies macros for min and max by default. We should only use min and max from stl
 if(WIN32)
   add_definitions(-DNOMINMAX)
@@ -22,6 +11,7 @@ if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
 endif()
 
 find_package(ament_cmake REQUIRED)
+find_package(ament_cmake_ros_core REQUIRED)
 find_package(pluginlib REQUIRED)
 find_package(rosbag2_compression REQUIRED)
 find_package(zstd_cmake_module REQUIRED)
@@ -36,6 +26,7 @@ target_include_directories(${PROJECT_NAME}
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
   $<INSTALL_INTERFACE:include/${PROJECT_NAME}>)
 target_link_libraries(${PROJECT_NAME}
+  ament_cmake_ros_core::ament_ros_defaults
   rosbag2_compression::rosbag2_compression
   zstd::zstd
 )
@@ -74,6 +65,7 @@ if(BUILD_TESTING)
   ament_add_gmock(test_zstd_compressor
     test/rosbag2_compression_zstd/test_zstd_compressor.cpp)
   target_link_libraries(test_zstd_compressor
+    ament_cmake_ros_core::ament_ros_defaults
     ${PROJECT_NAME}
     rclcpp::rclcpp
     rosbag2_test_common::rosbag2_test_common

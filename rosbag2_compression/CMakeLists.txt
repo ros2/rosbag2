@@ -1,17 +1,6 @@
 cmake_minimum_required(VERSION 3.20)
 project(rosbag2_compression)
 
-# Default to C99
-if(NOT CMAKE_C_STANDARD)
-  set(CMAKE_C_STANDARD 99)
-endif()
-
-# Default to C++20
-if(NOT CMAKE_CXX_STANDARD)
-  set(CMAKE_CXX_STANDARD 20)
-  set(CMAKE_CXX_STANDARD_REQUIRED ON)
-endif()
-
 # Windows supplies macros for min and max by default. We should only use min and max from stl
 if(WIN32)
   add_definitions(-DNOMINMAX)
@@ -22,6 +11,7 @@ if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
 endif()
 
 find_package(ament_cmake REQUIRED)
+find_package(ament_cmake_ros_core REQUIRED)
 find_package(pluginlib REQUIRED)
 find_package(rcpputils REQUIRED)
 find_package(rcutils REQUIRED)
@@ -39,6 +29,7 @@ target_include_directories(${PROJECT_NAME}
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
   $<INSTALL_INTERFACE:include/${PROJECT_NAME}>)
 target_link_libraries(${PROJECT_NAME}
+  ament_cmake_ros_core::ament_ros_defaults
   pluginlib::pluginlib
   rcpputils::rcpputils
   rcutils::rcutils
@@ -78,7 +69,7 @@ if(BUILD_TESTING)
   add_library(fake_plugin SHARED
     test/rosbag2_compression/fake_compressor.cpp
     test/rosbag2_compression/fake_decompressor.cpp)
-  target_link_libraries(fake_plugin ${PROJECT_NAME})
+  target_link_libraries(fake_plugin ament_cmake_ros_core::ament_ros_defaults ${PROJECT_NAME})
   install(
     TARGETS fake_plugin
     ARCHIVE DESTINATION lib
@@ -89,15 +80,16 @@ if(BUILD_TESTING)
 
   ament_add_gmock(test_compression_factory
     test/rosbag2_compression/test_compression_factory.cpp)
-  target_link_libraries(test_compression_factory ${PROJECT_NAME})
+  target_link_libraries(test_compression_factory ament_cmake_ros_core::ament_ros_defaults ${PROJECT_NAME})
 
   ament_add_gmock(test_compression_options
     test/rosbag2_compression/test_compression_options.cpp)
-  target_link_libraries(test_compression_options ${PROJECT_NAME})
+  target_link_libraries(test_compression_options ament_cmake_ros_core::ament_ros_defaults ${PROJECT_NAME})
 
   ament_add_gmock(test_sequential_compression_reader
     test/rosbag2_compression/test_sequential_compression_reader.cpp)
   target_link_libraries(test_sequential_compression_reader
+    ament_cmake_ros_core::ament_ros_defaults
     ${PROJECT_NAME}
     rosbag2_cpp::rosbag2_cpp
     rosbag2_storage::rosbag2_storage
@@ -106,6 +98,7 @@ if(BUILD_TESTING)
   ament_add_gmock(test_sequential_compression_writer
     test/rosbag2_compression/test_sequential_compression_writer.cpp)
   target_link_libraries(test_sequential_compression_writer
+    ament_cmake_ros_core::ament_ros_defaults
     ${PROJECT_NAME}
     fake_plugin
     rosbag2_cpp::rosbag2_cpp
