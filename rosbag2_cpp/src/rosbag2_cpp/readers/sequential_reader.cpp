@@ -116,14 +116,6 @@ void SequentialReader::open(
     current_file_iterator_ = file_paths_.begin();
     load_current_file();
     metadata_ = storage_->get_metadata();
-    if (metadata_.relative_file_paths.empty()) {
-      ROSBAG2_CPP_LOG_WARN("No file paths were found in metadata.");
-      return;
-    }
-    file_paths_ = metadata_.relative_file_paths;
-    // Note: the current_file_iterator_ may have been initialized by the preprocess_current_file()
-    // for cases when we use decompressor to uncompress entire file. Do not initialize it again
-    // here with current_file_iterator_ = file_paths_.begin();
   }
   auto topics = metadata_.topics_with_message_count;
   if (topics.empty()) {
