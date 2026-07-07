@@ -54,7 +54,7 @@ TEST(TestTopicTypeHash, test_formatting) {
 
 rclcpp::TopicEndpointInfo make_info(rosidl_type_hash_t hash)
 {
-  rcl_topic_endpoint_info_t info;
+  rcl_topic_endpoint_info_t info = rmw_get_zero_initialized_topic_endpoint_info();
   info.topic_type_hash = hash;
   info.topic_type = "topic_type";
   info.node_name = "node_name";
