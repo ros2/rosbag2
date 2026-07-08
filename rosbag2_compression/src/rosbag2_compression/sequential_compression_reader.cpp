@@ -95,12 +95,6 @@ void SequentialCompressionReader::open(
   const rosbag2_storage::StorageOptions & storage_options,
   const rosbag2_cpp::ConverterOptions & converter_options)
 {
-  if (!metadata_io_->metadata_file_exists(storage_options.uri)) {
-    std::stringstream errmsg;
-    errmsg << "Could not find metadata for bag: \"" << storage_options.uri <<
-      "\". Bags without metadata (such as from ROS 1) not supported by rosbag2 decompression.";
-    throw std::runtime_error{errmsg.str()};
-  }
   SequentialReader::open(storage_options, converter_options);
 }
 
