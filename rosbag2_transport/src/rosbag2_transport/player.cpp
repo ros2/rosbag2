@@ -1405,7 +1405,7 @@ bool allow_topic(
       }
     case TopicKind::ACTION_INTERFACE_TOPIC:
       {
-        if (!exclude_topics.empty()) {
+        if (!exclude_actions.empty()) {
           auto it = std::find(exclude_actions.begin(), exclude_actions.end(), topic_name);
           if (it != exclude_actions.end()) {
             return false;

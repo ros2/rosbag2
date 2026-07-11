@@ -1774,7 +1774,8 @@ TEST_F(RosBag2PlayTestFixture, recorded_messages_are_played_for_filtered_actions
   };
 
   // send actions as client
-  play_options_.actions_to_filter = {action_name2};
+  play_options_.actions_to_filter = {action_name1, action_name2};
+  play_options_.exclude_actions_to_filter = {action_name1};
   play_options_.send_actions_as_client = true;
   auto prepared_mock_reader = std::make_unique<MockSequentialReader>();
   prepared_mock_reader->prepare(messages, actions_types);
@@ -1803,6 +1804,7 @@ TEST_F(RosBag2PlayTestFixture, recorded_messages_are_played_for_filtered_actions
   EXPECT_EQ(action1_cancel_count, 0);
   ASSERT_EQ(action2_request_count, 1);
   EXPECT_EQ(action2_cancel_count, 0);
+  EXPECT_THAT(player->get_list_of_action_clients(), SizeIs(1));
 
   // There is no direct interface to confirm that rosbag2 received the get_result response.
   // Here, the logic of handling actions in rosbag2 is used to make this determination. If
