@@ -35,6 +35,22 @@ RESOURCES_PATH = Path(os.environ['ROSBAG2_PY_TEST_RESOURCES_DIR'])
 PLAYBACK_UNTIL_TIMESTAMP_REGEX_STRING = r'\[rosbag2_player]: Playback until timestamp: -1'
 
 
+def test_info_verbose_standalone_file(capfd):
+    bag_file = RESOURCES_PATH / 'mcap' / 'talker' / 'talker.mcap'
+    info = rosbag2_py.Info()
+    metadata = info.read_metadata(str(bag_file), 'mcap')
+    metadata.files = [rosbag2_py.FileInformation(
+        path=bag_file.name,
+        starting_time=metadata.starting_time,
+        duration=metadata.duration,
+        message_count=metadata.message_count,
+    )]
+
+    info.print_output_verbose(str(bag_file), metadata, 'name')
+
+    assert 'Topic information:' in capfd.readouterr().out
+
+
 def test_options_qos_conversion():
     # Tests that the to-and-from C++ conversions are working properly in the pybind structs
     simple_overrides = {
