@@ -107,6 +107,33 @@ TEST_F(RecordIntegrationTestFixture, regex_topics_recording)
   EXPECT_TRUE(recorded_topics.find(v1) != recorded_topics.end());
 }
 
+TEST_F(RecordIntegrationTestFixture, topics_and_regex_keep_discovery_running)
+{
+  auto test_string_messages = get_messages_strings();
+  const std::string regex_topic = "/regex_topic";
+  const std::string explicit_topic = "/explicit_topic";
+
+  rosbag2_transport::RecordOptions record_options =
+  {false, false, false, false, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, "rmw_format", 10ms};
+  record_options.topics = {explicit_topic};
+  record_options.regex = "^/regex_topic$";
+
+  rosbag2_test_common::PublicationManager pub_manager;
+  pub_manager.setup_publisher(regex_topic, test_string_messages[0], 1);
+
+  auto recorder = std::make_shared<rosbag2_transport::Recorder>(
+    std::move(writer_), storage_options_, record_options);
+  recorder->record();
+
+  start_async_spin(recorder);
+  auto cleanup_process_handle = rcpputils::make_scope_exit([&]() {stop_spinning();});
+
+  ASSERT_TRUE(pub_manager.wait_for_matched(regex_topic.c_str()));
+
+  pub_manager.setup_publisher(explicit_topic, test_string_messages[1], 1);
+  ASSERT_TRUE(pub_manager.wait_for_matched(explicit_topic.c_str()));
+}
+
 TEST_F(RecordIntegrationTestFixture, regex_and_exclude_regex_topic_recording)
 {
   auto test_string_messages = get_messages_strings();
