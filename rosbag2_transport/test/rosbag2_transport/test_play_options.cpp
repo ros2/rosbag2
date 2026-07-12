@@ -87,3 +87,18 @@ TEST(play_options, yaml_round_trip_preserves_encoded_options)
   CHECK(progress_bar_separation_lines);
   #undef CHECK
 }
+
+TEST(play_options, yaml_round_trip_preserves_default_negative_ack_timeout)
+{
+  rosbag2_transport::PlayOptions original;
+
+  auto node = YAML::convert<rosbag2_transport::PlayOptions>::encode(original);
+  EXPECT_EQ(-1, node["wait_acked_timeout"]["sec"].as<int32_t>());
+  EXPECT_EQ(999999999U, node["wait_acked_timeout"]["nsec"].as<uint32_t>());
+
+  std::stringstream serializer;
+  serializer << node;
+  auto reconstructed = YAML::Load(serializer.str()).as<rosbag2_transport::PlayOptions>();
+
+  EXPECT_EQ(original.wait_acked_timeout, reconstructed.wait_acked_timeout);
+}
