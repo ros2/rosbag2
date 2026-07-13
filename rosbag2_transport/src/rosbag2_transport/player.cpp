@@ -16,6 +16,7 @@
 
 #include <algorithm>
 #include <chrono>
+#include <cstdio>
 #include <memory>
 #include <queue>
 #include <string>
@@ -147,6 +148,7 @@ Player::Player(
     auto metadata = reader_->get_metadata();
     starting_time_ = std::chrono::duration_cast<std::chrono::nanoseconds>(
       metadata.starting_time.time_since_epoch()).count();
+    bag_duration_ns_ = metadata.duration.count();
     // If a non-default (positive) starting time offset is provided in PlayOptions,
     // then add the offset to the starting time obtained from reader metadata
     if (play_options_.start_offset < 0) {
@@ -157,6 +159,8 @@ Player::Player(
           ". Negative start offset ignored.");
     } else {
       starting_time_ += play_options_.start_offset;
+      bag_duration_ns_ = std::max<rcutils_time_point_value_t>(
+        0, bag_duration_ns_ - play_options_.start_offset);
     }
     clock_ = std::make_unique<rosbag2_cpp::TimeControllerClock>(
       starting_time_, std::chrono::steady_clock::now,
@@ -186,6 +190,9 @@ Player::~Player()
 const std::chrono::milliseconds
 Player::queue_read_wait_period_ = std::chrono::milliseconds(100);
 
+const std::chrono::milliseconds
+Player::progress_bar_update_period_ = std::chrono::milliseconds(100);
+
 bool Player::is_storage_completely_loaded() const
 {
   if (storage_loading_future_.valid() &&
@@ -198,6 +205,8 @@ bool Player::is_storage_completely_loaded() const
 
 void Player::play()
 {
+  last_logged_playback_timestamp_ = -1;
+  has_playback_progress_output_ = false;
   rclcpp::Duration delay(0, 0);
   if (play_options_.delay >= rclcpp::Duration(0, 0)) {
     delay = play_options_.delay;
@@ -219,6 +228,7 @@ void Player::play()
         reader_->seek(starting_time_);
         clock_->jump(starting_time_);
       }
+      print_playback_progress(starting_time_, is_paused() ? "PAUSED" : "RUNNING", true);
       storage_loading_future_ = std::async(std::launch::async, [this]() {load_storage_content();});
       wait_for_filled_queue();
       play_messages_from_queue();
@@ -234,6 +244,11 @@ void Player::play()
   std::lock_guard<std::mutex> lk(ready_to_play_from_queue_mutex_);
   is_ready_to_play_from_queue_ = false;
   ready_to_play_from_queue_cv_.notify_all();
+
+  if (has_playback_progress_output_) {
+    std::fputc('\n', stdout);
+    std::fflush(stdout);
+  }
 
   // Wait for all published messages to be acknowledged.
   if (play_options_.wait_acked_timeout >= 0) {
@@ -264,12 +279,14 @@ void Player::play()
 void Player::pause()
 {
   clock_->pause();
+  print_playback_progress(clock_->now(), "PAUSED", true);
   RCLCPP_INFO_STREAM(get_logger(), "Pausing play.");
 }
 
 void Player::resume()
 {
   clock_->resume();
+  print_playback_progress(clock_->now(), "RUNNING", true);
   RCLCPP_INFO_STREAM(get_logger(), "Resuming play.");
 }
 
@@ -352,6 +369,9 @@ bool Player::play_next()
     {
       next_message_published = publish_message(message_ptr);
       clock_->jump(message_ptr->time_stamp);
+      if (next_message_published) {
+        print_playback_progress(message_ptr->time_stamp, "PAUSED", true);
+      }
     }
     message_queue_.pop();
     message_ptr = peek_next_message_from_queue();
@@ -397,6 +417,7 @@ void Player::seek(rcutils_time_point_value_t time_point)
     while (message_queue_.pop()) {}
     reader_->seek(time_point);
     clock_->jump(time_point);
+    print_playback_progress(time_point, is_paused() ? "PAUSED" : "RUNNING", true);
     // Restart queuing thread if it has finished running (previously reached end of bag),
     // otherwise, queueing should continue automatically after releasing mutex
     if (is_storage_completely_loaded() && rclcpp::ok()) {
@@ -464,6 +485,7 @@ void Player::play_messages_from_queue()
     // Do not move on until sleep_until returns true
     // It will always sleep, so this is not a tight busy loop on pause
     while (rclcpp::ok() && !clock_->sleep_until(message_ptr->time_stamp)) {
+      print_playback_progress(clock_->now(), is_paused() ? "PAUSED" : "RUNNING");
       if (std::atomic_exchange(&cancel_wait_for_next_message_, false)) {
         break;
       }
@@ -476,11 +498,14 @@ void Player::play_messages_from_queue()
         message_ptr = peek_next_message_from_queue();
         continue;
       }
-      publish_message(message_ptr);
+      if (publish_message(message_ptr)) {
+        print_playback_progress(message_ptr->time_stamp, "RUNNING");
+      }
     }
     message_queue_.pop();
     message_ptr = peek_next_message_from_queue();
   }
+  print_playback_progress(clock_->now(), is_paused() ? "PAUSED" : "RUNNING", true);
   // while we're in pause state, make sure we don't return
   // if we happen to be at the end of queue
   while (is_paused() && rclcpp::ok()) {
@@ -592,6 +617,39 @@ bool Player::publish_message(rosbag2_storage::SerializedBagMessageSharedPtr mess
     }
   }
   return message_published;
+}
+
+void Player::print_playback_progress(
+  rcutils_time_point_value_t current_time,
+  const char * state,
+  bool force)
+{
+  if (!force) {
+    if (last_logged_playback_timestamp_ >= 0 &&
+      current_time - last_logged_playback_timestamp_ <
+      std::chrono::duration_cast<std::chrono::nanoseconds>(progress_bar_update_period_).count())
+    {
+      return;
+    }
+  }
+
+  auto clamped_time = std::max(current_time, starting_time_);
+  auto playback_duration_ns = std::max<rcutils_time_point_value_t>(0, clamped_time - starting_time_);
+  auto playback_duration_s = RCUTILS_NS_TO_S(static_cast<double>(playback_duration_ns));
+  auto bag_duration_s = RCUTILS_NS_TO_S(static_cast<double>(bag_duration_ns_));
+  auto bag_time_s = RCUTILS_NS_TO_S(static_cast<double>(clamped_time));
+
+  std::fprintf(
+    stdout,
+    "\r [%-7s]  Bag Time: %13.6f   Duration: %.6f / %.6f               ",
+    state,
+    bag_time_s,
+    playback_duration_s,
+    bag_duration_s);
+  std::fflush(stdout);
+
+  last_logged_playback_timestamp_ = clamped_time;
+  has_playback_progress_output_ = true;
 }
 
 void Player::add_key_callback(
