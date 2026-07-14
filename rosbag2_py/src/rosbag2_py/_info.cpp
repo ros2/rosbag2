@@ -13,6 +13,7 @@
 // limitations under the License.
 
 #include <algorithm>
+#include <filesystem>
 #include <iostream>
 #include <memory>
 #include <string>
@@ -31,6 +32,8 @@
 
 namespace rosbag2_py
 {
+
+namespace fs = std::filesystem;
 
 class Info
 {
@@ -84,10 +87,12 @@ public:
   {
     std::vector<std::shared_ptr<rosbag2_cpp::rosbag2_service_info_t>> all_services_info;
     std::vector<std::shared_ptr<rosbag2_cpp::rosbag2_action_info_t>> all_actions_info;
+    const fs::path bag_path{uri};
+    const fs::path base_path = fs::is_directory(bag_path) ? bag_path : bag_path.parent_path();
 
     for (auto & file_info : metadata_info.files) {
       auto [service_info, action_info] = info_->read_service_and_action_info(
-        uri + "/" + file_info.path, metadata_info.storage_identifier);
+        (base_path / file_info.path).generic_string(), metadata_info.storage_identifier);
 
       all_services_info.insert(all_services_info.end(), service_info.begin(), service_info.end());
       all_actions_info.insert(all_actions_info.end(), action_info.begin(), action_info.end());
@@ -96,7 +101,7 @@ public:
     std::unordered_map<std::string, uint64_t> messages_size = {};
     for (const auto & file_info : metadata_info.files) {
       auto messages_size_tmp = info_->compute_messages_size_contribution(
-        uri + "/" + file_info.path,
+        (base_path / file_info.path).generic_string(),
         metadata_info.storage_identifier);
       for (const auto & topic_size_tmp : messages_size_tmp) {
         messages_size[topic_size_tmp.first] += topic_size_tmp.second;
