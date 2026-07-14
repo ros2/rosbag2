@@ -161,7 +161,12 @@ if(BUILD_TESTING)
     test/rosbag2_cpp/test_info.cpp
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
   if(TARGET test_info)
-    target_link_libraries(test_info ament_cmake_ros_core::ament_ros_defaults ${PROJECT_NAME} rosbag2_test_common::rosbag2_test_common test_msgs::test_msgs)
+    target_link_libraries(test_info
+      ament_cmake_ros_core::ament_ros_defaults
+      ${PROJECT_NAME}
+      rosbag2_test_common::rosbag2_test_common
+      test_msgs::test_msgs
+    )
   endif()
 
   ament_add_gmock(test_sequential_reader
@@ -180,7 +185,11 @@ if(BUILD_TESTING)
   ament_add_gmock(test_storage_without_metadata_file
     test/rosbag2_cpp/test_storage_without_metadata_file.cpp)
   if(TARGET test_storage_without_metadata_file)
-    target_link_libraries(test_storage_without_metadata_file ament_cmake_ros_core::ament_ros_defaults ${PROJECT_NAME} rosbag2_storage::rosbag2_storage)
+    target_link_libraries(test_storage_without_metadata_file
+      ament_cmake_ros_core::ament_ros_defaults
+      ${PROJECT_NAME}
+      rosbag2_storage::rosbag2_storage
+    )
   endif()
 
   ament_add_gmock(test_local_message_definition_source
