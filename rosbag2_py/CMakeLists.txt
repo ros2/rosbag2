@@ -1,22 +1,12 @@
 cmake_minimum_required(VERSION 3.20)
 project(rosbag2_py)
 
-# Default to C99
-if(NOT CMAKE_C_STANDARD)
-  set(CMAKE_C_STANDARD 99)
-endif()
-
-# Default to C++17
-if(NOT CMAKE_CXX_STANDARD)
-  set(CMAKE_CXX_STANDARD 17)
-  set(CMAKE_CXX_STANDARD_REQUIRED ON)
-endif()
-
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   add_compile_options(-Wall -Wextra -Wpedantic)
 endif()
 
 find_package(ament_cmake REQUIRED)
+find_package(ament_cmake_ros_core REQUIRED)
 find_package(ament_cmake_python REQUIRED)
 find_package(ament_cmake_ros REQUIRED)
 find_package(rosbag2_compression REQUIRED)
@@ -52,12 +42,18 @@ pybind11_add_module(_compression_options
 target_link_libraries(_compression_options PUBLIC
   rosbag2_compression::rosbag2_compression
 )
+target_link_libraries(_compression_options PRIVATE
+  ament_cmake_ros_core::ament_ros_defaults
+)
 
 pybind11_add_module(_message_definitions
   src/rosbag2_py/_message_definitions.cpp
 )
 target_link_libraries(_message_definitions PUBLIC
   rosbag2_cpp::rosbag2_cpp
+)
+target_link_libraries(_message_definitions PRIVATE
+  ament_cmake_ros_core::ament_ros_defaults
 )
 
 pybind11_add_module(_reader
@@ -67,6 +63,9 @@ target_link_libraries(_reader PUBLIC
   rosbag2_compression::rosbag2_compression
   rosbag2_cpp::rosbag2_cpp
   rosbag2_storage::rosbag2_storage
+)
+target_link_libraries(_reader PRIVATE
+  ament_cmake_ros_core::ament_ros_defaults
 )
 
 pybind11_add_module(_storage
@@ -78,6 +77,9 @@ target_link_libraries(_storage PUBLIC
   rosbag2_cpp::rosbag2_cpp
   rosbag2_storage::rosbag2_storage
 )
+target_link_libraries(_storage PRIVATE
+  ament_cmake_ros_core::ament_ros_defaults
+)
 
 pybind11_add_module(_writer
   src/rosbag2_py/_writer.cpp
@@ -86,6 +88,9 @@ target_link_libraries(_writer PUBLIC
   rosbag2_compression::rosbag2_compression
   rosbag2_cpp::rosbag2_cpp
   rosbag2_storage::rosbag2_storage
+)
+target_link_libraries(_writer PRIVATE
+  ament_cmake_ros_core::ament_ros_defaults
 )
 
 pybind11_add_module(_info
@@ -100,6 +105,9 @@ target_link_libraries(_info PUBLIC
   rosbag2_cpp::rosbag2_cpp
   rosbag2_storage::rosbag2_storage
 )
+target_link_libraries(_info PRIVATE
+  ament_cmake_ros_core::ament_ros_defaults
+)
 
 pybind11_add_module(_transport
   src/rosbag2_py/_transport.cpp
@@ -110,6 +118,9 @@ target_link_libraries(_transport PUBLIC
   rosbag2_storage::rosbag2_storage
   rosbag2_transport::rosbag2_transport
 )
+target_link_libraries(_transport PRIVATE
+  ament_cmake_ros_core::ament_ros_defaults
+)
 
 pybind11_add_module(_reindexer
   src/rosbag2_py/_reindexer.cpp
@@ -117,6 +128,9 @@ pybind11_add_module(_reindexer
 target_link_libraries(_reindexer PUBLIC
   rosbag2_cpp::rosbag2_cpp
   rosbag2_storage::rosbag2_storage
+)
+target_link_libraries(_reindexer PRIVATE
+  ament_cmake_ros_core::ament_ros_defaults
 )
 
 # Install cython modules as sub-modules of the project
