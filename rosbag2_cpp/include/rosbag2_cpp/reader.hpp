@@ -112,7 +112,7 @@ public:
    * The message will be serialized in the format given to `open`.
    *
    * Expected usage:
-   * if (writer.has_next()) message = writer.read_next();
+   * if (reader.has_next()) message = reader.read_next();
    *
    * \return next message in serialized form
    * \throws runtime_error if the Reader is not open.
@@ -124,7 +124,7 @@ public:
    * The message will be serialized in the format given to `open`.
    *
    * Expected usage:
-   * if (writer.has_next()) message = writer.read_next();
+   * if (reader.has_next()) message = reader.read_next();
    *
    * \return next message in non-serialized form
    * \throws runtime_error if the Reader is not open.
