@@ -65,7 +65,7 @@ TEST_F(RecordIntegrationTestFixture, regex_topics_recording)
   ASSERT_FALSE(std::regex_match(b4, re));
 
   rosbag2_transport::RecordOptions record_options =
-  {false, false, false, false, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, "rmw_format", 10ms};
+  {false, false, false, false, {}, {}, {}, {}, {}, {}, {}, {}, {}, "rmw_format", 10ms};
   record_options.regex = regex;
 
   // TODO(karsten1987) Refactor this into publication manager
@@ -138,7 +138,7 @@ TEST_F(RecordIntegrationTestFixture, regex_and_exclude_regex_topic_recording)
   ASSERT_TRUE(std::regex_match(e1, exclude));
 
   rosbag2_transport::RecordOptions record_options =
-  {false, false, false, false, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, "rmw_format", 10ms};
+  {false, false, false, false, {}, {}, {}, {}, {}, {}, {}, {}, {}, "rmw_format", 10ms};
   record_options.regex = regex;
   record_options.exclude_regex = topics_regex_to_exclude;
 
@@ -214,7 +214,7 @@ TEST_F(RecordIntegrationTestFixture, regex_and_exclude_topic_topic_recording)
   ASSERT_TRUE(e1 == topics_exclude);
 
   rosbag2_transport::RecordOptions record_options =
-  {false, false, false, false, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, "rmw_format", 10ms};
+  {false, false, false, false, {}, {}, {}, {}, {}, {}, {}, {}, {}, "rmw_format", 10ms};
   record_options.regex = regex;
   record_options.exclude_topics.emplace_back(topics_exclude);
 
@@ -277,7 +277,7 @@ TEST_F(RecordIntegrationTestFixture, regex_and_exclude_regex_service_recording)
   std::string b2 = "/namespace_before/not_nice";
 
   rosbag2_transport::RecordOptions record_options =
-  {false, false, false, false, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, "rmw_format", 10ms};
+  {false, false, false, false, {}, {}, {}, {}, {}, {}, {}, {}, {}, "rmw_format", 10ms};
   record_options.regex = regex;
   record_options.exclude_regex = services_regex_to_exclude;
 
@@ -359,7 +359,7 @@ TEST_F(RecordIntegrationTestFixture, regex_and_exclude_service_service_recording
   std::string b2 = "/namespace_before/not_nice";
 
   rosbag2_transport::RecordOptions record_options =
-  {false, false, false, false, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, "rmw_format", 10ms};
+  {false, false, false, false, {}, {}, {}, {}, {}, {}, {}, {}, {}, "rmw_format", 10ms};
   record_options.regex = regex;
   record_options.exclude_service_events.emplace_back(services_exclude);
 
@@ -441,7 +441,7 @@ TEST_F(RecordIntegrationTestFixture, regex_and_exclude_regex_action_recording)
   std::string b2 = "/namespace_before/not_nice";
 
   rosbag2_transport::RecordOptions record_options =
-  {false, false, false, false, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, "rmw_format", 10ms};
+  {false, false, false, false, {}, {}, {}, {}, {}, {}, {}, {}, {}, "rmw_format", 10ms};
   record_options.regex = regex;
   record_options.exclude_regex = actions_regex_to_exclude;
 
@@ -541,7 +541,7 @@ TEST_F(RecordIntegrationTestFixture, regex_and_exclude_actions_action_recording)
   std::string b2 = "/namespace_before/not_nice";
 
   rosbag2_transport::RecordOptions record_options =
-  {false, false, false, false, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, "rmw_format", 10ms};
+  {false, false, false, false, {}, {}, {}, {}, {}, {}, {}, {}, {}, "rmw_format", 10ms};
   record_options.regex = regex;
   record_options.exclude_actions = action_exclude;
 

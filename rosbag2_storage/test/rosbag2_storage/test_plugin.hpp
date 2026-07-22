@@ -47,11 +47,6 @@ public:
 
   std::shared_ptr<rosbag2_storage::SerializedBagMessage> read_next() override;
 
-  void write(std::shared_ptr<const rosbag2_storage::SerializedBagMessage> msg) override;
-
-  void write(
-    const std::vector<std::shared_ptr<const rosbag2_storage::SerializedBagMessage>> & msg) override;
-
   bool write_message(std::shared_ptr<const rosbag2_storage::SerializedBagMessage> msg) override;
 
   std::vector<size_t>

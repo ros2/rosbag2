@@ -82,19 +82,6 @@ void TestPlugin::remove_topic(const rosbag2_storage::TopicMetadata & topic)
   std::cout << "Removed topic with name =" << topic.name << " and type =" << topic.type << ".\n";
 }
 
-void TestPlugin::write(const std::shared_ptr<const rosbag2_storage::SerializedBagMessage> msg)
-{
-  (void) msg;
-  std::cout << "\nwriting\n";
-}
-
-void TestPlugin::write(
-  const std::vector<std::shared_ptr<const rosbag2_storage::SerializedBagMessage>> & msg)
-{
-  (void) msg;
-  std::cout << "\nwriting multiple\n";
-}
-
 bool TestPlugin::write_message(
   const std::shared_ptr<const rosbag2_storage::SerializedBagMessage> msg)
 {

@@ -33,7 +33,7 @@ Node convert<rosbag2_transport::RecordOptions>::encode(
   auto & [all_topics, all_services, all_actions, is_discovery_disabled,
     topics, topic_types, services, actions,
     exclude_topics, exclude_topic_types, exclude_service_events, exclude_actions,
-    rmw_serialization_format, input_serialization_format, output_serialization_format,
+    input_serialization_format, output_serialization_format,
     topic_polling_interval, regex, exclude_regex, node_prefix,
     compression_mode, compression_format, compression_queue_size, compression_threads,
     compression_threads_priority, topic_qos_profile_overrides,
@@ -54,7 +54,6 @@ Node convert<rosbag2_transport::RecordOptions>::encode(
   node["exclude_topic_types"] = exclude_topic_types;
   node["exclude_services"] = exclude_service_events;
   node["exclude_actions"] = exclude_actions;
-  node["rmw_serialization_format"] = rmw_serialization_format;
   node["input_serialization_format"] = input_serialization_format;
   node["output_serialization_format"] = output_serialization_format;
   node["topic_polling_interval"] = topic_polling_interval;
@@ -91,7 +90,7 @@ bool convert<rosbag2_transport::RecordOptions>::decode(
   auto & [all_topics, all_services, all_actions, is_discovery_disabled,
     topics, topic_types, services, actions,
     exclude_topics, exclude_topic_types, exclude_service_events, exclude_actions,
-    rmw_serialization_format, input_serialization_format, output_serialization_format,
+    input_serialization_format, output_serialization_format,
     topic_polling_interval, regex, exclude_regex, node_prefix,
     compression_mode, compression_format, compression_queue_size, compression_threads,
     compression_threads_priority, topic_qos_profile_overrides,
@@ -120,8 +119,6 @@ bool convert<rosbag2_transport::RecordOptions>::decode(
   optional_assign<std::vector<std::string>>(node, "exclude_topic_types", exclude_topic_types);
   optional_assign<std::vector<std::string>>(node, "exclude_services", exclude_service_events);
   optional_assign<std::vector<std::string>>(node, "exclude_actions", exclude_actions);
-  optional_assign<std::string>(
-    node, "rmw_serialization_format", rmw_serialization_format);
   optional_assign<std::string>(
     node, "input_serialization_format", input_serialization_format);
   optional_assign<std::string>(

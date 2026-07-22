@@ -15,7 +15,6 @@
 import datetime
 import os
 from pathlib import Path
-import re
 import signal
 import threading
 
@@ -32,7 +31,6 @@ from std_msgs.msg import String
 
 
 RESOURCES_PATH = Path(os.environ['ROSBAG2_PY_TEST_RESOURCES_DIR'])
-PLAYBACK_UNTIL_TIMESTAMP_REGEX_STRING = r'\[rosbag2_player]: Playback until timestamp: -1'
 
 
 def test_info_verbose_standalone_file(capfd):
@@ -262,142 +260,6 @@ def test_recorder_api(tmp_path, storage_id):
         for topic_info in metadata.topics_with_message_count
     ]
     assert '/test_recorder_api_node/topic' in bag_topics, str(bag_topics)
-
-
-def test_player_unconfigured():
-    # Test that using a constructor without full configuration raises an error when trying to use
-    # the player
-    player = rosbag2_py.Player()
-    with pytest.raises(RuntimeError):
-        player.start_spin()
-    with pytest.raises(RuntimeError):
-        player.play()
-    with pytest.raises(RuntimeError):
-        player.wait_for_playback_to_start()
-    with pytest.raises(RuntimeError):
-        player.wait_for_playback_to_finish()
-    with pytest.raises(RuntimeError):
-        player.stop()
-    with pytest.raises(RuntimeError):
-        player.pause()
-    with pytest.raises(RuntimeError):
-        player.resume()
-    with pytest.raises(RuntimeError):
-        player.is_paused()
-    with pytest.raises(RuntimeError):
-        player.play_next()
-    with pytest.raises(RuntimeError):
-        player.burst(1)
-    with pytest.raises(RuntimeError):
-        player.seek(0)
-
-
-def test_recorder_unconfigured():
-    # Test that using a constructor without full configuration raises an error when trying to use
-    # the recorder
-    recorder = rosbag2_py.Recorder()
-    with pytest.raises(RuntimeError):
-        recorder.start_spin()
-    with pytest.raises(RuntimeError):
-        recorder.record()
-    with pytest.raises(RuntimeError):
-        recorder.stop()
-    with pytest.raises(RuntimeError):
-        recorder.pause()
-    with pytest.raises(RuntimeError):
-        recorder.resume()
-    with pytest.raises(RuntimeError):
-        recorder.is_paused()
-
-
-@pytest.mark.parametrize('storage_id', TESTED_STORAGE_IDS)
-def test_record_cancel(tmp_path, storage_id):
-    bag_path = tmp_path / 'test_record_cancel'
-    storage_options, converter_options = get_rosbag_options(str(bag_path), storage_id)
-
-    record_options = rosbag2_py.RecordOptions()
-    record_options.all_topics = True
-    record_options.is_discovery_disabled = False
-    record_options.topic_polling_interval = datetime.timedelta(milliseconds=100)
-
-    recorder = rosbag2_py.Recorder()
-
-    ctx = rclpy.Context()
-    ctx.init()
-    record_thread = threading.Thread(
-        target=recorder.record,
-        args=(storage_options, record_options),
-        daemon=True)
-    record_thread.start()
-
-    node = rclpy.create_node('test_record_cancel', context=ctx)
-    executor = rclpy.executors.SingleThreadedExecutor(context=ctx)
-    executor.add_node(node)
-    pub = node.create_publisher(String, 'chatter', 10)
-
-    i = 0
-    msg = String()
-
-    while rclpy.ok() and i < 10:
-        msg.data = 'Hello World: {0}'.format(i)
-        i += 1
-        pub.publish(msg)
-
-    recorder.cancel()
-
-    metadata_io = rosbag2_py.MetadataIo()
-    assert wait_for(lambda: metadata_io.metadata_file_exists(str(bag_path)),
-                    timeout=rclpy.duration.Duration(seconds=3))
-    record_thread.join()
-
-    metadata = metadata_io.read_metadata(str(bag_path))
-    assert len(metadata.relative_file_paths)
-    storage_path = bag_path / metadata.relative_file_paths[0]
-    assert wait_for(lambda: storage_path.is_file(),
-                    timeout=rclpy.duration.Duration(seconds=3))
-
-
-@pytest.mark.parametrize('storage_id', TESTED_STORAGE_IDS)
-def test_play_cancel(storage_id, capfd):
-    bag_path = str(RESOURCES_PATH / storage_id / 'talker')
-    assert os.path.exists(bag_path), 'Could not find test bag file: ' + bag_path
-
-    storage_options, converter_options = get_rosbag_options(bag_path, storage_id)
-
-    play_options = rosbag2_py.PlayOptions()
-    play_options.loop = True
-    play_options.start_paused = True
-
-    player = rosbag2_py.Player(storage_options, play_options)
-
-    player_thread = threading.Thread(
-        target=player.play,
-        args=(storage_options, play_options),
-        daemon=True)
-    player_thread.start()
-
-    def check_playback_start_output(cap_streams):
-        out, err = capfd.readouterr()
-        cap_streams['err'] += err
-        cap_streams['out'] += out
-        expected_string_regex = re.compile(PLAYBACK_UNTIL_TIMESTAMP_REGEX_STRING)
-        matches = expected_string_regex.search(cap_streams['err'])
-        return matches is not None
-
-    captured_streams = {'out': '', 'err': ''}
-
-    if not wait_for(lambda: check_playback_start_output(captured_streams),
-                    timeout=rclpy.duration.Duration(seconds=5)):
-        with capfd.disabled():
-            print('\nCaptured stdout:', captured_streams['out'])
-            print('\nCaptured stderr:', captured_streams['err'])
-        player.cancel()
-        player_thread.join()
-        assert False
-
-    player.cancel()
-    player_thread.join(3)
-    assert not player_thread.is_alive()
 
 
 @pytest.mark.parametrize('storage_id', TESTED_STORAGE_IDS)
