@@ -163,7 +163,7 @@ if(BUILD_TESTING)
     APPEND_ENV "${append_env_vars}"
     ENV "${set_env_vars}"
   )
-  ament_add_pytest_test(test_transport_py
+  ament_add_ros_isolated_pytest_test(test_transport_py
     "test/test_transport.py"
     APPEND_ENV "${append_env_vars}"
     ENV "${set_env_vars}"
