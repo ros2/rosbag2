@@ -353,6 +353,66 @@ TEST_F(TestTopicFilter, filter_actions) {
   }
 }
 
+TEST_F(TestTopicFilter, filter_individual_action_interface_topic_by_topics_list) {
+  std::map<std::string, std::vector<std::string>> topics_and_types{
+    {"topic/a", {"type_a"}},
+    // action/a
+    {"/action/a/_action/send_goal/_service_event", {"test_msgs/action/TypeA_SendGoal_Event"}},
+    {"/action/a/_action/get_result/_service_event", {"test_msgs/action/TypeA_GetResult_Event"}},
+    {"/action/a/_action/cancel_goal/_service_event", {"action_msgs/srv/CancelGoal_Event"}},
+    {"/action/a/_action/feedback", {"test_msgs/action/TypeA_FeedbackMessage"}},
+    {"/action/a/_action/status", {"action_msgs/msg/GoalStatusArray"}},
+  };
+
+  // An exact match in the topics list selects an individual action interface
+  // topic (e.g. only the status topic) without pulling in the whole action.
+  {
+    rosbag2_transport::RecordOptions record_options;
+    record_options.topics = {"/action/a/_action/status"};
+    record_options.include_hidden_topics = true;
+    rosbag2_transport::TopicFilter filter{record_options, nullptr, true};
+    auto filtered_topics = filter.filter_topics(topics_and_types);
+    ASSERT_EQ(1u, filtered_topics.size());
+    EXPECT_TRUE(
+      filtered_topics.find("/action/a/_action/status") != filtered_topics.end());
+  }
+
+  // A regular topic and an individual action interface topic can be mixed.
+  {
+    rosbag2_transport::RecordOptions record_options;
+    record_options.topics = {"topic/a", "/action/a/_action/status"};
+    record_options.include_hidden_topics = true;
+    rosbag2_transport::TopicFilter filter{record_options, nullptr, true};
+    auto filtered_topics = filter.filter_topics(topics_and_types);
+    ASSERT_EQ(2u, filtered_topics.size());
+    EXPECT_TRUE(filtered_topics.find("topic/a") != filtered_topics.end());
+    EXPECT_TRUE(
+      filtered_topics.find("/action/a/_action/status") != filtered_topics.end());
+  }
+
+  // Action interface topics are hidden: without --include-hidden-topics an
+  // exact topics-list match must not select them.
+  {
+    rosbag2_transport::RecordOptions record_options;
+    record_options.topics = {"/action/a/_action/status"};
+    record_options.include_hidden_topics = false;
+    rosbag2_transport::TopicFilter filter{record_options, nullptr, true};
+    auto filtered_topics = filter.filter_topics(topics_and_types);
+    EXPECT_TRUE(filtered_topics.empty());
+  }
+
+  // exclude_topics takes precedence over an exact topics-list match.
+  {
+    rosbag2_transport::RecordOptions record_options;
+    record_options.topics = {"/action/a/_action/status"};
+    record_options.exclude_topics = {"/action/a/_action/status"};
+    record_options.include_hidden_topics = true;
+    rosbag2_transport::TopicFilter filter{record_options, nullptr, true};
+    auto filtered_topics = filter.filter_topics(topics_and_types);
+    EXPECT_TRUE(filtered_topics.empty());
+  }
+}
+
 TEST_F(TestTopicFilter, all_topics_and_exclude_regex)
 {
   rosbag2_transport::RecordOptions record_options;

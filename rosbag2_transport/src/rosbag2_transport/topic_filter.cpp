@@ -262,6 +262,7 @@ bool TopicFilter::topic_selected_by_lists_or_regex(
     if (!record_options_.all_actions &&
       static_topics_and_services_.empty() &&
       record_options_.actions.empty() &&
+      record_options_.topics.empty() &&
       record_options_.regex.empty())
     {
       return false;
@@ -270,6 +271,7 @@ bool TopicFilter::topic_selected_by_lists_or_regex(
     // Convert topic name to action name
     auto action_name = rosbag2_cpp::action_interface_name_to_action_name(topic_name);
 
+    bool selected_as_topic = false;
     if (!record_options_.all_actions &&
       !topic_in_list(topic_name, static_topics_and_services_))
     {
@@ -277,15 +279,34 @@ bool TopicFilter::topic_selected_by_lists_or_regex(
       if (include_action_interface_names_.find(topic_name) ==
         include_action_interface_names_.end())
       {
-        // Not match include regex
-        if (!record_options_.regex.empty()) {
-          std::regex include_regex(record_options_.regex);
-          if (!std::regex_search(action_name, include_regex)) {
+        // An exact match in the topics list selects an individual action
+        // interface topic (e.g. only the status topic of an action).
+        selected_as_topic = topic_in_list(topic_name, record_options_.topics);
+        if (!selected_as_topic) {
+          // Not match include regex
+          if (!record_options_.regex.empty()) {
+            std::regex include_regex(record_options_.regex);
+            if (!std::regex_search(action_name, include_regex)) {
+              return false;
+            }
+          } else {
             return false;
           }
-        } else {
-          return false;
         }
+      }
+    }
+
+    if (selected_as_topic) {
+      // Keep parity with regular topic handling when selected via the topics
+      // list: honor hidden-topic gating and topic exclusions.
+      if (!record_options_.include_hidden_topics && topic_is_hidden(topic_name)) {
+        RCUTILS_LOG_WARN_ONCE_NAMED(
+          ROSBAG2_TRANSPORT_PACKAGE_NAME,
+          "Hidden topics are not recorded. Enable them with --include-hidden-topics");
+        return false;
+      }
+      if (topic_in_list(topic_name, record_options_.exclude_topics)) {
+        return false;
       }
     }
 
