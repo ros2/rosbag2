@@ -204,6 +204,7 @@ private:
   bool publish_message(rosbag2_storage::SerializedBagMessageSharedPtr message);
   static constexpr double read_ahead_lower_bound_percentage_ = 0.9;
   static const std::chrono::milliseconds queue_read_wait_period_;
+  static const std::chrono::milliseconds progress_bar_update_period_;
   std::atomic_bool cancel_wait_for_next_message_{false};
 
   std::mutex reader_mutex_;
@@ -216,6 +217,10 @@ private:
   void add_keyboard_callbacks();
 
   void create_control_services();
+  void print_playback_progress(
+    rcutils_time_point_value_t current_time,
+    const char * state,
+    bool force = false);
 
   rosbag2_storage::StorageOptions storage_options_;
   rosbag2_transport::PlayOptions play_options_;
@@ -229,6 +234,9 @@ private:
     skip_message_in_main_play_loop_mutex_) = false;
 
   rcutils_time_point_value_t starting_time_;
+  rcutils_time_point_value_t bag_duration_ns_ = 0;
+  rcutils_time_point_value_t last_logged_playback_timestamp_ = -1;
+  bool has_playback_progress_output_ = false;
 
   // control services
   rclcpp::Service<rosbag2_interfaces::srv::Pause>::SharedPtr srv_pause_;

@@ -39,8 +39,8 @@ public:
    * \param now_fn: Function used to get the current steady time
    *   defaults to std::chrono::steady_clock::now
    *   Used to control for unit testing, or for specialized needs
-   * \param sleep_time_while_paused: Amount of time to sleep in `sleep_until` when the clock
-   *   is paused. Allows the caller to spin at a defined rate while receiving `false`
+  * \param sleep_time_while_paused: Maximum interval used by `sleep_until` while the clock
+  *   is paused or waiting. Allows the caller to spin at a defined rate while receiving `false`
    * \param paused: Start the clock paused
    */
   ROSBAG2_CPP_PUBLIC
