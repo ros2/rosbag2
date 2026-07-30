@@ -14,6 +14,12 @@ int32 split_mode
 # Topic name to use for timestamp-based split evaluation.
 # If empty, evaluate using messages from all topics.
 string tracking_topic_name
+
+# Directory to record the new bag into, instead of rolling over to the next file in the current
+# bag directory. The directory must not exist yet. The new bag gets its own metadata.yaml and its
+# file counter restarts at 0.
+# If empty, the recorder rolls over to the next file in the current bag directory as usual.
+string output_uri
 ---
 # Return codes for SplitBagfile response.
 int32 RETURN_CODE_SUCCESS=0
