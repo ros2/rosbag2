@@ -14,11 +14,7 @@
 
 #include <algorithm>
 #include <chrono>
-<<<<<<< HEAD
-=======
 #include <filesystem>
-#include <functional>
->>>>>>> 4dddf35 (Added missing header (#2464))
 #include <future>
 #include <memory>
 #include <regex>
