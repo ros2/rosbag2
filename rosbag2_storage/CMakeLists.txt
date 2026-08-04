@@ -82,17 +82,25 @@ if(BUILD_TESTING)
     test/rosbag2_storage/test_plugin.cpp
     test/rosbag2_storage/test_read_only_plugin.cpp)
   target_link_libraries(test_plugin ament_cmake_ros_core::ament_ros_defaults ${PROJECT_NAME} pluginlib::pluginlib)
-  install(
-    TARGETS test_plugin
-    ARCHIVE DESTINATION lib
-    LIBRARY DESTINATION lib
-    RUNTIME DESTINATION bin)
-  pluginlib_export_plugin_description_file(rosbag2_storage test/rosbag2_storage/test_plugin.xml)
+  # Mock-install the test plugin into the build folder rather than installing
+  # it, so that it never appears as a registered storage plugin outside of the
+  # tests that need it.
+  pluginlib_enable_plugin_testing(
+    CMAKE_TARGET_VAR test_plugin_mock_install_target
+    AMENT_PREFIX_PATH_VAR test_plugin_mock_install_path
+    PACKAGE_NAME "rosbag2_storage_test_plugins"
+    PACKAGE_XML "test/rosbag2_storage/test_package.xml"
+    PLUGIN_CATEGORY "rosbag2_storage"
+    PLUGIN_DESCRIPTIONS "test/rosbag2_storage/test_plugin.xml"
+    PLUGIN_LIBRARIES test_plugin)
 
   ament_add_gmock(test_storage_factory
-    test/rosbag2_storage/test_storage_factory.cpp)
+    test/rosbag2_storage/test_storage_factory.cpp
+    APPEND_LIBRARY_DIRS "$<TARGET_FILE_DIR:test_plugin>"
+    APPEND_ENV AMENT_PREFIX_PATH=${test_plugin_mock_install_path})
   if(TARGET test_storage_factory)
     target_link_libraries(test_storage_factory ament_cmake_ros_core::ament_ros_defaults ${PROJECT_NAME})
+    add_dependencies(test_storage_factory "${test_plugin_mock_install_target}")
   endif()
 
   ament_add_gmock(test_ros_helper
