@@ -14,6 +14,7 @@
 
 #include <filesystem>
 #include <memory>
+#include <set>
 #include <stdexcept>
 #include <string>
 #include <utility>
@@ -137,11 +138,33 @@ void SequentialReader::open(
   }
   fill_topics_metadata();
 
-  // Currently a bag file can only be played if all topics have the same serialization format.
-  check_topics_serialization_formats(topics);
-  check_converter_serialization_format(
-    converter_options.output_serialization_format,
-    topics[0].topic_metadata.serialization_format);
+  std::set<std::string> storage_serialization_formats;
+  for (const auto & topic : topics) {
+    storage_serialization_formats.insert(topic.topic_metadata.serialization_format);
+  }
+  // Conversion is needed if an output serialization format was requested and no topic is
+  // stored in it, and is only possible when all topics have the same serialization format.
+  const auto & output_serialization_format = converter_options.output_serialization_format;
+  if (!output_serialization_format.empty() &&
+    storage_serialization_formats.count(output_serialization_format) == 0)
+  {
+    if (storage_serialization_formats.size() > 1u) {
+      throw std::runtime_error(
+              "The bag contains topics with mixed serialization formats, and none of them "
+              "matches the requested output serialization format '" +
+              output_serialization_format + "'. Conversion of a bag with mixed serialization "
+              "formats is not supported.");
+    }
+    converter_ = std::make_unique<Converter>(
+      *storage_serialization_formats.begin(), output_serialization_format, converter_factory_);
+    for (const auto & topic : topics) {
+      converter_->add_topic(topic.topic_metadata.name, topic.topic_metadata.type);
+    }
+  }
+  // Messages already stored in the requested output serialization format (or all messages,
+  // when no output serialization format is requested) are returned as stored, without
+  // conversion. Topics which the consumer cannot decode have to be filtered out by the
+  // consumer.
 }
 
 bool SequentialReader::set_read_order(const rosbag2_storage::ReadOrder & order)
@@ -315,37 +338,6 @@ std::string SequentialReader::get_current_uri() const
   auto current_file = get_current_file();
   auto current_uri = fs::path(current_file).stem();
   return current_uri.generic_string();
-}
-
-void SequentialReader::check_topics_serialization_formats(
-  const std::vector<rosbag2_storage::TopicInformation> & topics)
-{
-  auto storage_serialization_format = topics[0].topic_metadata.serialization_format;
-  for (const auto & topic : topics) {
-    if (topic.topic_metadata.serialization_format != storage_serialization_format) {
-      throw std::runtime_error(
-              "Topics with different rmw serialization format have been found. "
-              "All topics must have the same serialization format.");
-    }
-  }
-}
-
-void SequentialReader::check_converter_serialization_format(
-  const std::string & converter_serialization_format,
-  const std::string & storage_serialization_format)
-{
-  if (converter_serialization_format.empty()) {return;}
-
-  if (converter_serialization_format != storage_serialization_format) {
-    converter_ = std::make_unique<Converter>(
-      storage_serialization_format,
-      converter_serialization_format,
-      converter_factory_);
-    auto topics = storage_->get_all_topics_and_types();
-    for (const auto & topic_with_type : topics) {
-      converter_->add_topic(topic_with_type.name, topic_with_type.type);
-    }
-  }
 }
 
 void SequentialReader::fill_topics_metadata()

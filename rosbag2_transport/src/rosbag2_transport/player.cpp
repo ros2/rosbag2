@@ -17,8 +17,10 @@
 #include <limits>
 #include <memory>
 #include <regex>
+#include <sstream>
 #include <string>
 #include <unordered_map>
+#include <unordered_set>
 #include <utility>
 #include <vector>
 #include <thread>
@@ -29,6 +31,7 @@
 #include "rclcpp_action/create_generic_client.hpp"
 #include "rcpputils/unique_lock.hpp"
 #include "rcutils/time.h"
+#include "rmw/rmw.h"
 
 #include "rosbag2_cpp/action_utils.hpp"
 #include "rosbag2_cpp/clocks/time_controller_clock.hpp"
@@ -320,6 +323,12 @@ private:
 
   void wait_for_filled_queue() const;
   void play_messages_from_queue();
+  /// \brief Build the storage filter resulting from the topic, service and action filtering
+  /// play options.
+  rosbag2_storage::StorageFilter build_storage_filter() const;
+  /// \brief Throw if the given storage filter selects topics for playback whose messages
+  /// cannot be decoded with the local rmw serialization format.
+  void validate_decodable_topics(const rosbag2_storage::StorageFilter & storage_filter) const;
   void prepare_publishers();
   bool publish_message(rosbag2_storage::SerializedBagMessageSharedPtr message);
   bool publish_message_by_player_publisher(
@@ -521,6 +530,10 @@ PlayerImpl::PlayerImpl(
       exclude_action_topic, owner_->get_name(),
       owner_->get_namespace(), false);
   }
+
+  // Validate as early as possible, in particular before the progress bar is constructed, so
+  // that refusing to play does not produce any UI output.
+  validate_decodable_topics(build_storage_filter());
 
   starting_time_ = readers_->get_earliest_timestamp();
   const rcutils_time_point_value_t ending_time = readers_->get_latest_timestamp();
@@ -1505,9 +1518,19 @@ bool allow_topic(
 
   return true;
 }
+
+TopicKind get_topic_kind(const rosbag2_storage::TopicMetadata & topic)
+{
+  if (rosbag2_cpp::is_topic_belong_to_action(topic.name, topic.type)) {
+    return TopicKind::ACTION_INTERFACE_TOPIC;
+  } else if (rosbag2_cpp::is_service_event_topic(topic.name, topic.type)) {
+    return TopicKind::SERVICE_EVENT_TOPIC;
+  }
+  return TopicKind::GENERIC_TOPIC;
+}
 }  // namespace
 
-void PlayerImpl::prepare_publishers()
+rosbag2_storage::StorageFilter PlayerImpl::build_storage_filter() const
 {
   rosbag2_storage::StorageFilter storage_filter;
   storage_filter.topics = play_options_.topics_to_filter;
@@ -1530,6 +1553,60 @@ void PlayerImpl::prepare_publishers()
       std::make_move_iterator(action_interfaces.begin()),
       std::make_move_iterator(action_interfaces.end()));
   }
+  return storage_filter;
+}
+
+void PlayerImpl::validate_decodable_topics(
+  const rosbag2_storage::StorageFilter & storage_filter) const
+{
+  // Refuse to play if the filters select topics whose messages cannot be decoded.
+  // For a bag where all topics share a single serialization format, the reader either delivers
+  // messages in the local rmw serialization format (converting them if necessary) or fails to
+  // open. However, for a bag with mixed serialization formats no conversion is performed, so
+  // topics whose serialization format differs from the local rmw serialization format cannot
+  // be played and have to be excluded from playback.
+  const std::string rmw_serialization_format = rmw_get_serialization_format();
+  std::vector<std::string> undecodable_topics;
+  for (const auto & reader_topics : readers_->get_topics_and_types_per_reader()) {
+    std::unordered_set<std::string> serialization_formats;
+    for (const auto & topic : reader_topics) {
+      if (!topic.serialization_format.empty()) {
+        serialization_formats.insert(topic.serialization_format);
+      }
+    }
+    if (serialization_formats.size() <= 1u) {
+      // Uniform serialization format; the reader converts messages if necessary.
+      continue;
+    }
+    for (const auto & topic : reader_topics) {
+      if (topic.serialization_format.empty() ||
+        topic.serialization_format == rmw_serialization_format)
+      {
+        continue;
+      }
+      if (allow_topic(get_topic_kind(topic), topic.name, storage_filter)) {
+        undecodable_topics.push_back(
+          "'" + topic.name + "' (" + topic.serialization_format + ")");
+      }
+    }
+  }
+  if (!undecodable_topics.empty()) {
+    std::ostringstream error;
+    error << "Cannot play because the following topics have a serialization format which "
+      "differs from the local rmw serialization format '" << rmw_serialization_format <<
+      "' and cannot be converted:";
+    for (const auto & topic : undecodable_topics) {
+      error << "\n  " << topic;
+    }
+    error << "\nExclude these topics from playback, e.g. with the ros2 bag play options "
+      "--topics, --exclude-topics or --exclude-regex, to play the rest of the bag.";
+    throw std::runtime_error(error.str());
+  }
+}
+
+void PlayerImpl::prepare_publishers()
+{
+  const rosbag2_storage::StorageFilter storage_filter = build_storage_filter();
 
   readers_->set_filter(storage_filter);
 
@@ -1572,14 +1649,7 @@ void PlayerImpl::prepare_publishers()
   std::vector<rosbag2_storage::TopicMetadata> topics = readers_->get_all_topics_and_types();
   std::string topic_without_support_acked;
   for (const auto & topic : topics) {
-    TopicKind topic_kind;
-    if (rosbag2_cpp::is_topic_belong_to_action(topic.name, topic.type)) {
-      topic_kind = TopicKind::ACTION_INTERFACE_TOPIC;
-    } else if (rosbag2_cpp::is_service_event_topic(topic.name, topic.type)) {
-      topic_kind = TopicKind::SERVICE_EVENT_TOPIC;
-    } else {
-      topic_kind = TopicKind::GENERIC_TOPIC;
-    }
+    TopicKind topic_kind = get_topic_kind(topic);
 
     if (topic_kind == TopicKind::ACTION_INTERFACE_TOPIC && play_options_.send_actions_as_client) {
       // Check if action client was created

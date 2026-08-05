@@ -677,6 +677,7 @@ if(BUILD_TESTING)
     ${PROJECT_NAME}
     rcpputils::rcpputils
     rosbag2_test_common::rosbag2_test_common
+    test_msgs::test_msgs
   )
 
   ament_add_gmock(test_player_progress_bar test/rosbag2_transport/test_player_progress_bar.cpp)
