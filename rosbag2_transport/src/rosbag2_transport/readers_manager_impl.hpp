@@ -174,6 +174,18 @@ public:
     return all_topics_and_types;
   }
 
+  [[nodiscard]] std::vector<std::vector<rosbag2_storage::TopicMetadata>>
+  get_topics_and_types_per_reader() const
+  {
+    std::vector<std::vector<rosbag2_storage::TopicMetadata>> topics_per_reader{};
+    rcpputils::unique_lock lk(reader_mutex_);
+    topics_per_reader.reserve(readers_with_options_.size());
+    for (const auto & [reader, _] : readers_with_options_) {
+      topics_per_reader.push_back(reader->get_all_topics_and_types());
+    }
+    return topics_per_reader;
+  }
+
   void add_event_callbacks(rosbag2_cpp::bag_events::ReaderEventCallbacks & callbacks)
   {
     rcpputils::unique_lock lk(reader_mutex_);

@@ -117,6 +117,12 @@ public:
   /// \return vector of topics with topic name and type as std::string
   [[nodiscard]] std::vector<rosbag2_storage::TopicMetadata> get_all_topics_and_types() const;
 
+  /// \brief Getter for the topics and types of each reader separately.
+  /// \return vector with one entry per reader, in the same order as the readers were provided
+  /// at construction, each containing the topics and types of that reader.
+  [[nodiscard]] std::vector<std::vector<rosbag2_storage::TopicMetadata>>
+  get_topics_and_types_per_reader() const;
+
   /// \brief Add event callbacks to all readers.
   /// \param callbacks The callbacks to add.
   void add_event_callbacks(rosbag2_cpp::bag_events::ReaderEventCallbacks & callbacks);

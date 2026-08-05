@@ -73,6 +73,12 @@ ReadersManager::get_all_topics_and_types() const
   return pimpl_->get_all_topics_and_types();
 }
 
+[[nodiscard]] std::vector<std::vector<rosbag2_storage::TopicMetadata>>
+ReadersManager::get_topics_and_types_per_reader() const
+{
+  return pimpl_->get_topics_and_types_per_reader();
+}
+
 void ReadersManager::add_event_callbacks(rosbag2_cpp::bag_events::ReaderEventCallbacks & callbacks)
 {
   pimpl_->add_event_callbacks(callbacks);

@@ -17,8 +17,11 @@
 #include <filesystem>
 #include <memory>
 #include <string>
+#include <unordered_map>
 #include <utility>
 #include <vector>
+
+#include "rmw/rmw.h"
 
 #include "rosbag2_cpp/readers/sequential_reader.hpp"
 #include "rosbag2_cpp/reader.hpp"
@@ -26,6 +29,7 @@
 
 #include "rosbag2_storage/bag_metadata.hpp"
 #include "rosbag2_storage/metadata_io.hpp"
+#include "rosbag2_storage/ros_helper.hpp"
 #include "rosbag2_storage/topic_metadata.hpp"
 
 #include "rosbag2_test_common/tested_storage_ids.hpp"
@@ -43,6 +47,7 @@
 
 using namespace testing;  // NOLINT
 using rosbag2_test_common::ParametrizedTemporaryDirectoryFixture;
+using rosbag2_test_common::TemporaryDirectoryFixture;
 namespace fs = std::filesystem;
 
 class SequentialReaderTest : public Test
@@ -224,6 +229,190 @@ TEST_F(SequentialReaderTest, next_file_calls_callback) {
   ASSERT_TRUE(callback_called);
   EXPECT_EQ(closed_file, bag_file_1_path_.generic_string());
   EXPECT_EQ(opened_file, bag_file_2_path_.generic_string());
+}
+
+class SequentialReaderMixedFormatsTest : public Test
+{
+public:
+  void init_reader(const std::vector<std::string> & serialization_formats)
+  {
+    storage_ = std::make_shared<NiceMock<MockStorage>>();
+    converter_factory_ = std::make_shared<StrictMock<MockConverterFactory>>();
+    auto storage_factory = std::make_unique<NiceMock<MockStorageFactory>>();
+    auto metadata_io = std::make_unique<NiceMock<MockMetadataIo>>();
+
+    storage_uri_ = fs::temp_directory_path().generic_string();
+
+    rosbag2_storage::BagMetadata metadata;
+    metadata.version = 4;
+    metadata.relative_file_paths = {(fs::path(storage_uri_) / "bag_file1").generic_string()};
+    metadata.storage_identifier = "mock_storage";
+    std::vector<rosbag2_storage::TopicMetadata> topics_and_types;
+    size_t topic_id = 0;
+    for (const auto & serialization_format : serialization_formats) {
+      rosbag2_storage::TopicMetadata topic_metadata;
+      topic_metadata.id = static_cast<uint16_t>(topic_id);
+      topic_metadata.name = "topic" + std::to_string(topic_id);
+      topic_metadata.type = "test_msgs/BasicTypes";
+      topic_metadata.serialization_format = serialization_format;
+      metadata.topics_with_message_count.push_back({topic_metadata, 1});
+      topics_and_types.push_back(topic_metadata);
+      topic_id++;
+    }
+
+    auto message = std::make_shared<rosbag2_storage::SerializedBagMessage>();
+    message->topic_name = "topic0";
+
+    ON_CALL(*metadata_io, read_metadata(_)).WillByDefault(Return(metadata));
+    ON_CALL(*metadata_io, metadata_file_exists(_)).WillByDefault(Return(true));
+    ON_CALL(*storage_, get_all_topics_and_types()).WillByDefault(Return(topics_and_types));
+    ON_CALL(*storage_, has_next()).WillByDefault(Return(true));
+    ON_CALL(*storage_, read_next()).WillByDefault(Return(message));
+    ON_CALL(*storage_, set_read_order).WillByDefault(Return(true));
+    ON_CALL(*storage_factory, open_read_only(_)).WillByDefault(Return(storage_));
+
+    auto sequential_reader = std::make_unique<rosbag2_cpp::readers::SequentialReader>(
+      std::move(storage_factory), converter_factory_, std::move(metadata_io));
+    reader_ = std::make_unique<rosbag2_cpp::Reader>(std::move(sequential_reader));
+  }
+
+  std::shared_ptr<NiceMock<MockStorage>> storage_;
+  std::shared_ptr<StrictMock<MockConverterFactory>> converter_factory_;
+  std::unique_ptr<rosbag2_cpp::Reader> reader_;
+  std::string storage_uri_;
+};
+
+TEST_F(SequentialReaderMixedFormatsTest, open_and_read_succeed_if_output_format_matches_a_topic) {
+  init_reader({"rmw1_format", "rmw2_format"});
+
+  // No converter shall be created; messages are returned in their stored serialization format.
+  EXPECT_CALL(*converter_factory_, load_deserializer(_)).Times(0);
+  EXPECT_CALL(*converter_factory_, load_serializer(_)).Times(0);
+
+  EXPECT_NO_THROW(reader_->open({storage_uri_, "mock_storage"}, {"", "rmw1_format"}));
+  EXPECT_TRUE(reader_->has_next());
+  auto message = reader_->read_next();
+  ASSERT_NE(nullptr, message);
+  EXPECT_EQ("topic0", message->topic_name);
+}
+
+TEST_F(SequentialReaderMixedFormatsTest, open_and_read_succeed_if_no_output_format_is_requested) {
+  init_reader({"rmw1_format", "rmw2_format"});
+
+  EXPECT_CALL(*converter_factory_, load_deserializer(_)).Times(0);
+  EXPECT_CALL(*converter_factory_, load_serializer(_)).Times(0);
+
+  EXPECT_NO_THROW(reader_->open({storage_uri_, "mock_storage"}, {"", ""}));
+  EXPECT_TRUE(reader_->has_next());
+  auto message = reader_->read_next();
+  ASSERT_NE(nullptr, message);
+  EXPECT_EQ("topic0", message->topic_name);
+}
+
+TEST_F(SequentialReaderMixedFormatsTest, open_throws_if_output_format_matches_no_topic) {
+  init_reader({"rmw1_format", "rmw2_format"});
+
+  EXPECT_THROW(
+    reader_->open({storage_uri_, "mock_storage"}, {"", "rmw3_format"}),
+    std::runtime_error);
+}
+
+namespace
+{
+std::shared_ptr<rosbag2_storage::SerializedBagMessage> make_fake_protobuf_message(
+  const std::string & topic_name, int64_t stamp_ns, uint8_t index)
+{
+  // A minimal, valid protobuf encoding of a foxglove.CompressedVideo message:
+  //   field 2 (frame_id, string) = "cam0"
+  //   field 3 (data, bytes) = 16 filler bytes
+  //   field 4 (format, string) = "h264"
+  std::vector<uint8_t> payload = {0x12, 0x04, 'c', 'a', 'm', '0', 0x1a, 0x10};
+  payload.insert(payload.end(), 16, index);
+  const std::vector<uint8_t> format_field = {0x22, 0x04, 'h', '2', '6', '4'};
+  payload.insert(payload.end(), format_field.begin(), format_field.end());
+
+  auto message = std::make_shared<rosbag2_storage::SerializedBagMessage>();
+  message->topic_name = topic_name;
+  message->recv_timestamp = stamp_ns;
+  message->send_timestamp = stamp_ns;
+  message->serialized_data =
+    rosbag2_storage::make_serialized_message(payload.data(), payload.size());
+  return message;
+}
+}  // namespace
+
+TEST_F(TemporaryDirectoryFixture, reads_mixed_serialization_formats_from_real_bag) {
+  const auto bag_path = (fs::path(temporary_dir_path_) / "mixed_formats_bag").generic_string();
+  const std::string cdr_topic = "/chatter";
+  const std::string protobuf_topic = "/camera/video_compressed";
+  constexpr size_t kNumMessagesPerTopic = 5;
+
+  // Write a small bag with one CDR encoded and one protobuf encoded topic, mimicking
+  // recordings made by non-ROS tools.
+  {
+    rosbag2_cpp::Writer writer;
+    rosbag2_storage::StorageOptions options;
+    options.uri = bag_path;
+    options.storage_id = "mcap";
+    writer.open(options);
+
+    rosbag2_storage::TopicMetadata protobuf_topic_metadata;
+    protobuf_topic_metadata.name = protobuf_topic;
+    protobuf_topic_metadata.type = "foxglove.CompressedVideo";
+    protobuf_topic_metadata.serialization_format = "protobuf";
+    writer.create_topic(protobuf_topic_metadata);
+
+    test_msgs::msg::BasicTypes msg;
+    for (size_t i = 0; i < kNumMessagesPerTopic; i++) {
+      const int64_t stamp_ns = 10000000 * static_cast<int64_t>(i);
+      msg.int32_value = static_cast<int32_t>(i);
+      writer.write(msg, cdr_topic, rclcpp::Time(stamp_ns));
+      writer.write(make_fake_protobuf_message(protobuf_topic, stamp_ns + 1,
+        static_cast<uint8_t>(i)));
+    }
+  }
+
+  // A bag with mixed serialization formats can be opened and read raw when no output
+  // serialization format is requested.
+  {
+    rosbag2_cpp::Reader reader;
+    EXPECT_NO_THROW(reader.open(bag_path));
+
+    std::unordered_map<std::string, std::string> serialization_formats;
+    for (const auto & topic : reader.get_all_topics_and_types()) {
+      serialization_formats[topic.name] = topic.serialization_format;
+    }
+    EXPECT_EQ(serialization_formats[protobuf_topic], "protobuf");
+    EXPECT_NE(serialization_formats[cdr_topic], "protobuf");
+
+    std::unordered_map<std::string, size_t> counts;
+    while (reader.has_next()) {
+      counts[reader.read_next()->topic_name]++;
+    }
+    EXPECT_EQ(counts[cdr_topic], kNumMessagesPerTopic);
+    EXPECT_EQ(counts[protobuf_topic], kNumMessagesPerTopic);
+  }
+
+  // Opening also succeeds when the requested output serialization format matches some of
+  // the topics; messages are not converted.
+  {
+    rosbag2_cpp::Reader reader;
+    rosbag2_storage::StorageOptions options;
+    options.uri = bag_path;
+    options.storage_id = "mcap";
+    EXPECT_NO_THROW(reader.open(options, {"", rmw_get_serialization_format()}));
+    EXPECT_TRUE(reader.has_next());
+  }
+
+  // Opening fails when the requested output serialization format matches none of the
+  // topics, since conversion of mixed serialization formats is not supported.
+  {
+    rosbag2_cpp::Reader reader;
+    rosbag2_storage::StorageOptions options;
+    options.uri = bag_path;
+    options.storage_id = "mcap";
+    EXPECT_THROW(reader.open(options, {"", "some_other_format"}), std::runtime_error);
+  }
 }
 
 TEST_P(ParametrizedTemporaryDirectoryFixture, reader_accepts_bare_file) {
