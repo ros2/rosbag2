@@ -17,6 +17,7 @@
 #include <algorithm>
 #include <atomic>
 #include <filesystem>
+#include <limits>
 #include <memory>
 #include <string>
 #include <unordered_map>
@@ -424,6 +425,77 @@ TEST_F(RecordIntegrationTestFixture, receives_latched_messages)
   EXPECT_THAT(recorded_messages, SizeIs(expected_messages));
   EXPECT_EQ(recorded_topics.size(), 1u);
   EXPECT_FALSE(recorded_messages.empty());
+}
+
+TEST_F(RecordIntegrationTestFixture, topic_throttle_frequency_drops_messages_at_subscription)
+{
+  auto string_message = get_messages_strings()[1];
+  const std::string throttled_topic = "/throttled_string_topic";
+  const std::string full_rate_topic = "/full_rate_string_topic";
+  constexpr size_t num_published_messages = 5;
+
+  rosbag2_test_common::PublicationManager pub_manager;
+  pub_manager.setup_publisher(throttled_topic, string_message, num_published_messages);
+  pub_manager.setup_publisher(full_rate_topic, string_message, num_published_messages);
+
+  rosbag2_transport::RecordOptions record_options;
+  record_options.topics = {throttled_topic, full_rate_topic};
+  record_options.rmw_serialization_format = "rmw_format";
+  record_options.topic_polling_interval = 100ms;
+  // One message per 1000 seconds. Everything published by the test after the first message
+  // arrives well within the throttle period and must be dropped.
+  record_options.topic_throttle_frequencies[throttled_topic] = 0.001;
+
+  auto recorder = std::make_shared<rosbag2_transport::Recorder>(
+    std::move(writer_), storage_options_, record_options);
+  recorder->record();
+
+  start_async_spin(recorder);
+  auto cleanup_process_handle = rcpputils::make_scope_exit([&]() {stop_spinning();});
+
+  ASSERT_TRUE(pub_manager.wait_for_matched(throttled_topic.c_str()));
+  ASSERT_TRUE(pub_manager.wait_for_matched(full_rate_topic.c_str()));
+
+  pub_manager.run_publishers();
+
+  auto & writer = recorder->get_writer_handle();
+  MockSequentialWriter & mock_writer =
+    static_cast<MockSequentialWriter &>(writer.get_implementation_handle());
+
+  // Expect all messages from the full rate topic and exactly one from the throttled topic.
+  constexpr size_t expected_messages = num_published_messages + 1;
+  auto ret = rosbag2_test_common::wait_until_condition(
+    [ =, &mock_writer]() {
+      return mock_writer.get_number_of_recorded_messages() >= expected_messages;
+    },
+    std::chrono::seconds(5));
+  EXPECT_TRUE(ret) << "failed to capture expected messages in time";
+
+  auto recorded_messages = mock_writer.get_messages();
+  auto throttled_messages = filter_messages<test_msgs::msg::Strings>(
+    recorded_messages, throttled_topic);
+  auto full_rate_messages = filter_messages<test_msgs::msg::Strings>(
+    recorded_messages, full_rate_topic);
+  EXPECT_THAT(full_rate_messages, SizeIs(num_published_messages));
+  EXPECT_THAT(throttled_messages, SizeIs(1));
+}
+
+TEST_F(RecordIntegrationTestFixture, record_throws_on_invalid_topic_throttle_frequency)
+{
+  // Cover the same rejection set as the CLI/node-param validators: non-positive and non-finite.
+  for (const double bad_frequency : {0.0, -5.0, std::numeric_limits<double>::infinity(),
+      std::numeric_limits<double>::quiet_NaN()})
+  {
+    auto writer = std::make_shared<rosbag2_cpp::Writer>(std::make_unique<MockSequentialWriter>());
+    rosbag2_transport::RecordOptions record_options;
+    record_options.is_discovery_disabled = true;
+    record_options.rmw_serialization_format = "rmw_format";
+    record_options.topic_throttle_frequencies["/some_topic"] = bad_frequency;
+
+    auto recorder = std::make_shared<rosbag2_transport::Recorder>(
+      std::move(writer), storage_options_, record_options);
+    EXPECT_THROW(recorder->record(), std::invalid_argument) << "frequency=" << bad_frequency;
+  }
 }
 
 TEST_F(RecordIntegrationTestFixture, repeat_transient_local_topics_register_requested_depth)

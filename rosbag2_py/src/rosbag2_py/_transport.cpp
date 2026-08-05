@@ -1013,6 +1013,7 @@ PYBIND11_MODULE(_transport, m) {
   .def_readwrite("repeat_transient_local_messages", &RecordOptions::repeat_transient_local_messages)
   .def_readwrite("repeat_all_transient_local_depth",
                  &RecordOptions::repeat_all_transient_local_depth)
+  .def_readwrite("topic_throttle_frequencies", &RecordOptions::topic_throttle_frequencies)
   ;
 
   py::class_<rosbag2_py::Player>(m, "Player")
