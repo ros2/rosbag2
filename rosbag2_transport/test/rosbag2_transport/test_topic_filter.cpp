@@ -411,6 +411,33 @@ TEST_F(TestTopicFilter, filter_individual_action_interface_topic_by_topics_list)
     auto filtered_topics = filter.filter_topics(topics_and_types);
     EXPECT_TRUE(filtered_topics.empty());
   }
+
+  // exclude_regex is matched against the topic name (parity with regular
+  // topic handling) and takes precedence over an exact topics-list match.
+  {
+    rosbag2_transport::RecordOptions record_options;
+    record_options.topics = {"/action/a/_action/status"};
+    record_options.exclude_regex = ".*/_action/status";
+    record_options.include_hidden_topics = true;
+    rosbag2_transport::TopicFilter filter{record_options, nullptr, true};
+    auto filtered_topics = filter.filter_topics(topics_and_types);
+    EXPECT_TRUE(filtered_topics.empty());
+  }
+
+  // Whole-action selection via the include regex takes precedence over an
+  // exact topics-list match: the topic keeps action semantics (no hidden-topic
+  // gating) even though it is also listed in topics.
+  {
+    rosbag2_transport::RecordOptions record_options;
+    record_options.topics = {"/action/a/_action/status"};
+    record_options.regex = "/action/a";
+    record_options.include_hidden_topics = false;
+    rosbag2_transport::TopicFilter filter{record_options, nullptr, true};
+    auto filtered_topics = filter.filter_topics(topics_and_types);
+    ASSERT_EQ(5u, filtered_topics.size());
+    EXPECT_TRUE(
+      filtered_topics.find("/action/a/_action/status") != filtered_topics.end());
+  }
 }
 
 TEST_F(TestTopicFilter, all_topics_and_exclude_regex)

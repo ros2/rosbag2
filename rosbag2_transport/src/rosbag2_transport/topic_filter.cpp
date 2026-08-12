@@ -279,17 +279,17 @@ bool TopicFilter::topic_selected_by_lists_or_regex(
       if (include_action_interface_names_.find(topic_name) ==
         include_action_interface_names_.end())
       {
-        // An exact match in the topics list selects an individual action
-        // interface topic (e.g. only the status topic of an action).
-        selected_as_topic = topic_in_list(topic_name, record_options_.topics);
-        if (!selected_as_topic) {
-          // Not match include regex
-          if (!record_options_.regex.empty()) {
-            std::regex include_regex(record_options_.regex);
-            if (!std::regex_search(action_name, include_regex)) {
-              return false;
-            }
-          } else {
+        bool selected_by_regex = false;
+        if (!record_options_.regex.empty()) {
+          std::regex include_regex(record_options_.regex);
+          selected_by_regex = std::regex_search(action_name, include_regex);
+        }
+        if (!selected_by_regex) {
+          // An exact match in the topics list selects an individual action
+          // interface topic (e.g. only the status topic of an action). Whole-action
+          // selection takes precedence over this fallback.
+          selected_as_topic = topic_in_list(topic_name, record_options_.topics);
+          if (!selected_as_topic) {
             return false;
           }
         }
@@ -307,6 +307,14 @@ bool TopicFilter::topic_selected_by_lists_or_regex(
       }
       if (topic_in_list(topic_name, record_options_.exclude_topics)) {
         return false;
+      }
+      // Apply exclude_regex against the topic name (not the action name) for
+      // parity with regular topic handling.
+      if (!record_options_.exclude_regex.empty()) {
+        std::regex exclude_regex(record_options_.exclude_regex);
+        if (std::regex_search(topic_name, exclude_regex)) {
+          return false;
+        }
       }
     }
 
