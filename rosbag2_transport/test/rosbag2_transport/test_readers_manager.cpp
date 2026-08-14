@@ -255,3 +255,55 @@ TEST_F(Rosbag2ReadersWrapperTestFixture, get_all_topics_and_types_from_multiple_
     EXPECT_EQ(topics[1].type, "test_msgs/msg/BasicTypes");
   }
 }
+
+TEST_F(Rosbag2ReadersWrapperTestFixture, set_filter_applies_to_first_message)
+{
+  ReadersManager readers_manager(std::move(readers_with_options_));
+
+  // Filter out topic1 entirely before reading anything. The filter must apply to every
+  // message, including the very first one from each reader.
+  rosbag2_storage::StorageFilter filter;
+  filter.topics = {"topic2"};
+  readers_manager.set_filter(filter);
+
+  size_t num_messages = 0;
+  while (auto message = readers_manager.get_next_message_in_chronological_order()) {
+    EXPECT_EQ(message->topic_name, "topic2");
+    num_messages++;
+  }
+  EXPECT_EQ(num_messages, static_cast<size_t>(kNumMessagesPerBag));
+}
+
+TEST_F(Rosbag2ReadersWrapperTestFixture, reader_without_messages_does_not_break_cache_alignment)
+{
+  // First reader has no messages at all
+  auto empty_reader = std::make_unique<MockSequentialReader>();
+  empty_reader->prepare({}, {{1u, "topic1", "test_msgs/msg/BasicTypes", "", {}, ""}});
+  auto cpp_reader1 = std::make_unique<rosbag2_cpp::Reader>(std::move(empty_reader));
+
+  auto basic_message = get_messages_basic_types()[0];
+  std::vector<std::shared_ptr<rosbag2_storage::SerializedBagMessage>> messages;
+  std::vector<rosbag2_storage::TopicMetadata> topics{
+    {2u, "topic2", "test_msgs/msg/BasicTypes", "", {}, ""}
+  };
+  for (int32_t i = 0; i < kNumMessagesPerBag; i++) {
+    messages.push_back(serialize_test_message("topic2", i * 10, basic_message));
+  }
+  auto mock_reader2 = std::make_unique<MockSequentialReader>();
+  mock_reader2->prepare(messages, topics);
+  auto cpp_reader2 = std::make_unique<rosbag2_cpp::Reader>(std::move(mock_reader2));
+
+  std::vector<ReadersManager::reader_storage_options_pair_t> readers_with_options;
+  readers_with_options.emplace_back(std::move(cpp_reader1), storage_options_);
+  readers_with_options.emplace_back(std::move(cpp_reader2), storage_options_);
+
+  ReadersManager readers_manager(std::move(readers_with_options));
+
+  // All messages from the second reader must be returned despite the first reader being empty.
+  size_t num_messages = 0;
+  while (auto message = readers_manager.get_next_message_in_chronological_order()) {
+    EXPECT_EQ(message->topic_name, "topic2");
+    num_messages++;
+  }
+  EXPECT_EQ(num_messages, static_cast<size_t>(kNumMessagesPerBag));
+}

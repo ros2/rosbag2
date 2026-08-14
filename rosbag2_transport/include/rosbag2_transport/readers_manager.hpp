@@ -60,8 +60,10 @@ public:
 
   /// \brief Constructor which initializes the ReadersManager with multiple readers and their
   /// associated storage options.
-  /// \note The readers will be opened during construction and cache will be populated with the
-  /// first message from each reader (if available).
+  /// \note The readers will be opened during construction. The internal cache of next messages
+  /// is populated lazily on the first call to get_next_message_in_chronological_order() or
+  /// seek(), so that a filter set via set_filter() beforehand applies to all messages,
+  /// including the first one from each reader.
   /// \param reader_with_options Vector of pairs of unique pointer to the rosbag2_cpp::Reader class
   /// (which will be moved to the internal instance of the ReadersManager class during construction)
   /// and storage options (which will be applied to the rosbag2_cpp::reader when opening it).
