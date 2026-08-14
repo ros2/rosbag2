@@ -169,4 +169,4 @@ def test_sequential_reader_seek(storage_id):
 
 def test_plugin_list():
     reader_plugins = rosbag2_py.get_registered_readers()
-    assert 'my_read_only_test_plugin' in reader_plugins
+    assert {'mcap', 'sqlite3'} <= reader_plugins

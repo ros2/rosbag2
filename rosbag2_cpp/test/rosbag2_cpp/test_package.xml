@@ -1,0 +1,12 @@
+<?xml version="1.0"?>
+<?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
+<package format="3">
+  <name>rosbag2_cpp_test_plugins</name>
+  <version>0.0.0</version>
+  <description>
+    Fake package used to mock-install the rosbag2_cpp test converter plugins for unit tests.
+    It is never installed.
+  </description>
+  <maintainer email="ros-tooling@googlegroups.com">ROS Tooling Working Group</maintainer>
+  <license>Apache License 2.0</license>
+</package>

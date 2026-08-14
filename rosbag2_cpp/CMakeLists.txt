@@ -144,17 +144,25 @@ if(BUILD_TESTING)
     ${PROJECT_NAME}
     rosbag2_storage::rosbag2_storage
   )
-  install(
-    TARGETS converter_test_plugins
-    ARCHIVE DESTINATION lib
-    LIBRARY DESTINATION lib
-    RUNTIME DESTINATION bin)
-  pluginlib_export_plugin_description_file(rosbag2_cpp test/rosbag2_cpp/converter_test_plugin.xml)
+  # Mock-install the test converter plugins into the build folder rather than
+  # installing them, so that they never appear as registered serialization
+  # format plugins outside of the tests that need them.
+  pluginlib_enable_plugin_testing(
+    CMAKE_TARGET_VAR converter_test_plugins_mock_install_target
+    AMENT_PREFIX_PATH_VAR converter_test_plugins_mock_install_path
+    PACKAGE_NAME "rosbag2_cpp_test_plugins"
+    PACKAGE_XML "test/rosbag2_cpp/test_package.xml"
+    PLUGIN_CATEGORY "rosbag2_cpp"
+    PLUGIN_DESCRIPTIONS "test/rosbag2_cpp/converter_test_plugin.xml"
+    PLUGIN_LIBRARIES converter_test_plugins)
 
   ament_add_gmock(test_converter_factory
-    test/rosbag2_cpp/test_converter_factory.cpp)
+    test/rosbag2_cpp/test_converter_factory.cpp
+    APPEND_LIBRARY_DIRS "$<TARGET_FILE_DIR:converter_test_plugins>"
+    APPEND_ENV AMENT_PREFIX_PATH=${converter_test_plugins_mock_install_path})
   if(TARGET test_converter_factory)
     target_link_libraries(test_converter_factory ament_cmake_ros_core::ament_ros_defaults ${PROJECT_NAME})
+    add_dependencies(test_converter_factory "${converter_test_plugins_mock_install_target}")
   endif()
 
   ament_add_gmock(test_info

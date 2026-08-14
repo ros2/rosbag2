@@ -70,33 +70,45 @@ if(BUILD_TESTING)
     test/rosbag2_compression/fake_compressor.cpp
     test/rosbag2_compression/fake_decompressor.cpp)
   target_link_libraries(fake_plugin ament_cmake_ros_core::ament_ros_defaults ${PROJECT_NAME})
-  install(
-    TARGETS fake_plugin
-    ARCHIVE DESTINATION lib
-    LIBRARY DESTINATION lib
-    RUNTIME DESTINATION bin)
-  pluginlib_export_plugin_description_file(
-    rosbag2_compression test/rosbag2_compression/fake_plugin.xml)
+  # Mock-install the fake compression plugin into the build folder rather
+  # than installing it, so that it never appears as a registered compression
+  # plugin outside of the tests that need it.
+  pluginlib_enable_plugin_testing(
+    CMAKE_TARGET_VAR fake_plugin_mock_install_target
+    AMENT_PREFIX_PATH_VAR fake_plugin_mock_install_path
+    PACKAGE_NAME "rosbag2_compression_test_plugins"
+    PACKAGE_XML "test/rosbag2_compression/test_package.xml"
+    PLUGIN_CATEGORY "rosbag2_compression"
+    PLUGIN_DESCRIPTIONS "test/rosbag2_compression/fake_plugin.xml"
+    PLUGIN_LIBRARIES fake_plugin)
 
   ament_add_gmock(test_compression_factory
-    test/rosbag2_compression/test_compression_factory.cpp)
+    test/rosbag2_compression/test_compression_factory.cpp
+    APPEND_LIBRARY_DIRS "$<TARGET_FILE_DIR:fake_plugin>"
+    APPEND_ENV AMENT_PREFIX_PATH=${fake_plugin_mock_install_path})
   target_link_libraries(test_compression_factory ament_cmake_ros_core::ament_ros_defaults ${PROJECT_NAME})
+  add_dependencies(test_compression_factory "${fake_plugin_mock_install_target}")
 
   ament_add_gmock(test_compression_options
     test/rosbag2_compression/test_compression_options.cpp)
   target_link_libraries(test_compression_options ament_cmake_ros_core::ament_ros_defaults ${PROJECT_NAME})
 
   ament_add_gmock(test_sequential_compression_reader
-    test/rosbag2_compression/test_sequential_compression_reader.cpp)
+    test/rosbag2_compression/test_sequential_compression_reader.cpp
+    APPEND_LIBRARY_DIRS "$<TARGET_FILE_DIR:fake_plugin>"
+    APPEND_ENV AMENT_PREFIX_PATH=${fake_plugin_mock_install_path})
   target_link_libraries(test_sequential_compression_reader
     ament_cmake_ros_core::ament_ros_defaults
     ${PROJECT_NAME}
     rosbag2_cpp::rosbag2_cpp
     rosbag2_storage::rosbag2_storage
   )
+  add_dependencies(test_sequential_compression_reader "${fake_plugin_mock_install_target}")
 
   ament_add_gmock(test_sequential_compression_writer
-    test/rosbag2_compression/test_sequential_compression_writer.cpp)
+    test/rosbag2_compression/test_sequential_compression_writer.cpp
+    APPEND_LIBRARY_DIRS "$<TARGET_FILE_DIR:fake_plugin>"
+    APPEND_ENV AMENT_PREFIX_PATH=${fake_plugin_mock_install_path})
   target_link_libraries(test_sequential_compression_writer
     ament_cmake_ros_core::ament_ros_defaults
     ${PROJECT_NAME}
@@ -104,6 +116,7 @@ if(BUILD_TESTING)
     rosbag2_cpp::rosbag2_cpp
     rosbag2_storage::rosbag2_storage
   )
+  add_dependencies(test_sequential_compression_writer "${fake_plugin_mock_install_target}")
 endif()
 
 ament_package()
