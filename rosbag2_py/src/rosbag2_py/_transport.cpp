@@ -32,6 +32,8 @@
 #include "rosbag2_transport/record_options.hpp"
 #include "rosbag2_transport/recorder.hpp"
 
+#include "rclcpp/executors/events_cbg_executor/events_cbg_executor.hpp"
+
 #include "./pybind11.hpp"
 
 namespace py = pybind11;
@@ -616,7 +618,8 @@ public:
       // We already have an executor spinning
       return;
     }
-    exec_ = std::make_unique<rclcpp::executors::SingleThreadedExecutor>();
+    exec_ = std::make_unique<rclcpp::executors::EventsCBGExecutor>(
+      rclcpp::ExecutorOptions(), 1);
     exec_->add_node(recorder_);
     spin_thread_ = std::thread(
       [this]() {
@@ -806,7 +809,7 @@ protected:
 
   std::shared_ptr<rosbag2_transport::Recorder> recorder_;
   std::mutex spin_thread_mutex_;
-  std::unique_ptr<rclcpp::executors::SingleThreadedExecutor> exec_{nullptr};
+  std::unique_ptr<rclcpp::executors::EventsCBGExecutor> exec_{nullptr};
   std::thread spin_thread_;
 };
 
