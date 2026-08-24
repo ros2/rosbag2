@@ -1,0 +1,16 @@
+rosbag2_performance_benchmarking_node:
+  ros__parameters:
+    publishers:
+      publisher_groups: [ "many_small" ]
+      wait_for_subscriptions: True
+      # Saturation ladder rung: 200 topics x 800 Hz = 160000 msg/s at 128 B.
+      many_small:
+        publishers_count:   200
+        topic_root:         "benchmarking_small"
+        msg_size_bytes:     128
+        msg_count_each:     4000
+        rate_hz:            800
+        qos:
+          qos_depth:          10
+          qos_reliability:    "reliable"
+          qos_durability:     "volatile"
