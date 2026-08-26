@@ -3,17 +3,12 @@ project(rosbag2_performance_benchmarking)
 
 option(ENABLE_ROSBAG2_BENCHMARK_TESTS "Enables rosbag2 performance benchmark tests" OFF)
 
-# Default to C++17
-if(NOT CMAKE_CXX_STANDARD)
-  set(CMAKE_CXX_STANDARD 17)
-  set(CMAKE_CXX_STANDARD_REQUIRED ON)
-endif()
-
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   add_compile_options(-Wall -Wextra -Wpedantic)
 endif()
 
 find_package(ament_cmake REQUIRED)
+find_package(ament_cmake_ros_core REQUIRED)
 
 find_package(rclcpp REQUIRED)
 find_package(rcutils REQUIRED)
@@ -41,6 +36,7 @@ add_executable(results_writer
   src/results_writer.cpp)
 
 target_link_libraries(writer_benchmark
+  ament_cmake_ros_core::ament_ros_defaults
   rclcpp::rclcpp
   rosbag2_performance_benchmarking_msgs::rosbag2_performance_benchmarking_msgs
   sensor_msgs::sensor_msgs
@@ -50,6 +46,7 @@ target_link_libraries(writer_benchmark
 )
 
 target_link_libraries(benchmark_publishers
+  ament_cmake_ros_core::ament_ros_defaults
   rclcpp::rclcpp
   rosbag2_storage::rosbag2_storage
   rosbag2_performance_benchmarking_msgs::rosbag2_performance_benchmarking_msgs
@@ -57,6 +54,7 @@ target_link_libraries(benchmark_publishers
 )
 
 target_link_libraries(results_writer
+  ament_cmake_ros_core::ament_ros_defaults
   rclcpp::rclcpp
   rosbag2_storage::rosbag2_storage
 )

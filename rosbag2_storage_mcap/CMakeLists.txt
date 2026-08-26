@@ -10,18 +10,13 @@ if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
       "Debug" "Release" "RelWithDebInfo" "MinSizeRel")
 endif()
 
-# Default to C++17
-if(NOT CMAKE_CXX_STANDARD)
-  set(CMAKE_CXX_STANDARD 17)
-  set(CMAKE_CXX_STANDARD_REQUIRED ON)
-endif()
-
 # Enable additional warnings and warnings as errors
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   add_compile_options(-Wall -Wextra -Wpedantic)
 endif()
 
 find_package(ament_cmake REQUIRED)
+find_package(ament_cmake_ros_core REQUIRED)
 find_package(ament_cmake_python REQUIRED)
 find_package(ament_index_cpp REQUIRED)
 find_package(mcap_vendor REQUIRED)
@@ -38,9 +33,9 @@ target_include_directories(${PROJECT_NAME} PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
   $<INSTALL_INTERFACE:include/${PROJECT_NAME}>
 )
-target_compile_features(${PROJECT_NAME} PUBLIC c_std_99 cxx_std_17)
 target_compile_definitions(${PROJECT_NAME} PRIVATE "ROSBAG2_STORAGE_MCAP_BUILDING_DLL")
 target_link_libraries(${PROJECT_NAME} PRIVATE
+  ament_cmake_ros_core::ament_ros_defaults
   mcap_vendor::mcap
   pluginlib::pluginlib
   rcutils::rcutils
@@ -101,6 +96,7 @@ if(BUILD_TESTING)
 
   ament_add_gmock(test_mcap_storage test/rosbag2_storage_mcap/test_mcap_storage.cpp)
   target_link_libraries(test_mcap_storage
+    ament_cmake_ros_core::ament_ros_defaults
     ${PROJECT_NAME}
     rosbag2_storage::rosbag2_storage
     rosbag2_test_common::rosbag2_test_common
@@ -110,6 +106,7 @@ if(BUILD_TESTING)
 
   ament_add_gmock(test_mcap_topic_filter test/rosbag2_storage_mcap/test_mcap_topic_filter.cpp)
   target_link_libraries(test_mcap_topic_filter
+    ament_cmake_ros_core::ament_ros_defaults
     ${PROJECT_NAME}
     rosbag2_storage::rosbag2_storage
     rosbag2_test_common::rosbag2_test_common

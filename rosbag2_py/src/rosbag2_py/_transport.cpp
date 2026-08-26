@@ -32,6 +32,8 @@
 #include "rosbag2_transport/record_options.hpp"
 #include "rosbag2_transport/recorder.hpp"
 
+#include "rclcpp/executors/events_cbg_executor/events_cbg_executor.hpp"
+
 #include "./pybind11.hpp"
 
 namespace py = pybind11;
@@ -195,7 +197,19 @@ public:
     // Don't install signal handlers to keep signal handling simple in the Python layer
     rclcpp::init(arguments.argc(), arguments.argv(),
                  rclcpp::InitOptions(), rclcpp::SignalHandlerOptions::None);
-    player_ = std::make_shared<rosbag2_transport::Player>(storage_options, play_options, node_name);
+    // If constructing the Player fails (e.g. the bag needs a converter plugin
+    // that is not installed), the destructor never runs, so rclcpp::shutdown()
+    // would otherwise only be called when the global Context is destroyed at
+    // process exit.
+    // Ensure the Context is shut down on the failure path so the program can exit
+    // cleanly with the expected error code.
+    try {
+      player_ =
+        std::make_shared<rosbag2_transport::Player>(storage_options, play_options, node_name);
+    } catch (...) {
+      rclcpp::shutdown();
+      throw;
+    }
   }
 
   virtual ~Player()
@@ -580,23 +594,30 @@ public:
     rclcpp::init(arguments.argc(), arguments.argv(),
                  rclcpp::InitOptions(), rclcpp::SignalHandlerOptions::None);
 
-    if (!record_options.rmw_serialization_format.empty() &&
-      record_options.output_serialization_format.empty())
-    {
-      record_options.output_serialization_format = record_options.rmw_serialization_format;
-      PyErr_WarnEx(PyExc_DeprecationWarning,
-                   "The rmw_serialization_format option is deprecated and will be removed in a "
-                   "future release.\nPlease use output_serialization_format instead.",
-                   1
-      );
-    }
-    if (record_options.output_serialization_format.empty()) {
-      record_options.output_serialization_format = std::string(rmw_get_serialization_format());
-    }
-    auto writer = rosbag2_transport::ReaderWriterFactory::make_writer(record_options);
+    // See the Player constructor: if constructing the Recorder throws, shut the
+    // Context down here so it is not left to be destroyed at process exit.
+    try {
+      if (!record_options.rmw_serialization_format.empty() &&
+        record_options.output_serialization_format.empty())
+      {
+        record_options.output_serialization_format = record_options.rmw_serialization_format;
+        PyErr_WarnEx(PyExc_DeprecationWarning,
+                     "The rmw_serialization_format option is deprecated and will be removed in a "
+                     "future release.\nPlease use output_serialization_format instead.",
+                     1
+        );
+      }
+      if (record_options.output_serialization_format.empty()) {
+        record_options.output_serialization_format = std::string(rmw_get_serialization_format());
+      }
+      auto writer = rosbag2_transport::ReaderWriterFactory::make_writer(record_options);
 
-    recorder_ = std::make_shared<rosbag2_transport::Recorder>(
-      std::move(writer), storage_options, record_options, node_name);
+      recorder_ = std::make_shared<rosbag2_transport::Recorder>(
+        std::move(writer), storage_options, record_options, node_name);
+    } catch (...) {
+      rclcpp::shutdown();
+      throw;
+    }
   }
 
   virtual ~Recorder()
@@ -616,7 +637,8 @@ public:
       // We already have an executor spinning
       return;
     }
-    exec_ = std::make_unique<rclcpp::executors::SingleThreadedExecutor>();
+    exec_ = std::make_unique<rclcpp::executors::EventsCBGExecutor>(
+      rclcpp::ExecutorOptions(), 1);
     exec_->add_node(recorder_);
     spin_thread_ = std::thread(
       [this]() {
@@ -806,7 +828,7 @@ protected:
 
   std::shared_ptr<rosbag2_transport::Recorder> recorder_;
   std::mutex spin_thread_mutex_;
-  std::unique_ptr<rclcpp::executors::SingleThreadedExecutor> exec_{nullptr};
+  std::unique_ptr<rclcpp::executors::EventsCBGExecutor> exec_{nullptr};
   std::thread spin_thread_;
 };
 

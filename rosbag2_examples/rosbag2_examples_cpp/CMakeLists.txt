@@ -1,23 +1,13 @@
 cmake_minimum_required(VERSION 3.20)
 project(rosbag2_examples_cpp)
 
-# Default to C99
-if(NOT CMAKE_C_STANDARD)
-  set(CMAKE_C_STANDARD 99)
-endif()
-
-# Default to C++17
-if(NOT CMAKE_CXX_STANDARD)
-  set(CMAKE_CXX_STANDARD 17)
-  set(CMAKE_CXX_STANDARD_REQUIRED ON)
-endif()
-
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   add_compile_options(-Wall -Wextra -Wpedantic)
 endif()
 
 # find dependencies
 find_package(ament_cmake REQUIRED)
+find_package(ament_cmake_ros_core REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(rosbag2_compression REQUIRED)
 find_package(rosbag2_cpp REQUIRED)
@@ -26,6 +16,7 @@ find_package(example_interfaces REQUIRED)
 
 add_executable(simple_bag_recorder src/simple_bag_recorder.cpp)
 target_link_libraries(simple_bag_recorder
+  ament_cmake_ros_core::ament_ros_defaults
   rclcpp::rclcpp
   rosbag2_cpp::rosbag2_cpp
   example_interfaces::example_interfaces
@@ -38,6 +29,7 @@ install(TARGETS
 
 add_executable(compressed_bag_recorder src/compressed_bag_recorder.cpp)
 target_link_libraries(compressed_bag_recorder
+  ament_cmake_ros_core::ament_ros_defaults
   rclcpp::rclcpp
   rosbag2_cpp::rosbag2_cpp
   rosbag2_compression::rosbag2_compression
@@ -51,6 +43,7 @@ install(TARGETS
 
 add_executable(compressed_bag_rewriter src/compressed_bag_rewriter.cpp)
 target_link_libraries(compressed_bag_rewriter
+  ament_cmake_ros_core::ament_ros_defaults
   rosbag2_transport::rosbag2_transport
   example_interfaces::example_interfaces
 )
@@ -62,6 +55,7 @@ install(TARGETS
 
 add_executable(simple_bag_reader src/simple_bag_reader.cpp)
 target_link_libraries(simple_bag_reader
+  ament_cmake_ros_core::ament_ros_defaults
   rclcpp::rclcpp
   rosbag2_cpp::rosbag2_cpp
   rosbag2_transport::rosbag2_transport
@@ -75,6 +69,7 @@ install(TARGETS
 
 add_executable(data_generator_node src/data_generator_node.cpp)
 target_link_libraries(data_generator_node
+  ament_cmake_ros_core::ament_ros_defaults
   rclcpp::rclcpp
   rosbag2_cpp::rosbag2_cpp
   example_interfaces::example_interfaces
@@ -87,6 +82,7 @@ install(TARGETS
 
 add_executable(data_generator_executable src/data_generator_executable.cpp)
 target_link_libraries(data_generator_executable
+  ament_cmake_ros_core::ament_ros_defaults
   rclcpp::rclcpp
   rosbag2_cpp::rosbag2_cpp
   example_interfaces::example_interfaces

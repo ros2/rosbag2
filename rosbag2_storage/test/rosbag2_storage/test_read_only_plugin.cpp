@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <iostream>
 #include <memory>
 #include <string>
 #include <vector>
@@ -24,28 +23,19 @@
 
 TestReadOnlyPlugin::~TestReadOnlyPlugin()
 {
-  std::cout << "\nclosing.\n";
 }
 
 void TestReadOnlyPlugin::open(
   const rosbag2_storage::StorageOptions & storage_options,
-  rosbag2_storage::storage_interfaces::IOFlag flag)
+  rosbag2_storage::storage_interfaces::IOFlag /*flag*/)
 {
   if (storage_options.storage_id != test_constants::READ_ONLY_PLUGIN_IDENTIFIER) {
     throw std::runtime_error{"storage_id did not match. TestReadOnlyPlugin won't open."};
   }
-  if (flag == rosbag2_storage::storage_interfaces::IOFlag::READ_ONLY) {
-    std::cout << "opening testplugin read only: ";
-  } else if (flag == rosbag2_storage::storage_interfaces::IOFlag::READ_WRITE) {
-    std::cout << "opening testplugin read write: ";
-  }
-  std::cout << "storage uri: " << storage_options.uri << ".\n";
-  std::cout << "config file uri: " << storage_options.storage_config_uri << ".\n";
 }
 
-bool TestReadOnlyPlugin::set_read_order(const rosbag2_storage::ReadOrder & order)
+bool TestReadOnlyPlugin::set_read_order(const rosbag2_storage::ReadOrder & /*order*/)
 {
-  std::cout << "Set read order " << order.sort_by << " " << order.reverse << std::endl;
   return true;
 }
 
@@ -56,13 +46,11 @@ bool TestReadOnlyPlugin::has_next()
 
 std::shared_ptr<rosbag2_storage::SerializedBagMessage> TestReadOnlyPlugin::read_next()
 {
-  std::cout << "\nreading\n";
   return std::shared_ptr<rosbag2_storage::SerializedBagMessage>();
 }
 
 std::vector<rosbag2_storage::TopicMetadata> TestReadOnlyPlugin::get_all_topics_and_types()
 {
-  std::cout << "\nreading topics and types\n";
   return std::vector<rosbag2_storage::TopicMetadata>();
 }
 
@@ -71,42 +59,35 @@ void TestReadOnlyPlugin::get_all_message_definitions(
 
 std::string TestReadOnlyPlugin::get_relative_file_path() const
 {
-  std::cout << "\nreturning relative path\n";
   return test_constants::DUMMY_FILEPATH;
 }
 
 rosbag2_storage::BagMetadata TestReadOnlyPlugin::get_metadata()
 {
-  std::cout << "\nreturning bag metadata\n";
   return rosbag2_storage::BagMetadata();
 }
 
 uint64_t TestReadOnlyPlugin::get_bagfile_size() const
 {
-  std::cout << "\nreturning bagfile size\n";
   return test_constants::MAX_BAGFILE_SIZE;
 }
 
 std::string TestReadOnlyPlugin::get_storage_identifier() const
 {
-  std::cout << "\nreturning storage identifier\n";
   return test_constants::READ_ONLY_PLUGIN_IDENTIFIER;
 }
 
 void TestReadOnlyPlugin::set_filter(
   const rosbag2_storage::StorageFilter & /*storage_filter*/)
 {
-  std::cout << "\nsetting storage filter\n";
 }
 
 void TestReadOnlyPlugin::reset_filter()
 {
-  std::cout << "\nresetting storage filter\n";
 }
 
 void TestReadOnlyPlugin::seek(const rcutils_time_point_value_t & /*timestamp*/)
 {
-  std::cout << "\nseeking\n";
 }
 
 PLUGINLIB_EXPORT_CLASS(TestReadOnlyPlugin, rosbag2_storage::storage_interfaces::ReadOnlyInterface)
