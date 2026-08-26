@@ -130,6 +130,7 @@ class RecordOptions:
     statistics_max_publishing_rate: float
     topic_polling_interval: datetime.timedelta
     topic_qos_profile_overrides: dict
+    topic_throttle_frequencies: Dict[str, float]
     topic_types: List[str]
     topics: List[str]
     use_sim_time: bool

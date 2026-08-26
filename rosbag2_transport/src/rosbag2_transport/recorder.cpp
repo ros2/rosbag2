@@ -16,8 +16,10 @@
 
 #include <algorithm>
 #include <chrono>
+#include <cmath>
 #include <functional>
 #include <future>
+#include <limits>
 #include <map>
 #include <memory>
 #include <optional>
@@ -715,6 +717,14 @@ bool RecorderImpl::record(const std::string & uri)
     RCLCPP_WARN(node->get_logger(),
       "No output serialization format specified, using rmw serialization format. '%s'.",
       record_options_.output_serialization_format.c_str());
+  }
+
+  for (const auto & [topic_name, frequency] : record_options_.topic_throttle_frequencies) {
+    if (!std::isfinite(frequency) || frequency <= 0.0) {
+      throw std::invalid_argument(
+              "Invalid throttle frequency " + std::to_string(frequency) + " for topic '" +
+              topic_name + "'. Frequencies must be finite and greater than 0.");
+    }
   }
 
   event_notifier_->reset_total_num_messages_lost_in_transport();
@@ -1807,8 +1817,25 @@ RecorderImpl::create_subscription(
       on_messages_lost_in_transport(topic_name, msgs_lost_info);
     };
 
+  // Per-topic throttle state, owned by the subscription callback. Throttling compares receive
+  // timestamps so that the message spacing in the bag matches the requested frequency and
+  // follows the same time base as the recorded timestamps (including sim time).
+  rcutils_duration_value_t throttle_period_ns = 0;
+  auto throttle_it = record_options_.topic_throttle_frequencies.find(topic_name);
+  if (throttle_it != record_options_.topic_throttle_frequencies.end()) {
+    constexpr auto kMaxPeriodNs = std::numeric_limits<rcutils_duration_value_t>::max();
+    const double period_ns = 1e9 / throttle_it->second;
+    throttle_period_ns = period_ns < static_cast<double>(kMaxPeriodNs) ?
+      static_cast<rcutils_duration_value_t>(period_ns) : kMaxPeriodNs;
+    RCLCPP_INFO(node->get_logger(),
+      "Throttling topic '%s' to %.3f Hz for recording.", topic_name.c_str(), throttle_it->second);
+  }
+  auto last_written_recv_timestamp = std::make_shared<rcutils_time_point_value_t>(
+    std::numeric_limits<rcutils_time_point_value_t>::min());
+
   auto subscription_callback =
-    [this, topic_name, topic_type](std::shared_ptr<const rclcpp::SerializedMessage> message,
+    [this, topic_name, topic_type, throttle_period_ns, last_written_recv_timestamp](
+    std::shared_ptr<const rclcpp::SerializedMessage> message,
     const rclcpp::MessageInfo & mi)
     {
       rcutils_time_point_value_t recv_timestamp{0};
@@ -1838,6 +1865,20 @@ RecorderImpl::create_subscription(
       handle_pending_resume_request(topic_name, send_timestamp, recv_timestamp);
 
       if (!paused_.load()) {
+        if (throttle_period_ns > 0) {
+          constexpr auto kNoMessageWrittenYet =
+            std::numeric_limits<rcutils_time_point_value_t>::min();
+          if (*last_written_recv_timestamp != kNoMessageWrittenYet) {
+            const rcutils_duration_value_t elapsed_ns =
+              recv_timestamp - *last_written_recv_timestamp;
+            // A negative elapsed time means the time base jumped backwards (e.g. a sim time
+            // reset); accept the message and restart the throttle window instead of stalling.
+            if (elapsed_ns >= 0 && elapsed_ns < throttle_period_ns) {
+              return;
+            }
+          }
+          *last_written_recv_timestamp = recv_timestamp;
+        }
         writer_->write(std::move(message), topic_name, topic_type, recv_timestamp, send_timestamp);
         // Handle pending bag split request if it is existing
         handle_pending_bag_split_request(topic_name, send_timestamp, recv_timestamp);

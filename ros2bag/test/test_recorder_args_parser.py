@@ -275,6 +275,54 @@ def test_recorder_repeat_all_transient_local_default(test_arguments_parser):
     assert 0 == args.repeat_all_transient_local
 
 
+def test_recorder_topic_throttle_frequency_argument(test_arguments_parser):
+    """Test recorder --topic-throttle-frequency list argument parser."""
+    output_path = RESOURCES_PATH / 'ros2bag_tmp_file'
+    args = test_arguments_parser.parse_args(
+        ['--topic-throttle-frequency', '/imu=10.0', '/camera/image_raw=2.5', '--all-topics',
+         '--output', output_path.as_posix()]
+    )
+    assert ['/imu=10.0', '/camera/image_raw=2.5'] == args.topic_throttle_frequency
+
+    uri = args.output or datetime.datetime.now().strftime('rosbag2_%Y_%m_%d-%H_%M_%S')
+    error_str = validate_parsed_arguments(args, uri)
+    assert error_str is None
+    assert {'/imu': 10.0, '/camera/image_raw': 2.5} == args.topic_throttle_frequencies
+
+
+def test_recorder_topic_throttle_frequency_missing_frequency(test_arguments_parser):
+    """Test recorder --topic-throttle-frequency without a frequency fails validation."""
+    output_path = RESOURCES_PATH / 'ros2bag_tmp_file'
+    args = test_arguments_parser.parse_args(
+        ['--topic-throttle-frequency', '/imu', '--all-topics',
+         '--output', output_path.as_posix()]
+    )
+
+    uri = args.output or datetime.datetime.now().strftime('rosbag2_%Y_%m_%d-%H_%M_%S')
+    error_str = validate_parsed_arguments(args, uri)
+    assert error_str is not None
+    expected_output = 'Expected format <topic>=<frequency>'
+    matches = expected_output in error_str
+    assert matches, ERROR_STRING_MSG.format(expected_output, error_str)
+
+
+def test_recorder_topic_throttle_frequency_invalid_frequency(test_arguments_parser):
+    """Test recorder --topic-throttle-frequency with non-positive frequency fails validation."""
+    output_path = RESOURCES_PATH / 'ros2bag_tmp_file'
+    for bad_value in ['/imu=0', '/imu=-5.0', '/imu=inf', '/imu=not_a_number']:
+        args = test_arguments_parser.parse_args(
+            ['--topic-throttle-frequency', bad_value, '--all-topics',
+             '--output', output_path.as_posix()]
+        )
+
+        uri = args.output or datetime.datetime.now().strftime('rosbag2_%Y_%m_%d-%H_%M_%S')
+        error_str = validate_parsed_arguments(args, uri)
+        assert error_str is not None, f'expected validation error for {bad_value}'
+        expected_output = 'Frequency must be'
+        matches = expected_output in error_str
+        assert matches, ERROR_STRING_MSG.format(expected_output, error_str)
+
+
 def test_recorder_validate_exclude_regex_needs_inclusive_args(test_arguments_parser):
     """Test that --exclude-regex needs inclusive arguments."""
     output_path = RESOURCES_PATH / 'ros2bag_tmp_file'
