@@ -22,6 +22,7 @@ from rosbag2_py import (
     BagMetadata,
     ConverterOptions,
     FileInformation,
+    LowFreeSpaceAction,
     StorageFilter,
     StorageOptions,
     TopicInformation,
@@ -51,6 +52,20 @@ class TestStorageStructs(unittest.TestCase):
     def test_storage_options_ctor(self):
         storage_options = StorageOptions(uri='path')
         assert storage_options
+        assert storage_options.min_free_space_bytes == 0
+        assert storage_options.min_free_space_percent == 0.0
+        assert storage_options.low_free_space_action == LowFreeSpaceAction.STOP
+
+    def test_storage_options_min_free_space(self):
+        storage_options = StorageOptions(
+            uri='path',
+            min_free_space_bytes=1024,
+            min_free_space_percent=5.5,
+            low_free_space_action=LowFreeSpaceAction.DELETE_OLDEST_FILES,
+        )
+        assert storage_options.min_free_space_bytes == 1024
+        assert storage_options.min_free_space_percent == 5.5
+        assert storage_options.low_free_space_action == LowFreeSpaceAction.DELETE_OLDEST_FILES
 
     def test_storage_filter_ctor(self):
         storage_filter = StorageFilter()

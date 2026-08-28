@@ -32,6 +32,7 @@ from rosbag2_py import get_default_storage_id
 from rosbag2_py import get_registered_compressors
 from rosbag2_py import get_registered_serializers
 from rosbag2_py import get_registered_writers
+from rosbag2_py import LowFreeSpaceAction
 from rosbag2_py import Recorder
 from rosbag2_py import RecordOptions
 from rosbag2_py import StorageOptions
@@ -208,6 +209,30 @@ def add_recorder_arguments(parser: ArgumentParser) -> None:
         help='Maximum number of bag files to retain before deleting the oldest bagfile '
              '(circular logging). Default: %(default)d, unlimited. '
              'Requires --max-bag-size or --max-bag-duration to be set.')
+    parser.add_argument(
+        '--min-free-space', type=int, default=0, metavar='BYTES',
+        help='Minimum free space in bytes which shall remain available on the filesystem '
+             'where the bag is written. When the available free space goes below this limit, '
+             'the action specified by --low-free-space-action is taken. Unlike --max-bag-size '
+             'and --max-bag-files this is a bound on the whole filesystem, protecting against '
+             'the disk being filled by anything else growing on it. '
+             'Default: %(default)d, disabled.')
+    parser.add_argument(
+        '--min-free-space-percent', type=float, default=0.0, metavar='PERCENT',
+        help='Minimum free space as a percentage (0-100) of the filesystem capacity which shall '
+             'remain available on the filesystem where the bag is written. Can be combined with '
+             '--min-free-space, in which case the larger resulting threshold applies. '
+             'Default: %(default)s, disabled.')
+    parser.add_argument(
+        '--low-free-space-action', type=str, default='stop',
+        choices=['stop', 'delete_oldest_files'],
+        help='Action to take when the available free space goes below the limit set by '
+             '--min-free-space or --min-free-space-percent. "stop": stop the recording and '
+             'publish an event. "delete_oldest_files": delete the oldest bag files of the current '
+             'recording until the free space is above the limit and continue recording, stops '
+             'only if there are no more old bag files to delete. Requires bag splitting to be '
+             'enabled via --max-bag-size or --max-bag-duration to be effective. '
+             'Default: %(default)s.')
     parser.add_argument(
         '--max-cache-size', type=int, default=100 * 1024 * 1024,
         help='Maximum size (in bytes) of messages to hold in each buffer of cache. '
@@ -402,6 +427,19 @@ def validate_parsed_arguments(args, uri) -> str:
     if args.repeat_all_transient_local < 0:
         return print_error('--repeat-all-transient-local depth must be a non-negative integer.')
 
+    if args.min_free_space < 0:
+        return print_error('--min-free-space must be a non-negative integer.')
+
+    if args.min_free_space_percent < 0.0 or args.min_free_space_percent > 100.0:
+        return print_error('--min-free-space-percent must be in the range [0, 100].')
+
+    if args.low_free_space_action == 'delete_oldest_files' and \
+            not (args.max_bag_size or args.max_bag_duration):
+        print(print_warn('--low-free-space-action delete_oldest_files has no old bag files to '
+                         'delete unless bag splitting is enabled via --max-bag-size or '
+                         '--max-bag-duration. Recording will stop when free space is low.'),
+              flush=True)
+
     try:
         args.repeat_transient_local_messages = parse_repeat_transient_local_topics(
             args.repeat_transient_local)
@@ -467,7 +505,11 @@ class RecordVerb(VerbExtension):
             storage_preset_profile=args.storage_preset_profile,
             storage_config_uri=storage_config_file,
             snapshot_mode=args.snapshot_mode,
-            custom_data=custom_data
+            custom_data=custom_data,
+            min_free_space_bytes=args.min_free_space,
+            min_free_space_percent=args.min_free_space_percent,
+            low_free_space_action=LowFreeSpaceAction.__members__[
+                args.low_free_space_action.upper()],
         )
         record_options = RecordOptions()
         record_options.static_topics_uri = static_topics_uri

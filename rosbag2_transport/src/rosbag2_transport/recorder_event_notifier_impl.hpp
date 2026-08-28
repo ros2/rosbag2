@@ -33,6 +33,7 @@
 #include "rclcpp/publisher.hpp"
 #include "rclcpp/qos.hpp"
 
+#include "rosbag2_interfaces/msg/low_disk_space_event.hpp"
 #include "rosbag2_interfaces/msg/messages_lost_event.hpp"
 #include "rosbag2_interfaces/msg/write_split_event.hpp"
 #include "rosbag2_cpp/bag_events.hpp"
@@ -47,14 +48,17 @@ class RecorderEventNotifierImpl
 public:
   using WriteSplitEvent = rosbag2_interfaces::msg::WriteSplitEvent;
   using MessagesLostEvent = rosbag2_interfaces::msg::MessagesLostEvent;
+  using LowDiskSpaceEvent = rosbag2_interfaces::msg::LowDiskSpaceEvent;
   static constexpr const char * kDefaultWriteSplitTopicName = "events/write_split";
   static constexpr const char * kDefaultMessagesLostTopicName = "events/rosbag2_messages_lost";
+  static constexpr const char * kDefaultLowDiskSpaceTopicName = "events/low_disk_space";
 
   explicit RecorderEventNotifierImpl(
     rclcpp::Node * node,
     const rosbag2_transport::RecordOptions & record_options,
     RclcppPublisherWrapper<WriteSplitEvent>::SharedPtr split_event_pub = nullptr,
-    RclcppPublisherWrapper<MessagesLostEvent>::SharedPtr msgs_lost_event_pub = nullptr)
+    RclcppPublisherWrapper<MessagesLostEvent>::SharedPtr msgs_lost_event_pub = nullptr,
+    RclcppPublisherWrapper<LowDiskSpaceEvent>::SharedPtr low_disk_space_event_pub = nullptr)
   : node_(node)
   {
     if (!node) {
@@ -63,6 +67,8 @@ public:
 
     rosbag2_storage::Rosbag2QoS split_event_qos = rosbag2_storage::Rosbag2QoS::EventQoS();
     rosbag2_storage::Rosbag2QoS msgs_lost_event_qos = rosbag2_storage::Rosbag2QoS::EventQoS();
+    rosbag2_storage::Rosbag2QoS low_disk_space_event_qos =
+      rosbag2_storage::Rosbag2QoS::EventQoS();
 
     // Need to expand the default relative topic name to check for QoS overrides
     auto write_split_topic_name = rclcpp::expand_topic_or_service_name(
@@ -96,9 +102,26 @@ public:
                    messages_lost_topic_name.c_str());
     }
 
+    // Need to expand the default relative topic name to check for QoS overrides
+    auto low_disk_space_topic_name = rclcpp::expand_topic_or_service_name(
+      kDefaultLowDiskSpaceTopicName, node->get_name(), node->get_namespace(), false);
+
+    if (record_options.topic_qos_profile_overrides.find(low_disk_space_topic_name) !=
+      record_options.topic_qos_profile_overrides.end())
+    {
+      const auto & override_qos =
+        record_options.topic_qos_profile_overrides.at(low_disk_space_topic_name);
+      low_disk_space_event_qos = rosbag2_storage::Rosbag2QoS(override_qos);
+      RCLCPP_DEBUG(node_->get_logger(),
+                   "Using overridden QoS profile: \n%s\nfor '%s' topic.",
+                   low_disk_space_event_qos.to_string().c_str(),
+                   low_disk_space_topic_name.c_str());
+    }
+
     // Store QoS profiles for getter methods
     split_event_qos_ = split_event_qos;
     msgs_lost_event_qos_ = msgs_lost_event_qos;
+    low_disk_space_event_qos_ = low_disk_space_event_qos;
 
     if (split_event_pub) {
       split_event_pub_ = std::move(split_event_pub);
@@ -114,6 +137,14 @@ public:
       msgs_lost_event_pub_ = RclcppPublisherWrapper<MessagesLostEvent>::make_shared(
         node_->create_publisher<MessagesLostEvent>(kDefaultMessagesLostTopicName,
                                                    msgs_lost_event_qos));
+    }
+
+    if (low_disk_space_event_pub) {
+      low_disk_space_event_pub_ = std::move(low_disk_space_event_pub);
+    } else {
+      low_disk_space_event_pub_ = RclcppPublisherWrapper<LowDiskSpaceEvent>::make_shared(
+        node_->create_publisher<LowDiskSpaceEvent>(kDefaultLowDiskSpaceTopicName,
+                                                   low_disk_space_event_qos));
     }
 
     // Start the thread that will publish events
@@ -155,9 +186,23 @@ public:
     }
   }
 
+  [[nodiscard]] std::string_view get_low_disk_space_topic_name() const
+  {
+    if (low_disk_space_event_pub_) {
+      return low_disk_space_event_pub_->get_topic_name();
+    } else {
+      return std::string_view{""};
+    }
+  }
+
   [[nodiscard]] rclcpp::QoS get_write_split_qos() const
   {
     return split_event_qos_;
+  }
+
+  [[nodiscard]] rclcpp::QoS get_low_disk_space_qos() const
+  {
+    return low_disk_space_event_qos_;
   }
 
   [[nodiscard]] rclcpp::QoS get_messages_lost_qos() const
@@ -195,6 +240,16 @@ public:
     {
       std::lock_guard<std::mutex> lock(event_publisher_thread_mutex_);
       bag_split_info_queue_.push(bag_split_info);
+    }
+    event_publisher_thread_wake_cv_.notify_all();
+  }
+
+  void on_low_disk_space_in_recorder(
+    const rosbag2_cpp::bag_events::LowDiskSpaceInfo & low_disk_space_info)
+  {
+    {
+      std::lock_guard<std::mutex> lock(event_publisher_thread_mutex_);
+      low_disk_space_info_queue_.push(low_disk_space_info);
     }
     event_publisher_thread_wake_cv_.notify_all();
   }
@@ -263,8 +318,8 @@ public:
         // If publishing of messages lost statistics is disabled, wait indefinitely
         event_publisher_thread_wake_cv_.wait(pub_thread_lock,
           [this]() {
-            return !bag_split_info_queue_.empty() || event_publisher_thread_should_exit_ ||
-                   !disable_publishing_msgs_lost_statistics_;
+            return !bag_split_info_queue_.empty() || !low_disk_space_info_queue_.empty() ||
+                   event_publisher_thread_should_exit_ || !disable_publishing_msgs_lost_statistics_;
           });
       } else {
         // Wait for either a write split event or the specified period for messages lost statistics
@@ -272,8 +327,8 @@ public:
           pub_thread_lock,
           msgs_lost_stats_max_publishing_period_,
           [this]() {
-            return !bag_split_info_queue_.empty() || event_publisher_thread_should_exit_ ||
-                   disable_publishing_msgs_lost_statistics_;
+            return !bag_split_info_queue_.empty() || !low_disk_space_info_queue_.empty() ||
+                   event_publisher_thread_should_exit_ || disable_publishing_msgs_lost_statistics_;
           }
         );
       }
@@ -295,6 +350,29 @@ public:
             "Failed to publish message on '" << get_write_split_topic_name() << "' topic.");
         }
         bag_split_info_queue_.pop();
+      }
+
+      while (!low_disk_space_info_queue_.empty()) {
+        try {
+          const auto & low_disk_space_info = low_disk_space_info_queue_.front();
+          auto message = rosbag2_interfaces::msg::LowDiskSpaceEvent();
+          message.path = low_disk_space_info.path;
+          message.available_bytes = low_disk_space_info.available_bytes;
+          message.capacity_bytes = low_disk_space_info.capacity_bytes;
+          message.min_free_space_bytes = low_disk_space_info.min_free_space_bytes;
+          message.deleted_files = low_disk_space_info.deleted_files;
+          message.recording_stopped = low_disk_space_info.writing_stopped;
+          message.node_name = node_->get_fully_qualified_name();
+          low_disk_space_event_pub_->publish(message);
+        } catch (const std::exception & e) {
+          RCLCPP_ERROR_STREAM(node_->get_logger(),
+            "Failed to publish message on '" << get_low_disk_space_topic_name() <<
+            "' topic. \nError: " << e.what());
+        } catch (...) {
+          RCLCPP_ERROR_STREAM(node_->get_logger(),
+            "Failed to publish message on '" << get_low_disk_space_topic_name() << "' topic.");
+        }
+        low_disk_space_info_queue_.pop();
       }
 
       if (!disable_publishing_msgs_lost_statistics_) {
@@ -332,10 +410,13 @@ private:
   rclcpp::Node * node_;
   RclcppPublisherWrapper<WriteSplitEvent>::SharedPtr split_event_pub_;
   RclcppPublisherWrapper<MessagesLostEvent>::SharedPtr msgs_lost_event_pub_;
+  RclcppPublisherWrapper<LowDiskSpaceEvent>::SharedPtr low_disk_space_event_pub_;
   rclcpp::QoS split_event_qos_{1};
   rclcpp::QoS msgs_lost_event_qos_{1};
+  rclcpp::QoS low_disk_space_event_qos_{1};
   std::atomic<bool> event_publisher_thread_should_exit_ = false;
   std::queue<rosbag2_cpp::bag_events::BagSplitInfo> bag_split_info_queue_;
+  std::queue<rosbag2_cpp::bag_events::LowDiskSpaceInfo> low_disk_space_info_queue_;
   std::mutex event_publisher_thread_mutex_;
   std::condition_variable event_publisher_thread_wake_cv_;
   std::thread event_publisher_thread_;

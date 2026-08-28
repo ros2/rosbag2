@@ -24,6 +24,7 @@
 #include "rclcpp/publisher.hpp"
 
 #include "rosbag2_cpp/bag_events.hpp"
+#include "rosbag2_interfaces/msg/low_disk_space_event.hpp"
 #include "rosbag2_interfaces/msg/messages_lost_event.hpp"
 #include "rosbag2_interfaces/msg/write_split_event.hpp"
 #include "rosbag2_transport/rclcpp_publisher_wrapper.hpp"
@@ -54,21 +55,25 @@ class ROSBAG2_TRANSPORT_PUBLIC RecorderEventNotifier
 public:
   using WriteSplitEvent = rosbag2_interfaces::msg::WriteSplitEvent;
   using MessagesLostEvent = rosbag2_interfaces::msg::MessagesLostEvent;
+  using LowDiskSpaceEvent = rosbag2_interfaces::msg::LowDiskSpaceEvent;
 
   /// \brief Constructor for the RecorderEventNotifier class.
   /// \details This constructor initializes the event notifier with a node and optional publishers
-  /// for split events and messages lost events.
+  /// for split events, messages lost events and low disk space events.
   /// \param node Pointer to the rclcpp Node that will be used for publishing events.
   /// \param record_options The record options used by the recorder.
   /// \param split_event_pub Optional publisher for WriteSplitEvent messages. If not provided, a
   /// new publisher will be created with the topic name "events/write_split".
   /// \param msgs_lost_event_pub Optional publisher for MessagesLostEvent messages. If not provided,
   /// a new publisher will be created with the topic name "events/rosbag2_messages_lost".
+  /// \param low_disk_space_event_pub Optional publisher for LowDiskSpaceEvent messages. If not
+  /// provided, a new publisher will be created with the topic name "events/low_disk_space".
   explicit RecorderEventNotifier(
     rclcpp::Node * node,
     const rosbag2_transport::RecordOptions & record_options = {},
     RclcppPublisherWrapper<WriteSplitEvent>::SharedPtr split_event_pub = nullptr,
-    RclcppPublisherWrapper<MessagesLostEvent>::SharedPtr msgs_lost_event_pub = nullptr);
+    RclcppPublisherWrapper<MessagesLostEvent>::SharedPtr msgs_lost_event_pub = nullptr,
+    RclcppPublisherWrapper<LowDiskSpaceEvent>::SharedPtr low_disk_space_event_pub = nullptr);
 
 /// \brief Destructor for the RecorderEventNotifier class.
   virtual ~RecorderEventNotifier();
@@ -95,6 +100,11 @@ public:
     const std::string & topic_name,
     const rclcpp::QOSMessageLostInfo & qos_msgs_lost_info);
 
+  /// \brief Callback for when the writer detected low free space on the disk.
+  /// \details Publishes a LowDiskSpaceEvent message asynchronously from the event publisher thread.
+  void on_low_disk_space_in_recorder(
+    const rosbag2_cpp::bag_events::LowDiskSpaceInfo & low_disk_space_info);
+
   /// \brief Getter for the total number of messages lost in transport.
   /// \return The total number of messages lost in transport.
   [[nodiscard]] uint64_t get_total_num_messages_lost_in_transport() const;
@@ -115,11 +125,17 @@ public:
   /// \brief Get the default topic name for messages lost events.
   [[nodiscard]] static const char * get_default_messages_lost_topic_name();
 
+  /// \brief Get the default topic name for low disk space events.
+  [[nodiscard]] static const char * get_default_low_disk_space_topic_name();
+
   /// \brief Get the topic name used for publishing write split events.
   [[nodiscard]] std::string_view get_write_split_topic_name() const;
 
   /// \brief Get the topic name used for publishing messages lost events.
   [[nodiscard]] std::string_view get_messages_lost_topic_name() const;
+
+  /// \brief Get the topic name used for publishing low disk space events.
+  [[nodiscard]] std::string_view get_low_disk_space_topic_name() const;
 
   /// \brief Get the QoS profile used for write split event publisher.
   /// \return The QoS profile used for publishing write split events.
@@ -128,6 +144,10 @@ public:
   /// \brief Get the QoS profile used for messages lost event publisher.
   /// \return The QoS profile used for publishing messages lost events.
   [[nodiscard]] rclcpp::QoS get_messages_lost_qos() const;
+
+  /// \brief Get the QoS profile used for low disk space event publisher.
+  /// \return The QoS profile used for publishing low disk space events.
+  [[nodiscard]] rclcpp::QoS get_low_disk_space_qos() const;
 
 private:
   std::unique_ptr<RecorderEventNotifierImpl> pimpl_;

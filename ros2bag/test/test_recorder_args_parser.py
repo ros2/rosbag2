@@ -447,3 +447,46 @@ def test_recorder_stats_max_publishing_rate_argument_invalid(test_arguments_pars
     expected_output = 'stats_max_publishing_rate must be between 0 and 1000.'
     matches = expected_output in error_str
     assert matches, ERROR_STRING_MSG.format(expected_output, error_str)
+
+
+def test_recorder_min_free_space_arguments(test_arguments_parser):
+    """Test recorder --min-free-space related arguments parser."""
+    output_path = RESOURCES_PATH / 'ros2bag_tmp_file'
+    args = test_arguments_parser.parse_args(
+        ['--all', '--output', output_path.as_posix(),
+         '--min-free-space', '1073741824', '--min-free-space-percent', '5.5',
+         '--low-free-space-action', 'delete_oldest_files', '--max-bag-size', '100000'])
+    assert args.min_free_space == 1073741824
+    assert args.min_free_space_percent == 5.5
+    assert args.low_free_space_action == 'delete_oldest_files'
+    assert validate_parsed_arguments(args, output_path.as_posix()) is None
+
+
+def test_recorder_min_free_space_defaults(test_arguments_parser):
+    """Test recorder --min-free-space related arguments are disabled by default."""
+    output_path = RESOURCES_PATH / 'ros2bag_tmp_file'
+    args = test_arguments_parser.parse_args(['--all', '--output', output_path.as_posix()])
+    assert args.min_free_space == 0
+    assert args.min_free_space_percent == 0.0
+    assert args.low_free_space_action == 'stop'
+    assert validate_parsed_arguments(args, output_path.as_posix()) is None
+
+
+def test_recorder_min_free_space_arguments_invalid(test_arguments_parser):
+    """Test recorder --min-free-space related arguments validation."""
+    output_path = RESOURCES_PATH / 'ros2bag_tmp_file'
+    args = test_arguments_parser.parse_args(
+        ['--all', '--output', output_path.as_posix(), '--min-free-space', '-1'])
+    error_string = validate_parsed_arguments(args, output_path.as_posix())
+    assert error_string is not None
+    assert '--min-free-space' in error_string
+
+    args = test_arguments_parser.parse_args(
+        ['--all', '--output', output_path.as_posix(), '--min-free-space-percent', '100.5'])
+    error_string = validate_parsed_arguments(args, output_path.as_posix())
+    assert error_string is not None
+    assert '--min-free-space-percent' in error_string
+
+    with pytest.raises(SystemExit):
+        test_arguments_parser.parse_args(
+            ['--all', '--output', output_path.as_posix(), '--low-free-space-action', 'pause'])

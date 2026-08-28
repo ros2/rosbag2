@@ -25,6 +25,30 @@
 namespace rosbag2_storage
 {
 
+/// \brief Action to take when the available free space on the filesystem holding the bag falls
+/// below the configured minimum (see StorageOptions::min_free_space_bytes and
+/// StorageOptions::min_free_space_percent).
+enum class LowFreeSpaceAction : uint8_t
+{
+  /// Stop writing messages to the bag. The recorder will stop the recording.
+  STOP = 0,
+  /// Delete the oldest bag files (splits) of the current recording until the free space is above
+  /// the limit and continue recording. Falls back to STOP if there are no more old bag files to
+  /// delete. Only useful when bag splitting is enabled (max_bagfile_size, max_bagfile_duration or
+  /// splits triggered via the recorder API or services).
+  DELETE_OLDEST_FILES = 1,
+};
+
+/// \brief Convert LowFreeSpaceAction to its string representation.
+/// \return "stop" or "delete_oldest_files".
+ROSBAG2_STORAGE_PUBLIC std::string to_string(LowFreeSpaceAction action);
+
+/// \brief Parse LowFreeSpaceAction from string. Accepted values are "stop" and
+/// "delete_oldest_files" (case-insensitive).
+/// \throws std::invalid_argument if the string doesn't correspond to any known action.
+ROSBAG2_STORAGE_PUBLIC LowFreeSpaceAction low_free_space_action_from_string(
+  const std::string & action);
+
 struct StorageOptions
 {
 public:
@@ -79,6 +103,27 @@ public:
 
   // Stores the custom data
   std::unordered_map<std::string, std::string> custom_data{};
+
+  // Note: New fields are appended at the end to keep positional aggregate initialization of
+  // StorageOptions in existing code working.
+
+  // Minimum free space in bytes which shall remain available on the filesystem where the bag is
+  // being written. When the available free space goes below this limit, the
+  // low_free_space_action is taken. A value of 0 disables the check.
+  // Note: This is a bound on the whole filesystem, not on the bag size. It protects against the
+  // disk being filled by the recording and by anything else growing on the same filesystem.
+  uint64_t min_free_space_bytes = 0;
+
+  // Minimum free space as a percentage (0.0 - 100.0) of the filesystem capacity which shall
+  // remain available. When the available free space goes below this limit, the
+  // low_free_space_action is taken. A value of 0 disables the check.
+  // If both min_free_space_bytes and min_free_space_percent are set, the larger resulting
+  // threshold in bytes is used.
+  double min_free_space_percent = 0.0;
+
+  // Action to take when the available free space goes below the configured minimum.
+  // Defaults to stopping the recording.
+  LowFreeSpaceAction low_free_space_action = LowFreeSpaceAction::STOP;
 };
 
 }  // namespace rosbag2_storage

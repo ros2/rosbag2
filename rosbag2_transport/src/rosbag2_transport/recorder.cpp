@@ -154,6 +154,15 @@ public:
     const std::string & topic_name,
     const rclcpp::QOSMessageLostInfo & qos_msgs_lost_info);
 
+  /// @brief Handle the low disk space event from the writer.
+  /// @details Publishes the event via the event notifier and, if the writer stopped writing,
+  /// stops the recording asynchronously.
+  /// @note Called from within the writer's write() call, i.e. with the writer's mutex held.
+  /// Therefore, the recording must not be stopped synchronously from this method, since
+  /// stop() closes the writer and would deadlock.
+  /// @param low_disk_space_info Information about the low disk space event.
+  void on_low_disk_space(const rosbag2_cpp::bag_events::LowDiskSpaceInfo & low_disk_space_info);
+
   /// @brief Get total number of messages lost in transport layer.
   /// @return Total number of messages lost in transport layer.
   [[nodiscard]]
@@ -757,6 +766,10 @@ bool RecorderImpl::record(const std::string & uri)
   callbacks.messages_lost_callback =
     [this](const std::vector<rosbag2_cpp::bag_events::MessagesLostInfo> & msgs_lost_info) {
       event_notifier_->on_messages_lost_in_recorder(msgs_lost_info);
+    };
+  callbacks.low_disk_space_callback =
+    [this](const rosbag2_cpp::bag_events::LowDiskSpaceInfo & low_disk_space_info) {
+      on_low_disk_space(low_disk_space_info);
     };
   writer_->add_event_callbacks(callbacks);
 
@@ -1718,6 +1731,36 @@ void RecorderImpl::on_messages_lost_in_transport(
   const rclcpp::QOSMessageLostInfo & qos_msgs_lost_info)
 {
   event_notifier_->on_messages_lost_in_transport(topic_name, qos_msgs_lost_info);
+}
+
+void RecorderImpl::on_low_disk_space(
+  const rosbag2_cpp::bag_events::LowDiskSpaceInfo & low_disk_space_info)
+{
+  event_notifier_->on_low_disk_space_in_recorder(low_disk_space_info);
+  if (!low_disk_space_info.writing_stopped) {
+    return;
+  }
+  RCLCPP_ERROR_STREAM(
+    node->get_logger(),
+    "Available free space (" << low_disk_space_info.available_bytes <<
+      " bytes) on the filesystem for '" << low_disk_space_info.path <<
+      "' is below the minimum free space limit (" << low_disk_space_info.min_free_space_bytes <<
+      " bytes). Stopping recording.");
+
+  // Note: This callback is invoked from within writer->write() with the writer's mutex held.
+  // Calling stop() here would deadlock on writer->close(), therefore schedule the stop to be
+  // executed asynchronously from the action task runner thread.
+  action_task_runner_.schedule(
+    node->now(),
+    [this]() {
+      try {
+        this->stop();
+      } catch (const std::exception & e) {
+        RCLCPP_ERROR(node->get_logger(),
+                     "Error while stopping recording on low disk space: %s", e.what());
+      }
+    },
+    "Stop recording on low disk space");
 }
 
 uint64_t RecorderImpl::get_total_num_messages_lost_in_transport() const
