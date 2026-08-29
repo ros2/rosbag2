@@ -27,6 +27,7 @@
 
 #include "rclcpp/logger.hpp"
 #include "rclcpp/logging.hpp"
+#include <iomanip>
 #include "rcutils/time.h"
 #include "rosbag2_transport/player_progress_bar.hpp"
 
