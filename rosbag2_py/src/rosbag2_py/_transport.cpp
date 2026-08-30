@@ -593,30 +593,13 @@ public:
     rclcpp::init(arguments.argc(), arguments.argv(),
                  rclcpp::InitOptions(), rclcpp::SignalHandlerOptions::None);
 
-<<<<<<< HEAD
-    if (record_options.rmw_serialization_format.empty()) {
-      record_options.rmw_serialization_format = std::string(rmw_get_serialization_format());
-    }
-    auto writer = rosbag2_transport::ReaderWriterFactory::make_writer(record_options);
-=======
     // See the Player constructor: if constructing the Recorder throws, shut the
     // Context down here so it is not left to be destroyed at process exit.
     try {
-      if (!record_options.rmw_serialization_format.empty() &&
-        record_options.output_serialization_format.empty())
-      {
-        record_options.output_serialization_format = record_options.rmw_serialization_format;
-        PyErr_WarnEx(PyExc_DeprecationWarning,
-                     "The rmw_serialization_format option is deprecated and will be removed in a "
-                     "future release.\nPlease use output_serialization_format instead.",
-                     1
-        );
-      }
-      if (record_options.output_serialization_format.empty()) {
-        record_options.output_serialization_format = std::string(rmw_get_serialization_format());
+      if (record_options.rmw_serialization_format.empty()) {
+        record_options.rmw_serialization_format = std::string(rmw_get_serialization_format());
       }
       auto writer = rosbag2_transport::ReaderWriterFactory::make_writer(record_options);
->>>>>>> 2777970 (Run RMW tests in isolation and call shutdown on error (#2460))
 
       recorder_ = std::make_shared<rosbag2_transport::Recorder>(
         std::move(writer), storage_options, record_options, node_name);
