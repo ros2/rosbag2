@@ -14,6 +14,7 @@
 
 #include <algorithm>
 #include <chrono>
+#include <filesystem>
 #include <future>
 #include <memory>
 #include <regex>
