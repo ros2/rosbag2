@@ -28,6 +28,7 @@ find_package(ament_index_cpp REQUIRED)
 
 if(BUILD_TESTING)
   find_package(ament_cmake_gmock REQUIRED)
+  find_package(ament_cmake_ros REQUIRED)
   find_package(ament_lint_auto REQUIRED)
   ament_lint_auto_find_test_dependencies()
 
@@ -42,7 +43,7 @@ if(BUILD_TESTING)
   find_package(std_msgs REQUIRED)
   find_package(test_msgs REQUIRED)
 
-  ament_add_gmock(test_rosbag2_record_end_to_end
+  ament_add_ros_isolated_gmock(test_rosbag2_record_end_to_end
     test/rosbag2_tests/test_rosbag2_record_end_to_end.cpp
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
     TIMEOUT 180)
@@ -58,7 +59,7 @@ if(BUILD_TESTING)
     ament_add_test_label(test_rosbag2_record_end_to_end xfail)
   endif()
 
-  ament_add_gmock(test_rosbag2_play_end_to_end
+  ament_add_ros_isolated_gmock(test_rosbag2_play_end_to_end
     test/rosbag2_tests/test_rosbag2_play_end_to_end.cpp
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
   if(TARGET test_rosbag2_play_end_to_end)
@@ -120,7 +121,7 @@ if(BUILD_TESTING)
     )
   endif()
 
-  ament_add_gmock(test_rosbag2_cpp_get_service_info
+  ament_add_ros_isolated_gmock(test_rosbag2_cpp_get_service_info
     test/rosbag2_tests/test_rosbag2_cpp_get_service_info.cpp
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
   if(TARGET test_rosbag2_cpp_get_service_info)
