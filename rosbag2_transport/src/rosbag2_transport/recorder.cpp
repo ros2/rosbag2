@@ -1531,7 +1531,16 @@ void RecorderImpl::topics_discovery() noexcept
         std::lock_guard<std::mutex> subscriptions_lock(subscriptions_mutex_);
         subscriptions_count = subscriptions_.size();
       }
-      if (!record_options_.topics.empty() &&
+      const bool has_additional_or_dynamic_selection =
+        record_options_.all_topics ||
+        record_options_.all_services ||
+        record_options_.all_actions ||
+        !record_options_.topic_types.empty() ||
+        !record_options_.services.empty() ||
+        !record_options_.actions.empty() ||
+        !record_options_.regex.empty();
+      if (!has_additional_or_dynamic_selection &&
+        !record_options_.topics.empty() &&
         subscriptions_count == record_options_.topics.size())
       {
         RCLCPP_INFO(

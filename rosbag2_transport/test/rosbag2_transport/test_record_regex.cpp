@@ -107,6 +107,160 @@ TEST_F(RecordIntegrationTestFixture, regex_topics_recording)
   EXPECT_TRUE(recorded_topics.find(v1) != recorded_topics.end());
 }
 
+TEST_F(RecordIntegrationTestFixture, regex_and_explicit_topics_continue_discovery)
+{
+  auto test_string_messages = get_messages_strings();
+  const std::string explicitly_listed_topic = "/explicit_topic";
+  const std::string late_regex_topic = "/namespace/late_topic";
+  const std::string regex = "^/namespace/.*$";
+
+  rosbag2_transport::RecordOptions record_options{};
+  record_options.topics = {explicitly_listed_topic};
+  record_options.regex = regex;
+  record_options.rmw_serialization_format = "rmw_format";
+  record_options.topic_polling_interval = 50ms;
+
+  auto recorder = std::make_shared<MockRecorder>(writer_, storage_options_, record_options);
+  recorder->record();
+
+  start_async_spin(recorder);
+  auto cleanup_process_handle = rcpputils::make_scope_exit([&]() {stop_spinning();});
+
+  rosbag2_test_common::PublicationManager initial_pub_manager;
+  initial_pub_manager.setup_publisher(explicitly_listed_topic, test_string_messages[0], 3);
+  ASSERT_TRUE(initial_pub_manager.wait_for_matched(explicitly_listed_topic.c_str()));
+
+  rosbag2_test_common::PublicationManager late_pub_manager;
+  late_pub_manager.setup_publisher(late_regex_topic, test_string_messages[1], 3);
+  ASSERT_TRUE(late_pub_manager.wait_for_matched(late_regex_topic.c_str(), std::chrono::seconds(5)))
+    << "Recorder failed to discover the late regex-matching topic";
+
+  initial_pub_manager.run_publishers();
+  late_pub_manager.run_publishers();
+
+  auto & writer = recorder->get_writer_handle();
+  MockSequentialWriter & mock_writer =
+    static_cast<MockSequentialWriter &>(writer.get_implementation_handle());
+
+  constexpr size_t expected_messages = 6;
+  auto ret = rosbag2_test_common::wait_until_condition(
+    [ =, &mock_writer]() {
+      return mock_writer.get_number_of_recorded_messages() >= expected_messages;
+    },
+    std::chrono::seconds(5));
+  EXPECT_TRUE(ret) << "failed to capture expected messages in time";
+
+  auto recorded_topics = mock_writer.get_topics();
+  EXPECT_THAT(recorded_topics, SizeIs(2));
+  EXPECT_TRUE(recorded_topics.find(explicitly_listed_topic) != recorded_topics.end());
+  EXPECT_TRUE(recorded_topics.find(late_regex_topic) != recorded_topics.end());
+}
+
+TEST_F(RecordIntegrationTestFixture, regex_and_explicit_topics_continue_discovery_for_late_service)
+{
+  auto test_string_messages = get_messages_strings();
+  const std::string explicitly_listed_topic = "/explicit_topic";
+  const std::string late_regex_service = "/namespace/late_service";
+  const std::string late_regex_service_event = late_regex_service + "/_service_event";
+  const std::string regex = "^/namespace/.*$";
+
+  rosbag2_transport::RecordOptions record_options{};
+  record_options.topics = {explicitly_listed_topic};
+  record_options.regex = regex;
+  record_options.rmw_serialization_format = "rmw_format";
+  record_options.topic_polling_interval = 50ms;
+
+  auto recorder = std::make_shared<MockRecorder>(writer_, storage_options_, record_options);
+  recorder->record();
+
+  start_async_spin(recorder);
+  auto cleanup_process_handle = rcpputils::make_scope_exit([&]() {stop_spinning();});
+
+  rosbag2_test_common::PublicationManager initial_pub_manager;
+  initial_pub_manager.setup_publisher(explicitly_listed_topic, test_string_messages[0], 3);
+  ASSERT_TRUE(initial_pub_manager.wait_for_matched(explicitly_listed_topic.c_str()));
+
+  auto service_manager =
+    std::make_shared<rosbag2_test_common::ClientManager<test_msgs::srv::BasicTypes>>(
+    late_regex_service);
+  ASSERT_TRUE(service_manager->wait_for_service_to_be_ready());
+  ASSERT_TRUE(recorder->wait_for_topic_to_be_discovered(
+      late_regex_service_event, std::chrono::seconds(5)))
+    << "Recorder failed to discover the late regex-matching service event topic";
+
+  initial_pub_manager.run_publishers();
+
+  auto & writer = recorder->get_writer_handle();
+  auto & mock_writer = dynamic_cast<MockSequentialWriter &>(writer.get_implementation_handle());
+
+  ASSERT_TRUE(service_manager->send_request());
+
+  constexpr size_t expected_messages = 5;
+  auto ret = rosbag2_test_common::wait_until_condition(
+    [ =, &mock_writer]() {
+      return mock_writer.get_number_of_recorded_messages() >= expected_messages;
+    },
+    std::chrono::seconds(5));
+  EXPECT_TRUE(ret) << "failed to capture expected messages in time";
+
+  auto recorded_topics = mock_writer.get_topics();
+  EXPECT_TRUE(recorded_topics.find(explicitly_listed_topic) != recorded_topics.end());
+  EXPECT_TRUE(recorded_topics.find(late_regex_service_event) != recorded_topics.end());
+}
+
+TEST_F(RecordIntegrationTestFixture, regex_and_explicit_topics_continue_discovery_for_late_action)
+{
+  auto test_string_messages = get_messages_strings();
+  const std::string explicitly_listed_topic = "/explicit_topic";
+  const std::string late_regex_action = "/namespace/late_action";
+  const std::string late_regex_action_event =
+    late_regex_action + "/_action/get_result/_service_event";
+  const std::string regex = "^/namespace/.*$";
+
+  rosbag2_transport::RecordOptions record_options{};
+  record_options.topics = {explicitly_listed_topic};
+  record_options.regex = regex;
+  record_options.rmw_serialization_format = "rmw_format";
+  record_options.topic_polling_interval = 50ms;
+
+  auto recorder = std::make_shared<MockRecorder>(writer_, storage_options_, record_options);
+  recorder->record();
+
+  start_async_spin(recorder);
+  auto cleanup_process_handle = rcpputils::make_scope_exit([&]() {stop_spinning();});
+
+  rosbag2_test_common::PublicationManager initial_pub_manager;
+  initial_pub_manager.setup_publisher(explicitly_listed_topic, test_string_messages[0], 3);
+  ASSERT_TRUE(initial_pub_manager.wait_for_matched(explicitly_listed_topic.c_str()));
+
+  auto action_manager =
+    std::make_shared<rosbag2_test_common::ActionClientManager<test_msgs::action::Fibonacci>>(
+    late_regex_action);
+  ASSERT_TRUE(action_manager->wait_for_action_server_to_be_ready());
+  ASSERT_TRUE(recorder->wait_for_topic_to_be_discovered(
+      late_regex_action_event, std::chrono::seconds(5)))
+    << "Recorder failed to discover the late regex-matching action introspection topic";
+
+  initial_pub_manager.run_publishers();
+
+  auto & writer = recorder->get_writer_handle();
+  auto & mock_writer = dynamic_cast<MockSequentialWriter &>(writer.get_implementation_handle());
+
+  ASSERT_TRUE(action_manager->send_goal());
+
+  constexpr size_t expected_at_least_messages_size = 11;
+  auto ret = rosbag2_test_common::wait_until_condition(
+    [ =, &mock_writer]() {
+      return mock_writer.get_number_of_recorded_messages() >= expected_at_least_messages_size;
+    },
+    std::chrono::seconds(5));
+  EXPECT_TRUE(ret) << "failed to capture expected messages in time";
+
+  auto recorded_topics = mock_writer.get_topics();
+  EXPECT_TRUE(recorded_topics.find(explicitly_listed_topic) != recorded_topics.end());
+  EXPECT_TRUE(recorded_topics.find(late_regex_action_event) != recorded_topics.end());
+}
+
 TEST_F(RecordIntegrationTestFixture, regex_and_exclude_regex_topic_recording)
 {
   auto test_string_messages = get_messages_strings();
