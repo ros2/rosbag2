@@ -32,7 +32,12 @@
 #include "rosbag2_transport/record_options.hpp"
 #include "rosbag2_transport/recorder.hpp"
 
+#include "rclcpp/duration.hpp"
 #include "rclcpp/executors/events_cbg_executor/events_cbg_executor.hpp"
+#include "rclcpp/executors/single_threaded_executor.hpp"
+#include "rclcpp/init_options.hpp"
+#include "rclcpp/qos.hpp"
+#include "rclcpp/utilities.hpp"
 
 #include "./pybind11.hpp"
 
