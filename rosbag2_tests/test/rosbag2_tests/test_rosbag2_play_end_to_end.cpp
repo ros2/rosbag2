@@ -24,6 +24,7 @@
 
 #include "rosbag2_interfaces/srv/resume.hpp"
 #include "rosbag2_interfaces/srv/stop.hpp"
+#include "rosbag2_interfaces/srv/play.hpp"
 #include "rosbag2_test_common/process_execution_helpers.hpp"
 #include "rosbag2_test_common/subscription_manager.hpp"
 #include "rosbag2_test_common/tested_storage_ids.hpp"
@@ -42,6 +43,7 @@ class PlayEndToEndTestFixture : public Test, public WithParamInterface<std::stri
 public:
   using Resume = rosbag2_interfaces::srv::Resume;
   using Stop = rosbag2_interfaces::srv::Stop;
+  using Play = rosbag2_interfaces::srv::Play;
 
   PlayEndToEndTestFixture()
   : sub_qos_(rclcpp::QoS{10}
@@ -54,6 +56,7 @@ public:
     client_node_ = std::make_shared<rclcpp::Node>("test_player_client");
     cli_resume_ = client_node_->create_client<Resume>("/rosbag2_player/resume");
     cli_stop_ = client_node_->create_client<Stop>("/rosbag2_player/stop");
+    cli_play_ = client_node_->create_client<Play>("/rosbag2_player/play");
     exec_ = std::make_shared<rclcpp::executors::SingleThreadedExecutor>();
     exec_->add_node(client_node_);
     spin_thread_ = std::thread(
@@ -113,6 +116,7 @@ public:
   rclcpp::Node::SharedPtr client_node_;
   rclcpp::Client<Resume>::SharedPtr cli_resume_;
   rclcpp::Client<Stop>::SharedPtr cli_stop_;
+  rclcpp::Client<Play>::SharedPtr cli_play_;
   std::thread spin_thread_;
   std::shared_ptr<rclcpp::executors::SingleThreadedExecutor> exec_;
   const std::chrono::seconds service_call_timeout_ {10};
@@ -356,6 +360,62 @@ TEST_P(PlayEndToEndTestFixture, play_end_to_end_exits_gracefully_on_sigterm) {
   cleanup_process_handle.cancel();
 }
 #endif  // #ifndef _WIN32
+
+TEST_P(PlayEndToEndTestFixture, play_persistent_allows_restart_via_play_service)
+{
+  const std::string topic_name = "/test_topic";
+  sub_->add_subscription<test_msgs::msg::BasicTypes>(topic_name, 3, sub_qos_);
+
+  // Start ros2 bag play in pause + persistent mode
+  auto process_id =
+    start_execution("ros2 bag play --persistent -p " + bags_path_ +
+    "/cdr_test --topics " + topic_name);
+  auto cleanup_process_handle = rcpputils::make_scope_exit(
+    [process_id]() {
+      stop_execution(process_id);
+    });
+
+  EXPECT_TRUE(sub_->spin_and_wait_for_matched({topic_name}));
+
+  ASSERT_TRUE(cli_resume_->wait_for_service(service_call_timeout_));
+  successful_service_request<Resume>(cli_resume_);
+
+  sub_->spin_subscriptions_sync();
+  auto primitive_msgs = sub_->get_received_messages<test_msgs::msg::BasicTypes>(topic_name);
+  ASSERT_THAT(primitive_msgs, SizeIs(Ge(3u)));
+
+  // Stop playback via stop service
+  ASSERT_TRUE(cli_stop_->wait_for_service(service_call_timeout_));
+  successful_service_request<Stop>(cli_stop_);
+
+  sub_ = std::make_unique<SubscriptionManager>();
+  sub_->add_subscription<test_msgs::msg::BasicTypes>(topic_name, 3, sub_qos_);
+  EXPECT_TRUE(sub_->spin_and_wait_for_matched({topic_name}));
+
+  ASSERT_TRUE(cli_play_->wait_for_service(service_call_timeout_));
+  auto play_request = std::make_shared<Play::Request>();
+
+  play_request->start_time = rclcpp::Time(0, 0);
+  play_request->start_offset = rclcpp::Time(0, 0);
+  play_request->playback_duration = rclcpp::Duration(-1, 0);
+  play_request->playback_until_timestamp = rclcpp::Time(-1);
+
+  auto play_response =
+    successful_service_request<Play>(cli_play_, play_request);
+
+  ASSERT_TRUE(play_response);
+  EXPECT_EQ(play_response->return_code,
+            rosbag2_interfaces::srv::Play::Response::RETURN_CODE_SUCCESS);
+  EXPECT_TRUE(play_response->error_string.empty());
+
+  sub_->spin_subscriptions_sync();
+  primitive_msgs = sub_->get_received_messages<test_msgs::msg::BasicTypes>(topic_name);
+  ASSERT_THAT(primitive_msgs, SizeIs(Ge(3u)));
+
+  // Send SIGINT to child process and check exit code
+  stop_execution(process_id, SIGINT);
+  cleanup_process_handle.cancel();
+}
 
 INSTANTIATE_TEST_SUITE_P(
   TestPlayEndToEnd,

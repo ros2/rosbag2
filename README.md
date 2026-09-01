@@ -358,6 +358,8 @@ The bag argument can be a directory containing `metadata.yaml` and one or more s
 to a single storage file such as `.mcap` or `.db3`.
 The Player will automatically detect which storage implementation to use for playing.
 A progress bar to track the playback progress will be displayed in the terminal by default.
+By default, the player process exits when playback is stopped or when it reaches the end of the
+bag.
 
 To play back multiple bags:
 
@@ -390,6 +392,11 @@ Options:
   The reference to use for bag message chronological ordering.
   Choices: reception timestamp (`received`), publication timestamp (`sent`).
   Default: reception timestamp.
+* `--persistent`:
+  Keep the player process alive after playback stops or reaches the end of the bag.
+  In persistent mode, playback can be started again without restarting `ros2 bag play`, including
+  future scheduled starts by setting `start_time` in the `~/play` service request.
+  Without this option, the player exits after playback stops or completes.
 * `--progress-bar-update-rate [Hz]`:
   Print a progress bar for the playback with a specified maximum update rate in times per second
   (Hz). Negative values mark an update for every published message, while a zero value disables
@@ -399,6 +406,16 @@ Options:
   It prevents mixing external log messages with the progress bar string. Default to 2.
 
 For more options, run with `--help`.
+
+To keep the player available for repeated service-driven playback runs, start it in persistent
+mode:
+
+```bash
+$ ros2 bag play --persistent <bag>
+```
+
+With `--persistent`, the process stays alive after playback stops and only exits when explicitly
+terminated, for example with `Ctrl+C`.
 
 #### Playback action messages as action client
 
@@ -445,7 +462,10 @@ The Rosbag2 player provides the following services for remote control, which can
 * `~/set_rate [rosbag2_interfaces/srv/SetRate]`
   * Sets the rate of playback, for example 2.0 will play messages twice as fast.
 * `~/stop [rosbag2_interfaces/srv/Stop]`
-  * Stop the player, putting the play head in "undefined position" outside the bag. Must call `play` before other operations can be done.
+  * Stop the player, putting the play head in "undefined position" outside the bag. Must call `play`
+    before other operations can be done.
+  * Without `--persistent`, stopping playback causes the player process to exit. With 
+    `--persistent`, the process stays alive and can be controlled again through services.
 * `~/toggle_paused [rosbag2_interfaces/srv/TogglePaused]`
   * Pause if playing, resume if paused.
 
