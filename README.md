@@ -411,10 +411,18 @@ For more information, please refer to https://github.com/ros2/rosbag2/blob/rolli
 
 #### Controlling playback via services
 
-The Rosbag2 player provides the following services for remote control, which can be called via `ros2 service` commandline or from your nodes,
+The Rosbag2 player provides the following services for remote control, which can be called via
+`ros2 service` commandline or from your nodes.
+
+Time-based `~/play` and `~/resume` requests can be used to coordinate playback across multiple
+`rosbag2_transport::Player` instances by scheduling playback state changes for the same time in
+the future. Scheduled playback actions are evaluated against the player node clock, so they can be
+coordinated with either system time or `/clock` when the player is configured to use simulation
+time.
 
 * `~/burst [rosbag2_interfaces/srv/Burst]`
-  * Can only be used while player is paused, publishes `num_messages` in order as fast as possible, moving forward the play head.
+  * Can only be used while player is paused, publishes `num_messages` in order as fast as possible,
+    moving forward the play head.
 * `~/get_rate [rosbag2_interfaces/srv/GetRate]`
   * Return the current playback rate.
 * `~/is_paused [rosbag2_interfaces/srv/IsPaused]`
@@ -422,14 +430,25 @@ The Rosbag2 player provides the following services for remote control, which can
 * `~/pause [rosbag2_interfaces/srv/Pause]`
   * Pause playback. Has no effect if already paused.
 * `~/play [rosbag2_interfaces/srv/Play]`
-  * Play from a starting offset timestamp, either until the end, an ending timestamp or for a set duration. Only works when stopped (not paused).
+  * Play from a starting offset timestamp, either until the end, an ending timestamp or for a set
+    duration. Only works when stopped (not paused).
+  * `start_time` schedules playback to begin at a specific future node time.
+  * If `start_time` is zero, unset, or in the past, playback starts immediately.
+  * A successful scheduled `play` request returns immediately and playback begins when the player
+    node clock reaches `start_time`.
+  * Scheduling a future `play` while another playback is active is allowed; the request succeeds
+    and the next playback begins once the player is stopped and the scheduled time is reached.
+  * Response fields:
+    - `return_code`: `success`, `already_running`, or `failed_to_start`.
+    - `error_string`: empty on success, otherwise describes the failure.
 * `~/play_next [rosbag2_interfaces/srv/PlayNext]`
   * Play a single next message from the bag. Only works while paused.
 * `~/resume [rosbag2_interfaces/srv/Resume]`
-  * Resume playback if paused.
+  * Resume playback if paused, either immediately or at a scheduled future node time.
   * The newer `publish_time` and `receive_time` resume modes are recorder-only.
   * Player only supports `resume_mode = node_time`.
-  * `resume_time` is not supported by player and must be zero for player resume requests.
+  * `resume_time` may be used with `resume_mode = node_time` to schedule a future playback resume.
+  * If `resume_time` is zero, unset, or in the past, playback resumes immediately.
   * `tracking_topic_name` is not supported by player and must be empty.
   * If `resume_mode` is `publish_time` or `receive_time`, player rejects the request with
     `return_code = invalid_resume_mode` and a descriptive `error_string`.
@@ -441,11 +460,18 @@ The Rosbag2 player provides the following services for remote control, which can
     - `return_code`: `success`, `invalid_resume_mode`, or `invalid_tracking_topic`.
     - `error_string`: empty on success, otherwise describes the failure.
 * `~/seek [rosbag2_interfaces/srv/Seek]`
-  * Change the play head to the specified timestamp. Can be forward or backward in time, the next played message is the next immediately after the seeked timestamp.
+  * Change the play head to the specified timestamp. Can be forward or backward in time, the next
+    played message is the next immediately after the seeked timestamp.
+  * Returns `success = true` when the requested time is within the bag duration and the seek
+    operation succeeds.
 * `~/set_rate [rosbag2_interfaces/srv/SetRate]`
   * Sets the rate of playback, for example 2.0 will play messages twice as fast.
 * `~/stop [rosbag2_interfaces/srv/Stop]`
-  * Stop the player, putting the play head in "undefined position" outside the bag. Must call `play` before other operations can be done.
+  * Stop the player, putting the play head in "undefined position" outside the bag. Must call `play`
+    before other operations can be done.
+  * Returns `return_code = 0` on success.
+  * Returns `return_code = 1` with an `error_string` if playback is already stopped or if stopping
+    fails.
 * `~/toggle_paused [rosbag2_interfaces/srv/TogglePaused]`
   * Pause if playing, resume if paused.
 

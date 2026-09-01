@@ -43,6 +43,7 @@
 #include "rosbag2_transport/player_service_client.hpp"
 #include "rosbag2_transport/player_progress_bar.hpp"
 #include "rosbag2_transport/reader_writer_factory.hpp"
+#include "rosbag2_transport/delayed_action_task_runner.hpp"
 #include "rosbag2_transport/readers_manager.hpp"
 
 #include "logging.hpp"
@@ -311,6 +312,25 @@ private:
   std::unordered_map<std::string, PlayerActionClientSharedPtr> action_clients_;
 
 private:
+  using PlayResponse = rosbag2_interfaces::srv::Play::Response;
+  using PlayRequest = rosbag2_interfaces::srv::Play::Request;
+
+  /// \brief Return codes for play operation.
+  enum class PlayReturnCode : int32_t
+  {
+    Success = PlayResponse::RETURN_CODE_SUCCESS,
+    AlreadyRunning = PlayResponse::RETURN_CODE_ALREADY_RUNNING,
+    FailedToStart = PlayResponse::RETURN_CODE_FAILED_TO_START
+  };
+
+  /// \brief Convert enum class to its underlying type.
+  template<typename E>
+  static constexpr std::underlying_type_t<E> to_underlying_type(E e) noexcept
+  {
+    static_assert(std::is_enum<E>::value, "E must be an enum type");
+    return static_cast<std::underlying_type_t<E>>(e);
+  }
+
   rosbag2_storage::SerializedBagMessageSharedPtr take_next_message_from_queue();
   void load_storage_content();
 
@@ -344,6 +364,19 @@ private:
   rcutils_time_point_value_t get_message_order_timestamp(
     const rosbag2_storage::SerializedBagMessageSharedPtr & message) const;
 
+  /// \brief Convert a builtin_interfaces::msg::Time to an optional rclcpp::Time.
+  /// \param time_msg The time message to convert.
+  /// \return An optional rclcpp::Time. If time_msg is zero, returns std::nullopt.
+  std::optional<rclcpp::Time> optional_time_from_request(
+    const builtin_interfaces::msg::Time & time_msg) const;
+
+  static void set_service_play_resp_success(
+    rosbag2_interfaces::srv::Play::Response & response) noexcept;
+  static void set_service_play_resp_error(
+    rosbag2_interfaces::srv::Play::Response & response,
+    PlayReturnCode code,
+    const std::string & error_string) noexcept;
+
   static constexpr double read_ahead_lower_bound_percentage_ = 0.9;
   static const std::chrono::milliseconds queue_read_wait_period_;
   std::atomic_bool cancel_wait_for_next_message_{false};
@@ -375,9 +408,11 @@ private:
   }
 
   Player * owner_;
+  DelayedActionTaskRunner action_task_runner_;
   rosbag2_transport::PlayOptions play_options_;
   static constexpr const char * kDefaultReadSplitTopicName = "events/read_split";
   rcutils_time_point_value_t play_until_timestamp_ = -1;
+
   LockedPriorityQueue<rosbag2_storage::SerializedBagMessageSharedPtr> message_queue_;
   using BagMessageComparator =
     LockedPriorityQueue<rosbag2_storage::SerializedBagMessageSharedPtr>::Comparator;
@@ -477,6 +512,7 @@ PlayerImpl::PlayerImpl(
   const rosbag2_transport::PlayOptions & play_options)
 : readers_(std::make_unique<ReadersManager>(std::move(readers_with_options))),
   owner_(owner),
+  action_task_runner_(owner_),
   play_options_(play_options),
   message_queue_(get_bag_message_comparator(play_options_.message_order)),
   keyboard_handler_(std::move(keyboard_handler)),
@@ -560,6 +596,9 @@ PlayerImpl::PlayerImpl(
   prepare_publishers();
   configure_play_until_timestamp();
 
+  // Starting delayed action task runner
+  action_task_runner_.start();
+
   create_control_services();
   add_keyboard_callbacks();
   progress_bar_->print_help_str();
@@ -576,6 +615,8 @@ PlayerImpl::~PlayerImpl()
     }
   }
 
+  // Stopping delayed action task runner
+  action_task_runner_.stop();
   // Force to stop playback to avoid hangout in case of unexpected exception or when smart
   // pointer to the player object goes out of scope
   stop();
@@ -2132,7 +2173,18 @@ void PlayerImpl::create_control_services()
         response->error_string = "tracking_topic_name is not supported by player Resume service.";
         return;
       }
-      owner_->resume();
+      // Convert builtin_interfaces::msg::Time to optional rclcpp::Time
+      auto resume_time = optional_time_from_request(request->resume_time);
+
+      // Execute immediately if no time specified or time is in the past/now
+      if (!resume_time.has_value() || *resume_time <= owner_->now()) {
+        owner_->resume();
+      } else {
+        auto action_task = [this]() {
+          owner_->resume();
+        };
+        action_task_runner_.schedule(*resume_time, std::move(action_task), "Resume playback");
+      }
     });
   srv_toggle_paused_ = owner_->create_service<rosbag2_interfaces::srv::TogglePaused>(
     "~/toggle_paused",
@@ -2174,10 +2226,35 @@ void PlayerImpl::create_control_services()
     {
       play_options_.start_offset = rclcpp::Time(request->start_offset).nanoseconds();
       play_options_.playback_duration = rclcpp::Duration(request->playback_duration);
-      play_options_.playback_until_timestamp =
-      rclcpp::Time(request->playback_until_timestamp).nanoseconds();
+      rcl_time_point_value_t nanosec = RCL_S_TO_NS(static_cast<int64_t>
+      (request->playback_until_timestamp.sec)) + request->playback_until_timestamp.nanosec;
+      play_options_.playback_until_timestamp = nanosec;
       configure_play_until_timestamp();
-      response->success = owner_->play();
+
+      // Check if start_time is specified for scheduling
+      auto start_time = optional_time_from_request(request->start_time);
+
+      if (!start_time.has_value() || *start_time <= owner_->now()) {
+        try {
+          const bool play_result = owner_->play();
+          if (play_result) {
+            set_service_play_resp_success(*response);
+          } else {
+            set_service_play_resp_error(
+              *response, PlayReturnCode::AlreadyRunning, "Player is already running.");
+          }
+        } catch (const std::exception & e) {
+          RCLCPP_ERROR_STREAM(owner_->get_logger(),
+                              "Failed to start playback immediately. \nError: " << e.what());
+          set_service_play_resp_error(*response, PlayReturnCode::FailedToStart, e.what());
+        }
+      } else {
+        auto action_task = [this]() {
+          (void)owner_->play();
+        };
+        action_task_runner_.schedule(*start_time, std::move(action_task), "Start playback");
+        set_service_play_resp_success(*response);
+      }
     });
   srv_play_next_ = owner_->create_service<rosbag2_interfaces::srv::PlayNext>(
     "~/play_next",
@@ -2240,6 +2317,30 @@ void PlayerImpl::configure_play_until_timestamp()
   } else {
     play_until_timestamp_ = -1;
   }
+}
+
+std::optional<rclcpp::Time> PlayerImpl::optional_time_from_request(
+  const builtin_interfaces::msg::Time & time_msg) const
+{
+  if (time_msg.sec == 0 && time_msg.nanosec == 0) {
+    return std::nullopt;
+  }
+  return rclcpp::Time(time_msg, owner_->get_clock()->get_clock_type());
+}
+
+void PlayerImpl::set_service_play_resp_success(PlayResponse & response) noexcept
+{
+  response.return_code = to_underlying_type(PlayReturnCode::Success);
+  response.error_string.clear();
+}
+
+void PlayerImpl::set_service_play_resp_error(
+  PlayResponse & response,
+  PlayReturnCode code,
+  const std::string & error_string) noexcept
+{
+  response.return_code = to_underlying_type(code);
+  response.error_string = error_string;
 }
 
 inline bool PlayerImpl::shall_stop_at_timestamp(
