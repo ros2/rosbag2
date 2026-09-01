@@ -693,7 +693,9 @@ void prepare_excluded_topics_filter(
 
   // Add service event topic name
   if (!storage_filter.exclude_service_events.empty()) {
-    excluded_topic_names_str += ",";
+    if (!excluded_topic_names_str.empty()) {
+      excluded_topic_names_str += ",";
+    }
     for (auto & service : storage_filter.exclude_service_events) {
       excluded_topic_names_str += "'" + service + "'";
       if (&service != &storage_filter.exclude_service_events.back()) {
@@ -704,7 +706,9 @@ void prepare_excluded_topics_filter(
 
   // Add topic name related to actions
   if (!storage_filter.exclude_actions_interfaces.empty()) {
-    excluded_topic_names_str += ",";
+    if (!excluded_topic_names_str.empty()) {
+      excluded_topic_names_str += ",";
+    }
     for (auto & action_topic : storage_filter.exclude_actions_interfaces) {
       excluded_topic_names_str += "'" + action_topic + "'";
       if (&action_topic != &storage_filter.exclude_actions_interfaces.back()) {
