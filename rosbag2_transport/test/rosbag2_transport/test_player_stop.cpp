@@ -23,7 +23,7 @@
 
 #include "rmw/rmw.h"
 #include "mock_player.hpp"
-#include "rclcpp/rclcpp.hpp"
+#include "rclcpp/utilities.hpp"
 #include "rosbag2_transport_test_fixture.hpp"
 #include "test_msgs/message_fixtures.hpp"
 #include "rosbag2_storage/serialized_bag_message.hpp"

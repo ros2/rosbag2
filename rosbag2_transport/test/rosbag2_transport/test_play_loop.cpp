@@ -23,7 +23,8 @@
 #include <vector>
 #include <utility>
 
-#include "rclcpp/rclcpp.hpp"
+#include "rclcpp/duration.hpp"
+#include "rclcpp/utilities.hpp"
 
 #include "rosbag2_test_common/subscription_manager.hpp"
 

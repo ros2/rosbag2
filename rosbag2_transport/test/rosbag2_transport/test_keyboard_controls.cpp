@@ -21,7 +21,7 @@
 #include <unordered_map>
 #include <utility>
 
-#include "rclcpp/rclcpp.hpp"
+#include "rclcpp/duration.hpp"
 
 #include "rosbag2_test_common/subscription_manager.hpp"
 

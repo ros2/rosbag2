@@ -23,7 +23,10 @@
 #include <utility>
 
 #include "rcutils/time.h"
-#include "rclcpp/rclcpp.hpp"
+#include "rclcpp/duration.hpp"
+#include "rclcpp/executors/single_threaded_executor.hpp"
+#include "rclcpp/qos.hpp"
+#include "rclcpp/utilities.hpp"
 
 #include "rosbag2_test_common/action_server_manager.hpp"
 #include "rosbag2_test_common/service_manager.hpp"

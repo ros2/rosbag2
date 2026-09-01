@@ -22,7 +22,7 @@
 #include <string>
 #include <vector>
 
-#include "rclcpp/rclcpp.hpp"
+#include "rclcpp/utilities.hpp"
 
 #include "rosbag2_compression/sequential_compression_reader.hpp"
 #include "rosbag2_cpp/reader.hpp"

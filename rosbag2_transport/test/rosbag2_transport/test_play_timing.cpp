@@ -20,7 +20,9 @@
 #include <vector>
 #include <utility>
 
-#include "rclcpp/rclcpp.hpp"
+#include "rclcpp/clock.hpp"
+#include "rclcpp/duration.hpp"
+#include "rclcpp/utilities.hpp"
 
 #include "rosbag2_transport/player.hpp"
 

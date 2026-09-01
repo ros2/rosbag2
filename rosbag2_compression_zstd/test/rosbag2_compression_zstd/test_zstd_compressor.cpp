@@ -21,7 +21,7 @@
 #include <system_error>
 #include <vector>
 
-#include "rclcpp/rclcpp.hpp"
+#include "rclcpp/utilities.hpp"
 
 #include "rosbag2_compression_zstd/zstd_compressor.hpp"
 #include "rosbag2_compression_zstd/zstd_decompressor.hpp"

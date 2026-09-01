@@ -19,7 +19,7 @@
 #include <string>
 #include <unordered_set>
 
-#include "rclcpp/rclcpp.hpp"
+#include "rclcpp/qos.hpp"
 #include "rcpputils/scope_exit.hpp"
 #include "record_fixture.hpp"
 #include "rosbag2_compression_zstd/zstd_decompressor.hpp"

@@ -27,7 +27,10 @@
 #include <utility>
 #include <vector>
 
-#include "rclcpp/rclcpp.hpp"
+#include "rclcpp/clock.hpp"
+#include "rclcpp/logging.hpp"
+#include "rclcpp/node.hpp"
+#include "rclcpp/time.hpp"
 
 namespace rosbag2_transport
 {

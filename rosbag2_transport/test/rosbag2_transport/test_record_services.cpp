@@ -24,7 +24,16 @@
 
 #include "rcutils/time.h"
 
-#include "rclcpp/rclcpp.hpp"
+#include "rclcpp/client.hpp"
+#include "rclcpp/clock.hpp"
+#include "rclcpp/duration.hpp"
+#include "rclcpp/executors/single_threaded_executor.hpp"
+#include "rclcpp/future_return_code.hpp"
+#include "rclcpp/node.hpp"
+#include "rclcpp/parameter.hpp"
+#include "rclcpp/publisher.hpp"
+#include "rclcpp/time.hpp"
+#include "rclcpp/utilities.hpp"
 #include "rosgraph_msgs/msg/clock.hpp"
 
 #include "rosbag2_interfaces/srv/get_subscribed_topics.hpp"

@@ -20,8 +20,6 @@
 #include <string>
 #include <utility>
 
-#include "rclcpp/rclcpp.hpp"
-
 #include "rosbag2_test_common/action_client_manager.hpp"
 #include "rosbag2_test_common/client_manager.hpp"
 #include "rosbag2_test_common/publication_manager.hpp"

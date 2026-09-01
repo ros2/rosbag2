@@ -19,8 +19,6 @@
 #include <utility>
 #include <vector>
 
-#include "rclcpp/rclcpp.hpp"
-
 #include "rosbag2_test_common/publication_manager.hpp"
 #include "rosbag2_test_common/wait_for.hpp"
 

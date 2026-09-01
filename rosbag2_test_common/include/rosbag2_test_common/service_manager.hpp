@@ -21,7 +21,13 @@
 #include <utility>
 #include <vector>
 
-#include "rclcpp/rclcpp.hpp"
+#include "rclcpp/client.hpp"
+#include "rclcpp/clock.hpp"
+#include "rclcpp/executors/single_threaded_executor.hpp"
+#include "rclcpp/node.hpp"
+#include "rclcpp/node_options.hpp"
+#include "rclcpp/qos.hpp"
+#include "rclcpp/service.hpp"
 
 #include "rosbag2_test_common/wait_for.hpp"
 

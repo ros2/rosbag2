@@ -21,8 +21,6 @@
 #include <vector>
 #include <utility>
 
-#include "rclcpp/rclcpp.hpp"
-
 #include "rosbag2_test_common/subscription_manager.hpp"
 
 #include "rosbag2_transport/player.hpp"

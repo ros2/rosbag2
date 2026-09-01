@@ -23,7 +23,15 @@
 #include <utility>
 #include <vector>
 
-#include "rclcpp/rclcpp.hpp"  // rclcpp must be included before the Windows specific includes.
+// rclcpp headers must be included before the Windows specific includes.
+#include "rclcpp/clock.hpp"
+#include "rclcpp/logger.hpp"
+#include "rclcpp/logging.hpp"
+#include "rclcpp/node.hpp"
+#include "rclcpp/node_options.hpp"
+#include "rclcpp/publisher_base.hpp"
+#include "rclcpp/qos.hpp"
+#include "rclcpp/utilities.hpp"
 #include "test_msgs/msg/basic_types.hpp"
 
 using namespace std::chrono_literals;  // NOLINT
