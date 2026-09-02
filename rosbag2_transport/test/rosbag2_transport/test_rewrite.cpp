@@ -14,15 +14,25 @@
 
 #include <gmock/gmock.h>
 
+#include <cstdint>
+#include <cstring>
 #include <filesystem>
+#include <memory>
 #include <string>
+#include <unordered_map>
 #include <vector>
 #include <utility>
 
+#include "rclcpp/time.hpp"
+
+#include "rosbag2_cpp/writer.hpp"
+#include "rosbag2_storage/ros_helper.hpp"
 #include "rosbag2_test_common/temporary_directory_fixture.hpp"
 #include "rosbag2_test_common/tested_storage_ids.hpp"
 #include "rosbag2_transport/bag_rewrite.hpp"
 #include "rosbag2_transport/reader_writer_factory.hpp"
+
+#include "test_msgs/msg/basic_types.hpp"
 
 using namespace ::testing;  // NOLINT
 using namespace rosbag2_test_common;  // NOLINT
@@ -336,3 +346,121 @@ INSTANTIATE_TEST_SUITE_P(
   TestRewrite,
   ValuesIn(rosbag2_test_common::kTestedStorageIDs)
 );
+
+namespace
+{
+/// Payload mimicking a protobuf encoded foxglove.CompressedVideo message. The exact bytes do
+/// not matter to the rewrite, which has to pass them through unmodified.
+std::vector<uint8_t> make_fake_protobuf_payload(uint8_t index)
+{
+  std::vector<uint8_t> payload = {0x12, 0x04, 'c', 'a', 'm', '0', 0x1a, 0x10};
+  payload.insert(payload.end(), 16, index);
+  const std::vector<uint8_t> format_field = {0x22, 0x04, 'h', '2', '6', '4'};
+  payload.insert(payload.end(), format_field.begin(), format_field.end());
+  return payload;
+}
+}  // namespace
+
+TEST_F(TemporaryDirectoryFixture, test_rewrite_bag_with_mixed_serialization_formats) {
+  const auto input_bag_path = fs::path(temporary_dir_path_) / "mixed_input";
+  const std::string cdr_topic = "/chatter";
+  const std::string protobuf_topic = "/camera/video_compressed";
+  constexpr size_t kNumMessagesPerTopic = 5;
+
+  // Write an input bag with one topic in the local rmw serialization format and one protobuf
+  // encoded topic, mimicking recordings made by non-ROS tools.
+  {
+    rosbag2_cpp::Writer writer;
+    rosbag2_storage::StorageOptions options;
+    options.uri = input_bag_path.string();
+    options.storage_id = "mcap";
+    writer.open(options);
+
+    rosbag2_storage::TopicMetadata protobuf_topic_metadata;
+    protobuf_topic_metadata.name = protobuf_topic;
+    protobuf_topic_metadata.type = "foxglove.CompressedVideo";
+    protobuf_topic_metadata.serialization_format = "protobuf";
+    writer.create_topic(protobuf_topic_metadata);
+
+    test_msgs::msg::BasicTypes msg;
+    for (size_t i = 0; i < kNumMessagesPerTopic; i++) {
+      const int64_t stamp_ns = 10000000 * static_cast<int64_t>(i);
+      msg.int32_value = static_cast<int32_t>(i);
+      writer.write(msg, cdr_topic, rclcpp::Time(stamp_ns));
+
+      const auto payload = make_fake_protobuf_payload(static_cast<uint8_t>(i));
+      auto message = std::make_shared<rosbag2_storage::SerializedBagMessage>();
+      message->topic_name = protobuf_topic;
+      message->recv_timestamp = stamp_ns + 1;
+      message->send_timestamp = stamp_ns + 1;
+      message->serialized_data =
+        rosbag2_storage::make_serialized_message(payload.data(), payload.size());
+      writer.write(message);
+    }
+  }
+
+  rosbag2_storage::StorageOptions input_storage;
+  input_storage.uri = input_bag_path.string();
+  input_storage.storage_id = "mcap";
+
+  rosbag2_storage::StorageOptions all_topics_storage;
+  all_topics_storage.uri = (fs::path(temporary_dir_path_) / "mixed_output").string();
+  all_topics_storage.storage_id = "mcap";
+  rosbag2_transport::RecordOptions all_topics_record;
+  all_topics_record.all_topics = true;
+
+  rosbag2_storage::StorageOptions cdr_only_storage;
+  cdr_only_storage.uri = (fs::path(temporary_dir_path_) / "cdr_only_output").string();
+  cdr_only_storage.storage_id = "mcap";
+  rosbag2_transport::RecordOptions cdr_only_record;
+  cdr_only_record.all_topics = false;
+  cdr_only_record.topics = {cdr_topic};
+
+  rosbag2_transport::bag_rewrite(
+    {input_storage},
+    {{all_topics_storage, all_topics_record}, {cdr_only_storage, cdr_only_record}});
+
+  // The unfiltered output shall contain both topics, with their serialization formats
+  // preserved and the protobuf messages passed through byte for byte.
+  {
+    auto reader = rosbag2_transport::ReaderWriterFactory::make_reader(all_topics_storage);
+    reader->open(all_topics_storage);
+
+    std::unordered_map<std::string, std::string> serialization_formats;
+    for (const auto & topic : reader->get_all_topics_and_types()) {
+      serialization_formats[topic.name] = topic.serialization_format;
+    }
+    EXPECT_THAT(serialization_formats, SizeIs(2));
+    EXPECT_EQ(serialization_formats[protobuf_topic], "protobuf");
+    EXPECT_FALSE(serialization_formats[cdr_topic].empty());
+    EXPECT_NE(serialization_formats[cdr_topic], "protobuf");
+
+    std::unordered_map<std::string, size_t> counts;
+    while (reader->has_next()) {
+      const auto message = reader->read_next();
+      if (message->topic_name == protobuf_topic) {
+        const auto expected_payload =
+          make_fake_protobuf_payload(static_cast<uint8_t>(counts[protobuf_topic]));
+        ASSERT_NE(nullptr, message->serialized_data);
+        ASSERT_EQ(expected_payload.size(), message->serialized_data->buffer_length);
+        EXPECT_EQ(
+          0,
+          memcmp(
+            expected_payload.data(), message->serialized_data->buffer, expected_payload.size()));
+      }
+      counts[message->topic_name]++;
+    }
+    EXPECT_EQ(counts[cdr_topic], kNumMessagesPerTopic);
+    EXPECT_EQ(counts[protobuf_topic], kNumMessagesPerTopic);
+  }
+
+  // The filtered output shall only contain the topic in the local rmw serialization format.
+  {
+    auto reader = rosbag2_transport::ReaderWriterFactory::make_reader(cdr_only_storage);
+    reader->open(cdr_only_storage);
+    const auto metadata = reader->get_metadata();
+    ASSERT_THAT(metadata.topics_with_message_count, SizeIs(1));
+    EXPECT_EQ(metadata.topics_with_message_count[0].topic_metadata.name, cdr_topic);
+    EXPECT_EQ(metadata.message_count, kNumMessagesPerTopic);
+  }
+}

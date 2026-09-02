@@ -17,6 +17,7 @@
 
 #include <memory>
 #include <string>
+#include <unordered_map>
 #include <unordered_set>
 #include <vector>
 
@@ -157,29 +158,6 @@ protected:
   virtual void load_prev_file();
 
   /**
-   * Checks if all topics in the bagfile have the same RMW serialization format.
-   * Currently a bag file can only be played if all topics have the same serialization format.
-   *
-   * \param topics Vector of TopicInformation with metadata.
-   * \throws runtime_error if any topic has a different serialization format from the rest.
-   */
-  virtual void check_topics_serialization_formats(
-    const std::vector<rosbag2_storage::TopicInformation> & topics);
-
-  /**
-  * Checks if the serialization format of the converter factory is the same as that of the storage
-  * factory.
-  * If not, changes the serialization format of the converter factory to use the serialization
-  * format of the storage factory.
-  *
-  * \param converter_serialization_format
-  * \param storage_serialization_format
-  */
-  virtual void check_converter_serialization_format(
-    const std::string & converter_serialization_format,
-    const std::string & storage_serialization_format);
-
-  /**
     * Fill topics_metadata_ cache vector with information from metadata_
     */
   virtual void fill_topics_metadata();
@@ -192,6 +170,23 @@ protected:
     */
   virtual void preprocess_current_file() {}
 
+  /**
+   * Finalize a message read from storage before handing it out to the caller.
+   *
+   * Fills in the serialization format of the message from the topic metadata if the storage
+   * plugin did not do so, converts the message if a converter was set up in open(), and
+   * otherwise throws if an output serialization format was requested and the message is not
+   * stored in it. The latter can only happen for bags with mixed serialization formats, where
+   * the caller is expected to filter out the topics it cannot decode.
+   *
+   * \param message The message as returned by the storage plugin.
+   * \return The message to hand out to the caller, converted if necessary.
+   * \throws std::runtime_error if the message can neither be returned in nor converted to the
+   *   requested output serialization format.
+   */
+  std::shared_ptr<rosbag2_storage::SerializedBagMessage> finalize_message(
+    std::shared_ptr<rosbag2_storage::SerializedBagMessage> message);
+
   std::unique_ptr<rosbag2_storage::StorageFactoryInterface> storage_factory_{};
   std::shared_ptr<rosbag2_storage::storage_interfaces::ReadOnlyInterface> storage_{};
   std::unique_ptr<Converter> converter_{};
@@ -200,6 +195,10 @@ protected:
   rcutils_time_point_value_t seek_time_ = 0;
   rosbag2_storage::StorageFilter topics_filter_{};
   std::vector<rosbag2_storage::TopicMetadata> topics_metadata_{};
+  /// Serialization format of every topic in the bag, keyed by topic name.
+  std::unordered_map<std::string, std::string> topic_serialization_formats_{};
+  /// Output serialization format requested in open(); empty if none was requested.
+  std::string output_serialization_format_{};
   std::vector<std::string> file_paths_{};
   std::vector<std::string>::iterator current_file_iterator_{};
   std::unordered_set<std::string> preprocessed_file_paths_;

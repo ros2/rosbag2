@@ -406,6 +406,7 @@ std::shared_ptr<rosbag2_storage::SerializedBagMessage> SqliteStorage::read_next(
   bag_message->serialized_data = std::get<0>(*current_message_row_);
   bag_message->recv_timestamp = std::get<1>(*current_message_row_);
   bag_message->topic_name = std::get<2>(*current_message_row_);
+  bag_message->serialization_format = std::get<4>(*current_message_row_);
 
   // set start time to current time
   // and set seek_row_id to the new row id up
@@ -730,7 +731,8 @@ void prepare_excluded_topics_filter(
 
 void SqliteStorage::prepare_for_reading()
 {
-  std::string statement_str = "SELECT data, timestamp, topics.name, messages.id "
+  std::string statement_str =
+    "SELECT data, timestamp, topics.name, messages.id, topics.serialization_format "
     "FROM messages JOIN topics ON messages.topic_id = topics.id WHERE ";
   std::vector<std::string> where_conditions;
 
@@ -763,7 +765,8 @@ void SqliteStorage::prepare_for_reading()
 
   read_statement_ = database_->prepare_statement(statement_str);
   message_result_ = read_statement_->execute_query<
-    std::shared_ptr<rcutils_uint8_array_t>, rcutils_time_point_value_t, std::string, int>();
+    std::shared_ptr<rcutils_uint8_array_t>, rcutils_time_point_value_t, std::string, int,
+    std::string>();
   current_message_row_ = message_result_.begin();
 }
 
