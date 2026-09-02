@@ -113,7 +113,7 @@ std::shared_ptr<rosbag2_storage::SerializedBagMessage> SequentialCompressionRead
     if (compression_mode_ == rosbag2_compression::CompressionMode::MESSAGE) {
       decompressor_->decompress_serialized_bag_message(message.get());
     }
-    return converter_ ? converter_->convert(message) : message;
+    return finalize_message(message);
   }
   throw std::runtime_error{"Bag is not open. Call open() before reading."};
 }

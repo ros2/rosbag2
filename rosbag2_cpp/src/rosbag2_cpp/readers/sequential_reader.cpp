@@ -139,32 +139,36 @@ void SequentialReader::open(
   fill_topics_metadata();
 
   std::set<std::string> storage_serialization_formats;
+  topic_serialization_formats_.clear();
   for (const auto & topic : topics) {
     storage_serialization_formats.insert(topic.topic_metadata.serialization_format);
+    topic_serialization_formats_[topic.topic_metadata.name] =
+      topic.topic_metadata.serialization_format;
   }
   // Conversion is needed if an output serialization format was requested and no topic is
   // stored in it, and is only possible when all topics have the same serialization format.
-  const auto & output_serialization_format = converter_options.output_serialization_format;
-  if (!output_serialization_format.empty() &&
-    storage_serialization_formats.count(output_serialization_format) == 0)
+  output_serialization_format_ = converter_options.output_serialization_format;
+  if (!output_serialization_format_.empty() &&
+    storage_serialization_formats.count(output_serialization_format_) == 0)
   {
     if (storage_serialization_formats.size() > 1u) {
       throw std::runtime_error(
               "The bag contains topics with mixed serialization formats, and none of them "
               "matches the requested output serialization format '" +
-              output_serialization_format + "'. Conversion of a bag with mixed serialization "
+              output_serialization_format_ + "'. Conversion of a bag with mixed serialization "
               "formats is not supported.");
     }
     converter_ = std::make_unique<Converter>(
-      *storage_serialization_formats.begin(), output_serialization_format, converter_factory_);
+      *storage_serialization_formats.begin(), output_serialization_format_, converter_factory_);
     for (const auto & topic : topics) {
       converter_->add_topic(topic.topic_metadata.name, topic.topic_metadata.type);
     }
   }
   // Messages already stored in the requested output serialization format (or all messages,
   // when no output serialization format is requested) are returned as stored, without
-  // conversion. Topics which the consumer cannot decode have to be filtered out by the
-  // consumer.
+  // conversion. In a bag with mixed serialization formats, topics which are not stored in the
+  // requested output serialization format have to be filtered out by the consumer;
+  // finalize_message() throws if a message from such a topic is read nevertheless.
 }
 
 bool SequentialReader::set_read_order(const rosbag2_storage::ReadOrder & order)
@@ -205,12 +209,36 @@ std::shared_ptr<rosbag2_storage::SerializedBagMessage> SequentialReader::read_ne
   if (storage_) {
     // performs rollover if necessary
     if (has_next()) {
-      auto message = storage_->read_next();
-      return converter_ ? converter_->convert(message) : message;
+      return finalize_message(storage_->read_next());
     }
     throw std::runtime_error("Bag is at end. No next message.");
   }
   throw std::runtime_error("Bag is not open. Call open() before reading.");
+}
+
+std::shared_ptr<rosbag2_storage::SerializedBagMessage> SequentialReader::finalize_message(
+  std::shared_ptr<rosbag2_storage::SerializedBagMessage> message)
+{
+  if (message->serialization_format.empty()) {
+    const auto it = topic_serialization_formats_.find(message->topic_name);
+    if (it != topic_serialization_formats_.end()) {
+      message->serialization_format = it->second;
+    }
+  }
+  if (converter_) {
+    return converter_->convert(message);
+  }
+  if (!output_serialization_format_.empty() &&
+    message->serialization_format != output_serialization_format_)
+  {
+    throw std::runtime_error(
+            "Message on topic '" + message->topic_name + "' is stored in serialization format '" +
+            message->serialization_format + "', which differs from the requested output "
+            "serialization format '" + output_serialization_format_ + "', and cannot be "
+            "converted because the bag contains topics with mixed serialization formats. "
+            "Exclude this topic from reading by setting a filter.");
+  }
+  return message;
 }
 
 const rosbag2_storage::BagMetadata & SequentialReader::get_metadata() const
