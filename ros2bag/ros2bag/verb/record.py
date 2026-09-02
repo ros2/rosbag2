@@ -231,7 +231,7 @@ def add_recorder_arguments(parser: ArgumentParser) -> None:
              'publish an event. "delete_oldest_files": delete the oldest bag files of the current '
              'recording until the free space is above the limit and continue recording, stops '
              'only if there are no more old bag files to delete. Requires bag splitting to be '
-             'enabled via --max-bag-size or --max-bag-duration to be effective. '
+             'enabled via --max-bag-size or --max-bag-duration. '
              'Default: %(default)s.')
     parser.add_argument(
         '--max-cache-size', type=int, default=100 * 1024 * 1024,
@@ -435,10 +435,8 @@ def validate_parsed_arguments(args, uri) -> str:
 
     if args.low_free_space_action == 'delete_oldest_files' and \
             not (args.max_bag_size or args.max_bag_duration):
-        print(print_warn('--low-free-space-action delete_oldest_files has no old bag files to '
-                         'delete unless bag splitting is enabled via --max-bag-size or '
-                         '--max-bag-duration. Recording will stop when free space is low.'),
-              flush=True)
+        return print_error('--low-free-space-action delete_oldest_files can only be used if '
+                           'bag splitting is enabled via --max-bag-size or --max-bag-duration.')
 
     try:
         args.repeat_transient_local_messages = parse_repeat_transient_local_topics(

@@ -495,6 +495,14 @@ get_storage_options_from_node_params(rclcpp::Node & node)
             std::string("Invalid value for the storage.low_free_space_action parameter. ") +
             e.what());
   }
+  if (storage_options.low_free_space_action ==
+    rosbag2_storage::LowFreeSpaceAction::DELETE_OLDEST_FILES &&
+    storage_options.max_bagfile_size == 0 && storage_options.max_bagfile_duration == 0)
+  {
+    throw std::invalid_argument(
+            "storage.low_free_space_action 'delete_oldest_files' can only be used if bag "
+            "splitting is enabled via storage.max_bagfile_size or storage.max_bagfile_duration.");
+  }
 
   storage_options.max_cache_size = param_utils::declare_integer_node_params<uint64_t>(
     node, "storage.max_cache_size", 0,

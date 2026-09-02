@@ -490,3 +490,20 @@ def test_recorder_min_free_space_arguments_invalid(test_arguments_parser):
     with pytest.raises(SystemExit):
         test_arguments_parser.parse_args(
             ['--all', '--output', output_path.as_posix(), '--low-free-space-action', 'pause'])
+
+
+def test_recorder_delete_oldest_files_requires_bag_splitting(test_arguments_parser):
+    """Test --low-free-space-action delete_oldest_files errors without bag splitting."""
+    output_path = RESOURCES_PATH / 'ros2bag_tmp_file'
+    args = test_arguments_parser.parse_args(
+        ['--all', '--output', output_path.as_posix(),
+         '--low-free-space-action', 'delete_oldest_files'])
+    error_string = validate_parsed_arguments(args, output_path.as_posix())
+    assert error_string is not None
+    assert '--low-free-space-action' in error_string
+
+    # Passes when splitting is enabled by size or by duration
+    args = test_arguments_parser.parse_args(
+        ['--all', '--output', output_path.as_posix(),
+         '--low-free-space-action', 'delete_oldest_files', '--max-bag-duration', '60'])
+    assert validate_parsed_arguments(args, output_path.as_posix()) is None

@@ -790,6 +790,13 @@ bool SequentialWriter::check_free_space()
   if (storage_options_.low_free_space_action ==
     rosbag2_storage::LowFreeSpaceAction::DELETE_OLDEST_FILES)
   {
+    // The cache consumer thread concurrently updates the per-file tracking containers
+    // (metadata_.files, metadata_.relative_file_paths and per_file_topic_message_counts_)
+    // which delete_oldest_file(..) is going to modify. Stop the cache consumer while deleting
+    // the oldest files and restart it afterwards, the same way as switch_to_next_storage() does.
+    if (use_cache_) {
+      cache_consumer_->stop();
+    }
     // Delete the oldest files, but never the one currently being written to, until there is
     // enough free space.
     while (space_info.available < min_free_space_bytes && metadata_.files.size() > 1) {
@@ -807,6 +814,9 @@ bool SequentialWriter::check_free_space()
             "'. Error: " << ec.message());
         break;
       }
+    }
+    if (use_cache_) {
+      cache_consumer_->start();
     }
   }
   info->available_bytes = space_info.available;

@@ -131,8 +131,9 @@ being written and take an action when it goes below a minimum:
   * `delete_oldest_files`: the oldest bag files (splits) of the current recording are deleted, never
     the file currently being written, until the free space is above the limit again, and recording
     continues. If there are no more old bag files to delete, the recording is stopped as with
-    `stop`. This action only makes sense together with bag splitting (`--max-bag-size` or
-    `--max-bag-duration`), e.g. for circular logging over long unattended runs.
+    `stop`. This action requires bag splitting to be enabled (`--max-bag-size` or
+    `--max-bag-duration`), e.g. for circular logging over long unattended runs; `ros2 bag record`
+    and the composable recorder node reject it otherwise.
 
 Both limits default to `0`, which disables the check and leaves the recorder behaviour unchanged.
 The free space is checked at most once per second, therefore the limit should leave headroom for
