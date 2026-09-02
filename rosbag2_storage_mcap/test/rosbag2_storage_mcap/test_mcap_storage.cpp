@@ -281,6 +281,7 @@ TEST_F(TemporaryDirectoryFixture, can_write_mcap_with_zstd_configured_from_yaml)
     rosbag2_storage::TopicMetadata topic_metadata;
     topic_metadata.name = topic_name;
     topic_metadata.type = "std_msgs/msg/String";
+    topic_metadata.serialization_format = "cdr";
 
     std_msgs::msg::String msg;
     msg.data = message_data;
