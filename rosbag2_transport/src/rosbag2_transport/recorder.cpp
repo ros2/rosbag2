@@ -189,6 +189,12 @@ public:
   /// Stop discovery
   void stop_discovery();
 
+  /// Return whether the recorder is currently recording.
+  bool is_recording() const;
+
+  /// Return the current recording URI, or empty string if not recording.
+  std::string get_uri() const;
+
   /// Return the current discovery state.
   bool is_discovery_running() const;
 
@@ -476,8 +482,10 @@ private:
   std::unordered_set<std::string> topic_unknown_types_;
   rclcpp::Service<rosbag2_interfaces::srv::GetSubscribedTopics>::SharedPtr
     srv_get_subscribed_topics_;
+  rclcpp::Service<rosbag2_interfaces::srv::GetUri>::SharedPtr srv_get_uri_;
   rclcpp::Service<rosbag2_interfaces::srv::IsDiscoveryRunning>::SharedPtr srv_is_discovery_running_;
   rclcpp::Service<rosbag2_interfaces::srv::IsPaused>::SharedPtr srv_is_paused_;
+  rclcpp::Service<rosbag2_interfaces::srv::IsRecording>::SharedPtr srv_is_recording_;
   rclcpp::Service<rosbag2_interfaces::srv::Pause>::SharedPtr srv_pause_;
   rclcpp::Service<rosbag2_interfaces::srv::Record>::SharedPtr srv_record_;
   rclcpp::Service<rosbag2_interfaces::srv::Resume>::SharedPtr srv_resume_;
@@ -487,7 +495,7 @@ private:
   rclcpp::Service<rosbag2_interfaces::srv::Stop>::SharedPtr srv_stop_;
   rclcpp::Service<rosbag2_interfaces::srv::StopDiscovery>::SharedPtr srv_stop_discovery_;
 
-  std::mutex start_stop_transition_mutex_;
+  mutable std::mutex start_stop_transition_mutex_;
   std::mutex discovery_mutex_;
   mutable std::mutex subscriptions_mutex_;
   std::atomic<bool> discovery_running_ = false;
@@ -938,6 +946,26 @@ void RecorderImpl::create_control_services()
       const std::shared_ptr<rosbag2_interfaces::srv::IsDiscoveryRunning::Response> response)
     {
       response->running = is_discovery_running();
+    });
+
+  srv_is_recording_ = node->create_service<rosbag2_interfaces::srv::IsRecording>(
+    "~/is_recording",
+    [this](
+      const std::shared_ptr<rmw_request_id_t>/* request_header */,
+      const std::shared_ptr<rosbag2_interfaces::srv::IsRecording::Request>/* request */,
+      const std::shared_ptr<rosbag2_interfaces::srv::IsRecording::Response> response)
+    {
+      response->recording = is_recording();
+    });
+
+  srv_get_uri_ = node->create_service<rosbag2_interfaces::srv::GetUri>(
+    "~/get_uri",
+    [this](
+      const std::shared_ptr<rmw_request_id_t>/* request_header */,
+      const std::shared_ptr<rosbag2_interfaces::srv::GetUri::Request>/* request */,
+      const std::shared_ptr<rosbag2_interfaces::srv::GetUri::Response> response)
+    {
+      response->uri = get_uri();
     });
 
   srv_record_ = node->create_service<rosbag2_interfaces::srv::Record>(
@@ -1499,6 +1527,17 @@ void RecorderImpl::stop_discovery()
     RCLCPP_DEBUG(
       node->get_logger(), "Recorder topic discovery has already been stopped or not running.");
   }
+}
+
+bool RecorderImpl::is_recording() const
+{
+  return in_recording_.load();
+}
+
+std::string RecorderImpl::get_uri() const
+{
+  std::lock_guard<std::mutex> state_lock(start_stop_transition_mutex_);
+  return in_recording_.load() ? storage_options_.uri : std::string{};
 }
 
 bool RecorderImpl::is_discovery_running() const
@@ -2215,6 +2254,18 @@ bool
 Recorder::is_paused()
 {
   return pimpl_->is_paused();
+}
+
+bool
+Recorder::is_recording() const
+{
+  return pimpl_->is_recording();
+}
+
+std::string
+Recorder::get_uri() const
+{
+  return pimpl_->get_uri();
 }
 
 bool
