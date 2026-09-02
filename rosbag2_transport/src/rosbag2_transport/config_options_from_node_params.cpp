@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <cmath>
 #include <string>
 #include <vector>
 
@@ -426,6 +427,32 @@ RecordOptions get_record_options_from_node_params(rclcpp::Node & node)
   }
   record_options.repeat_all_transient_local_depth =
     static_cast<uint32_t>(repeat_all_transient_local_depth);
+
+  auto topic_throttle_frequency = node.declare_parameter<std::vector<std::string>>(
+    "record.topic_throttle_frequency", std::vector<std::string>());
+  for (const auto & entry : topic_throttle_frequency) {
+    auto [topic_name, frequency_str] = param_utils::split_key_value(entry, "");
+    if (topic_name.empty()) {
+      throw std::invalid_argument(
+              "record.topic_throttle_frequency topic name cannot be empty.");
+    }
+    if (frequency_str.empty()) {
+      throw std::invalid_argument(
+              "record.topic_throttle_frequency expects entries in <topic>=<frequency> format.");
+    }
+    double frequency = 0.0;
+    try {
+      frequency = std::stod(frequency_str);
+    } catch (const std::exception &) {
+      throw std::invalid_argument(
+              "record.topic_throttle_frequency frequency must be a positive number.");
+    }
+    if (!std::isfinite(frequency) || frequency <= 0.0) {
+      throw std::invalid_argument(
+              "record.topic_throttle_frequency frequency must be finite and greater than 0.");
+    }
+    record_options.topic_throttle_frequencies[topic_name] = frequency;
+  }
 
   record_options.use_sim_time = node.get_parameter("use_sim_time").get_value<bool>();
 

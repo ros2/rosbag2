@@ -2,6 +2,10 @@
 Changelog for package rosbag2_storage
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Unreleased
+----------
+* Add YAML converter for ``std::unordered_map<std::string, double>`` (topic throttle frequencies)
+
 0.34.0 (2026-05-01)
 -------------------
 

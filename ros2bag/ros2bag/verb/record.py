@@ -14,6 +14,7 @@
 
 from argparse import ArgumentParser, FileType
 import datetime
+import math
 import os
 import signal
 import threading
@@ -76,6 +77,38 @@ def parse_repeat_transient_local_topics(values):
         repeat_topics[topic] = depth
 
     return repeat_topics
+
+
+def parse_topic_throttle_frequencies(values):
+    throttle_frequencies = {}
+    if not values:
+        return throttle_frequencies
+
+    for value in values:
+        topic, frequency_str = split_key_value(value)
+
+        if not topic:
+            raise ValueError(
+                f'Invalid value for --topic-throttle-frequency: "{value}". '
+                'Topic name must not be empty.')
+        if not frequency_str:
+            raise ValueError(
+                f'Invalid value for --topic-throttle-frequency: "{value}". '
+                'Expected format <topic>=<frequency>.')
+        try:
+            frequency = float(frequency_str)
+        except ValueError as exc:
+            raise ValueError(
+                f'Invalid frequency for --topic-throttle-frequency: "{value}". '
+                'Frequency must be a positive number.') from exc
+        if not math.isfinite(frequency) or frequency <= 0.0:
+            raise ValueError(
+                f'Invalid frequency for --topic-throttle-frequency: "{value}". '
+                'Frequency must be finite and greater than 0.')
+
+        throttle_frequencies[topic] = frequency
+
+    return throttle_frequencies
 
 
 def add_recorder_arguments(parser: ArgumentParser) -> None:
@@ -262,6 +295,12 @@ def add_recorder_arguments(parser: ArgumentParser) -> None:
              'Per-topic entries from --repeat-transient-local take precedence over this '
              'default depth. 0 disables (default).')
     parser.add_argument(
+        '--topic-throttle-frequency', type=str, default=[], metavar='Topic=Hz', nargs='+',
+        help='Space-delimited list of topics with a maximum recording frequency in Hz. '
+             'Messages arriving faster than the given frequency are dropped at the '
+             'subscription edge and not written to the bag. Format: <topic>=<frequency>. '
+             'Topics not listed are recorded at full frequency.')
+    parser.add_argument(
         '--log-level', type=str, default='info',
         choices=['debug', 'info', 'warn', 'error', 'fatal'],
         help='Logging level.')
@@ -408,6 +447,12 @@ def validate_parsed_arguments(args, uri) -> str:
     except ValueError as exc:
         return print_error(str(exc))
 
+    try:
+        args.topic_throttle_frequencies = parse_topic_throttle_frequencies(
+            args.topic_throttle_frequency)
+    except ValueError as exc:
+        return print_error(str(exc))
+
     return None
 
 
@@ -507,6 +552,7 @@ class RecordVerb(VerbExtension):
         record_options.statistics_max_publishing_rate = args.stats_max_publishing_rate
         record_options.repeat_transient_local_messages = args.repeat_transient_local_messages
         record_options.repeat_all_transient_local_depth = args.repeat_all_transient_local
+        record_options.topic_throttle_frequencies = args.topic_throttle_frequencies
 
         recorder = Recorder(storage_options, record_options, args.log_level, args.node_name)
 

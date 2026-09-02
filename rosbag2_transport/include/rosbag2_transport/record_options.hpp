@@ -102,6 +102,15 @@ public:
   /// repeat_transient_local_messages. 0 disables the feature.
   uint32_t repeat_all_transient_local_depth = 0;
 
+  /// \brief Per-topic maximum recording frequency in Hz, keyed by fully qualified topic name.
+  /// Messages arriving on a listed topic are dropped at the subscription edge if less than
+  /// 1/frequency seconds have elapsed, in the receive timestamp time base, since the last
+  /// message written for that topic. Topics without an entry are recorded at full frequency.
+  /// Values must be finite and greater than 0. Empty map disables the feature.
+  /// \note Throttling applies only to messages received via subscriptions. Messages written
+  /// through the direct Recorder::write_message() API are not throttled.
+  std::unordered_map<std::string, double> topic_throttle_frequencies{};
+
   /// Note: Please don't forget to update the YAML serialization and deserialization logic in
   /// `record_options.cpp` and the test case `test_yaml_serialization_deserialization`
   /// in `test_record_options.cpp` when updating the fields in RecordOptions.
