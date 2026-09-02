@@ -78,17 +78,21 @@ public:
   void open(const std::string & uri);
 
   /**
-   * Throws if file could not be opened.
-   * This must be called before any other function is used.
-   * The rosbag is automatically closed on destruction.
+   * Opens an existing bag for reading. Must be called before any other function is used.
+   * The bag is closed automatically on destruction.
    *
-   * If the `output_serialization_format` within the `converter_options` is not the same as the
-   * format of the underlying stored data, a converter will be used to automatically convert the
-   * data to the specified output format.
-   * Throws if the converter plugin does not exist.
+   * If `converter_options.output_serialization_format` is empty, messages are returned as
+   * stored. Otherwise, messages are returned in that format: messages already stored in it are
+   * returned as is, and a bag whose topics all share another format is converted. A bag with
+   * topics in mixed formats cannot be converted; it can only be opened if at least one topic is
+   * stored in the requested format, and read_next() throws on messages of the other topics, so
+   * exclude those with set_filter(). Every returned message reports its format in
+   * SerializedBagMessage::serialization_format. `input_serialization_format` is ignored.
    *
-   * \param storage_options Options to configure the storage
-   * \param converter_options Options for specifying the output data format
+   * \param storage_options Storage options; at least `uri` must be set.
+   * \param converter_options Requested output serialization format, see above.
+   * \throws std::runtime_error if the bag cannot be opened, the requested output format cannot
+   *   be provided, or a needed converter plugin is missing.
    */
   void open(
     const rosbag2_storage::StorageOptions & storage_options,

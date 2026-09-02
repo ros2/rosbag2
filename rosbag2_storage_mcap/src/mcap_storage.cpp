@@ -540,6 +540,7 @@ bool MCAPStorage::read_and_enqueue_message()
   msg->recv_timestamp = rcutils_time_point_value_t(messageView.message.logTime);
   msg->send_timestamp = rcutils_time_point_value_t(messageView.message.publishTime);
   msg->topic_name = messageView.channel->topic;
+  msg->serialization_format = messageView.channel->messageEncoding;
   msg->serialized_data = rosbag2_storage::make_serialized_message(messageView.message.data,
                                                                   messageView.message.dataSize);
 

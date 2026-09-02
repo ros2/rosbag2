@@ -43,6 +43,13 @@ struct SerializedBagMessage
   /// \brief An optional sequence number of the message. If non-zero, sequence numbers should be
   /// unique per channel (per topic and per publisher) and increasing over time.
   uint32_t sequence_number = 0;
+
+  /// \brief Serialization format of serialized_data, e.g. "cdr". Empty if unknown.
+  /// Storage plugins fill this in from the metadata of the topic when reading a message, and
+  /// readers fall back to the topic metadata when a storage plugin leaves it empty. It is
+  /// informational when writing: the serialization format of a topic is defined by the
+  /// TopicMetadata passed to create_topic().
+  std::string serialization_format;
 };
 
 /// \brief A shared pointer to a SerializedBagMessage.

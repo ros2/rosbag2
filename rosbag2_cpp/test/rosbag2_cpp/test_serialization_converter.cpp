@@ -221,6 +221,7 @@ TEST_F(SerializationConverterTest, default_rmw_converter_can_serialize) {
   writer_->write(message);
 
   ASSERT_EQ(mock_storage_data_.size(), 1);
+  EXPECT_THAT(mock_storage_data_[0]->serialization_format, StrEq(rmw_serialization_format));
 
   rclcpp::Serialization<std_msgs::msg::String> serialization;
   rclcpp::SerializedMessage rclcpp_serialized_msg(*mock_storage_data_[0]->serialized_data);

@@ -246,6 +246,8 @@ TEST_F(TemporaryDirectoryFixture, can_write_and_read_basic_mcap_file)
 
     std_msgs::msg::String msg;
     auto serialized_bag_msg = reader->read_next();
+    EXPECT_EQ(serialized_bag_msg->topic_name, topic_name);
+    EXPECT_EQ(serialized_bag_msg->serialization_format, "cdr");
     rclcpp::SerializedMessage extracted_serialized_msg(*serialized_bag_msg->serialized_data);
     serialization.deserialize_message(&extracted_serialized_msg, &msg);
     EXPECT_EQ(msg.data, message_data);
@@ -315,6 +317,8 @@ TEST_F(TemporaryDirectoryFixture, can_write_mcap_with_zstd_configured_from_yaml)
 
     std_msgs::msg::String msg;
     auto serialized_bag_msg = reader->read_next();
+    EXPECT_EQ(serialized_bag_msg->topic_name, topic_name);
+    EXPECT_EQ(serialized_bag_msg->serialization_format, "cdr");
     rclcpp::SerializedMessage extracted_serialized_msg(*serialized_bag_msg->serialized_data);
     serialization.deserialize_message(&extracted_serialized_msg, &msg);
     EXPECT_EQ(msg.data, message_data);
