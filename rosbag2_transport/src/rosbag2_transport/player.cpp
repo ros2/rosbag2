@@ -687,6 +687,10 @@ bool PlayerImpl::play()
         RCLCPP_ERROR(owner_->get_logger(), "Failed to play: %s", e.what());
       }
 
+      if (clock_publish_timer_ != nullptr) {
+        clock_publish_timer_->cancel();
+      }
+
       progress_bar_->update(clock_->is_paused() ? PlayerStatus::PAUSED : PlayerStatus::RUNNING);
 
       // Wait for all published messages to be acknowledged.

@@ -400,6 +400,10 @@ Options:
 
 For more options, run with `--help`.
 
+#### Publishing simulation time
+
+When fixed-frequency `/clock` publication is enabled with `--clock` or the `play.clock_publish_frequency` node parameter, `/clock` is published only while a playback session is active. If the Player node remains alive after playback finishes or is stopped, clock publication stops. Starting another playback session restarts it. Pausing playback does not end the session; fixed-frequency updates continue with the paused time.
+
 #### Playback action messages as action client
 
 If you want Rosbag2 to replay recorded action messages in the role of an action client, you need to specify the --send-actions-as-client parameter.
