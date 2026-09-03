@@ -23,6 +23,7 @@
 #include <vector>
 
 #include <rclcpp/executors.hpp>
+#include "rcpputils/scope_exit.hpp"
 #include "rosbag2_transport/player.hpp"
 #include "rosgraph_msgs/msg/clock.hpp"
 #include "test_msgs/message_fixtures.hpp"
@@ -178,6 +179,12 @@ TEST_F(ClockPublishFixture, clock_stops_after_playback_and_restarts_on_next_play
   exec.add_node(player);
   exec.add_node(clock_subscriber);
   auto spin_thread = std::thread([&exec]() {exec.spin();});
+  auto cleanup_spin_thread = rcpputils::make_scope_exit([&]() {
+        exec.cancel();
+        if (spin_thread.joinable()) {
+          spin_thread.join();
+        }
+    });
 
   const auto discovery_deadline = std::chrono::steady_clock::now() + std::chrono::seconds(30);
   while ((*clock_publisher)->get_subscription_count() == 0 &&
@@ -186,10 +193,6 @@ TEST_F(ClockPublishFixture, clock_stops_after_playback_and_restarts_on_next_play
     std::this_thread::sleep_for(std::chrono::milliseconds(10));
   }
   const bool clock_subscription_matched = (*clock_publisher)->get_subscription_count() > 0;
-  if (!clock_subscription_matched) {
-    exec.cancel();
-    spin_thread.join();
-  }
   ASSERT_TRUE(clock_subscription_matched);
 
   ASSERT_TRUE(player->play());
@@ -206,15 +209,8 @@ TEST_F(ClockPublishFixture, clock_stops_after_playback_and_restarts_on_next_play
     received_clock_messages.load(std::memory_order_relaxed),
     clock_messages_after_playback);
 
-  const bool second_play_started = player->play();
-  if (second_play_started) {
-    player->wait_for_playback_to_finish(std::chrono::seconds(30));
-  }
-
-  exec.cancel();
-  spin_thread.join();
-
-  EXPECT_TRUE(second_play_started);
+  ASSERT_TRUE(player->play());
+  ASSERT_TRUE(player->wait_for_playback_to_finish(std::chrono::seconds(30)));
   EXPECT_GT(
     received_clock_messages.load(std::memory_order_relaxed),
     clock_messages_after_playback);
