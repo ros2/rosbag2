@@ -168,7 +168,57 @@ To play back multiple bags:
 $ ros2 bag play -i <bag1> -i <bag2> -i <bag3>
 ```
 
+<<<<<<< HEAD
 Messages from all provided bags will be played in order, based on their original recording reception timestamps.
+=======
+Messages from all provided bags will be played in order, based on their original recording
+reception timestamps.
+
+Options:
+
+* `--topics`:
+  Space-delimited list of topics to play.
+* `--services`:
+  Space-delimited list of services to play.
+* `--actions`:
+  Space-delimited list of actions to play.
+* `-e,--regex`:
+  Play only topics and services matches with regular expression.
+* `-x,--exclude-regex`:
+  Regular expressions to exclude topics and services from replay.
+* `--exclude-topics`:
+  Space-delimited list of topics not to play.
+* `--exclude-services`:
+  Space-delimited list of services not to play.
+* `--exclude-actions`:
+  Space-delimited list of actions not to play.
+* `--message-order {received,sent}`:
+  The reference to use for bag message chronological ordering.
+  Choices: reception timestamp (`received`), publication timestamp (`sent`).
+  Default: reception timestamp.
+* `--progress-bar-update-rate [Hz]`:
+  Print a progress bar for the playback with a specified maximum update rate in times per second
+  (Hz). Negative values mark an update for every published message, while a zero value disables
+  the progress bar. Default is 3 Hz.
+* `--progress-bar-separation-lines`:
+  The number of lines to separate the progress bar from the rest of the playback player output.
+  It prevents mixing external log messages with the progress bar string. Default to 2.
+
+For more options, run with `--help`.
+
+#### Publishing simulation time
+
+When fixed-frequency `/clock` publication is enabled with `--clock` or the `play.clock_publish_frequency` node parameter, `/clock` is published only while a playback session is active. If the Player node remains alive after playback finishes or is stopped, clock publication stops. Starting another playback session restarts it. Pausing playback does not end the session; fixed-frequency updates continue with the paused time.
+
+#### Playback action messages as action client
+
+If you want Rosbag2 to replay recorded action messages in the role of an action client, you need to specify the --send-actions-as-client parameter.
+```
+$ ros2 bag play --send-actions-as-client <bag>
+```
+Rosbag2 will send recorded goal request, cancel request and result request to action server.  
+For more information, please refer to https://github.com/ros2/rosbag2/blob/rolling/docs/design/rosbag2_record_replay_action.md.
+>>>>>>> 8bb2414 (Stop fixed-frequency /clock publication after playback (#2482))
 
 #### Controlling playback via services
 

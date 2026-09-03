@@ -571,6 +571,15 @@ bool PlayerImpl::play()
         RCLCPP_ERROR(owner_->get_logger(), "Failed to play: %s", e.what());
       }
 
+<<<<<<< HEAD
+=======
+      if (clock_publish_timer_ != nullptr) {
+        clock_publish_timer_->cancel();
+      }
+
+      progress_bar_->update(clock_->is_paused() ? PlayerStatus::PAUSED : PlayerStatus::RUNNING);
+
+>>>>>>> 8bb2414 (Stop fixed-frequency /clock publication after playback (#2482))
       // Wait for all published messages to be acknowledged.
       if (play_options_.wait_acked_timeout >= 0) {
         std::chrono::milliseconds timeout(play_options_.wait_acked_timeout);
