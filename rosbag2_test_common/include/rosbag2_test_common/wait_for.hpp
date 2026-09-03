@@ -17,7 +17,7 @@
 
 #include <chrono>
 
-#include "rclcpp/rclcpp.hpp"
+#include "rclcpp/executors/single_threaded_executor.hpp"
 
 namespace rosbag2_test_common
 {

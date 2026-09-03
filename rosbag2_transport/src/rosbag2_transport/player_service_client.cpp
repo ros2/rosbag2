@@ -17,6 +17,8 @@
 
 #include "rosbag2_transport/player_service_client.hpp"
 
+#include "rclcpp/typesupport_helpers.hpp"
+
 #include "rosbag2_cpp/service_utils.hpp"
 
 #include "rosidl_typesupport_introspection_cpp/identifier.hpp"

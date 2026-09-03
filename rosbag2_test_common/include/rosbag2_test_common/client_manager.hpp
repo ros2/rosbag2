@@ -23,7 +23,17 @@
 
 #include "rcl/service_introspection.h"
 
-#include "rclcpp/rclcpp.hpp"  // rclcpp must be included before the Windows specific includes.
+// rclcpp headers must be included before the Windows specific includes.
+#include "rclcpp/client.hpp"
+#include "rclcpp/clock.hpp"
+#include "rclcpp/executors.hpp"
+#include "rclcpp/executors/single_threaded_executor.hpp"
+#include "rclcpp/future_return_code.hpp"
+#include "rclcpp/logging.hpp"
+#include "rclcpp/node.hpp"
+#include "rclcpp/node_options.hpp"
+#include "rclcpp/qos.hpp"
+#include "rclcpp/service.hpp"
 
 namespace rosbag2_test_common
 {

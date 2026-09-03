@@ -29,7 +29,8 @@
 #include <utility>
 #include <vector>
 
-#include "rclcpp/rclcpp.hpp"
+#include "rclcpp/duration.hpp"
+#include "rclcpp/time.hpp"
 #include "rcpputils/asserts.hpp"
 
 #include "rosbag2_cpp/readers/sequential_reader.hpp"

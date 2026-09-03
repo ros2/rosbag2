@@ -20,7 +20,7 @@
 #include <thread>
 #include <vector>
 
-#include "rclcpp/rclcpp.hpp"
+#include "rclcpp/node.hpp"
 #include "rosbag2_compression/compression_options.hpp"
 #include "rosbag2_cpp/writers/sequential_writer.hpp"
 

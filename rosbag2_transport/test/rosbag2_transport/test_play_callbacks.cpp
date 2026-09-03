@@ -20,7 +20,7 @@
 #include <vector>
 #include <utility>
 
-#include "rclcpp/rclcpp.hpp"
+#include "rclcpp/utilities.hpp"
 #include "mock_player.hpp"
 #include "rosbag2_transport_test_fixture.hpp"
 #include "rosbag2_transport/player.hpp"

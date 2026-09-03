@@ -25,7 +25,10 @@
 #include <rosbag2_storage/ros_helper.hpp>
 
 #include "mock_recorder.hpp"
-#include "rclcpp/rclcpp.hpp"
+#include "rclcpp/event_handler.hpp"
+#include "rclcpp/node.hpp"
+#include "rclcpp/qos.hpp"
+#include "rclcpp/utilities.hpp"
 #include "rcpputils/scope_exit.hpp"
 
 #include "rosbag2_test_common/publication_manager.hpp"

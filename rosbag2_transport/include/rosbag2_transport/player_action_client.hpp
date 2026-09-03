@@ -27,7 +27,7 @@
 #include "rcl/types.h"
 #include "rclcpp_action/generic_client.hpp"
 #include <rclcpp_action/types.hpp>
-#include "rclcpp/rclcpp.hpp"
+#include "rclcpp/logger.hpp"
 
 #include "rosbag2_cpp/action_utils.hpp"
 
