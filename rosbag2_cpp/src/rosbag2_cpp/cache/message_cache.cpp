@@ -31,6 +31,8 @@ namespace cache
 MessageCache::MessageCache(size_t max_buffer_size, uint32_t max_buffer_duration)
 {
   producer_buffer_ = std::make_shared<MessageCacheBuffer>(max_buffer_size, max_buffer_duration);
+  flushing_producer_buffer_ =
+    std::make_shared<MessageCacheBuffer>(max_buffer_size, max_buffer_duration);
   consumer_buffer_ = std::make_shared<MessageCacheBuffer>(max_buffer_size, max_buffer_duration);
 }
 
@@ -55,7 +57,9 @@ bool MessageCache::push(std::shared_ptr<const rosbag2_storage::SerializedBagMess
   {
     std::lock_guard<std::mutex> lock(producer_buffer_mutex_);
     pushed = producer_buffer_->push(msg);
-    data_ready_ = true;  // Don't use notify_data_ready() here for the sake of performance.
+    if (pushed) {
+      data_ready_ = true;  // Don't use notify_data_ready() here for the sake of performance.
+    }
   }
 
   if (pushed) {
@@ -89,11 +93,11 @@ void MessageCache::notify_data_ready()
 
 void MessageCache::wait_for_data()
 {
-  std::unique_lock<std::mutex> producer_lock(producer_buffer_mutex_);
+  std::unique_lock<std::mutex> producer_buffer_lock(producer_buffer_mutex_);
   if (!flushing_) {
     // Required condition check to protect against spurious wakeups
     cache_condition_var_.wait(
-      producer_lock, [this] {
+      producer_buffer_lock, [this] {
         return data_ready_ || flushing_;
       });
     data_ready_ = false;
@@ -104,13 +108,20 @@ void MessageCache::swap_buffers()
 {
   std::lock_guard<std::mutex> producer_lock(producer_buffer_mutex_);
   std::lock_guard<std::mutex> consumer_lock(consumer_buffer_mutex_);
-  std::swap(producer_buffer_, consumer_buffer_);
+  if (flushing_) {
+    // If we are flushing, we want to swap the flushing producer buffer with the consumer buffer
+    std::swap(flushing_producer_buffer_, consumer_buffer_);
+  } else {
+    // Otherwise, we swap the producer buffer with the consumer buffer
+    std::swap(producer_buffer_, consumer_buffer_);
+  }
 }
 
 void MessageCache::begin_flushing()
 {
   {
     std::lock_guard<std::mutex> lock(producer_buffer_mutex_);
+    std::swap(producer_buffer_, flushing_producer_buffer_);
     flushing_ = true;
   }
   cache_condition_var_.notify_one();
@@ -118,7 +129,11 @@ void MessageCache::begin_flushing()
 
 void MessageCache::done_flushing()
 {
+  std::lock_guard<std::mutex> lock(producer_buffer_mutex_);
   flushing_ = false;
+  // Messages may have been accepted into the producer buffer while the consumer was flushing the
+  // previous buffer during a bag split. Preserve readiness for the restarted consumer thread.
+  data_ready_ = data_ready_ || !producer_buffer_->data().empty();
 }
 
 void MessageCache::log_dropped()
@@ -126,6 +141,8 @@ void MessageCache::log_dropped()
   uint64_t total_lost = 0;
   std::string log_text("Cache buffers lost messages per topic: ");
 
+  // TODO(morlov): Protect messages_dropped_per_topic_ with mutex since we can call write(msg)
+  //  concurrently
   // worse performance than sorting key vector (neglible), but cleaner
   std::map<std::string, uint32_t> messages_dropped_per_topic_sorted(
     messages_dropped_per_topic_.begin(), messages_dropped_per_topic_.end());
@@ -146,6 +163,8 @@ void MessageCache::log_dropped()
     ROSBAG2_CPP_LOG_WARN_STREAM(log_text);
   }
 
+  // TODO(morlov): Consider to not taking in to account producer_buffer_->size() when calling from
+  //  bag_split
   size_t remaining = producer_buffer_->size() + consumer_buffer_->size();
   if (remaining > 0) {
     ROSBAG2_CPP_LOG_WARN_STREAM(

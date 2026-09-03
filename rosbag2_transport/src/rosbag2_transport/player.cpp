@@ -1259,7 +1259,7 @@ void PlayerImpl::play_messages_from_queue()
       while (rclcpp::ok() && !stop_playback_ && !play_next_.load() &&
         !clock_->sleep_until(get_message_order_timestamp(message_ptr)))
       {
-        // Stop sleeping if cancelled
+        // Stop sleeping if canceled
         if (std::atomic_exchange(&cancel_wait_for_next_message_, false)) {
           break;
         }
