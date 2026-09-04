@@ -31,7 +31,7 @@ target_link_libraries(${PROJECT_NAME} PUBLIC
   rosbag2_storage::rosbag2_storage
   rcpputils::rcpputils
   rcutils::rcutils
-  SQLite::SQLite3
+  SQLite3::SQLite3
 )
 target_link_libraries(${PROJECT_NAME} PRIVATE
   ament_cmake_ros_core::ament_ros_defaults
