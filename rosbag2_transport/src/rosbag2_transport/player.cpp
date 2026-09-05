@@ -2313,7 +2313,12 @@ const rosbag2_transport::PlayOptions & PlayerImpl::get_play_options()
 // Player public interface
 
 Player::Player(const rclcpp::NodeOptions & node_options)
-: Player("rosbag2_player", node_options) {}
+: Player("rosbag2_player", node_options)
+{
+  RCLCPP_WARN(this->get_logger(),
+    "The rosbag2_transport::Player composable node is deprecated."
+    " Please use rosbag2::Player instead");
+}
 
 Player::Player(const std::string & node_name, const rclcpp::NodeOptions & node_options)
 : rclcpp::Node(node_name, node_options)

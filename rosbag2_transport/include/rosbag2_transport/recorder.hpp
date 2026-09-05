@@ -67,12 +67,16 @@ public:
   /// Will call Recorder(node_name, node_options) constructor with node_name = "rosbag2_recorder".
   /// \param node_options Node options which will be used during construction of the underlying
   /// node.
+  [[deprecated("The rosbag2_transport::Recorder constructor for the composable recorder is "
+               "deprecated. Please use rosbag2::Recorder constructor instead")]]
   ROSBAG2_TRANSPORT_PUBLIC
   explicit Recorder(const rclcpp::NodeOptions & node_options);
 
   /// \brief Default constructor and entry point for the composable recorder.
-  /// Will construct Recorder class and initialize record_options, storage_options from node
-  /// parameters. At the end will call Recorder::record() to automatically start recording in a
+  /// \note Used from the rosbag2::Recorder constructor which is registered with
+  /// ament resource index.
+  /// \details Will construct Recorder class and initialize record_options, storage_options from
+  /// node parameters. At the end will call Recorder::record() to automatically start recording in a
   /// separate thread.
   /// \param node_name Name for the underlying node.
   /// \param node_options Node options which will be used during construction of the underlying

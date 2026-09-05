@@ -88,11 +88,14 @@ public:
   /// Will call Player(node_name, node_options) constructor with node_name = "rosbag2_player".
   /// \param node_options Node options which will be used during construction of the underlying
   /// node.
+  [[deprecated("The rosbag2_transport::Player constructor for the composable player is deprecated."
+               "Please use rosbag2::Player constructor instead")]]
   ROSBAG2_TRANSPORT_PUBLIC
   explicit Player(const rclcpp::NodeOptions & node_options);
 
   /// \brief Default constructor and entry point for the composable player.
-  /// Will construct Player class and initialize play_options, storage_options from node
+  /// \note Used from the rosbag2::Player constructor which is registered with ament resource index.
+  /// \details Will construct Player class and initialize play_options, storage_options from node
   /// parameters. At the end will call Player::play() to automatically start playback in a
   /// separate thread.
   /// \param node_name Name for the underlying node.
