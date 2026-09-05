@@ -432,12 +432,28 @@ rosbag2_storage::MessageDefinition LocalMessageDefinitionSource::get_full_text_e
           }
         }
       }
+      if (real_root_type == "action_msgs/msg/GoalStatusArray") {
+        // The owning action type could not be determined (e.g. only the status topic of an
+        // action is recorded, so no other introspection topic has populated the cache).
+        // GoalStatusArray is an ordinary message type - fall back to its plain message
+        // definition instead of producing an "unknown" encoding with an empty definition.
+        format = Format::MSG;
+      } else if (real_root_type == "action_msgs/srv/CancelGoal_Event") {
+        // Same fallback for the cancel-goal service event type: use the plain service
+        // definition.
+        real_root_type = service_event_topic_type_to_service_type(real_root_type);
+        format = Format::SRV;
+      }
     }
     try {
       DefinitionIdentifier def_identifier{real_root_type, format};
       const MessageSpec & spec = load_message_spec(def_identifier);
       (void)seen_deps.insert(def_identifier).second;
-      result = delimiter(def_identifier);
+      if (format != Format::MSG) {
+        // By design the top-level message definition for MSG format is present first,
+        // with no delimiter.
+        result = delimiter(def_identifier);
+      }
       result += spec.text;
       for (const auto & dep_name : spec.dependencies) {
         DefinitionIdentifier dep(dep_name, Format::MSG);
