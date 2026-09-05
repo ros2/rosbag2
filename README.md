@@ -110,6 +110,58 @@ _Splitting by time_: `ros2 bag record -a -d 9000` will split the bag files after
 
 If both splitting by size and duration are enabled, the bag will split at whichever threshold is reached first.
 
+#### Stopping the recording when free disk space is low
+
+The bag size limits described above (`--max-bag-size`, `--max-bag-duration`, `--max-bag-files`)
+are bounds on the bag itself. They do not protect against the disk being filled by anything else
+growing on the same filesystem (system logs, core dumps, a second recorder, a software update).
+A full disk on a robot is usually much worse than a stopped recording.
+
+To guard against this, the recorder can monitor the free space on the filesystem where the bag is
+being written and take an action when it goes below a minimum:
+
+* `--min-free-space <bytes>`: minimum free space in bytes which shall remain available.
+* `--min-free-space-percent <percent>`: minimum free space as a percentage (0-100) of the
+  filesystem capacity. Can be combined with `--min-free-space`, in which case the larger resulting
+  threshold in bytes applies.
+* `--low-free-space-action {stop,delete_oldest_files}`: the action to take when the free space
+  goes below the limit. Default: `stop`.
+  * `stop`: the recording is stopped, the current bag file is finalized and one error is logged.
+    The recorder node keeps running, so the recording can be restarted with the `~/record` service.
+  * `delete_oldest_files`: the oldest bag files (splits) of the current recording are deleted, never
+    the file currently being written, until the free space is above the limit again, and recording
+    continues. If there are no more old bag files to delete, the recording is stopped as with
+    `stop`. This action requires bag splitting to be enabled (`--max-bag-size` or
+    `--max-bag-duration`), e.g. for circular logging over long unattended runs; `ros2 bag record`
+    and the composable recorder node reject it otherwise.
+
+Both limits default to `0`, which disables the check and leaves the recorder behaviour unchanged.
+The free space is checked at most once per second, therefore the limit should leave headroom for
+roughly one second worth of data at the expected write rate.
+
+For example, stop recording when less than 1 GB is left on the disk:
+
+```
+$ ros2 bag record -a --min-free-space 1000000000
+```
+
+Keep recording with circular logging as long as at least 5% of the disk stays free:
+
+```
+$ ros2 bag record -a --max-bag-size 100000000 --min-free-space-percent 5 --low-free-space-action delete_oldest_files
+```
+
+Whenever the limit is reached, the recorder publishes a `rosbag2_interfaces/msg/LowDiskSpaceEvent`
+message on the `events/low_disk_space` topic so that other nodes can react. The message contains
+the checked path, the available and total capacity in bytes, the effective limit, the list of
+deleted bag files (if any) and whether the recording was stopped.
+
+The same options are available for the composable recorder node as the `storage.min_free_space_bytes`,
+`storage.min_free_space_percent` and `storage.low_free_space_action` parameters, and for the
+`rosbag2_cpp::Writer` via the corresponding `rosbag2_storage::StorageOptions` fields. When the
+`rosbag2_cpp::Writer` is used directly, it stops writing messages after the limit is reached and
+notifies about it via the `low_disk_space_callback` from `rosbag2_cpp::bag_events::WriterEventCallbacks`.
+
 #### Repeating transient-local messages on split and snapshot
 
 When a bag file is split or a snapshot is taken, consumers of the new file may need certain

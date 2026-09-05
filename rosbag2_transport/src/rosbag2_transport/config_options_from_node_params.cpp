@@ -472,6 +472,38 @@ get_storage_options_from_node_params(rclcpp::Node & node)
     node, "storage.max_bag_files", 0,
     std::numeric_limits<int64_t>::max(), storage_options.max_bag_files);
 
+  storage_options.min_free_space_bytes = param_utils::declare_integer_node_params<uint64_t>(
+    node, "storage.min_free_space_bytes", 0,
+    std::numeric_limits<int64_t>::max(), storage_options.min_free_space_bytes);
+
+  auto min_free_space_percent_desc = param_utils::float_param_description(
+    "Minimum free space as a percentage (0-100) of the filesystem capacity which shall remain"
+    " available on the filesystem where the bag is written. 0 disables the check.",
+    0.0f, 100.0f);
+  storage_options.min_free_space_percent = node.declare_parameter<double>(
+    "storage.min_free_space_percent", storage_options.min_free_space_percent,
+    min_free_space_percent_desc);
+
+  const auto low_free_space_action_str = node.declare_parameter<std::string>(
+    "storage.low_free_space_action",
+    rosbag2_storage::to_string(storage_options.low_free_space_action));
+  try {
+    storage_options.low_free_space_action =
+      rosbag2_storage::low_free_space_action_from_string(low_free_space_action_str);
+  } catch (const std::invalid_argument & e) {
+    throw std::invalid_argument(
+            std::string("Invalid value for the storage.low_free_space_action parameter. ") +
+            e.what());
+  }
+  if (storage_options.low_free_space_action ==
+    rosbag2_storage::LowFreeSpaceAction::DELETE_OLDEST_FILES &&
+    storage_options.max_bagfile_size == 0 && storage_options.max_bagfile_duration == 0)
+  {
+    throw std::invalid_argument(
+            "storage.low_free_space_action 'delete_oldest_files' can only be used if bag "
+            "splitting is enabled via storage.max_bagfile_size or storage.max_bagfile_duration.");
+  }
+
   storage_options.max_cache_size = param_utils::declare_integer_node_params<uint64_t>(
     node, "storage.max_cache_size", 0,
     std::numeric_limits<int64_t>::max(), 100 * 1024 * 1024);

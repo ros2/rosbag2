@@ -14,15 +14,18 @@
 
 #include <gmock/gmock.h>
 
+#include <atomic>
 #include <chrono>
 #include <ctime>
 #include <filesystem>
+#include <fstream>
 #include <iomanip>
 #include <memory>
 #include <regex>
 #include <sstream>
 #include <stdexcept>
 #include <string>
+#include <thread>
 #include <utility>
 #include <vector>
 
@@ -68,6 +71,49 @@ public:
     message_cache_ = std::move(message_cache);
     cache_consumer_ = std::move(cache_consumer);
   }
+
+  /// \brief Substitute the filesystem space information and disable the check throttling.
+  void set_fake_filesystem_space(uint64_t capacity, uint64_t available)
+  {
+    fake_space_info_.capacity = capacity;
+    fake_space_info_.free = available;
+    fake_space_info_.available = available;
+    free_space_check_period_ = std::chrono::steady_clock::duration::zero();
+  }
+
+  size_t get_num_free_space_queries() const
+  {
+    return num_free_space_queries_;
+  }
+
+protected:
+  std::filesystem::space_info get_filesystem_space_info(std::error_code & ec) const override
+  {
+    ec.clear();
+    num_free_space_queries_++;
+    if (fake_space_info_.capacity == 0) {
+      return SequentialWriter::get_filesystem_space_info(ec);
+    }
+    // Emulate that deleting files frees up space
+    auto space_info = fake_space_info_;
+    space_info.available += num_deleted_files_ * bytes_per_deleted_file_;
+    space_info.free = space_info.available;
+    return space_info;
+  }
+
+  bool delete_oldest_file(std::string & deleted_file_path) override
+  {
+    if (SequentialWriter::delete_oldest_file(deleted_file_path)) {
+      num_deleted_files_++;
+      return true;
+    }
+    return false;
+  }
+
+  std::filesystem::space_info fake_space_info_{0, 0, 0};
+  mutable size_t num_free_space_queries_{0};
+  size_t num_deleted_files_{0};
+  static constexpr uint64_t bytes_per_deleted_file_ = 100;
 };
 
 class SequentialWriterTest : public Test
@@ -1598,3 +1644,270 @@ INSTANTIATE_TEST_SUITE_P(
   ParametrizedTemporaryDirectoryFixture,
   ValuesIn(rosbag2_test_common::kTestedStorageIDs)
 );
+
+TEST_F(SequentialWriterTest, open_throws_error_on_invalid_min_free_space_percent) {
+  std::string rmw_format = "rmw_format";
+  auto sequential_writer = std::make_unique<rosbag2_cpp::writers::SequentialWriter>(
+    std::move(storage_factory_), converter_factory_, std::move(metadata_io_));
+  writer_ = std::make_unique<rosbag2_cpp::Writer>(std::move(sequential_writer));
+
+  storage_options_.min_free_space_percent = 100.5;
+  EXPECT_THROW(writer_->open(storage_options_, {rmw_format, rmw_format}), std::runtime_error);
+}
+
+TEST_F(SequentialWriterTest, free_space_is_not_checked_when_min_free_space_is_not_set) {
+  auto sequential_writer = std::make_unique<SequentialWriterForTest>(
+    std::move(storage_factory_), converter_factory_, std::move(metadata_io_));
+  auto * writer_for_test = sequential_writer.get();
+  writer_for_test->set_fake_filesystem_space(1000, 0);  // No free space at all
+  writer_ = std::make_unique<rosbag2_cpp::Writer>(std::move(sequential_writer));
+
+  auto message = std::make_shared<rosbag2_storage::SerializedBagMessage>();
+  message->topic_name = "test_topic";
+
+  bool callback_called = false;
+  rosbag2_cpp::bag_events::WriterEventCallbacks callbacks;
+  callbacks.low_disk_space_callback =
+    [&callback_called](const rosbag2_cpp::bag_events::LowDiskSpaceInfo &) {
+      callback_called = true;
+    };
+  writer_->add_event_callbacks(callbacks);
+
+  writer_->open(storage_options_, {"rmw_format", "rmw_format"});
+  writer_->create_topic({0u, "test_topic", "test_msgs/BasicTypes", "", {}, ""});
+  for (auto i = 0; i < 5; ++i) {
+    writer_->write(message);
+  }
+  writer_->close();
+
+  EXPECT_EQ(writer_for_test->get_num_free_space_queries(), 0u);
+  EXPECT_FALSE(callback_called);
+  EXPECT_EQ(fake_storage_size_, 5u);
+}
+
+TEST_F(SequentialWriterTest, writer_stops_writing_and_calls_callback_when_free_space_is_low) {
+  auto sequential_writer = std::make_unique<SequentialWriterForTest>(
+    std::move(storage_factory_), converter_factory_, std::move(metadata_io_));
+  auto * writer_for_test = sequential_writer.get();
+  writer_for_test->set_fake_filesystem_space(1000, 300);
+  writer_ = std::make_unique<rosbag2_cpp::Writer>(std::move(sequential_writer));
+
+  auto message = std::make_shared<rosbag2_storage::SerializedBagMessage>();
+  message->topic_name = "test_topic";
+
+  // Bytes limit (200) is below the available space (300), but percent limit 50% of 1000 = 500
+  // is above. The larger of the two limits shall apply.
+  storage_options_.min_free_space_bytes = 200;
+  storage_options_.min_free_space_percent = 50.0;
+  storage_options_.low_free_space_action = rosbag2_storage::LowFreeSpaceAction::STOP;
+
+  size_t num_callbacks = 0;
+  rosbag2_cpp::bag_events::LowDiskSpaceInfo received_info;
+  rosbag2_cpp::bag_events::WriterEventCallbacks callbacks;
+  callbacks.low_disk_space_callback =
+    [&num_callbacks, &received_info](const rosbag2_cpp::bag_events::LowDiskSpaceInfo & info) {
+      num_callbacks++;
+      received_info = info;
+    };
+  writer_->add_event_callbacks(callbacks);
+
+  writer_->open(storage_options_, {"rmw_format", "rmw_format"});
+  writer_->create_topic({0u, "test_topic", "test_msgs/BasicTypes", "", {}, ""});
+  for (auto i = 0; i < 5; ++i) {
+    writer_->write(message);
+  }
+  writer_->close();
+
+  // Nothing shall be written and the callback shall be called exactly once
+  EXPECT_EQ(fake_storage_size_, 0u);
+  EXPECT_EQ(num_callbacks, 1u);
+  EXPECT_TRUE(received_info.writing_stopped);
+  EXPECT_EQ(received_info.path, storage_options_.uri);
+  EXPECT_EQ(received_info.available_bytes, 300u);
+  EXPECT_EQ(received_info.capacity_bytes, 1000u);
+  EXPECT_EQ(received_info.min_free_space_bytes, 500u);
+  EXPECT_TRUE(received_info.deleted_files.empty());
+  // Free space shall be queried only once, since writer stops writing after the first event
+  EXPECT_EQ(writer_for_test->get_num_free_space_queries(), 1u);
+}
+
+TEST_F(SequentialWriterTest, writer_deletes_oldest_files_when_free_space_is_low) {
+  const uint64_t max_bagfile_size = 3;
+  // Create real files for the fake storage so that they can be deleted
+  ON_CALL(*storage_factory_, open_read_write(_)).WillByDefault(
+    DoAll(
+      Invoke(
+        [this](const rosbag2_storage::StorageOptions & storage_options) {
+          fake_storage_size_ = 0;
+          fake_storage_uri_ = storage_options.uri;
+          std::ofstream file(fake_storage_uri_);
+          file << "fake bag file content";
+        }),
+      Return(storage_)));
+
+  auto sequential_writer = std::make_unique<SequentialWriterForTest>(
+    std::move(storage_factory_), converter_factory_, std::move(metadata_io_));
+  auto * writer_for_test = sequential_writer.get();
+  writer_ = std::make_unique<rosbag2_cpp::Writer>(std::move(sequential_writer));
+
+  auto message = std::make_shared<rosbag2_storage::SerializedBagMessage>();
+  message->topic_name = "test_topic";
+
+  storage_options_.max_bagfile_size = max_bagfile_size;
+  storage_options_.min_free_space_bytes = 500;
+  storage_options_.low_free_space_action =
+    rosbag2_storage::LowFreeSpaceAction::DELETE_OLDEST_FILES;
+
+  std::vector<rosbag2_cpp::bag_events::LowDiskSpaceInfo> received_infos;
+  rosbag2_cpp::bag_events::WriterEventCallbacks callbacks;
+  callbacks.low_disk_space_callback =
+    [&received_infos](const rosbag2_cpp::bag_events::LowDiskSpaceInfo & info) {
+      received_infos.push_back(info);
+    };
+  writer_->add_event_callbacks(callbacks);
+
+  writer_->open(storage_options_, {"rmw_format", "rmw_format"});
+  writer_->create_topic({0u, "test_topic", "test_msgs/BasicTypes", "", {}, ""});
+
+  // Write enough messages to have 3 files (2 splits) with enough free space
+  writer_for_test->set_fake_filesystem_space(10000, 1000);
+  for (uint64_t i = 0; i < 2 * max_bagfile_size + 1; ++i) {
+    writer_->write(message);
+  }
+  ASSERT_TRUE(received_infos.empty());
+  const auto files_before = fs::directory_iterator(storage_options_.uri);
+  ASSERT_EQ(std::distance(fs::begin(files_before), fs::end(files_before)), 3);
+
+  // Free space drops below the limit. Each deleted file frees up 100 bytes (see
+  // SequentialWriterForTest), so two of the three files need to be deleted to get back above
+  // the 500 bytes limit.
+  writer_for_test->set_fake_filesystem_space(10000, 350);
+  writer_->write(message);
+
+  ASSERT_EQ(received_infos.size(), 1u);
+  EXPECT_FALSE(received_infos[0].writing_stopped);
+  EXPECT_EQ(received_infos[0].min_free_space_bytes, 500u);
+  EXPECT_EQ(received_infos[0].available_bytes, 550u);
+  ASSERT_EQ(received_infos[0].deleted_files.size(), 2u);
+  for (const auto & deleted_file : received_infos[0].deleted_files) {
+    EXPECT_FALSE(fs::exists(deleted_file)) << deleted_file;
+  }
+  // The current file shall never be deleted and writing shall continue
+  EXPECT_TRUE(fs::exists(fake_storage_uri_));
+  EXPECT_EQ(fake_storage_size_, 2u);
+
+  // Free space drops again, but there are no more old files to delete. Writer shall stop writing.
+  writer_for_test->set_fake_filesystem_space(10000, 100);
+  writer_->write(message);
+  writer_->write(message);
+  writer_->close();
+
+  ASSERT_EQ(received_infos.size(), 2u);
+  EXPECT_TRUE(received_infos[1].writing_stopped);
+  EXPECT_TRUE(received_infos[1].deleted_files.empty());
+  EXPECT_EQ(fake_storage_size_, 2u);
+  // Metadata shall only reference the remaining file
+  EXPECT_EQ(fake_metadata_.files.size(), 1u);
+  EXPECT_EQ(fake_metadata_.relative_file_paths.size(), 1u);
+}
+
+TEST_F(SequentialWriterTest, writer_deletes_oldest_files_on_low_free_space_with_cache_enabled) {
+  const uint64_t max_bagfile_size = 3;
+  const size_t message_count = 2 * max_bagfile_size + 1;
+  // Create real files for the fake storage so that they can be deleted
+  ON_CALL(*storage_factory_, open_read_write(_)).WillByDefault(
+    DoAll(
+      Invoke(
+        [this](const rosbag2_storage::StorageOptions & storage_options) {
+          fake_storage_size_ = 0;
+          fake_storage_uri_ = storage_options.uri;
+          std::ofstream file(fake_storage_uri_);
+          file << "fake bag file content";
+        }),
+      Return(storage_)));
+
+  // Track the total number of messages flushed to the storage by the cache consumer thread
+  std::atomic<size_t> total_flushed{0};
+  ON_CALL(*storage_, write_messages(An<const rosbag2_storage::SerializedBagMessages &>()))
+  .WillByDefault(
+    [this, &total_flushed](const rosbag2_storage::SerializedBagMessages & msgs) {
+      fake_storage_size_.fetch_add(static_cast<uint32_t>(msgs.size()));
+      total_flushed.fetch_add(msgs.size());
+      return std::vector<size_t>();
+    }
+  );
+
+  auto sequential_writer = std::make_unique<SequentialWriterForTest>(
+    std::move(storage_factory_), converter_factory_, std::move(metadata_io_));
+  auto * writer_for_test = sequential_writer.get();
+  writer_ = std::make_unique<rosbag2_cpp::Writer>(std::move(sequential_writer));
+
+  const std::string msg_content = "Hello";
+  auto message = std::make_shared<rosbag2_storage::SerializedBagMessage>();
+  message->topic_name = "test_topic";
+  message->serialized_data =
+    rosbag2_storage::make_serialized_message(msg_content.c_str(), msg_content.length());
+
+  storage_options_.max_bagfile_size = max_bagfile_size;
+  storage_options_.max_cache_size = 200;
+  storage_options_.min_free_space_bytes = 500;
+  storage_options_.low_free_space_action =
+    rosbag2_storage::LowFreeSpaceAction::DELETE_OLDEST_FILES;
+
+  std::vector<rosbag2_cpp::bag_events::LowDiskSpaceInfo> received_infos;
+  rosbag2_cpp::bag_events::WriterEventCallbacks callbacks;
+  callbacks.low_disk_space_callback =
+    [&received_infos](const rosbag2_cpp::bag_events::LowDiskSpaceInfo & info) {
+      received_infos.push_back(info);
+    };
+  writer_->add_event_callbacks(callbacks);
+
+  // Wait until the cache consumer thread flushed the expected total number of messages, to make
+  // the bag splitting and free space checks deterministic.
+  auto wait_for_total_flushed = [&total_flushed](size_t expected_num_messages) {
+      using clock = std::chrono::steady_clock;
+      auto start = clock::now();
+      while (total_flushed.load() < expected_num_messages &&
+        (clock::now() - start) < std::chrono::seconds(5))
+      {
+        std::this_thread::sleep_for(std::chrono::milliseconds(1));
+      }
+      return total_flushed.load() == expected_num_messages;
+    };
+
+  writer_for_test->set_fake_filesystem_space(10000, 1000);
+  writer_->open(storage_options_, {"rmw_format", "rmw_format"});
+  writer_->create_topic({0u, "test_topic", "test_msgs/BasicTypes", "", {}, ""});
+
+  // Write enough messages to have 3 files (2 splits) with enough free space
+  for (size_t i = 1; i <= message_count; ++i) {
+    writer_->write(message);
+    ASSERT_TRUE(wait_for_total_flushed(i)) << "message number = " << i;
+  }
+  ASSERT_TRUE(received_infos.empty());
+
+  // Free space drops below the limit. Each deleted file frees up 100 bytes (see
+  // SequentialWriterForTest), so two of the three files need to be deleted to get back above
+  // the 500 bytes limit. The cache consumer shall be stopped during the deletion and restarted
+  // afterwards, so that the subsequent messages are still flushed to the storage.
+  writer_for_test->set_fake_filesystem_space(10000, 350);
+  writer_->write(message);
+  ASSERT_TRUE(wait_for_total_flushed(message_count + 1));
+
+  ASSERT_EQ(received_infos.size(), 1u);
+  EXPECT_FALSE(received_infos[0].writing_stopped);
+  ASSERT_EQ(received_infos[0].deleted_files.size(), 2u);
+  for (const auto & deleted_file : received_infos[0].deleted_files) {
+    EXPECT_FALSE(fs::exists(deleted_file)) << deleted_file;
+  }
+  EXPECT_TRUE(fs::exists(fake_storage_uri_));
+
+  // The cache consumer shall be operational after the deletion
+  writer_->write(message);
+  ASSERT_TRUE(wait_for_total_flushed(message_count + 2));
+  writer_->close();
+
+  // Metadata shall only reference the remaining file
+  EXPECT_EQ(fake_metadata_.files.size(), 1u);
+  EXPECT_EQ(fake_metadata_.relative_file_paths.size(), 1u);
+}

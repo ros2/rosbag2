@@ -26,12 +26,15 @@ RecorderEventNotifier::RecorderEventNotifier(
   rclcpp::Node * node,
   const rosbag2_transport::RecordOptions & record_options,
   RclcppPublisherWrapper<rosbag2_interfaces::msg::WriteSplitEvent>::SharedPtr split_event_pub,
-  RclcppPublisherWrapper<rosbag2_interfaces::msg::MessagesLostEvent>::SharedPtr msgs_lost_event_pub)
+  RclcppPublisherWrapper<rosbag2_interfaces::msg::MessagesLostEvent>::SharedPtr msgs_lost_event_pub,
+  RclcppPublisherWrapper<rosbag2_interfaces::msg::LowDiskSpaceEvent>::SharedPtr
+  low_disk_space_event_pub)
 {
   pimpl_ = std::make_unique<RecorderEventNotifierImpl>(node,
                                                        record_options,
                                                        std::move(split_event_pub),
-                                                       std::move(msgs_lost_event_pub));
+                                                       std::move(msgs_lost_event_pub),
+                                                       std::move(low_disk_space_event_pub));
 }
 
 RecorderEventNotifier::~RecorderEventNotifier()
@@ -65,6 +68,12 @@ void RecorderEventNotifier::on_messages_lost_in_transport(
   pimpl_->on_messages_lost_in_transport(topic_name, qos_msgs_lost_info);
 }
 
+void RecorderEventNotifier::on_low_disk_space_in_recorder(
+  const rosbag2_cpp::bag_events::LowDiskSpaceInfo & low_disk_space_info)
+{
+  pimpl_->on_low_disk_space_in_recorder(low_disk_space_info);
+}
+
 uint64_t RecorderEventNotifier::get_total_num_messages_lost_in_transport() const
 {
   return pimpl_->get_total_num_messages_lost_in_transport();
@@ -95,6 +104,11 @@ const char * RecorderEventNotifier::get_default_messages_lost_topic_name()
   return RecorderEventNotifierImpl::kDefaultMessagesLostTopicName;
 }
 
+const char * RecorderEventNotifier::get_default_low_disk_space_topic_name()
+{
+  return RecorderEventNotifierImpl::kDefaultLowDiskSpaceTopicName;
+}
+
 std::string_view RecorderEventNotifier::get_write_split_topic_name() const
 {
   return pimpl_->get_write_split_topic_name();
@@ -105,6 +119,11 @@ std::string_view RecorderEventNotifier::get_messages_lost_topic_name() const
   return pimpl_->get_messages_lost_topic_name();
 }
 
+std::string_view RecorderEventNotifier::get_low_disk_space_topic_name() const
+{
+  return pimpl_->get_low_disk_space_topic_name();
+}
+
 rclcpp::QoS RecorderEventNotifier::get_write_split_qos() const
 {
   return pimpl_->get_write_split_qos();
@@ -113,6 +132,11 @@ rclcpp::QoS RecorderEventNotifier::get_write_split_qos() const
 rclcpp::QoS RecorderEventNotifier::get_messages_lost_qos() const
 {
   return pimpl_->get_messages_lost_qos();
+}
+
+rclcpp::QoS RecorderEventNotifier::get_low_disk_space_qos() const
+{
+  return pimpl_->get_low_disk_space_qos();
 }
 
 }  // namespace rosbag2_transport

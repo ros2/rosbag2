@@ -356,6 +356,17 @@ TEST_F(SequentialCompressionWriterTest, writer_creates_correct_metadata_relative
     EXPECT_TRUE(file_counter_at_start(path, counter));
     counter++;
   }
+
+  // The per-file information shall reference the same compressed filenames, so that circular
+  // logging and the low free disk space action can find and delete the compressed files.
+  ASSERT_EQ(
+    intercepted_write_metadata_.files.size(),
+    intercepted_write_metadata_.relative_file_paths.size());
+  for (size_t i = 0; i < intercepted_write_metadata_.files.size(); i++) {
+    EXPECT_EQ(
+      intercepted_write_metadata_.files[i].path,
+      intercepted_write_metadata_.relative_file_paths[i]) << "file index = " << i;
+  }
 }
 
 TEST_F(SequentialCompressionWriterTest, writer_call_metadata_update_on_open_and_destruction)
@@ -732,6 +743,11 @@ TEST_F(SequentialCompressionWriterTest,
   ASSERT_EQ(
     intercepted_write_metadata_.files.size(),
     intercepted_write_metadata_.relative_file_paths.size());
+  for (size_t i = 0; i < intercepted_write_metadata_.files.size(); i++) {
+    EXPECT_EQ(
+      intercepted_write_metadata_.files[i].path,
+      intercepted_write_metadata_.relative_file_paths[i]) << "file index = " << i;
+  }
 }
 
 TEST_F(SequentialCompressionWriterTest, snapshot_writes_to_new_file_with_file_compression)

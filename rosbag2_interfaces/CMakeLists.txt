@@ -14,6 +14,7 @@ find_package(builtin_interfaces REQUIRED)
 find_package(rosidl_default_generators REQUIRED)
 
 rosidl_generate_interfaces(${PROJECT_NAME}
+  "msg/LowDiskSpaceEvent.msg"
   "msg/ReadSplitEvent.msg"
   "msg/WriteSplitEvent.msg"
   "msg/MessagesLostEventTopicStat.msg"
