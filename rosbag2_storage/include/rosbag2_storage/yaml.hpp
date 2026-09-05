@@ -104,9 +104,10 @@ struct convert<rclcpp::Duration>
 {
   static Node encode(const rclcpp::Duration & duration)
   {
+    const builtin_interfaces::msg::Duration duration_msg = duration;
     Node node;
-    node["sec"] = duration.nanoseconds() / 1000000000;
-    node["nsec"] = duration.nanoseconds() % 1000000000;
+    node["sec"] = duration_msg.sec;
+    node["nsec"] = duration_msg.nanosec;
     return node;
   }
 

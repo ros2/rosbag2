@@ -657,6 +657,10 @@ if(BUILD_TESTING)
     test/rosbag2_transport/test_record_options.cpp)
   target_link_libraries(test_record_options ament_cmake_ros_core::ament_ros_defaults ${PROJECT_NAME})
 
+  ament_add_gmock(test_play_options
+    test/rosbag2_transport/test_play_options.cpp)
+  target_link_libraries(test_play_options ${PROJECT_NAME})
+
   ament_add_gmock(test_type_description_hash
     test/rosbag2_transport/test_type_description_hash.cpp)
   target_link_libraries(test_type_description_hash ament_cmake_ros_core::ament_ros_defaults ${PROJECT_NAME})
