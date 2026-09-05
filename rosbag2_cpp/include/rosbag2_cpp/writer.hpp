@@ -75,6 +75,7 @@ public:
    * more storage and converter options.
    *
    * \param storage_uri URI of the storage to open.
+   * \throws runtime_error if internal error happens.
    **/
   void open(const std::string & uri);
 
@@ -84,6 +85,12 @@ public:
    * and \ref remove_topic.
    * \param storage_options Options to configure the storage
    * \param converter_options options to define in which format incoming messages are stored
+   * \throws runtime_error if 
+   * database directory already exists,
+   * failed to create database directory,
+   * no storage could be initialized,
+   * invalid bag splitting size given,
+   * max cache size less or equal 0 when snapshot mode is enabled.
    **/
   void open(
     const rosbag2_storage::StorageOptions & storage_options,
