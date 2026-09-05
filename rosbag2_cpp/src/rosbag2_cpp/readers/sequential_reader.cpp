@@ -110,25 +110,12 @@ void SequentialReader::open(
     current_file_iterator_ = file_paths_.begin();
     load_current_file();
   } else {
-    storage_ = storage_factory_->open_read_only(storage_options_);
-    if (!storage_) {
-      throw std::runtime_error("No storage could be initialized for the input URI: " +
-            storage_options.uri);
-    }
-    if (!set_read_order(read_order_)) {
-      ROSBAG2_CPP_LOG_WARN(
-        "Could not set read order on open(), falling back to file order");
-      if (!set_read_order(kFallbackOrder)) {
-        throw std::runtime_error("Could not set read order on open()");
-      }
-    }
-    metadata_ = storage_->get_metadata();
-    if (metadata_.relative_file_paths.empty()) {
-      ROSBAG2_CPP_LOG_WARN("No file paths were found in metadata.");
-      return;
-    }
-    file_paths_ = metadata_.relative_file_paths;
+    ROSBAG2_CPP_LOG_WARN("No metadata.yaml file found. Assuming a single storage file and trying "
+                         "to read metadata from storage file.");
+    file_paths_ = {storage_options_.uri};
     current_file_iterator_ = file_paths_.begin();
+    load_current_file();
+    metadata_ = storage_->get_metadata();
   }
   auto topics = metadata_.topics_with_message_count;
   if (topics.empty()) {
@@ -139,9 +126,8 @@ void SequentialReader::open(
 
   // Currently a bag file can only be played if all topics have the same serialization format.
   check_topics_serialization_formats(topics);
-  check_converter_serialization_format(
-    converter_options.output_serialization_format,
-    topics[0].topic_metadata.serialization_format);
+  check_converter_serialization_format(converter_options.output_serialization_format,
+                                       topics[0].topic_metadata.serialization_format);
 }
 
 bool SequentialReader::set_read_order(const rosbag2_storage::ReadOrder & order)
@@ -217,8 +203,7 @@ void SequentialReader::set_filter(
     storage_->set_filter(topics_filter_);
     return;
   }
-  throw std::runtime_error(
-          "Bag is not open. Call open() before setting filter.");
+  throw std::runtime_error("Bag is not open. Call open() before setting filter.");
 }
 
 void SequentialReader::reset_filter()
@@ -265,7 +250,7 @@ bool SequentialReader::has_prev_file() const
 
 void SequentialReader::load_current_file()
 {
-  // only preprocess if file hasn't been preprocessed before
+  // Only preprocess if file hasn't been preprocessed before
   // add path AFTER preprocessing since preprocessing may modify it
   if (preprocessed_file_paths_.find(get_current_file()) == preprocessed_file_paths_.end()) {
     preprocess_current_file();
@@ -275,10 +260,16 @@ void SequentialReader::load_current_file()
   storage_options_.uri = get_current_file();
   storage_ = storage_factory_->open_read_only(storage_options_);
   if (!storage_) {
-    throw std::runtime_error{"No storage could be initialized. Abort"};
+    throw std::runtime_error("No storage could be initialized for the input URI: " +
+                             storage_options_.uri);
   }
   // set filters
-  storage_->set_read_order(read_order_);
+  if (!set_read_order(read_order_)) {
+    ROSBAG2_CPP_LOG_WARN("Could not set read order on open(), falling back to file order");
+    if (!set_read_order(kFallbackOrder)) {
+      throw std::runtime_error("Could not set read order on open()");
+    }
+  }
   storage_->seek(seek_time_);
   set_filter(topics_filter_);
 }
@@ -288,7 +279,7 @@ void SequentialReader::load_next_file()
   assert(current_file_iterator_ != file_paths_.end());
   auto info = std::make_shared<bag_events::BagSplitInfo>();
   info->closed_file = get_current_file();
-  current_file_iterator_++;
+  ++current_file_iterator_;
   info->opened_file = get_current_file();
   load_current_file();
   callback_manager_.execute_callbacks(bag_events::BagEvent::READ_SPLIT, info);
@@ -299,7 +290,7 @@ void SequentialReader::load_prev_file()
   assert(current_file_iterator_ != file_paths_.begin());
   auto info = std::make_shared<bag_events::BagSplitInfo>();
   info->closed_file = get_current_file();
-  current_file_iterator_--;
+  --current_file_iterator_;
   info->opened_file = get_current_file();
   load_current_file();
   callback_manager_.execute_callbacks(bag_events::BagEvent::READ_SPLIT, info);
