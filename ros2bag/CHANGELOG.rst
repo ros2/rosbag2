@@ -2,8 +2,8 @@
 Changelog for package ros2bag
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.15.17 (2026-09-06)
+--------------------
 * Added option to change node name for the recorder from the Python API (`#1180 <https://github.com/ros2/rosbag2/issues/1180>`_) (`#2437 <https://github.com/ros2/rosbag2/issues/2437>`_)
 * Contributors: Fabian Hirmann
 
