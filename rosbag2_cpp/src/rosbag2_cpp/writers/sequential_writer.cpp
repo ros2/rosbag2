@@ -194,7 +194,7 @@ void SequentialWriter::open(
     auto const & md = topic_names_to_message_definitions_[topic_name];
     storage_->create_topic(topic_metadata, md);
   }
-  storage_->update_metadata(metadata_);
+  update_current_storage_metadata();
   next_file_index_ = 1;  // First file is 0, next will be 1
   is_open_ = true;
 }
@@ -208,7 +208,7 @@ void SequentialWriter::flush_cache_update_metadata_and_close_storage()
   }
   finalize_metadata();
   if (storage_) {
-    storage_->update_metadata(metadata_);
+    update_current_storage_metadata();
     storage_.reset();  // Destroy storage before calling WRITE_SPLIT callback to make sure that
     // bag file was closed before callback call.
   }
@@ -377,8 +377,7 @@ void SequentialWriter::switch_to_next_storage()
     message_cache_->log_dropped();
   }
 
-  finalize_metadata();
-  storage_->update_metadata(metadata_);
+  update_current_storage_metadata();
 
   // Check for overflow: if next_file_index_ is 0, we've wrapped around (very unlikely but possible)
   if (next_file_index_ == 0) {
@@ -412,8 +411,7 @@ void SequentialWriter::switch_to_next_storage()
   // Delete oldest files if circular buffer limit exceeded (after new file is added)
   delete_oldest_files_if_needed();
 
-  finalize_metadata();
-  storage_->update_metadata(metadata_);
+  update_current_storage_metadata();
   {
     // Re-register all topics since we rolled-over to a new bagfile.
     std::lock_guard<std::mutex> lock(topics_info_mutex_);
@@ -727,13 +725,21 @@ void SequentialWriter::finalize_metadata()
   metadata_.bag_size = 0;
 
   for (const auto & path : metadata_.relative_file_paths) {
-    const auto bag_path = fs::path{path};
+    // Note: The relative_file_paths contains file names relative to the bag folder
+    const auto bag_path = fs::path(base_folder_) / path;
 
-    if (fs::exists(bag_path)) {
-      metadata_.bag_size += fs::file_size(bag_path);
+    std::error_code ec;
+    const auto file_size = fs::file_size(bag_path, ec);
+    if (!ec) {
+      metadata_.bag_size += file_size;
     }
   }
 
+  update_metadata_topics_message_counts();
+}
+
+void SequentialWriter::update_metadata_topics_message_counts()
+{
   metadata_.topics_with_message_count.clear();
   metadata_.topics_with_message_count.reserve(topics_names_to_info_.size());
   metadata_.message_count = 0;
@@ -749,6 +755,30 @@ void SequentialWriter::finalize_metadata()
         converter_->get_output_serialization_format();
     }
   }
+}
+
+void SequentialWriter::update_current_storage_metadata()
+{
+  if (!storage_) {
+    return;
+  }
+  update_metadata_topics_message_counts();
+  auto metadata_copy = metadata_;
+  // Trim the file lists down to the currently opened file. The storage plugin serializes the
+  // given metadata into the bag file, and re-serializing the whole, growing file history into
+  // every bag file on every split caused unbounded CPU growth and redundant on-disk metadata for
+  // long recordings with many splits (https://github.com/ros2/rosbag2/issues/2481).
+  // The full file history is still written to the metadata.yaml file on close().
+  const auto current_file = strip_parent_path(storage_->get_relative_file_path());
+  metadata_copy.relative_file_paths = {current_file};
+  if (!metadata_.files.empty()) {
+    // The currently opened file is always the last one in the files list
+    metadata_copy.files = {metadata_.files.back()};
+  }
+  std::error_code ec;
+  const auto current_file_size = fs::file_size(fs::path(base_folder_) / current_file, ec);
+  metadata_copy.bag_size = ec ? 0u : current_file_size;
+  storage_->update_metadata(metadata_copy);
 }
 
 void SequentialWriter::write_messages(
