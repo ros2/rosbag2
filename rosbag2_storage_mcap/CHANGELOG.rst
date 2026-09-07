@@ -2,6 +2,9 @@
 Changelog for package rosbag2_storage_mcap
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.15.17 (2026-09-06)
+--------------------
+
 0.15.16 (2025-12-23)
 --------------------
 * [humble] Bugfix for incorrect MCAPStorage::seek(timestamp) when timestamp is current (backport `#2157 <https://github.com/ros2/rosbag2/issues/2157>`_) (`#2161 <https://github.com/ros2/rosbag2/issues/2161>`_)

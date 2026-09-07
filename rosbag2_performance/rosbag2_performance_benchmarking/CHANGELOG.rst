@@ -2,6 +2,9 @@
 Changelog for package rosbag2_performance_benchmarking
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.15.17 (2026-09-06)
+--------------------
+
 0.15.16 (2025-12-23)
 --------------------
 * [humble] Enable `rosbag2_performance_benchmarking` package to be built by default (backport `#2093 <https://github.com/ros2/rosbag2/issues/2093>`_) (`#2098 <https://github.com/ros2/rosbag2/issues/2098>`_)

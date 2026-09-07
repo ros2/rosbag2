@@ -2,6 +2,12 @@
 Changelog for package rosbag2
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.15.17 (2026-09-06)
+--------------------
+* docs: fix Reader usage examples (`#2455 <https://github.com/ros2/rosbag2/issues/2455>`_) (`#2459 <https://github.com/ros2/rosbag2/issues/2459>`_)
+* Added writer for std::shared_ptr<const rclcpp::SerializedMessage> (`#2356 <https://github.com/ros2/rosbag2/issues/2356>`_)
+* Contributors: Jacob Cohen, mergify[bot]
+
 0.15.16 (2025-12-23)
 --------------------
 
