@@ -294,6 +294,12 @@ TEST_F(SequentialReaderMixedFormatsTest, open_and_read_succeed_if_output_format_
   auto message = reader_->read_next();
   ASSERT_NE(nullptr, message);
   EXPECT_EQ("topic0", message->topic_name);
+
+  // The topic not stored in the requested output serialization format cannot be delivered.
+  const auto undeliverable_topics = reader_->get_undeliverable_topics();
+  ASSERT_THAT(undeliverable_topics, SizeIs(1));
+  EXPECT_EQ("topic1", undeliverable_topics[0].name);
+  EXPECT_EQ("rmw2_format", undeliverable_topics[0].serialization_format);
 }
 
 TEST_F(SequentialReaderMixedFormatsTest, open_and_read_succeed_if_no_output_format_is_requested) {
@@ -307,6 +313,9 @@ TEST_F(SequentialReaderMixedFormatsTest, open_and_read_succeed_if_no_output_form
   auto message = reader_->read_next();
   ASSERT_NE(nullptr, message);
   EXPECT_EQ("topic0", message->topic_name);
+
+  // Without a requested output serialization format, every topic is delivered as stored.
+  EXPECT_THAT(reader_->get_undeliverable_topics(), IsEmpty());
 }
 
 TEST_F(SequentialReaderMixedFormatsTest, open_throws_if_output_format_matches_no_topic) {
@@ -466,6 +475,10 @@ TEST_F(TemporaryDirectoryFixture, reads_mixed_serialization_formats_from_real_ba
     options.uri = bag_path;
     options.storage_id = "mcap";
     EXPECT_NO_THROW(reader.open(options, {"", rmw_get_serialization_format()}));
+    // The protobuf topic is reported as undeliverable.
+    const auto undeliverable_topics = reader.get_undeliverable_topics();
+    ASSERT_THAT(undeliverable_topics, SizeIs(1));
+    EXPECT_EQ(undeliverable_topics[0].name, protobuf_topic);
     ASSERT_TRUE(reader.has_next());
     // The first message in the bag is on the CDR topic.
     const auto message = reader.read_next();

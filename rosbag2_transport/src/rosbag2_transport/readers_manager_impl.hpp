@@ -16,6 +16,7 @@
 #define ROSBAG2_TRANSPORT__READERS_MANAGER_IMPL_HPP_
 
 #include <algorithm>
+#include <iterator>
 #include <memory>
 #include <utility>
 #include <vector>
@@ -174,16 +175,17 @@ public:
     return all_topics_and_types;
   }
 
-  [[nodiscard]] std::vector<std::vector<rosbag2_storage::TopicMetadata>>
-  get_topics_and_types_per_reader() const
+  [[nodiscard]] std::vector<rosbag2_storage::TopicMetadata> get_undeliverable_topics() const
   {
-    std::vector<std::vector<rosbag2_storage::TopicMetadata>> topics_per_reader{};
+    std::vector<rosbag2_storage::TopicMetadata> undeliverable_topics{};
     rcpputils::unique_lock lk(reader_mutex_);
-    topics_per_reader.reserve(readers_with_options_.size());
     for (const auto & [reader, _] : readers_with_options_) {
-      topics_per_reader.push_back(reader->get_all_topics_and_types());
+      auto reader_undeliverable_topics = reader->get_undeliverable_topics();
+      undeliverable_topics.insert(undeliverable_topics.end(),
+                                  std::make_move_iterator(reader_undeliverable_topics.begin()),
+                                  std::make_move_iterator(reader_undeliverable_topics.end()));
     }
-    return topics_per_reader;
+    return undeliverable_topics;
   }
 
   void add_event_callbacks(rosbag2_cpp::bag_events::ReaderEventCallbacks & callbacks)

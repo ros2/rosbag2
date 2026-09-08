@@ -82,6 +82,8 @@ public:
 
   std::vector<rosbag2_storage::TopicMetadata> get_all_topics_and_types() const override;
 
+  std::vector<rosbag2_storage::TopicMetadata> get_undeliverable_topics() const override;
+
   void get_all_message_definitions(
     std::vector<rosbag2_storage::MessageDefinition> & definitions) override;
 

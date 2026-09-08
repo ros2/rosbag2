@@ -253,6 +253,22 @@ std::vector<rosbag2_storage::TopicMetadata> SequentialReader::get_all_topics_and
   return topics_metadata_;
 }
 
+std::vector<rosbag2_storage::TopicMetadata> SequentialReader::get_undeliverable_topics() const
+{
+  rcpputils::check_true(storage_ != nullptr, "Bag is not open. Call open() before reading.");
+  std::vector<rosbag2_storage::TopicMetadata> undeliverable_topics;
+  if (output_serialization_format_.empty() || converter_) {
+    // Messages are returned as stored or converted; finalize_message() delivers all of them.
+    return undeliverable_topics;
+  }
+  for (const auto & topic : topics_metadata_) {
+    if (topic.serialization_format != output_serialization_format_) {
+      undeliverable_topics.push_back(topic);
+    }
+  }
+  return undeliverable_topics;
+}
+
 void SequentialReader::get_all_message_definitions(
   std::vector<rosbag2_storage::MessageDefinition> & definitions)
 {

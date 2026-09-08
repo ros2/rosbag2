@@ -1605,9 +1605,35 @@ TEST_F(RosBag2PlayTestFixture, topics_with_unplayable_serialization_format_can_b
   {serialize_test_message("/topic1", 500, primitive_message),
     serialize_test_message("/topic1", 700, primitive_message)};
 
-  // Without filters the topic with the unplayable serialization format is selected for
-  // playback, and the player shall refuse to play.
+  // Without filters the topic with the unplayable serialization format is only implicitly
+  // selected for playback; it shall be excluded automatically, with a warning, and the rest
+  // of the bag shall be played.
   {
+    sub_.reset();
+    sub_ = std::make_shared<SubscriptionManager>();
+    sub_->add_subscription<test_msgs::msg::BasicTypes>("/topic1", 2);
+
+    auto prepared_mock_reader = std::make_unique<MockSequentialReader>();
+    prepared_mock_reader->prepare(messages, topic_types);
+    auto reader = std::make_unique<rosbag2_cpp::Reader>(std::move(prepared_mock_reader));
+
+    auto await_received_messages = sub_->spin_subscriptions();
+
+    auto player = std::make_shared<rosbag2_transport::Player>(
+      std::move(reader), storage_options_, play_options_);
+    player->play();
+    player->wait_for_playback_to_finish();
+    await_received_messages.get();
+
+    auto replayed_topic1 = sub_->get_received_messages<test_msgs::msg::BasicTypes>("/topic1");
+    EXPECT_THAT(replayed_topic1, SizeIs(2u));
+  }
+
+  // When the topic with the unplayable serialization format is requested by name, the player
+  // shall refuse to play.
+  {
+    play_options_.topics_to_filter = {"topic2"};
+
     auto prepared_mock_reader = std::make_unique<MockSequentialReader>();
     prepared_mock_reader->prepare(messages, topic_types);
     auto reader = std::make_unique<rosbag2_cpp::Reader>(std::move(prepared_mock_reader));
@@ -1616,6 +1642,8 @@ TEST_F(RosBag2PlayTestFixture, topics_with_unplayable_serialization_format_can_b
       std::make_shared<rosbag2_transport::Player>(
         std::move(reader), storage_options_, play_options_),
       std::runtime_error);
+
+    play_options_.topics_to_filter.clear();
   }
 
   // When the topic with the unplayable serialization format is excluded, the rest of the bag
@@ -1669,6 +1697,24 @@ TEST_F(RosBag2PlayTestFixture, topics_with_unplayable_serialization_format_can_b
     EXPECT_THAT(replayed_topic1, SizeIs(2u));
 
     play_options_.topics_to_filter.clear();
+  }
+
+  // When excluding the unplayable topics would leave nothing to play, the player shall refuse
+  // to play instead of "succeeding" without publishing a single message.
+  {
+    auto all_unplayable_topic_types = std::vector<rosbag2_storage::TopicMetadata>{
+      {1u, "/topic1", "test_msgs/BasicTypes", "some_other_format", {}, ""},
+      {2u, "/topic2", "foxglove.CompressedVideo", "protobuf", {}, ""},
+    };
+
+    auto prepared_mock_reader = std::make_unique<MockSequentialReader>();
+    prepared_mock_reader->prepare(messages, all_unplayable_topic_types);
+    auto reader = std::make_unique<rosbag2_cpp::Reader>(std::move(prepared_mock_reader));
+
+    EXPECT_THROW(
+      std::make_shared<rosbag2_transport::Player>(
+        std::move(reader), storage_options_, play_options_),
+      std::runtime_error);
   }
 }
 

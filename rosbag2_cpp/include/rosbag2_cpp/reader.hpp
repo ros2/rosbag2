@@ -174,6 +174,19 @@ public:
   std::vector<rosbag2_storage::TopicMetadata> get_all_topics_and_types() const;
 
   /**
+   * Get the topics whose messages read_next() would refuse to deliver, based on the topic
+   * metadata. In a bag with mixed serialization formats opened with a requested output
+   * serialization format, these are the topics which are not stored in that format; exclude
+   * them with set_filter() to read the rest of the bag. Empty when no output serialization
+   * format was requested or when all messages can be returned in it.
+   *
+   * \return vector of topics whose messages can neither be returned in nor converted to the
+   * output serialization format requested in open().
+   * \throws runtime_error if the Reader is not open.
+   */
+  std::vector<rosbag2_storage::TopicMetadata> get_undeliverable_topics() const;
+
+  /**
    * Ask bagfile for all message definitions that were recorded.
    *
    * \param[out] vector of message definitions to fill. Existing data will be overwritten.
