@@ -2,6 +2,11 @@
 Changelog for package rosbag2_tests
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Run RMW tests in isolation and call shutdown on error (`#2460 <https://github.com/ros2/rosbag2/issues/2460>`_) (`#2461 <https://github.com/ros2/rosbag2/issues/2461>`_)
+* Contributors: mergify[bot]
+
 0.33.3 (2026-05-12)
 -------------------
 

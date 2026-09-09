@@ -2,6 +2,16 @@
 Changelog for package rosbag2_transport
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Enhance action status topic handling and filtering logic (`#2470 <https://github.com/ros2/rosbag2/issues/2470>`_) (`#2489 <https://github.com/ros2/rosbag2/issues/2489>`_)
+* Stop fixed-frequency /clock publication after playback (`#2482 <https://github.com/ros2/rosbag2/issues/2482>`_) (`#2488 <https://github.com/ros2/rosbag2/issues/2488>`_)
+* Fix missing lib : Add iomanip lib (`#2480 <https://github.com/ros2/rosbag2/issues/2480>`_) (`#2486 <https://github.com/ros2/rosbag2/issues/2486>`_)
+* Added missing header (`#2464 <https://github.com/ros2/rosbag2/issues/2464>`_) (`#2466 <https://github.com/ros2/rosbag2/issues/2466>`_)
+* Address flakiness in RecordSrvsSimTimeTest fixture (`#2426 <https://github.com/ros2/rosbag2/issues/2426>`_) (`#2429 <https://github.com/ros2/rosbag2/issues/2429>`_)
+* [lyrical] Address RHEL uncrustify warning. (backport `#2432 <https://github.com/ros2/rosbag2/issues/2432>`_) (`#2433 <https://github.com/ros2/rosbag2/issues/2433>`_)
+* Contributors: mergify[bot]
+
 0.33.3 (2026-05-12)
 -------------------
 * Apply /bigobj to all MSVC builds in rosbag2_transport (`#2424 <https://github.com/ros2/rosbag2/issues/2424>`_) (`#2428 <https://github.com/ros2/rosbag2/issues/2428>`_)
