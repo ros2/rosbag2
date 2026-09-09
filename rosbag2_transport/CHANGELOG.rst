@@ -2,8 +2,8 @@
 Changelog for package rosbag2_transport
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.33.4 (2026-09-08)
+-------------------
 * Enhance action status topic handling and filtering logic (`#2470 <https://github.com/ros2/rosbag2/issues/2470>`_) (`#2489 <https://github.com/ros2/rosbag2/issues/2489>`_)
 * Stop fixed-frequency /clock publication after playback (`#2482 <https://github.com/ros2/rosbag2/issues/2482>`_) (`#2488 <https://github.com/ros2/rosbag2/issues/2488>`_)
 * Fix missing lib : Add iomanip lib (`#2480 <https://github.com/ros2/rosbag2/issues/2480>`_) (`#2486 <https://github.com/ros2/rosbag2/issues/2486>`_)
