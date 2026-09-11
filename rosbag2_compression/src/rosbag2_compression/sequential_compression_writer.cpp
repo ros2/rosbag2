@@ -413,6 +413,7 @@ SequentialCompressionWriter::compress_message(
   compressed_message->recv_timestamp = message->recv_timestamp;
   compressed_message->send_timestamp = message->send_timestamp;
   compressed_message->topic_name = message->topic_name;
+  compressed_message->serialization_format = message->serialization_format;
   compressor.compress_serialized_bag_message(message.get(), compressed_message.get());
   return compressed_message;
 }

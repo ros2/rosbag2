@@ -73,6 +73,7 @@ TEST_F(StorageTestFixture, string_messages_are_written_and_read_to_and_from_sqli
     EXPECT_THAT(deserialize_message(read_messages[i]->serialized_data), Eq(string_messages[i]));
     EXPECT_THAT(read_messages[i]->recv_timestamp, Eq(std::get<1>(messages[i])));
     EXPECT_THAT(read_messages[i]->topic_name, Eq(topics[i]));
+    EXPECT_THAT(read_messages[i]->serialization_format, Eq(std::get<4>(messages[i])));
   }
 }
 
@@ -362,6 +363,7 @@ TEST_F(StorageTestFixture, messages_readable_for_prefoxy_db_schema) {
     EXPECT_THAT(deserialize_message(read_messages[i]->serialized_data), Eq(string_messages[i]));
     EXPECT_THAT(read_messages[i]->recv_timestamp, Eq(std::get<1>(messages[i])));
     EXPECT_THAT(read_messages[i]->topic_name, Eq(topics[i]));
+    EXPECT_THAT(read_messages[i]->serialization_format, Eq(std::get<4>(messages[i])));
   }
 }
 

@@ -140,7 +140,8 @@ private:
   uint16_t get_or_generate_extern_topic_id(int64_t inner_topic_id);
 
   using ReadQueryResult = SqliteStatementWrapper::QueryResult<
-    std::shared_ptr<rcutils_uint8_array_t>, rcutils_time_point_value_t, std::string, int>;
+    std::shared_ptr<rcutils_uint8_array_t>, rcutils_time_point_value_t, std::string, int,
+    std::string>;
 
   std::shared_ptr<SqliteWrapper> database_ RCPPUTILS_TSA_GUARDED_BY(db_read_write_mutex_);
   SqliteStatement write_statement_ {};

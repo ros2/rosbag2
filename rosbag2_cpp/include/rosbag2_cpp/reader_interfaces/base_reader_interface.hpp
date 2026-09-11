@@ -57,6 +57,15 @@ public:
 
   virtual std::vector<rosbag2_storage::TopicMetadata> get_all_topics_and_types() const = 0;
 
+  /// \brief Get the topics whose messages read_next() would refuse to deliver.
+  /// \return vector of topics whose messages can neither be returned in nor converted to the
+  /// serialization format requested when the bag was opened. Empty in the default
+  /// implementation, for readers which deliver every topic.
+  virtual std::vector<rosbag2_storage::TopicMetadata> get_undeliverable_topics() const
+  {
+    return {};
+  }
+
   virtual void get_all_message_definitions(
     std::vector<rosbag2_storage::MessageDefinition> & definitions) = 0;
 

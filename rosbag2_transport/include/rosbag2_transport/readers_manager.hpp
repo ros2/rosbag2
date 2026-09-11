@@ -117,6 +117,13 @@ public:
   /// \return vector of topics with topic name and type as std::string
   [[nodiscard]] std::vector<rosbag2_storage::TopicMetadata> get_all_topics_and_types() const;
 
+  /// \brief Getter for the topics whose messages the readers would refuse to deliver, i.e.
+  /// topics whose messages can neither be returned in nor converted to the local rmw
+  /// serialization format the readers are opened with.
+  /// \return vector of the undeliverable topics of all readers, in the order the readers were
+  /// provided at construction; a topic recorded in several bags may appear more than once.
+  [[nodiscard]] std::vector<rosbag2_storage::TopicMetadata> get_undeliverable_topics() const;
+
   /// \brief Add event callbacks to all readers.
   /// \param callbacks The callbacks to add.
   void add_event_callbacks(rosbag2_cpp::bag_events::ReaderEventCallbacks & callbacks);
