@@ -36,6 +36,7 @@ recorder_params_node:
       start_paused: false
       disable_keyboard_controls: true
       statistics_max_publishing_rate: 0.5
+      topic_throttle_frequency: ["/imu=10.0", "/camera/image_raw=2.5"]
 
     storage:
       uri: "path/to/some_bag"

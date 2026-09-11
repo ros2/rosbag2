@@ -2,6 +2,10 @@
 Changelog for package ros2bag
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Unreleased
+----------
+* Add ``--topic-throttle-frequency Topic=Hz`` to ``ros2 bag record`` for per-topic max recording rate
+
 0.34.0 (2026-05-01)
 -------------------
 

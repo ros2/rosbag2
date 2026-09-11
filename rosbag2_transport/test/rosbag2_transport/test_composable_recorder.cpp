@@ -18,6 +18,8 @@
 #include <memory>
 #include <regex>
 #include <sstream>
+#include <string>
+#include <unordered_map>
 
 #include "composition_manager_test_fixture.hpp"
 #include "rosbag2_cpp/reader.hpp"
@@ -255,6 +257,11 @@ TEST_P(ComposableRecorderTests, recorder_can_parse_parameters_from_file) {
   EXPECT_EQ(record_options.disable_keyboard_controls, true);
   EXPECT_EQ(record_options.statistics_max_publishing_rate, 0.5);
   EXPECT_EQ(record_options.use_sim_time, false);
+  std::unordered_map<std::string, double> topic_throttle_frequencies{
+    {"/imu", 10.0},
+    {"/camera/image_raw", 2.5}
+  };
+  EXPECT_EQ(record_options.topic_throttle_frequencies, topic_throttle_frequencies);
 
   EXPECT_EQ(storage_options.uri, root_bag_path_.generic_string());
   EXPECT_EQ(storage_options.storage_id, GetParam());

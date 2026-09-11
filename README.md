@@ -158,6 +158,39 @@ $ ros2 bag record -a --repeat-all-transient-local --repeat-transient-local /map=
 listed in `--repeat-transient-local`, the QoS override takes precedence. Ensure the override
 includes `transient_local` durability to receive latched messages.
 
+#### Throttling per-topic recording frequency
+
+High-frequency topics (IMUs, cameras, point clouds) can dominate bag size even when the recorded
+data is only needed at a lower rate. The `--topic-throttle-frequency` option sets a maximum
+recording frequency in Hz for individual topics. Messages arriving faster than the requested
+frequency are dropped inside the recorder at the subscription edge — before serialization
+buffering, compression, and disk I/O — so throttled data costs no write bandwidth.
+
+Format: `--topic-throttle-frequency <topic>=<frequency> [...]`
+
+Examples:
+
+```bash
+# Record everything, but limit the IMU to 10 Hz and the camera to 2 Hz
+$ ros2 bag record -a --topic-throttle-frequency /imu=10.0 /camera/image_raw=2.0
+
+# Record two topics, throttling only one of them
+$ ros2 bag record /odom /scan --topic-throttle-frequency /scan=5.0
+```
+
+Topics not listed are recorded at full frequency. Throttling compares message receive
+timestamps, so it follows the same time base as the timestamps recorded in the bag, including
+simulated time when recording with `use_sim_time`. The first message on a throttled topic is
+always recorded, and a backwards jump of the time base (e.g. a simulation reset) restarts the
+throttle window instead of stalling the topic.
+
+This option also works via node parameters as `record.topic_throttle_frequency`, accepting a
+list of strings in the same `<topic>=<frequency>` format.
+
+**Note**: Throttling drops messages deterministically by elapsed time, not by sampling. If you
+need every message during the live run and a smaller archive afterwards, record at full
+frequency and downsample in post-processing instead.
+
 #### Recording with compression
 
 By default Rosbag2 does not record with compression enabled. However, compression can be specified using the following CLI options.

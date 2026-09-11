@@ -2,6 +2,11 @@
 Changelog for package rosbag2_transport
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Unreleased
+----------
+* Add per-topic frequency throttling for recording via ``RecordOptions::topic_throttle_frequencies``,
+  ``record.topic_throttle_frequency`` node parameter, and subscription-edge drop before writer I/O
+
 0.34.0 (2026-05-01)
 -------------------
 * Fixed compile errors in rosbag2_transport for MSVC 2022 and C++20 (`#2407 <https://github.com/ros2/rosbag2/issues/2407>`_)

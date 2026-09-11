@@ -2,6 +2,10 @@
 Changelog for package rosbag2_py
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Unreleased
+----------
+* Expose ``RecordOptions.topic_throttle_frequencies`` in Python bindings
+
 0.34.0 (2026-05-01)
 -------------------
 

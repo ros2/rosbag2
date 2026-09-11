@@ -100,6 +100,27 @@ struct convert<std::unordered_map<std::string, size_t>>
 };
 
 template<>
+struct convert<std::unordered_map<std::string, double>>
+{
+  static Node encode(const std::unordered_map<std::string, double> & map)
+  {
+    Node node;
+    for (const auto & it : map) {
+      node[it.first] = it.second;
+    }
+    return node;
+  }
+
+  static bool decode(const Node & node, std::unordered_map<std::string, double> & map)
+  {
+    for (YAML::const_iterator it = node.begin(); it != node.end(); ++it) {
+      map.emplace(it->first.as<std::string>(), it->second.as<double>());
+    }
+    return true;
+  }
+};
+
+template<>
 struct convert<rclcpp::Duration>
 {
   static Node encode(const rclcpp::Duration & duration)
