@@ -2,8 +2,8 @@
 Changelog for package rosbag2_storage_mcap
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.35.0 (2026-09-12)
+-------------------
 * Support playing bags with topics in mixed serialization formats. (`#2476 <https://github.com/ros2/rosbag2/issues/2476>`_)
 * use C++ 20 in default. (`#2447 <https://github.com/ros2/rosbag2/issues/2447>`_)
 * Contributors: Chris Lalancette, Tomoya Fujita

@@ -2,8 +2,8 @@
 Changelog for package rosbag2_tests
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.35.0 (2026-09-12)
+-------------------
 * Granular rclcpp/rclcpp.hpp (`#2483 <https://github.com/ros2/rosbag2/issues/2483>`_)
 * Run RMW tests in isolation and call shutdown on error (`#2460 <https://github.com/ros2/rosbag2/issues/2460>`_)
 * use C++ 20 in default. (`#2447 <https://github.com/ros2/rosbag2/issues/2447>`_)

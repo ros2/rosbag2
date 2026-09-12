@@ -2,8 +2,8 @@
 Changelog for package rosbag2_performance_benchmarking
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.35.0 (2026-09-12)
+-------------------
 * Granular rclcpp/rclcpp.hpp (`#2483 <https://github.com/ros2/rosbag2/issues/2483>`_)
 * Replace the `rosbag2_py` recorder executor with the `EventsCBGExecutor` (`#2472 <https://github.com/ros2/rosbag2/issues/2472>`_)
 * use C++ 20 in default. (`#2447 <https://github.com/ros2/rosbag2/issues/2447>`_)

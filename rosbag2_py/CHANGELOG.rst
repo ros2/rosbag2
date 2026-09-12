@@ -2,8 +2,8 @@
 Changelog for package rosbag2_py
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.35.0 (2026-09-12)
+-------------------
 * Granular rclcpp/rclcpp.hpp (`#2483 <https://github.com/ros2/rosbag2/issues/2483>`_)
 * Replace the `rosbag2_py` recorder executor with the `EventsCBGExecutor` (`#2472 <https://github.com/ros2/rosbag2/issues/2472>`_)
 * Cleanup the tests (`#2469 <https://github.com/ros2/rosbag2/issues/2469>`_)

@@ -2,8 +2,8 @@
 Changelog for package rosbag2_interfaces
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.35.0 (2026-09-12)
+-------------------
 * use C++ 20 in default. (`#2447 <https://github.com/ros2/rosbag2/issues/2447>`_)
 * Add "GetSubscribedTopics" recorder service request (`#2374 <https://github.com/ros2/rosbag2/issues/2374>`_)
 * Contributors: Michael Orlov, Tomoya Fujita

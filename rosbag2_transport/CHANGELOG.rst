@@ -2,8 +2,8 @@
 Changelog for package rosbag2_transport
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.35.0 (2026-09-12)
+-------------------
 * Support playing bags with topics in mixed serialization formats. (`#2476 <https://github.com/ros2/rosbag2/issues/2476>`_)
 * More granular includes (`#2487 <https://github.com/ros2/rosbag2/issues/2487>`_)
 * Enhance action status topic handling and filtering logic (`#2470 <https://github.com/ros2/rosbag2/issues/2470>`_)

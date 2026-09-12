@@ -2,8 +2,8 @@
 Changelog for package rosbag2_cpp
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.35.0 (2026-09-12)
+-------------------
 * Support playing bags with topics in mixed serialization formats. (`#2476 <https://github.com/ros2/rosbag2/issues/2476>`_)
 * Enhance action status topic handling and filtering logic (`#2470 <https://github.com/ros2/rosbag2/issues/2470>`_)
 * Cleanup the tests (`#2469 <https://github.com/ros2/rosbag2/issues/2469>`_)
