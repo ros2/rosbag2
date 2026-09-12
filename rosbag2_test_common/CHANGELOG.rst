@@ -2,6 +2,12 @@
 Changelog for package rosbag2_test_common
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Granular rclcpp/rclcpp.hpp (`#2483 <https://github.com/ros2/rosbag2/issues/2483>`_)
+* use C++ 20 in default. (`#2447 <https://github.com/ros2/rosbag2/issues/2447>`_)
+* Contributors: Alejandro Hernández Cordero, Tomoya Fujita
+
 0.34.0 (2026-05-01)
 -------------------
 * Reduce flakiness in rosbag2 recorder end-to-end tests (`#2370 <https://github.com/ros2/rosbag2/issues/2370>`_)

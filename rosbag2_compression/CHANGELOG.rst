@@ -2,6 +2,13 @@
 Changelog for package rosbag2_compression
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Support playing bags with topics in mixed serialization formats. (`#2476 <https://github.com/ros2/rosbag2/issues/2476>`_)
+* Cleanup the tests (`#2469 <https://github.com/ros2/rosbag2/issues/2469>`_)
+* use C++ 20 in default. (`#2447 <https://github.com/ros2/rosbag2/issues/2447>`_)
+* Contributors: Chris Lalancette, Tomoya Fujita
+
 0.34.0 (2026-05-01)
 -------------------
 
