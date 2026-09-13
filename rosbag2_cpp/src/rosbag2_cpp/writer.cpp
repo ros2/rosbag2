@@ -122,6 +122,12 @@ void Writer::split_bagfile()
   return writer_impl_->split_bagfile();
 }
 
+void Writer::split_bagfile(const std::string & new_uri)
+{
+  std::lock_guard<std::mutex> writer_lock(writer_mutex_);
+  return writer_impl_->split_bagfile(new_uri);
+}
+
 void Writer::write(std::shared_ptr<const rosbag2_storage::SerializedBagMessage> message)
 {
   std::lock_guard<std::mutex> writer_lock(writer_mutex_);

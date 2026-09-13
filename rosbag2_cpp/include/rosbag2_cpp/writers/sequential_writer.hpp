@@ -157,6 +157,12 @@ public:
   void split_bagfile() override;
 
   /**
+   * \brief Finalizes the current bag and opens a new one in the new_uri directory.
+   * \throws std::runtime_error if new_uri can't be used. The current bag keeps recording.
+   */
+  void split_bagfile(const std::string & new_uri) override;
+
+  /**
    * \brief Check if a callback is registered for the given event.
    * \return True if there is any callback registered for the event, false otherwise.
    */
@@ -177,6 +183,10 @@ protected:
 
   /// \brief Flush the cache, update metadata and close the storage.
   void flush_cache_update_metadata_and_close_storage();
+
+  /// \brief Common implementation of close(), also used by split_bagfile(new_uri).
+  /// \param execute_split_callback whether to emit the WRITE_SPLIT event for the closed file.
+  virtual void close_impl(bool execute_split_callback);
 
   std::string split_bagfile_local(bool execute_callbacks = true);
 
@@ -215,6 +225,9 @@ protected:
   static std::string format_storage_uri(const std::string & base_folder, uint64_t storage_count);
 
   rosbag2_storage::StorageOptions storage_options_;
+
+  /// \brief Converter options, kept to reopen the writer on split_bagfile(new_uri).
+  ConverterOptions converter_options_;
 
   /// \brief Topic name to the TopicInformation map.
   /// Used to keep topic list and track message counts. If cache is present, the message

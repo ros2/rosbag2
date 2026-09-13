@@ -110,6 +110,30 @@ public:
     messages_per_file_ = 0;
   }
 
+  void split_bagfile(const std::string & new_uri) override
+  {
+    if (throw_on_split_to_new_uri_) {
+      throw std::runtime_error("Bag directory already exists (" + new_uri + ")");
+    }
+    split_uri_ = new_uri;
+    auto info = std::make_shared<rosbag2_cpp::bag_events::BagSplitInfo>();
+    info->closed_file = "BagFile" + std::to_string(file_number_);
+    file_number_ = 0;
+    info->opened_file = new_uri + "/BagFile0";
+    callback_manager_.execute_callbacks(rosbag2_cpp::bag_events::BagEvent::WRITE_SPLIT, info);
+    messages_per_file_ = 0;
+  }
+
+  std::string get_split_uri() const
+  {
+    return split_uri_;
+  }
+
+  void set_throw_on_split_to_new_uri(bool value)
+  {
+    throw_on_split_to_new_uri_ = value;
+  }
+
   void
   add_event_callbacks(const rosbag2_cpp::bag_events::WriterEventCallbacks & callbacks) override
   {
@@ -216,6 +240,8 @@ private:
   rosbag2_cpp::bag_events::EventCallbackManager callback_manager_;
   size_t file_number_ = 0;
   size_t max_messages_per_file_ = 0;
+  std::string split_uri_;
+  bool throw_on_split_to_new_uri_ = false;
   std::atomic<bool> writer_close_called_{false};
   rosbag2_storage::StorageOptions storage_options_;
 };
