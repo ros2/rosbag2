@@ -73,6 +73,13 @@ public:
 
   /// \brief Producer API: notify wait_for_data() to wake up and unblock consumer thread.
   virtual void notify_data_ready() {}
+
+  /// \brief Get the total size in bytes of the messages currently residing in the cache and
+  /// waiting to be handed over to the consumer.
+  /// \note Messages already handed over to the consumer are not counted, since they are in the
+  /// process of being written to the storage.
+  /// \return Size in bytes of the cached messages. The default implementation returns zero.
+  virtual size_t get_current_size() {return 0u;}
 };
 
 }  // namespace cache
