@@ -1524,6 +1524,16 @@ void RecorderImpl::topics_discovery() noexcept
         RCLCPP_INFO(node->get_logger(), "Sim time /clock found, starting recording.");
       }
     }
+    const bool only_explicit_topics_requested =
+      !record_options_.topics.empty() &&
+      !record_options_.all_topics &&
+      record_options_.topic_types.empty() &&
+      !record_options_.all_services &&
+      record_options_.services.empty() &&
+      !record_options_.all_actions &&
+      record_options_.actions.empty() &&
+      record_options_.regex.empty() &&
+      static_topics_.empty();
     bool should_update_subscriptions = true;
     while (rclcpp::ok() && discovery_running_) {
       size_t subscriptions_count = 0u;
@@ -1531,7 +1541,7 @@ void RecorderImpl::topics_discovery() noexcept
         std::lock_guard<std::mutex> subscriptions_lock(subscriptions_mutex_);
         subscriptions_count = subscriptions_.size();
       }
-      if (!record_options_.topics.empty() &&
+      if (only_explicit_topics_requested &&
         subscriptions_count == record_options_.topics.size())
       {
         RCLCPP_INFO(
