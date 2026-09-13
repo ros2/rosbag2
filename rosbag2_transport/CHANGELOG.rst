@@ -2,6 +2,23 @@
 Changelog for package rosbag2_transport
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.35.0 (2026-09-12)
+-------------------
+* Support playing bags with topics in mixed serialization formats. (`#2476 <https://github.com/ros2/rosbag2/issues/2476>`_)
+* More granular includes (`#2487 <https://github.com/ros2/rosbag2/issues/2487>`_)
+* Enhance action status topic handling and filtering logic (`#2470 <https://github.com/ros2/rosbag2/issues/2470>`_)
+* Stop fixed-frequency /clock publication after playback (`#2482 <https://github.com/ros2/rosbag2/issues/2482>`_)
+* Granular rclcpp/rclcpp.hpp (`#2483 <https://github.com/ros2/rosbag2/issues/2483>`_)
+* Fix missing lib : Add iomanip lib (`#2480 <https://github.com/ros2/rosbag2/issues/2480>`_)
+* Make the topic filter match the first message. (`#2468 <https://github.com/ros2/rosbag2/issues/2468>`_)
+* Added missing header (`#2464 <https://github.com/ros2/rosbag2/issues/2464>`_)
+* use C++ 20 in default. (`#2447 <https://github.com/ros2/rosbag2/issues/2447>`_)
+* Initialize topic endpoint info in rosbag2 test (`#2446 <https://github.com/ros2/rosbag2/issues/2446>`_)
+* Address flakiness in RecordSrvsSimTimeTest fixture (`#2426 <https://github.com/ros2/rosbag2/issues/2426>`_)
+* Apply /bigobj to all MSVC builds in rosbag2_transport (`#2424 <https://github.com/ros2/rosbag2/issues/2424>`_)
+* Add "GetSubscribedTopics" recorder service request (`#2374 <https://github.com/ros2/rosbag2/issues/2374>`_)
+* Contributors: Alejandro Hernández Cordero, CY Chen, Chris Lalancette, Michael Carroll, Michael Orlov, Tomoya Fujita, Tony Najjar, ktyang, mosfet80
+
 0.34.0 (2026-05-01)
 -------------------
 * Fixed compile errors in rosbag2_transport for MSVC 2022 and C++20 (`#2407 <https://github.com/ros2/rosbag2/issues/2407>`_)

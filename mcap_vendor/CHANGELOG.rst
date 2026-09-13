@@ -2,6 +2,11 @@
 Changelog for package mcap_vendor
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.35.0 (2026-09-12)
+-------------------
+* use C++ 20 in default. (`#2447 <https://github.com/ros2/rosbag2/issues/2447>`_)
+* Contributors: Tomoya Fujita
+
 0.34.0 (2026-05-01)
 -------------------
 
