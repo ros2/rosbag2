@@ -265,6 +265,22 @@ protected:
   // Record TopicInformation into metadata
   void finalize_metadata();
 
+  /// \brief Update topics_with_message_count and message_count in the metadata_ from the
+  /// currently tracked per-topic information.
+  void update_metadata_topics_message_counts();
+
+  /// \brief Write the metadata about the currently opened bagfile into the storage file.
+  /// \details Storage plugins serialize the given metadata into the bag file on every call.
+  /// Therefore, this method writes a copy of metadata_ with the relative_file_paths and files
+  /// lists trimmed down to the currently opened file. These lists grow by one entry with every
+  /// bagfile split, and re-serializing the whole file history into the bag file on every split
+  /// caused unbounded CPU growth and redundant on-disk metadata for long recordings with many
+  /// splits. See https://github.com/ros2/rosbag2/issues/2481 for details.
+  /// The full file history is still written to the metadata.yaml file when the writer is closed.
+  /// \note Storage plugins ignore or overwrite the embedded file lists on read and use the
+  /// actually opened file instead.
+  void update_current_storage_metadata();
+
   // Helper method used by write to get the message in a format that is ready to be written.
   // Common use cases include converting the message using the converter or
   // performing other operations like compression on it
