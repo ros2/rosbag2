@@ -38,41 +38,83 @@ CacheConsumer::~CacheConsumer()
 
 void CacheConsumer::stop()
 {
-  message_cache_->begin_flushing();
-  is_stop_issued_ = true;
+  issue_stop().get();
+}
 
-  ROSBAG2_CPP_LOG_INFO_STREAM(
-    "Writing remaining messages from cache to the bag. It may take a while");
-
-  if (consumer_thread_.joinable()) {
-    consumer_thread_.join();
-  }
-  message_cache_->done_flushing();
+std::future<void> CacheConsumer::stop_async()
+{
+  auto stop_future = issue_stop();
+  return std::async(std::launch::async, [stop_future]() mutable {
+             stop_future.get();
+  });
 }
 
 void CacheConsumer::start()
 {
+  std::lock_guard<std::mutex> lock(start_stop_mutex_);
+  if (shared_stop_future_.valid()) {
+    shared_stop_future_.get();
+    shared_stop_future_ = std::shared_future<void>();
+  }
+
   is_stop_issued_ = false;
   if (!consumer_thread_.joinable()) {
     consumer_thread_ = std::thread(&CacheConsumer::exec_consuming, this);
   }
 }
 
-void CacheConsumer::exec_consuming()
+void CacheConsumer::flush_remaining_messages() const
 {
-  bool exit_flag = false;
-  bool flushing = false;
-  while (!exit_flag) {
+  // Swap buffers one last time to make sure that all messages are flushed. This is necessary in
+  // case stop is called while consumer_thread_ is processing the consumer buffer, which means that
+  // the producer buffer may have some messages which has not yet dumped to the storage.
+  message_cache_->swap_buffers();
+  // Get the current consumer buffer.
+  auto consumer_buffer = message_cache_->get_consumer_buffer();
+  consume_callback_(consumer_buffer->data());
+  consumer_buffer->clear();
+  message_cache_->release_consumer_buffer();
+}
+
+std::shared_future<void> CacheConsumer::issue_stop()
+{
+  std::lock_guard<std::mutex> lock(start_stop_mutex_);
+  if (shared_stop_future_.valid()) {
+    return shared_stop_future_;
+  }
+
+  message_cache_->begin_flushing();
+  is_stop_issued_ = true;
+
+  ROSBAG2_CPP_LOG_INFO_STREAM(
+    "Writing remaining messages from cache to the bag. It may take a while");
+
+  shared_stop_future_ = std::async(std::launch::async, [this]() {
+        if (consumer_thread_.joinable()) {
+          consumer_thread_.join();
+        }
+        // Flush remaining messages. This is necessary in case stop is called while consumer_thread_
+        // is processing the consumer buffer, which means that the producer buffer may have some
+        // messages which has not yet dumped to the storage.
+        flush_remaining_messages();
+        message_cache_->done_flushing();
+        ROSBAG2_CPP_LOG_INFO_STREAM("Finished writing remaining messages from cache to the bag.");
+    }).share();
+  return shared_stop_future_;
+}
+
+void CacheConsumer::exec_consuming() const
+{
+  while (!is_stop_issued_) {
     message_cache_->wait_for_data();
+    // Note: We need to do swap and dump data even if stop is issued, to properly handle snapshot
+    // mode case, which is implemented via stop call.
     message_cache_->swap_buffers();
     // Get the current consumer buffer.
     auto consumer_buffer = message_cache_->get_consumer_buffer();
     consume_callback_(consumer_buffer->data());
     consumer_buffer->clear();
     message_cache_->release_consumer_buffer();
-
-    if (flushing) {exit_flag = true;}  // this was the final run
-    if (is_stop_issued_) {flushing = true;}  // run one final time to flush
   }
 }
 

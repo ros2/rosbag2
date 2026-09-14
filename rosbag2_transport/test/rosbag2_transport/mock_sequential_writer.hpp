@@ -110,6 +110,11 @@ public:
     messages_per_file_ = 0;
   }
 
+  void split_bagfile_async() override
+  {
+    split_bagfile();
+  }
+
   void
   add_event_callbacks(const rosbag2_cpp::bag_events::WriterEventCallbacks & callbacks) override
   {

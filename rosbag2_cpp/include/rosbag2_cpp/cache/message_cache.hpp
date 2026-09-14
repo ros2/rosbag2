@@ -119,6 +119,7 @@ protected:
 private:
   /// Double buffers
   std::shared_ptr<MessageCacheBuffer> producer_buffer_;
+  std::shared_ptr<MessageCacheBuffer> flushing_producer_buffer_;
   std::mutex producer_buffer_mutex_;
   std::shared_ptr<MessageCacheBuffer> consumer_buffer_;
   std::mutex consumer_buffer_mutex_;

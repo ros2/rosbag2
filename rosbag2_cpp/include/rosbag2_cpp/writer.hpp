@@ -138,6 +138,11 @@ public:
   void split_bagfile();
 
   /**
+   * Start closing the current bag file and opening the next bag file asynchronously.
+   */
+  void split_bagfile_async();
+
+  /**
    * \brief Removes a new topic in the underlying storage.
    * \details Expected to be used if creation of subscription fails and cleanup is needed.
    * \note If writer is not open, this will just remove the topic information locally.
@@ -264,7 +269,9 @@ public:
   [[nodiscard]] bool has_callback_for_event(bag_events::BagEvent event) const;
 
 private:
-  std::mutex writer_mutex_;
+  /// \brief mutex to protect access to the underlying writer_impl_.
+  /// Shall be locked each time when need to have access to the writer_impl_.
+  mutable std::mutex writer_mutex_;
   std::unique_ptr<rosbag2_cpp::writer_interfaces::BaseWriterInterface> writer_impl_;
 };
 

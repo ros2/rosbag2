@@ -16,6 +16,7 @@
 
 #include <filesystem>
 #include <fstream>
+#include <future>
 #include <memory>
 #include <regex>
 #include <sstream>
@@ -612,6 +613,77 @@ TEST_P(SequentialCompressionWriterTest, split_event_calls_callback_with_msg_comp
       EXPECT_TRUE(file_counter_at_start(opened_filename, i + 1));
     }
   }
+}
+
+TEST_F(SequentialCompressionWriterTest, close_waits_for_pending_async_split_with_file_compression)
+{
+  rosbag2_compression::CompressionOptions compression_options {
+    DefaultTestCompressor,
+    rosbag2_compression::CompressionMode::FILE,
+    0,
+    1,
+    kDefaultCompressionQueueThreadsPriority
+  };
+
+  std::promise<void> unblock_split;
+  auto unblock_split_future = unblock_split.get_future().share();
+  std::atomic<size_t> open_call_count{0};
+  int detected_thread_priority = 0;
+
+  ON_CALL(*storage_factory_, open_read_write(_)).WillByDefault(
+    DoAll(
+      Invoke(
+        [this, &open_call_count, unblock_split_future](
+          const rosbag2_storage::StorageOptions & storage_options)
+        {
+          fake_storage_size_.store(0);
+          fake_storage_uri_ = storage_options.uri;
+          std::ofstream output(storage_options.uri);
+          ASSERT_TRUE(output.is_open());
+          output << "Fake storage data" << std::endl;
+          output.close();
+          if (open_call_count.fetch_add(1) == 1) {
+            unblock_split_future.wait();
+          }
+        }),
+      Return(storage_)));
+
+  ON_CALL(*storage_,
+          write_message(An<std::shared_ptr<const rosbag2_storage::SerializedBagMessage>>()))
+  .WillByDefault(
+    [this](std::shared_ptr<const rosbag2_storage::SerializedBagMessage> serialized_message) {
+      (void)serialized_message;
+      fake_storage_size_.fetch_add(1);
+      return true;
+    }
+  );
+  ON_CALL(*storage_, get_bagfile_size).WillByDefault(
+    [this]() {
+      return fake_storage_size_.load();
+    });
+  ON_CALL(*storage_, get_relative_file_path).WillByDefault(
+    [this]() {
+      return fake_storage_uri_;
+    });
+
+  initializeWriter(
+    compression_options,
+    std::make_unique<FakeCompressionFactory>(detected_thread_priority));
+
+  writer_->open(tmp_dir_storage_options_);
+  writer_->create_topic({0u, "test_topic", "test_msgs/BasicTypes", "", {}, ""});
+
+  writer_->split_bagfile_async();
+
+  auto close_future = std::async(std::launch::async, [this]() {
+        writer_->close();
+  });
+
+  EXPECT_EQ(close_future.wait_for(std::chrono::milliseconds(100)), std::future_status::timeout);
+
+  unblock_split.set_value();
+
+  EXPECT_EQ(close_future.wait_for(std::chrono::seconds(1)), std::future_status::ready);
 }
 
 TEST_P(SequentialCompressionWriterTest, split_event_calls_callback_with_file_compression)
