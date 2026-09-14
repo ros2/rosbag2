@@ -1,0 +1,3 @@
+---
+# True if the recorder is currently recording, false otherwise
+bool recording
