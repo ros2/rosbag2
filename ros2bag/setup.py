@@ -27,7 +27,7 @@ setup(
     description='Entry point for rosbag in ROS 2',
     long_description="""\
 The package provides the rosbag command for the ROS 2 command line tools.""",
-    license='Apache License, Version 2.0',
+    license='Apache-2.0',
     extras_require={
         'test': [
             'pytest',
