@@ -261,6 +261,12 @@ TEST_P(ComposableRecorderTests, recorder_can_parse_parameters_from_file) {
   EXPECT_EQ(storage_options.storage_config_uri, "");
   EXPECT_EQ(storage_options.max_bagfile_size, 2147483646);
   EXPECT_EQ(storage_options.max_bagfile_duration, 2147483646);
+  EXPECT_EQ(storage_options.max_bag_files, 5);
+  EXPECT_EQ(storage_options.min_free_space_bytes, 1073741824);
+  EXPECT_DOUBLE_EQ(storage_options.min_free_space_percent, 2.5);
+  EXPECT_EQ(
+    storage_options.low_free_space_action,
+    rosbag2_storage::LowFreeSpaceAction::DELETE_OLDEST_FILES);
   EXPECT_EQ(storage_options.max_cache_size, 989888);
   EXPECT_EQ(storage_options.max_cache_duration, 30);
   EXPECT_EQ(storage_options.storage_preset_profile, "none");

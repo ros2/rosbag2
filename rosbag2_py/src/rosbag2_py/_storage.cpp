@@ -79,6 +79,10 @@ PYBIND11_MODULE(_storage, m) {
     "output_serialization_format",
     &rosbag2_cpp::ConverterOptions::output_serialization_format);
 
+  pybind11::enum_<rosbag2_storage::LowFreeSpaceAction>(m, "LowFreeSpaceAction")
+  .value("STOP", rosbag2_storage::LowFreeSpaceAction::STOP)
+  .value("DELETE_OLDEST_FILES", rosbag2_storage::LowFreeSpaceAction::DELETE_OLDEST_FILES);
+
   using KEY_VALUE_MAP = std::unordered_map<std::string, std::string>;
   pybind11::class_<rosbag2_storage::StorageOptions>(m, "StorageOptions")
   .def(
@@ -96,7 +100,10 @@ PYBIND11_MODULE(_storage, m) {
         bool snapshot_mode,
         int64_t start_time_ns,
         int64_t end_time_ns,
-        KEY_VALUE_MAP custom_data)
+        KEY_VALUE_MAP custom_data,
+        uint64_t min_free_space_bytes,
+        double min_free_space_percent,
+        rosbag2_storage::LowFreeSpaceAction low_free_space_action)
       {
         return rosbag2_storage::StorageOptions{
           std::move(uri),
@@ -112,6 +119,9 @@ PYBIND11_MODULE(_storage, m) {
           start_time_ns,
           end_time_ns,
           std::move(custom_data),
+          min_free_space_bytes,
+          min_free_space_percent,
+          low_free_space_action,
         };
       }),
     pybind11::arg("uri"),
@@ -126,7 +136,10 @@ PYBIND11_MODULE(_storage, m) {
     pybind11::arg("snapshot_mode") = false,
     pybind11::arg("start_time_ns") = -1,
     pybind11::arg("end_time_ns") = -1,
-    pybind11::arg("custom_data") = KEY_VALUE_MAP{})
+    pybind11::arg("custom_data") = KEY_VALUE_MAP{},
+    pybind11::arg("min_free_space_bytes") = 0,
+    pybind11::arg("min_free_space_percent") = 0.0,
+    pybind11::arg("low_free_space_action") = rosbag2_storage::LowFreeSpaceAction::STOP)
   .def_readwrite("uri", &rosbag2_storage::StorageOptions::uri)
   .def_readwrite("storage_id", &rosbag2_storage::StorageOptions::storage_id)
   .def_readwrite(
@@ -138,6 +151,15 @@ PYBIND11_MODULE(_storage, m) {
   .def_readwrite(
     "max_bag_files",
     &rosbag2_storage::StorageOptions::max_bag_files)
+  .def_readwrite(
+    "min_free_space_bytes",
+    &rosbag2_storage::StorageOptions::min_free_space_bytes)
+  .def_readwrite(
+    "min_free_space_percent",
+    &rosbag2_storage::StorageOptions::min_free_space_percent)
+  .def_readwrite(
+    "low_free_space_action",
+    &rosbag2_storage::StorageOptions::low_free_space_action)
   .def_readwrite(
     "max_cache_size",
     &rosbag2_storage::StorageOptions::max_cache_size)

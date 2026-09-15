@@ -80,6 +80,25 @@ public:
   void write(std::shared_ptr<const rosbag2_storage::SerializedBagMessage> message) override
   {
     std::lock_guard<std::mutex> lock(messages_mutex_);
+    if (low_disk_space_triggered_) {
+      return;  // Emulate the real writer which stops writing after the low disk space event
+    }
+    if (low_disk_space_after_messages_ > 0 &&
+      messages_.size() + snapshot_buffer_.size() + 1 >= low_disk_space_after_messages_)
+    {
+      // Emulate the real writer which detects low disk space from within write(), i.e. with the
+      // upper level writer mutex held, and stops writing.
+      low_disk_space_triggered_ = true;
+      auto info = std::make_shared<rosbag2_cpp::bag_events::LowDiskSpaceInfo>();
+      info->path = storage_options_.uri;
+      info->available_bytes = 100;
+      info->capacity_bytes = 1000;
+      info->min_free_space_bytes = 200;
+      info->writing_stopped = true;
+      callback_manager_.execute_callbacks(
+        rosbag2_cpp::bag_events::BagEvent::LOW_DISK_SPACE, info);
+      return;
+    }
     if (!storage_options_.snapshot_mode) {
       messages_.push_back(message);
     } else {
@@ -117,6 +136,11 @@ public:
       callback_manager_.add_event_callback(
         callbacks.write_split_callback,
         rosbag2_cpp::bag_events::BagEvent::WRITE_SPLIT);
+    }
+    if (callbacks.low_disk_space_callback) {
+      callback_manager_.add_event_callback(
+        callbacks.low_disk_space_callback,
+        rosbag2_cpp::bag_events::BagEvent::LOW_DISK_SPACE);
     }
   }
 
@@ -197,6 +221,13 @@ public:
     return writer_close_called_.load();
   }
 
+  /// \brief Emulate low disk space detection on the n-th written message. 0 disables.
+  void set_low_disk_space_after_messages(size_t num_messages)
+  {
+    std::lock_guard<std::mutex> lock(messages_mutex_);
+    low_disk_space_after_messages_ = num_messages;
+  }
+
   rosbag2_storage::StorageOptions get_storage_options() const
   {
     return storage_options_;
@@ -216,6 +247,8 @@ private:
   rosbag2_cpp::bag_events::EventCallbackManager callback_manager_;
   size_t file_number_ = 0;
   size_t max_messages_per_file_ = 0;
+  size_t low_disk_space_after_messages_ = 0;
+  bool low_disk_space_triggered_ = false;
   std::atomic<bool> writer_close_called_{false};
   rosbag2_storage::StorageOptions storage_options_;
 };

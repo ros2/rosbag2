@@ -350,17 +350,32 @@ void SequentialCompressionWriter::compress_file(
       // After we've compressed the file, replace the name in the file list with the new name.
       // Must search for the entry because other threads may have changed the order of the vector
       // and invalidated any index or iterator we held to it.
+      // Note: file_relative_to_bag may alias an element of metadata_.relative_file_paths, since
+      // close() passes metadata_.relative_file_paths.back() directly. Take a copy before
+      // modifying the list, so that the searches below don't use the already rewritten value.
+      const std::string uncompressed_relative_path = file_relative_to_bag;
       std::lock_guard<std::recursive_mutex> lock(storage_mutex_);
       const auto iter = std::find(
         metadata_.relative_file_paths.begin(),
         metadata_.relative_file_paths.end(),
-        file_relative_to_bag);
+        uncompressed_relative_path);
       if (iter != metadata_.relative_file_paths.end()) {
         *iter = relative_compressed_uri.string();
       } else {
         ROSBAG2_COMPRESSION_LOG_ERROR_STREAM(
           "Failed to find path to uncompressed bag: \"" << file_relative_to_pwd.string() <<
             "\"; this shouldn't happen.");
+      }
+      // Also update the path in the per-file information, so that the metadata stays consistent
+      // and the base class can find and delete the compressed file when deleting the oldest
+      // files for circular logging (max_bag_files) or on the low free disk space action.
+      const auto file_info_iter = std::find_if(
+        metadata_.files.begin(), metadata_.files.end(),
+        [&uncompressed_relative_path](const rosbag2_storage::FileInformation & file_info) {
+          return file_info.path == uncompressed_relative_path;
+        });
+      if (file_info_iter != metadata_.files.end()) {
+        file_info_iter->path = relative_compressed_uri.string();
       }
     }
 

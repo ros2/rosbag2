@@ -43,6 +43,10 @@ recorder_params_node:
       storage_config_uri: ""
       max_bagfile_size: 2147483646
       max_bagfile_duration: 2147483646
+      max_bag_files: 5
+      min_free_space_bytes: 1073741824
+      min_free_space_percent: 2.5
+      low_free_space_action: "delete_oldest_files"
       max_cache_size: 989888
       max_cache_duration: 30
       storage_preset_profile: "none"

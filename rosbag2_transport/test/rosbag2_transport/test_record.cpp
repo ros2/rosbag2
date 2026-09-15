@@ -694,6 +694,71 @@ TEST_F(RecordIntegrationTestFixture, write_split_callback_is_called)
   EXPECT_EQ(opened_file, "BagFile1");
 }
 
+TEST_F(RecordIntegrationTestFixture, recorder_stops_recording_on_low_disk_space_event)
+{
+  auto string_message = get_messages_strings()[1];
+  std::string string_topic = "/string_topic";
+  const size_t low_disk_space_after_messages = 3;
+  const size_t num_messages_to_publish = 10;
+
+  std::atomic<bool> callback_called{false};
+  rosbag2_cpp::bag_events::LowDiskSpaceInfo received_info;
+  rosbag2_cpp::bag_events::WriterEventCallbacks callbacks;
+  callbacks.low_disk_space_callback =
+    [&callback_called, &received_info](const rosbag2_cpp::bag_events::LowDiskSpaceInfo & info) {
+      received_info = info;
+      callback_called = true;
+    };
+  writer_->add_event_callbacks(callbacks);
+
+  {
+    auto & mock_writer = dynamic_cast<MockSequentialWriter &>(writer_->get_implementation_handle());
+    mock_writer.set_low_disk_space_after_messages(low_disk_space_after_messages);
+  }
+
+  rosbag2_transport::RecordOptions record_options =
+  {
+    false, false, false, false, {string_topic}, {}, {}, {}, {}, {}, {}, {}, {}, {}, "rmw_format",
+    10ms
+  };
+  auto recorder = std::make_shared<rosbag2_transport::Recorder>(
+    std::move(writer_), storage_options_, record_options);
+
+  start_async_spin(recorder);
+  auto cleanup_process_handle = rcpputils::make_scope_exit([&]() {stop_spinning();});
+
+  auto & writer = recorder->get_writer_handle();
+  auto & mock_writer = dynamic_cast<MockSequentialWriter &>(writer.get_implementation_handle());
+
+  rosbag2_test_common::PublicationManager pub_manager;
+  pub_manager.setup_publisher(string_topic, string_message, num_messages_to_publish);
+
+  recorder->record();
+
+  ASSERT_TRUE(pub_manager.wait_for_matched(string_topic.c_str()));
+  pub_manager.run_publishers();
+
+  // The recorder shall stop the recording (i.e. close the writer) after the low disk space event
+  auto ret = rosbag2_test_common::wait_until_condition(
+    [&mock_writer]() {
+      return mock_writer.closed_was_called();
+    },
+    std::chrono::seconds(5));
+  EXPECT_TRUE(ret) << "Recorder did not stop recording after the low disk space event";
+
+  EXPECT_TRUE(callback_called);
+  EXPECT_TRUE(received_info.writing_stopped);
+  EXPECT_EQ(received_info.available_bytes, 100u);
+  EXPECT_EQ(received_info.min_free_space_bytes, 200u);
+  // Only the messages before the event shall be recorded
+  EXPECT_EQ(mock_writer.get_number_of_recorded_messages(), low_disk_space_after_messages - 1);
+
+  // Recording can be started again after being stopped by the low disk space event
+  EXPECT_NO_THROW(recorder->record());
+  EXPECT_FALSE(mock_writer.closed_was_called());
+  recorder->stop();
+}
+
 TEST_F(RecordIntegrationTestFixture, toggle_paused_do_pause_resume)
 {
   rosbag2_transport::RecordOptions record_options{};

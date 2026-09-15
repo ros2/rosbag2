@@ -25,6 +25,7 @@
 #include <vector>
 
 #include "rclcpp/qos.hpp"
+#include "rosbag2_interfaces/msg/low_disk_space_event.hpp"
 #include "rosbag2_interfaces/msg/messages_lost_event.hpp"
 #include "rosbag2_interfaces/msg/messages_lost_event_topic_stat.hpp"
 #include "rosbag2_interfaces/msg/write_split_event.hpp"
@@ -38,6 +39,7 @@ using namespace rosbag2_test_common;  // NOLINT
 
 using WriteSplitEvent = rosbag2_interfaces::msg::WriteSplitEvent;
 using MessagesLostEvent = rosbag2_interfaces::msg::MessagesLostEvent;
+using LowDiskSpaceEvent = rosbag2_interfaces::msg::LowDiskSpaceEvent;
 
 template<typename T>
 class MockPublisherWrapper : public RclcppPublisherWrapper<T> {
@@ -88,6 +90,8 @@ TEST_F(TestRecorderEventNotifier, get_default_events_topic_names)
                "events/write_split");
   EXPECT_STREQ(RecorderEventNotifier::get_default_messages_lost_topic_name(),
                "events/rosbag2_messages_lost");
+  EXPECT_STREQ(RecorderEventNotifier::get_default_low_disk_space_topic_name(),
+               "events/low_disk_space");
 }
 
 TEST_F(TestRecorderEventNotifier, get_current_events_topic_names)
@@ -145,6 +149,42 @@ TEST_F(TestRecorderEventNotifier, can_handle_and_publish_bag_split_events)
   EXPECT_THAT(received_split_event_messages[0]->opened_file, Eq(bag_split_info1.opened_file));
   EXPECT_THAT(received_split_event_messages[1]->closed_file, Eq(bag_split_info2.closed_file));
   EXPECT_THAT(received_split_event_messages[1]->opened_file, Eq(bag_split_info2.opened_file));
+}
+
+TEST_F(TestRecorderEventNotifier, can_handle_and_publish_low_disk_space_events)
+{
+  // Disable statistics publishing
+  notifier_->set_messages_lost_statistics_max_publishing_rate(0.0f);
+  const std::string topic_name = RecorderEventNotifier::get_default_low_disk_space_topic_name();
+  const auto fqn_topic_name = node_->get_node_base_interface()->resolve_topic_or_service_name(
+    topic_name, /*is_service=*/ false, /*only_expand=*/ false);
+  EXPECT_STREQ(notifier_->get_low_disk_space_topic_name().data(), fqn_topic_name.c_str());
+
+  auto sub = std::make_unique<SubscriptionManager>();
+  rclcpp::QoS sub_qos(rclcpp::QoS{10}.reliability(rclcpp::ReliabilityPolicy::Reliable));
+  sub->add_subscription<LowDiskSpaceEvent>(fqn_topic_name, 1, sub_qos);
+  ASSERT_TRUE(sub->spin_and_wait_for_matched({fqn_topic_name}, std::chrono::seconds(5)));
+  auto await_received_messages = sub->spin_subscriptions(std::chrono::seconds(5));
+
+  rosbag2_cpp::bag_events::LowDiskSpaceInfo info;
+  info.path = "/path/to/bag";
+  info.available_bytes = 1000;
+  info.capacity_bytes = 100000;
+  info.min_free_space_bytes = 2000;
+  info.deleted_files = {"/path/to/bag/bag_0.mcap"};
+  info.writing_stopped = true;
+  notifier_->on_low_disk_space_in_recorder(info);
+
+  await_received_messages.get();
+  auto received_messages = sub->get_received_messages<LowDiskSpaceEvent>(fqn_topic_name);
+  ASSERT_THAT(received_messages, SizeIs(1));
+  EXPECT_EQ(received_messages[0]->path, info.path);
+  EXPECT_EQ(received_messages[0]->available_bytes, info.available_bytes);
+  EXPECT_EQ(received_messages[0]->capacity_bytes, info.capacity_bytes);
+  EXPECT_EQ(received_messages[0]->min_free_space_bytes, info.min_free_space_bytes);
+  EXPECT_EQ(received_messages[0]->deleted_files, info.deleted_files);
+  EXPECT_TRUE(received_messages[0]->recording_stopped);
+  EXPECT_EQ(received_messages[0]->node_name, node_->get_fully_qualified_name());
 }
 
 TEST_F(TestRecorderEventNotifier, can_publish_event_on_messages_lost_in_recorder)

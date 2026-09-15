@@ -153,6 +153,17 @@ void SequentialWriter::open(
     throw std::runtime_error{error.str()};
   }
 
+  if (storage_options_.min_free_space_percent < 0.0 ||
+    storage_options_.min_free_space_percent > 100.0)
+  {
+    std::stringstream error;
+    error << "Invalid minimum free space percent given. Please provide a value in the range "
+      "[0, 100]. Specified value of " << storage_options_.min_free_space_percent;
+    throw std::runtime_error{error.str()};
+  }
+  writing_stopped_due_to_low_free_space_ = false;
+  last_free_space_check_time_ = std::chrono::steady_clock::time_point{};
+
   use_cache_ =
     storage_options.max_cache_size > 0u || storage_options.max_cache_duration > 0u;
 
@@ -492,6 +503,10 @@ void SequentialWriter::write(std::shared_ptr<const rosbag2_storage::SerializedBa
     is_first_message_ = false;
   }
 
+  if (!check_free_space()) {
+    return;  // Writing stopped due to the low free space on the disk
+  }
+
   if (!storage_options_.snapshot_mode && should_split_bagfile(message_timestamp)) {
     split_bagfile();
     metadata_.files.back().starting_time = message_timestamp;
@@ -656,6 +671,22 @@ void SequentialWriter::delete_oldest_files_if_needed()
     return;
   }
 
+  // Delete the oldest files until we're under the bag file count limit
+  while (metadata_.files.size() > storage_options_.max_bag_files) {
+    std::string deleted_file_path;
+    if (!delete_oldest_file(deleted_file_path)) {
+      break;  // Keep file in tracking; retry on next split to avoid tight loop
+    }
+  }
+}
+
+bool SequentialWriter::delete_oldest_file(std::string & deleted_file_path)
+{
+  deleted_file_path.clear();
+  if (metadata_.files.empty()) {
+    return false;
+  }
+
   // Remove oldest file from tracking: adjust per-topic message counts and metadata
   auto remove_oldest_file_from_tracking = [&]()
     {
@@ -677,31 +708,137 @@ void SequentialWriter::delete_oldest_files_if_needed()
       }
     };
 
-  // Delete the oldest files until we're under the bag file count limit
-  while (metadata_.files.size() > storage_options_.max_bag_files) {
-    const auto & oldest_file = metadata_.files.front();
-    const auto file_path = fs::path(base_folder_) / oldest_file.path;
+  const auto & oldest_file = metadata_.files.front();
+  const auto file_path = fs::path(base_folder_) / oldest_file.path;
 
-    // Delete file from filesystem
-    if (fs::exists(file_path)) {
-      const uint64_t file_size = fs::file_size(file_path);
-      const int64_t file_duration_ns = oldest_file.duration.count();
-      std::error_code ec;
-      bool file_removed = fs::remove(file_path, ec);
-      if (!file_removed || ec) {
-        ROSBAG2_CPP_LOG_ERROR("Failed to delete oldest bagfile: %s. Error: %s",
-                              file_path.generic_string().c_str(), ec.message().c_str());
-        break;  // Keep file in tracking; retry on next split to avoid tight loop
+  // Delete file from filesystem
+  if (fs::exists(file_path)) {
+    const uint64_t file_size = fs::file_size(file_path);
+    const int64_t file_duration_ns = oldest_file.duration.count();
+    std::error_code ec;
+    bool file_removed = fs::remove(file_path, ec);
+    if (!file_removed || ec) {
+      ROSBAG2_CPP_LOG_ERROR("Failed to delete oldest bagfile: %s. Error: %s",
+                            file_path.generic_string().c_str(), ec.message().c_str());
+      return false;
+    }
+    ROSBAG2_CPP_LOG_INFO("Deleted oldest bagfile: %s (%lu bytes, %ld ns)",
+                         oldest_file.path.c_str(), file_size, file_duration_ns);
+    deleted_file_path = file_path.generic_string();
+    remove_oldest_file_from_tracking();
+  } else {
+    ROSBAG2_CPP_LOG_ERROR("Oldest bagfile to delete not found: %s",
+                          file_path.generic_string().c_str());
+    remove_oldest_file_from_tracking();
+  }
+  return true;
+}
+
+std::filesystem::space_info SequentialWriter::get_filesystem_space_info(
+  std::error_code & ec) const
+{
+  return fs::space(base_folder_, ec);
+}
+
+uint64_t SequentialWriter::get_min_free_space_bytes(uint64_t capacity_bytes) const
+{
+  uint64_t min_free_space_bytes = storage_options_.min_free_space_bytes;
+  if (storage_options_.min_free_space_percent > 0.0) {
+    const auto min_free_space_from_percent = static_cast<uint64_t>(
+      static_cast<double>(capacity_bytes) * storage_options_.min_free_space_percent / 100.0);
+    min_free_space_bytes = std::max(min_free_space_bytes, min_free_space_from_percent);
+  }
+  return min_free_space_bytes;
+}
+
+bool SequentialWriter::check_free_space()
+{
+  if (writing_stopped_due_to_low_free_space_) {
+    return false;
+  }
+  if (storage_options_.min_free_space_bytes == 0 &&
+    storage_options_.min_free_space_percent <= 0.0)
+  {
+    return true;  // Free space check is disabled
+  }
+
+  const auto now = std::chrono::steady_clock::now();
+  if (now - last_free_space_check_time_ < free_space_check_period_) {
+    return true;  // Checked recently
+  }
+  last_free_space_check_time_ = now;
+
+  std::error_code ec;
+  auto space_info = get_filesystem_space_info(ec);
+  if (ec) {
+    ROSBAG2_CPP_LOG_WARN_STREAM(
+      "Failed to query the free space on the filesystem for '" << base_folder_ <<
+        "'. Error: " << ec.message());
+    return true;
+  }
+
+  const uint64_t min_free_space_bytes = get_min_free_space_bytes(space_info.capacity);
+  if (space_info.available >= min_free_space_bytes) {
+    return true;  // Enough free space
+  }
+
+  auto info = std::make_shared<bag_events::LowDiskSpaceInfo>();
+  info->path = base_folder_;
+  info->capacity_bytes = space_info.capacity;
+  info->min_free_space_bytes = min_free_space_bytes;
+
+  if (storage_options_.low_free_space_action ==
+    rosbag2_storage::LowFreeSpaceAction::DELETE_OLDEST_FILES)
+  {
+    // The cache consumer thread concurrently updates the per-file tracking containers
+    // (metadata_.files, metadata_.relative_file_paths and per_file_topic_message_counts_)
+    // which delete_oldest_file(..) is going to modify. Stop the cache consumer while deleting
+    // the oldest files and restart it afterwards, the same way as switch_to_next_storage() does.
+    if (use_cache_) {
+      cache_consumer_->stop();
+    }
+    // Delete the oldest files, but never the one currently being written to, until there is
+    // enough free space.
+    while (space_info.available < min_free_space_bytes && metadata_.files.size() > 1) {
+      std::string deleted_file_path;
+      if (!delete_oldest_file(deleted_file_path)) {
+        break;
       }
-      ROSBAG2_CPP_LOG_INFO("Deleted oldest bagfile: %s (%lu bytes, %ld ns)",
-                           oldest_file.path.c_str(), file_size, file_duration_ns);
-      remove_oldest_file_from_tracking();
-    } else {
-      ROSBAG2_CPP_LOG_ERROR("Oldest bagfile to delete not found: %s",
-                            file_path.generic_string().c_str());
-      remove_oldest_file_from_tracking();
+      if (!deleted_file_path.empty()) {
+        info->deleted_files.emplace_back(std::move(deleted_file_path));
+      }
+      space_info = get_filesystem_space_info(ec);
+      if (ec) {
+        ROSBAG2_CPP_LOG_WARN_STREAM(
+          "Failed to query the free space on the filesystem for '" << base_folder_ <<
+            "'. Error: " << ec.message());
+        break;
+      }
+    }
+    if (use_cache_) {
+      cache_consumer_->start();
     }
   }
+  info->available_bytes = space_info.available;
+
+  if (ec || space_info.available < min_free_space_bytes) {
+    writing_stopped_due_to_low_free_space_ = true;
+    info->writing_stopped = true;
+    ROSBAG2_CPP_LOG_ERROR_STREAM(
+      "Available free space (" << space_info.available << " bytes) on the filesystem for '" <<
+        base_folder_ << "' is below the minimum free space limit (" << min_free_space_bytes <<
+        " bytes). No more messages will be written to the bag.");
+  } else {
+    ROSBAG2_CPP_LOG_WARN_STREAM(
+      "Available free space on the filesystem for '" << base_folder_ <<
+        "' went below the minimum free space limit (" << min_free_space_bytes <<
+        " bytes). Deleted " << info->deleted_files.size() <<
+        " oldest bagfile(s) to reclaim disk space. Available free space now: " <<
+        space_info.available << " bytes.");
+  }
+
+  callback_manager_.execute_callbacks(bag_events::BagEvent::LOW_DISK_SPACE, info);
+  return !writing_stopped_due_to_low_free_space_;
 }
 
 bool SequentialWriter::message_within_accepted_time_range(
@@ -881,7 +1018,15 @@ void SequentialWriter::add_event_callbacks(const bag_events::WriterEventCallback
       bag_events::BagEvent::MESSAGES_LOST);
   }
 
-  if (!callbacks.messages_lost_callback && !callbacks.write_split_callback) {
+  if (callbacks.low_disk_space_callback) {
+    callback_manager_.add_event_callback(
+      callbacks.low_disk_space_callback,
+      bag_events::BagEvent::LOW_DISK_SPACE);
+  }
+
+  if (!callbacks.messages_lost_callback && !callbacks.write_split_callback &&
+    !callbacks.low_disk_space_callback)
+  {
     throw std::runtime_error("No valid callback provided");
   }
 }

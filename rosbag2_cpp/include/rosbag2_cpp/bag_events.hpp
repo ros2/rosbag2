@@ -40,6 +40,10 @@ enum class BagEvent
   READ_SPLIT,
   /// The Writer has lost messages on the storage side or due to a cache overflow.
   MESSAGES_LOST,
+  /// The available free space on the filesystem holding the bag went below the configured
+  /// minimum (see rosbag2_storage::StorageOptions::min_free_space_bytes and
+  /// rosbag2_storage::StorageOptions::min_free_space_percent).
+  LOW_DISK_SPACE,
 };
 
 
@@ -56,6 +60,30 @@ struct MessagesLostInfo
 };
 
 using MessagesLostCallback = std::function<void(const std::vector<MessagesLostInfo> &)>;
+
+/**
+ * \brief The information structure passed to callbacks for the LOW_DISK_SPACE event.
+ */
+struct LowDiskSpaceInfo
+{
+  /// The bag directory whose filesystem was checked for free space.
+  std::string path;
+  /// The free space in bytes available on the filesystem when the event was generated. If files
+  /// were deleted to reclaim disk space, this is the value after deletion.
+  uint64_t available_bytes = 0;
+  /// The total capacity in bytes of the filesystem.
+  uint64_t capacity_bytes = 0;
+  /// The effective minimum free space limit in bytes that was violated.
+  uint64_t min_free_space_bytes = 0;
+  /// The full paths of the bag files deleted to reclaim disk space. Empty unless the
+  /// rosbag2_storage::LowFreeSpaceAction::DELETE_OLDEST_FILES action is configured.
+  std::vector<std::string> deleted_files;
+  /// True if the writer stopped writing messages to the bag because the free space is still
+  /// below the limit. The writer will not write any more messages until it is closed and reopened.
+  bool writing_stopped = false;
+};
+
+using LowDiskSpaceCallback = std::function<void(const LowDiskSpaceInfo &)>;
 
 /**
  * \brief The information structure passed to callbacks for the WRITE_SPLIT and READ_SPLIT events.
@@ -80,6 +108,9 @@ struct WriterEventCallbacks
 
   /// The callback to call for the MESSAGES_LOST event.
   MessagesLostCallback messages_lost_callback;
+
+  /// The callback to call for the LOW_DISK_SPACE event.
+  LowDiskSpaceCallback low_disk_space_callback;
 };
 
 /**

@@ -15,7 +15,9 @@
 #ifndef ROSBAG2_CPP__WRITERS__SEQUENTIAL_WRITER_HPP_
 #define ROSBAG2_CPP__WRITERS__SEQUENTIAL_WRITER_HPP_
 
+#include <chrono>
 #include <deque>
+#include <filesystem>
 #include <memory>
 #include <mutex>
 #include <string>
@@ -250,6 +252,45 @@ protected:
   /// Adjusts per-topic message counts in topics_names_to_info_, which are used to
   /// compute metadata.message_count and topics_with_message_count during finalization.
   void delete_oldest_files_if_needed();
+
+  /// \brief Delete the oldest bagfile of the current recording and remove it from the metadata
+  /// tracking, adjusting per-topic message counts in topics_names_to_info_.
+  /// \note The caller is responsible for making sure that the oldest file is not the file
+  /// currently being written to. i.e. metadata_.files.size() > 1.
+  /// \param[out] deleted_file_path Full path of the deleted file. Empty if the oldest file was
+  /// already missing on the filesystem and only removed from tracking.
+  /// \return true if the oldest file was removed from tracking (deleted or already missing),
+  /// false if deleting the file failed. In that case the file is kept in tracking.
+  virtual bool delete_oldest_file(std::string & deleted_file_path);
+
+  /// \brief Query the space information of the filesystem holding the bag directory.
+  /// \details Virtual to be able to substitute the filesystem in unit tests.
+  /// \param[out] ec Error code set if the query fails.
+  /// \return The space information for base_folder_.
+  virtual std::filesystem::space_info get_filesystem_space_info(std::error_code & ec) const;
+
+  /// \brief Check the available free space on the filesystem holding the bag and take the
+  /// configured low free space action if it went below the configured minimum.
+  /// \details The check is throttled to run at most once per free_space_check_period_ and does
+  /// nothing if neither min_free_space_bytes nor min_free_space_percent is set.
+  /// If the free space is low and the low_free_space_action is DELETE_OLDEST_FILES, the oldest
+  /// bagfiles are deleted (never the currently opened one) until the free space is above the
+  /// limit. If the free space is still low afterwards, or the action is STOP, the writer stops
+  /// writing messages until it is closed and reopened. In both cases the LOW_DISK_SPACE event
+  /// callbacks are executed.
+  /// \return true if writing shall continue, false if the writer stopped writing messages.
+  bool check_free_space();
+
+  /// \brief Compute the effective minimum free space limit in bytes from the storage options.
+  /// \param capacity_bytes The total capacity of the filesystem in bytes.
+  uint64_t get_min_free_space_bytes(uint64_t capacity_bytes) const;
+
+  /// \brief Minimum period between two checks of the free space on the filesystem.
+  std::chrono::steady_clock::duration free_space_check_period_{std::chrono::seconds(1)};
+  std::chrono::steady_clock::time_point last_free_space_check_time_{};
+  /// \brief Set to true when the writer stopped writing messages due to the low free space.
+  /// Reset on open().
+  bool writing_stopped_due_to_low_free_space_{false};
 
   // Checks if the current recording bagfile needs to be split and rolled over to a new file.
   bool should_split_bagfile(
