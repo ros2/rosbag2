@@ -26,6 +26,7 @@
 #include "rosbag2_cpp/reindexer.hpp"
 
 #include "rosbag2_storage/bag_metadata.hpp"
+#include "rosbag2_storage/storage_options.hpp"
 #include "rosbag2_storage/topic_metadata.hpp"
 #include "rosbag2_test_common/temporary_directory_fixture.hpp"
 

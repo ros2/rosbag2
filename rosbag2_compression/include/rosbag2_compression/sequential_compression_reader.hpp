@@ -23,15 +23,18 @@
 #include "rosbag2_compression/compression_options.hpp"
 
 #include "rosbag2_cpp/converter.hpp"
+#include "rosbag2_cpp/converter_options.hpp"
 #include "rosbag2_cpp/readers/sequential_reader.hpp"
 #include "rosbag2_cpp/serialization_format_converter_factory.hpp"
 #include "rosbag2_cpp/serialization_format_converter_factory_interface.hpp"
 
 #include "rosbag2_storage/metadata_io.hpp"
+#include "rosbag2_storage/serialized_bag_message.hpp"
 #include "rosbag2_storage/storage_factory.hpp"
 #include "rosbag2_storage/storage_factory_interface.hpp"
 #include "rosbag2_storage/storage_filter.hpp"
 #include "rosbag2_storage/storage_interfaces/read_only_interface.hpp"
+#include "rosbag2_storage/storage_options.hpp"
 
 #include "compression_factory.hpp"
 #include "visibility_control.hpp"

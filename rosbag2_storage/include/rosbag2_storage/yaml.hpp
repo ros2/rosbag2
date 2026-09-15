@@ -15,6 +15,9 @@
 #define ROSBAG2_STORAGE__YAML_HPP_
 
 #include <algorithm>
+#include <chrono>
+#include <cstddef>
+#include <cstdint>
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -31,8 +34,10 @@
 #endif
 
 #include "rclcpp/duration.hpp"
+#include "rclcpp/qos.hpp"
 #include "rosbag2_storage/bag_metadata.hpp"
 #include "rosbag2_storage/qos.hpp"
+#include "rosbag2_storage/topic_metadata.hpp"
 
 namespace YAML
 {

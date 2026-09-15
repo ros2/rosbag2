@@ -15,15 +15,24 @@
 #include <gmock/gmock.h>
 
 #include <chrono>
+#include <cstdint>
 #include <memory>
+#include <ratio>
 #include <string>
 #include <vector>
 #include <utility>
 
+#include "mock_sequential_reader.hpp"
+#include "rcl/time.h"
 #include "rclcpp/clock.hpp"
 #include "rclcpp/duration.hpp"
 #include "rclcpp/utilities.hpp"
+#include "rcutils/time.h"
+#include "rosbag2_storage/serialized_bag_message.hpp"
+#include "rosbag2_storage/storage_options.hpp"
+#include "rosbag2_storage/topic_metadata.hpp"
 
+#include "rosbag2_transport/play_options.hpp"
 #include "rosbag2_transport/player.hpp"
 
 #include "test_msgs/msg/basic_types.hpp"

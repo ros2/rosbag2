@@ -15,9 +15,11 @@
 #include <gmock/gmock.h>
 
 #include <memory>
+#include <stdexcept>
 #include <string>
 #include <vector>
 
+#include "rcutils/time.h"
 #include "rosbag2_cpp/cache/transient_local_messages_cache.hpp"
 #include "rosbag2_storage/serialized_bag_message.hpp"
 

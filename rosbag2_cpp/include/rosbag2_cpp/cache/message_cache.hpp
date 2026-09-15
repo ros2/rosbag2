@@ -17,6 +17,8 @@
 
 #include <atomic>
 #include <condition_variable>
+#include <cstddef>
+#include <cstdint>
 #include <unordered_map>
 #include <memory>
 #include <mutex>

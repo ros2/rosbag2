@@ -13,9 +13,12 @@
 // limitations under the License.
 
 #include <algorithm>
+#include <cerrno>
 #include <chrono>
 #include <cstdio>
+#include <ios>
 #include <memory>
+#include <stdexcept>
 #include <string>
 #include <vector>
 

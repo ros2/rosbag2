@@ -12,9 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <chrono>
+#include <cstddef>
 #include <exception>
+#include <future>
 #include <memory>
 #include <string>
+#include <thread>
 #include <vector>
 
 #include "rosbag2_performance_benchmarking/byte_producer.hpp"
@@ -22,11 +26,14 @@
 #include "rosbag2_performance_benchmarking/publisher_group_config.hpp"
 #include "rosbag2_performance_benchmarking/thread_pool.hpp"
 
+#include "msg_utils/message_producer.hpp"
 #include "msg_utils/message_producer_factory.hpp"
 
 #include "rclcpp/executors/single_threaded_executor.hpp"
+#include "rclcpp/logging.hpp"
 #include "rclcpp/node.hpp"
 #include "rclcpp/qos.hpp"
+#include "rclcpp/utilities.hpp"
 
 class BenchmarkPublishers : public rclcpp::Node
 {

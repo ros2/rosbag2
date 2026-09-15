@@ -15,9 +15,22 @@
 
 #include <gmock/gmock.h>
 
+#include <cstddef>
+#include <cstdint>
 #include <iostream>
+#include <memory>
+#include <stdexcept>
+#include <string>
+#include <utility>
+#include <vector>
 
+#include "mock_sequential_reader.hpp"
 #include "rcutils/time.h"
+#include "rosbag2_cpp/reader.hpp"
+#include "rosbag2_storage/serialized_bag_message.hpp"
+#include "rosbag2_storage/storage_filter.hpp"
+#include "rosbag2_storage/storage_options.hpp"
+#include "rosbag2_storage/topic_metadata.hpp"
 #include "rosbag2_transport/readers_manager.hpp"
 #include "rosbag2_transport_test_fixture.hpp"
 #include "test_msgs/message_fixtures.hpp"

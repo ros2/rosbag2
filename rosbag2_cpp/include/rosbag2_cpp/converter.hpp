@@ -20,6 +20,8 @@
 #include <unordered_map>
 #include <vector>
 
+#include "rosbag2_cpp/converter_interfaces/serialization_format_deserializer.hpp"
+#include "rosbag2_cpp/converter_interfaces/serialization_format_serializer.hpp"
 #include "rosbag2_cpp/converter_options.hpp"
 #include "rosbag2_cpp/converter_interfaces/serialization_format_converter.hpp"
 #include "rosbag2_cpp/serialization_format_converter_factory.hpp"
@@ -29,6 +31,7 @@
 #include "rosbag2_storage/serialized_bag_message.hpp"
 
 #include "rcpputils/shared_library.hpp"
+#include "rosidl_runtime_c/message_type_support_struct.h"
 
 // This is necessary because of using stl types here. It is completely safe, because
 // a) the member is not accessible from the outside

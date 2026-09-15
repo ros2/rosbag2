@@ -13,6 +13,7 @@
 // limitations under the License.
 
 #include <memory>
+#include <stdexcept>
 #include <string>
 #include <vector>
 

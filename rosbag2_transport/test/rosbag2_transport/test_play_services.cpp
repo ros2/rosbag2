@@ -14,25 +14,40 @@
 
 #include <gmock/gmock.h>
 
+#include <chrono>
+#include <cstddef>
+#include <functional>
+#include <future>
+#include <iostream>
 #include <memory>
+#include <ostream>
+#include <stdexcept>
 #include <string>
+#include <thread>
 #include <vector>
 #include <utility>
 #include <condition_variable>
 #include <mutex>
 
+#include "mock_sequential_reader.hpp"
 #include "rclcpp/client.hpp"
 #include "rclcpp/executors/single_threaded_executor.hpp"
 #include "rclcpp/node.hpp"
 #include "rclcpp/subscription.hpp"
 #include "rclcpp/utilities.hpp"
 #include "mock_player.hpp"
+#include "rosbag2_interfaces/srv/get_rate.hpp"
 #include "rosbag2_interfaces/srv/is_paused.hpp"
 #include "rosbag2_interfaces/srv/pause.hpp"
+#include "rosbag2_interfaces/srv/play_next.hpp"
 #include "rosbag2_interfaces/srv/resume.hpp"
+#include "rosbag2_interfaces/srv/set_rate.hpp"
 #include "rosbag2_interfaces/srv/stop.hpp"
 #include "rosbag2_interfaces/srv/toggle_paused.hpp"
+#include "rosbag2_storage/storage_options.hpp"
+#include "rosbag2_storage/topic_metadata.hpp"
 #include "rosbag2_test_common/wait_for.hpp"
+#include "rosbag2_transport/play_options.hpp"
 #include "rosbag2_transport/player.hpp"
 #include "test_msgs/msg/basic_types.hpp"
 #include "test_msgs/message_fixtures.hpp"

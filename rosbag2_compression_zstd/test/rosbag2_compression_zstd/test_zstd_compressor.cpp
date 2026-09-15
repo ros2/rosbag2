@@ -13,20 +13,29 @@
 // limitations under the License.
 
 #include <algorithm>
+#include <cstdint>
 #include <cstdio>
+#include <cstring>
 #include <filesystem>
 #include <fstream>
+#include <ios>
 #include <memory>
+#include <ostream>
+#include <sstream>
+#include <stdexcept>
 #include <string>
 #include <system_error>
 #include <vector>
 
 #include "rclcpp/utilities.hpp"
+#include "rcutils/allocator.h"
+#include "rcutils/types/uint8_array.h"
 
 #include "rosbag2_compression_zstd/zstd_compressor.hpp"
 #include "rosbag2_compression_zstd/zstd_decompressor.hpp"
 
 #include "rosbag2_storage/ros_helper.hpp"
+#include "rosbag2_storage/serialized_bag_message.hpp"
 
 #include "rosbag2_test_common/temporary_directory_fixture.hpp"
 

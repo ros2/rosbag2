@@ -17,6 +17,9 @@
 
 #include <sqlite3.h>
 
+#include <cstddef>
+#include <cstdint>
+#include <iterator>
 #include <memory>
 #include <stdexcept>
 #include <string>
@@ -24,6 +27,8 @@
 #include <utility>
 #include <vector>
 
+#include "rcutils/time.h"
+#include "rcutils/types/uint8_array.h"
 #include "rosbag2_storage/serialized_bag_message.hpp"
 #include "rosbag2_storage_sqlite3/sqlite_exception.hpp"
 #include "rosbag2_storage_sqlite3/visibility_control.hpp"

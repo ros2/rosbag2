@@ -14,14 +14,19 @@
 
 #include <gmock/gmock.h>
 
+#include <chrono>
+#include <cstddef>
 #include <memory>
 #include <string>
 #include <utility>
 #include <vector>
 
+#include "mock_sequential_writer.hpp"
+#include "rcpputils/scope_exit.hpp"
 #include "rosbag2_test_common/publication_manager.hpp"
 #include "rosbag2_test_common/wait_for.hpp"
 
+#include "rosbag2_transport/record_options.hpp"
 #include "rosbag2_transport/recorder.hpp"
 
 #include "test_msgs/msg/basic_types.hpp"

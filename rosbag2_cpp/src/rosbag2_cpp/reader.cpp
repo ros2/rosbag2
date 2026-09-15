@@ -16,6 +16,7 @@
 #include "rosbag2_cpp/reader.hpp"
 
 #include <memory>
+#include <stdexcept>
 #include <string>
 #include <utility>
 #include <vector>

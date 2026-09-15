@@ -33,11 +33,14 @@
 #include "rosbag2_cpp/serialization_format_converter_factory_interface.hpp"
 #include "rosbag2_cpp/writers/sequential_writer.hpp"
 
+#include "rosbag2_storage/message_definition.hpp"
 #include "rosbag2_storage/metadata_io.hpp"
+#include "rosbag2_storage/serialized_bag_message.hpp"
 #include "rosbag2_storage/storage_factory.hpp"
 #include "rosbag2_storage/storage_factory_interface.hpp"
 #include "rosbag2_storage/storage_options.hpp"
 #include "rosbag2_storage/storage_interfaces/base_io_interface.hpp"
+#include "rosbag2_storage/topic_metadata.hpp"
 
 #include "rosbag2_compression/compression_options.hpp"
 

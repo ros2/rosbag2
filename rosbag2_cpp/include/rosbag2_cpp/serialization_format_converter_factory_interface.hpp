@@ -20,6 +20,8 @@
 #include <vector>
 
 #include "rosbag2_cpp/converter_interfaces/serialization_format_converter.hpp"
+#include "rosbag2_cpp/converter_interfaces/serialization_format_deserializer.hpp"
+#include "rosbag2_cpp/converter_interfaces/serialization_format_serializer.hpp"
 #include "rosbag2_cpp/visibility_control.hpp"
 
 namespace rosbag2_cpp

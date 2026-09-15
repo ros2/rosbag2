@@ -16,18 +16,28 @@
 #include <gmock/gmock.h>
 
 #include <chrono>
+#include <cstddef>
 #include <memory>
 #include <mutex>
 #include <queue>
+#include <stdexcept>
 #include <string>
 #include <thread>
 #include <utility>
 #include <vector>
 
+#include "rclcpp/event_handler.hpp"
+#include "rclcpp/expand_topic_or_service_name.hpp"
+#include "rclcpp/node.hpp"
+#include "rclcpp/publisher.hpp"
 #include "rclcpp/qos.hpp"
+#include "rclcpp/utilities.hpp"
+#include "rosbag2_cpp/bag_events.hpp"
 #include "rosbag2_interfaces/msg/messages_lost_event.hpp"
 #include "rosbag2_interfaces/msg/messages_lost_event_topic_stat.hpp"
 #include "rosbag2_interfaces/msg/write_split_event.hpp"
+#include "rosbag2_storage/qos.hpp"
+#include "rosbag2_transport/record_options.hpp"
 #include "rosbag2_transport/recorder_event_notifier.hpp"
 #include "rosbag2_transport/rclcpp_publisher_wrapper.hpp"
 #include "rosbag2_test_common/subscription_manager.hpp"

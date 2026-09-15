@@ -17,23 +17,36 @@
 
 #include <gtest/gtest.h>
 
+#include <cassert>
+#include <cstdint>
 #include <cstdio>
 #include <cstring>
 #include <iostream>
 #include <filesystem>  // NOLINT cpplint: FP, filesystem is a C++17 system header
 #include <fstream>
 #include <memory>
+#include <stdexcept>
 #include <string>
 #include <tuple>
 #include <utility>
 #include <vector>
 #include <unordered_map>
 
+#include "rcutils/allocator.h"
 #include "rcutils/logging_macros.h"
 #include "rcutils/snprintf.h"
+#include "rcutils/types/rcutils_ret.h"
+#include "rcutils/types/uint8_array.h"
 
 #include "rosbag2_storage/metadata_io.hpp"
+#include "rosbag2_storage/serialized_bag_message.hpp"
+#include "rosbag2_storage/storage_interfaces/base_io_interface.hpp"
+#include "rosbag2_storage/storage_interfaces/read_only_interface.hpp"
+#include "rosbag2_storage/storage_interfaces/read_write_interface.hpp"
+#include "rosbag2_storage/storage_options.hpp"
 
+#include "rosbag2_storage_sqlite3/sqlite_exception.hpp"
+#include "rosbag2_storage_sqlite3/sqlite_statement_wrapper.hpp"
 #include "rosbag2_storage_sqlite3/sqlite_storage.hpp"
 #include "rosbag2_storage_sqlite3/sqlite_wrapper.hpp"
 

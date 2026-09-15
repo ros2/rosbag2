@@ -15,13 +15,21 @@
 #ifndef MSG_UTILS__MESSAGE_PRODUCER_HPP_
 #define MSG_UTILS__MESSAGE_PRODUCER_HPP_
 
+#include <chrono>
+#include <cstddef>
 #include <memory>
 #include <string>
 #include <stdexcept>
+#include <thread>
 
 #include "helpers.hpp"
 #include "rclcpp/node.hpp"
+#include "rclcpp/publisher.hpp"
+#include "rclcpp/utilities.hpp"
 #include "rosbag2_performance_benchmarking/publisher_group_config.hpp"
+#include "rosbag2_performance_benchmarking_msgs/msg/byte_array.hpp"
+#include "sensor_msgs/msg/image.hpp"
+#include "sensor_msgs/msg/point_cloud2.hpp"
 
 namespace msg_utils
 {
