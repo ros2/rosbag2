@@ -14,12 +14,23 @@
 
 #include <gmock/gmock.h>
 
+#include <cstddef>
+#include <sstream>
 #include <string>
 #include <vector>
 
+#include "rcl/graph.h"
+#include "rcl/types.h"
+#include "rclcpp/duration.hpp"
+#include "rclcpp/node_interfaces/node_graph_interface.hpp"
+#include "rclcpp/qos.hpp"
+#include "rcutils/allocator.h"
+#include "rmw/time.h"
+#include "rmw/topic_endpoint_info.h"
 #include "rmw/types.h"
 
 #include "rosbag2_storage/qos.hpp"
+#include "yaml-cpp/yaml.h"
 
 TEST(TestQoS, serialization)
 {

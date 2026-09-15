@@ -13,18 +13,27 @@
 // limitations under the License.
 
 #include <algorithm>
+#include <atomic>
 #include <chrono>
+#include <condition_variable>
+#include <exception>
+#include <iostream>
+#include <iterator>
 #include <limits>
 #include <memory>
+#include <mutex>
 #include <regex>
 #include <sstream>
+#include <stdexcept>
 #include <string>
+#include <type_traits>
 #include <unordered_map>
 #include <unordered_set>
 #include <utility>
 #include <vector>
 #include <thread>
 
+#include "keyboard_handler/keyboard_handler_base.hpp"
 #include "rcl/graph.h"
 
 #include "rclcpp/duration.hpp"
@@ -43,17 +52,21 @@
 #include "rclcpp/timer.hpp"
 #include "rclcpp/utilities.hpp"
 #include "rclcpp_action/create_generic_client.hpp"
+#include "rcpputils/thread_safety_annotations.hpp"
 #include "rcpputils/unique_lock.hpp"
+#include "rcutils/logging_macros.h"
 #include "rcutils/time.h"
 #include "rmw/rmw.h"
 
 #include "rosbag2_cpp/action_utils.hpp"
+#include "rosbag2_cpp/bag_events.hpp"
 #include "rosbag2_cpp/clocks/time_controller_clock.hpp"
 #include "rosbag2_cpp/reader.hpp"
 #include "rosbag2_cpp/service_utils.hpp"
 
 #include "rosbag2_storage/storage_filter.hpp"
 #include "rosbag2_storage/qos.hpp"
+#include "rosbag2_storage/topic_metadata.hpp"
 #include "rosbag2_transport/config_options_from_node_params.hpp"
 #include "rosbag2_transport/player.hpp"
 #include "rosbag2_transport/player_action_client.hpp"
@@ -64,6 +77,7 @@
 
 #include "logging.hpp"
 #include "locked_priority_queue.hpp"
+#include "service_msgs/msg/service_event_info.hpp"
 
 namespace
 {

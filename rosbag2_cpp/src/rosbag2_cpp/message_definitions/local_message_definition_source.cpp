@@ -12,12 +12,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <cstdint>
 #include <filesystem>
 #include <fstream>
 #include <functional>
+#include <iterator>
 #include <optional>
 #include <regex>
 #include <set>
+#include <sstream>
+#include <stdexcept>
 #include <string>
 #include <unordered_set>
 #include <utility>

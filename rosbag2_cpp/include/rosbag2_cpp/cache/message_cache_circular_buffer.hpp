@@ -15,6 +15,8 @@
 #ifndef ROSBAG2_CPP__CACHE__MESSAGE_CACHE_CIRCULAR_BUFFER_HPP_
 #define ROSBAG2_CPP__CACHE__MESSAGE_CACHE_CIRCULAR_BUFFER_HPP_
 
+#include <cstddef>
+#include <cstdint>
 #include <deque>
 #include <memory>
 #include <vector>

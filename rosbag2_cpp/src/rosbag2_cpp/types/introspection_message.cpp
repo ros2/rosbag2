@@ -21,6 +21,7 @@
 #include "rcutils/allocator.h"
 #include "rcutils/strdup.h"
 #include "rcutils/time.h"
+#include "rosidl_runtime_cpp/message_initialization.hpp"
 
 #include "rosidl_typesupport_cpp/message_type_support.hpp"
 

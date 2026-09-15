@@ -15,6 +15,7 @@
 #ifndef ROSBAG2_PY__FORMAT_BAG_METADATA_HPP_
 #define ROSBAG2_PY__FORMAT_BAG_METADATA_HPP_
 
+#include <cstdint>
 #include <string>
 #include <unordered_map>
 

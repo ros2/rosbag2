@@ -22,6 +22,9 @@
 
 #include "rclcpp/serialization.hpp"
 #include "rclcpp/serialized_message.hpp"
+#include "rcutils/types/uint8_array.h"
+#include "rmw/ret_types.h"
+#include "rmw/serialized_message.h"
 
 namespace rosbag2_test_common
 {

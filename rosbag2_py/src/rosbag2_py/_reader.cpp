@@ -23,6 +23,7 @@
 #include "rosbag2_cpp/plugins/plugin_utils.hpp"
 #include "rosbag2_cpp/readers/sequential_reader.hpp"
 #include "rosbag2_cpp/reader.hpp"
+#include "rosbag2_storage/message_definition.hpp"
 #include "rosbag2_storage/storage_interfaces/read_only_interface.hpp"
 #include "rosbag2_storage/storage_interfaces/read_write_interface.hpp"
 #include "rosbag2_storage/storage_filter.hpp"
@@ -30,6 +31,7 @@
 #include "rosbag2_storage/topic_metadata.hpp"
 
 #include "./pybind11.hpp"
+#include "rcutils/types/uint8_array.h"
 
 namespace rosbag2_py
 {

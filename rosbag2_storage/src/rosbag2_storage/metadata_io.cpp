@@ -16,10 +16,14 @@
 
 #include <filesystem>
 #include <fstream>
+#include <sstream>
+#include <stdexcept>
 #include <string>
 #include <vector>
 
+#include "rcutils/allocator.h"
 #include "rcutils/filesystem.h"
+#include "rcutils/types/rcutils_ret.h"
 
 #include "rosbag2_storage/topic_metadata.hpp"
 #include "rosbag2_storage/yaml.hpp"

@@ -14,22 +14,33 @@
 
 #include <gmock/gmock.h>
 
+#include <chrono>
+#include <csignal>
+#include <cstddef>
+#include <cstdlib>
 #include <filesystem>
 #include <memory>
+#include <sstream>
 #include <string>
 #include <unordered_set>
+#include <vector>
 
 #include "rclcpp/qos.hpp"
 #include "rcpputils/scope_exit.hpp"
 #include "record_fixture.hpp"
+#include "rmw/rmw.h"
 #include "rosbag2_compression_zstd/zstd_decompressor.hpp"
 #include "rosbag2_storage/metadata_io.hpp"
+#include "rosbag2_test_common/process_execution_helpers_unix.hpp"
 #include "rosbag2_test_common/publication_manager.hpp"
 #include "rosbag2_test_common/subscription_manager.hpp"
 #include "rosbag2_test_common/process_execution_helpers.hpp"
+#include "rosbag2_test_common/tested_storage_ids.hpp"
 
 #include "test_msgs/msg/arrays.hpp"
 #include "test_msgs/message_fixtures.hpp"
+#include "test_msgs/msg/basic_types.hpp"
+#include "test_msgs/msg/strings.hpp"
 
 namespace fs = std::filesystem;
 

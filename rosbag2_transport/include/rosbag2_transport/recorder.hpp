@@ -15,6 +15,7 @@
 #ifndef ROSBAG2_TRANSPORT__RECORDER_HPP_
 #define ROSBAG2_TRANSPORT__RECORDER_HPP_
 
+#include <cstdint>
 #include <future>
 #include <memory>
 #include <string>
@@ -26,8 +27,14 @@
 
 #include "keyboard_handler/keyboard_handler.hpp"
 
+#include "rclcpp/event_handler.hpp"
 #include "rclcpp/node.hpp"
+#include "rclcpp/node_interfaces/node_graph_interface.hpp"
+#include "rclcpp/node_options.hpp"
 #include "rclcpp/qos.hpp"
+#include "rclcpp/subscription_base.hpp"
+#include "rcutils/time.h"
+#include "rcutils/types/uint8_array.h"
 
 #include "rosbag2_cpp/writer.hpp"
 
@@ -44,11 +51,13 @@
 
 #include "rosbag2_interfaces/msg/write_split_event.hpp"
 
+#include "rosbag2_storage/storage_options.hpp"
 #include "rosbag2_storage/topic_metadata.hpp"
 
 #include "rosbag2_transport/record_options.hpp"
 #include "rosbag2_transport/visibility_control.hpp"
 #include "rosbag2_transport/topic_filter.hpp"
+#include "rosidl_runtime_c/type_hash.h"
 
 namespace rosbag2_cpp
 {

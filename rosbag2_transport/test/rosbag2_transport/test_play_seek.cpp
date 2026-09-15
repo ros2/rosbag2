@@ -15,6 +15,8 @@
 #include <gmock/gmock.h>
 
 #include <chrono>
+#include <cstddef>
+#include <cstdint>
 #include <filesystem>
 #include <future>
 #include <memory>
@@ -23,9 +25,17 @@
 #include <vector>
 
 #include "mock_player.hpp"
+#include "rmw/rmw.h"
+#include "rosbag2_cpp/converter_options.hpp"
+#include "rosbag2_cpp/reader.hpp"
 #include "rosbag2_cpp/writers/sequential_writer.hpp"
 #include "rosbag2_play_test_fixture.hpp"
+#include "rosbag2_storage/bag_metadata.hpp"
+#include "rosbag2_storage/metadata_io.hpp"
+#include "rosbag2_storage/serialized_bag_message.hpp"
 #include "rosbag2_storage/storage_options.hpp"
+#include "rosbag2_storage/topic_metadata.hpp"
+#include "rosbag2_test_common/subscription_manager.hpp"
 #include "rosbag2_test_common/tested_storage_ids.hpp"
 #include "test_msgs/message_fixtures.hpp"
 #include "test_msgs/msg/basic_types.hpp"

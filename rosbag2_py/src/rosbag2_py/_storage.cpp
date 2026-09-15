@@ -12,14 +12,20 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <chrono>
+#include <cstddef>
+#include <cstdint>
 #include <string>
+#include <unordered_map>
 #include <utility>
 #include <vector>
 
 #include "rosbag2_cpp/converter_options.hpp"
 #include "rosbag2_storage/bag_metadata.hpp"
 #include "rosbag2_storage/default_storage_id.hpp"
+#include "rosbag2_storage/message_definition.hpp"
 #include "rosbag2_storage/metadata_io.hpp"
+#include "rosbag2_storage/qos.hpp"
 #include "rosbag2_storage/storage_filter.hpp"
 #include "rosbag2_storage/storage_interfaces/base_read_interface.hpp"
 #include "rosbag2_storage/storage_options.hpp"
@@ -27,6 +33,9 @@
 
 #include "format_bag_metadata.hpp"
 #include "pybind11.hpp"
+#include "rclcpp/duration.hpp"
+#include "rclcpp/qos.hpp"
+#include "rmw/types.h"
 
 namespace
 {

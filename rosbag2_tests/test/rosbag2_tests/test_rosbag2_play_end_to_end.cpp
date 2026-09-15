@@ -14,17 +14,28 @@
 
 #include <gmock/gmock.h>
 
+#include <chrono>
+#include <csignal>
 #include <cstdlib>
 #include <filesystem>
 #include <future>
 #include <iostream>
 #include <memory>
+#include <stdexcept>
 #include <string>
+#include <thread>
 #include <vector>
 
+#include "rclcpp/client.hpp"
+#include "rclcpp/executors/single_threaded_executor.hpp"
+#include "rclcpp/node.hpp"
+#include "rclcpp/qos.hpp"
+#include "rclcpp/utilities.hpp"
+#include "rcpputils/scope_exit.hpp"
 #include "rosbag2_interfaces/srv/resume.hpp"
 #include "rosbag2_interfaces/srv/stop.hpp"
 #include "rosbag2_test_common/process_execution_helpers.hpp"
+#include "rosbag2_test_common/process_execution_helpers_unix.hpp"
 #include "rosbag2_test_common/subscription_manager.hpp"
 #include "rosbag2_test_common/tested_storage_ids.hpp"
 #include "rosbag2_test_common/wait_for.hpp"

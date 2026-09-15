@@ -15,19 +15,34 @@
 #include <gmock/gmock.h>
 
 #include <algorithm>
+#include <cassert>
+#include <chrono>
+#include <cstddef>
+#include <cstdint>
 #include <filesystem>  // NOLINT cpplint: FP, filesystem is a C++17 system header
 #include <limits>
 #include <memory>
+#include <stdexcept>
 #include <string>
 #include <tuple>
 #include <utility>
 #include <vector>
 
+#include "rclcpp/qos.hpp"
 #include "rcpputils/env.hpp"
 
 #include "rcutils/snprintf.h"
 
+#include "rosbag2_storage/bag_metadata.hpp"
+#include "rosbag2_storage/message_definition.hpp"
 #include "rosbag2_storage/storage_filter.hpp"
+#include "rosbag2_storage/storage_interfaces/base_io_interface.hpp"
+#include "rosbag2_storage/storage_interfaces/read_only_interface.hpp"
+#include "rosbag2_storage/storage_interfaces/read_write_interface.hpp"
+#include "rosbag2_storage/storage_options.hpp"
+#include "rosbag2_storage/topic_metadata.hpp"
+#include "rosbag2_storage_sqlite3/sqlite_storage.hpp"
+#include "rosbag2_storage_sqlite3/sqlite_wrapper.hpp"
 
 #include "storage_test_fixture.hpp"
 

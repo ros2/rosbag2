@@ -16,6 +16,9 @@
 #define ROSBAG2_TRANSPORT__PLAYER_ACTION_CLIENT_HPP_
 
 #include <chrono>
+#include <cstddef>
+#include <cstdint>
+#include <functional>
 #include <memory>
 #include <mutex>
 #include <random>
@@ -26,10 +29,16 @@
 
 #include "rcl/types.h"
 #include "rclcpp_action/generic_client.hpp"
+#include "rclcpp_action/generic_client_goal_handle.hpp"
 #include <rclcpp_action/types.hpp>
 #include "rclcpp/logger.hpp"
+#include "rcpputils/shared_library.hpp"
+#include "rcutils/allocator.h"
 
 #include "rosbag2_cpp/action_utils.hpp"
+#include "rosidl_runtime_c/message_type_support_struct.h"
+#include "rosidl_typesupport_introspection_cpp/message_introspection.hpp"
+#include "service_msgs/msg/service_event_info.hpp"
 
 namespace rosbag2_transport
 {

@@ -15,7 +15,13 @@
 #include <gmock/gmock.h>
 #include <string>
 
+#include <chrono>
+#include <sstream>
+#include <vector>
+
+#include "rclcpp/qos.hpp"
 #include "rosbag2_transport/record_options.hpp"
+#include "yaml-cpp/yaml.h"
 
 using namespace ::testing;  // NOLINT
 

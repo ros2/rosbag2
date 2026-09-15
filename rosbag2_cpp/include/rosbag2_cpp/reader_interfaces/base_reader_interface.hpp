@@ -18,6 +18,7 @@
 #include <memory>
 #include <vector>
 
+#include "rcutils/time.h"
 #include "rcutils/types.h"
 #include "rosbag2_cpp/bag_events.hpp"
 #include "rosbag2_cpp/converter_options.hpp"
