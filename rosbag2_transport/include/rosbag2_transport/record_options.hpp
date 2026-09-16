@@ -18,6 +18,7 @@
 #include <chrono>
 #include <string>
 #include <unordered_map>
+#include <utility>
 #include <vector>
 
 #include "keyboard_handler/keyboard_handler.hpp"
@@ -101,6 +102,13 @@ public:
   /// with this depth, unless an explicit per-topic entry exists in
   /// repeat_transient_local_messages. 0 disables the feature.
   uint32_t repeat_all_transient_local_depth = 0;
+
+  /// \brief Per-topic message index ranges for bag rewriting.
+  /// For each stored topic, only messages whose position in the message order are within
+  /// the specified range are written to the output bag. When multiple input bags provide
+  /// the same topic, the index refers to the merged chronological sequence of that topic.
+  /// Topics not stored keep all messages.
+  std::unordered_map<std::string, std::pair<size_t, size_t>> topic_message_ranges{};
 
   /// Note: Please don't forget to update the YAML serialization and deserialization logic in
   /// `record_options.cpp` and the test case `test_yaml_serialization_deserialization`
