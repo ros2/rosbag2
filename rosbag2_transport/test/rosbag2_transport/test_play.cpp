@@ -1638,8 +1638,9 @@ TEST_F(RosBag2PlayTestFixture, topics_with_unplayable_serialization_format_can_b
     prepared_mock_reader->prepare(messages, topic_types);
     auto reader = std::make_unique<rosbag2_cpp::Reader>(std::move(prepared_mock_reader));
 
+    std::shared_ptr<rosbag2_transport::Player> player;
     EXPECT_THROW(
-      std::make_shared<rosbag2_transport::Player>(
+      player = std::make_shared<rosbag2_transport::Player>(
         std::move(reader), storage_options_, play_options_),
       std::runtime_error);
 
@@ -1711,8 +1712,9 @@ TEST_F(RosBag2PlayTestFixture, topics_with_unplayable_serialization_format_can_b
     prepared_mock_reader->prepare(messages, all_unplayable_topic_types);
     auto reader = std::make_unique<rosbag2_cpp::Reader>(std::move(prepared_mock_reader));
 
+    std::shared_ptr<rosbag2_transport::Player> player;
     EXPECT_THROW(
-      std::make_shared<rosbag2_transport::Player>(
+      player = std::make_shared<rosbag2_transport::Player>(
         std::move(reader), storage_options_, play_options_),
       std::runtime_error);
   }
