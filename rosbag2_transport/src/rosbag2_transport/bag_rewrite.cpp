@@ -83,18 +83,100 @@ std::shared_ptr<rosbag2_storage::SerializedBagMessage> get_next(
   return earliest_msg;
 }
 
+/// Return if the message at message_index on topic_name shall be written to an output bag file
+bool message_in_range(
+  const rosbag2_transport::RecordOptions & record_options,
+  const std::string & topic_name, size_t message_index)
+{
+  auto range_it = record_options.topic_message_ranges.find(topic_name);
+  if (range_it == record_options.topic_message_ranges.end()) {
+    // Topic is not specified in the message ranges member -> message can be written
+    return true;
+  }
+  // Do not write if the index is outside the range
+  return message_index >= range_it->second.first && message_index <= range_it->second.second;
+}
+
+/// Validate the per-topic message ranges requested by the output bags
+void validate_message_ranges(
+  const std::vector<reader_storage_options_pair_t> & input_bags,
+  const std::vector<writer_record_options_pair_t> & output_bags)
+{
+  // Get all topic names and their message counts from the bag input data
+  std::unordered_map<std::string, size_t> available_message_counts;
+  for (const auto & input_bag : input_bags) {
+    const auto & metadata = input_bag.first->get_metadata();
+    for (const auto & topic_information : metadata.topics_with_message_count) {
+      available_message_counts[topic_information.topic_metadata.name] +=
+        topic_information.message_count;
+    }
+  }
+
+  // Main validation
+  for (const auto & output_bag : output_bags) {
+    const auto & record_options = output_bag.second;
+    for (const auto & [topic_name, range] : record_options.topic_message_ranges) {
+      auto count_it = available_message_counts.find(topic_name);
+      if (count_it == available_message_counts.end()) {
+        throw std::invalid_argument(
+          "Invalid message range for topic '" + topic_name +
+          "': topic does not exist in any input bag.");
+      }
+      const size_t message_count = count_it->second;
+      if (message_count == 0) {
+        throw std::invalid_argument(
+          "Invalid message range for topic '" + topic_name +
+          "': topic has no messages in the input bags.");
+      }
+
+      const size_t start = range.first;
+      const size_t end = range.second;
+      if (start > end) {
+        throw std::invalid_argument(
+          "Invalid message range for topic '" + topic_name + "': start index " +
+          std::to_string(start) + " is greater than end index " +
+          std::to_string(end) + ".");
+      }
+
+      if (start >= message_count) {
+        throw std::invalid_argument(
+          "Invalid message range for topic '" + topic_name + "': start index " +
+          std::to_string(start) + " is out of range [0, " +
+          std::to_string(message_count - 1) + "]." +
+          " The topic has " + std::to_string(message_count) + " messages.");
+      }
+      if (end >= message_count) {
+        throw std::invalid_argument(
+          "Invalid message range for topic '" + topic_name + "': end index " +
+          std::to_string(end) + " is out of range [0, " +
+          std::to_string(message_count - 1) + "]." +
+          " The topic has " + std::to_string(message_count) + " messages.");
+      }
+    }
+  }
+}
+
+/// \brief An output Writer together with the RecordOptions that configured it.
+/// Required to evaluate per-topic message ranges when writing.
+struct FilteredOutput
+{
+  rosbag2_cpp::Writer * writer;
+  const rosbag2_transport::RecordOptions * record_options;
+};
+
+
 /// Discover what topics are in the inputs, filter out topics that can't be processed,
 /// create_topic on Writers that will receive topics.
 /// Return a map f topic -> vector of which Writers want to receive that topic,
 /// based on the RecordOptions.
 /// The output vector has bare pointers to the uniquely owned Writers,
 /// so this may not outlive the output_bags Writers.
-std::unordered_map<std::string, std::vector<rosbag2_cpp::Writer *>>
+std::unordered_map<std::string, std::vector<FilteredOutput>>
 setup_topic_filtering(
   const std::vector<reader_storage_options_pair_t> & input_bags,
   const std::vector<writer_record_options_pair_t> & output_bags)
 {
-  std::unordered_map<std::string, std::vector<rosbag2_cpp::Writer *>> filtered_outputs;
+  std::unordered_map<std::string, std::vector<FilteredOutput>> filtered_outputs;
   std::map<std::string, std::vector<std::string>> input_topics;
   std::unordered_map<std::string, std::vector<rclcpp::QoS>> input_topics_qos_profiles;
   std::unordered_map<std::string, std::string> input_topics_serialization_format;
@@ -159,7 +241,7 @@ setup_topic_filtering(
         writer->create_topic(topic_metadata);
       }
       filtered_outputs.try_emplace(topic_name);
-      filtered_outputs[topic_name].push_back(writer.get());
+      filtered_outputs[topic_name].push_back({writer.get(), &record_options});
     }
   }
 
@@ -175,17 +257,27 @@ void perform_rewrite(
     throw std::runtime_error("Must provide at least one input and one output bag to rewrite.");
   }
 
+  // Fail on invalid per-topic message ranges before anything is written
+  validate_message_ranges(input_bags, output_bags);
+
   auto topic_outputs = setup_topic_filtering(input_bags, output_bags);
 
   std::vector<std::shared_ptr<rosbag2_storage::SerializedBagMessage>> next_messages;
   next_messages.resize(input_bags.size(), nullptr);
 
+  // Store the position of messages within their topic's message sequence
+  std::unordered_map<std::string, size_t> topic_message_indices;
+
   std::shared_ptr<rosbag2_storage::SerializedBagMessage> next_msg;
   while ((next_msg = get_next(input_bags, next_messages))) {
     auto iterator = topic_outputs.find(next_msg->topic_name);
     if (iterator != topic_outputs.end()) {
-      for (const auto writer : iterator->second) {
-        writer->write(next_msg);
+      // Determine specific message position
+      const size_t message_index = topic_message_indices[next_msg->topic_name]++;
+      for (const auto & output : iterator->second) {
+        if (message_in_range(*output.record_options, next_msg->topic_name, message_index)) {
+          output.writer->write(next_msg);
+        }
       }
     }
   }
