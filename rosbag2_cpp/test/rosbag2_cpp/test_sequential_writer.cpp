@@ -17,6 +17,7 @@
 #include <chrono>
 #include <ctime>
 #include <filesystem>
+#include <fstream>
 #include <iomanip>
 #include <memory>
 #include <regex>
@@ -468,10 +469,27 @@ TEST_F(SequentialWriterTest, sequantial_writer_call_metadata_update_on_bag_split
   ASSERT_EQ(v_intercepted_update_metadata_.size(), 4u);
   EXPECT_TRUE(v_intercepted_update_metadata_[0].compression_mode.empty());
   EXPECT_EQ(v_intercepted_update_metadata_[0].message_count, 0u);  // On opening first bag file
-  EXPECT_EQ(v_intercepted_update_metadata_[1].files.size(), 1u);   // On closing first bag file
-  EXPECT_EQ(v_intercepted_update_metadata_[2].files.size(), 2u);   // On opening second bag file
-  EXPECT_EQ(v_intercepted_update_metadata_[3].files.size(), 2u);   // On writer destruction
+  // The metadata written into the bag files shall only reference the currently opened file, not
+  // the whole file history (see https://github.com/ros2/rosbag2/issues/2481).
+  for (size_t i = 0; i < v_intercepted_update_metadata_.size(); i++) {
+    ASSERT_EQ(v_intercepted_update_metadata_[i].files.size(), 1u) << "update index = " << i;
+    ASSERT_EQ(v_intercepted_update_metadata_[i].relative_file_paths.size(), 1u) <<
+      "update index = " << i;
+    EXPECT_EQ(
+      v_intercepted_update_metadata_[i].files[0].path,
+      v_intercepted_update_metadata_[i].relative_file_paths[0]) << "update index = " << i;
+  }
+  // Updates 0 and 1: opening and closing the first bag file. Updates 2 and 3: opening the second
+  // bag file and closing it on the writer destruction.
+  EXPECT_EQ(extract_counter_from_filename(v_intercepted_update_metadata_[0].files[0].path), 0u);
+  EXPECT_EQ(extract_counter_from_filename(v_intercepted_update_metadata_[1].files[0].path), 0u);
+  EXPECT_EQ(extract_counter_from_filename(v_intercepted_update_metadata_[2].files[0].path), 1u);
+  EXPECT_EQ(extract_counter_from_filename(v_intercepted_update_metadata_[3].files[0].path), 1u);
+  EXPECT_EQ(v_intercepted_update_metadata_[1].message_count, kNumMessagesToWrite);
   EXPECT_EQ(v_intercepted_update_metadata_[3].message_count, 2 * kNumMessagesToWrite);
+  // The metadata.yaml file shall still contain the full file history
+  EXPECT_EQ(fake_metadata_.files.size(), 2u);
+  EXPECT_EQ(fake_metadata_.relative_file_paths.size(), 2u);
 }
 
 TEST_F(SequentialWriterTest, open_throws_error_if_converter_plugin_does_not_exist) {
@@ -1598,3 +1616,34 @@ INSTANTIATE_TEST_SUITE_P(
   ParametrizedTemporaryDirectoryFixture,
   ValuesIn(rosbag2_test_common::kTestedStorageIDs)
 );
+
+TEST_F(SequentialWriterTest, finalize_metadata_computes_bag_size_relative_to_bag_folder) {
+  // Create a real file for the fake storage so that its size can be measured
+  ON_CALL(*storage_factory_, open_read_write(_)).WillByDefault(
+    DoAll(
+      Invoke(
+        [this](const rosbag2_storage::StorageOptions & storage_options) {
+          fake_storage_size_ = 0;
+          fake_storage_uri_ = storage_options.uri;
+          std::ofstream file(fake_storage_uri_);
+          file << "fake bag file content";
+        }),
+      Return(storage_)));
+
+  auto sequential_writer = std::make_unique<rosbag2_cpp::writers::SequentialWriter>(
+    std::move(storage_factory_), converter_factory_, std::move(metadata_io_));
+  writer_ = std::make_unique<rosbag2_cpp::Writer>(std::move(sequential_writer));
+
+  auto message = std::make_shared<rosbag2_storage::SerializedBagMessage>();
+  message->topic_name = "test_topic";
+
+  writer_->open(storage_options_, {"rmw_format", "rmw_format"});
+  writer_->create_topic({0u, "test_topic", "test_msgs/BasicTypes", "", {}, ""});
+  writer_->write(message);
+  writer_->close();
+
+  // The relative file paths in the metadata are relative to the bag folder. The bag size shall
+  // be computed by resolving them against the bag folder, not the current working directory.
+  ASSERT_EQ(fake_metadata_.relative_file_paths.size(), 1u);
+  EXPECT_EQ(fake_metadata_.bag_size, fs::file_size(fake_storage_uri_));
+}
