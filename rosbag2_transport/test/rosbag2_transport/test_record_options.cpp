@@ -58,6 +58,7 @@ TEST(record_options, test_yaml_serialization_deserialization)
   original.statistics_max_publishing_rate = 5.0f;
   original.repeat_transient_local_messages = {{"/map", 1}, {"/tf_static", 5}};
   original.repeat_all_transient_local_depth = 3;
+  original.topic_message_ranges = {{"/bounded_topic", {10, 42}}};
 
   auto node = YAML::convert<rosbag2_transport::RecordOptions>::encode(original);
 
@@ -101,6 +102,7 @@ TEST(record_options, test_yaml_serialization_deserialization)
   CHECK(disable_keyboard_controls);
   CHECK(repeat_transient_local_messages);
   CHECK(repeat_all_transient_local_depth);
+  CHECK(topic_message_ranges);
   #undef CHECK
   ASSERT_FLOAT_EQ(original.statistics_max_publishing_rate,
                   reconstructed.statistics_max_publishing_rate);
@@ -124,6 +126,37 @@ TEST(record_options, test_yaml_decode_for_all_and_exclude)
   ASSERT_EQ(record_options.all_actions, true);
   ASSERT_EQ(record_options.regex, "[xyz]/topic");
   ASSERT_EQ(record_options.exclude_regex, "[x]/topic");
+}
+
+// TODO(MaxFleur) - Don't know if we should include an extra check for this
+TEST(record_options, test_yaml_decode_topic_message_ranges)
+{
+  std::string serialized_record_options =
+    "  all_topics: true\n"
+    "  topic_message_ranges:\n"
+    "    /lidar:\n"
+    "      start: 10\n"
+    "      end: 42\n"
+    "    /cam_image_left:\n"
+    "      start: 3\n"
+    "      end: 20\n"
+    "    /cam_image_right:\n"
+    "      start: 0\n"
+    "      end: 3\n";
+
+  YAML::Node loaded_node = YAML::Load(serialized_record_options);
+  auto record_options = loaded_node.as<rosbag2_transport::RecordOptions>();
+  ASSERT_EQ(record_options.topic_message_ranges.size(), 3u);
+
+  auto lidar_range = record_options.topic_message_ranges.at("/lidar");
+  ASSERT_EQ(lidar_range.first, 10u);
+  ASSERT_EQ(lidar_range.second, 42u);
+  auto camera_range_left = record_options.topic_message_ranges.at("/cam_image_left");
+  ASSERT_EQ(camera_range_left.first, 3u);
+  ASSERT_EQ(camera_range_left.second, 20u);
+  auto camera_range_right = record_options.topic_message_ranges.at("/cam_image_right");
+  ASSERT_EQ(camera_range_right.first, 0u);
+  ASSERT_EQ(camera_range_right.second, 3u);
 }
 
 TEST(record_options, test_large_serialization)
