@@ -110,6 +110,12 @@ _Splitting by time_: `ros2 bag record -a -d 9000` will split the bag files after
 
 If both splitting by size and duration are enabled, the bag will split at whichever threshold is reached first.
 
+Recorder-triggered bag splitting uses a non-blocking asynchronous split path. This allows the
+recorder to continue processing incoming messages while a new bagfile is opened, reducing the risk
+of stalls or message loss during long split operations. Because the split is performed
+asynchronously, the actual split point may occur slightly after the configured threshold or
+requested split time.
+
 #### Repeating transient-local messages on split and snapshot
 
 When a bag file is split or a snapshot is taken, consumers of the new file may need certain
@@ -215,6 +221,8 @@ The Rosbag2 recorder provides the following services for remote control, which c
     - `error_string`: empty on success, otherwise describes the failure.
 * `~/split_bagfile [rosbag2_interfaces/srv/SplitBagfile]`
   * Triggers a split to a new file, either immediately or scheduled based on mode and time.
+    Recorder-triggered splits use the same non-blocking asynchronous split path as automatic
+    recorder splitting.
   * Split modes:
     - **Node time**: split by the recorder node clock; executes immediately if `split_time` is
       unset or in the past, or is scheduled in the future via the task runner.
@@ -232,7 +240,7 @@ The Rosbag2 recorder provides the following services for remote control, which c
     - For publish/receive-time modes, splits are executed asynchronously by the task runner and
       scheduled to be executed immediately after the next qualifying message arrives; therefore
       the split may not happen exactly at the requested timestamp. This is made to avoid blocking
-      the recorder from processing incoming messages and potentially lost messages due to the long
+      the recorder from processing incoming messages and potentially losing messages due to the long
       bag split operation.
     - Future node-time splits are scheduled and may also be executed slightly after the requested
       time due to task scheduling.

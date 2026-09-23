@@ -14,7 +14,9 @@
 
 #include <gmock/gmock.h>
 
+#include <atomic>
 #include <chrono>
+#include <future>
 #include <numeric>
 #include <memory>
 #include <string>
@@ -112,6 +114,123 @@ TEST_F(MessageCacheTest, message_cache_writes_full_producer_buffer) {
 
   mock_cache_consumer->stop();
   EXPECT_EQ(consumed_message_count, message_count - should_be_dropped_count);
+}
+
+TEST_F(MessageCacheTest, cache_consumer_repeated_stop_async_calls_share_in_progress_stop) {
+  auto mock_message_cache = std::make_shared<NiceMock<MockMessageCache>>(cache_size_);
+  std::promise<void> callback_started_promise;
+  auto callback_started = callback_started_promise.get_future();
+  std::promise<void> release_callback_promise;
+  auto release_callback = release_callback_promise.get_future().share();
+  std::atomic<size_t> callback_invocations {0};
+  std::atomic<size_t> consumed_message_count {0};
+
+  auto cb = [&callback_started_promise, release_callback, &callback_invocations,
+      &consumed_message_count](
+    const std::vector<std::shared_ptr<const rosbag2_storage::SerializedBagMessage>> & msgs)
+    {
+      consumed_message_count += msgs.size();
+      if (callback_invocations.fetch_add(1) == 0) {
+        callback_started_promise.set_value();
+        release_callback.wait();
+      }
+    };
+
+  auto cache_consumer = std::make_unique<NiceMock<MockCacheConsumer>>(mock_message_cache, cb);
+  ASSERT_TRUE(mock_message_cache->push(make_test_msg()));
+  ASSERT_EQ(callback_started.wait_for(1s), std::future_status::ready);
+
+  auto first_stop_future = cache_consumer->stop_async();
+  auto second_stop_future = cache_consumer->stop_async();
+
+  release_callback_promise.set_value();
+
+  EXPECT_NO_THROW(first_stop_future.get());
+  EXPECT_NO_THROW(second_stop_future.get());
+  EXPECT_EQ(callback_invocations.load(), 2u);
+  EXPECT_EQ(consumed_message_count.load(), 1u);
+}
+
+TEST_F(MessageCacheTest, cache_consumer_stop_waits_for_in_progress_async_stop) {
+  auto mock_message_cache = std::make_shared<NiceMock<MockMessageCache>>(cache_size_);
+  std::promise<void> callback_started_promise;
+  auto callback_started = callback_started_promise.get_future();
+  std::promise<void> release_callback_promise;
+  auto release_callback = release_callback_promise.get_future().share();
+  std::atomic<size_t> callback_invocations {0};
+  std::atomic<size_t> consumed_message_count {0};
+
+  auto cb = [&callback_started_promise, release_callback, &callback_invocations,
+      &consumed_message_count](
+    const std::vector<std::shared_ptr<const rosbag2_storage::SerializedBagMessage>> & msgs)
+    {
+      consumed_message_count += msgs.size();
+      if (callback_invocations.fetch_add(1) == 0) {
+        callback_started_promise.set_value();
+        release_callback.wait();
+      }
+    };
+
+  auto cache_consumer = std::make_unique<NiceMock<MockCacheConsumer>>(mock_message_cache, cb);
+  ASSERT_TRUE(mock_message_cache->push(make_test_msg()));
+  ASSERT_EQ(callback_started.wait_for(1s), std::future_status::ready);
+
+  auto async_stop_future = cache_consumer->stop_async();
+  auto sync_stop_future = std::async(std::launch::async, [&cache_consumer]() {
+        cache_consumer->stop();
+    });
+
+  release_callback_promise.set_value();
+
+  EXPECT_NO_THROW(async_stop_future.get());
+  EXPECT_NO_THROW(sync_stop_future.get());
+  EXPECT_EQ(callback_invocations.load(), 2u);
+  EXPECT_EQ(consumed_message_count.load(), 1u);
+}
+
+TEST_F(MessageCacheTest, done_flushing_preserves_ready_state_for_messages_added_during_flush) {
+  auto message_cache = std::make_shared<rosbag2_cpp::cache::MessageCache>(cache_size_);
+  std::promise<void> waiter_started_promise;
+  auto waiter_started = waiter_started_promise.get_future();
+
+  auto waiting_consumer = std::async(std::launch::async,
+      [message_cache, &waiter_started_promise]() {
+        waiter_started_promise.set_value();
+        message_cache->wait_for_data();
+  });
+  ASSERT_EQ(waiter_started.wait_for(1s), std::future_status::ready);
+
+  message_cache->begin_flushing();
+  ASSERT_TRUE(message_cache->push(make_test_msg()));
+  ASSERT_EQ(waiting_consumer.wait_for(1s), std::future_status::ready);
+  EXPECT_NO_THROW(waiting_consumer.get());
+
+  // In flushing mode the swap drains the pre-flush buffer, so the message pushed during flushing
+  // remains in the producer buffer and must still wake the restarted consumer afterward.
+  message_cache->swap_buffers();
+  auto consumer_buffer = message_cache->get_consumer_buffer();
+  EXPECT_TRUE(consumer_buffer->data().empty());
+  consumer_buffer->clear();
+  message_cache->release_consumer_buffer();
+
+  message_cache->done_flushing();
+
+  auto restarted_consumer = std::async(std::launch::async, [message_cache]() {
+        message_cache->wait_for_data();
+  });
+
+  const auto status = restarted_consumer.wait_for(1s);
+  if (status != std::future_status::ready) {
+    message_cache->notify_data_ready();
+  }
+  EXPECT_EQ(status, std::future_status::ready);
+  EXPECT_NO_THROW(restarted_consumer.get());
+
+  message_cache->swap_buffers();
+  consumer_buffer = message_cache->get_consumer_buffer();
+  ASSERT_EQ(consumer_buffer->data().size(), 1u);
+  consumer_buffer->clear();
+  message_cache->release_consumer_buffer();
 }
 
 TEST_F(MessageCacheTest, message_cache_rejects_null_message) {

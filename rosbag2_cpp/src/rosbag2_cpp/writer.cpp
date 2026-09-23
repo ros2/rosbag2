@@ -46,6 +46,9 @@ Writer::Writer(std::unique_ptr<rosbag2_cpp::writer_interfaces::BaseWriterInterfa
 
 Writer::~Writer()
 {
+  // Need to protect with mutex lock to avoid destructing writer_impl and other operations like
+  // write, split_bagfile, etc. running concurrently which may lead to the undefined behavior.
+  std::lock_guard<std::mutex> writer_lock(writer_mutex_);
   writer_impl_.reset();
 }
 
@@ -119,13 +122,19 @@ bool Writer::take_snapshot()
 void Writer::split_bagfile()
 {
   std::lock_guard<std::mutex> writer_lock(writer_mutex_);
-  return writer_impl_->split_bagfile();
+  writer_impl_->split_bagfile();
+}
+
+void Writer::split_bagfile_async()
+{
+  std::lock_guard<std::mutex> writer_lock(writer_mutex_);
+  writer_impl_->split_bagfile_async();
 }
 
 void Writer::write(std::shared_ptr<const rosbag2_storage::SerializedBagMessage> message)
 {
   std::lock_guard<std::mutex> writer_lock(writer_mutex_);
-  writer_impl_->write(message);
+  writer_impl_->write(std::move(message));
 }
 
 void Writer::write(
@@ -155,7 +164,8 @@ void Writer::write(
   const rclcpp::Time & time,
   uint32_t sequence_number)
 {
-  write(message, topic_name, type_name, time.nanoseconds(), time.nanoseconds(), sequence_number);
+  write(std::move(message), topic_name, type_name, time.nanoseconds(), time.nanoseconds(),
+      sequence_number);
 }
 
 void Writer::write(
@@ -187,11 +197,13 @@ void Writer::write(
 
 void Writer::add_event_callbacks(bag_events::WriterEventCallbacks & callbacks)
 {
+  std::lock_guard<std::mutex> writer_lock(writer_mutex_);
   writer_impl_->add_event_callbacks(callbacks);
 }
 
 bool Writer::has_callback_for_event(bag_events::BagEvent event) const
 {
+  std::lock_guard<std::mutex> writer_lock(writer_mutex_);
   return writer_impl_->has_callback_for_event(event);
 }
 
