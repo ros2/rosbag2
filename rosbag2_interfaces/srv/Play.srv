@@ -1,9 +1,24 @@
 # See rosbag2_transport::PlayOptions::start_offset
 builtin_interfaces/Time start_offset
+
 # See rosbag2_transport::PlayOptions::playback_duration
 builtin_interfaces/Duration playback_duration
+
 # See rosbag2_transport::PlayOptions::playback_until_timestamp
 builtin_interfaces/Time playback_until_timestamp
+
+# Timestamp in the future when to start playing.
+# If empty or time in the past, playing starts immediately.
+builtin_interfaces/Time start_time
+
 ---
-# returns false when another playback execution is running, otherwise true
-bool success
+# Return codes for player response.
+int32 RETURN_CODE_SUCCESS=0
+int32 RETURN_CODE_ALREADY_RUNNING=1
+int32 RETURN_CODE_FAILED_TO_START=2
+
+# Return code. Use RETURN_CODE_SUCCESS on success; otherwise use one of the error codes.
+int32 return_code
+
+# Error string. Empty if no error occurred.
+string error_string

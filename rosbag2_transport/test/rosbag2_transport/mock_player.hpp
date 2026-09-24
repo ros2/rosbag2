@@ -33,15 +33,17 @@ public:
     std::unique_ptr<rosbag2_cpp::Reader> reader,
     const rosbag2_storage::StorageOptions & storage_options,
     const rosbag2_transport::PlayOptions & play_options,
-    const std::string & node_name = "rosbag2_mock_player")
-  : Player(std::move(reader), storage_options, play_options, node_name)
+    const std::string & node_name = "rosbag2_mock_player",
+    const rclcpp::NodeOptions & node_options = rclcpp::NodeOptions())
+  : Player(std::move(reader), storage_options, play_options, node_name, node_options)
   {}
 
   MockPlayer(
     std::vector<rosbag2_transport::Player::reader_storage_options_pair_t> && input_bags,
     const rosbag2_transport::PlayOptions & play_options,
-    const std::string & node_name = "rosbag2_mock_player")
-  : Player(std::move(input_bags), play_options, node_name)
+    const std::string & node_name = "rosbag2_mock_player",
+    const rclcpp::NodeOptions & node_options = rclcpp::NodeOptions())
+  : Player(std::move(input_bags), play_options, node_name, node_options)
   {}
 
   explicit MockPlayer(

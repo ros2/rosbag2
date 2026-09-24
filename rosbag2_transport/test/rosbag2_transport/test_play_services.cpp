@@ -31,6 +31,7 @@
 #include "rosbag2_interfaces/srv/pause.hpp"
 #include "rosbag2_interfaces/srv/resume.hpp"
 #include "rosbag2_interfaces/srv/stop.hpp"
+#include "rosbag2_interfaces/srv/play.hpp"
 #include "rosbag2_interfaces/srv/toggle_paused.hpp"
 #include "rosbag2_test_common/wait_for.hpp"
 #include "rosbag2_transport/player.hpp"
@@ -58,10 +59,12 @@ public:
   using SetRate = rosbag2_interfaces::srv::SetRate;
   using PlayNext = rosbag2_interfaces::srv::PlayNext;
   using Stop = rosbag2_interfaces::srv::Stop;
+  using Play = rosbag2_interfaces::srv::Play;
 
-  PlaySrvsTest()
+  explicit PlaySrvsTest(bool use_sim_time = false)
   : RosBag2PlayTestFixture(),
-    client_node_(std::make_shared<rclcpp::Node>("test_play_client"))
+    client_node_(std::make_shared<rclcpp::Node>("test_play_client")),
+    use_sim_time_(use_sim_time)
   {}
 
   ~PlaySrvsTest() override
@@ -76,6 +79,10 @@ public:
   {
     setup_player();
 
+    if (use_sim_time_) {
+      player_->set_parameter(rclcpp::Parameter("use_sim_time", true));
+    }
+
     const std::string ns = "/" + player_name_;
     cli_pause_ = client_node_->create_client<Pause>(ns + "/pause");
     cli_resume_ = client_node_->create_client<Resume>(ns + "/resume");
@@ -85,6 +92,7 @@ public:
     cli_set_rate_ = client_node_->create_client<SetRate>(ns + "/set_rate");
     cli_play_next_ = client_node_->create_client<PlayNext>(ns + "/play_next");
     cli_stop_ = client_node_->create_client<Stop>(ns + "/stop");
+    cli_play_ = client_node_->create_client<Play>(ns + "/play");
     topic_sub_ = client_node_->create_subscription<test_msgs::msg::BasicTypes>(
       test_topic_, 10,
       std::bind(&PlaySrvsTest::topic_callback, this, std::placeholders::_1));
@@ -95,6 +103,18 @@ public:
       [this]() {
         exec_.spin();
       });
+
+    if (use_sim_time_) {
+      clock_pub_ = client_node_->create_publisher<rosgraph_msgs::msg::Clock>("/clock", 10);
+      current_sim_time_ = rclcpp::Time(1, 0, RCL_ROS_TIME);
+      publish_clock(current_sim_time_);
+      ASSERT_TRUE(
+        rosbag2_test_common::wait_until_condition(
+          [this]() {return player_->get_clock()->started();},
+          std::chrono::seconds(5)));
+      EXPECT_EQ(player_->get_clock()->get_clock_type(), RCL_ROS_TIME);
+      ASSERT_TRUE(player_->get_clock()->ros_time_is_active());
+    }
 
     // Wait for the executor to start spinning in the newly spawned thread to avoid race conditions
     if (!wait_until_condition([this]() {return exec_.is_spinning();}, std::chrono::seconds(5))) {
@@ -112,6 +132,7 @@ public:
     ASSERT_TRUE(cli_set_rate_->wait_for_service(service_wait_timeout_));
     ASSERT_TRUE(cli_play_next_->wait_for_service(service_wait_timeout_));
     ASSERT_TRUE(cli_stop_->wait_for_service(service_wait_timeout_));
+    ASSERT_TRUE(cli_play_->wait_for_service(service_wait_timeout_));
   }
 
   void TearDown() override
@@ -220,8 +241,20 @@ private:
     auto prepared_mock_reader = std::make_unique<MockSequentialReader>();
     prepared_mock_reader->prepare(messages, topic_types);
     auto reader = std::make_unique<rosbag2_cpp::Reader>(std::move(prepared_mock_reader));
-    player_ = std::make_shared<MockPlayer>(
-      std::move(reader), storage_options, play_options, player_name_);
+
+    if (use_sim_time_) {
+      rclcpp::NodeOptions node_options = rclcpp::NodeOptions()
+        .start_parameter_event_publisher(false)
+        .append_parameter_override("use_sim_time", true)
+        .enable_rosout(false);
+
+      player_ = std::make_shared<MockPlayer>(
+        std::move(reader), storage_options, play_options, player_name_, node_options);
+    } else {
+      player_ = std::make_shared<MockPlayer>(
+        std::move(reader), storage_options, play_options, player_name_);
+    }
+
     player_->pause();  // Start playing in pause mode. Require for play_next test. For all other
     // tests we will resume playback via explicit call to start_playback().
     player_->play();
@@ -278,12 +311,44 @@ public:
   rclcpp::Client<SetRate>::SharedPtr cli_set_rate_;
   rclcpp::Client<PlayNext>::SharedPtr cli_play_next_;
   rclcpp::Client<Stop>::SharedPtr cli_stop_;
+  rclcpp::Client<Play>::SharedPtr cli_play_;
 
   // Mechanism to check on playback status
   rclcpp::Subscription<test_msgs::msg::BasicTypes>::SharedPtr topic_sub_;
   std::mutex got_msg_mutex_;
   std::condition_variable got_msg_;
   size_t message_counter_ = 0;
+
+  bool use_sim_time_ = false;
+  rclcpp::Publisher<rosgraph_msgs::msg::Clock>::SharedPtr clock_pub_;
+  rclcpp::Time current_sim_time_{0, 0, RCL_ROS_TIME};
+
+  void publish_clock(const rclcpp::Time & time)
+  {
+    if (!use_sim_time_) {
+      return;
+    }
+    rosgraph_msgs::msg::Clock msg;
+    msg.clock = time;
+    clock_pub_->publish(msg);
+  }
+
+  void advance_sim_time(const rclcpp::Duration & delta)
+  {
+    if (!use_sim_time_) {
+      return;
+    }
+    current_sim_time_ = current_sim_time_ + delta;
+    publish_clock(current_sim_time_);
+  }
+};
+
+class PlaySrvsSimTimeTest : public PlaySrvsTest
+{
+protected:
+  PlaySrvsSimTimeTest()
+  : PlaySrvsTest(true /*use_sim_time*/)
+  {}
 };
 
 TEST_F(PlaySrvsTest, pause_resume)
@@ -470,4 +535,115 @@ TEST_F(PlaySrvsTest, stop_in_active_play) {
   // The second stop() call after playback has already stopped shall return return_code = 1
   stop_response = service_call_stop();
   ASSERT_EQ(stop_response->return_code, 1);
+}
+
+TEST_F(PlaySrvsSimTimeTest, resume_can_be_scheduled_in_future_sim_time)
+{
+  ASSERT_TRUE(player_->is_paused());
+  expect_messages(false);
+
+  // Schedule a resume in the future
+  auto resume_request = std::make_shared<Resume::Request>();
+  auto target_time = current_sim_time_ + rclcpp::Duration(std::chrono::milliseconds(200));
+  resume_request->resume_time = target_time;
+
+  auto resume_response = successful_call<Resume>(
+    cli_resume_, resume_request, __PRETTY_FUNCTION__, __LINE__);
+  ASSERT_TRUE(resume_response);
+
+  EXPECT_TRUE(player_->is_paused());
+  expect_messages(false);
+
+  auto delta = target_time - current_sim_time_;
+  advance_sim_time(delta);
+
+  ASSERT_TRUE(
+    rosbag2_test_common::wait_until_condition(
+      [this]() {return !player_->is_paused();},
+      std::chrono::seconds(5))
+  ) << "Timed out waiting for scheduled resume to execute.";
+
+  expect_messages(true);
+}
+
+TEST_F(PlaySrvsSimTimeTest, play_can_be_scheduled_in_future_sim_time)
+{
+  ASSERT_TRUE(player_->is_paused());
+  player_->resume();
+  expect_messages(true);
+  player_->stop();  // Stop playback to prepare for scheduled play test
+  expect_messages(false);
+
+  auto play_request = std::make_shared<Play::Request>();
+  auto target_time = current_sim_time_ + rclcpp::Duration(2, 0);
+  play_request->start_time = target_time;
+
+  play_request->start_offset = rclcpp::Time(0, 0);
+  play_request->playback_duration = rclcpp::Duration(-1, 0);
+  play_request->playback_until_timestamp.sec = -1;
+  play_request->playback_until_timestamp.nanosec = 0;
+
+  auto play_response =
+    successful_call<Play>(cli_play_, play_request, __PRETTY_FUNCTION__, __LINE__);
+  ASSERT_TRUE(play_response);
+  EXPECT_EQ(play_response->return_code,
+            rosbag2_interfaces::srv::Play::Response::RETURN_CODE_SUCCESS);
+  EXPECT_TRUE(play_response->error_string.empty());
+
+  expect_messages(false);
+
+  // Advance time to trigger the scheduled playback
+  auto delta = target_time - current_sim_time_;
+  advance_sim_time(delta);
+
+  ASSERT_TRUE(
+    rosbag2_test_common::wait_until_condition(
+      [this]()
+      {
+        std::unique_lock<std::mutex> lock(got_msg_mutex_);
+        return message_counter_ > 0;
+      },
+      std::chrono::seconds(5))
+  ) << "Timed out waiting for scheduled play to execute.";
+
+  expect_messages(true);
+
+  // Test that calling play with default start_time (0) returns false when already in playback
+  play_request->start_time = rclcpp::Time(0, 0);
+  play_response = successful_call<Play>(cli_play_, play_request, __PRETTY_FUNCTION__, __LINE__);
+  ASSERT_TRUE(play_response);
+  EXPECT_EQ(play_response->return_code,
+            rosbag2_interfaces::srv::Play::Response::RETURN_CODE_ALREADY_RUNNING);
+  EXPECT_FALSE(play_response->error_string.empty());
+
+  expect_messages(true);
+
+  // Test that scheduling play in the future while already playing works
+  target_time = current_sim_time_ + rclcpp::Duration(2, 0);
+  play_request->start_time = target_time;
+  play_response = successful_call<Play>(cli_play_, play_request, __PRETTY_FUNCTION__, __LINE__);
+  ASSERT_TRUE(play_response);
+  EXPECT_EQ(play_response->return_code,
+            rosbag2_interfaces::srv::Play::Response::RETURN_CODE_SUCCESS);
+  EXPECT_TRUE(play_response->error_string.empty());
+
+  expect_messages(true);  // Messages continue from current playback
+
+  player_->stop();   // Stop playback to prepare for the next already scheduled playback to start
+  expect_messages(false);
+
+  // Advance time to trigger the scheduled playback
+  delta = target_time - current_sim_time_;
+  advance_sim_time(delta);
+
+  ASSERT_TRUE(
+    rosbag2_test_common::wait_until_condition(
+      [this]()
+      {
+        std::unique_lock<std::mutex> lock(got_msg_mutex_);
+        return message_counter_ > 0;
+      }, std::chrono::seconds(5))
+  ) << "Timed out waiting for scheduled play to execute.";
+
+  expect_messages(true);
 }
