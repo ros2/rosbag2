@@ -14,7 +14,7 @@ jobs:
       matrix:
           linter: [copyright, xmllint]
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v7
     - uses: ros-tooling/action-ros-lint@0.1.3
       with:
         linter: ${{ matrix.linter }}
@@ -46,7 +46,7 @@ jobs:
           # We exclude cppcheck due to https://github.com/ament/ament_lint/pull/345
           linter: [cpplint, uncrustify]
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v7
     - uses: ros-tooling/action-ros-lint@0.1.3
       with:
         linter: ${{ matrix.linter }}
@@ -78,7 +78,7 @@ jobs:
           - linter: clang_format
             arguments: "--config rosbag2_storage_mcap/.clang-format"
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v7
     - uses: ros-tooling/action-ros-lint@0.1.3
       with:
         linter: ${{ matrix.linter }}
@@ -96,7 +96,7 @@ jobs:
       matrix:
           linter: [pep257, flake8]
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v7
     - uses: ros-tooling/action-ros-lint@0.1.3
       with:
         linter: ${{ matrix.linter }}
