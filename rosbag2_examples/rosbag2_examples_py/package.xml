@@ -5,7 +5,7 @@
   <version>0.35.0</version>
   <description>Python bag writing tutorial</description>
   <maintainer email="gbiggs@killbots.net">geoff</maintainer>
-  <license>Apache License 2.0</license>
+  <license>Apache-2.0</license>
 
   <depend>rclpy</depend>
   <depend>rosbag2_compression</depend>
