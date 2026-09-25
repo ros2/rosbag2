@@ -12,11 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <ostream>
 #include <set>
 #include <string>
 
 #include "gmock/gmock.h"
 #include "rosbag2_cpp/message_definitions/local_message_definition_source.hpp"
+
+#include "rosbag2_storage/message_definition.hpp"
 
 using rosbag2_cpp::LocalMessageDefinitionSource;
 using rosbag2_cpp::parse_definition_dependencies;

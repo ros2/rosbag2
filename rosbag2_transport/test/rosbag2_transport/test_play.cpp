@@ -15,24 +15,34 @@
 #include <gmock/gmock.h>
 
 #include <chrono>
+#include <cstddef>
+#include <cstdint>
 #include <future>
 #include <memory>
+#include <stdexcept>
 #include <string>
+#include <thread>
 #include <vector>
 #include <unordered_map>
 #include <utility>
 
+#include "action_msgs/msg/goal_status.hpp"
+#include "action_msgs/msg/goal_status_array.hpp"
+#include "action_msgs/srv/cancel_goal.hpp"
+#include "mock_sequential_reader.hpp"
 #include "rcutils/time.h"
 #include "rclcpp/duration.hpp"
 #include "rclcpp/executors/single_threaded_executor.hpp"
 #include "rclcpp/qos.hpp"
 #include "rclcpp/utilities.hpp"
 #include "rmw/rmw.h"
+#include "rosbag2_cpp/bag_events.hpp"
 
 #include "rosbag2_test_common/action_server_manager.hpp"
 #include "rosbag2_test_common/service_manager.hpp"
 #include "rosbag2_test_common/subscription_manager.hpp"
 
+#include "rosbag2_transport/play_options.hpp"
 #include "rosbag2_transport/player.hpp"
 
 #include "test_msgs/action/fibonacci.hpp"
@@ -42,10 +52,13 @@
 #include "test_msgs/srv/basic_types.hpp"
 
 #include "rosbag2_storage/qos.hpp"
+#include "rosbag2_storage/serialized_bag_message.hpp"
+#include "rosbag2_storage/topic_metadata.hpp"
 
 #include "rosbag2_play_test_fixture.hpp"
 #include "rosbag2_transport_test_fixture.hpp"
 #include "mock_player.hpp"
+#include "service_msgs/msg/service_event_info.hpp"
 
 using namespace ::testing;  // NOLINT
 using namespace rosbag2_transport;  // NOLINT

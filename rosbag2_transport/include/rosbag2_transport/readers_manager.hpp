@@ -23,7 +23,9 @@
 #include "rosbag2_cpp/bag_events.hpp"
 #include "rosbag2_cpp/reader.hpp"
 #include "rosbag2_storage/serialized_bag_message.hpp"
+#include "rosbag2_storage/storage_filter.hpp"
 #include "rosbag2_storage/storage_options.hpp"
+#include "rosbag2_storage/topic_metadata.hpp"
 #include "rosbag2_transport/visibility_control.hpp"
 
 #ifdef _WIN32

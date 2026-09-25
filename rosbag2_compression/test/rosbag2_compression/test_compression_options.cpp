@@ -14,6 +14,7 @@
 
 #include <gmock/gmock.h>
 
+#include <cstdint>
 #include <string>
 
 #include "rosbag2_compression/compression_options.hpp"

@@ -15,14 +15,17 @@
 #ifndef ROSBAG2_STORAGE__STORAGE_INTERFACES__READ_ONLY_INTERFACE_HPP_
 #define ROSBAG2_STORAGE__STORAGE_INTERFACES__READ_ONLY_INTERFACE_HPP_
 
+#include <cstdint>
 #include <string>
 
+#include "rcutils/time.h"
 #include "rcutils/types.h"
 
 #include "rosbag2_storage/storage_filter.hpp"
 #include "rosbag2_storage/storage_interfaces/base_info_interface.hpp"
 #include "rosbag2_storage/storage_interfaces/base_io_interface.hpp"
 #include "rosbag2_storage/storage_interfaces/base_read_interface.hpp"
+#include "rosbag2_storage/storage_options.hpp"
 #include "rosbag2_storage/storage_traits.hpp"
 #include "rosbag2_storage/visibility_control.hpp"
 

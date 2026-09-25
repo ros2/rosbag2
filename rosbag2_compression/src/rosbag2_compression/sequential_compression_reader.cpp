@@ -16,6 +16,7 @@
 
 #include <filesystem>
 #include <memory>
+#include <sstream>
 #include <stdexcept>
 #include <string>
 #include <utility>
@@ -23,6 +24,7 @@
 
 #include "rcpputils/asserts.hpp"
 
+#include "rosbag2_compression/compression_factory.hpp"
 #include "rosbag2_compression/compression_options.hpp"
 
 #include "logging.hpp"

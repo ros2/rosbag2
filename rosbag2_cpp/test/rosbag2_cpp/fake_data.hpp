@@ -15,10 +15,14 @@
 #ifndef ROSBAG2_CPP__FAKE_DATA_HPP_
 #define ROSBAG2_CPP__FAKE_DATA_HPP_
 
+#include <cstddef>
+#include <cstdint>
 #include <utility>
 #include <vector>
 
+#include "rcutils/time.h"
 #include "rosbag2_cpp/writers/sequential_writer.hpp"
+#include "rosbag2_storage/storage_options.hpp"
 
 // Write vector of <timestamp, uint32_data_value> pairs to bag files, splitting every N messages
 void write_sample_split_bag(

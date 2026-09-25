@@ -14,20 +14,40 @@
 
 #include <gmock/gmock.h>
 
+#include <algorithm>
+#include <chrono>
+#include <cstddef>
 #include <filesystem>
 #include <memory>
 #include <regex>
 #include <sstream>
+#include <stdexcept>
+#include <string>
+#include <thread>
+#include <unordered_map>
+#include <utility>
+#include <vector>
 
+#include "composition_interfaces/srv/load_node.hpp"
 #include "composition_manager_test_fixture.hpp"
+#include "rcl_interfaces/msg/parameter_descriptor.hpp"
+#include "rclcpp/future_return_code.hpp"
+#include "rclcpp/node_options.hpp"
+#include "rclcpp/parameter.hpp"
+#include "rclcpp/parameter_value.hpp"
+#include "rclcpp/qos.hpp"
+#include "rclcpp/utilities.hpp"
 #include "rosbag2_cpp/reader.hpp"
 #include "rosbag2_cpp/writers/sequential_writer.hpp"
+#include "rosbag2_storage/metadata_io.hpp"
+#include "rosbag2_storage/storage_filter.hpp"
 #include "rosbag2_test_common/publication_manager.hpp"
 #include "rosbag2_test_common/memory_management.hpp"
 #include "rosbag2_test_common/tested_storage_ids.hpp"
 #include "rosbag2_test_common/temporary_directory_fixture.hpp"
 #include "rosbag2_transport/recorder.hpp"
 #include "test_msgs/message_fixtures.hpp"
+#include "test_msgs/msg/strings.hpp"
 
 using namespace std::chrono_literals;  // NOLINT
 using namespace ::testing;  // NOLINT

@@ -15,12 +15,17 @@
 #ifndef ROSBAG2_STORAGE__QOS_HPP_
 #define ROSBAG2_STORAGE__QOS_HPP_
 
+#include <cstddef>
 #include <string>
+#include <type_traits>
 #include <vector>
 #include <unordered_map>
 
 #include "rclcpp/node_interfaces/node_graph_interface.hpp"
 #include "rclcpp/qos.hpp"
+#include "rmw/qos_profiles.h"
+#include "rmw/time.h"
+#include "rmw/types.h"
 
 #ifdef _WIN32
 // This is necessary because yaml-cpp does not always use dllimport/dllexport consistently

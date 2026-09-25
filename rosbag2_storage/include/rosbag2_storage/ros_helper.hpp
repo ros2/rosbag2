@@ -15,6 +15,7 @@
 #ifndef ROSBAG2_STORAGE__ROS_HELPER_HPP_
 #define ROSBAG2_STORAGE__ROS_HELPER_HPP_
 
+#include <cstddef>
 #include <memory>
 
 #include "rcutils/types/uint8_array.h"

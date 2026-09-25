@@ -19,6 +19,9 @@
 #define ROSBAG2_CPP_LOCAL_MESSAGE_DEFINITION_SOURCE_MAX_RECURSION_DEPTH 50
 #endif
 
+#include <cstddef>
+#include <exception>
+#include <functional>
 #include <set>
 #include <string>
 #include <unordered_map>

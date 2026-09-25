@@ -15,6 +15,7 @@
 #ifndef ROSBAG2_TRANSPORT__LOCKED_PRIORITY_QUEUE_HPP_
 #define ROSBAG2_TRANSPORT__LOCKED_PRIORITY_QUEUE_HPP_
 
+#include <cstddef>
 #include <functional>
 #include <mutex>
 #include <optional>

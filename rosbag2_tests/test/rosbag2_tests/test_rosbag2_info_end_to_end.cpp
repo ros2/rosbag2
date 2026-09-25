@@ -21,6 +21,7 @@
 #include <thread>
 
 #include "rosbag2_test_common/process_execution_helpers.hpp"
+#include "rosbag2_test_common/process_execution_helpers_unix.hpp"
 #include "rosbag2_test_common/tested_storage_ids.hpp"
 
 using namespace ::testing;  // NOLINT

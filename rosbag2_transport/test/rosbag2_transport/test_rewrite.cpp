@@ -17,20 +17,29 @@
 #include <cstdint>
 #include <cstring>
 #include <filesystem>
+#include <iostream>
 #include <memory>
+#include <ostream>
 #include <string>
 #include <unordered_map>
 #include <vector>
 #include <utility>
 
 #include "rclcpp/time.hpp"
+#include "rcutils/time.h"
 
 #include "rosbag2_cpp/writer.hpp"
+#include "rosbag2_storage/message_definition.hpp"
+#include "rosbag2_storage/metadata_io.hpp"
 #include "rosbag2_storage/ros_helper.hpp"
+#include "rosbag2_storage/serialized_bag_message.hpp"
+#include "rosbag2_storage/storage_options.hpp"
+#include "rosbag2_storage/topic_metadata.hpp"
 #include "rosbag2_test_common/temporary_directory_fixture.hpp"
 #include "rosbag2_test_common/tested_storage_ids.hpp"
 #include "rosbag2_transport/bag_rewrite.hpp"
 #include "rosbag2_transport/reader_writer_factory.hpp"
+#include "rosbag2_transport/record_options.hpp"
 
 #include "test_msgs/msg/basic_types.hpp"
 

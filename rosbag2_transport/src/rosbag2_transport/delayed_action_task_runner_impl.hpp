@@ -19,6 +19,7 @@
 #include <chrono>
 #include <condition_variable>
 #include <cstdint>
+#include <exception>
 #include <functional>
 #include <mutex>
 #include <queue>
@@ -27,6 +28,7 @@
 #include <utility>
 #include <vector>
 
+#include "rcl/time.h"
 #include "rclcpp/clock.hpp"
 #include "rclcpp/logging.hpp"
 #include "rclcpp/node.hpp"

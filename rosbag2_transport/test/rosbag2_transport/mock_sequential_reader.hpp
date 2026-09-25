@@ -15,13 +15,25 @@
 #ifndef ROSBAG2_TRANSPORT__MOCK_SEQUENTIAL_READER_HPP_
 #define ROSBAG2_TRANSPORT__MOCK_SEQUENTIAL_READER_HPP_
 
+#include <chrono>
+#include <cstddef>
 #include <memory>
 #include <string>
 #include <unordered_set>
 #include <utility>
 #include <vector>
 
+#include "rcutils/time.h"
+#include "rosbag2_cpp/bag_events.hpp"
+#include "rosbag2_cpp/converter_options.hpp"
 #include "rosbag2_cpp/reader_interfaces/base_reader_interface.hpp"
+#include "rosbag2_storage/bag_metadata.hpp"
+#include "rosbag2_storage/message_definition.hpp"
+#include "rosbag2_storage/serialized_bag_message.hpp"
+#include "rosbag2_storage/storage_filter.hpp"
+#include "rosbag2_storage/storage_interfaces/base_read_interface.hpp"
+#include "rosbag2_storage/storage_options.hpp"
+#include "rosbag2_storage/topic_metadata.hpp"
 
 class MockSequentialReader : public rosbag2_cpp::reader_interfaces::BaseReaderInterface
 {

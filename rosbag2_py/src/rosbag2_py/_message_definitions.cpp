@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <string>
+
 #include "rosbag2_cpp/message_definitions/local_message_definition_source.hpp"
 
 #include "./pybind11.hpp"

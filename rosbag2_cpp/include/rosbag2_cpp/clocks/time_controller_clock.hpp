@@ -18,7 +18,12 @@
 #include <chrono>
 #include <memory>
 
+#include "rcl/time.h"
+#include "rclcpp/clock.hpp"
+#include "rclcpp/time.hpp"
+#include "rcutils/time.h"
 #include "rosbag2_cpp/clocks/player_clock.hpp"
+#include "rosbag2_cpp/visibility_control.hpp"
 
 namespace rosbag2_cpp
 {

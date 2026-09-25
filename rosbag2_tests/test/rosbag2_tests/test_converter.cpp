@@ -17,15 +17,23 @@
 #include <memory>
 #include <string>
 
+#include "rcpputils/shared_library.hpp"
+#include "rcutils/allocator.h"
 #include "rcutils/strdup.h"
 
+#include "rosbag2_cpp/converter_interfaces/serialization_format_deserializer.hpp"
+#include "rosbag2_cpp/converter_interfaces/serialization_format_serializer.hpp"
 #include "rosbag2_cpp/serialization_format_converter_factory.hpp"
 #include "rclcpp/typesupport_helpers.hpp"
 #include "rosbag2_cpp/types.hpp"
+#include "rosbag2_cpp/types/introspection_message.hpp"
+#include "rosbag2_storage/serialized_bag_message.hpp"
 
 #include "rosbag2_test_common/memory_management.hpp"
+#include "rosidl_runtime_c/message_type_support_struct.h"
 
 #include "test_msgs/message_fixtures.hpp"
+#include "test_msgs/msg/multi_nested.hpp"
 
 using rosbag2_cpp::SerializationFormatConverterFactory;
 using namespace ::testing;  // NOLINT

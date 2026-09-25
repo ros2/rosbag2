@@ -13,9 +13,11 @@
 // limitations under the License.
 
 #include <memory>
+#include <thread>
 
 #include "rclcpp/executors/single_threaded_executor.hpp"
 #include "rclcpp/node.hpp"
+#include "rclcpp/utilities.hpp"
 #include "rosbag2_performance_benchmarking/result_utils.hpp"
 
 int main(int argc, char * argv[])

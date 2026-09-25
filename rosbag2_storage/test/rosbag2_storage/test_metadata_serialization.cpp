@@ -15,6 +15,7 @@
 #include <gmock/gmock.h>
 
 #include <chrono>
+#include <cstddef>
 #include <fstream>
 #include <memory>
 #include <string>
@@ -25,6 +26,7 @@
 # include <Windows.h>
 #endif
 
+#include "rclcpp/qos.hpp"
 #include "rosbag2_storage/bag_metadata.hpp"
 #include "rosbag2_storage/default_storage_id.hpp"
 #include "rosbag2_storage/metadata_io.hpp"

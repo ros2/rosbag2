@@ -15,6 +15,10 @@
 #ifndef ROSBAG2_CPP__WRITERS__SEQUENTIAL_WRITER_HPP_
 #define ROSBAG2_CPP__WRITERS__SEQUENTIAL_WRITER_HPP_
 
+#include <atomic>
+#include <chrono>
+#include <cstddef>
+#include <cstdint>
 #include <deque>
 #include <memory>
 #include <mutex>
@@ -22,6 +26,7 @@
 #include <unordered_map>
 #include <vector>
 
+#include "rcutils/time.h"
 #include "rosbag2_cpp/bag_events.hpp"
 #include "rosbag2_cpp/cache/cache_consumer.hpp"
 #include "rosbag2_cpp/cache/circular_message_cache.hpp"
@@ -29,17 +34,22 @@
 #include "rosbag2_cpp/cache/message_cache_interface.hpp"
 #include "rosbag2_cpp/cache/transient_local_messages_cache.hpp"
 #include "rosbag2_cpp/converter.hpp"
+#include "rosbag2_cpp/converter_options.hpp"
 #include "rosbag2_cpp/message_definitions/local_message_definition_source.hpp"
 #include "rosbag2_cpp/serialization_format_converter_factory.hpp"
+#include "rosbag2_cpp/serialization_format_converter_factory_interface.hpp"
 #include "rosbag2_cpp/writer_interfaces/base_writer_interface.hpp"
 #include "rosbag2_cpp/visibility_control.hpp"
 
+#include "rosbag2_storage/bag_metadata.hpp"
 #include "rosbag2_storage/message_definition.hpp"
 #include "rosbag2_storage/metadata_io.hpp"
+#include "rosbag2_storage/serialized_bag_message.hpp"
 #include "rosbag2_storage/storage_factory.hpp"
 #include "rosbag2_storage/storage_factory_interface.hpp"
 #include "rosbag2_storage/storage_options.hpp"
 #include "rosbag2_storage/storage_interfaces/read_write_interface.hpp"
+#include "rosbag2_storage/topic_metadata.hpp"
 
 // This is necessary because of using stl types here. It is completely safe, because
 // a) the member is not accessible from the outside

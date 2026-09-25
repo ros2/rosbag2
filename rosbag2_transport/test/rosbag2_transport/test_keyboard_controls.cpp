@@ -14,18 +14,26 @@
 
 #include <gmock/gmock.h>
 
+#include <chrono>
 #include <future>
 #include <memory>
+#include <stdexcept>
 #include <string>
 #include <vector>
 #include <unordered_map>
 #include <utility>
 
+#include "keyboard_handler/keyboard_handler.hpp"
+#include "mock_sequential_reader.hpp"
+#include "mock_sequential_writer.hpp"
 #include "rclcpp/duration.hpp"
+#include "rcpputils/scope_exit.hpp"
 
 #include "rosbag2_test_common/subscription_manager.hpp"
 
+#include "rosbag2_transport/play_options.hpp"
 #include "rosbag2_transport/player.hpp"
+#include "rosbag2_transport/record_options.hpp"
 #include "rosbag2_transport/recorder.hpp"
 
 #include "test_msgs/msg/arrays.hpp"
@@ -34,6 +42,9 @@
 
 #include "record_integration_fixture.hpp"
 #include "rosbag2_play_test_fixture.hpp"
+#include "rosbag2_storage/serialized_bag_message.hpp"
+#include "rosbag2_storage/storage_options.hpp"
+#include "rosbag2_storage/topic_metadata.hpp"
 #include "rosbag2_transport_test_fixture.hpp"
 #include "mock_keyboard_handler.hpp"
 

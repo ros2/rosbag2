@@ -17,8 +17,10 @@
 
 #include <gtest/gtest.h>
 
+#include <cstdint>
 #include <cstdio>
 #include <memory>
+#include <stdexcept>
 #include <string>
 #include <vector>
 
@@ -31,6 +33,7 @@
 # include <Windows.h>
 #endif
 
+#include "rosbag2_storage/serialized_bag_message.hpp"
 #include "rosbag2_storage/storage_options.hpp"
 
 #include "rosbag2_transport/play_options.hpp"

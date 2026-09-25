@@ -15,6 +15,8 @@
 #ifndef ROSBAG2_CPP__INFO_HPP_
 #define ROSBAG2_CPP__INFO_HPP_
 
+#include <cstddef>
+#include <cstdint>
 #include <memory>
 #include <string>
 #include <vector>

@@ -14,18 +14,27 @@
 
 #include <gmock/gmock.h>
 
+#include <algorithm>
 #include <chrono>
+#include <cstddef>
 #include <filesystem>
 #include <memory>
 #include <stdexcept>
 #include <string>
+#include <thread>
 #include <utility>
 #include <vector>
 
+#include "rclcpp/executors/single_threaded_executor.hpp"
+#include "rclcpp/time.hpp"
+#include "rclcpp/utilities.hpp"
+#include "rcpputils/scope_exit.hpp"
 #include "rosbag2_cpp/info.hpp"
 #include "rosbag2_cpp/writer.hpp"
+#include "rosbag2_cpp/writers/sequential_writer.hpp"
 
 #include "rosbag2_storage/metadata_io.hpp"
+#include "rosbag2_storage/storage_options.hpp"
 
 #include "rosbag2_test_common/bag_files_helpers.hpp"
 #include "rosbag2_test_common/client_manager.hpp"
@@ -34,6 +43,7 @@
 #include "rosbag2_test_common/tested_storage_ids.hpp"
 #include "rosbag2_test_common/wait_for.hpp"
 
+#include "rosbag2_transport/record_options.hpp"
 #include "rosbag2_transport/recorder.hpp"
 
 #include "test_msgs/message_fixtures.hpp"

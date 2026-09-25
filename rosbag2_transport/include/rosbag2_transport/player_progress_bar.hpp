@@ -15,7 +15,9 @@
 #ifndef ROSBAG2_TRANSPORT__PLAYER_PROGRESS_BAR_HPP_
 #define ROSBAG2_TRANSPORT__PLAYER_PROGRESS_BAR_HPP_
 
+#include <cstdint>
 #include <memory>
+#include <ostream>
 #include <string>
 
 #include "rcutils/time.h"

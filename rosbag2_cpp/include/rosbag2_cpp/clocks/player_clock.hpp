@@ -20,6 +20,7 @@
 #include <functional>
 #include <memory>
 
+#include "rcl/time.h"
 #include "rclcpp/clock.hpp"
 #include "rclcpp/time.hpp"
 #include "rcutils/time.h"
