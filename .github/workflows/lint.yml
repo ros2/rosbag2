@@ -14,13 +14,8 @@ jobs:
       matrix:
           linter: [copyright, xmllint]
     steps:
-<<<<<<< HEAD
-    - uses: actions/checkout@v4
-    - uses: ros-tooling/action-ros-lint@v0.1
-=======
     - uses: actions/checkout@v7
-    - uses: ros-tooling/action-ros-lint@0.1.4
->>>>>>> 308aa80 (Bump GitHub actions versions (#2503))
+    - uses: ros-tooling/action-ros-lint@v0.1
       with:
         linter: ${{ matrix.linter }}
         distribution: humble
@@ -49,13 +44,8 @@ jobs:
       matrix:
           linter: [cpplint, uncrustify]
     steps:
-<<<<<<< HEAD
-    - uses: actions/checkout@v4
-    - uses: ros-tooling/action-ros-lint@v0.1
-=======
     - uses: actions/checkout@v7
-    - uses: ros-tooling/action-ros-lint@0.1.4
->>>>>>> 308aa80 (Bump GitHub actions versions (#2503))
+    - uses: ros-tooling/action-ros-lint@v0.1
       with:
         linter: ${{ matrix.linter }}
         distribution: humble
@@ -84,13 +74,8 @@ jobs:
           - linter: clang_format
             arguments: "--config rosbag2_storage_mcap/.clang-format"
     steps:
-<<<<<<< HEAD
-    - uses: actions/checkout@v4
-    - uses: ros-tooling/action-ros-lint@v0.1
-=======
     - uses: actions/checkout@v7
-    - uses: ros-tooling/action-ros-lint@0.1.4
->>>>>>> 308aa80 (Bump GitHub actions versions (#2503))
+    - uses: ros-tooling/action-ros-lint@v0.1
       with:
         linter: ${{ matrix.linter }}
         arguments: ${{ matrix.arguments }}
@@ -107,13 +92,8 @@ jobs:
       matrix:
           linter: [pep257, flake8]
     steps:
-<<<<<<< HEAD
-    - uses: actions/checkout@v4
-    - uses: ros-tooling/action-ros-lint@v0.1
-=======
     - uses: actions/checkout@v7
-    - uses: ros-tooling/action-ros-lint@0.1.4
->>>>>>> 308aa80 (Bump GitHub actions versions (#2503))
+    - uses: ros-tooling/action-ros-lint@v0.1
       with:
         linter: ${{ matrix.linter }}
         distribution: humble
