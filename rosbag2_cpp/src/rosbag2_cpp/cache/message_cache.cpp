@@ -100,6 +100,12 @@ void MessageCache::wait_for_data()
   }
 }
 
+size_t MessageCache::get_current_size()
+{
+  std::lock_guard<std::mutex> lock(producer_buffer_mutex_);
+  return producer_buffer_->get_bytes_size();
+}
+
 void MessageCache::swap_buffers()
 {
   std::lock_guard<std::mutex> producer_lock(producer_buffer_mutex_);
