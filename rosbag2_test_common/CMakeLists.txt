@@ -46,9 +46,6 @@ ament_python_install_package(${PROJECT_NAME})
 
 ament_export_dependencies(ament_cmake_ros_core rclcpp rclcpp_action rcutils test_msgs)
 
-# Export old-style CMake variables
-ament_export_include_directories("include/${PROJECT_NAME}")
-
 # Export modern CMake targets
 ament_export_targets(export_${PROJECT_NAME})
 
