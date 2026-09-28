@@ -22,7 +22,7 @@ This README has a lot of information. You may want to jump directly to:
 Rosbag2 packages are available via debian packages, and will already be included with any `-ros-base` installation (which is included within `-desktop`)
 
 ```
-$ export ROS_DISTRO=humble
+$ export ROS_DISTRO=jazzy
 $ sudo apt-get install ros-$ROS_DISTRO-rosbag2
 ```
 
