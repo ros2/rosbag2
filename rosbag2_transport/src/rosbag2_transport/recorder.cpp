@@ -164,9 +164,11 @@ public:
   void stop();
 
   //// @brief Split the current bagfile and open a new one.
+  /// @param output_uri Directory to record the new bag into. If empty, roll over to the next
+  /// file in the current bag directory.
   /// @return true if split was successful, false if recording is not active.
   /// \throws std::exception if underlying writer fails to split the bagfile.
-  bool split_bagfile();
+  bool split_bagfile(const std::string & output_uri = "");
 
   /// Get a const reference to the underlying rosbag2 writer.
   const rosbag2_cpp::Writer & get_writer_handle();
@@ -256,6 +258,7 @@ private:
     std::string tracking_topic_name{};
     int64_t time_ns = kNoPendingPublishSplit;
     SplitMode mode = SplitMode::NodeTime;
+    std::string output_uri{};
   };
 
   /// \brief Pending resume state for timestamp-based resume requests.
@@ -450,23 +453,29 @@ private:
 
   /// \brief Handle a timer-based bag split request.
   /// \param split_time The time at which to split the bag file. If std::nullopt, split immediately.
+  /// \param output_uri Directory to record the new bag into. If empty, roll over to the next file.
   /// \param response The service response to populate.
   void handle_timer_bag_split_request(std::optional<rclcpp::Time> split_time,
+                                      const std::string & output_uri,
                                       SplitBagFileCallbackResponse & response);
 
   /// \brief Handle a timestamp-based bag split request.
   /// \param split_time The time at which to split the bag file. If std::nullopt, split immediately.
   /// \param split_mode The mode to use for the split (publish time, receive time).
   /// \param topic_name The topic to track for the split. If empty, track all topics.
+  /// \param output_uri Directory to record the new bag into. If empty, roll over to the next file.
   /// \param response The service response to populate.
   void handle_timestamp_bag_split_request(const std::optional<rclcpp::Time> & split_time,
                                           SplitMode split_mode,
                                           const std::string & topic_name,
+                                          const std::string & output_uri,
                                           SplitBagFileCallbackResponse & response);
   // *INDENT-ON*
 
   /// \brief Attempt an immediate split of the bag file.
-  void attempt_immediate_bag_split(SplitBagFileCallbackResponse & response);
+  void attempt_immediate_bag_split(
+    const std::string & output_uri,
+    SplitBagFileCallbackResponse & response);
 
   rclcpp::Node * node;
   std::unique_ptr<TopicFilter> topic_filter_;
@@ -795,7 +804,7 @@ bool RecorderImpl::record(const std::string & uri)
   return true;
 }
 
-bool RecorderImpl::split_bagfile()
+bool RecorderImpl::split_bagfile(const std::string & output_uri)
 {
   std::lock_guard<std::mutex> state_lock(start_stop_transition_mutex_);
   if (!in_recording_.load()) {
@@ -804,7 +813,13 @@ bool RecorderImpl::split_bagfile()
     return false;
   }
 
-  writer_->split_bagfile();
+  if (output_uri.empty()) {
+    writer_->split_bagfile();
+  } else {
+    RCLCPP_INFO(node->get_logger(), "Splitting bag file to new output URI: '%s'.",
+                output_uri.c_str());
+    writer_->split_bagfile(output_uri);
+  }
   return true;
 }
 
@@ -854,7 +869,7 @@ void RecorderImpl::create_control_services()
         return;
       }
       if (split_mode.value() == SplitMode::NodeTime) {
-        handle_timer_bag_split_request(split_time, response);
+        handle_timer_bag_split_request(split_time, request->output_uri, response);
         return;
       }
       std::string split_tracking_topic_name;
@@ -875,6 +890,7 @@ void RecorderImpl::create_control_services()
       handle_timestamp_bag_split_request(split_time,
                                          split_mode.value(),
                                          split_tracking_topic_name,
+                                         request->output_uri,
                                          response);
     }
   );
@@ -1229,10 +1245,12 @@ void RecorderImpl::handle_timestamp_resume_request(
   set_service_success(response);
 }
 
-void RecorderImpl::attempt_immediate_bag_split(SplitBagFileCallbackResponse & response)
+void RecorderImpl::attempt_immediate_bag_split(
+  const std::string & output_uri,
+  SplitBagFileCallbackResponse & response)
 {
   try {
-    if (this->split_bagfile()) {
+    if (this->split_bagfile(output_uri)) {
       set_service_success(response);
     } else {
       set_service_error(response,
@@ -1247,14 +1265,15 @@ void RecorderImpl::attempt_immediate_bag_split(SplitBagFileCallbackResponse & re
 
 void RecorderImpl::handle_timer_bag_split_request(
   std::optional<rclcpp::Time> split_time,
+  const std::string & output_uri,
   SplitBagFileCallbackResponse & response)
 {
   if (should_execute_immediately(split_time)) {
-    attempt_immediate_bag_split(response);
+    attempt_immediate_bag_split(output_uri, response);
   } else {
-    auto action_task = [this]() {
+    auto action_task = [this, output_uri]() {
         try {
-          (void)this->split_bagfile();
+          (void)this->split_bagfile(output_uri);
         } catch (const std::exception & e) {
           RCLCPP_ERROR(node->get_logger(), "Error during 'SplitBagfile' request: %s", e.what());
         }
@@ -1268,10 +1287,11 @@ void RecorderImpl::handle_timestamp_bag_split_request(
   const std::optional<rclcpp::Time> & split_time,
   SplitMode split_mode,
   const std::string & topic_name,
+  const std::string & output_uri,
   SplitBagFileCallbackResponse & response)
 {
   if (!split_time.has_value()) {
-    attempt_immediate_bag_split(response);
+    attempt_immediate_bag_split(output_uri, response);
     return;
   }
 
@@ -1299,7 +1319,7 @@ void RecorderImpl::handle_timestamp_bag_split_request(
     RCLCPP_INFO(node->get_logger(),
                 "Timestamp-based split request%s already due (req=%.9f s). Splitting immediately.",
                 on_topic_str.c_str(), split_time->seconds());
-    attempt_immediate_bag_split(response);
+    attempt_immediate_bag_split(output_uri, response);
     return;
   }
 
@@ -1315,6 +1335,7 @@ void RecorderImpl::handle_timestamp_bag_split_request(
     pending_bag_split_request_->tracking_topic_name = topic_name;
     pending_bag_split_request_->mode = split_mode;
     pending_bag_split_request_->time_ns = split_req_ns;
+    pending_bag_split_request_->output_uri = output_uri;
   }
 
   RCLCPP_INFO(node->get_logger(),
@@ -1397,9 +1418,9 @@ void RecorderImpl::handle_pending_bag_split_request(
                    to_string(pending_bag_split_request_->mode),
                    message_time, pending_bag_split_request_->time_ns);
       auto action_task =
-        [this]() {
+        [this, output_uri = pending_bag_split_request_->output_uri]() {
           try {
-            (void)this->split_bagfile();
+            (void)this->split_bagfile(output_uri);
           } catch (const std::exception & e) {
             RCLCPP_ERROR(node->get_logger(), "Error during bag file split request: %s", e.what());
           }

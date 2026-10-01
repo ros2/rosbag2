@@ -261,7 +261,7 @@ void SequentialCompressionWriter::open(
   this->is_open_ = true;
 }
 
-void SequentialCompressionWriter::close()
+void SequentialCompressionWriter::close_impl(bool execute_split_callback)
 {
   // Note. close and open methods protected with mutex on upper rosbag2_cpp::writer level.
   if (!this->is_open_.exchange(false)) {
@@ -300,11 +300,11 @@ void SequentialCompressionWriter::close()
   stop_compressor_threads();  // Note: The metadata_.relative_file_paths will be updated with
   // compressed filename when compressor threads will finish.
 
-  //  Note: We need to call the base class close() after compressing the last file because the
-  //  base class close() will call the execute_bag_split_callbacks(closed_file, ""); with the last
-  //  file, and if we called it before compressing the last file, the callback would be called
-  //  with the uncompressed file name, which is not the desired behavior.
-  SequentialWriter::close();
+  //  Note: We need to call the base class close_impl() after compressing the last file because
+  //  the base class will report the closed file with the last file, and if we called it before
+  //  compressing the last file, it would report the uncompressed file name, which is not the
+  //  desired behavior.
+  SequentialWriter::close_impl(execute_split_callback);
 }
 
 void SequentialCompressionWriter::create_topic(
@@ -403,6 +403,7 @@ void SequentialCompressionWriter::split_bagfile()
     should_compress_last_file_ = false;
   }
 }
+
 
 std::shared_ptr<rosbag2_storage::SerializedBagMessage>
 SequentialCompressionWriter::compress_message(

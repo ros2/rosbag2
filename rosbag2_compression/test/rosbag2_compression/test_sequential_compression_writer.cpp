@@ -696,6 +696,62 @@ TEST_P(SequentialCompressionWriterTest, split_event_calls_callback_with_file_com
   }
 }
 
+TEST_F(SequentialCompressionWriterTest, split_bagfile_to_new_uri_compresses_the_closed_file)
+{
+  rosbag2_compression::CompressionOptions compression_options {
+    DefaultTestCompressor,
+    rosbag2_compression::CompressionMode::FILE,
+    0,
+    1,
+    kDefaultCompressionQueueThreadsPriority
+  };
+
+  initializeFakeFileStorage();
+  initializeWriter(compression_options);
+
+  std::vector<std::string> closed_files;
+  std::vector<std::string> opened_files;
+  rosbag2_cpp::bag_events::WriterEventCallbacks callbacks;
+  callbacks.write_split_callback =
+    [&closed_files, &opened_files](rosbag2_cpp::bag_events::BagSplitInfo & info) {
+      closed_files.emplace_back(info.closed_file);
+      opened_files.emplace_back(info.opened_file);
+    };
+  writer_->add_event_callbacks(callbacks);
+
+  writer_->open(tmp_dir_storage_options_);
+  writer_->create_topic({0u, "test_topic", "test_msgs/BasicTypes", "", {}, ""});
+
+  auto message = std::make_shared<rosbag2_storage::SerializedBagMessage>();
+  message->topic_name = "test_topic";
+  for (auto i = 0; i < 3; ++i) {
+    writer_->write(message);
+  }
+
+  const std::string new_bag_dir = "new_bag";
+  const auto new_uri = (tmp_dir_ / new_bag_dir).string();
+  writer_->split_bagfile(new_uri);
+
+  EXPECT_NO_THROW(writer_->write(message));
+  EXPECT_TRUE(fs::is_directory(new_uri));
+
+  ASSERT_EQ(closed_files.size(), 1u);
+  ASSERT_EQ(opened_files.size(), 1u);
+
+  // The closed file must be reported under its compressed name
+  const std::string closed_filename = fs::path(closed_files[0]).filename().generic_string();
+  EXPECT_TRUE(path_match_expected_compressed_file_regex(closed_filename)) <<
+    "Closed file '" << closed_filename << "' is not the compressed file";
+  EXPECT_TRUE(file_counter_at_start(closed_filename, 0));
+
+  EXPECT_EQ(fs::path(opened_files[0]).parent_path().generic_string(),
+            fs::path(new_uri).generic_string());
+  EXPECT_EQ(fs::path(opened_files[0]).filename().generic_string().find("0_" + new_bag_dir + "_"),
+            0u);
+
+  writer_->close();
+}
+
 TEST_F(SequentialCompressionWriterTest,
   circular_logging_limits_number_of_files_by_max_bag_files_with_file_compression)
 {

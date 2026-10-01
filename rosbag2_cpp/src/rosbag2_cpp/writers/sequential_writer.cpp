@@ -111,6 +111,7 @@ void SequentialWriter::open(
 
   base_folder_ = storage_options.uri;
   storage_options_ = storage_options;
+  converter_options_ = converter_options;
 
   if (storage_options_.storage_id.empty()) {
     storage_options_.storage_id = rosbag2_storage::get_default_storage_id();
@@ -216,6 +217,11 @@ void SequentialWriter::flush_cache_update_metadata_and_close_storage()
 
 void SequentialWriter::close()
 {
+  close_impl(true);
+}
+
+void SequentialWriter::close_impl(bool execute_split_callback)
+{
   // Note. close and open methods protected with mutex on upper rosbag2_cpp::writer level.
   if (!is_open_.exchange(false)) {
     return;  // The writer is not open
@@ -223,7 +229,7 @@ void SequentialWriter::close()
 
   flush_cache_update_metadata_and_close_storage();
 
-  if (!metadata_.relative_file_paths.empty()) {
+  if (execute_split_callback && !metadata_.relative_file_paths.empty()) {
     // Take the latest file name from metadata in case if it was updated after compression in
     // derived class
     auto closed_file =
@@ -459,6 +465,46 @@ void SequentialWriter::execute_bag_split_callbacks(
 void SequentialWriter::split_bagfile()
 {
   (void)split_bagfile_local();
+}
+
+void SequentialWriter::split_bagfile(const std::string & new_uri)
+{
+  if (!is_open_) {
+    throw std::runtime_error("Bag is not open. Call open() before splitting the bag file.");
+  }
+  if (new_uri.empty()) {
+    throw std::runtime_error("Can't split the bag file to a new URI. The new URI is empty");
+  }
+  // Checked again in open(), but by then the current bag is closed and there would be nothing
+  // left to record into.
+  if (fs::is_directory(fs::path(new_uri))) {
+    std::stringstream error;
+    error << "Bag directory already exists (" << new_uri <<
+      "), can't overwrite existing bag";
+    throw std::runtime_error{error.str()};
+  }
+
+  auto new_storage_options = storage_options_;
+  new_storage_options.uri = new_uri;
+
+  close_impl(false);  // The WRITE_SPLIT event is emitted below, with the newly opened file
+
+  // Read after closing: a derived writer may rename the last file while closing it, and
+  // base_folder_ still points to the closed bag until open() below.
+  std::string closed_file;
+  if (!metadata_.relative_file_paths.empty()) {
+    closed_file =
+      (fs::path(base_folder_) / metadata_.relative_file_paths.back()).generic_string();
+  }
+
+  open(new_storage_options, converter_options_);
+
+  // Same as split_bagfile(): make transient-local topics appear in the new bag as well.
+  if (!storage_options_.snapshot_mode) {
+    write_transient_local_messages(last_recv_timestamp_, last_sent_timestamp_);
+  }
+
+  execute_bag_split_callbacks(closed_file, storage_->get_relative_file_path());
 }
 
 void SequentialWriter::write(std::shared_ptr<const rosbag2_storage::SerializedBagMessage> message)

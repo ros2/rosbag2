@@ -125,13 +125,13 @@ public:
     const rosbag2_storage::StorageOptions & storage_options,
     const rosbag2_cpp::ConverterOptions & converter_options) override;
 
+protected:
   /**
    * Attempt to compress the last open file and reset the storage and storage factory.
    * This method must be exception safe because it is called by the destructor.
    */
-  void close() override;
+  void close_impl(bool execute_split_callback) override;
 
-protected:
   /**
    * Compress a file and update the metadata file path.
    *
