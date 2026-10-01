@@ -40,7 +40,7 @@ Node convert<rosbag2_transport::RecordOptions>::encode(
     include_hidden_topics, include_unpublished_topics, ignore_leaf_topics,
     start_paused, use_sim_time, static_topics_uri, disable_keyboard_controls,
     statistics_max_publishing_rate, repeat_transient_local_messages,
-    repeat_all_transient_local_depth] = record_options;
+    repeat_all_transient_local_depth, topic_message_ranges] = record_options;
   Node node;
   node["all_topics"] = all_topics;
   node["all_services"] = all_services;
@@ -78,6 +78,15 @@ Node convert<rosbag2_transport::RecordOptions>::encode(
   node["statistics_max_publishing_rate"] = statistics_max_publishing_rate;
   node["repeat_transient_local_messages"] = repeat_transient_local_messages;
   node["repeat_all_transient_local_depth"] = repeat_all_transient_local_depth;
+  // YAML will store this as a sequence normally, avoid, with an extra node
+  Node topic_message_ranges_node;
+  for (const auto & [topic_name, range] : topic_message_ranges) {
+    Node range_node;
+    range_node["start"] = range.first;
+    range_node["end"] = range.second;
+    topic_message_ranges_node[topic_name] = range_node;
+  }
+  node["topic_message_ranges"] = topic_message_ranges_node;
   return node;
 }
 
@@ -98,7 +107,7 @@ bool convert<rosbag2_transport::RecordOptions>::decode(
     include_hidden_topics, include_unpublished_topics, ignore_leaf_topics,
     start_paused, use_sim_time, static_topics_uri, disable_keyboard_controls,
     statistics_max_publishing_rate, repeat_transient_local_messages,
-    repeat_all_transient_local_depth] = record_options;
+    repeat_all_transient_local_depth, topic_message_ranges] = record_options;
 
   optional_assign<bool>(node, "all_topics", all_topics);
   optional_assign<bool>(node, "all_services", all_services);
@@ -160,6 +169,21 @@ bool convert<rosbag2_transport::RecordOptions>::decode(
     node, "repeat_transient_local_messages", repeat_transient_local_messages);
   optional_assign<uint32_t>(node, "repeat_all_transient_local_depth",
     repeat_all_transient_local_depth);
+  // This is stored as an extra node, so a simple optional_assign wouldn't do the trick here
+  if (node["topic_message_ranges"]) {
+    topic_message_ranges.clear();
+    for (YAML::const_iterator it = node["topic_message_ranges"].begin();
+      it != node["topic_message_ranges"].end(); ++it)
+    {
+      size_t start = 0;
+      size_t end = 0;
+      optional_assign<size_t>(it->second, "start", start);
+      optional_assign<size_t>(it->second, "end", end);
+
+      topic_message_ranges[it->first.as<std::string>()] = {start, end};
+    }
+  }
+
   return true;
 }
 

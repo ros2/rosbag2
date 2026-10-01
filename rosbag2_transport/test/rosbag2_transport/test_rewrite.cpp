@@ -31,6 +31,7 @@
 #include "rosbag2_test_common/tested_storage_ids.hpp"
 #include "rosbag2_transport/bag_rewrite.hpp"
 #include "rosbag2_transport/reader_writer_factory.hpp"
+#include "rosbag2_transport/record_options.hpp"
 
 #include "test_msgs/msg/basic_types.hpp"
 
@@ -339,6 +340,118 @@ TEST_P(TestRewrite, test_cut_single_topic_with_start_and_end_time) {
       std::cerr << "Original msg timestamp: " << ts << " msg_count: " << msg_count << std::endl;
     }
   }
+}
+
+TEST_P(TestRewrite, test_message_range_rewrite) {
+  use_input_a();
+
+  rosbag2_storage::StorageOptions output_storage;
+  output_storage.uri = (output_dir_ / "ranged").string();
+  output_storage.storage_id = storage_id_;
+  rosbag2_transport::RecordOptions record_options;
+  record_options.all_topics = true;
+  record_options.topic_message_ranges = {
+    {"a_empty", {10, 20}},
+    {"b_basictypes", {5, 10}}};
+  output_bags_.push_back({output_storage, record_options});
+
+  rosbag2_transport::bag_rewrite(input_bags_, output_bags_);
+
+  auto reader = rosbag2_transport::ReaderWriterFactory::make_reader(output_storage);
+  reader->open(output_storage);
+  const auto metadata = reader->get_metadata();
+  EXPECT_EQ(metadata.message_count, 11u + 6u);
+  EXPECT_THAT(metadata.topics_with_message_count, SizeIs(2));
+  for (const auto & topic_info : metadata.topics_with_message_count) {
+    if (topic_info.topic_metadata.name == "a_empty") {
+      EXPECT_EQ(topic_info.message_count, 11u);
+    } else if (topic_info.topic_metadata.name == "b_basictypes") {
+      EXPECT_EQ(topic_info.message_count, 6u);
+    } else {
+      ADD_FAILURE() << "Unexpected topic in output: " << topic_info.topic_metadata.name;
+    }
+  }
+}
+
+TEST_P(TestRewrite, test_message_range_merged_inputs) {
+  // a_empty merged from rewriter_a (100 messages) and rewriter_b (25 messages) leads to
+  // 125 messages, take 95 messages which are from both bag files
+  use_input_a();
+  use_input_b();
+
+  rosbag2_storage::StorageOptions output_storage;
+  output_storage.uri = (output_dir_ / "merged_ranged").string();
+  output_storage.storage_id = storage_id_;
+  rosbag2_transport::RecordOptions record_options;
+  record_options.all_topics = true;
+  record_options.topic_message_ranges = {{"a_empty", {10, 104}}};
+  output_bags_.push_back({output_storage, record_options});
+
+  rosbag2_transport::bag_rewrite(input_bags_, output_bags_);
+
+  auto reader = rosbag2_transport::ReaderWriterFactory::make_reader(output_storage);
+  reader->open(output_storage);
+  const auto metadata = reader->get_metadata();
+  EXPECT_THAT(metadata.topics_with_message_count, SizeIs(3));
+  for (const auto & topic_info : metadata.topics_with_message_count) {
+    const std::string & topic_name = topic_info.topic_metadata.name;
+    if (topic_name == "a_empty") {
+      EXPECT_EQ(topic_info.message_count, 95u);
+    } else if (topic_name != "b_basictypes" && topic_name != "c_strings") {
+      ADD_FAILURE() << "Unexpected topic in output: " << topic_name;
+    }
+  }
+}
+
+TEST_P(TestRewrite, test_message_range_out_of_bounds_throws) {
+  use_input_a();
+
+  std::vector<std::pair<rosbag2_storage::StorageOptions, rosbag2_transport::RecordOptions>>
+  output_bags;
+  rosbag2_storage::StorageOptions output_storage;
+  output_storage.uri = (output_dir_ / "end_out_of_bounds").string();
+  output_storage.storage_id = storage_id_;
+  rosbag2_transport::RecordOptions record_options;
+  record_options.all_topics = true;
+  // a_empty has 100 messages, valid indices are [0, 99]
+  record_options.topic_message_ranges = {{"a_empty", {0, 100}}};
+  output_bags.push_back({output_storage, record_options});
+
+  EXPECT_THROW(
+    rosbag2_transport::bag_rewrite(input_bags_, output_bags),
+    std::invalid_argument);
+}
+
+TEST_P(TestRewrite, test_message_range_start_greater_than_end_throws) {
+  use_input_a();
+
+  rosbag2_storage::StorageOptions output_storage;
+  output_storage.uri = (output_dir_ / "start_gt_end").string();
+  output_storage.storage_id = storage_id_;
+  rosbag2_transport::RecordOptions record_options;
+  record_options.all_topics = true;
+  record_options.topic_message_ranges = {{"a_empty", {50, 10}}};
+  output_bags_.push_back({output_storage, record_options});
+
+  EXPECT_THROW(
+    rosbag2_transport::bag_rewrite(input_bags_, output_bags_),
+    std::invalid_argument);
+}
+
+TEST_P(TestRewrite, test_message_range_unknown_topic_throws) {
+  use_input_a();
+
+  rosbag2_storage::StorageOptions output_storage;
+  output_storage.uri = (output_dir_ / "unknown_topic").string();
+  output_storage.storage_id = storage_id_;
+  rosbag2_transport::RecordOptions record_options;
+  record_options.all_topics = true;
+  record_options.topic_message_ranges = {{"does_not_exist", {0, 5}}};
+  output_bags_.push_back({output_storage, record_options});
+
+  EXPECT_THROW(
+    rosbag2_transport::bag_rewrite(input_bags_, output_bags_),
+    std::invalid_argument);
 }
 
 INSTANTIATE_TEST_SUITE_P(
