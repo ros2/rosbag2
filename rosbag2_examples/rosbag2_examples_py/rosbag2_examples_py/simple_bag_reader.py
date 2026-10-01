@@ -44,9 +44,9 @@ class SimpleBagReader(Node):
             break
 
 
-def main(args=None):
+def main():
     try:
-        with rclpy.init(args=args):
+        with rclpy.init():
             sbr = SimpleBagReader(sys.argv[1])
             rclpy.spin(sbr)
     except (KeyboardInterrupt, ExternalShutdownException):

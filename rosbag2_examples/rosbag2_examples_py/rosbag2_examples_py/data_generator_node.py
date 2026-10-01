@@ -50,9 +50,9 @@ class DataGeneratorNode(Node):
         self.data.data += 1
 
 
-def main(args=None):
+def main():
     try:
-        with rclpy.init(args=args):
+        with rclpy.init():
             dgn = DataGeneratorNode()
             rclpy.spin(dgn)
     except (KeyboardInterrupt, ExternalShutdownException):
