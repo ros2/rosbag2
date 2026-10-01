@@ -7,6 +7,12 @@ if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   add_compile_options(-Wall -Wextra -Wpedantic)
 endif()
 
+if(MSVC)
+  # benchmark_publishers.cpp instantiates rclcpp::Publisher<T> for 25 message
+  # types, which exceeds the default object file section limit (C1128).
+  add_compile_options(/bigobj)
+endif()
+
 find_package(ament_cmake REQUIRED)
 find_package(ament_cmake_ros_core REQUIRED)
 
