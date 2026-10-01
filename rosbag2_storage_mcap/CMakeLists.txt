@@ -117,7 +117,6 @@ if(BUILD_TESTING)
 endif()
 
 
-ament_export_libraries(${PROJECT_NAME})
 ament_export_targets(export_${PROJECT_NAME})
 
 ament_package()
