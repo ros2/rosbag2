@@ -69,7 +69,13 @@ SequentialWriter::~SequentialWriter()
   // Callbacks likely was created after SequentialWriter object and may point to the already
   // destructed objects.
   callback_manager_.delete_all_callbacks();
-  SequentialWriter::close();
+  try {
+    SequentialWriter::close();
+  } catch (const std::exception & e) {
+    ROSBAG2_CPP_LOG_WARN_STREAM("Failed to close writer in destructor: " << e.what());
+  } catch (...) {
+    ROSBAG2_CPP_LOG_WARN("Failed to close writer in destructor due to an unknown error.");
+  }
 }
 
 void SequentialWriter::init_metadata()
@@ -105,6 +111,9 @@ void SequentialWriter::open(
   if (is_open_) {
     return;  // The writer already opened
   }
+
+  wait_for_pending_split();
+
   if (storage_options.uri.empty()) {
     throw std::runtime_error("Can't open rosbag2_cpp::SequentialWriter. The input URI is empty");
   }
@@ -196,21 +205,24 @@ void SequentialWriter::open(
   }
   storage_->update_metadata(metadata_);
   next_file_index_ = 1;  // First file is 0, next will be 1
+  is_first_message_ = true;
   is_open_ = true;
 }
 
 void SequentialWriter::flush_cache_update_metadata_and_close_storage()
 {
   if (use_cache_) {
-    // destructor will flush message cache
+    // The cache consumer destructor will flush message cache. Note: need to destruct cache_consumer
+    // first because it holds shared pointer to the message_cache.
     cache_consumer_.reset();
     message_cache_.reset();
   }
+  std::lock_guard<std::mutex> storage_lock(storage_mutex_);
+  std::lock_guard<std::mutex> metadata_lock(metadata_mutex_);
   finalize_metadata();
   if (storage_) {
     storage_->update_metadata(metadata_);
-    storage_.reset();  // Destroy storage before calling WRITE_SPLIT callback to make sure that
-    // bag file was closed before callback call.
+    storage_.reset();
   }
 }
 
@@ -221,6 +233,10 @@ void SequentialWriter::close()
     return;  // The writer is not open
   }
 
+  wait_for_pending_split();
+
+  // Close storage before calling WRITE_SPLIT callback to make sure that bag file was closed
+  // before callback call.
   flush_cache_update_metadata_and_close_storage();
 
   if (!metadata_.relative_file_paths.empty()) {
@@ -272,6 +288,7 @@ void SequentialWriter::create_topic(
   const rosbag2_storage::TopicMetadata & topic_with_type,
   const rosbag2_storage::MessageDefinition & message_definition)
 {
+  wait_for_pending_split();
   rosbag2_storage::TopicInformation info{};
   {
     std::lock_guard<std::mutex> lock(topics_info_mutex_);
@@ -313,6 +330,7 @@ void SequentialWriter::create_transient_local_topic(
 
 void SequentialWriter::remove_topic(const rosbag2_storage::TopicMetadata & topic_with_type)
 {
+  wait_for_pending_split();
   if (transient_local_cache_->has_topic(topic_with_type.name)) {
     transient_local_cache_->remove_topic(topic_with_type.name);
   }
@@ -369,82 +387,115 @@ std::string SequentialWriter::format_storage_uri(
   return (fs::path(base_folder) / storage_file_name.str()).generic_string();
 }
 
-void SequentialWriter::switch_to_next_storage()
+std::string SequentialWriter::split_bagfile_local(bool execute_callbacks)
 {
-  // consume remaining message cache
-  if (use_cache_) {
-    cache_consumer_->stop();
+  auto split_future = split_bagfile_async_local(execute_callbacks);
+  return split_future.get();
+}
+
+std::future<std::string> SequentialWriter::split_bagfile_async_local(bool execute_callbacks)
+{
+  if (!is_open_.load()) {
+    throw std::runtime_error("Bag is not open. Call open() before splitting bag file.");
+  }
+
+  std::string closed_file;
+  {
+    std::lock_guard<std::mutex> storage_lock(storage_mutex_);
+    closed_file = storage_->get_relative_file_path();
+  }
+  std::future<void> cache_flush_future_result;
+
+  if (use_cache_) {  // Start flushing remaining messages from cache asynchronously.
+    cache_flush_future_result = cache_consumer_->stop_async();
     message_cache_->log_dropped();
   }
 
-  finalize_metadata();
-  storage_->update_metadata(metadata_);
+  std::future<std::string> split_future_result =
+    std::async(std::launch::async,
+      [this, closed_file, execute_callbacks,
+      cache_flush_future_result = std::move(cache_flush_future_result)]() mutable
+      {
+        if (use_cache_ && cache_flush_future_result.valid()) {
+          cache_flush_future_result.get();  // Ensure cache is fully flushed before proceeding
+        }
+        std::string opened_file;
+        {
+          std::lock_guard<std::mutex> storage_lock(storage_mutex_);
+          {
+            // TODO(morlov): Make copy of metadata before entering the async lambda and use it to
+            //  finalize current file, to avoid race condition which can lead to the global
+            //  metadata update from write message before we lock metadata_mutex_.
+            std::lock_guard<std::mutex> metadata_lock(metadata_mutex_);
+            finalize_metadata();
+            storage_->update_metadata(metadata_);
 
-  // Check for overflow: if next_file_index_ is 0, we've wrapped around (very unlikely but possible)
-  if (next_file_index_ == 0) {
-    ROSBAG2_CPP_LOG_WARN_STREAM(
-      "File index counter has overflowed (wrapped to 0). "
-      "This should not happen in practice, but continuing with index 0. "
-      "If circular logging is enabled, ensure old files are deleted to avoid conflicts.");
-  }
+            // Check for overflow: if next_file_index_ is 0, we've wrapped around (very unlikely
+            // but possible)
+            if (next_file_index_ == 0) {
+              ROSBAG2_CPP_LOG_WARN_STREAM(
+                "File index counter has overflowed (wrapped to 0). "
+                "This should not happen in practice, but continuing with index 0. "
+                "If circular logging is enabled, ensure old files are deleted to avoid conflicts.");
+            }
 
-  storage_options_.uri = format_storage_uri(base_folder_, next_file_index_);
-  next_file_index_++;
-  // TODO(morlov): If we would ever remove the upper level writer mutex lock, consider protecting
-  //  storage_ with mutex to avoid race conditions with write(msg) call when we are switching to
-  //  next storage and not using cache.
-  storage_ = storage_factory_->open_read_write(storage_options_);
-  if (!storage_) {
-    std::stringstream errmsg;
-    errmsg << "Failed to rollover bagfile to new file: \"" << storage_options_.uri << "\"!";
+            storage_options_.uri = format_storage_uri(base_folder_, next_file_index_);
+            next_file_index_++;
+          }
+          storage_ = storage_factory_->open_read_write(storage_options_);
+          if (!storage_) {
+            std::stringstream errmsg;
+            errmsg << "Failed to rollover bagfile to new file: \"" << storage_options_.uri << "\"!";
+            throw std::runtime_error(errmsg.str());
+          }
+          {
+            std::lock_guard<std::mutex> metadata_lock(metadata_mutex_);
+            rosbag2_storage::FileInformation file_info{};
+            file_info.starting_time =
+            std::chrono::time_point<std::chrono::high_resolution_clock>(
+              std::chrono::nanoseconds::max());
+            file_info.path = strip_parent_path(storage_->get_relative_file_path());
+            metadata_.files.push_back(file_info);
+            metadata_.relative_file_paths.push_back(file_info.path);
+            per_file_topic_message_counts_.emplace_back();  // Initialize tracking for new file
 
-    throw std::runtime_error(errmsg.str());
-  }
+            // Delete oldest files if circular buffer limit exceeded (after new file is added)
+            delete_oldest_files_if_needed();
 
-  rosbag2_storage::FileInformation file_info{};
-  file_info.starting_time =
-    std::chrono::time_point<std::chrono::high_resolution_clock>(std::chrono::nanoseconds::max());
-  file_info.path = strip_parent_path(storage_->get_relative_file_path());
-  metadata_.files.push_back(file_info);
-  metadata_.relative_file_paths.push_back(file_info.path);
-  per_file_topic_message_counts_.emplace_back();  // Initialize tracking for new file
+            finalize_metadata();
+            storage_->update_metadata(metadata_);
+          }
+          {
+            // Re-register all topics since we rolled-over to a new bagfile.
+            std::lock_guard<std::mutex> lock(topics_info_mutex_);
+            for (const auto & topic : topics_names_to_info_) {
+              auto const & md = topic_names_to_message_definitions_[topic.first];
+              storage_->create_topic(topic.second.topic_metadata, md);
+            }
+          }
+          opened_file = storage_->get_relative_file_path();
+        }
 
-  // Delete oldest files if circular buffer limit exceeded (after new file is added)
-  delete_oldest_files_if_needed();
+        if (use_cache_) {
+          // restart consumer thread for cache
+          cache_consumer_->start();
+        }
 
-  finalize_metadata();
-  storage_->update_metadata(metadata_);
-  {
-    // Re-register all topics since we rolled-over to a new bagfile.
-    std::lock_guard<std::mutex> lock(topics_info_mutex_);
-    for (const auto & topic : topics_names_to_info_) {
-      auto const & md = topic_names_to_message_definitions_[topic.first];
-      storage_->create_topic(topic.second.topic_metadata, md);
-    }
-  }
+        if (execute_callbacks) {
+          execute_bag_split_callbacks(closed_file, opened_file);
+        }
 
-  if (use_cache_) {
-    // restart consumer thread for cache
-    cache_consumer_->start();
-  }
-}
-
-std::string SequentialWriter::split_bagfile_local(bool execute_callbacks)
-{
-  auto closed_file = storage_->get_relative_file_path();
-  switch_to_next_storage();
-  // In non-snapshot mode, write cached transient-local messages to the new bag file so that
-  // transient-local topics appear in every split. In snapshot mode the merge happens
-  // later inside write_messages() where the circular buffer is flushed together with the snapshot.
-  if (!storage_options_.snapshot_mode) {
-    write_transient_local_messages(last_recv_timestamp_, last_sent_timestamp_);
-  }
-  auto opened_file = storage_->get_relative_file_path();
-
-  if (execute_callbacks) {
-    execute_bag_split_callbacks(closed_file, opened_file);
-  }
-  return opened_file;
+        // In non-snapshot mode, write cached transient-local messages to the new bag file so that
+        // transient-local topics appear in every split. In snapshot mode the merge happens
+        // later inside write_messages() where the circular buffer is flushed together with the
+        // snapshot.
+        if (!storage_options_.snapshot_mode) {
+          write_transient_local_messages(last_recv_timestamp_, last_sent_timestamp_);
+        }
+        return opened_file;
+      }
+    );
+  return split_future_result;
 }
 
 void SequentialWriter::execute_bag_split_callbacks(
@@ -458,11 +509,27 @@ void SequentialWriter::execute_bag_split_callbacks(
 
 void SequentialWriter::split_bagfile()
 {
-  (void)split_bagfile_local();
+  split_bagfile_async();
+  wait_for_pending_split();
+}
+
+void SequentialWriter::split_bagfile_async()
+{
+  (void)start_split_bagfile_async(
+    [this]() {
+      return split_bagfile_async_local();
+    });
 }
 
 void SequentialWriter::write(std::shared_ptr<const rosbag2_storage::SerializedBagMessage> message)
 {
+  const bool snapshot_mode = storage_options_.snapshot_mode;
+  if (!use_cache_) {
+    // If not using cache, we need to wait for a pending bag split if any. Note: in case when cache
+    // is disabled the bag split and write(message) calls became a blocking calls for each other.
+    wait_for_pending_split();
+  }
+
   if (!is_open_) {
     throw std::runtime_error("Bag is not open. Call open() before writing.");
   }
@@ -471,12 +538,9 @@ void SequentialWriter::write(std::shared_ptr<const rosbag2_storage::SerializedBa
     return;
   }
 
-  // Get TopicInformation handler for counting messages.
-  rosbag2_storage::TopicInformation * topic_information_ptr{nullptr};
   const auto & topic_name = message->topic_name;
-  if (const auto it = topics_names_to_info_.find(topic_name); it != topics_names_to_info_.end()) {
-    topic_information_ptr = &(it->second);
-  } else {
+  auto topic_info_it = topics_names_to_info_.find(topic_name);
+  if (topic_info_it == topics_names_to_info_.end()) {
     std::stringstream errmsg;
     errmsg << "Failed to write on topic '" << topic_name <<
       "'. Call create_topic() before first write.";
@@ -487,26 +551,10 @@ void SequentialWriter::write(std::shared_ptr<const rosbag2_storage::SerializedBa
     std::chrono::nanoseconds(message->recv_timestamp));
 
   if (is_first_message_) {
-    // Update bagfile starting time
+    // Initialize bag file starting time for future comparison with min value
     metadata_.starting_time = message_timestamp;
     is_first_message_ = false;
   }
-
-  if (!storage_options_.snapshot_mode && should_split_bagfile(message_timestamp)) {
-    split_bagfile();
-    metadata_.files.back().starting_time = message_timestamp;
-  }
-
-  metadata_.starting_time = std::min(metadata_.starting_time, message_timestamp);
-
-  metadata_.files.back().starting_time =
-    std::min(metadata_.files.back().starting_time, message_timestamp);
-  const auto duration = message_timestamp - metadata_.starting_time;
-  metadata_.duration = std::max(metadata_.duration, duration);
-
-  const auto file_duration = message_timestamp - metadata_.files.back().starting_time;
-  metadata_.files.back().duration =
-    std::max(metadata_.files.back().duration, file_duration);
 
   auto converted_msg = get_writeable_message(message);
   if (transient_local_cache_->has_topic(topic_name)) {
@@ -514,18 +562,55 @@ void SequentialWriter::write(std::shared_ptr<const rosbag2_storage::SerializedBa
   }
 
   bool message_lost = false;
-  if (storage_options_.max_cache_size == 0u && storage_options_.max_cache_duration == 0u) {
-    // If cache size is set to zero, we write to storage directly
+  // If cache size is set to zero, we write to storage directly from the write() call. Otherwise,
+  // we push the message to cache and let the cache consumer thread handle writing to storage.
+  if (!use_cache_) {
+    if (!snapshot_mode && should_split_bagfile(message_timestamp)) {
+      split_bagfile();
+      std::lock_guard<std::mutex> metadata_lock(metadata_mutex_);
+      // Init file's starting time for future comparison with min value
+      metadata_.files.back().starting_time = message_timestamp;
+    }
+    std::lock_guard<std::mutex> storage_lock(storage_mutex_);
     if (storage_->write_message(converted_msg)) {
-      metadata_.files.back().message_count++;
+      auto * topic_information_ptr = &(topic_info_it->second);
       topic_information_ptr->message_count++;
       per_file_topic_message_counts_.back()[message->topic_name]++;
+      // Update metadata
+      metadata_.files.back().message_count++;
+      metadata_.starting_time = std::min(metadata_.starting_time, message_timestamp);
+      metadata_.duration =
+        std::max(metadata_.duration, message_timestamp - metadata_.starting_time);
+
+      metadata_.files.back().starting_time =
+        std::min(metadata_.files.back().starting_time, message_timestamp);
+
+      const auto file_duration = message_timestamp - metadata_.files.back().starting_time;
+      metadata_.files.back().duration =
+        std::max(metadata_.files.back().duration, file_duration);
+
     } else {
       message_lost = true;
     }
-  } else {
-    // Otherwise, use cache buffer
+  } else {  // Using cache
+    if (!snapshot_mode && !split_bagfile_in_progress()) {
+      bool should_split = false;
+      {
+        // TODO(morlov): Try to get rid from mutexes lock by caching values needed for the
+        //  should_split_bagfile
+        std::lock_guard<std::mutex> storage_lock(storage_mutex_);
+        std::lock_guard<std::mutex> metadata_lock(metadata_mutex_);
+        should_split = should_split_bagfile(message_timestamp);
+      }
+      if (should_split) {
+        split_bagfile_async();
+      }
+    }
     message_lost = !message_cache_->push(converted_msg);
+    // Note: metadata updates will be made when messages will be written by the cache consumer
+    // thread in the write_messages(..) method, when cache_consumer call it as a callback.
+    // We can't update metadata here because the message can be still in cache and not written to
+    // storage yet, so we don't know for sure if the message will be written to storage or not.
   }
 
   if (message_lost) {
@@ -541,6 +626,8 @@ void SequentialWriter::write(std::shared_ptr<const rosbag2_storage::SerializedBa
 
 bool SequentialWriter::take_snapshot()
 {
+  wait_for_pending_split();
+
   if (!storage_options_.snapshot_mode) {
     ROSBAG2_CPP_LOG_WARN("SequentialWriter take_snapshot called when snapshot mode is disabled");
     return false;
@@ -738,6 +825,7 @@ void SequentialWriter::finalize_metadata()
   metadata_.topics_with_message_count.reserve(topics_names_to_info_.size());
   metadata_.message_count = 0;
 
+  std::lock_guard<std::mutex> lock(topics_info_mutex_);
   for (const auto & [_, topic_info] : topics_names_to_info_) {
     metadata_.topics_with_message_count.push_back(topic_info);
     metadata_.message_count += topic_info.message_count;
@@ -782,10 +870,12 @@ void SequentialWriter::write_messages(
     messages_to_write = &merged_messages;
   }
 
+  // TODO(morlov): Check if really need to lock storage_mutex_ ?
+  std::lock_guard<std::mutex> storage_lock(storage_mutex_);
   auto lost_messages_idx = storage_->write_messages(*messages_to_write);
   auto written_messages_count = messages_to_write->size() - lost_messages_idx.size();
 
-  if (storage_options_.snapshot_mode && written_messages_count > 0) {
+  if (written_messages_count > 0) {
     // Update FileInformation about the last file in metadata in case of snapshot mode
     size_t first_msg_index = 0;
     // If some messages were lost, we need to find the first message that was written
@@ -810,33 +900,48 @@ void SequentialWriter::write_messages(
       }
     }
 
-    const auto first_msg_timestamp = std::chrono::time_point<std::chrono::high_resolution_clock>(
+    const auto earliest_message_time = std::chrono::time_point<std::chrono::high_resolution_clock>(
       std::chrono::nanoseconds((*messages_to_write)[first_msg_index]->recv_timestamp));
-    const auto last_msg_timestamp = std::chrono::time_point<std::chrono::high_resolution_clock>(
+    const auto latest_message_time = std::chrono::time_point<std::chrono::high_resolution_clock>(
       std::chrono::nanoseconds((*messages_to_write)[last_msg_index]->recv_timestamp));
-    metadata_.files.back().starting_time = first_msg_timestamp;
-    metadata_.files.back().duration = last_msg_timestamp - first_msg_timestamp;
+
+    // Update metadata
+    std::lock_guard<std::mutex> metadata_lock(metadata_mutex_);
+    if (storage_options_.snapshot_mode) {
+      metadata_.files.back().starting_time = earliest_message_time;
+      metadata_.files.back().duration = latest_message_time - earliest_message_time;
+    } else {
+      metadata_.files.back().starting_time =
+        std::min(metadata_.files.back().starting_time, earliest_message_time);
+      metadata_.files.back().duration =
+        std::max(metadata_.files.back().duration,
+                 latest_message_time - metadata_.files.back().starting_time);
+    }
+
+    metadata_.starting_time = std::min(metadata_.starting_time, earliest_message_time);
+    metadata_.duration =
+      std::max(metadata_.duration, latest_message_time - metadata_.starting_time);
+
+    metadata_.files.back().message_count += written_messages_count;
+    metadata_.message_count += written_messages_count;
   }
 
-  metadata_.files.back().message_count += written_messages_count;
-  metadata_.message_count += written_messages_count;
-
-  {  // Update message count for each topic in metadata
-    std::lock_guard<std::mutex> lock(topics_info_mutex_);
-    for (size_t i = 0; i < messages_to_write->size(); i++) {
-      if (!lost_messages_idx.empty()) {
-        auto is_lost = std::binary_search(lost_messages_idx.begin(), lost_messages_idx.end(), i);
-        if (is_lost) {
-          continue;
-        }
+  // Update message count for each topic in metadata
+  std::lock_guard<std::mutex> lock(topics_info_mutex_);
+  for (size_t i = 0; i < messages_to_write->size(); i++) {
+    // If some messages were lost, we need to skip them
+    if (!lost_messages_idx.empty()) {
+      auto is_lost = std::binary_search(lost_messages_idx.begin(), lost_messages_idx.end(), i);
+      if (is_lost) {
+        continue;  // Skip lost messages
       }
+    }
 
-      const auto & msg = (*messages_to_write)[i];
-      auto topic_info_it = topics_names_to_info_.find(msg->topic_name);
-      if (topic_info_it != topics_names_to_info_.end()) {
-        topic_info_it->second.message_count++;
-        per_file_topic_message_counts_.back()[msg->topic_name]++;
-      }
+    const auto & msg = (*messages_to_write)[i];
+    auto topic_info_it = topics_names_to_info_.find(msg->topic_name);
+    if (topic_info_it != topics_names_to_info_.end()) {
+      topic_info_it->second.message_count++;
+      per_file_topic_message_counts_.back()[msg->topic_name]++;
     }
   }
 
@@ -865,6 +970,67 @@ void SequentialWriter::on_messages_lost(
       bag_events::BagEvent::MESSAGES_LOST,
       std::move(msgs_lost_info));
   }
+}
+
+void SequentialWriter::wait_for_pending_split()
+{
+  std::shared_future<std::string> split_future;
+  {
+    std::lock_guard<std::mutex> lock(split_bagfile_mutex_);
+    split_future = split_bagfile_shared_future_;
+    if (!split_future.valid()) {
+      return;
+    }
+  }
+
+  try {  // Wait for a pending split to finish
+    (void)split_future.get();
+  } catch (...) {
+    clear_completed_split_future();
+    throw;
+  }
+
+  clear_completed_split_future();
+}
+
+std::shared_future<std::string> SequentialWriter::start_split_bagfile_async(
+  const std::function<std::future<std::string>()> & split_launcher)
+{
+  std::lock_guard<std::mutex> start_lock(split_bagfile_start_mutex_);
+  wait_for_pending_split();
+
+  std::lock_guard<std::mutex> lock(split_bagfile_mutex_);
+  if (!is_open_.load()) {
+    return {};
+  }
+  split_bagfile_shared_future_ = split_launcher().share();
+  return split_bagfile_shared_future_;
+}
+
+void SequentialWriter::clear_completed_split_future()
+{
+  std::lock_guard<std::mutex> lock(split_bagfile_mutex_);
+  if (split_bagfile_shared_future_.valid() &&
+    split_bagfile_shared_future_.wait_for(std::chrono::seconds(0)) == std::future_status::ready)
+  {
+    split_bagfile_shared_future_ = std::shared_future<std::string>{};
+  }
+}
+
+bool SequentialWriter::split_bagfile_in_progress()
+{
+  std::shared_future<std::string> split_future;
+  {
+    std::lock_guard<std::mutex> lock(split_bagfile_mutex_);
+    if (!split_bagfile_shared_future_.valid()) {
+      return false;
+    }
+    split_future = split_bagfile_shared_future_;
+  }
+  if (split_future.wait_for(std::chrono::seconds(0)) != std::future_status::ready) {
+    return true;
+  }
+  return false;
 }
 
 void SequentialWriter::add_event_callbacks(const bag_events::WriterEventCallbacks & callbacks)

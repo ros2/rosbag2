@@ -143,6 +143,7 @@ PYBIND11_MODULE(_writer, m) {
     pybind11::overload_cast<const rosbag2_storage::TopicMetadata &>(&PyWriter::create_topic))
   .def("take_snapshot", &PyWriter::take_snapshot)
   .def("split_bagfile", &PyWriter::split_bagfile)
+  .def("split_bagfile_async", &PyWriter::split_bagfile_async)
   ;
 
   pybind11::class_<PyCompressionWriter>(m, "SequentialCompressionWriter")
@@ -188,6 +189,7 @@ PYBIND11_MODULE(_writer, m) {
     >(&PyCompressionWriter::create_topic))
   .def("take_snapshot", &PyCompressionWriter::take_snapshot)
   .def("split_bagfile", &PyCompressionWriter::split_bagfile)
+  .def("split_bagfile_async", &PyCompressionWriter::split_bagfile_async)
   ;
 
   m.def(
