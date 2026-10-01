@@ -615,9 +615,14 @@ TEST_F(
   writer_->open(storage_options_, {rmw_format, rmw_format});
   writer_->create_topic({0u, "test_topic", "test_msgs/BasicTypes", "", {}, ""});
 
+  // Note: fake_storage_size_ counts written messages, while the cached messages size is taken
+  // into account in the splitting decision in bytes. Use 1-byte messages to keep the same units.
+  auto message = make_test_msg();
+  message->serialized_data = rosbag2_storage::make_serialized_message("x", 1u);
+
   auto timeout = std::chrono::seconds(2);
   for (auto i = 1u; i < message_count; ++i) {
-    writer_->write(make_test_msg());
+    writer_->write(message);
     // Wait for written_messages == i for each 5th message with timeout in 2 sec
     // Need yield resources and make sure that cache_consumer had a chance to dump buffer to the
     // storage before split is gonna occur. i.e. each 5th message.
@@ -659,6 +664,66 @@ TEST_F(
       << "Counter in filename '" << path << "' does not match expected value";
     counter++;
   }
+}
+
+TEST_F(
+  SequentialWriterTest,
+  writer_with_cache_splits_when_storage_and_cache_size_gt_max_bagfile_size) {
+  // Regression test for https://github.com/ros2/rosbag2/issues/2310
+  // Messages residing in the writer's cache are not yet reflected in the storage's bagfile size,
+  // but they will be flushed to the current bagfile on split. Therefore, they shall be taken into
+  // account in the splitting decision.
+  const uint64_t max_bagfile_size = 100;
+  const uint64_t fake_bagfile_size = 60;
+  size_t fake_cached_messages_size = 0;
+  size_t num_splits = 0;
+
+  ON_CALL(*storage_, get_bagfile_size).WillByDefault(Return(fake_bagfile_size));
+  EXPECT_CALL(*storage_factory_, open_read_write(_)).Times(2);
+  EXPECT_CALL(*metadata_io_, write_metadata).Times(1);
+
+  auto sequential_writer = std::make_unique<SequentialWriterForTest>(
+    std::move(storage_factory_), converter_factory_, std::move(metadata_io_));
+
+  rosbag2_cpp::bag_events::WriterEventCallbacks callbacks;
+  callbacks.write_split_callback =
+    [&num_splits](rosbag2_cpp::bag_events::BagSplitInfo & info) {
+      if (!info.opened_file.empty()) {  // Don't count the split event from the writer close
+        num_splits++;
+      }
+    };
+  sequential_writer->add_event_callbacks(callbacks);
+
+  storage_options_.max_bagfile_size = max_bagfile_size;
+  storage_options_.max_cache_size = 100 * 1024;  // Enable cache 100 KiB
+  sequential_writer->open(storage_options_, {"rmw_format", "rmw_format"});
+
+  auto mock_message_cache = std::make_shared<NiceMock<MockMessageCache>>(1024u);
+  ON_CALL(*mock_message_cache, get_current_size()).WillByDefault(
+    Invoke([&fake_cached_messages_size]() {return fake_cached_messages_size;}));
+  auto write_messages_cb =
+    [](const std::vector<std::shared_ptr<const rosbag2_storage::SerializedBagMessage>> &) {};
+  auto mock_cache_consumer =
+    std::make_unique<NiceMock<MockCacheConsumer>>(mock_message_cache, write_messages_cb);
+  sequential_writer->set_message_cache_and_cache_consumer(
+    mock_message_cache, std::move(mock_cache_consumer));
+
+  sequential_writer->create_topic({0u, "test_topic", "test_msgs/BasicTypes", "", {}, ""});
+
+  // Storage size plus cached messages size is below the limit. No split expected.
+  fake_cached_messages_size = max_bagfile_size - fake_bagfile_size - 1;
+  sequential_writer->write(make_test_msg());
+  EXPECT_EQ(num_splits, 0u);
+
+  // Storage size plus cached messages size reached the limit. Split expected.
+  fake_cached_messages_size = max_bagfile_size - fake_bagfile_size;
+  sequential_writer->write(make_test_msg());
+  EXPECT_EQ(num_splits, 1u) <<
+    "Writer should split bagfile when storage size plus cached messages size reaches the "
+    "max_bagfile_size";
+
+  sequential_writer->close();
+  EXPECT_EQ(fake_metadata_.relative_file_paths.size(), 2u);
 }
 
 TEST_F(SequentialWriterTest, do_not_use_cache_if_cache_size_is_zero) {

@@ -632,9 +632,13 @@ bool SequentialWriter::should_split_bagfile(
   if (storage_options_.max_bagfile_size !=
     rosbag2_storage::storage_interfaces::MAX_BAGFILE_SIZE_NO_SPLIT)
   {
-    // TODO(morlov): consider cached messages size in splitting decision. Right now we only consider
-    //  the size of already written messages in storage. Add message_cache_->get_current_size() API.
-    should_split = (storage_->get_bagfile_size() >= storage_options_.max_bagfile_size);
+    // Take into account messages residing in the cache, since they are not reflected yet in the
+    // storage's bagfile size, but will be flushed to the current bagfile on split.
+    uint64_t estimated_bagfile_size = storage_->get_bagfile_size();
+    if (use_cache_) {
+      estimated_bagfile_size += message_cache_->get_current_size();
+    }
+    should_split = (estimated_bagfile_size >= storage_options_.max_bagfile_size);
   }
 
   // Splitting by time

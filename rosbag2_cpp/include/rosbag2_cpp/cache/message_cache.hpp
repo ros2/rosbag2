@@ -112,6 +112,10 @@ public:
   /// Producer API: notify consumer to wake-up (primary buffer has data)
   void notify_data_ready() override;
 
+  /// \brief Get the total size in bytes of the messages in the producer buffer, i.e. messages
+  /// pushed to the cache, but not yet handed over to the consumer via swap_buffers().
+  size_t get_current_size() override;
+
 protected:
   /// Dropped messages per topic. Used for printing in alphabetic order
   std::unordered_map<std::string, uint32_t> messages_dropped_per_topic_;
