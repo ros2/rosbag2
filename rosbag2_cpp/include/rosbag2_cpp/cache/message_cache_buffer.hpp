@@ -16,6 +16,8 @@
 #define ROSBAG2_CPP__CACHE__MESSAGE_CACHE_BUFFER_HPP_
 
 #include <atomic>
+#include <cstddef>
+#include <cstdint>
 #include <memory>
 #include <vector>
 

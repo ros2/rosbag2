@@ -21,18 +21,26 @@
 #include <unordered_set>
 #include <vector>
 
+#include "rcutils/time.h"
 #include "rosbag2_cpp/bag_events.hpp"
 #include "rosbag2_cpp/converter.hpp"
+#include "rosbag2_cpp/converter_options.hpp"
 #include "rosbag2_cpp/reader_interfaces/base_reader_interface.hpp"
 #include "rosbag2_cpp/serialization_format_converter_factory.hpp"
 #include "rosbag2_cpp/serialization_format_converter_factory_interface.hpp"
 #include "rosbag2_cpp/visibility_control.hpp"
 
+#include "rosbag2_storage/bag_metadata.hpp"
+#include "rosbag2_storage/message_definition.hpp"
 #include "rosbag2_storage/metadata_io.hpp"
+#include "rosbag2_storage/serialized_bag_message.hpp"
 #include "rosbag2_storage/storage_factory.hpp"
 #include "rosbag2_storage/storage_factory_interface.hpp"
 #include "rosbag2_storage/storage_filter.hpp"
+#include "rosbag2_storage/storage_interfaces/base_read_interface.hpp"
 #include "rosbag2_storage/storage_interfaces/read_only_interface.hpp"
+#include "rosbag2_storage/storage_options.hpp"
+#include "rosbag2_storage/topic_metadata.hpp"
 
 // This is necessary because of using stl types here. It is completely safe, because
 // a) the member is not accessible from the outside

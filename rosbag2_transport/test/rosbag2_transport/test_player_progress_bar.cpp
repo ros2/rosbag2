@@ -15,9 +15,17 @@
 
 #include <gmock/gmock.h>
 
+#include <chrono>
+#include <cstddef>
+#include <cstdint>
 #include <iostream>
+#include <memory>
+#include <sstream>
+#include <string>
 #include <thread>
+#include <vector>
 
+#include "rcutils/time.h"
 #include "rosbag2_transport/player_progress_bar.hpp"
 
 using namespace ::testing;          // NOLINT

@@ -14,14 +14,19 @@
 
 #include <gmock/gmock.h>
 
+#include <algorithm>
 #include <chrono>
 #include <cmath>
+#include <cstddef>
+#include <cstdint>
 #include <list>
 #include <memory>
+#include <stdexcept>
 #include <string>
 #include <utility>
 
 #include "rcutils/time.h"
+#include "rcutils/types/uint8_array.h"
 #include "rosbag2_storage/ros_helper.hpp"
 #include "rosbag2_storage/serialized_bag_message.hpp"
 

@@ -16,12 +16,15 @@
 #include <gmock/gmock.h>
 
 #include <chrono>
+#include <cstddef>
+#include <cstdint>
 #include <future>
 #include <memory>
 #include <string>
 #include <utility>
 #include <vector>
 
+#include "mock_sequential_reader.hpp"
 #include "rosbag2_test_common/subscription_manager.hpp"
 
 #include "rosbag2_transport/player.hpp"
@@ -30,6 +33,8 @@
 #include "test_msgs/message_fixtures.hpp"
 
 #include "rosbag2_play_test_fixture.hpp"
+#include "rosbag2_storage/serialized_bag_message.hpp"
+#include "rosbag2_storage/topic_metadata.hpp"
 
 TEST_F(RosBag2PlayTestFixture, recorded_message_is_played_on_remapped_topic) {
   //  test constants

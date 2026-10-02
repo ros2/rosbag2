@@ -15,12 +15,15 @@
 #include <gmock/gmock.h>
 
 #include <chrono>
+#include <cstddef>
 #include <filesystem>
 #include <memory>
 #include <string>
 #include <unordered_map>
+#include <utility>
 #include <vector>
 
+#include "composition_interfaces/srv/load_node.hpp"
 #include "composition_manager_test_fixture.hpp"
 #include "mock_player.hpp"
 #include "rclcpp/client.hpp"
@@ -32,8 +35,12 @@
 #include "rclcpp/qos.hpp"
 #include "rclcpp/time.hpp"
 #include "rclcpp/utilities.hpp"
+#include "rosbag2_interfaces/srv/is_paused.hpp"
+#include "rosbag2_interfaces/srv/play.hpp"
+#include "rosbag2_interfaces/srv/resume.hpp"
 #include "rosbag2_test_common/subscription_manager.hpp"
 #include "rosbag2_test_common/tested_storage_ids.hpp"
+#include "rosbag2_transport/play_options.hpp"
 #include "test_msgs/msg/basic_types.hpp"
 
 using namespace std::chrono_literals;  // NOLINT

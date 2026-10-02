@@ -14,12 +14,24 @@
 
 #include <gmock/gmock.h>
 
+#include <algorithm>
+#include <chrono>
+#include <cstddef>
+#include <cstdint>
+#include <cstdlib>
 #include <filesystem>
 #include <memory>
+#include <ostream>
+#include <sstream>
 #include <string>
+#include <vector>
 
+#include "rclcpp/qos.hpp"
+#include "rosbag2_storage/message_definition.hpp"
+#include "rosbag2_storage/serialized_bag_message.hpp"
 #include "rosbag2_storage/storage_factory.hpp"
 #include "rosbag2_storage/storage_options.hpp"
+#include "rosbag2_storage/topic_metadata.hpp"
 #include "rosbag2_test_common/memory_management.hpp"
 #include "rosbag2_test_common/tested_storage_ids.hpp"
 #include "rosbag2_test_common/temporary_directory_fixture.hpp"

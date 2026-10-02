@@ -13,6 +13,7 @@
 // limitations under the License.
 
 #include <cstdint>
+#include <ios>
 #include <sstream>
 #include <string>
 #include <iomanip>

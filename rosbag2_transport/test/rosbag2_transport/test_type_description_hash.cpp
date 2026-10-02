@@ -15,8 +15,15 @@
 #include <gmock/gmock.h>
 
 #include <string>
+#include <vector>
 
+#include "rcl/graph.h"
+#include "rclcpp/node_interfaces/node_graph_interface.hpp"
+#include "rmw/qos_profiles.h"
+#include "rmw/topic_endpoint_info.h"
+#include "rmw/types.h"
 #include "rosbag2_transport/recorder.hpp"
+#include "rosidl_runtime_c/type_hash.h"
 
 using namespace ::testing;  // NOLINT
 

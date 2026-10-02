@@ -12,9 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <utility>
 #include <vector>
 
+#include "rosbag2_storage/storage_options.hpp"
 #include "rosbag2_transport/bag_rewrite.hpp"
+#include "rosbag2_transport/record_options.hpp"
 
 int main(int, char **)
 {

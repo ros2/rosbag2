@@ -18,9 +18,11 @@
 #include <vector>
 
 #include "fake_data.hpp"
+#include "rosbag2_cpp/converter_options.hpp"
 
 #include "rosbag2_storage/message_definition.hpp"
 #include "rosbag2_storage/ros_helper.hpp"
+#include "rosbag2_storage/serialized_bag_message.hpp"
 
 void write_sample_split_bag(
   const rosbag2_storage::StorageOptions & storage_options,

@@ -16,8 +16,10 @@
 #define ROSBAG2_TEST_COMMON__ACTION_CLIENT_MANAGER_HPP_
 
 #include <chrono>
+#include <cstddef>
 #include <memory>
 #include <string>
+#include <thread>
 #include <utility>
 #include <vector>
 
@@ -32,7 +34,13 @@
 #include "rclcpp/node_options.hpp"
 #include "rclcpp/qos.hpp"
 #include "rclcpp/utilities.hpp"
-#include "rclcpp_action/rclcpp_action.hpp"
+#include "rclcpp_action/client.hpp"
+#include "rclcpp_action/client_goal_handle.hpp"
+#include "rclcpp_action/create_client.hpp"
+#include "rclcpp_action/create_server.hpp"
+#include "rclcpp_action/server.hpp"
+#include "rclcpp_action/server_goal_handle.hpp"
+#include "rclcpp_action/types.hpp"
 
 #include "test_msgs/action/fibonacci.hpp"
 

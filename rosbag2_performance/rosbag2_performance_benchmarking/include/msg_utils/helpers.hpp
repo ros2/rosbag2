@@ -15,6 +15,8 @@
 #ifndef MSG_UTILS__HELPERS_HPP_
 #define MSG_UTILS__HELPERS_HPP_
 
+#include <cstddef>
+
 #include <rosbag2_performance_benchmarking_msgs/msg/byte_array.hpp>
 #include <sensor_msgs/msg/image.hpp>
 #include <sensor_msgs/msg/point_cloud2.hpp>

@@ -20,6 +20,7 @@
 
 #include "rosbag2_cpp/service_utils.hpp"
 #include "rosbag2_test_common/memory_management.hpp"
+#include "service_msgs/msg/service_event_info.hpp"
 #include "test_msgs/srv/basic_types.hpp"
 
 using namespace ::testing;  // NOLINT

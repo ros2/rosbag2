@@ -15,13 +15,16 @@
 #ifndef ROSBAG2_TRANSPORT__RECORDER_EVENT_NOTIFIER_HPP_
 #define ROSBAG2_TRANSPORT__RECORDER_EVENT_NOTIFIER_HPP_
 
+#include <cstdint>
 #include <vector>
 #include <memory>
 #include <string>
 #include <string_view>
 
+#include "rclcpp/event_handler.hpp"
 #include "rclcpp/node.hpp"
 #include "rclcpp/publisher.hpp"
+#include "rclcpp/qos.hpp"
 
 #include "rosbag2_cpp/bag_events.hpp"
 #include "rosbag2_interfaces/msg/messages_lost_event.hpp"

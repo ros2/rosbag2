@@ -19,6 +19,7 @@
 #include <memory>
 #include <string>
 
+#include "composition_interfaces/srv/load_node.hpp"
 #include "rclcpp/future_return_code.hpp"
 #include "rclcpp/parameter.hpp"
 #include "rclcpp/parameter_map.hpp"

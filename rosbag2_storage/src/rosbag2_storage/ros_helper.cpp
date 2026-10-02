@@ -14,10 +14,15 @@
 
 #include "rosbag2_storage/ros_helper.hpp"
 
+#include <cstring>
 #include <memory>
+#include <stdexcept>
 #include <string>
 
+#include "rcutils/allocator.h"
+#include "rcutils/error_handling.h"
 #include "rcutils/types.h"
+#include "rcutils/types/rcutils_ret.h"
 #include "rosbag2_storage/logging.hpp"
 
 namespace rosbag2_storage

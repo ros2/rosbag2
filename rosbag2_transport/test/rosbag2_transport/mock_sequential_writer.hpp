@@ -16,13 +16,21 @@
 #define ROSBAG2_TRANSPORT__MOCK_SEQUENTIAL_WRITER_HPP_
 
 #include <atomic>
+#include <cstddef>
 #include <memory>
+#include <mutex>
 #include <string>
 #include <unordered_map>
 #include <utility>
 #include <vector>
 
+#include "rosbag2_cpp/bag_events.hpp"
+#include "rosbag2_cpp/converter_options.hpp"
 #include "rosbag2_cpp/writer_interfaces/base_writer_interface.hpp"
+#include "rosbag2_storage/message_definition.hpp"
+#include "rosbag2_storage/serialized_bag_message.hpp"
+#include "rosbag2_storage/storage_options.hpp"
+#include "rosbag2_storage/topic_metadata.hpp"
 
 class MockSequentialWriter : public rosbag2_cpp::writer_interfaces::BaseWriterInterface
 {

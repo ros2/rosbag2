@@ -14,24 +14,36 @@
 
 #include <gmock/gmock.h>
 
+#include <atomic>
+#include <cerrno>
+#include <cstddef>
+#include <cstdint>
 #include <filesystem>
 #include <fstream>
+#include <iostream>
 #include <memory>
+#include <ostream>
 #include <regex>
 #include <sstream>
+#include <stdexcept>
 #include <string>
 #include <utility>
 #include <vector>
 
 #include "rcpputils/asserts.hpp"
 
+#include "rosbag2_compression/compression_factory.hpp"
 #include "rosbag2_compression/compression_options.hpp"
 #include "rosbag2_compression/sequential_compression_writer.hpp"
 
+#include "rosbag2_cpp/bag_events.hpp"
 #include "rosbag2_cpp/writer.hpp"
 #include "rosbag2_cpp/writers/sequential_writer.hpp"
 
+#include "rosbag2_storage/bag_metadata.hpp"
 #include "rosbag2_storage/ros_helper.hpp"
+#include "rosbag2_storage/serialized_bag_message.hpp"
+#include "rosbag2_storage/storage_interfaces/base_write_interface.hpp"
 #include "rosbag2_storage/storage_options.hpp"
 
 #include "mock_converter_factory.hpp"

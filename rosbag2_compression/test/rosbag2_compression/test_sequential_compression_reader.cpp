@@ -17,14 +17,19 @@
 #include <filesystem>
 #include <fstream>
 #include <memory>
+#include <ostream>
+#include <stdexcept>
 #include <string>
 #include <utility>
 #include <vector>
 
 #include "rcpputils/asserts.hpp"
 
+#include "rosbag2_compression/compression_factory.hpp"
+#include "rosbag2_compression/compression_options.hpp"
 #include "rosbag2_compression/sequential_compression_reader.hpp"
 
+#include "rosbag2_cpp/converter_options.hpp"
 #include "rosbag2_cpp/reader.hpp"
 
 #include "mock_converter_factory.hpp"
@@ -34,6 +39,10 @@
 
 #include "mock_compression.hpp"
 #include "mock_compression_factory.hpp"
+#include "rosbag2_storage/bag_metadata.hpp"
+#include "rosbag2_storage/serialized_bag_message.hpp"
+#include "rosbag2_storage/storage_options.hpp"
+#include "rosbag2_storage/topic_metadata.hpp"
 
 using namespace testing;  // NOLINT
 

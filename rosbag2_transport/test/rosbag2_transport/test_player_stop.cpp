@@ -15,15 +15,21 @@
 #include <gmock/gmock.h>
 
 #include <chrono>
+#include <cstddef>
+#include <future>
 #include <memory>
+#include <thread>
 #include <vector>
 #include <utility>
 #include <condition_variable>
 #include <mutex>
 
+#include "mock_sequential_reader.hpp"
+#include "rcutils/time.h"
 #include "rmw/rmw.h"
 #include "mock_player.hpp"
 #include "rclcpp/utilities.hpp"
+#include "rosbag2_storage/topic_metadata.hpp"
 #include "rosbag2_transport_test_fixture.hpp"
 #include "test_msgs/message_fixtures.hpp"
 #include "rosbag2_storage/serialized_bag_message.hpp"

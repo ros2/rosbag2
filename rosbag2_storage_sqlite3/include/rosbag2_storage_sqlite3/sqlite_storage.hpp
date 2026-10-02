@@ -16,6 +16,8 @@
 #define ROSBAG2_STORAGE_SQLITE3__SQLITE_STORAGE_HPP_
 
 #include <atomic>
+#include <cstddef>
+#include <cstdint>
 #include <memory>
 #include <mutex>
 #include <string>
@@ -23,11 +25,19 @@
 #include <vector>
 
 #include "rcpputils/thread_safety_annotations.hpp"
+#include "rcutils/time.h"
+#include "rcutils/types/uint8_array.h"
+#include "rosbag2_storage/message_definition.hpp"
+#include "rosbag2_storage/storage_interfaces/base_io_interface.hpp"
+#include "rosbag2_storage/storage_interfaces/base_read_interface.hpp"
+#include "rosbag2_storage/storage_interfaces/base_write_interface.hpp"
 #include "rosbag2_storage/storage_interfaces/read_write_interface.hpp"
 #include "rosbag2_storage/serialized_bag_message.hpp"
 #include "rosbag2_storage/storage_filter.hpp"
+#include "rosbag2_storage/storage_options.hpp"
 #include "rosbag2_storage/topic_metadata.hpp"
 #include "rosbag2_storage/bag_metadata.hpp"
+#include "rosbag2_storage_sqlite3/sqlite_statement_wrapper.hpp"
 #include "rosbag2_storage_sqlite3/sqlite_wrapper.hpp"
 #include "rosbag2_storage_sqlite3/visibility_control.hpp"
 

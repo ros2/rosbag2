@@ -17,6 +17,8 @@
 #include <gmock/gmock.h>
 
 #include <chrono>
+#include <cstddef>
+#include <cstdint>
 #include <future>
 #include <memory>
 #include <string>
@@ -34,7 +36,11 @@
 #include "test_msgs/message_fixtures.hpp"
 
 #include "mock_player.hpp"
+#include "mock_sequential_reader.hpp"
+#include "rcl/time.h"
 #include "rosbag2_play_test_fixture.hpp"
+#include "rosbag2_storage/serialized_bag_message.hpp"
+#include "rosbag2_storage/topic_metadata.hpp"
 #include "rosbag2_transport_test_fixture.hpp"
 
 class RosBag2PlayDurationAndUntilTestFixture : public RosBag2PlayTestFixture

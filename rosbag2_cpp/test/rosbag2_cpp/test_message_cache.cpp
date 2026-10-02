@@ -15,8 +15,11 @@
 #include <gmock/gmock.h>
 
 #include <chrono>
+#include <cstddef>
+#include <cstdint>
 #include <numeric>
 #include <memory>
+#include <stdexcept>
 #include <string>
 #include <unordered_map>
 #include <utility>
@@ -24,6 +27,7 @@
 #include <thread>
 
 #include "rcutils/time.h"
+#include "rosbag2_cpp/cache/message_cache.hpp"
 #include "rosbag2_cpp/cache/message_cache_buffer.hpp"
 #include "rosbag2_storage/ros_helper.hpp"
 #include "rosbag2_storage/serialized_bag_message.hpp"

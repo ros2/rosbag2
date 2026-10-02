@@ -15,12 +15,18 @@
 #ifndef ROSBAG2_TRANSPORT__MOCK_KEYBOARD_HANDLER_HPP_
 #define ROSBAG2_TRANSPORT__MOCK_KEYBOARD_HANDLER_HPP_
 
+#include <sys/types.h>
+#include <termios.h>
+
+#include <cstddef>
 #include <memory>
+#include <mutex>
 #include <string>
 #include <unordered_map>
 #include <vector>
 
 #include "keyboard_handler/keyboard_handler.hpp"
+#include "keyboard_handler/keyboard_handler_unix_impl.hpp"
 
 // press one specific key code one second at a time
 class MockKeyboardHandler : public KeyboardHandler

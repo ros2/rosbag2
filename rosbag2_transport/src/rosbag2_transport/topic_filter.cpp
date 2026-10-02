@@ -15,6 +15,7 @@
 #include <algorithm>
 #include <map>
 #include <regex>
+#include <stdexcept>
 #include <string>
 #include <utility>
 #include <vector>
@@ -27,6 +28,7 @@
 #include "rclcpp/typesupport_helpers.hpp"
 
 #include "logging.hpp"
+#include "rcutils/logging_macros.h"
 #include "rosbag2_transport/topic_filter.hpp"
 
 namespace

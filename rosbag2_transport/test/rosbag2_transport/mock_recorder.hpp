@@ -16,10 +16,15 @@
 #define ROSBAG2_TRANSPORT__MOCK_RECORDER_HPP_
 
 #include <chrono>
+#include <cstdint>
 #include <memory>
 #include <string>
 #include <ratio>
+#include <thread>
 
+#include "rclcpp/node_options.hpp"
+#include "rosbag2_storage/storage_options.hpp"
+#include "rosbag2_transport/record_options.hpp"
 #include "rosbag2_transport/recorder.hpp"
 
 class MockRecorder : public rosbag2_transport::Recorder

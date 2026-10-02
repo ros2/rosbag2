@@ -17,7 +17,9 @@
 #include <string>
 #include <vector>
 
+#include "rclcpp/logging.hpp"
 #include "rclcpp/qos.hpp"
+#include "rclcpp/utilities.hpp"
 #include "rosbag2_performance_benchmarking/producer_config.hpp"
 #include "rosbag2_storage/default_storage_id.hpp"
 

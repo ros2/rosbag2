@@ -12,16 +12,25 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include "rclcpp/qos.hpp"
+#include "rosbag2_storage/message_definition.hpp"
+#include "rosbag2_storage/serialized_bag_message.hpp"
 #include "rosbag2_storage/storage_factory.hpp"
+#include "rosbag2_storage/storage_filter.hpp"
 #include "rosbag2_storage/storage_options.hpp"
+#include "rosbag2_storage/topic_metadata.hpp"
 #include "rosbag2_test_common/memory_management.hpp"
 #include "std_msgs/msg/string.hpp"
 
 #include <gmock/gmock.h>
 
+#include <cstdint>
 #include <filesystem>
+#include <iostream>
 #include <memory>
 #include <string>
+#include <tuple>
+#include <vector>
 
 using namespace ::testing;  // NOLINT
 

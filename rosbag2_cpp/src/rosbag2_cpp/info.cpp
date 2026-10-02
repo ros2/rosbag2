@@ -21,12 +21,15 @@
 #include <utility>
 #include <vector>
 
+#include "rmw/ret_types.h"
 #include "rmw/rmw.h"
 #include "rosbag2_cpp/action_utils.hpp"
 #include "rosbag2_cpp/info.hpp"
 #include "rosbag2_cpp/service_utils.hpp"
 #include "rosbag2_storage/metadata_io.hpp"
 #include "rosbag2_storage/storage_factory.hpp"
+#include "rosbag2_storage/storage_interfaces/base_read_interface.hpp"
+#include "rosidl_runtime_c/message_type_support_struct.h"
 #include "rosidl_typesupport_cpp/message_type_support.hpp"
 #include "service_msgs/msg/service_event_info.hpp"
 
