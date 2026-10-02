@@ -439,10 +439,15 @@ TEST_F(SequentialCompressionWriterTest, writer_call_metadata_update_on_bag_split
     compression_mode_from_string(v_intercepted_update_metadata_[0].compression_mode);
   EXPECT_EQ(compression_mode, rosbag2_compression::CompressionMode::MESSAGE);
   EXPECT_EQ(v_intercepted_update_metadata_[0].message_count, 0u);  // On opening first bag file
+  // The metadata written into the bag files shall only reference the currently opened file, not
+  // the whole file history (see https://github.com/ros2/rosbag2/issues/2481).
   EXPECT_EQ(v_intercepted_update_metadata_[1].files.size(), 1u);   // On closing first bag file
-  EXPECT_EQ(v_intercepted_update_metadata_[2].files.size(), 2u);   // On opening second bag file
-  EXPECT_EQ(v_intercepted_update_metadata_[3].files.size(), 2u);   // On writer destruction
+  EXPECT_EQ(v_intercepted_update_metadata_[2].files.size(), 1u);   // On opening second bag file
+  EXPECT_EQ(v_intercepted_update_metadata_[3].files.size(), 1u);   // On writer destruction
   EXPECT_EQ(v_intercepted_update_metadata_[3].message_count, 2 * kNumMessagesToWrite);
+  // The metadata.yaml file shall still contain the full file history
+  EXPECT_EQ(intercepted_write_metadata_.files.size(), 2u);
+  EXPECT_EQ(intercepted_write_metadata_.relative_file_paths.size(), 2u);
 }
 
 TEST_P(SequentialCompressionWriterTest, writer_writes_with_compression_queue_sizes)
