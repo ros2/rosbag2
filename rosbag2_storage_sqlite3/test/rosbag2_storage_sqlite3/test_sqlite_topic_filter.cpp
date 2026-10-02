@@ -383,6 +383,31 @@ TEST_F(SQLiteTopicFilterTestFixture, TestResetFilter)
   EXPECT_FALSE(readable_storage->has_next());
 }
 
+TEST_F(SQLiteTopicFilterTestFixture, FilterWithServiceOrActionBlacklistOnly)
+{
+  auto read_topic_names = [this](const rosbag2_storage::StorageFilter & storage_filter) {
+    auto readable_storage = open_test_bag_for_read_only();
+    readable_storage->set_filter(storage_filter);
+    std::vector<std::string> topic_names;
+    while (readable_storage->has_next()) {
+      topic_names.push_back(readable_storage->read_next()->topic_name);
+    }
+    return topic_names;
+  };
+
+  rosbag2_storage::StorageFilter service_filter{};
+  service_filter.exclude_service_events = {"service_topic2/_service_event"};
+  auto service_topic_names = read_topic_names(service_filter);
+  EXPECT_THAT(service_topic_names, SizeIs(9));
+  EXPECT_THAT(service_topic_names, Not(Contains("service_topic2/_service_event")));
+
+  rosbag2_storage::StorageFilter action_filter{};
+  action_filter.exclude_actions_interfaces = {"action1/_action/status"};
+  auto action_topic_names = read_topic_names(action_filter);
+  EXPECT_THAT(action_topic_names, SizeIs(9));
+  EXPECT_THAT(action_topic_names, Not(Contains("action1/_action/status")));
+}
+
 TEST_F(SQLiteTopicFilterTestFixture, CanSelectFromTopicsListAndRegexWithServices)
 {
   auto readable_storage = open_test_bag_for_read_only();
