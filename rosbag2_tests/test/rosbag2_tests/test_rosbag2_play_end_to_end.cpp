@@ -35,7 +35,6 @@
 #include "rosbag2_interfaces/srv/resume.hpp"
 #include "rosbag2_interfaces/srv/stop.hpp"
 #include "rosbag2_test_common/process_execution_helpers.hpp"
-#include "rosbag2_test_common/process_execution_helpers_unix.hpp"
 #include "rosbag2_test_common/subscription_manager.hpp"
 #include "rosbag2_test_common/tested_storage_ids.hpp"
 #include "rosbag2_test_common/wait_for.hpp"
