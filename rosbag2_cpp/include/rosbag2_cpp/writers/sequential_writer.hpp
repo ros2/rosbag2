@@ -15,6 +15,8 @@
 #ifndef ROSBAG2_CPP__WRITERS__SEQUENTIAL_WRITER_HPP_
 #define ROSBAG2_CPP__WRITERS__SEQUENTIAL_WRITER_HPP_
 
+#include <functional>
+#include <future>
 #include <deque>
 #include <memory>
 #include <mutex>
@@ -157,6 +159,11 @@ public:
   void split_bagfile() override;
 
   /**
+   * \brief Starts closing the current backed storage and opening the next bagfile asynchronously.
+   */
+  void split_bagfile_async() override;
+
+  /**
    * \brief Check if a callback is registered for the given event.
    * \return True if there is any callback registered for the event, false otherwise.
    */
@@ -167,6 +174,9 @@ protected:
   std::unique_ptr<rosbag2_storage::StorageFactoryInterface> storage_factory_;
   std::shared_ptr<SerializationFormatConverterFactoryInterface> converter_factory_;
   std::shared_ptr<rosbag2_storage::storage_interfaces::ReadWriteInterface> storage_;
+  /// storage_mutex_ protects storage_ and all operations on it, including split_bagfile() and
+  /// any other operations that may be called from write() or create{remove}_topic()
+  std::mutex storage_mutex_;
   std::unique_ptr<rosbag2_storage::MetadataIo> metadata_io_;
   std::unique_ptr<Converter> converter_;
 
@@ -178,7 +188,22 @@ protected:
   /// \brief Flush the cache, update metadata and close the storage.
   void flush_cache_update_metadata_and_close_storage();
 
+  /// \brief Close the current bag file and rolls over to a new one.
+  /// \details Splits the current bag file by closing the current storage and opening a new one
+  /// with a new URI.
+  /// \return the URI of the newly opened bag file after the split is complete.
   std::string split_bagfile_local(bool execute_callbacks = true);
+
+  /// \brief Close the current bag file and rolls over to a new one asynchronously.
+  /// \details Splits the current bag file by closing the current storage and opening a new one
+  /// with a new URI.
+  /// \note It is safe to call write() and create{remove}_topic() while the split is in progress,
+  /// the new messages and topics will be stored in a separate cache buffer and written to the new
+  /// bag file once it is opened.
+  /// \return The future that contains the URI of the newly opened bag file after the split is
+  /// complete.
+  std::future<std::string> split_bagfile_async_local(bool execute_callbacks = true);
+
 
   /**
    * \brief Write cached transient-local messages to the current storage.
@@ -198,8 +223,6 @@ protected:
 
   void execute_bag_split_callbacks(
     const std::string & closed_file, const std::string & opened_file);
-
-  void switch_to_next_storage();
 
   /// \brief Helper method to generate a storage URI for a new bag file based on the base folder
   /// and the current storage count.
@@ -227,6 +250,9 @@ protected:
   /// it is safe to access without topics_info_mutex_ losck as all external API calls are protected
   /// with \sa writer_mutex_ on \sa rosbag2_cpp::Writer level.
   std::unordered_map<std::string, rosbag2_storage::TopicInformation> topics_names_to_info_;
+
+  /// \brief Mutex to protect the topics_names_to_info_ map when adding or deleting items and when
+  /// accessing it from CacheConsumer callback or bag split
   std::mutex topics_info_mutex_;
 
   LocalMessageDefinitionSource message_definitions_;
@@ -279,6 +305,13 @@ protected:
    */
   void on_messages_lost(std::shared_ptr<std::vector<bag_events::MessagesLostInfo>> msgs_lost_info);
 
+  /// Wait for a previously started asynchronous bag split to finish.
+  void wait_for_pending_split();
+
+  /// Start a new asynchronous split after waiting for any previously started split to finish.
+  std::shared_future<std::string> start_split_bagfile_async(
+    const std::function<std::future<std::string>()> & split_launcher);
+
   /**
    * \brief Helper method to write messages while also updating tracked metadata.
    * \param messages The list of messages to write.
@@ -287,7 +320,37 @@ protected:
     const std::vector<std::shared_ptr<const rosbag2_storage::SerializedBagMessage>> & messages);
 
 private:
+  /// \brief Clear the future that tracks the completion of an asynchronous bag split operation.
+  void clear_completed_split_future();
+
+  /// \brief Check if there is an ongoing asynchronous bag split operation.
+  /// \return true if there is an ongoing split operation, false otherwise.
+  bool split_bagfile_in_progress();
+
   std::mutex lost_messages_callbacks_mutex_;
+
+  /// \brief Mutex to serialize asynchronous split scheduling.
+  std::mutex split_bagfile_start_mutex_;
+
+  /// \brief Mutex to protect the split bagfile process, ensuring that only one split operation can
+  /// occur at a time.
+  std::mutex split_bagfile_mutex_;
+
+  /// \brief Future to track the completion of an asynchronous bag split operation.
+  /// It holds the URI of the newly opened bag file once the split is complete. This allows write()
+  /// and create{remove}_topic() to check if a split is in progress and wait for it to finish
+  /// before proceeding with operations that interact with the storage. The future is set when
+  /// split_bagfile_async() is called and is cleared once the split operation is complete and the
+  /// new bag file is ready for writing.
+  std::shared_future<std::string> split_bagfile_shared_future_;
+
+  /// \brief Mutex to protect the metadata_ and split_bagfile_future_ members, which are accessed
+  /// and modified together in the split bagfile process. This ensures that the metadata is updated
+  /// consistently with the bagfile splits and prevents race conditions between write() and
+  /// split_bagfile() operations.
+  std::mutex metadata_mutex_;
+
+
   bool is_first_message_ {true};
   std::atomic_bool is_open_{false};
   rcutils_time_point_value_t last_recv_timestamp_{0};
