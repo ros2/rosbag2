@@ -109,6 +109,42 @@ TEST_F(RosBag2PlayTestFixture, recorded_messages_are_played_for_all_topics)
           ElementsAre(40.0f, 2.0f, 0.0f)))));
 }
 
+TEST_F(RosBag2PlayTestFixture, playback_progress_is_printed_to_stdout)
+{
+  auto primitive_message = get_messages_basic_types()[0];
+  primitive_message->int32_value = 42;
+
+  auto topic_types = std::vector<rosbag2_storage::TopicMetadata>{
+    {"topic1", "test_msgs/BasicTypes", "", ""},
+  };
+
+  std::vector<std::shared_ptr<rosbag2_storage::SerializedBagMessage>> messages = {
+    serialize_test_message("topic1", 1000000000, primitive_message),
+    serialize_test_message("topic1", 2000000000, primitive_message),
+  };
+
+  rosbag2_storage::BagMetadata metadata;
+  metadata.starting_time = std::chrono::high_resolution_clock::time_point(std::chrono::seconds(1));
+  metadata.duration = std::chrono::seconds(1);
+  metadata.message_count = messages.size();
+
+  auto prepared_mock_reader = std::make_unique<MockSequentialReader>();
+  prepared_mock_reader->prepare(messages, topic_types);
+  prepared_mock_reader->set_metadata(metadata);
+  auto reader = std::make_unique<rosbag2_cpp::Reader>(std::move(prepared_mock_reader));
+
+  auto player = std::make_shared<rosbag2_transport::Player>(
+    std::move(reader), storage_options_, play_options_);
+
+  testing::internal::CaptureStdout();
+  player->play();
+  const auto output = testing::internal::GetCapturedStdout();
+
+  EXPECT_THAT(output, HasSubstr("[RUNNING]"));
+  EXPECT_THAT(output, HasSubstr("Bag Time:"));
+  EXPECT_THAT(output, HasSubstr("Duration: 1.000000 / 1.000000"));
+}
+
 TEST_F(RosBag2PlayTestFixture, recorded_messages_are_played_for_all_topics_with_unknown_type)
 {
   auto primitive_message1 = get_messages_basic_types()[0];

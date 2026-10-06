@@ -175,8 +175,10 @@ bool TimeControllerClock::sleep_until(rcutils_time_point_value_t until)
     } else {
       const auto steady_until = impl_->ros_to_steady(until);
       // wait only if necessary for performance
-      if (steady_until > impl_->now_fn()) {
-        impl_->cv.wait_until(lock, steady_until);
+      const auto steady_now = impl_->now_fn();
+      if (steady_until > steady_now) {
+        const auto wakeup_time = std::min(steady_until, steady_now + impl_->sleep_time_while_paused);
+        impl_->cv.wait_until(lock, wakeup_time);
       }
     }
     if (impl_->paused) {
