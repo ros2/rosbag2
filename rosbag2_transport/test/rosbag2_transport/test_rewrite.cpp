@@ -353,10 +353,16 @@ namespace
 /// not matter to the rewrite, which has to pass them through unmodified.
 std::vector<uint8_t> make_fake_protobuf_payload(uint8_t index)
 {
-  std::vector<uint8_t> payload = {0x12, 0x04, 'c', 'a', 'm', '0', 0x1a, 0x10};
-  payload.insert(payload.end(), 16, index);
-  const std::vector<uint8_t> format_field = {0x22, 0x04, 'h', '2', '6', '4'};
-  payload.insert(payload.end(), format_field.begin(), format_field.end());
+  constexpr size_t kHeaderSize = 8;
+  constexpr size_t kDataSize = 16;
+  constexpr size_t kFormatSize = 6;
+  std::vector<uint8_t> payload;
+  // Reserve the final size up front. Growing the vector in place after constructing it from an
+  // initializer list makes GCC 15 -O3 emit a bogus -Warray-bounds warning for the inlined fill.
+  payload.reserve(kHeaderSize + kDataSize + kFormatSize);
+  payload.insert(payload.end(), {0x12, 0x04, 'c', 'a', 'm', '0', 0x1a, 0x10});
+  payload.insert(payload.end(), kDataSize, index);
+  payload.insert(payload.end(), {0x22, 0x04, 'h', '2', '6', '4'});
   return payload;
 }
 }  // namespace
