@@ -87,11 +87,10 @@ public:
 
     ON_CALL(*storage_factory_, open_read_write(_)).WillByDefault(
       DoAll(
-        Invoke(
           [this](const rosbag2_storage::StorageOptions & storage_options) {
             fake_storage_size_ = 0;
             fake_storage_uri_ = storage_options.uri;
-          }),
+          },
         Return(storage_)));
     EXPECT_CALL(*storage_factory_, open_read_write(_)).Times(AtLeast(0));
 
@@ -700,7 +699,7 @@ TEST_F(
 
   auto mock_message_cache = std::make_shared<NiceMock<MockMessageCache>>(1024u);
   ON_CALL(*mock_message_cache, get_current_size()).WillByDefault(
-    Invoke([&fake_cached_messages_size]() {return fake_cached_messages_size;}));
+    [&fake_cached_messages_size]() {return fake_cached_messages_size;});
   auto write_messages_cb =
     [](const std::vector<std::shared_ptr<const rosbag2_storage::SerializedBagMessage>> &) {};
   auto mock_cache_consumer =
@@ -1033,7 +1032,6 @@ TEST_F(SequentialWriterTest, calls_callback_on_storage_message_lost_with_no_cach
   ON_CALL(*storage_,
     write_message(An<std::shared_ptr<const rosbag2_storage::SerializedBagMessage>>()))
   .WillByDefault(
-    Invoke(
       [this](const std::shared_ptr<const rosbag2_storage::SerializedBagMessage> &) -> bool {
         static size_t curr_number_of_lost_messages = 0;
         if (curr_number_of_lost_messages < num_messages_to_lose_) {
@@ -1044,7 +1042,6 @@ TEST_F(SequentialWriterTest, calls_callback_on_storage_message_lost_with_no_cach
           return true;  // Simulate successful write
         }
       }
-    )
   );
 
   auto sequential_writer = std::make_unique<rosbag2_cpp::writers::SequentialWriter>(
@@ -1096,7 +1093,6 @@ TEST_F(SequentialWriterTest, calls_callback_on_storage_messages_lost_with_cache)
 
   ON_CALL(*storage_, write_messages(An<const rosbag2_storage::SerializedBagMessages &>()))
   .WillByDefault(
-    Invoke(
       [this](const rosbag2_storage::SerializedBagMessages & msgs)
       {
         static size_t curr_number_of_lost_messages = 0;
@@ -1111,7 +1107,6 @@ TEST_F(SequentialWriterTest, calls_callback_on_storage_messages_lost_with_cache)
         }
         return lost_messages;
       }
-    )
   );
 
   auto sequential_writer = std::make_unique<rosbag2_cpp::writers::SequentialWriter>(
@@ -1188,7 +1183,6 @@ TEST_F(SequentialWriterTest, calls_callback_on_messages_loss_in_writer_cache)
   ON_CALL(*mock_message_cache,
         mock_push(An<std::shared_ptr<const rosbag2_storage::SerializedBagMessage>>()))
   .WillByDefault(
-    Invoke(
       [this](const std::shared_ptr<const rosbag2_storage::SerializedBagMessage> &)-> bool
       {
         static size_t num_lost_messages_in_cache = 0;
@@ -1199,7 +1193,6 @@ TEST_F(SequentialWriterTest, calls_callback_on_messages_loss_in_writer_cache)
           return true;
         }
       }
-    )
   );
 
   auto mock_cache_consumer =
@@ -1355,12 +1348,12 @@ TEST_F(SequentialWriterTest, split_prepends_transient_local_messages_to_next_bag
   // because we configured writer to not use cache and messages before split will be written with
   // via storage_->write_message(msg) directly.
   EXPECT_CALL(*storage_, write_messages(An<const rosbag2_storage::SerializedBagMessages &>()))
-  .WillOnce(Invoke(
+  .WillOnce(
       [&prepended_messages](const rosbag2_storage::SerializedBagMessages & messages)
       {
         prepended_messages = messages;
         return std::vector<size_t>{};
-      })
+      }
   );
   EXPECT_CALL(*storage_,
     write_message(An<std::shared_ptr<const rosbag2_storage::SerializedBagMessage>>())).Times(2);
@@ -1381,12 +1374,12 @@ TEST_F(SequentialWriterTest, snapshot_merge_prepends_transient_local_messages)
   rosbag2_storage::SerializedBagMessages written_msgs;
 
   EXPECT_CALL(*storage_, write_messages(An<const rosbag2_storage::SerializedBagMessages &>()))
-  .WillOnce(Invoke(
+  .WillOnce(
       [&written_msgs](const rosbag2_storage::SerializedBagMessages & messages)
       {
         written_msgs = messages;
         return std::vector<size_t>{};
-      })
+      }
   );
 
   auto sequential_writer = std::make_unique<SequentialWriterForTest>(
