@@ -16,6 +16,7 @@
 
 #include <sys/stat.h>
 
+#include <algorithm>
 #include <atomic>
 #include <chrono>
 #include <cstring>
@@ -23,6 +24,8 @@
 #include <iostream>
 #include <limits>
 #include <memory>
+#include <sstream>
+#include <stdexcept>
 #include <string>
 #include <unordered_map>
 #include <utility>
@@ -32,6 +35,7 @@
 #include "rcpputils/scope_exit.hpp"
 
 #include "rosbag2_storage/metadata_io.hpp"
+#include "rosbag2_storage/qos.hpp"
 #include "rosbag2_storage/serialized_bag_message.hpp"
 #include "rosbag2_storage/yaml.hpp"
 #include "rosbag2_storage_sqlite3/sqlite_exception.hpp"

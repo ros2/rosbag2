@@ -16,6 +16,7 @@
 #define ROSBAG2_TEST_COMMON__WAIT_FOR_HPP_
 
 #include <chrono>
+#include <thread>
 
 #include "rclcpp/executors/single_threaded_executor.hpp"
 

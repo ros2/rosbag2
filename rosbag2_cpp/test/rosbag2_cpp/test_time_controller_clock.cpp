@@ -15,9 +15,17 @@
 #include <gmock/gmock.h>
 
 #include <atomic>
+#include <chrono>
+#include <cstdint>
+#include <cstdlib>
+#include <stdexcept>
 #include <thread>
 #include <rclcpp/utilities.hpp>
 #include "rosbag2_cpp/clocks/time_controller_clock.hpp"
+
+#include "rclcpp/time.hpp"
+#include "rcutils/time.h"
+#include "rosbag2_cpp/clocks/player_clock.hpp"
 
 using namespace testing;  // NOLINT
 using SteadyTimePoint = std::chrono::steady_clock::time_point;

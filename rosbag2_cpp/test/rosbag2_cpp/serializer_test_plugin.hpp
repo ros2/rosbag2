@@ -18,6 +18,9 @@
 #include <memory>
 
 #include "rosbag2_cpp/converter_interfaces/serialization_format_serializer.hpp"
+#include "rosbag2_cpp/types/introspection_message.hpp"
+#include "rosbag2_storage/serialized_bag_message.hpp"
+#include "rosidl_runtime_c/message_type_support_struct.h"
 
 class SerializerTestPlugin
   : public rosbag2_cpp::converter_interfaces::SerializationFormatSerializer

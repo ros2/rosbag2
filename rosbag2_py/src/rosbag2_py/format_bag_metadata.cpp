@@ -13,10 +13,13 @@
 // limitations under the License.
 
 #include <chrono>
+#include <cstddef>
+#include <ctime>
 #include <iostream>
 #include <iomanip>
 #include <memory>
 #include <sstream>
+#include <stdexcept>
 #include <string>
 #include <unordered_map>
 #include <vector>

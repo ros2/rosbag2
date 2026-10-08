@@ -18,8 +18,10 @@
 #include <memory>
 #include <string>
 
+#include "rosbag2_compression/base_compressor_interface.hpp"
 #include "rosbag2_compression/compression_factory.hpp"
 #include "fake_compressor.hpp"
+#include "rosbag2_compression/visibility_control.hpp"
 
 class ROSBAG2_COMPRESSION_EXPORT FakeCompressionFactory
   : public rosbag2_compression::CompressionFactory

@@ -23,6 +23,7 @@
 #include "rosidl_typesupport_introspection_cpp/message_introspection.hpp"
 
 #include "rosbag2_cpp/visibility_control.hpp"
+#include "rosidl_runtime_c/message_type_support_struct.h"
 
 struct rosidl_message_type_support_t;
 

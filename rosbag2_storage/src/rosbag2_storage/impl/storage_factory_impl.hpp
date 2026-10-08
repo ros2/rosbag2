@@ -17,15 +17,20 @@
 #define ROSBAG2_STORAGE__IMPL__STORAGE_FACTORY_IMPL_HPP_
 
 #include <algorithm>
+#include <exception>
 #include <memory>
+#include <sstream>
+#include <stdexcept>
 #include <string>
 #include <unordered_set>
 #include <vector>
 
 #include "pluginlib/class_loader.hpp"
 
+#include "rosbag2_storage/storage_interfaces/base_io_interface.hpp"
 #include "rosbag2_storage/storage_interfaces/read_only_interface.hpp"
 #include "rosbag2_storage/storage_interfaces/read_write_interface.hpp"
+#include "rosbag2_storage/storage_options.hpp"
 
 #include "rosbag2_storage/storage_factory.hpp"
 #include "rosbag2_storage/storage_traits.hpp"

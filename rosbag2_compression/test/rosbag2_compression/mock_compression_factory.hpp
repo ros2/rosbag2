@@ -20,6 +20,8 @@
 #include <memory>
 #include <string>
 
+#include "rosbag2_compression/base_compressor_interface.hpp"
+#include "rosbag2_compression/base_decompressor_interface.hpp"
 #include "rosbag2_compression/compression_factory.hpp"
 
 class MockCompressionFactory : public rosbag2_compression::CompressionFactory

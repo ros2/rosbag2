@@ -14,6 +14,10 @@
 
 #include "compression_utils.hpp"
 
+#include <cerrno>
+#include <cstdio>
+#include <sstream>
+#include <stdexcept>
 #include <string>
 #include <vector>
 

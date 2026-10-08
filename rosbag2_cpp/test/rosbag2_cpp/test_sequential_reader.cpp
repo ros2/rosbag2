@@ -14,8 +14,12 @@
 
 #include <gmock/gmock.h>
 
+#include <algorithm>
+#include <cstddef>
+#include <cstdint>
 #include <filesystem>
 #include <memory>
+#include <stdexcept>
 #include <string>
 #include <unordered_map>
 #include <utility>
@@ -23,6 +27,8 @@
 
 #include "rmw/rmw.h"
 
+#include "rosbag2_cpp/bag_events.hpp"
+#include "rosbag2_cpp/converter_options.hpp"
 #include "rosbag2_cpp/readers/sequential_reader.hpp"
 #include "rosbag2_cpp/reader.hpp"
 #include "rosbag2_cpp/writer.hpp"
@@ -30,6 +36,11 @@
 #include "rosbag2_storage/bag_metadata.hpp"
 #include "rosbag2_storage/metadata_io.hpp"
 #include "rosbag2_storage/ros_helper.hpp"
+#include "rosbag2_storage/serialized_bag_message.hpp"
+#include "rosbag2_storage/storage_factory.hpp"
+#include "rosbag2_storage/storage_filter.hpp"
+#include "rosbag2_storage/storage_interfaces/base_read_interface.hpp"
+#include "rosbag2_storage/storage_options.hpp"
 #include "rosbag2_storage/topic_metadata.hpp"
 
 #include "rosbag2_test_common/tested_storage_ids.hpp"
@@ -44,6 +55,8 @@
 #include "mock_metadata_io.hpp"
 #include "mock_storage.hpp"
 #include "mock_storage_factory.hpp"
+#include "rclcpp/time.hpp"
+#include "rcutils/time.h"
 
 using namespace testing;  // NOLINT
 using rosbag2_test_common::ParametrizedTemporaryDirectoryFixture;

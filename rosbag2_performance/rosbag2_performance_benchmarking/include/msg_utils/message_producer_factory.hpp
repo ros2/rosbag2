@@ -16,6 +16,7 @@
 #define MSG_UTILS__MESSAGE_PRODUCER_FACTORY_HPP_
 
 #include <memory>
+#include <stdexcept>
 #include <string>
 
 #include <rosbag2_performance_benchmarking_msgs/msg/byte_array.hpp>

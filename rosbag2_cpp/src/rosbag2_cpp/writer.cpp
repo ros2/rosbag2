@@ -25,6 +25,7 @@
 #include "rclcpp/logging.hpp"
 #include "rclcpp/serialized_message.hpp"
 #include "rclcpp/time.hpp"
+#include "rcutils/types/uint8_array.h"
 
 #include "rosbag2_cpp/info.hpp"
 #include "rosbag2_cpp/writer_interfaces/base_writer_interface.hpp"

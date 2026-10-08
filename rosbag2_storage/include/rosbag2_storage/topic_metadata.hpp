@@ -15,6 +15,7 @@
 #ifndef ROSBAG2_STORAGE__TOPIC_METADATA_HPP_
 #define ROSBAG2_STORAGE__TOPIC_METADATA_HPP_
 
+#include <cstdint>
 #include <string>
 #include <vector>
 #include "rclcpp/qos.hpp"

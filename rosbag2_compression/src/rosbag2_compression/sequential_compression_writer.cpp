@@ -15,7 +15,9 @@
 #include "rosbag2_compression/sequential_compression_writer.hpp"
 
 #include <algorithm>
+#include <cerrno>
 #include <chrono>
+#include <cstdint>
 #include <cstring>
 #include <filesystem>
 #include <functional>
@@ -27,12 +29,15 @@
 
 #include "rcpputils/asserts.hpp"
 
+#include "rosbag2_cpp/bag_events.hpp"
 #include "rosbag2_cpp/info.hpp"
 
 #include "rosbag2_storage/storage_options.hpp"
 #include "rosbag2_storage/storage_interfaces/read_write_interface.hpp"
 
 #include "logging.hpp"
+#include "rosbag2_compression/base_compressor_interface.hpp"
+#include "rosbag2_compression/compression_factory.hpp"
 #ifdef _WIN32
 #include <windows.h>
 #else

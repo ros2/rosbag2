@@ -20,11 +20,16 @@
 #include <utility>
 
 #include "mock_recorder.hpp"
+#include "rclcpp/node.hpp"
+#include "rclcpp/qos.hpp"
+#include "rcpputils/scope_exit.hpp"
+#include "rosbag2_transport/record_options.hpp"
 #include "test_msgs/msg/basic_types.hpp"
 #include "test_msgs/message_fixtures.hpp"
 #include "rosbag2_test_common/publication_manager.hpp"
 #include "rosbag2_test_common/wait_for.hpp"
 #include "record_integration_fixture.hpp"
+#include "test_msgs/msg/strings.hpp"
 
 using namespace std::chrono_literals;  // NOLINT
 

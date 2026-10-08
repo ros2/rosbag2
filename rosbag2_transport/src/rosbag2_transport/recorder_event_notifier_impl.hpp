@@ -16,8 +16,11 @@
 #ifndef ROSBAG2_TRANSPORT__RECORDER_EVENT_NOTIFIER_IMPL_HPP_
 #define ROSBAG2_TRANSPORT__RECORDER_EVENT_NOTIFIER_IMPL_HPP_
 
+#include <atomic>
 #include <chrono>
 #include <condition_variable>
+#include <cstdint>
+#include <exception>
 #include <mutex>
 #include <queue>
 #include <stdexcept>
@@ -28,6 +31,8 @@
 #include <utility>
 #include <vector>
 
+#include "rclcpp/event_handler.hpp"
+#include "rclcpp/expand_topic_or_service_name.hpp"
 #include "rclcpp/logging.hpp"
 #include "rclcpp/node.hpp"
 #include "rclcpp/publisher.hpp"
@@ -38,6 +43,7 @@
 #include "rosbag2_cpp/bag_events.hpp"
 #include "rosbag2_storage/qos.hpp"
 #include "rosbag2_transport/rclcpp_publisher_wrapper.hpp"
+#include "rosbag2_transport/record_options.hpp"
 #include "rosbag2_transport/recorder_event_notifier.hpp"
 
 namespace rosbag2_transport

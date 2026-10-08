@@ -16,6 +16,7 @@
 #define ROSBAG2_TEST_COMMON__BAG_FILES_HELPERS_HPP_
 
 #include <chrono>
+#include <cstddef>
 #include <filesystem>
 #include <stdexcept>
 #include <string>

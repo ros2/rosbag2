@@ -17,6 +17,7 @@
 #define ROSBAG2_PY__INFO_SORTING_METHOD_HPP_
 
 #include <algorithm>
+#include <cstddef>
 #include <numeric>
 #include <stdexcept>
 #include <string>

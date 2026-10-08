@@ -15,15 +15,21 @@
 #ifndef ROSBAG2_TRANSPORT__MOCK_PLAYER_HPP_
 #define ROSBAG2_TRANSPORT__MOCK_PLAYER_HPP_
 
+#include <cstddef>
 #include <memory>
 #include <utility>
 #include <vector>
 #include <string>
 
-#include "rclcpp_action/rclcpp_action.hpp"
+#include "rclcpp/client.hpp"
+#include "rclcpp/node_options.hpp"
+#include "rclcpp/publisher_base.hpp"
+#include "rclcpp_action/client_base.hpp"
+#include "rclcpp_action/types.hpp"
 
 #include "rosbag2_cpp/reader.hpp"
 #include "rosbag2_storage/storage_options.hpp"
+#include "rosbag2_transport/play_options.hpp"
 #include "rosbag2_transport/player.hpp"
 
 class MockPlayer : public rosbag2_transport::Player

@@ -15,7 +15,9 @@
 #ifndef ROSBAG2_PERFORMANCE_BENCHMARKING__CONFIG_UTILS_HPP_
 #define ROSBAG2_PERFORMANCE_BENCHMARKING__CONFIG_UTILS_HPP_
 
+#include <cstddef>
 #include <string>
+#include <string_view>
 #include <vector>
 
 #include "rclcpp/node.hpp"

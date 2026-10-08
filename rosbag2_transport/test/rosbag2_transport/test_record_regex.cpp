@@ -14,11 +14,15 @@
 
 #include <gmock/gmock.h>
 
+#include <algorithm>
 #include <chrono>
+#include <cstddef>
+#include <iterator>
 #include <memory>
 #include <regex>
 #include <string>
 #include <utility>
+#include <vector>
 
 #include "rosbag2_test_common/action_client_manager.hpp"
 #include "rosbag2_test_common/client_manager.hpp"
@@ -26,6 +30,7 @@
 #include "rosbag2_test_common/wait_for.hpp"
 
 #include "rosbag2_cpp/action_utils.hpp"
+#include "rosbag2_transport/record_options.hpp"
 #include "rosbag2_transport/recorder.hpp"
 
 #include "test_msgs/action/fibonacci.hpp"
@@ -35,6 +40,8 @@
 #include "test_msgs/srv/basic_types.hpp"
 
 #include "mock_recorder.hpp"
+#include "mock_sequential_writer.hpp"
+#include "rcpputils/scope_exit.hpp"
 #include "record_integration_fixture.hpp"
 
 using namespace std::chrono_literals;  // NOLINT
