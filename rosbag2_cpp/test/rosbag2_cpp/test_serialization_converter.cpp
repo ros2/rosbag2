@@ -63,11 +63,10 @@ public:
 
     ON_CALL(*storage_factory_, open_read_write(_)).WillByDefault(
       DoAll(
-        Invoke(
           [this](const rosbag2_storage::StorageOptions & storage_options) {
             mock_storage_data_.clear();
             (void)storage_options;
-          }),
+          },
         Return(storage_)));
     EXPECT_CALL(*storage_factory_, open_read_write(_)).Times(AtLeast(1));
 

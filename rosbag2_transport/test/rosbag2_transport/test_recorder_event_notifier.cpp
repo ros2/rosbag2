@@ -391,20 +391,20 @@ TEST_F(TestRecorderEventNotifier, event_notifier_respects_max_publishing_rate) {
 
   // Set up expectations on the shared_ptr mocks directly
   ON_CALL(*write_split_pub_mock, publish(::testing::_))
-  .WillByDefault(::testing::Invoke(
+  .WillByDefault(
       [&published_write_split_events, &published_events_mutex](const WriteSplitEvent & msg) {
         std::lock_guard<std::mutex> lock(published_events_mutex);
         published_write_split_events.push_back(msg);
       }
-  ));
+  );
 
   EXPECT_CALL(*msgs_lost_pub_mock, publish(::testing::_))
-  .WillRepeatedly(::testing::Invoke(
+  .WillRepeatedly(
       [&published_messages_lost_events, &published_events_mutex](const MessagesLostEvent & msg) {
         std::lock_guard<std::mutex> lock(published_events_mutex);
         published_messages_lost_events.emplace_back(std::chrono::steady_clock::now(), msg);
       }
-  ));
+  );
 
   // Pass the shared_ptr mocks directly to the notifier
   notifier_ = std::make_unique<RecorderEventNotifier>(node_.get(),
