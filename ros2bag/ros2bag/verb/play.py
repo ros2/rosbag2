@@ -12,12 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from argparse import FileType
 import signal
 import threading
 
 from rclpy.qos import InvalidQoSProfileException
 from ros2bag.api import add_standard_multi_reader_args
+from ros2bag.api import check_file_readable
 from ros2bag.api import check_not_negative_float
 from ros2bag.api import check_not_negative_int
 from ros2bag.api import check_positive_float
@@ -90,7 +90,7 @@ class PlayVerb(VerbExtension):
             '--exclude-actions', type=str, default=[], metavar='action', nargs='+',
             help='Space-delimited list of actions not to play.')
         parser.add_argument(
-            '--qos-profile-overrides-path', type=FileType('r'),
+            '--qos-profile-overrides-path', type=check_file_readable,
             help='Path to a yaml file defining overrides of the QoS profile for specific topics.')
         parser.add_argument(
             '-l', '--loop', action='store_true',
@@ -101,7 +101,7 @@ class PlayVerb(VerbExtension):
             help='list of topics to be remapped: in the form '
                  '"old_topic1:=new_topic1 old_topic2:=new_topic2 etc." ')
         parser.add_argument(
-            '--storage-config-file', type=FileType('r'),
+            '--storage-config-file', type=check_file_readable,
             help='Path to a yaml file defining storage specific configurations. '
                  'See storage plugin documentation for the format of this file.')
         clock_args_group = parser.add_mutually_exclusive_group()
@@ -236,7 +236,8 @@ class PlayVerb(VerbExtension):
     def main(self, *, args):  # noqa: D102
         qos_profile_overrides = {}  # Specify a valid default
         if args.qos_profile_overrides_path:
-            qos_profile_dict = yaml.safe_load(args.qos_profile_overrides_path)
+            with open(args.qos_profile_overrides_path, 'r') as f:
+                qos_profile_dict = yaml.safe_load(f)
             try:
                 qos_profile_overrides = convert_yaml_to_qos_profile(
                     qos_profile_dict)
@@ -245,7 +246,7 @@ class PlayVerb(VerbExtension):
 
         storage_config_file = ''
         if args.storage_config_file:
-            storage_config_file = args.storage_config_file.name
+            storage_config_file = args.storage_config_file
 
         topic_remapping = ['--ros-args']
         for remap_rule in args.remap:
