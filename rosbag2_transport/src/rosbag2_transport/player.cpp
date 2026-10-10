@@ -571,6 +571,10 @@ bool PlayerImpl::play()
         RCLCPP_ERROR(owner_->get_logger(), "Failed to play: %s", e.what());
       }
 
+      if (clock_publish_timer_ != nullptr) {
+        clock_publish_timer_->cancel();
+      }
+
       // Wait for all published messages to be acknowledged.
       if (play_options_.wait_acked_timeout >= 0) {
         std::chrono::milliseconds timeout(play_options_.wait_acked_timeout);
