@@ -15,7 +15,6 @@
 from argparse import (
     ArgumentParser,
     ArgumentTypeError,
-    FileType,
     HelpFormatter,
 )
 import os
@@ -145,6 +144,22 @@ def check_path_exists(value: Any) -> str:
         raise ArgumentTypeError("Bag path '{}' does not exist!".format(value))
     except ValueError:
         raise ArgumentTypeError('{} is not the valid type (string)'.format(value))
+
+
+def check_file_readable(value: Any) -> str:
+    """
+    Argparse validator to verify that a path refers to a readable file.
+
+    Unlike ``argparse.FileType`` (deprecated since Python 3.14) this does not
+    leave the file open; it only checks that it can be opened for reading and
+    returns the path unchanged.
+    """
+    try:
+        with open(value, 'r'):
+            pass
+    except OSError as e:
+        raise ArgumentTypeError(f"can't open '{value}': {e}")
+    return value
 
 
 def check_not_negative_int(arg: str) -> int:
@@ -287,7 +302,7 @@ def add_writer_storage_plugin_extensions(parser: ArgumentParser) -> None:
         extension = None
 
     parser.add_argument(
-        '--storage-config-file', type=FileType('r'),
+        '--storage-config-file', type=check_file_readable,
         help='Path to a yaml file defining storage specific configurations. '
              f'See {plugin_id} plugin documentation for the format of this file.')
 
