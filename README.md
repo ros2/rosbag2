@@ -170,6 +170,10 @@ $ ros2 bag play -i <bag1> -i <bag2> -i <bag3>
 
 Messages from all provided bags will be played in order, based on their original recording reception timestamps.
 
+#### Publishing simulation time
+
+When fixed-frequency `/clock` publication is enabled with `--clock` or the `play.clock_publish_frequency` node parameter, `/clock` is published only while a playback session is active. If the Player node remains alive after playback finishes or is stopped, clock publication stops. Starting another playback session restarts it. Pausing playback does not end the session; fixed-frequency updates continue with the paused time.
+
 #### Controlling playback via services
 
 The Rosbag2 player provides the following services for remote control, which can be called via `ros2 service` commandline or from your nodes,
