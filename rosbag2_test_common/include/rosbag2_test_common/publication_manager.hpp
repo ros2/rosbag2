@@ -15,11 +15,15 @@
 #ifndef ROSBAG2_TEST_COMMON__PUBLICATION_MANAGER_HPP_
 #define ROSBAG2_TEST_COMMON__PUBLICATION_MANAGER_HPP_
 
+#include <chrono>
+#include <cstdint>
 #include <cstring>
 #include <functional>
 #include <future>
 #include <memory>
+#include <ratio>
 #include <string>
+#include <thread>
 #include <utility>
 #include <vector>
 

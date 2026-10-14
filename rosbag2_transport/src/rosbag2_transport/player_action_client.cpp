@@ -12,11 +12,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <algorithm>
 #include <memory>
+#include <sstream>
+#include <stdexcept>
 #include <utility>
 
+#include "action_msgs/srv/cancel_goal.hpp"
 #include "rosbag2_transport/player_action_client.hpp"
 
+#include "rclcpp/logging.hpp"
 #include "rclcpp/typesupport_helpers.hpp"
 
 #include "rosbag2_cpp/action_utils.hpp"
@@ -25,6 +30,10 @@
 #include "rosidl_typesupport_introspection_cpp/message_introspection.hpp"
 
 #include "logging.hpp"
+#include "rmw/ret_types.h"
+#include "rmw/rmw.h"
+#include "rosidl_runtime_cpp/message_initialization.hpp"
+#include "unique_identifier_msgs/msg/uuid.hpp"
 
 using namespace std::chrono_literals;
 

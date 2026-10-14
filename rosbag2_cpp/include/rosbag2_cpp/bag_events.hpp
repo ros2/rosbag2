@@ -15,9 +15,11 @@
 #ifndef ROSBAG2_CPP__BAG_EVENTS_HPP_
 #define ROSBAG2_CPP__BAG_EVENTS_HPP_
 
+#include <cstdint>
 #include <functional>
 #include <memory>
 #include <string>
+#include <type_traits>
 #include <vector>
 
 #include "rclcpp/function_traits.hpp"

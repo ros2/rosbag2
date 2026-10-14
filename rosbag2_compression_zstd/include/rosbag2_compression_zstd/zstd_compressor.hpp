@@ -26,6 +26,7 @@
 #include "rosbag2_compression/base_compressor_interface.hpp"
 
 #include "rosbag2_compression_zstd/visibility_control.hpp"
+#include "rosbag2_storage/serialized_bag_message.hpp"
 
 namespace rosbag2_compression_zstd
 {

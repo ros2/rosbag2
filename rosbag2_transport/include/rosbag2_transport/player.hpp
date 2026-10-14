@@ -16,6 +16,8 @@
 #define ROSBAG2_TRANSPORT__PLAYER_HPP_
 
 #include <chrono>
+#include <cstddef>
+#include <cstdint>
 #include <forward_list>
 #include <functional>
 #include <future>
@@ -27,11 +29,16 @@
 
 #include "keyboard_handler/keyboard_handler.hpp"
 
+#include "rclcpp/generic_client.hpp"
+#include "rclcpp/generic_publisher.hpp"
 #include "rclcpp/node.hpp"
+#include "rclcpp/node_options.hpp"
 #include "rclcpp/publisher.hpp"
 #include "rclcpp/qos.hpp"
 
 #include "rclcpp_action/generic_client.hpp"
+#include "rclcpp_action/types.hpp"
+#include "rcutils/time.h"
 
 #include "rosbag2_cpp/clocks/player_clock.hpp"
 #include "rosbag2_interfaces/msg/read_split_event.hpp"

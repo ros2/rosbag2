@@ -14,6 +14,7 @@
 
 #include <gmock/gmock.h>
 
+#include <chrono>
 #include <filesystem>
 #include <memory>
 #include <utility>
@@ -21,6 +22,7 @@
 #include "record_integration_fixture.hpp"
 #include "mock_recorder.hpp"
 #include "rosbag2_test_common/publication_manager.hpp"
+#include "rosbag2_transport/record_options.hpp"
 #include "test_msgs/message_fixtures.hpp"
 
 using namespace ::testing;  // NOLINT

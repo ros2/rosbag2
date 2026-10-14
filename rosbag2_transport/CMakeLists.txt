@@ -645,9 +645,6 @@ if(BUILD_TESTING)
   if(TARGET test_play_services__rmw_fastrtps_cpp)
     ament_add_test_label(test_play_services__rmw_fastrtps_cpp xfail)
   endif()
-  if(TARGET test_play_services__rmw_fastrtps_dynamic_cpp)
-    ament_add_test_label(test_play_services__rmw_fastrtps_dynamic_cpp xfail)
-  endif()
 
   ament_add_gmock(test_record_options
     test/rosbag2_transport/test_record_options.cpp)

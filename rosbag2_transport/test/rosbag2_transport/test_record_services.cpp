@@ -16,12 +16,19 @@
 
 #include <algorithm>
 #include <atomic>
+#include <chrono>
+#include <iostream>
 #include <memory>
+#include <ostream>
+#include <stdexcept>
 #include <string>
+#include <thread>
 #include <vector>
 #include <utility>
 #include <type_traits>
 
+#include "mock_sequential_writer.hpp"
+#include "rcl/time.h"
 #include "rcutils/time.h"
 
 #include "rclcpp/client.hpp"
@@ -48,14 +55,17 @@
 #include "rosbag2_interfaces/srv/stop_discovery.hpp"
 #include "rosbag2_interfaces/srv/stop.hpp"
 #include "rosbag2_storage/qos.hpp"
+#include "rosbag2_transport/record_options.hpp"
 #include "rosbag2_transport/recorder.hpp"
 
 #include "rosbag2_test_common/publication_manager.hpp"
 #include "rosbag2_test_common/wait_for.hpp"
 
 #include "test_msgs/message_fixtures.hpp"
+#include "test_msgs/msg/strings.hpp"
 
 #include "record_integration_fixture.hpp"
+#include "rosbag2_cpp/bag_events.hpp"
 
 using namespace ::testing;  // NOLINT
 using namespace std::chrono_literals;  // NOLINT

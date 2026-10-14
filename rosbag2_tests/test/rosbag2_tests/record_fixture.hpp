@@ -17,6 +17,9 @@
 
 #include <gmock/gmock.h>
 
+#include <algorithm>
+#include <chrono>
+#include <cstddef>
 #include <filesystem>
 #include <memory>
 #include <string>
@@ -26,6 +29,7 @@
 
 #include "rosbag2_compression/sequential_compression_reader.hpp"
 #include "rosbag2_cpp/reader.hpp"
+#include "rosbag2_storage/metadata_io.hpp"
 #include "rosbag2_storage/storage_filter.hpp"
 #include "rosbag2_test_common/bag_files_helpers.hpp"
 #include "rosbag2_test_common/memory_management.hpp"

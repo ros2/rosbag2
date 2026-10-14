@@ -16,6 +16,7 @@
 #define ROSBAG2_COMPRESSION__COMPRESSION_FACTORY_IMPL_HPP_
 
 #include <algorithm>
+#include <exception>
 #include <memory>
 #include <stdexcept>
 #include <string>
@@ -24,6 +25,8 @@
 #include "pluginlib/class_loader.hpp"
 
 #include "logging.hpp"
+#include "rosbag2_compression/base_compressor_interface.hpp"
+#include "rosbag2_compression/base_decompressor_interface.hpp"
 #include "rosbag2_compression/compression_factory.hpp"
 
 namespace rosbag2_compression

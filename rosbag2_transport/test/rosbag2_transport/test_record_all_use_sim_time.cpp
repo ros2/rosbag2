@@ -14,11 +14,20 @@
 
 #include <gmock/gmock.h>
 
+#include <chrono>
+#include <cstddef>
+#include <cstdint>
+#include <iostream>
 #include <memory>
+#include <ostream>
+#include <stdexcept>
 #include <string>
+#include <thread>
+#include <unordered_map>
 #include <utility>
 #include <vector>
 
+#include "mock_sequential_writer.hpp"
 #include "rclcpp/executors/single_threaded_executor.hpp"
 #include "rclcpp/node.hpp"
 #include "rclcpp/node_options.hpp"
@@ -26,16 +35,19 @@
 #include "rclcpp/qos.hpp"
 #include "rclcpp/time.hpp"
 #include "rclcpp/timer.hpp"
+#include "rcpputils/scope_exit.hpp"
 
 #include "rosbag2_test_common/publication_manager.hpp"
 #include "rosbag2_test_common/wait_for.hpp"
 
+#include "rosbag2_transport/record_options.hpp"
 #include "rosbag2_transport/recorder.hpp"
 
 #include "test_msgs/msg/basic_types.hpp"
 #include "test_msgs/message_fixtures.hpp"
 
 #include "record_integration_fixture.hpp"
+#include "rosbag2_storage/serialized_bag_message.hpp"
 #include "rosgraph_msgs/msg/clock.hpp"
 #include "mock_recorder.hpp"
 

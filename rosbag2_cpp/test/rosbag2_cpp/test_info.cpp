@@ -14,17 +14,20 @@
 
 #include <gmock/gmock.h>
 
+#include <chrono>
 #include <filesystem>
 #include <fstream>
 #include <memory>
 #include <string>
 #include <vector>
 
+#include "rclcpp/time.hpp"
 #include "rosbag2_cpp/info.hpp"
 #include "rosbag2_cpp/writer.hpp"
 
 #include "rosbag2_storage/bag_metadata.hpp"
 #include "rosbag2_storage/metadata_io.hpp"
+#include "rosbag2_storage/storage_options.hpp"
 
 #include "rosbag2_test_common/temporary_directory_fixture.hpp"
 #include "rosbag2_test_common/tested_storage_ids.hpp"

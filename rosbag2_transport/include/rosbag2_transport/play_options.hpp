@@ -17,6 +17,7 @@
 
 #include <chrono>
 #include <cstddef>
+#include <cstdint>
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -24,6 +25,7 @@
 #include "keyboard_handler/keyboard_handler.hpp"
 #include "rclcpp/duration.hpp"
 #include "rclcpp/qos.hpp"
+#include "rcutils/time.h"
 #include "rosbag2_storage/yaml.hpp"
 #include "rosbag2_transport/visibility_control.hpp"
 

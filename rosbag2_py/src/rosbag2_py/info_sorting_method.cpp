@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <cctype>
+
 #include "rosbag2_storage/bag_metadata.hpp"
 
 #include "info_sorting_method.hpp"

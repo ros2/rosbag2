@@ -16,8 +16,10 @@
 #define ROSBAG2_TEST_COMMON__CLIENT_MANAGER_HPP_
 
 #include <chrono>
+#include <cstddef>
 #include <memory>
 #include <string>
+#include <thread>
 #include <utility>
 #include <vector>
 
@@ -34,6 +36,7 @@
 #include "rclcpp/node_options.hpp"
 #include "rclcpp/qos.hpp"
 #include "rclcpp/service.hpp"
+#include "rmw/types.h"
 
 namespace rosbag2_test_common
 {

@@ -17,19 +17,33 @@
 #include <algorithm>
 #include <atomic>
 #include <chrono>
+#include <cstddef>
+#include <cstdint>
+#include <cstdlib>
 #include <memory>
+#include <string>
 #include <thread>
 #include <utility>
 #include <vector>
 
+#include "rclcpp/duration.hpp"
 #include <rclcpp/executors.hpp>
+#include "rclcpp/executors/single_threaded_executor.hpp"
+#include "rclcpp/node.hpp"
+#include "rclcpp/qos.hpp"
+#include "rclcpp/time.hpp"
 #include "rcpputils/scope_exit.hpp"
 #include "rosbag2_transport/player.hpp"
 #include "rosgraph_msgs/msg/clock.hpp"
 #include "test_msgs/message_fixtures.hpp"
+#include "test_msgs/msg/basic_types.hpp"
 
 #include "mock_player.hpp"
+#include "mock_sequential_reader.hpp"
+#include "rcutils/time.h"
 #include "rosbag2_play_test_fixture.hpp"
+#include "rosbag2_storage/serialized_bag_message.hpp"
+#include "rosbag2_storage/topic_metadata.hpp"
 
 using namespace ::testing;  // NOLINT
 

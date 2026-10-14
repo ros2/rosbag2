@@ -17,20 +17,29 @@
 #include <cstdint>
 #include <cstring>
 #include <filesystem>
+#include <iostream>
 #include <memory>
+#include <ostream>
 #include <string>
 #include <unordered_map>
 #include <vector>
 #include <utility>
 
 #include "rclcpp/time.hpp"
+#include "rcutils/time.h"
 
 #include "rosbag2_cpp/writer.hpp"
+#include "rosbag2_storage/message_definition.hpp"
+#include "rosbag2_storage/metadata_io.hpp"
 #include "rosbag2_storage/ros_helper.hpp"
+#include "rosbag2_storage/serialized_bag_message.hpp"
+#include "rosbag2_storage/storage_options.hpp"
+#include "rosbag2_storage/topic_metadata.hpp"
 #include "rosbag2_test_common/temporary_directory_fixture.hpp"
 #include "rosbag2_test_common/tested_storage_ids.hpp"
 #include "rosbag2_transport/bag_rewrite.hpp"
 #include "rosbag2_transport/reader_writer_factory.hpp"
+#include "rosbag2_transport/record_options.hpp"
 
 #include "test_msgs/msg/basic_types.hpp"
 
@@ -353,10 +362,16 @@ namespace
 /// not matter to the rewrite, which has to pass them through unmodified.
 std::vector<uint8_t> make_fake_protobuf_payload(uint8_t index)
 {
-  std::vector<uint8_t> payload = {0x12, 0x04, 'c', 'a', 'm', '0', 0x1a, 0x10};
-  payload.insert(payload.end(), 16, index);
-  const std::vector<uint8_t> format_field = {0x22, 0x04, 'h', '2', '6', '4'};
-  payload.insert(payload.end(), format_field.begin(), format_field.end());
+  constexpr size_t kHeaderSize = 8;
+  constexpr size_t kDataSize = 16;
+  constexpr size_t kFormatSize = 6;
+  std::vector<uint8_t> payload;
+  // Reserve the final size up front. Growing the vector in place after constructing it from an
+  // initializer list makes GCC 15 -O3 emit a bogus -Warray-bounds warning for the inlined fill.
+  payload.reserve(kHeaderSize + kDataSize + kFormatSize);
+  payload.insert(payload.end(), {0x12, 0x04, 'c', 'a', 'm', '0', 0x1a, 0x10});
+  payload.insert(payload.end(), kDataSize, index);
+  payload.insert(payload.end(), {0x22, 0x04, 'h', '2', '6', '4'});
   return payload;
 }
 }  // namespace

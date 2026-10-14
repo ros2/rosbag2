@@ -16,12 +16,14 @@
 
 #include <memory>
 #include <sstream>
+#include <stdexcept>
 #include <string>
 #include <vector>
 
 #include "ament_index_cpp/get_resources.hpp"
 #include "rcpputils/find_library.hpp"
 #include "rcpputils/shared_library.hpp"
+#include "rmw/ret_types.h"
 #include "rmw/rmw.h"
 #include "rosbag2_cpp/converter_interfaces/serialization_format_converter.hpp"
 #include "rosbag2_cpp/logging.hpp"

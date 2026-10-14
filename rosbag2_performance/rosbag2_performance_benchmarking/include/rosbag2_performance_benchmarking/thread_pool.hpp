@@ -15,8 +15,10 @@
 #ifndef ROSBAG2_PERFORMANCE_BENCHMARKING__THREAD_POOL_HPP_
 #define ROSBAG2_PERFORMANCE_BENCHMARKING__THREAD_POOL_HPP_
 
+#include <cstddef>
 #include <mutex>
 #include <queue>
+#include <stdexcept>
 #include <vector>
 #include <thread>
 #include <functional>

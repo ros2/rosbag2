@@ -18,12 +18,15 @@
 #include <chrono>
 #include <ctime>
 #include <filesystem>
+#include <functional>
 #include <iomanip>
+#include <iterator>
 #include <memory>
 #include <regex>
 #include <stdexcept>
 #include <string>
 #include <sstream>
+#include <system_error>
 #include <unordered_map>
 #include <utility>
 #include <vector>
@@ -33,6 +36,8 @@
 #include "rosbag2_cpp/info.hpp"
 #include "rosbag2_cpp/logging.hpp"
 #include "rosbag2_storage/default_storage_id.hpp"
+#include "rosbag2_storage/storage_interfaces/base_io_interface.hpp"
+#include "rosbag2_storage/storage_interfaces/base_write_interface.hpp"
 #include "rosbag2_storage/storage_options.hpp"
 
 namespace fs = std::filesystem;

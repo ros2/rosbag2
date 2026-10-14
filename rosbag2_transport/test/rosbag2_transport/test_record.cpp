@@ -16,8 +16,13 @@
 
 #include <algorithm>
 #include <atomic>
+#include <chrono>
+#include <cstddef>
+#include <cstdint>
 #include <filesystem>
+#include <iostream>
 #include <memory>
+#include <ostream>
 #include <string>
 #include <unordered_map>
 #include <utility>
@@ -25,24 +30,35 @@
 #include <rosbag2_storage/ros_helper.hpp>
 
 #include "mock_recorder.hpp"
+#include "mock_sequential_writer.hpp"
 #include "rclcpp/event_handler.hpp"
 #include "rclcpp/node.hpp"
 #include "rclcpp/qos.hpp"
 #include "rclcpp/utilities.hpp"
 #include "rcpputils/scope_exit.hpp"
+#include "rcutils/time.h"
+#include "rmw/time.h"
+#include "rmw/types.h"
+#include "rosbag2_cpp/bag_events.hpp"
 
 #include "rosbag2_test_common/publication_manager.hpp"
 #include "rosbag2_test_common/wait_for.hpp"
 #include "rosbag2_test_common/temporary_directory_fixture.hpp"
 
+#include "rosbag2_transport/record_options.hpp"
 #include "rosbag2_transport/recorder.hpp"
 
 #include "test_msgs/msg/arrays.hpp"
 #include "test_msgs/msg/basic_types.hpp"
 #include "test_msgs/message_fixtures.hpp"
+#include "test_msgs/msg/strings.hpp"
 
+#include "rosbag2_storage/message_definition.hpp"
 #include "rosbag2_storage/qos.hpp"
 #include "record_integration_fixture.hpp"
+#include "rosbag2_storage/serialized_bag_message.hpp"
+#include "rosbag2_storage/storage_options.hpp"
+#include "rosbag2_storage/topic_metadata.hpp"
 #include "rosbag2_transport/reader_writer_factory.hpp"
 
 using namespace ::testing;  // NOLINT

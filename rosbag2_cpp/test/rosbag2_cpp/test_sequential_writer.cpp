@@ -14,23 +14,38 @@
 
 #include <gmock/gmock.h>
 
+#include <atomic>
 #include <chrono>
+#include <cstdint>
 #include <ctime>
 #include <filesystem>
 #include <iomanip>
+#include <iostream>
 #include <memory>
+#include <ostream>
 #include <regex>
 #include <sstream>
 #include <stdexcept>
 #include <string>
+#include <thread>
 #include <utility>
 #include <vector>
 
+#include "rosbag2_cpp/bag_events.hpp"
+#include "rosbag2_cpp/cache/cache_consumer.hpp"
+#include "rosbag2_cpp/cache/message_cache_interface.hpp"
+#include "rosbag2_cpp/converter_options.hpp"
+#include "rosbag2_cpp/serialization_format_converter_factory_interface.hpp"
 #include "rosbag2_cpp/writers/sequential_writer.hpp"
 #include "rosbag2_cpp/writer.hpp"
 
 #include "rosbag2_storage/bag_metadata.hpp"
+#include "rosbag2_storage/metadata_io.hpp"
 #include "rosbag2_storage/ros_helper.hpp"
+#include "rosbag2_storage/serialized_bag_message.hpp"
+#include "rosbag2_storage/storage_factory_interface.hpp"
+#include "rosbag2_storage/storage_interfaces/base_write_interface.hpp"
+#include "rosbag2_storage/storage_options.hpp"
 #include "rosbag2_storage/topic_metadata.hpp"
 
 #include "rosbag2_test_common/temporary_directory_fixture.hpp"
@@ -44,6 +59,7 @@
 #include "mock_storage_factory.hpp"
 #include "mock_message_cache.hpp"
 #include "mock_cache_consumer.hpp"
+#include "rcutils/time.h"
 
 using namespace testing;  // NOLINT
 using rosbag2_test_common::ParametrizedTemporaryDirectoryFixture;

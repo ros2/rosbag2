@@ -23,6 +23,7 @@
 
 #include "rosbag2_test_common/subscription_manager.hpp"
 
+#include "rosbag2_transport/play_options.hpp"
 #include "rosbag2_transport/player.hpp"
 
 #include "test_msgs/msg/arrays.hpp"
@@ -30,8 +31,12 @@
 #include "test_msgs/message_fixtures.hpp"
 
 #include "mock_player.hpp"
+#include "mock_sequential_reader.hpp"
+#include "rcl/time.h"
 #include "rosbag2_play_duration_until_fixture.hpp"
 #include "rosbag2_play_test_fixture.hpp"
+#include "rosbag2_storage/serialized_bag_message.hpp"
+#include "rosbag2_storage/topic_metadata.hpp"
 #include "rosbag2_transport_test_fixture.hpp"
 
 using namespace ::testing;  // NOLINT

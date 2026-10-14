@@ -13,6 +13,7 @@
 // limitations under the License.
 
 #include <cstring>
+#include <stdexcept>
 #include <string>
 #include <regex>
 #include <unordered_map>

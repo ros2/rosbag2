@@ -16,6 +16,8 @@
 #define ROSBAG2_TRANSPORT__PLAYER_SERVICE_CLIENT_HPP_
 
 #include <chrono>
+#include <cstddef>
+#include <cstdint>
 #include <map>
 #include <memory>
 #include <mutex>
@@ -26,8 +28,13 @@
 #include "rcl/types.h"
 #include "rclcpp/generic_client.hpp"
 #include "rclcpp/logger.hpp"
+#include "rcpputils/shared_library.hpp"
+#include "rcutils/allocator.h"
 
 #include "rosbag2_cpp/service_utils.hpp"
+#include "rosidl_runtime_c/message_type_support_struct.h"
+#include "rosidl_typesupport_introspection_cpp/message_introspection.hpp"
+#include "service_msgs/msg/service_event_info.hpp"
 
 namespace rosbag2_transport
 {

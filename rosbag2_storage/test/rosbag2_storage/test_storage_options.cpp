@@ -14,7 +14,11 @@
 
 #include <gmock/gmock.h>
 
+#include <sstream>
+#include <string>
+
 #include "rosbag2_storage/storage_options.hpp"
+#include "yaml-cpp/yaml.h"
 
 using namespace ::testing;  // NOLINT
 

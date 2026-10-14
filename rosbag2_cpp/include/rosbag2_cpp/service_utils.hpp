@@ -16,7 +16,10 @@
 #define ROSBAG2_CPP__SERVICE_UTILS_HPP_
 
 #include <array>
+#include <cstddef>
+#include <cstdint>
 #include <string>
+#include <type_traits>
 
 #include "rosbag2_cpp/visibility_control.hpp"
 

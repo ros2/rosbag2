@@ -15,6 +15,7 @@
 #ifndef ROSBAG2_CPP__CACHE__CACHE_BUFFER_INTERFACE_HPP_
 #define ROSBAG2_CPP__CACHE__CACHE_BUFFER_INTERFACE_HPP_
 
+#include <cstddef>
 #include <memory>
 #include <vector>
 

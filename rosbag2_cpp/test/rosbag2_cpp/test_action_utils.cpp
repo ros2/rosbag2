@@ -13,8 +13,10 @@
 // limitations under the License.
 #include  <gmock/gmock.h>
 
+#include <algorithm>
 #include <string>
 #include <tuple>
+#include <utility>
 #include <vector>
 
 #include "rosbag2_cpp/action_utils.hpp"

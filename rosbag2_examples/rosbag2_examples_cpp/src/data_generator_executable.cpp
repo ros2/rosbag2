@@ -13,12 +13,15 @@
 // limitations under the License.
 
 #include <chrono>
+#include <cstdint>
 #include <memory>
 
 #include "example_interfaces/msg/int32.hpp"
 #include "rclcpp/clock.hpp"
 #include "rclcpp/duration.hpp"
 #include "rclcpp/time.hpp"
+
+#include "rmw/rmw.h"
 
 #include "rosbag2_cpp/writer.hpp"
 #include "rosbag2_cpp/writers/sequential_writer.hpp"

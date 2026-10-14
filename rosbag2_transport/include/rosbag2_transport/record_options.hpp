@@ -16,6 +16,8 @@
 #define ROSBAG2_TRANSPORT__RECORD_OPTIONS_HPP_
 
 #include <chrono>
+#include <cstddef>
+#include <cstdint>
 #include <string>
 #include <unordered_map>
 #include <vector>

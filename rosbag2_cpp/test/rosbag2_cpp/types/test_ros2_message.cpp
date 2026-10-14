@@ -14,12 +14,15 @@
 
 #include <gmock/gmock.h>
 
+#include <cstdio>
 #include <memory>
 #include <string>
 #include <utility>
 #include <vector>
 
 #include "rclcpp/typesupport_helpers.hpp"
+#include "rcpputils/shared_library.hpp"
+#include "rcutils/allocator.h"
 #include "rosbag2_cpp/types/introspection_message.hpp"
 
 #include "test_msgs/message_fixtures.hpp"

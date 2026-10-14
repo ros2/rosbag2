@@ -19,11 +19,13 @@
 
 #include <algorithm>
 #include <chrono>
+#include <cstdint>
 #include <filesystem>
 #include <memory>
 #include <string>
 
 #include "composition_interfaces/srv/load_node.hpp"
+#include "composition_interfaces/srv/unload_node.hpp"
 #include "rclcpp/client.hpp"
 #include "rclcpp/executors/single_threaded_executor.hpp"
 #include "rclcpp/future_return_code.hpp"

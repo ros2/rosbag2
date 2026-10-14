@@ -21,11 +21,14 @@
 // This notice must appear in all copies of this file and its derivatives.
 
 #include <algorithm>
+#include <chrono>
+#include <cstdint>
 #include <filesystem>
 #include <iostream>
 #include <map>
 #include <memory>
 #include <regex>
+#include <sstream>
 #include <stdexcept>
 #include <string>
 #include <utility>
@@ -33,6 +36,7 @@
 
 #include "rcpputils/asserts.hpp"
 
+#include "rosbag2_cpp/converter_options.hpp"
 #include "rosbag2_cpp/logging.hpp"
 #include "rosbag2_cpp/reader.hpp"
 #include "rosbag2_cpp/reindexer.hpp"

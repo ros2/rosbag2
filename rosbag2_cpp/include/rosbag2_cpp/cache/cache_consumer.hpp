@@ -25,6 +25,7 @@
 #include "rosbag2_cpp/cache/cache_buffer_interface.hpp"
 #include "rosbag2_cpp/cache/message_cache.hpp"
 #include "rosbag2_cpp/cache/message_cache_interface.hpp"
+#include "rosbag2_cpp/visibility_control.hpp"
 
 // This is necessary because of using stl types here. It is completely safe, because
 // a) the member is not accessible from the outside

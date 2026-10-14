@@ -13,23 +13,30 @@
 // limitations under the License.
 
 #include <algorithm>
+#include <cstdint>
 #include <memory>
 #include <string>
 #include <unordered_set>
 
+#include "rosbag2_compression/base_compressor_interface.hpp"
+#include "rosbag2_compression/compression_options.hpp"
 #include "rosbag2_compression/sequential_compression_writer.hpp"
+#include "rosbag2_cpp/converter_interfaces/serialization_format_converter.hpp"
+#include "rosbag2_cpp/converter_interfaces/serialization_format_serializer.hpp"
 #include "rosbag2_cpp/converter_options.hpp"
 #include "rosbag2_cpp/plugins/plugin_utils.hpp"
 #include "rosbag2_cpp/writer.hpp"
 #include "rosbag2_cpp/writers/sequential_writer.hpp"
 #include "rosbag2_cpp/serialization_format_converter_factory.hpp"
 #include "rosbag2_storage/ros_helper.hpp"
+#include "rosbag2_storage/serialized_bag_message.hpp"
 #include "rosbag2_storage/storage_filter.hpp"
 #include "rosbag2_storage/storage_interfaces/read_write_interface.hpp"
 #include "rosbag2_storage/storage_options.hpp"
 #include "rosbag2_storage/topic_metadata.hpp"
 
 #include "./pybind11.hpp"
+#include "rcutils/time.h"
 
 namespace rosbag2_py
 {

@@ -20,8 +20,10 @@
 #include <utility>
 #include <vector>
 
+#include "rcutils/allocator.h"
 #include "rosbag2_cpp/info.hpp"
 #include "rclcpp/typesupport_helpers.hpp"
+#include "rosbag2_cpp/types/introspection_message.hpp"
 
 #include "rosbag2_storage/metadata_io.hpp"
 #include "rosbag2_storage/ros_helper.hpp"

@@ -16,8 +16,11 @@
 #define ROSBAG2_TRANSPORT__READERS_MANAGER_IMPL_HPP_
 
 #include <algorithm>
+#include <chrono>
+#include <cstddef>
 #include <iterator>
 #include <memory>
+#include <stdexcept>
 #include <utility>
 #include <vector>
 #include <limits>
@@ -31,7 +34,9 @@
 #include "rosbag2_cpp/bag_events.hpp"
 #include "rosbag2_cpp/reader.hpp"
 #include "rosbag2_storage/serialized_bag_message.hpp"
+#include "rosbag2_storage/storage_filter.hpp"
 #include "rosbag2_storage/storage_options.hpp"
+#include "rosbag2_storage/topic_metadata.hpp"
 
 namespace rosbag2_transport
 {

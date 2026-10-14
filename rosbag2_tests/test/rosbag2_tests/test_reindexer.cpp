@@ -25,6 +25,7 @@
 #include <algorithm>
 #include <filesystem>
 #include <memory>
+#include <sstream>
 #include <string>
 #include <utility>
 #include <vector>
@@ -39,6 +40,7 @@
 
 #include "rosbag2_storage/bag_metadata.hpp"
 #include "rosbag2_storage/metadata_io.hpp"
+#include "rosbag2_storage/storage_options.hpp"
 #include "rosbag2_storage/topic_metadata.hpp"
 #include "rosbag2_storage/message_definition.hpp"
 

@@ -20,6 +20,7 @@
 #include <string>
 
 #include "rosbag2_storage/storage_factory_interface.hpp"
+#include "rosbag2_storage/storage_options.hpp"
 #include "rosbag2_storage/visibility_control.hpp"
 
 // This is necessary because of using stl types here. It is completely safe, because

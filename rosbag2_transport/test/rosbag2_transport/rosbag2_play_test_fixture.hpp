@@ -17,6 +17,7 @@
 
 #include <memory>
 
+#include "rclcpp/utilities.hpp"
 #include "rosbag2_test_common/action_server_manager.hpp"
 #include "rosbag2_test_common/subscription_manager.hpp"
 #include "rosbag2_test_common/service_manager.hpp"

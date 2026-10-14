@@ -15,17 +15,22 @@
 #include <gmock/gmock.h>
 
 #include <chrono>
+#include <cstddef>
 #include <memory>
 #include <string>
 #include <utility>
 
+#include "mock_sequential_writer.hpp"
+#include "rclcpp/node.hpp"
 #include "test_msgs/msg/arrays.hpp"
 #include "test_msgs/msg/basic_types.hpp"
 #include "test_msgs/message_fixtures.hpp"
+#include "test_msgs/msg/strings.hpp"
 
 #include "rosbag2_test_common/publication_manager.hpp"
 #include "rosbag2_test_common/wait_for.hpp"
 
+#include "rosbag2_transport/record_options.hpp"
 #include "rosbag2_transport/recorder.hpp"
 
 #include "record_integration_fixture.hpp"

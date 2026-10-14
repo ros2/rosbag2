@@ -19,8 +19,12 @@
 #include <string>
 #include <utility>
 
+#include "rcutils/time.h"
 #include "rcutils/types.h"
+#include "rcutils/types/uint8_array.h"
+#include "rosbag2_storage/storage_interfaces/base_io_interface.hpp"
 
+#include "rosbag2_storage_sqlite3/sqlite_exception.hpp"
 #include "rosbag2_storage_sqlite3/sqlite_wrapper.hpp"
 
 #include "storage_test_fixture.hpp"

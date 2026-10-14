@@ -15,6 +15,7 @@
 #ifndef ROSBAG2_STORAGE__SERIALIZED_BAG_MESSAGE_HPP_
 #define ROSBAG2_STORAGE__SERIALIZED_BAG_MESSAGE_HPP_
 
+#include <cstdint>
 #include <memory>
 #include <string>
 

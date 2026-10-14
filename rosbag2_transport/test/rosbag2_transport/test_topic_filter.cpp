@@ -15,14 +15,24 @@
 #include <gmock/gmock.h>
 
 #include <algorithm>
+#include <chrono>
+#include <cstddef>
 #include <future>
+#include <iterator>
 #include <map>
+#include <memory>
 #include <string>
+#include <tuple>
 #include <unordered_map>
 #include <unordered_set>
+#include <utility>
 #include <vector>
 
+#include "rcl/guard_condition.h"
+#include "rclcpp/event.hpp"
+#include "rclcpp/node_interfaces/node_graph_interface.hpp"
 #include "rosbag2_cpp/action_utils.hpp"
+#include "rosbag2_transport/record_options.hpp"
 #include "rosbag2_transport/topic_filter.hpp"
 
 using namespace ::testing;  // NOLINT

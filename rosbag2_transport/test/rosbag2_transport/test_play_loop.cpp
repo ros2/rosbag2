@@ -16,6 +16,8 @@
 #include <gmock/gmock.h>
 
 #include <chrono>
+#include <cstddef>
+#include <cstdint>
 #include <future>
 #include <memory>
 #include <string>
@@ -23,17 +25,21 @@
 #include <vector>
 #include <utility>
 
+#include "mock_sequential_reader.hpp"
 #include "rclcpp/duration.hpp"
 #include "rclcpp/utilities.hpp"
 
 #include "rosbag2_test_common/subscription_manager.hpp"
 
+#include "rosbag2_transport/play_options.hpp"
 #include "rosbag2_transport/player.hpp"
 
 #include "test_msgs/msg/basic_types.hpp"
 #include "test_msgs/message_fixtures.hpp"
 
 #include "rosbag2_play_test_fixture.hpp"
+#include "rosbag2_storage/serialized_bag_message.hpp"
+#include "rosbag2_storage/topic_metadata.hpp"
 
 TEST_F(RosBag2PlayTestFixture, play_bag_file_twice) {
   //  test constants
