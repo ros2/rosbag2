@@ -98,3 +98,35 @@ TEST_F(StorageFactoryTest, load_unavailable_plugin) {
     {bag_file_path, test_unavailable_plugin_id});
   EXPECT_EQ(nullptr, instance_ro);
 }
+
+TEST_F(StorageFactoryTest, read_write_storage_outlives_factory) {
+  std::shared_ptr<ReadWriteInterface> storage;
+  {
+    rosbag2_storage::StorageFactory local_factory;
+    storage = local_factory.open_read_write(
+      {bag_file_path, test_constants::READ_WRITE_PLUGIN_IDENTIFIER});
+    ASSERT_NE(nullptr, storage);
+  }
+
+  EXPECT_EQ(test_constants::READ_WRITE_PLUGIN_IDENTIFIER, storage->get_storage_identifier());
+  EXPECT_TRUE(storage->write_message(nullptr));
+  storage.reset();
+}
+
+TEST_F(StorageFactoryTest, read_only_storage_outlives_factory) {
+  for (const auto & storage_id : {
+    test_constants::READ_ONLY_PLUGIN_IDENTIFIER, test_constants::READ_WRITE_PLUGIN_IDENTIFIER})
+  {
+    std::shared_ptr<ReadOnlyInterface> storage;
+    {
+      rosbag2_storage::StorageFactory local_factory;
+      storage = local_factory.open_read_only({bag_file_path, storage_id});
+      ASSERT_NE(nullptr, storage);
+    }
+
+    EXPECT_EQ(storage_id, storage->get_storage_identifier());
+    EXPECT_TRUE(storage->has_next());
+    EXPECT_EQ(nullptr, storage->read_next());
+    storage.reset();
+  }
+}

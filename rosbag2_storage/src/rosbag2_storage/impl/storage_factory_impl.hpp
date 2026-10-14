@@ -59,7 +59,12 @@ try_load_plugin(
   std::shared_ptr<InterfaceT> instance;
   try {
     auto unmanaged_instance = class_loader->createUnmanagedInstance(plugin_name);
-    instance = std::shared_ptr<InterfaceT>(unmanaged_instance);
+    // Keep the plugin library loaded until the instance has been destroyed.
+    instance = std::shared_ptr<InterfaceT>(
+      unmanaged_instance, [class_loader](InterfaceT * ptr) mutable {
+        delete ptr;
+        class_loader.reset();
+      });
   } catch (const std::runtime_error & ex) {
     ROSBAG2_STORAGE_LOG_ERROR_STREAM(
       "Unable to load plugin '" << plugin_name << "': " << ex.what());
