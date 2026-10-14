@@ -103,9 +103,9 @@ public:
 
     ON_CALL(*storage_factory_, open_read_write(_)).WillByDefault(
       DoAll(
-          [this](const rosbag2_storage::StorageOptions & storage_options) {
-            fake_storage_size_ = 0;
-            fake_storage_uri_ = storage_options.uri;
+        [this](const rosbag2_storage::StorageOptions & storage_options) {
+          fake_storage_size_ = 0;
+          fake_storage_uri_ = storage_options.uri;
           },
         Return(storage_)));
     EXPECT_CALL(*storage_factory_, open_read_write(_)).Times(AtLeast(0));
@@ -1048,15 +1048,15 @@ TEST_F(SequentialWriterTest, calls_callback_on_storage_message_lost_with_no_cach
   ON_CALL(*storage_,
     write_message(An<std::shared_ptr<const rosbag2_storage::SerializedBagMessage>>()))
   .WillByDefault(
-      [this](const std::shared_ptr<const rosbag2_storage::SerializedBagMessage> &) -> bool {
-        static size_t curr_number_of_lost_messages = 0;
-        if (curr_number_of_lost_messages < num_messages_to_lose_) {
-          curr_number_of_lost_messages++;
-          return false;  // Simulate message loss
-        } else {
-          fake_storage_size_++;
-          return true;  // Simulate successful write
-        }
+    [this](const std::shared_ptr<const rosbag2_storage::SerializedBagMessage> &) -> bool {
+      static size_t curr_number_of_lost_messages = 0;
+      if (curr_number_of_lost_messages < num_messages_to_lose_) {
+        curr_number_of_lost_messages++;
+        return false;    // Simulate message loss
+      } else {
+        fake_storage_size_++;
+        return true;    // Simulate successful write
+      }
       }
   );
 
@@ -1109,19 +1109,19 @@ TEST_F(SequentialWriterTest, calls_callback_on_storage_messages_lost_with_cache)
 
   ON_CALL(*storage_, write_messages(An<const rosbag2_storage::SerializedBagMessages &>()))
   .WillByDefault(
-      [this](const rosbag2_storage::SerializedBagMessages & msgs)
-      {
-        static size_t curr_number_of_lost_messages = 0;
-        std::vector<size_t> lost_messages;
-        for (size_t i = 0; i < msgs.size(); i++) {
-          if (curr_number_of_lost_messages < num_messages_to_lose_) {
-            lost_messages.push_back(i);    // Simulate message loss
-            curr_number_of_lost_messages++;
-          } else {
-            fake_storage_size_++;
-          }
+    [this](const rosbag2_storage::SerializedBagMessages & msgs)
+    {
+      static size_t curr_number_of_lost_messages = 0;
+      std::vector<size_t> lost_messages;
+      for (size_t i = 0; i < msgs.size(); i++) {
+        if (curr_number_of_lost_messages < num_messages_to_lose_) {
+          lost_messages.push_back(i);      // Simulate message loss
+          curr_number_of_lost_messages++;
+        } else {
+          fake_storage_size_++;
         }
-        return lost_messages;
+      }
+      return lost_messages;
       }
   );
 
@@ -1199,15 +1199,15 @@ TEST_F(SequentialWriterTest, calls_callback_on_messages_loss_in_writer_cache)
   ON_CALL(*mock_message_cache,
         mock_push(An<std::shared_ptr<const rosbag2_storage::SerializedBagMessage>>()))
   .WillByDefault(
-      [this](const std::shared_ptr<const rosbag2_storage::SerializedBagMessage> &)-> bool
-      {
-        static size_t num_lost_messages_in_cache = 0;
-        if (num_lost_messages_in_cache < num_messages_to_lose_) {
-          num_lost_messages_in_cache++;
-          return false;
-        } else {
-          return true;
-        }
+    [this](const std::shared_ptr<const rosbag2_storage::SerializedBagMessage> &)-> bool
+    {
+      static size_t num_lost_messages_in_cache = 0;
+      if (num_lost_messages_in_cache < num_messages_to_lose_) {
+        num_lost_messages_in_cache++;
+        return false;
+      } else {
+        return true;
+      }
       }
   );
 
@@ -1365,10 +1365,10 @@ TEST_F(SequentialWriterTest, split_prepends_transient_local_messages_to_next_bag
   // via storage_->write_message(msg) directly.
   EXPECT_CALL(*storage_, write_messages(An<const rosbag2_storage::SerializedBagMessages &>()))
   .WillOnce(
-      [&prepended_messages](const rosbag2_storage::SerializedBagMessages & messages)
-      {
-        prepended_messages = messages;
-        return std::vector<size_t>{};
+    [&prepended_messages](const rosbag2_storage::SerializedBagMessages & messages)
+    {
+      prepended_messages = messages;
+      return std::vector<size_t>{};
       }
   );
   EXPECT_CALL(*storage_,
@@ -1391,10 +1391,10 @@ TEST_F(SequentialWriterTest, snapshot_merge_prepends_transient_local_messages)
 
   EXPECT_CALL(*storage_, write_messages(An<const rosbag2_storage::SerializedBagMessages &>()))
   .WillOnce(
-      [&written_msgs](const rosbag2_storage::SerializedBagMessages & messages)
-      {
-        written_msgs = messages;
-        return std::vector<size_t>{};
+    [&written_msgs](const rosbag2_storage::SerializedBagMessages & messages)
+    {
+      written_msgs = messages;
+      return std::vector<size_t>{};
       }
   );
 
