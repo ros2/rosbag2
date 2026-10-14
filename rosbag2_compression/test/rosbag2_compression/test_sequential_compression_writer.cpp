@@ -106,17 +106,16 @@ public:
     // initialize values when opening a new bagfile
     ON_CALL(*storage_factory_, open_read_write(_)).WillByDefault(
       DoAll(
-        Invoke(
-          [this](const rosbag2_storage::StorageOptions & storage_options) {
-            fake_storage_size_.store(0);
-            fake_storage_uri_ = storage_options.uri;
+        [this](const rosbag2_storage::StorageOptions & storage_options) {
+          fake_storage_size_.store(0);
+          fake_storage_uri_ = storage_options.uri;
             // Touch the file
-            std::ofstream output(storage_options.uri);
-            ASSERT_TRUE(output.is_open());
+          std::ofstream output(storage_options.uri);
+          ASSERT_TRUE(output.is_open());
             // Put some arbitrary bytes in the file so it isn't interpreted as being empty
-            output << "Fake storage data" << std::endl;
-            output.close();
-          }),
+          output << "Fake storage data" << std::endl;
+          output.close();
+          },
         Return(storage_)));
     ON_CALL(*storage_,
             write_message(An<std::shared_ptr<const rosbag2_storage::SerializedBagMessage>>()))
