@@ -17,6 +17,7 @@
 
 #include <gmock/gmock.h>
 
+#include <cstdint>
 #include <memory>
 #include <string>
 #include <unordered_map>
@@ -36,6 +37,7 @@ public:
   }
 
   MOCK_METHOD0(log_dropped, void());
+  MOCK_METHOD0(get_current_size, size_t());
   MOCK_METHOD1(mock_push, bool(std::shared_ptr<const rosbag2_storage::SerializedBagMessage>));
 
   bool push(std::shared_ptr<const rosbag2_storage::SerializedBagMessage> msg) override

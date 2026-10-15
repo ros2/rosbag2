@@ -15,21 +15,39 @@
 #include "rcpputils/thread_safety_annotations.hpp"
 #include "rcutils/logging_macros.h"
 #include "rcutils/strerror.h"
+#include "rcutils/time.h"
+#include "rosbag2_storage/bag_metadata.hpp"
+#include "rosbag2_storage/message_definition.hpp"
 #include "rosbag2_storage/metadata_io.hpp"
+#include "rosbag2_storage/qos.hpp"
 #include "rosbag2_storage/ros_helper.hpp"
+#include "rosbag2_storage/serialized_bag_message.hpp"
+#include "rosbag2_storage/storage_filter.hpp"
+#include "rosbag2_storage/storage_interfaces/base_io_interface.hpp"
+#include "rosbag2_storage/storage_interfaces/base_read_interface.hpp"
+#include "rosbag2_storage/storage_interfaces/base_write_interface.hpp"
 #include "rosbag2_storage/storage_interfaces/read_write_interface.hpp"
+#include "rosbag2_storage/storage_options.hpp"
+#include "rosbag2_storage/topic_metadata.hpp"
 #include "rosbag2_storage/yaml.hpp"
 #include "rosbag2_storage_mcap/visibility_control.hpp"
 
 #include <mcap/mcap.hpp>
 
 #include <algorithm>
+#include <chrono>
+#include <cstddef>
+#include <cstdint>
 #include <cstring>
+#include <fstream>
+#include <ios>
 #include <memory>
 #include <mutex>
 #include <optional>
 #include <regex>
+#include <stdexcept>
 #include <string>
+#include <string_view>
 #include <unordered_map>
 #include <utility>
 #include <vector>
@@ -540,6 +558,7 @@ bool MCAPStorage::read_and_enqueue_message()
   msg->recv_timestamp = rcutils_time_point_value_t(messageView.message.logTime);
   msg->send_timestamp = rcutils_time_point_value_t(messageView.message.publishTime);
   msg->topic_name = messageView.channel->topic;
+  msg->serialization_format = messageView.channel->messageEncoding;
   msg->serialized_data = rosbag2_storage::make_serialized_message(messageView.message.data,
                                                                   messageView.message.dataSize);
 

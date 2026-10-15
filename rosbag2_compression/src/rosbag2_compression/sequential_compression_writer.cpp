@@ -15,7 +15,9 @@
 #include "rosbag2_compression/sequential_compression_writer.hpp"
 
 #include <algorithm>
+#include <cerrno>
 #include <chrono>
+#include <cstdint>
 #include <cstring>
 #include <filesystem>
 #include <functional>
@@ -27,12 +29,15 @@
 
 #include "rcpputils/asserts.hpp"
 
+#include "rosbag2_cpp/bag_events.hpp"
 #include "rosbag2_cpp/info.hpp"
 
 #include "rosbag2_storage/storage_options.hpp"
 #include "rosbag2_storage/storage_interfaces/read_write_interface.hpp"
 
 #include "logging.hpp"
+#include "rosbag2_compression/base_compressor_interface.hpp"
+#include "rosbag2_compression/compression_factory.hpp"
 #ifdef _WIN32
 #include <windows.h>
 #else
@@ -413,6 +418,7 @@ SequentialCompressionWriter::compress_message(
   compressed_message->recv_timestamp = message->recv_timestamp;
   compressed_message->send_timestamp = message->send_timestamp;
   compressed_message->topic_name = message->topic_name;
+  compressed_message->serialization_format = message->serialization_format;
   compressor.compress_serialized_bag_message(message.get(), compressed_message.get());
   return compressed_message;
 }

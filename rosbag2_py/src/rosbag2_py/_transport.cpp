@@ -13,11 +13,19 @@
 // limitations under the License.
 
 #include <algorithm>
+#include <atomic>
+#include <condition_variable>
 #include <csignal>
 #include <chrono>
+#include <cstddef>
+#include <cstdint>
 #include <filesystem>
+#include <functional>
 #include <memory>
+#include <mutex>
+#include <stdexcept>
 #include <string>
+#include <thread>
 #include <unordered_map>
 #include <utility>
 #include <vector>
@@ -32,9 +40,19 @@
 #include "rosbag2_transport/record_options.hpp"
 #include "rosbag2_transport/recorder.hpp"
 
+#include "rclcpp/duration.hpp"
+#include "rclcpp/executor_options.hpp"
 #include "rclcpp/executors/events_cbg_executor/events_cbg_executor.hpp"
+#include "rclcpp/executors/single_threaded_executor.hpp"
+#include "rclcpp/init_options.hpp"
+#include "rclcpp/qos.hpp"
+#include "rclcpp/utilities.hpp"
 
 #include "./pybind11.hpp"
+#include "rcl/time.h"
+#include "rcutils/time.h"
+#include "rmw/rmw.h"
+#include "rmw/types.h"
 
 namespace py = pybind11;
 typedef std::unordered_map<std::string, rclcpp::QoS> QoSMap;

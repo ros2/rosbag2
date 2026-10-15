@@ -15,6 +15,7 @@
 #ifndef ROSBAG2_PY__FORMAT_ACTION_INFO_HPP_
 #define ROSBAG2_PY__FORMAT_ACTION_INFO_HPP_
 
+#include <cstdint>
 #include <memory>
 #include <string>
 #include <unordered_map>

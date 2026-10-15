@@ -12,15 +12,31 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <chrono>
+#include <cstddef>
+#include <cstdint>
+#include <cstdlib>
+#include <exception>
+#include <limits>
+#include <sstream>
+#include <stdexcept>
 #include <string>
+#include <type_traits>
+#include <utility>
 #include <vector>
 
+#include "rcl_interfaces/msg/floating_point_range.hpp"
+#include "rcl_interfaces/msg/integer_range.hpp"
+#include "rcl_interfaces/msg/parameter_descriptor.hpp"
+#include "rclcpp/duration.hpp"
+#include "rclcpp/exceptions/exceptions.hpp"
 #include "rclcpp/logging.hpp"
 #include "rosbag2_cpp/action_utils.hpp"
 #include "rosbag2_cpp/service_utils.hpp"
 #include "rosbag2_storage/qos.hpp"
 #include "rosbag2_transport/play_options.hpp"
 #include "rosbag2_transport/config_options_from_node_params.hpp"
+#include "yaml-cpp/yaml.h"
 
 namespace rosbag2_transport
 {

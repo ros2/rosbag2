@@ -19,16 +19,21 @@
 #include <string>
 #include <vector>
 
+#include "rcl/types.h"
 #include "rclcpp/clock.hpp"
 #include "rclcpp/serialization.hpp"
 #include "rclcpp/serialized_message.hpp"
 
 #include "rcutils/time.h"
+#include "rcutils/types/uint8_array.h"
 
 #include "rosbag2_cpp/reader.hpp"
 #include "rosbag2_cpp/readers/sequential_reader.hpp"
 #include "rosbag2_cpp/writer.hpp"
 #include "rosbag2_cpp/writers/sequential_writer.hpp"
+#include "rosbag2_storage/serialized_bag_message.hpp"
+#include "rosbag2_storage/storage_options.hpp"
+#include "rosbag2_storage/topic_metadata.hpp"
 
 #include "rosbag2_test_common/tested_storage_ids.hpp"
 

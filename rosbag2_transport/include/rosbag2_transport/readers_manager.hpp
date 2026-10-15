@@ -23,7 +23,9 @@
 #include "rosbag2_cpp/bag_events.hpp"
 #include "rosbag2_cpp/reader.hpp"
 #include "rosbag2_storage/serialized_bag_message.hpp"
+#include "rosbag2_storage/storage_filter.hpp"
 #include "rosbag2_storage/storage_options.hpp"
+#include "rosbag2_storage/topic_metadata.hpp"
 #include "rosbag2_transport/visibility_control.hpp"
 
 #ifdef _WIN32
@@ -116,6 +118,13 @@ public:
   /// \brief Getter for all topics and types in all readers.
   /// \return vector of topics with topic name and type as std::string
   [[nodiscard]] std::vector<rosbag2_storage::TopicMetadata> get_all_topics_and_types() const;
+
+  /// \brief Getter for the topics whose messages the readers would refuse to deliver, i.e.
+  /// topics whose messages can neither be returned in nor converted to the local rmw
+  /// serialization format the readers are opened with.
+  /// \return vector of the undeliverable topics of all readers, in the order the readers were
+  /// provided at construction; a topic recorded in several bags may appear more than once.
+  [[nodiscard]] std::vector<rosbag2_storage::TopicMetadata> get_undeliverable_topics() const;
 
   /// \brief Add event callbacks to all readers.
   /// \param callbacks The callbacks to add.

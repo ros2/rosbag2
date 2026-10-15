@@ -16,6 +16,8 @@
 #define ROSBAG2_STORAGE__BAG_METADATA_HPP_
 
 #include <chrono>
+#include <cstddef>
+#include <cstdint>
 #include <string>
 #include <vector>
 #include <utility>

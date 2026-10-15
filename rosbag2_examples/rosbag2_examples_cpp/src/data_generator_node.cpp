@@ -13,10 +13,15 @@
 // limitations under the License.
 
 #include <chrono>
+#include <functional>
 #include <memory>
 
 #include "example_interfaces/msg/int32.hpp"
-#include "rclcpp/rclcpp.hpp"
+#include "rclcpp/executors.hpp"
+#include "rclcpp/node.hpp"
+#include "rclcpp/timer.hpp"
+#include "rclcpp/utilities.hpp"
+#include "rmw/rmw.h"
 
 #include "rosbag2_cpp/writer.hpp"
 

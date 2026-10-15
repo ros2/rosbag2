@@ -16,6 +16,7 @@
 #ifndef ROSBAG2_STORAGE__STORAGE_INTERFACES__BASE_INFO_INTERFACE_HPP_
 #define ROSBAG2_STORAGE__STORAGE_INTERFACES__BASE_INFO_INTERFACE_HPP_
 
+#include <cstdint>
 #include <string>
 
 #include "rosbag2_storage/bag_metadata.hpp"

@@ -16,15 +16,31 @@
 
 #include <algorithm>
 #include <atomic>
+#include <chrono>
+#include <iostream>
 #include <memory>
+#include <ostream>
+#include <stdexcept>
 #include <string>
+#include <thread>
 #include <vector>
 #include <utility>
 #include <type_traits>
 
+#include "mock_sequential_writer.hpp"
+#include "rcl/time.h"
 #include "rcutils/time.h"
 
-#include "rclcpp/rclcpp.hpp"
+#include "rclcpp/client.hpp"
+#include "rclcpp/clock.hpp"
+#include "rclcpp/duration.hpp"
+#include "rclcpp/executors/single_threaded_executor.hpp"
+#include "rclcpp/future_return_code.hpp"
+#include "rclcpp/node.hpp"
+#include "rclcpp/parameter.hpp"
+#include "rclcpp/publisher.hpp"
+#include "rclcpp/time.hpp"
+#include "rclcpp/utilities.hpp"
 #include "rosgraph_msgs/msg/clock.hpp"
 
 #include "rosbag2_interfaces/srv/get_subscribed_topics.hpp"
@@ -39,14 +55,17 @@
 #include "rosbag2_interfaces/srv/stop_discovery.hpp"
 #include "rosbag2_interfaces/srv/stop.hpp"
 #include "rosbag2_storage/qos.hpp"
+#include "rosbag2_transport/record_options.hpp"
 #include "rosbag2_transport/recorder.hpp"
 
 #include "rosbag2_test_common/publication_manager.hpp"
 #include "rosbag2_test_common/wait_for.hpp"
 
 #include "test_msgs/message_fixtures.hpp"
+#include "test_msgs/msg/strings.hpp"
 
 #include "record_integration_fixture.hpp"
+#include "rosbag2_cpp/bag_events.hpp"
 
 using namespace ::testing;  // NOLINT
 using namespace std::chrono_literals;  // NOLINT

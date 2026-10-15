@@ -8,13 +8,13 @@ jobs:
     name: ament_${{ matrix.linter }}
     runs-on: ubuntu-latest
     container:
-      image: rostooling/setup-ros-docker:ubuntu-noble-ros-rolling-ros-base-latest
+      image: ghcr.io/ros-tooling/setup-ros-docker/setup-ros-docker-ubuntu-resolute-ros-rolling-ros-base:master
     strategy:
       fail-fast: false
       matrix:
           linter: [copyright, xmllint]
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v7
     - uses: ros-tooling/action-ros-lint@0.1.4
       with:
         linter: ${{ matrix.linter }}
@@ -38,14 +38,14 @@ jobs:
     name: ament_${{ matrix.linter }}
     runs-on: ubuntu-latest
     container:
-      image: rostooling/setup-ros-docker:ubuntu-noble-ros-rolling-ros-base-latest
+      image: ghcr.io/ros-tooling/setup-ros-docker/setup-ros-docker-ubuntu-resolute-ros-rolling-ros-base:master
     strategy:
       fail-fast: false
       matrix:
           # We exclude cppcheck due to https://github.com/ament/ament_lint/pull/345
           linter: [cpplint, uncrustify]
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v7
     - uses: ros-tooling/action-ros-lint@0.1.4
       with:
         linter: ${{ matrix.linter }}
@@ -66,7 +66,7 @@ jobs:
     name: ament_${{ matrix.linter }}
     runs-on: ubuntu-latest
     container:
-      image: rostooling/setup-ros-docker:ubuntu-noble-ros-rolling-ros-base-latest
+      image: ghcr.io/ros-tooling/setup-ros-docker/setup-ros-docker-ubuntu-resolute-ros-rolling-ros-base:master
     strategy:
       fail-fast: false
       matrix:
@@ -76,7 +76,7 @@ jobs:
           - linter: clang_format
             arguments: "--config rosbag2_storage_mcap/.clang-format"
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v7
     - uses: ros-tooling/action-ros-lint@0.1.4
       with:
         linter: ${{ matrix.linter }}
@@ -88,13 +88,13 @@ jobs:
     name: ament_${{ matrix.linter }}
     runs-on: ubuntu-latest
     container:
-      image: rostooling/setup-ros-docker:ubuntu-noble-ros-rolling-ros-base-latest
+      image: ghcr.io/ros-tooling/setup-ros-docker/setup-ros-docker-ubuntu-resolute-ros-rolling-ros-base:master
     strategy:
       fail-fast: false
       matrix:
           linter: [pep257, flake8]
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v7
     - uses: ros-tooling/action-ros-lint@0.1.4
       with:
         linter: ${{ matrix.linter }}

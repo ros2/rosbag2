@@ -15,15 +15,20 @@
 #ifndef ROSBAG2_TEST_COMMON__SUBSCRIPTION_MANAGER_HPP_
 #define ROSBAG2_TEST_COMMON__SUBSCRIPTION_MANAGER_HPP_
 
+#include <chrono>
+#include <cstddef>
 #include <future>
 #include <memory>
+#include <stdexcept>
 #include <string>
+#include <thread>
 #include <unordered_map>
 #include <vector>
 
 #include "rclcpp/clock.hpp"
 #include "rclcpp/executors/single_threaded_executor.hpp"
 #include "rclcpp/intra_process_setting.hpp"
+#include "rclcpp/logging.hpp"
 #include "rclcpp/node.hpp"
 #include "rclcpp/node_options.hpp"
 #include "rclcpp/publisher_base.hpp"
@@ -33,6 +38,7 @@
 #include "rclcpp/subscription_base.hpp"
 #include "rclcpp/subscription_options.hpp"
 #include "rclcpp/utilities.hpp"
+#include "rmw/qos_profiles.h"
 
 namespace rosbag2_test_common
 {

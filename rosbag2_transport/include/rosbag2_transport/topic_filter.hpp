@@ -22,6 +22,7 @@
 #include <utility>
 #include <vector>
 
+#include "rclcpp/node_interfaces/node_graph_interface.hpp"
 #include "rosbag2_transport/record_options.hpp"
 #include "rosbag2_transport/visibility_control.hpp"
 

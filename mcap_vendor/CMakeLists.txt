@@ -65,7 +65,6 @@ endmacro()
 ## Call vendor macro
 build_mcap_vendor()
 
-ament_export_include_directories(include/${PROJECT_NAME})
 ament_export_targets(mcap HAS_LIBRARY_TARGET)
 ament_export_dependencies(lz4_cmake_module lz4 zstd_cmake_module zstd)
 

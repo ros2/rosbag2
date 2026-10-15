@@ -16,18 +16,28 @@
 #include <gmock/gmock.h>
 
 #include <chrono>
+#include <cstddef>
 #include <memory>
 #include <mutex>
 #include <queue>
+#include <stdexcept>
 #include <string>
 #include <thread>
 #include <utility>
 #include <vector>
 
+#include "rclcpp/event_handler.hpp"
+#include "rclcpp/expand_topic_or_service_name.hpp"
+#include "rclcpp/node.hpp"
+#include "rclcpp/publisher.hpp"
 #include "rclcpp/qos.hpp"
+#include "rclcpp/utilities.hpp"
+#include "rosbag2_cpp/bag_events.hpp"
 #include "rosbag2_interfaces/msg/messages_lost_event.hpp"
 #include "rosbag2_interfaces/msg/messages_lost_event_topic_stat.hpp"
 #include "rosbag2_interfaces/msg/write_split_event.hpp"
+#include "rosbag2_storage/qos.hpp"
+#include "rosbag2_transport/record_options.hpp"
 #include "rosbag2_transport/recorder_event_notifier.hpp"
 #include "rosbag2_transport/rclcpp_publisher_wrapper.hpp"
 #include "rosbag2_test_common/subscription_manager.hpp"
@@ -381,20 +391,20 @@ TEST_F(TestRecorderEventNotifier, event_notifier_respects_max_publishing_rate) {
 
   // Set up expectations on the shared_ptr mocks directly
   ON_CALL(*write_split_pub_mock, publish(::testing::_))
-  .WillByDefault(::testing::Invoke(
-      [&published_write_split_events, &published_events_mutex](const WriteSplitEvent & msg) {
-        std::lock_guard<std::mutex> lock(published_events_mutex);
-        published_write_split_events.push_back(msg);
+  .WillByDefault(
+    [&published_write_split_events, &published_events_mutex](const WriteSplitEvent & msg) {
+      std::lock_guard<std::mutex> lock(published_events_mutex);
+      published_write_split_events.push_back(msg);
       }
-  ));
+  );
 
   EXPECT_CALL(*msgs_lost_pub_mock, publish(::testing::_))
-  .WillRepeatedly(::testing::Invoke(
-      [&published_messages_lost_events, &published_events_mutex](const MessagesLostEvent & msg) {
-        std::lock_guard<std::mutex> lock(published_events_mutex);
-        published_messages_lost_events.emplace_back(std::chrono::steady_clock::now(), msg);
+  .WillRepeatedly(
+    [&published_messages_lost_events, &published_events_mutex](const MessagesLostEvent & msg) {
+      std::lock_guard<std::mutex> lock(published_events_mutex);
+      published_messages_lost_events.emplace_back(std::chrono::steady_clock::now(), msg);
       }
-  ));
+  );
 
   // Pass the shared_ptr mocks directly to the notifier
   notifier_ = std::make_unique<RecorderEventNotifier>(node_.get(),

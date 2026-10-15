@@ -15,11 +15,16 @@
 #include "rosbag2_transport/reader_writer_factory.hpp"
 
 #include <memory>
+#include <thread>
 #include <utility>
 
 #include "rosbag2_compression/compression_options.hpp"
 #include "rosbag2_compression/sequential_compression_reader.hpp"
 #include "rosbag2_compression/sequential_compression_writer.hpp"
+#include "rosbag2_cpp/reader_interfaces/base_reader_interface.hpp"
+#include "rosbag2_cpp/readers/sequential_reader.hpp"
+#include "rosbag2_cpp/writer_interfaces/base_writer_interface.hpp"
+#include "rosbag2_cpp/writers/sequential_writer.hpp"
 #include "rosbag2_storage/metadata_io.hpp"
 
 namespace rosbag2_transport

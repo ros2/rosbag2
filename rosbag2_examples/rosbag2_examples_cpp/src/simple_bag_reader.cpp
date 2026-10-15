@@ -20,8 +20,16 @@
 
 #include "example_interfaces/msg/string.hpp"
 
-#include "rclcpp/rclcpp.hpp"
+#include "rclcpp/executors.hpp"
+#include "rclcpp/generic_publisher.hpp"
+#include "rclcpp/node.hpp"
 #include "rclcpp/serialization.hpp"
+#include "rclcpp/serialized_message.hpp"
+#include "rclcpp/timer.hpp"
+#include "rclcpp/utilities.hpp"
+#include "rosbag2_cpp/reader.hpp"
+#include "rosbag2_storage/serialized_bag_message.hpp"
+#include "rosbag2_storage/storage_options.hpp"
 #include "rosbag2_transport/reader_writer_factory.hpp"
 
 using namespace std::chrono_literals;

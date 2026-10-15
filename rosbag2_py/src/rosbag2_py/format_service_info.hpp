@@ -15,6 +15,7 @@
 #ifndef ROSBAG2_PY__FORMAT_SERVICE_INFO_HPP_
 #define ROSBAG2_PY__FORMAT_SERVICE_INFO_HPP_
 
+#include <cstdint>
 #include <memory>
 #include <string>
 #include <vector>

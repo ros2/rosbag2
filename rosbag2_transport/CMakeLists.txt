@@ -89,10 +89,6 @@ install(
   RUNTIME DESTINATION bin
 )
 
-# Export old-style CMake variables
-ament_export_include_directories("include/${PROJECT_NAME}")
-ament_export_libraries(${PROJECT_NAME})
-
 # Export modern CMake targets
 ament_export_targets(export_${PROJECT_NAME})
 
@@ -649,9 +645,6 @@ if(BUILD_TESTING)
   if(TARGET test_play_services__rmw_fastrtps_cpp)
     ament_add_test_label(test_play_services__rmw_fastrtps_cpp xfail)
   endif()
-  if(TARGET test_play_services__rmw_fastrtps_dynamic_cpp)
-    ament_add_test_label(test_play_services__rmw_fastrtps_dynamic_cpp xfail)
-  endif()
 
   ament_add_gmock(test_record_options
     test/rosbag2_transport/test_record_options.cpp)
@@ -677,6 +670,7 @@ if(BUILD_TESTING)
     ${PROJECT_NAME}
     rcpputils::rcpputils
     rosbag2_test_common::rosbag2_test_common
+    test_msgs::test_msgs
   )
 
   ament_add_gmock(test_player_progress_bar test/rosbag2_transport/test_player_progress_bar.cpp)

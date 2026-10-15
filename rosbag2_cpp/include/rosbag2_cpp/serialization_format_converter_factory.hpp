@@ -15,6 +15,8 @@
 #ifndef ROSBAG2_CPP__SERIALIZATION_FORMAT_CONVERTER_FACTORY_HPP_
 #define ROSBAG2_CPP__SERIALIZATION_FORMAT_CONVERTER_FACTORY_HPP_
 
+#include "rosbag2_cpp/converter_interfaces/serialization_format_deserializer.hpp"
+#include "rosbag2_cpp/converter_interfaces/serialization_format_serializer.hpp"
 #include "rosbag2_cpp/serialization_format_converter_factory_interface.hpp"
 
 #include <memory>

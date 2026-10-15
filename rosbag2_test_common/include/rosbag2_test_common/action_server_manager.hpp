@@ -16,15 +16,28 @@
 #define ROSBAG2_TEST_COMMON__ACTION_SERVER_MANAGER_HPP_
 
 #include <chrono>
+#include <cstddef>
 #include <memory>
 #include <string>
+#include <thread>
 #include <unordered_map>
 #include <utility>
 #include <vector>
 
+#include "rcl/service_introspection.h"
+#include "rclcpp/clock.hpp"
 #include "rclcpp/executors.hpp"
+#include "rclcpp/executors/single_threaded_executor.hpp"
+#include "rclcpp/node.hpp"
+#include "rclcpp/node_options.hpp"
+#include "rclcpp/qos.hpp"
 
-#include "rclcpp_action/rclcpp_action.hpp"
+#include "rclcpp_action/client_base.hpp"
+#include "rclcpp_action/create_client.hpp"
+#include "rclcpp_action/create_server.hpp"
+#include "rclcpp_action/server.hpp"
+#include "rclcpp_action/server_goal_handle.hpp"
+#include "rclcpp_action/types.hpp"
 
 using namespace std::chrono_literals;  // NOLINT
 

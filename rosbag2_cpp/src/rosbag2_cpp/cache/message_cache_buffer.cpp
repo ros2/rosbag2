@@ -13,6 +13,7 @@
 // limitations under the License.
 
 #include <memory>
+#include <stdexcept>
 #include <vector>
 
 #include "rcutils/time.h"
@@ -97,6 +98,11 @@ void MessageCacheBuffer::clear()
 size_t MessageCacheBuffer::size()
 {
   return buffer_.size();
+}
+
+size_t MessageCacheBuffer::get_bytes_size() const
+{
+  return buffer_bytes_size_;
 }
 
 const std::vector<CacheBufferInterface::buffer_element_t> & MessageCacheBuffer::data()

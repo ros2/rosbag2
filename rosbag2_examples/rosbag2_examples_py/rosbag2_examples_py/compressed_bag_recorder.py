@@ -58,9 +58,9 @@ class CompressedBagRecorder(Node):
             self.get_clock().now().nanoseconds)
 
 
-def main(args=None):
+def main():
     try:
-        with rclpy.init(args=args):
+        with rclpy.init():
             cbr = CompressedBagRecorder()
             rclpy.spin(cbr)
     except (KeyboardInterrupt, ExternalShutdownException):

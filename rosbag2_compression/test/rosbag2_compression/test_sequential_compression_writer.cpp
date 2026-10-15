@@ -14,24 +14,36 @@
 
 #include <gmock/gmock.h>
 
+#include <atomic>
+#include <cerrno>
+#include <cstddef>
+#include <cstdint>
 #include <filesystem>
 #include <fstream>
+#include <iostream>
 #include <memory>
+#include <ostream>
 #include <regex>
 #include <sstream>
+#include <stdexcept>
 #include <string>
 #include <utility>
 #include <vector>
 
 #include "rcpputils/asserts.hpp"
 
+#include "rosbag2_compression/compression_factory.hpp"
 #include "rosbag2_compression/compression_options.hpp"
 #include "rosbag2_compression/sequential_compression_writer.hpp"
 
+#include "rosbag2_cpp/bag_events.hpp"
 #include "rosbag2_cpp/writer.hpp"
 #include "rosbag2_cpp/writers/sequential_writer.hpp"
 
+#include "rosbag2_storage/bag_metadata.hpp"
 #include "rosbag2_storage/ros_helper.hpp"
+#include "rosbag2_storage/serialized_bag_message.hpp"
+#include "rosbag2_storage/storage_interfaces/base_write_interface.hpp"
 #include "rosbag2_storage/storage_options.hpp"
 
 #include "mock_converter_factory.hpp"
@@ -94,17 +106,16 @@ public:
     // initialize values when opening a new bagfile
     ON_CALL(*storage_factory_, open_read_write(_)).WillByDefault(
       DoAll(
-        Invoke(
-          [this](const rosbag2_storage::StorageOptions & storage_options) {
-            fake_storage_size_.store(0);
-            fake_storage_uri_ = storage_options.uri;
+        [this](const rosbag2_storage::StorageOptions & storage_options) {
+          fake_storage_size_.store(0);
+          fake_storage_uri_ = storage_options.uri;
             // Touch the file
-            std::ofstream output(storage_options.uri);
-            ASSERT_TRUE(output.is_open());
+          std::ofstream output(storage_options.uri);
+          ASSERT_TRUE(output.is_open());
             // Put some arbitrary bytes in the file so it isn't interpreted as being empty
-            output << "Fake storage data" << std::endl;
-            output.close();
-          }),
+          output << "Fake storage data" << std::endl;
+          output.close();
+          },
         Return(storage_)));
     ON_CALL(*storage_,
             write_message(An<std::shared_ptr<const rosbag2_storage::SerializedBagMessage>>()))

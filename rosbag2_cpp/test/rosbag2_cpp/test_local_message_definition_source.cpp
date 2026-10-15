@@ -12,11 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <ostream>
 #include <set>
 #include <string>
 
 #include "gmock/gmock.h"
 #include "rosbag2_cpp/message_definitions/local_message_definition_source.hpp"
+
+#include "rosbag2_storage/message_definition.hpp"
 
 using rosbag2_cpp::LocalMessageDefinitionSource;
 using rosbag2_cpp::parse_definition_dependencies;
@@ -228,6 +231,41 @@ TEST(test_local_message_definition_source, can_find_action_deps_in_msg)
       "rosbag2_test_msgdefs/action/ComplexActionMsg_FeedbackMessage",
       "/complex_action_msg/_action/feedback");
     check_result(result);
+  }
+}
+
+TEST(test_local_message_definition_source, action_status_and_cancel_goal_without_prior_lookup)
+{
+  // A fresh source has no cached action type for the topic: recording only the status or
+  // cancel_goal interface topic of an action must still yield a usable plain definition
+  // instead of an "unknown" encoding with an empty definition.
+  {
+    LocalMessageDefinitionSource source;
+    auto result = source.get_full_text_ext(
+      "action_msgs/msg/GoalStatusArray",
+      "/complex_action_msg/_action/status");
+    EXPECT_EQ(result.encoding, "ros2msg");
+    EXPECT_EQ(result.topic_type, "action_msgs/msg/GoalStatusArray");
+    EXPECT_THAT(
+      result.encoded_message_definition,
+      ::testing::HasSubstr("GoalStatus[] status_list"));
+    EXPECT_THAT(
+      result.encoded_message_definition,
+      ::testing::HasSubstr("MSG: action_msgs/GoalStatus"));
+    EXPECT_THAT(
+      result.encoded_message_definition,
+      ::testing::HasSubstr("MSG: unique_identifier_msgs/UUID"));
+  }
+  {
+    LocalMessageDefinitionSource source;
+    auto result = source.get_full_text_ext(
+      "action_msgs/srv/CancelGoal_Event",
+      "/complex_action_msg/_action/cancel_goal/_service_event");
+    EXPECT_EQ(result.encoding, "ros2msg");
+    EXPECT_EQ(result.topic_type, "action_msgs/srv/CancelGoal");
+    EXPECT_THAT(
+      result.encoded_message_definition,
+      ::testing::HasSubstr("SRV: action_msgs/srv/CancelGoal"));
   }
 }
 

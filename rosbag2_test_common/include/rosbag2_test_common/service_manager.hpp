@@ -15,13 +15,26 @@
 #ifndef ROSBAG2_TEST_COMMON__SERVICE_MANAGER_HPP_
 #define ROSBAG2_TEST_COMMON__SERVICE_MANAGER_HPP_
 
+#include <chrono>
+#include <iostream>
 #include <memory>
+#include <ostream>
+#include <stdexcept>
 #include <string>
+#include <thread>
 #include <unordered_map>
 #include <utility>
 #include <vector>
 
-#include "rclcpp/rclcpp.hpp"
+#include "rcl/service_introspection.h"
+#include "rclcpp/client.hpp"
+#include "rclcpp/clock.hpp"
+#include "rclcpp/executors/single_threaded_executor.hpp"
+#include "rclcpp/node.hpp"
+#include "rclcpp/node_options.hpp"
+#include "rclcpp/qos.hpp"
+#include "rclcpp/service.hpp"
+#include "rmw/types.h"
 
 #include "rosbag2_test_common/wait_for.hpp"
 

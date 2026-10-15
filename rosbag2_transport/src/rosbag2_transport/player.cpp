@@ -13,30 +13,60 @@
 // limitations under the License.
 
 #include <algorithm>
+#include <atomic>
 #include <chrono>
+#include <condition_variable>
+#include <exception>
+#include <iostream>
+#include <iterator>
 #include <limits>
 #include <memory>
+#include <mutex>
 #include <regex>
+#include <sstream>
+#include <stdexcept>
 #include <string>
+#include <type_traits>
 #include <unordered_map>
+#include <unordered_set>
 #include <utility>
 #include <vector>
 #include <thread>
 
+#include "keyboard_handler/keyboard_handler_base.hpp"
 #include "rcl/graph.h"
 
-#include "rclcpp/rclcpp.hpp"
+#include "rclcpp/duration.hpp"
+#include "rclcpp/expand_topic_or_service_name.hpp"
+#include "rclcpp/generic_client.hpp"
+#include "rclcpp/generic_publisher.hpp"
+#include "rclcpp/logger.hpp"
+#include "rclcpp/logging.hpp"
+#include "rclcpp/node.hpp"
+#include "rclcpp/node_options.hpp"
+#include "rclcpp/publisher.hpp"
+#include "rclcpp/qos.hpp"
+#include "rclcpp/serialized_message.hpp"
+#include "rclcpp/service.hpp"
+#include "rclcpp/time.hpp"
+#include "rclcpp/timer.hpp"
+#include "rclcpp/utilities.hpp"
 #include "rclcpp_action/create_generic_client.hpp"
+#include "rcpputils/thread_safety_annotations.hpp"
 #include "rcpputils/unique_lock.hpp"
+#include "rcutils/logging_macros.h"
 #include "rcutils/time.h"
+#include "rmw/rmw.h"
 
 #include "rosbag2_cpp/action_utils.hpp"
+#include "rosbag2_cpp/bag_events.hpp"
 #include "rosbag2_cpp/clocks/time_controller_clock.hpp"
 #include "rosbag2_cpp/reader.hpp"
 #include "rosbag2_cpp/service_utils.hpp"
 
 #include "rosbag2_storage/storage_filter.hpp"
 #include "rosbag2_storage/qos.hpp"
+#include "rosbag2_storage/topic_metadata.hpp"
 #include "rosbag2_transport/config_options_from_node_params.hpp"
 #include "rosbag2_transport/player.hpp"
 #include "rosbag2_transport/player_action_client.hpp"
@@ -47,6 +77,7 @@
 
 #include "logging.hpp"
 #include "locked_priority_queue.hpp"
+#include "service_msgs/msg/service_event_info.hpp"
 
 namespace
 {
@@ -320,6 +351,15 @@ private:
 
   void wait_for_filled_queue() const;
   void play_messages_from_queue();
+  /// \brief Build the storage filter resulting from the topic, service and action filtering
+  /// play options.
+  rosbag2_storage::StorageFilter build_storage_filter() const;
+  /// \brief Resolve which of the topics selected by the play options can actually be played,
+  /// dealing with topics whose messages the readers cannot deliver in the local rmw
+  /// serialization format: throw if such a topic was requested by name in the play options,
+  /// otherwise record it in undecodable_*_to_exclude_ and warn. Throws as well if no playable
+  /// topic remains selected.
+  void resolve_playable_topics();
   void prepare_publishers();
   bool publish_message(rosbag2_storage::SerializedBagMessageSharedPtr message);
   bool publish_message_by_player_publisher(
@@ -376,6 +416,12 @@ private:
 
   Player * owner_;
   rosbag2_transport::PlayOptions play_options_;
+  /// Topics excluded from playback, in addition to the exclusions in play_options_, because
+  /// their messages cannot be decoded; filled by resolve_playable_topics() and merged into the
+  /// storage filter by build_storage_filter(), grouped by the filter list they belong in.
+  std::vector<std::string> undecodable_topics_to_exclude_;
+  std::vector<std::string> undecodable_service_events_to_exclude_;
+  std::vector<std::string> undecodable_action_interfaces_to_exclude_;
   static constexpr const char * kDefaultReadSplitTopicName = "events/read_split";
   rcutils_time_point_value_t play_until_timestamp_ = -1;
   LockedPriorityQueue<rosbag2_storage::SerializedBagMessageSharedPtr> message_queue_;
@@ -521,6 +567,11 @@ PlayerImpl::PlayerImpl(
       exclude_action_topic, owner_->get_name(),
       owner_->get_namespace(), false);
   }
+
+  // Resolve the playable topics as early as possible, in particular before the progress bar
+  // is constructed, so that refusing to play does not produce any UI output and the warning
+  // about topics excluded from playback is not swallowed by the progress bar.
+  resolve_playable_topics();
 
   starting_time_ = readers_->get_earliest_timestamp();
   const rcutils_time_point_value_t ending_time = readers_->get_latest_timestamp();
@@ -671,6 +722,10 @@ bool PlayerImpl::play()
         } while (rclcpp::ok() && !stop_playback_ && play_options_.loop);
       } catch (const std::exception & e) {
         RCLCPP_ERROR(owner_->get_logger(), "Failed to play: %s", e.what());
+      }
+
+      if (clock_publish_timer_ != nullptr) {
+        clock_publish_timer_->cancel();
       }
 
       progress_bar_->update(clock_->is_paused() ? PlayerStatus::PAUSED : PlayerStatus::RUNNING);
@@ -1505,9 +1560,28 @@ bool allow_topic(
 
   return true;
 }
+
+TopicKind get_topic_kind(const rosbag2_storage::TopicMetadata & topic)
+{
+  if (rosbag2_cpp::is_topic_belong_to_action(topic.name, topic.type)) {
+    return TopicKind::ACTION_INTERFACE_TOPIC;
+  } else if (rosbag2_cpp::is_service_event_topic(topic.name, topic.type)) {
+    return TopicKind::SERVICE_EVENT_TOPIC;
+  }
+  return TopicKind::GENERIC_TOPIC;
+}
+
+std::string format_topic_list(const std::vector<std::string> & topics)
+{
+  std::string list;
+  for (const auto & topic : topics) {
+    list += "\n  " + topic;
+  }
+  return list;
+}
 }  // namespace
 
-void PlayerImpl::prepare_publishers()
+rosbag2_storage::StorageFilter PlayerImpl::build_storage_filter() const
 {
   rosbag2_storage::StorageFilter storage_filter;
   storage_filter.topics = play_options_.topics_to_filter;
@@ -1530,6 +1604,117 @@ void PlayerImpl::prepare_publishers()
       std::make_move_iterator(action_interfaces.begin()),
       std::make_move_iterator(action_interfaces.end()));
   }
+  // Exclude the topics found to be undecodable by resolve_playable_topics() as well.
+  storage_filter.exclude_topics.insert(
+    storage_filter.exclude_topics.end(),
+    undecodable_topics_to_exclude_.begin(), undecodable_topics_to_exclude_.end());
+  storage_filter.exclude_service_events.insert(
+    storage_filter.exclude_service_events.end(),
+    undecodable_service_events_to_exclude_.begin(), undecodable_service_events_to_exclude_.end());
+  storage_filter.exclude_actions_interfaces.insert(
+    storage_filter.exclude_actions_interfaces.end(),
+    undecodable_action_interfaces_to_exclude_.begin(),
+    undecodable_action_interfaces_to_exclude_.end());
+  return storage_filter;
+}
+
+void PlayerImpl::resolve_playable_topics()
+{
+  // The readers refuse to deliver messages whose serialization format differs from the local
+  // rmw serialization format and cannot be converted, which happens for bags with mixed
+  // serialization formats. When such a topic was requested by name in the play options, refuse
+  // to play; when it is only selected implicitly, by the play-everything default or by a
+  // matching regex, exclude it from playback with a warning, matching how topics whose type
+  // has no typesupport locally are skipped in prepare_publishers().
+  std::unordered_set<std::string> undeliverable_topic_names;
+  for (const auto & topic : readers_->get_undeliverable_topics()) {
+    undeliverable_topic_names.insert(topic.name);
+  }
+  if (undeliverable_topic_names.empty()) {
+    return;
+  }
+
+  // The undecodable_*_to_exclude_ lists are still empty at this point, so this filter reflects
+  // the play options alone.
+  const rosbag2_storage::StorageFilter storage_filter = build_storage_filter();
+  const std::string rmw_serialization_format = rmw_get_serialization_format();
+  std::vector<std::string> requested_undecodable_topics;
+  std::vector<std::string> excluded_topics;
+  bool playable_topic_selected = false;
+  for (const auto & topic : readers_->get_all_topics_and_types()) {
+    const TopicKind topic_kind = get_topic_kind(topic);
+    if (!allow_topic(topic_kind, topic.name, storage_filter)) {
+      continue;
+    }
+    if (undeliverable_topic_names.count(topic.name) == 0) {
+      playable_topic_selected = true;
+      continue;
+    }
+    const std::vector<std::string> * requested_names = nullptr;
+    std::vector<std::string> * names_to_exclude = nullptr;
+    switch (topic_kind) {
+      case TopicKind::GENERIC_TOPIC:
+        requested_names = &storage_filter.topics;
+        names_to_exclude = &undecodable_topics_to_exclude_;
+        break;
+      case TopicKind::SERVICE_EVENT_TOPIC:
+        requested_names = &storage_filter.services_events;
+        names_to_exclude = &undecodable_service_events_to_exclude_;
+        break;
+      case TopicKind::ACTION_INTERFACE_TOPIC:
+        requested_names = &storage_filter.actions_interfaces;
+        names_to_exclude = &undecodable_action_interfaces_to_exclude_;
+        break;
+    }
+    if (std::find(requested_names->begin(), requested_names->end(), topic.name) !=
+      requested_names->end())
+    {
+      requested_undecodable_topics.push_back(
+        "'" + topic.name + "' (" + topic.serialization_format + ")");
+    } else {
+      if (std::find(names_to_exclude->begin(), names_to_exclude->end(), topic.name) ==
+        names_to_exclude->end())
+      {
+        // A topic recorded in several bags shall be excluded and reported only once.
+        names_to_exclude->push_back(topic.name);
+        excluded_topics.push_back("'" + topic.name + "' (" + topic.serialization_format + ")");
+      }
+    }
+  }
+
+  if (!requested_undecodable_topics.empty()) {
+    throw std::runtime_error(
+            "Cannot play because the following requested topics have a serialization format "
+            "which differs from the local rmw serialization format '" +
+            rmw_serialization_format + "' and cannot be converted:" +
+            format_topic_list(requested_undecodable_topics) +
+            "\nRemove these topics from the ros2 bag play options --topics, --services or "
+            "--actions to play the rest of the bag.");
+  }
+  if (excluded_topics.empty()) {
+    return;  // Everything selected for playback can be played.
+  }
+  if (!playable_topic_selected) {
+    // Refuse to play a bag none of whose topics can be played; otherwise playback would
+    // "succeed" without publishing a single message.
+    throw std::runtime_error(
+            "Cannot play because no topics would be left to play after excluding the "
+            "following topics, whose serialization format differs from the local rmw "
+            "serialization format '" + rmw_serialization_format + "' and cannot be converted:" +
+            format_topic_list(excluded_topics));
+  }
+  RCLCPP_WARN(
+    owner_->get_logger(),
+    "Excluding the following topics from playback: their serialization format differs from "
+    "the local rmw serialization format '%s' and cannot be converted:%s"
+    "\nSelect or exclude topics explicitly, e.g. with the ros2 bag play options --topics, "
+    "--exclude-topics or --exclude-regex, to silence this warning.",
+    rmw_serialization_format.c_str(), format_topic_list(excluded_topics).c_str());
+}
+
+void PlayerImpl::prepare_publishers()
+{
+  const rosbag2_storage::StorageFilter storage_filter = build_storage_filter();
 
   readers_->set_filter(storage_filter);
 
@@ -1572,14 +1757,7 @@ void PlayerImpl::prepare_publishers()
   std::vector<rosbag2_storage::TopicMetadata> topics = readers_->get_all_topics_and_types();
   std::string topic_without_support_acked;
   for (const auto & topic : topics) {
-    TopicKind topic_kind;
-    if (rosbag2_cpp::is_topic_belong_to_action(topic.name, topic.type)) {
-      topic_kind = TopicKind::ACTION_INTERFACE_TOPIC;
-    } else if (rosbag2_cpp::is_service_event_topic(topic.name, topic.type)) {
-      topic_kind = TopicKind::SERVICE_EVENT_TOPIC;
-    } else {
-      topic_kind = TopicKind::GENERIC_TOPIC;
-    }
+    TopicKind topic_kind = get_topic_kind(topic);
 
     if (topic_kind == TopicKind::ACTION_INTERFACE_TOPIC && play_options_.send_actions_as_client) {
       // Check if action client was created

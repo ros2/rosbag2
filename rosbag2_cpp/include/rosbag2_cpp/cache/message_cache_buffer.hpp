@@ -16,6 +16,8 @@
 #define ROSBAG2_CPP__CACHE__MESSAGE_CACHE_BUFFER_HPP_
 
 #include <atomic>
+#include <cstddef>
+#include <cstdint>
 #include <memory>
 #include <vector>
 
@@ -75,6 +77,9 @@ public:
 
   /// Get number of elements in the buffer
   size_t size() override;
+
+  /// Get the total size in bytes of the messages stored in the buffer
+  size_t get_bytes_size() const;
 
   /// Get buffer data
   const std::vector<CacheBufferInterface::buffer_element_t> & data() override;

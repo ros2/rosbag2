@@ -15,19 +15,34 @@
 #include <gmock/gmock.h>
 
 #include <algorithm>
+#include <cassert>
+#include <chrono>
+#include <cstddef>
+#include <cstdint>
 #include <filesystem>  // NOLINT cpplint: FP, filesystem is a C++17 system header
 #include <limits>
 #include <memory>
+#include <stdexcept>
 #include <string>
 #include <tuple>
 #include <utility>
 #include <vector>
 
+#include "rclcpp/qos.hpp"
 #include "rcpputils/env.hpp"
 
 #include "rcutils/snprintf.h"
 
+#include "rosbag2_storage/bag_metadata.hpp"
+#include "rosbag2_storage/message_definition.hpp"
 #include "rosbag2_storage/storage_filter.hpp"
+#include "rosbag2_storage/storage_interfaces/base_io_interface.hpp"
+#include "rosbag2_storage/storage_interfaces/read_only_interface.hpp"
+#include "rosbag2_storage/storage_interfaces/read_write_interface.hpp"
+#include "rosbag2_storage/storage_options.hpp"
+#include "rosbag2_storage/topic_metadata.hpp"
+#include "rosbag2_storage_sqlite3/sqlite_storage.hpp"
+#include "rosbag2_storage_sqlite3/sqlite_wrapper.hpp"
 
 #include "storage_test_fixture.hpp"
 
@@ -73,6 +88,7 @@ TEST_F(StorageTestFixture, string_messages_are_written_and_read_to_and_from_sqli
     EXPECT_THAT(deserialize_message(read_messages[i]->serialized_data), Eq(string_messages[i]));
     EXPECT_THAT(read_messages[i]->recv_timestamp, Eq(std::get<1>(messages[i])));
     EXPECT_THAT(read_messages[i]->topic_name, Eq(topics[i]));
+    EXPECT_THAT(read_messages[i]->serialization_format, Eq(std::get<4>(messages[i])));
   }
 }
 
@@ -362,6 +378,7 @@ TEST_F(StorageTestFixture, messages_readable_for_prefoxy_db_schema) {
     EXPECT_THAT(deserialize_message(read_messages[i]->serialized_data), Eq(string_messages[i]));
     EXPECT_THAT(read_messages[i]->recv_timestamp, Eq(std::get<1>(messages[i])));
     EXPECT_THAT(read_messages[i]->topic_name, Eq(topics[i]));
+    EXPECT_THAT(read_messages[i]->serialization_format, Eq(std::get<4>(messages[i])));
   }
 }
 

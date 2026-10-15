@@ -15,12 +15,25 @@
 #ifndef ROSBAG2_TRANSPORT__MOCK_SEQUENTIAL_READER_HPP_
 #define ROSBAG2_TRANSPORT__MOCK_SEQUENTIAL_READER_HPP_
 
+#include <chrono>
+#include <cstddef>
 #include <memory>
 #include <string>
+#include <unordered_set>
 #include <utility>
 #include <vector>
 
+#include "rcutils/time.h"
+#include "rosbag2_cpp/bag_events.hpp"
+#include "rosbag2_cpp/converter_options.hpp"
 #include "rosbag2_cpp/reader_interfaces/base_reader_interface.hpp"
+#include "rosbag2_storage/bag_metadata.hpp"
+#include "rosbag2_storage/message_definition.hpp"
+#include "rosbag2_storage/serialized_bag_message.hpp"
+#include "rosbag2_storage/storage_filter.hpp"
+#include "rosbag2_storage/storage_interfaces/base_read_interface.hpp"
+#include "rosbag2_storage/storage_options.hpp"
+#include "rosbag2_storage/topic_metadata.hpp"
 
 class MockSequentialReader : public rosbag2_cpp::reader_interfaces::BaseReaderInterface
 {
@@ -30,7 +43,7 @@ public:
     const rosbag2_cpp::ConverterOptions & converter_options) override
   {
     (void) storage_options;
-    (void) converter_options;
+    output_serialization_format_ = converter_options.output_serialization_format;
     num_read_ = 0;
   }
 
@@ -98,6 +111,31 @@ public:
   std::vector<rosbag2_storage::TopicMetadata> get_all_topics_and_types() const override
   {
     return topics_;
+  }
+
+  std::vector<rosbag2_storage::TopicMetadata> get_undeliverable_topics() const override
+  {
+    // Mirrors rosbag2_cpp::readers::SequentialReader: messages of a bag with a uniform
+    // serialization format are always delivered (converted if necessary), while in a bag with
+    // mixed serialization formats topics not stored in the requested output serialization
+    // format cannot be delivered.
+    std::vector<rosbag2_storage::TopicMetadata> undeliverable_topics;
+    if (output_serialization_format_.empty()) {
+      return undeliverable_topics;
+    }
+    std::unordered_set<std::string> serialization_formats;
+    for (const auto & topic : topics_) {
+      serialization_formats.insert(topic.serialization_format);
+    }
+    if (serialization_formats.size() <= 1u) {
+      return undeliverable_topics;
+    }
+    for (const auto & topic : topics_) {
+      if (topic.serialization_format != output_serialization_format_) {
+        undeliverable_topics.push_back(topic);
+      }
+    }
+    return undeliverable_topics;
   }
 
   void get_all_message_definitions(std::vector<rosbag2_storage::MessageDefinition> & definitions)
@@ -168,6 +206,7 @@ private:
   std::vector<std::shared_ptr<rosbag2_storage::SerializedBagMessage>> messages_;
   rosbag2_storage::BagMetadata metadata_;
   std::vector<rosbag2_storage::TopicMetadata> topics_;
+  std::string output_serialization_format_;
   size_t num_read_;
   rcutils_time_point_value_t seek_time_ = 0;
   rosbag2_storage::StorageFilter filter_;

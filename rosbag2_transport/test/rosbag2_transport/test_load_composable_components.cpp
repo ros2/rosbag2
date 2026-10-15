@@ -14,6 +14,17 @@
 
 #include <gmock/gmock.h>
 
+#include <chrono>
+#include <filesystem>
+#include <memory>
+#include <string>
+
+#include "composition_interfaces/srv/load_node.hpp"
+#include "rclcpp/future_return_code.hpp"
+#include "rclcpp/parameter.hpp"
+#include "rclcpp/parameter_map.hpp"
+#include "rclcpp/parameter_value.hpp"
+
 #include "composition_manager_test_fixture.hpp"
 #include "rosbag2_test_common/tested_storage_ids.hpp"
 

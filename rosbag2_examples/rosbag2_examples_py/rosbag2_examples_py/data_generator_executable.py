@@ -18,7 +18,7 @@ from rclpy.serialization import serialize_message
 import rosbag2_py
 
 
-def main(args=None):
+def main():
     writer = rosbag2_py.SequentialWriter()
 
     storage_options = rosbag2_py.StorageOptions(

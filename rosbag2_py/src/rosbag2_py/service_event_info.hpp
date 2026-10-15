@@ -16,6 +16,7 @@
 #ifndef ROSBAG2_PY__SERVICE_EVENT_INFO_HPP_
 #define ROSBAG2_PY__SERVICE_EVENT_INFO_HPP_
 
+#include <cstddef>
 #include <string>
 
 namespace rosbag2_py

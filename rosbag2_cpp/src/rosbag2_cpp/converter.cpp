@@ -20,8 +20,10 @@
 #include <utility>
 #include <vector>
 
+#include "rcutils/allocator.h"
 #include "rosbag2_cpp/info.hpp"
 #include "rclcpp/typesupport_helpers.hpp"
+#include "rosbag2_cpp/types/introspection_message.hpp"
 
 #include "rosbag2_storage/metadata_io.hpp"
 #include "rosbag2_storage/ros_helper.hpp"
@@ -86,6 +88,7 @@ std::shared_ptr<rosbag2_storage::SerializedBagMessage> Converter::convert(
   output_message->topic_name = std::string(allocated_ros_message->topic_name);
   output_message->recv_timestamp = message->recv_timestamp;
   output_message->send_timestamp = message->send_timestamp;
+  output_message->serialization_format = output_serialization_format_;
   output_converter_->serialize(allocated_ros_message, rmw_ts, output_message);
   return output_message;
 }

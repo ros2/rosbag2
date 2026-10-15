@@ -16,6 +16,7 @@
 #include "rosbag2_cpp/reader.hpp"
 
 #include <memory>
+#include <stdexcept>
 #include <string>
 #include <utility>
 #include <vector>
@@ -83,6 +84,11 @@ const rosbag2_storage::BagMetadata & Reader::get_metadata() const
 std::vector<rosbag2_storage::TopicMetadata> Reader::get_all_topics_and_types() const
 {
   return reader_impl_->get_all_topics_and_types();
+}
+
+std::vector<rosbag2_storage::TopicMetadata> Reader::get_undeliverable_topics() const
+{
+  return reader_impl_->get_undeliverable_topics();
 }
 
 void Reader::get_all_message_definitions(

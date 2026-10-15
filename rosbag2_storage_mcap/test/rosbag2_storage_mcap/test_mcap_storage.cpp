@@ -12,10 +12,19 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include "rclcpp/qos.hpp"
 #include "rclcpp/serialization.hpp"
 #include "rclcpp/serialized_message.hpp"
 #include "rcutils/logging_macros.h"
+#include "rcutils/time.h"
+#include "rcutils/types/uint8_array.h"
+#include "rmw/ret_types.h"
+#include "rmw/serialized_message.h"
+#include "rosbag2_storage/bag_metadata.hpp"
+#include "rosbag2_storage/message_definition.hpp"
+#include "rosbag2_storage/serialized_bag_message.hpp"
 #include "rosbag2_storage/storage_factory.hpp"
+#include "rosbag2_storage/topic_metadata.hpp"
 #ifdef ROSBAG2_STORAGE_MCAP_HAS_STORAGE_OPTIONS
   #include "rosbag2_storage/storage_options.hpp"
 #endif
@@ -24,9 +33,14 @@
 
 #include <gmock/gmock.h>
 
+#include <chrono>
+#include <cstdint>
 #include <filesystem>
 #include <memory>
 #include <string>
+#include <tuple>
+#include <utility>
+#include <vector>
 
 using namespace ::testing;  // NOLINT
 using TemporaryDirectoryFixture = rosbag2_test_common::TemporaryDirectoryFixture;
@@ -246,6 +260,8 @@ TEST_F(TemporaryDirectoryFixture, can_write_and_read_basic_mcap_file)
 
     std_msgs::msg::String msg;
     auto serialized_bag_msg = reader->read_next();
+    EXPECT_EQ(serialized_bag_msg->topic_name, topic_name);
+    EXPECT_EQ(serialized_bag_msg->serialization_format, "cdr");
     rclcpp::SerializedMessage extracted_serialized_msg(*serialized_bag_msg->serialized_data);
     serialization.deserialize_message(&extracted_serialized_msg, &msg);
     EXPECT_EQ(msg.data, message_data);
@@ -279,6 +295,7 @@ TEST_F(TemporaryDirectoryFixture, can_write_mcap_with_zstd_configured_from_yaml)
     rosbag2_storage::TopicMetadata topic_metadata;
     topic_metadata.name = topic_name;
     topic_metadata.type = "std_msgs/msg/String";
+    topic_metadata.serialization_format = "cdr";
 
     std_msgs::msg::String msg;
     msg.data = message_data;
@@ -315,6 +332,8 @@ TEST_F(TemporaryDirectoryFixture, can_write_mcap_with_zstd_configured_from_yaml)
 
     std_msgs::msg::String msg;
     auto serialized_bag_msg = reader->read_next();
+    EXPECT_EQ(serialized_bag_msg->topic_name, topic_name);
+    EXPECT_EQ(serialized_bag_msg->serialization_format, "cdr");
     rclcpp::SerializedMessage extracted_serialized_msg(*serialized_bag_msg->serialized_data);
     serialization.deserialize_message(&extracted_serialized_msg, &msg);
     EXPECT_EQ(msg.data, message_data);

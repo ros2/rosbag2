@@ -15,6 +15,7 @@
 #ifndef ROSBAG2_STORAGE__STORAGE_INTERFACES__BASE_WRITE_INTERFACE_HPP_
 #define ROSBAG2_STORAGE__STORAGE_INTERFACES__BASE_WRITE_INTERFACE_HPP_
 
+#include <cstddef>
 #include <memory>
 #include <string>
 #include <vector>

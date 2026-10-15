@@ -15,12 +15,17 @@
 #include "rosbag2_performance_benchmarking/result_utils.hpp"
 
 #include <chrono>
+#include <cstddef>
 #include <fstream>
 #include <iomanip>   // std::setprecision, std::setw
+#include <ios>
 #include <memory>
+#include <ostream>
+#include <stdexcept>
 #include <string>
 #include <vector>
 
+#include "rosbag2_storage/bag_metadata.hpp"
 #include "rosbag2_storage/storage_options.hpp"
 #include "rosbag2_storage/metadata_io.hpp"
 #include "rosbag2_storage/yaml.hpp"

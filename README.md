@@ -22,7 +22,7 @@ This README has a lot of information. You may want to jump directly to:
 Rosbag2 packages are available via debian packages, and will already be included with any `-ros-base` installation (which is included within `-desktop`)
 
 ```
-$ export ROS_DISTRO=humble
+$ export ROS_DISTRO=rolling
 $ sudo apt-get install ros-$ROS_DISTRO-rosbag2
 ```
 
@@ -399,6 +399,10 @@ Options:
   It prevents mixing external log messages with the progress bar string. Default to 2.
 
 For more options, run with `--help`.
+
+#### Publishing simulation time
+
+When fixed-frequency `/clock` publication is enabled with `--clock` or the `play.clock_publish_frequency` node parameter, `/clock` is published only while a playback session is active. If the Player node remains alive after playback finishes or is stopped, clock publication stops. Starting another playback session restarts it. Pausing playback does not end the session; fixed-frequency updates continue with the paused time.
 
 #### Playback action messages as action client
 

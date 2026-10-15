@@ -15,8 +15,11 @@
 #include <gmock/gmock.h>
 
 #include <chrono>
+#include <cstddef>
+#include <cstdint>
 #include <numeric>
 #include <memory>
+#include <stdexcept>
 #include <string>
 #include <unordered_map>
 #include <utility>
@@ -24,6 +27,7 @@
 #include <thread>
 
 #include "rcutils/time.h"
+#include "rosbag2_cpp/cache/message_cache.hpp"
 #include "rosbag2_cpp/cache/message_cache_buffer.hpp"
 #include "rosbag2_storage/ros_helper.hpp"
 #include "rosbag2_storage/serialized_bag_message.hpp"
@@ -274,4 +278,37 @@ TEST_F(MessageCacheTest, message_cache_allows_first_message_exceeding_size_limit
   // The stored data size can exceed the configured max size by a single message
   EXPECT_GT(total_size, max_buffer_size);
   EXPECT_EQ(buffer_data.front()->recv_timestamp, ts1_ns);
+}
+
+TEST_F(MessageCacheTest, get_current_size_returns_size_of_messages_in_producer_buffer) {
+  const size_t message_count = 5;
+  const std::string payload(50, 'x');
+  auto message_cache = std::make_shared<rosbag2_cpp::cache::MessageCache>(cache_size_);
+  EXPECT_EQ(message_cache->get_current_size(), 0u);
+
+  size_t expected_size = 0;
+  for (size_t i = 0; i < message_count; ++i) {
+    auto msg = make_test_msg(0, payload);
+    expected_size += msg->serialized_data->buffer_length;
+    ASSERT_TRUE(message_cache->push(msg));
+    EXPECT_EQ(message_cache->get_current_size(), expected_size);
+  }
+
+  // Dropped messages shall not be counted
+  auto too_big_msg = make_test_msg(0, std::string(cache_size_, 'y'));
+  ASSERT_FALSE(message_cache->push(too_big_msg));
+  EXPECT_EQ(message_cache->get_current_size(), expected_size);
+
+  // Messages handed over to the consumer shall not be counted anymore
+  message_cache->swap_buffers();
+  EXPECT_EQ(message_cache->get_current_size(), 0u);
+  auto consumer_buffer = message_cache->get_consumer_buffer();
+  EXPECT_EQ(consumer_buffer->size(), message_count);
+  consumer_buffer->clear();
+  message_cache->release_consumer_buffer();
+
+  // Messages pushed after the swap shall be counted again
+  auto msg = make_test_msg(0, payload);
+  ASSERT_TRUE(message_cache->push(msg));
+  EXPECT_EQ(message_cache->get_current_size(), msg->serialized_data->buffer_length);
 }

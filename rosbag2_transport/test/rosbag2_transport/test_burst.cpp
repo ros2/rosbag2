@@ -15,13 +15,24 @@
 #include <gmock/gmock.h>
 
 #include <chrono>
+#include <cstddef>
 #include <future>
 #include <memory>
+#include <string>
+#include <thread>
 #include <utility>
 #include <vector>
 
 #include "mock_player.hpp"
+#include "mock_sequential_reader.hpp"
+#include "rclcpp/executors/single_threaded_executor.hpp"
+#include "rmw/rmw.h"
+#include "rosbag2_cpp/reader.hpp"
 #include "rosbag2_play_test_fixture.hpp"
+#include "rosbag2_storage/serialized_bag_message.hpp"
+#include "rosbag2_storage/topic_metadata.hpp"
+#include "rosbag2_test_common/subscription_manager.hpp"
+#include "service_msgs/msg/service_event_info.hpp"
 #include "test_msgs/action/fibonacci.hpp"
 #include "test_msgs/message_fixtures.hpp"
 #include "test_msgs/msg/arrays.hpp"

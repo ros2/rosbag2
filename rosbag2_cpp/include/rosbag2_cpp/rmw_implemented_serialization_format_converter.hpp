@@ -19,7 +19,10 @@
 #include <string>
 
 #include "rosbag2_cpp/converter_interfaces/serialization_format_converter.hpp"
+#include "rosbag2_cpp/types/introspection_message.hpp"
 #include "rosbag2_cpp/visibility_control.hpp"
+#include "rosbag2_storage/serialized_bag_message.hpp"
+#include "rosidl_runtime_c/message_type_support_struct.h"
 
 // This is necessary because of using stl types here. It is completely safe, because
 // a) the member is not accessible from the outside

@@ -16,6 +16,7 @@
 
 #include <filesystem>
 #include <memory>
+#include <sstream>
 #include <stdexcept>
 #include <string>
 #include <utility>
@@ -23,6 +24,7 @@
 
 #include "rcpputils/asserts.hpp"
 
+#include "rosbag2_compression/compression_factory.hpp"
 #include "rosbag2_compression/compression_options.hpp"
 
 #include "logging.hpp"
@@ -113,7 +115,7 @@ std::shared_ptr<rosbag2_storage::SerializedBagMessage> SequentialCompressionRead
     if (compression_mode_ == rosbag2_compression::CompressionMode::MESSAGE) {
       decompressor_->decompress_serialized_bag_message(message.get());
     }
-    return converter_ ? converter_->convert(message) : message;
+    return finalize_message(message);
   }
   throw std::runtime_error{"Bag is not open. Call open() before reading."};
 }

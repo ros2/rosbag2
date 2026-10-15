@@ -13,14 +13,19 @@
 // limitations under the License.
 
 #include <algorithm>
+#include <cerrno>
 #include <chrono>
+#include <cstdint>
 #include <cstdio>
 #include <filesystem>
+#include <ios>
 #include <sstream>
+#include <stdexcept>
 #include <string>
 #include <vector>
 
 #include "compression_utils.hpp"
+#include "rcutils/types/uint8_array.h"
 #include "rosbag2_compression_zstd/zstd_decompressor.hpp"
 
 namespace fs = std::filesystem;

@@ -12,15 +12,26 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <algorithm>
 #include <chrono>
 #include <memory>
+#include <optional>
+#include <stdexcept>
 #include <string>
 
 #include "rclcpp/executors/single_threaded_executor.hpp"
+#include "rclcpp/logging.hpp"
+#include "rclcpp/utilities.hpp"
+#include "rcutils/allocator.h"
+#include "rcutils/error_handling.h"
+#include "rcutils/time.h"
+#include "rcutils/types/rcutils_ret.h"
+#include "rcutils/types/uint8_array.h"
 #include "rosbag2_compression/sequential_compression_writer.hpp"
 #include "rosbag2_storage/serialized_bag_message.hpp"
 #include "rmw/rmw.h"
 #include "rosbag2_performance_benchmarking_msgs/msg/byte_array.hpp"
+#include "rosbag2_storage/topic_metadata.hpp"
 
 #include "rosbag2_performance_benchmarking/config_utils.hpp"
 #include "rosbag2_performance_benchmarking/result_utils.hpp"

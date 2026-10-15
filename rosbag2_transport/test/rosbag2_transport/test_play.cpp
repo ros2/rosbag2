@@ -15,20 +15,34 @@
 #include <gmock/gmock.h>
 
 #include <chrono>
+#include <cstddef>
+#include <cstdint>
 #include <future>
 #include <memory>
+#include <stdexcept>
 #include <string>
+#include <thread>
 #include <vector>
 #include <unordered_map>
 #include <utility>
 
+#include "action_msgs/msg/goal_status.hpp"
+#include "action_msgs/msg/goal_status_array.hpp"
+#include "action_msgs/srv/cancel_goal.hpp"
+#include "mock_sequential_reader.hpp"
 #include "rcutils/time.h"
-#include "rclcpp/rclcpp.hpp"
+#include "rclcpp/duration.hpp"
+#include "rclcpp/executors/single_threaded_executor.hpp"
+#include "rclcpp/qos.hpp"
+#include "rclcpp/utilities.hpp"
+#include "rmw/rmw.h"
+#include "rosbag2_cpp/bag_events.hpp"
 
 #include "rosbag2_test_common/action_server_manager.hpp"
 #include "rosbag2_test_common/service_manager.hpp"
 #include "rosbag2_test_common/subscription_manager.hpp"
 
+#include "rosbag2_transport/play_options.hpp"
 #include "rosbag2_transport/player.hpp"
 
 #include "test_msgs/action/fibonacci.hpp"
@@ -38,10 +52,13 @@
 #include "test_msgs/srv/basic_types.hpp"
 
 #include "rosbag2_storage/qos.hpp"
+#include "rosbag2_storage/serialized_bag_message.hpp"
+#include "rosbag2_storage/topic_metadata.hpp"
 
 #include "rosbag2_play_test_fixture.hpp"
 #include "rosbag2_transport_test_fixture.hpp"
 #include "mock_player.hpp"
+#include "service_msgs/msg/service_event_info.hpp"
 
 using namespace ::testing;  // NOLINT
 using namespace rosbag2_transport;  // NOLINT
@@ -1583,6 +1600,136 @@ TEST_F(RosBag2PlayTestFixture, recorded_messages_are_played_for_filtered_topics)
     auto replayed_topic2 = sub_->get_received_messages<test_msgs::msg::Arrays>("/topic2");
     // All we care is that any messages arrived
     EXPECT_THAT(replayed_topic2, SizeIs(Ge(1u)));
+  }
+}
+
+TEST_F(RosBag2PlayTestFixture, topics_with_unplayable_serialization_format_can_be_filtered_out)
+{
+  auto primitive_message = get_messages_basic_types()[0];
+  primitive_message->int32_value = 42;
+
+  const std::string rmw_serialization_format = rmw_get_serialization_format();
+  auto topic_types = std::vector<rosbag2_storage::TopicMetadata>{
+    {1u, "/topic1", "test_msgs/BasicTypes", rmw_serialization_format, {}, ""},
+    {2u, "/topic2", "foxglove.CompressedVideo", "protobuf", {}, ""},
+  };
+
+  std::vector<std::shared_ptr<rosbag2_storage::SerializedBagMessage>> messages =
+  {serialize_test_message("/topic1", 500, primitive_message),
+    serialize_test_message("/topic1", 700, primitive_message)};
+
+  // Without filters the topic with the unplayable serialization format is only implicitly
+  // selected for playback; it shall be excluded automatically, with a warning, and the rest
+  // of the bag shall be played.
+  {
+    sub_.reset();
+    sub_ = std::make_shared<SubscriptionManager>();
+    sub_->add_subscription<test_msgs::msg::BasicTypes>("/topic1", 2);
+
+    auto prepared_mock_reader = std::make_unique<MockSequentialReader>();
+    prepared_mock_reader->prepare(messages, topic_types);
+    auto reader = std::make_unique<rosbag2_cpp::Reader>(std::move(prepared_mock_reader));
+
+    auto await_received_messages = sub_->spin_subscriptions();
+
+    auto player = std::make_shared<rosbag2_transport::Player>(
+      std::move(reader), storage_options_, play_options_);
+    player->play();
+    player->wait_for_playback_to_finish();
+    await_received_messages.get();
+
+    auto replayed_topic1 = sub_->get_received_messages<test_msgs::msg::BasicTypes>("/topic1");
+    EXPECT_THAT(replayed_topic1, SizeIs(2u));
+  }
+
+  // When the topic with the unplayable serialization format is requested by name, the player
+  // shall refuse to play.
+  {
+    play_options_.topics_to_filter = {"topic2"};
+
+    auto prepared_mock_reader = std::make_unique<MockSequentialReader>();
+    prepared_mock_reader->prepare(messages, topic_types);
+    auto reader = std::make_unique<rosbag2_cpp::Reader>(std::move(prepared_mock_reader));
+
+    std::shared_ptr<rosbag2_transport::Player> player;
+    EXPECT_THROW(
+      player = std::make_shared<rosbag2_transport::Player>(
+        std::move(reader), storage_options_, play_options_),
+      std::runtime_error);
+
+    play_options_.topics_to_filter.clear();
+  }
+
+  // When the topic with the unplayable serialization format is excluded, the rest of the bag
+  // shall be played.
+  {
+    play_options_.exclude_topics_to_filter = {"topic2"};
+
+    sub_.reset();
+    sub_ = std::make_shared<SubscriptionManager>();
+    sub_->add_subscription<test_msgs::msg::BasicTypes>("/topic1", 2);
+
+    auto prepared_mock_reader = std::make_unique<MockSequentialReader>();
+    prepared_mock_reader->prepare(messages, topic_types);
+    auto reader = std::make_unique<rosbag2_cpp::Reader>(std::move(prepared_mock_reader));
+
+    auto await_received_messages = sub_->spin_subscriptions();
+
+    auto player = std::make_shared<rosbag2_transport::Player>(
+      std::move(reader), storage_options_, play_options_);
+    player->play();
+    player->wait_for_playback_to_finish();
+    await_received_messages.get();
+
+    auto replayed_topic1 = sub_->get_received_messages<test_msgs::msg::BasicTypes>("/topic1");
+    EXPECT_THAT(replayed_topic1, SizeIs(2u));
+
+    play_options_.exclude_topics_to_filter.clear();
+  }
+
+  // Selecting only the playable topic shall work as well.
+  {
+    play_options_.topics_to_filter = {"topic1"};
+
+    sub_.reset();
+    sub_ = std::make_shared<SubscriptionManager>();
+    sub_->add_subscription<test_msgs::msg::BasicTypes>("/topic1", 2);
+
+    auto prepared_mock_reader = std::make_unique<MockSequentialReader>();
+    prepared_mock_reader->prepare(messages, topic_types);
+    auto reader = std::make_unique<rosbag2_cpp::Reader>(std::move(prepared_mock_reader));
+
+    auto await_received_messages = sub_->spin_subscriptions();
+
+    auto player = std::make_shared<rosbag2_transport::Player>(
+      std::move(reader), storage_options_, play_options_);
+    player->play();
+    player->wait_for_playback_to_finish();
+    await_received_messages.get();
+
+    auto replayed_topic1 = sub_->get_received_messages<test_msgs::msg::BasicTypes>("/topic1");
+    EXPECT_THAT(replayed_topic1, SizeIs(2u));
+
+    play_options_.topics_to_filter.clear();
+  }
+
+  // When excluding the unplayable topics would leave nothing to play, the player shall refuse
+  // to play instead of "succeeding" without publishing a single message.
+  {
+    auto all_unplayable_topic_types = std::vector<rosbag2_storage::TopicMetadata>{
+      {1u, "/topic1", "test_msgs/BasicTypes", "some_other_format", {}, ""},
+      {2u, "/topic2", "foxglove.CompressedVideo", "protobuf", {}, ""},
+    };
+
+    auto prepared_mock_reader = std::make_unique<MockSequentialReader>();
+    prepared_mock_reader->prepare(messages, all_unplayable_topic_types);
+    auto reader = std::make_unique<rosbag2_cpp::Reader>(std::move(prepared_mock_reader));
+
+    std::shared_ptr<rosbag2_transport::Player> player;
+    EXPECT_THROW(
+      player = std::make_shared<rosbag2_transport::Player>(
+        std::move(reader), storage_options_, play_options_),
+      std::runtime_error);
   }
 }
 

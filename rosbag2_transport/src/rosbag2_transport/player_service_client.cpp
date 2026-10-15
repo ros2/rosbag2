@@ -12,10 +12,17 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <future>
 #include <memory>
+#include <sstream>
+#include <stdexcept>
+#include <thread>
 #include <utility>
+#include <vector>
 
 #include "rosbag2_transport/player_service_client.hpp"
+
+#include "rclcpp/typesupport_helpers.hpp"
 
 #include "rosbag2_cpp/service_utils.hpp"
 
@@ -23,6 +30,9 @@
 #include "rosidl_typesupport_introspection_cpp/message_introspection.hpp"
 
 #include "logging.hpp"
+#include "rmw/ret_types.h"
+#include "rmw/rmw.h"
+#include "rosidl_runtime_cpp/message_initialization.hpp"
 
 using namespace std::chrono_literals;
 
