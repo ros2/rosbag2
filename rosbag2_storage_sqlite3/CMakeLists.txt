@@ -20,6 +20,10 @@ find_package(rosbag2_storage REQUIRED)
 find_package(SQLite3 REQUIRED)
 find_package(yaml-cpp REQUIRED)
 
+if(NOT TARGET SQLite3::SQLite3) # CMake < 4.3
+  add_library(SQLite3::SQLite3 ALIAS SQLite::SQLite3)
+endif()
+
 ament_python_install_package(ros2bag_sqlite3_cli)
 
 add_library(${PROJECT_NAME} SHARED
@@ -31,7 +35,7 @@ target_link_libraries(${PROJECT_NAME} PUBLIC
   rosbag2_storage::rosbag2_storage
   rcpputils::rcpputils
   rcutils::rcutils
-  SQLite::SQLite3
+  SQLite3::SQLite3
 )
 target_link_libraries(${PROJECT_NAME} PRIVATE
   ament_cmake_ros_core::ament_ros_defaults
