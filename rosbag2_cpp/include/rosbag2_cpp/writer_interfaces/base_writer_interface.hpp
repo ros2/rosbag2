@@ -17,6 +17,8 @@
 
 #include <cstddef>
 #include <memory>
+#include <stdexcept>
+#include <string>
 
 #include "rosbag2_cpp/bag_events.hpp"
 #include "rosbag2_cpp/converter_options.hpp"
@@ -72,6 +74,17 @@ public:
    * Close the current bagfile and opens the next bagfile.
    */
   virtual void split_bagfile() = 0;
+
+  /**
+   * Close the current bag and open a new one in the new_uri directory.
+   * \throws std::runtime_error if the writer does not support splitting to a new URI.
+   */
+  virtual void split_bagfile(const std::string & new_uri)
+  {
+    (void)new_uri;
+    throw std::runtime_error(
+      "Splitting the bag file to a new output URI is not supported by this writer.");
+  }
 
   virtual void add_event_callbacks(const bag_events::WriterEventCallbacks & callbacks) = 0;
 
