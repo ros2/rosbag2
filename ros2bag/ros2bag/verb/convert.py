@@ -35,6 +35,10 @@ class ConvertVerb(VerbExtension):
             help='YAML file with options for output bags. Must have one top-level key '
                  '"output_bags", which contains a sequence of StorageOptions/RecordOptions '
                  'objects. See README.md for some examples.')
+        parser.add_argument(
+            '--output-uri',
+            help='Override the output bag directory. Requires exactly one output_bags entry '
+                 'in the output options YAML file. The entry may omit uri with this option.')
 
     def main(self, *, args):
         if args.input_options is None and args.input is None:
@@ -44,7 +48,12 @@ class ConvertVerb(VerbExtension):
             raise RuntimeError('Exactly one input source must be provided: provide either'
                                ' -i, --input or --input-options YAML file, but not both.')
 
+        if args.output_uri == '':
+            raise RuntimeError('--output-uri must not be empty.')
+
         input_options = input_bag_arg_to_storage_options(args.input)
         input_config_file = args.input_options if args.input_options else ''
 
-        bag_rewrite(input_options, input_config_file, args.output_options)
+        bag_rewrite(
+            input_options, input_config_file, args.output_options,
+            output_uri=args.output_uri or '')

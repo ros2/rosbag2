@@ -17,7 +17,7 @@ from pathlib import Path
 
 import pytest
 
-from rosbag2_py import bag_rewrite, StorageOptions
+from rosbag2_py import bag_rewrite, ConverterOptions, SequentialReader, StorageOptions
 from rosbag2_test_common import TESTED_STORAGE_IDS
 
 RESOURCES_PATH = Path(os.environ['ROSBAG2_PY_TEST_RESOURCES_DIR'])
@@ -154,3 +154,69 @@ def test_both_input_sources_provided(tmpdir):
 
     with pytest.raises(RuntimeError, match='Exactly one input source must be provided.*'):
         bag_rewrite(input_options, str(input_config_path), str(output_options_path))
+
+
+@pytest.mark.parametrize('storage_id', TESTED_STORAGE_IDS)
+@pytest.mark.parametrize('include_yaml_uri', [False, True])
+@pytest.mark.parametrize('input_from_yaml', [False, True])
+def test_output_uri_override(tmp_path, storage_id, include_yaml_uri, input_from_yaml):
+    input_uri = RESOURCES_PATH / storage_id / 'convert_a'
+    yaml_uri = tmp_path / 'yaml_destination'
+    output_options_path = tmp_path / 'output.yaml'
+    output_options_content = f"""
+output_bags:
+- storage_id: {storage_id}
+  all_topics: true
+"""
+    if include_yaml_uri:
+        output_options_content += f'  uri: {yaml_uri}\n'
+    output_options_path.write_text(output_options_content)
+    input_options = [StorageOptions(uri=str(input_uri))]
+    input_config_file = ''
+    if input_from_yaml:
+        input_config_path = tmp_path / 'input.yaml'
+        input_config_path.write_text(f'input_bags:\n- uri: {input_uri}\n')
+        input_options = []
+        input_config_file = str(input_config_path)
+
+    def read_messages(uri):
+        reader = SequentialReader()
+        reader.open(StorageOptions(uri=str(uri)), ConverterOptions())
+        messages = []
+        while reader.has_next():
+            messages.append(reader.read_next_ext())
+        return messages
+
+    expected_messages = read_messages(input_uri)
+    assert expected_messages
+    for output_name in ['first converted bag', 'second converted bag']:
+        output_uri = tmp_path / output_name
+        bag_rewrite(
+            input_options, input_config_file, str(output_options_path),
+            output_uri=str(output_uri))
+
+        assert (output_uri / 'metadata.yaml').is_file()
+        assert read_messages(output_uri) == expected_messages
+        assert not yaml_uri.exists()
+        assert output_options_path.read_text() == output_options_content
+
+
+@pytest.mark.parametrize('output_count', [0, 2])
+def test_output_uri_override_requires_one_output(tmp_path, output_count):
+    output_uri = tmp_path / 'override_destination'
+    yaml_uris = [tmp_path / f'output_{i}' for i in range(output_count)]
+    output_options_path = tmp_path / 'output.yaml'
+    if output_count == 0:
+        output_options_content = 'output_bags: []\n'
+    else:
+        output_options_content = 'output_bags:\n' + ''.join(
+            f'- uri: {uri}\n  all_topics: true\n' for uri in yaml_uris)
+    output_options_path.write_text(output_options_content)
+
+    # A missing input proves the override is validated before opening a reader.
+    input_options = [StorageOptions(uri=str(tmp_path / 'missing_input'))]
+    with pytest.raises(RuntimeError, match="exactly one entry in 'output_bags'"):
+        bag_rewrite(input_options, '', str(output_options_path), output_uri=str(output_uri))
+
+    assert not output_uri.exists()
+    assert all(not uri.exists() for uri in yaml_uris)
