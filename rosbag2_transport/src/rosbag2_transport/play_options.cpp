@@ -77,6 +77,8 @@ bool convert<rosbag2_transport::PlayOptions>::decode(
     node, "topics_to_filter", play_options.topics_to_filter);
   optional_assign<std::vector<std::string>>(
     node, "services_to_filter", play_options.services_to_filter);
+  optional_assign<std::vector<std::string>>(
+    node, "actions_to_filter", play_options.actions_to_filter);
   optional_assign<std::string>(node, "regex_to_filter", play_options.regex_to_filter);
   optional_assign<std::string>(
     node, "exclude_regex_to_filter",
@@ -85,9 +87,15 @@ bool convert<rosbag2_transport::PlayOptions>::decode(
     node, "exclude_topics", play_options.exclude_topics_to_filter);
   optional_assign<std::vector<std::string>>(
     node, "exclude_services", play_options.exclude_services_to_filter);
+  optional_assign<std::vector<std::string>>(
+    node, "exclude_actions", play_options.exclude_actions_to_filter);
 
   optional_assign<std::unordered_map<std::string, rclcpp::QoS>>(
     node, "topic_qos_profile_overrides", play_options.topic_qos_profile_overrides);
+
+  optional_assign<bool>(node, "loop", play_options.loop);
+  optional_assign<std::vector<std::string>>(
+    node, "topic_remapping_options", play_options.topic_remapping_options);
 
   optional_assign<double>(node, "clock_publish_frequency", play_options.clock_publish_frequency);
 
