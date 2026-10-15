@@ -6,8 +6,6 @@ int32 RESUME_MODE_RECEIVE_TIME=2
 
 # Timestamp in the future when to resume recording/playback.
 # If empty or time in the past, resumes recording/playback immediately.
-# Note: The resume_time is not supported by player and shall be set to zero when using Resume with
-# player.
 builtin_interfaces/Time resume_time
 
 # Resume mode to use for the resume_time request.
