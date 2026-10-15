@@ -532,6 +532,18 @@ This file must contain a top-level key `output_bags`, which contains a list of t
 The only required value in the output bags is `uri` and `storage_id`. All other values are
 optional (however, if no topic selection is specified, this output bag will be empty!).
 
+For a single output bag, `--output-uri PATH` overrides the output `uri`, so the same YAML file
+can be reused when converting multiple bags:
+
+```bash
+ros2 bag convert -i input_a -o output_options.yaml --output-uri input_a_filtered
+ros2 bag convert -i input_b -o output_options.yaml --output-uri input_b_filtered
+```
+
+The output entry may omit `uri` when this option is used. `PATH` is the output bag directory;
+the writer generates the storage filenames inside it. The override requires exactly one entry
+in `output_bags`. Without it, all output destinations come from the YAML file as before.
+
 This example notes all fields that can have an effect, with a comment on the required ones.
 
 ```yaml
