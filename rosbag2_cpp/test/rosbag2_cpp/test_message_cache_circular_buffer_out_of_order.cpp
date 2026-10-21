@@ -62,3 +62,43 @@ TEST(MessageCacheCircularBufferOutOfOrder, respects_duration_with_out_of_order_a
     });
   EXPECT_LE((*max_msg)->recv_timestamp - (*min_msg)->recv_timestamp, 2'000'000'000LL);
 }
+
+TEST(MessageCacheCircularBufferOutOfOrder, keeps_messages_sorted_by_timestamp)
+{
+  rosbag2_cpp::cache::MessageCacheCircularBuffer cache(0, 2);
+  ASSERT_TRUE(cache.push(message_at(10'000'000'000LL)));
+  ASSERT_TRUE(cache.push(message_at(11'000'000'000LL)));
+  ASSERT_TRUE(cache.push(message_at(10'500'000'000LL)));
+
+  const auto & messages = cache.data();
+  ASSERT_EQ(messages.size(), 3u);
+  EXPECT_EQ(messages[0]->recv_timestamp, 10'000'000'000LL);
+  EXPECT_EQ(messages[1]->recv_timestamp, 10'500'000'000LL);
+  EXPECT_EQ(messages[2]->recv_timestamp, 11'000'000'000LL);
+}
+
+TEST(MessageCacheCircularBufferOutOfOrder, late_message_outside_window_does_not_evict_newer)
+{
+  rosbag2_cpp::cache::MessageCacheCircularBuffer cache(0, 2);
+  ASSERT_TRUE(cache.push(message_at(10'000'000'000LL)));
+  ASSERT_TRUE(cache.push(message_at(12'000'000'000LL)));
+  ASSERT_TRUE(cache.push(message_at(5'000'000'000LL)));
+
+  const auto & messages = cache.data();
+  ASSERT_EQ(messages.size(), 2u);
+  EXPECT_EQ(messages[0]->recv_timestamp, 10'000'000'000LL);
+  EXPECT_EQ(messages[1]->recv_timestamp, 12'000'000'000LL);
+}
+
+TEST(MessageCacheCircularBufferOutOfOrder, respects_byte_limit_after_late_arrival)
+{
+  rosbag2_cpp::cache::MessageCacheCircularBuffer cache(12, 2);
+  ASSERT_TRUE(cache.push(message_at(10'000'000'000LL)));
+  ASSERT_TRUE(cache.push(message_at(11'000'000'000LL)));
+  ASSERT_TRUE(cache.push(message_at(10'500'000'000LL)));
+
+  const auto & messages = cache.data();
+  ASSERT_EQ(messages.size(), 2u);
+  EXPECT_EQ(messages[0]->recv_timestamp, 10'500'000'000LL);
+  EXPECT_EQ(messages[1]->recv_timestamp, 11'000'000'000LL);
+}
