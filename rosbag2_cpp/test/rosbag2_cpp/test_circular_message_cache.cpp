@@ -316,9 +316,8 @@ TEST_F(CircularMessageCacheTest, handles_out_of_order_timestamps_gracefully) {
 
   // Newer message should be accepted
   EXPECT_TRUE(circular_message_cache->push(newer_message));
-  // The late message is accepted by push(), but falls outside the retained
-  // two-second window and is immediately evicted.
-  EXPECT_TRUE(circular_message_cache->push(older_message));
+  // Older (out-of-order) message should be rejected by the circular buffer
+  EXPECT_FALSE(circular_message_cache->push(older_message));
 
   circular_message_cache->notify_data_ready();
   circular_message_cache->swap_buffers();
