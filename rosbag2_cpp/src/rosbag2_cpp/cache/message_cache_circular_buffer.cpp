@@ -52,9 +52,10 @@ bool MessageCacheCircularBuffer::push(CacheBufferInterface::buffer_element_t msg
     return false;
   }
 
-  // A late message that is still inside the retained window is expected (e.g. transient-local
-  // replay) and is accepted below. One older than the whole window would be evicted right away,
-  // so reject it up front; this usually indicates a clock jump such as a sim-time reset.
+  // A message may arrive with a receive timestamp slightly older than the newest cached one.
+  // If it is still inside the retained window it is accepted below. One older than the whole
+  // window would be evicted right away, so reject it up front; such a large negative delta
+  // usually indicates a clock jump such as a sim-time reset.
   if (max_cache_duration_ns_ > 0 && !buffer_.empty() &&
     msg->recv_timestamp < buffer_.back()->recv_timestamp &&
     static_cast<uint64_t>(buffer_.back()->recv_timestamp) -
@@ -67,8 +68,8 @@ bool MessageCacheCircularBuffer::push(CacheBufferInterface::buffer_element_t msg
     return false;
   }
 
-  // Keep the deque ordered by receive timestamp, not arrival order. In particular,
-  // transient-local replay can deliver an older sample after a newer one.
+  // Keep the deque ordered by receive timestamp, not arrival order, so that front() is always
+  // the oldest sample and duration eviction can be measured against back().
   auto insertion_point = std::upper_bound(
     buffer_.begin(), buffer_.end(), msg->recv_timestamp,
     [](int64_t timestamp, const auto & buffered) {
