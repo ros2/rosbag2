@@ -82,7 +82,7 @@ TEST(MessageCacheCircularBufferOutOfOrder, late_message_outside_window_does_not_
   rosbag2_cpp::cache::MessageCacheCircularBuffer cache(0, 2);
   ASSERT_TRUE(cache.push(message_at(10'000'000'000LL)));
   ASSERT_TRUE(cache.push(message_at(12'000'000'000LL)));
-  ASSERT_TRUE(cache.push(message_at(5'000'000'000LL)));
+  EXPECT_FALSE(cache.push(message_at(5'000'000'000LL)));
 
   const auto & messages = cache.data();
   ASSERT_EQ(messages.size(), 2u);

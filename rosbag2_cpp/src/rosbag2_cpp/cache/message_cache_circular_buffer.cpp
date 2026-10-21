@@ -52,6 +52,21 @@ bool MessageCacheCircularBuffer::push(CacheBufferInterface::buffer_element_t msg
     return false;
   }
 
+  // A late message that is still inside the retained window is expected (e.g. transient-local
+  // replay) and is accepted below. One older than the whole window would be evicted right away,
+  // so reject it up front; this usually indicates a clock jump such as a sim-time reset.
+  if (max_cache_duration_ns_ > 0 && !buffer_.empty() &&
+    msg->recv_timestamp < buffer_.back()->recv_timestamp &&
+    static_cast<uint64_t>(buffer_.back()->recv_timestamp) -
+    static_cast<uint64_t>(msg->recv_timestamp) > max_cache_duration_ns_)
+  {
+    ROSBAG2_CPP_LOG_WARN_STREAM("Late message is outside the circular cache duration: "
+      << "message timestamp " << msg->recv_timestamp
+      << " is older than newest cached message timestamp " << buffer_.back()->recv_timestamp
+      << " by more than the cache duration. Dropping message!");
+    return false;
+  }
+
   // Keep the deque ordered by receive timestamp, not arrival order. In particular,
   // transient-local replay can deliver an older sample after a newer one.
   auto insertion_point = std::upper_bound(
