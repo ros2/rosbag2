@@ -37,7 +37,6 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "srv/StopDiscovery.srv"
   "srv/TogglePaused.srv"
   DEPENDENCIES builtin_interfaces
-  ADD_LINTER_TESTS
 )
 ament_export_dependencies(rosidl_default_runtime)
 

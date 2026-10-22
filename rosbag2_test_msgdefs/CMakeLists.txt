@@ -23,7 +23,6 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "nested_sub_dir/action/BasicMsg.action"
   "action/ComplexActionMsg.action"
   "action/ComplexActionIdl.action"
-  ADD_LINTER_TESTS
 )
 
 ament_package()
