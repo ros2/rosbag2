@@ -655,14 +655,10 @@ void MCAPStorage::reset_iterator()
   ensure_summary_read();
   mcap::ReadMessageOptions options;
   if (read_order_ == mcap::ReadMessageOptions::ReadOrder::ReverseLogTimeOrder) {
-    options.startTime = 0;
-    // endTime is an exclusive range endpoint, but we want to start from `last_read_time_point_`.
-    // therefore, the time range we pass to the MCAP library is one nanosecond later than the
-    // seek point specified.
-    options.endTime = mcap::Timestamp(last_read_time_point_ + 1);
+    // Reading backwards from the seek point, so `last_read_time_point_` itself is included.
+    options.endingAt(mcap::Timestamp(last_read_time_point_));
   } else {
-    options.startTime = mcap::Timestamp(last_read_time_point_);
-    options.endTime = mcap::MaxTime;
+    options.startingAt(mcap::Timestamp(last_read_time_point_));
   }
   options.readOrder = read_order_;
 
