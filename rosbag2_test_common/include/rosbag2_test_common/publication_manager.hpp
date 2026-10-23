@@ -52,8 +52,9 @@ public:
         rclcpp::NodeOptions().start_parameter_event_publisher(false).enable_rosout(false)))
   {}
 
+  /// \return The publisher that was created, so callers can publish on it directly.
   template<class MsgT>
-  void setup_publisher(
+  std::shared_ptr<rclcpp::Publisher<MsgT>> setup_publisher(
     const std::string & topic_name,
     const std::shared_ptr<MsgT> message,
     const size_t repetition,
@@ -63,8 +64,9 @@ public:
     return setup_publisher(topic_name, *message, repetition, qos, interval);
   }
 
+  /// \return The publisher that was created, so callers can publish on it directly.
   template<class MsgT>
-  void setup_publisher(
+  std::shared_ptr<rclcpp::Publisher<MsgT>> setup_publisher(
     const std::string & topic_name,
     const MsgT & message,
     const size_t repetition,
@@ -88,6 +90,7 @@ public:
       };
 
     publishers_.push_back(std::make_pair(publisher, publisher_fcn));
+    return publisher;
   }
 
   void run_publishers(bool verbose = false) const
@@ -187,7 +190,7 @@ private:
 /// \details Will assign current repetition number to the message->uint64_value and timestamp
 /// from steady clock to the message->int64_value for each publishing message.
 template<>
-void PublicationManager::setup_publisher(
+std::shared_ptr<rclcpp::Publisher<test_msgs::msg::BasicTypes>> PublicationManager::setup_publisher(
   const std::string & topic_name,
   const test_msgs::msg::BasicTypes & message,
   const size_t repetition,
@@ -214,6 +217,7 @@ void PublicationManager::setup_publisher(
     };
 
   publishers_.push_back(std::make_pair(publisher, publisher_fcn));
+  return publisher;
 }
 
 }  // namespace rosbag2_test_common

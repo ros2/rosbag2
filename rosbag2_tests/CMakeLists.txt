@@ -47,7 +47,6 @@ if(BUILD_TESTING)
       rosbag2_test_common::rosbag2_test_common
       test_msgs::test_msgs
     )
-    ament_add_test_label(test_rosbag2_record_end_to_end xfail)
   endif()
 
   ament_add_ros_isolated_gmock(test_rosbag2_play_end_to_end
