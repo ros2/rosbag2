@@ -198,6 +198,12 @@ public:
     const auto condition_clear_time = std::chrono::milliseconds(ms_between_msgs_ * 100);
     std::unique_lock<std::mutex> lock(got_msg_mutex_);
     if (reset_message_counter) {
+      // A successful pause/resume response only guarantees the internal state flipped, not
+      // that an already in-flight message was aborted. Drain one message period before
+      // resetting the counter so a straggler isn't mistaken for one published afterward.
+      got_msg_.wait_for(
+        lock, std::chrono::milliseconds(ms_between_msgs_),
+        [this]() {return message_counter_ > 0;});
       message_counter_ = 0;
     }
     if (!messages_should_arrive) {
