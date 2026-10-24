@@ -358,6 +358,53 @@ TEST_F(PlaySrvsTest, toggle_paused)
   expect_messages(true);
 }
 
+TEST_F(PlaySrvsTest, toggle_paused_message_already_in_flight)
+{
+  // A successful toggle_paused() response only guarantees the player's internal "paused" flag
+  // flipped - it says nothing about a message already in flight through the publish pipeline
+  // when the request was serviced. Hold one message "in flight" (inside the pre-publish
+  // callback) until after toggle_paused() is acknowledged, so it's guaranteed to land just
+  // after the player reports paused - reproducing the race deterministically instead of
+  // depending on timing or system load.
+  std::mutex release_mutex;
+  std::condition_variable release_cv;
+  bool message_in_flight = false;
+  bool release_message = false;
+
+  auto hold_first_message =
+    [&](std::shared_ptr<rosbag2_storage::SerializedBagMessage>/* msg */) {
+      std::unique_lock<std::mutex> lk(release_mutex);
+      message_in_flight = true;
+      release_cv.notify_one();
+      release_cv.wait(lk, [&] {return release_message;});
+    };
+  auto pre_callback_handle = player_->add_on_play_message_pre_callback(hold_first_message);
+  ASSERT_NE(pre_callback_handle, rosbag2_transport::Player::invalid_callback_handle);
+
+  start_playback();
+
+  // Wait until the first message is held "in flight" inside the callback above.
+  {
+    std::unique_lock<std::mutex> lk(release_mutex);
+    ASSERT_TRUE(release_cv.wait_for(lk, 2s, [&] {return message_in_flight;}));
+  }
+
+  // Pause while that message is still held - this is the race window. A successful response
+  // here only means the "paused" flag flipped; the held message hasn't published yet.
+  service_call_toggle_paused();
+  ASSERT_TRUE(player_->is_paused());
+
+  // Let the held message through. It was already in flight when we paused, so it must still
+  // land - but nothing published after it should.
+  {
+    std::lock_guard<std::mutex> lk(release_mutex);
+    release_message = true;
+  }
+  release_cv.notify_one();
+
+  expect_messages(false);
+}
+
 TEST_F(PlaySrvsTest, is_paused)
 {
   start_playback();
