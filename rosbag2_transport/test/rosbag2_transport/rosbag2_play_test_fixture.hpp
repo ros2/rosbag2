@@ -37,6 +37,11 @@ public:
 
   ~RosBag2PlayTestFixture() override
   {
+    // Destroy the managers' nodes/executor threads before invalidating the
+    // context they're still using; action_server_ can otherwise throw mid-callback.
+    action_server_.reset();
+    srv_.reset();
+    sub_.reset();
     rclcpp::shutdown();
   }
 
