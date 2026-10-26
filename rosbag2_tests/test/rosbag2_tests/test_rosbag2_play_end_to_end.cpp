@@ -109,7 +109,18 @@ public:
     auto result = std::make_shared<typename Srv::Response>();
     EXPECT_NO_THROW({result = future.get();});
     EXPECT_TRUE(result);
-    return result;
+auto future = cli->async_send_request(request);
+EXPECT_TRUE(future.valid());
+auto result = std::make_shared<typename Srv::Response>();
+if (future.wait_for(service_call_timeout_) != std::future_status::ready) {
+  // Do not call future.get() here: it would block forever and turn a lost response into a
+  // test timeout with no diagnostics.
+  ADD_FAILURE() << "Service call timed out after " << service_call_timeout_.count() << "s";
+} else {
+  EXPECT_NO_THROW({result = future.get();});
+  EXPECT_TRUE(result);
+}
+return result;
   }
 
   template<typename Srv>
@@ -131,7 +142,11 @@ public:
     return wait_until_condition(
       [this]() {
         auto future = cli_is_paused_->async_send_request(std::make_shared<IsPaused::Request>());
-        return future.wait_for(std::chrono::milliseconds(200)) == std::future_status::ready;
+        if (future.wait_for(std::chrono::milliseconds(200)) == std::future_status::ready) {
+          return true;
+        }
+        cli_is_paused_->remove_pending_request(future);
+        return false;
       }, service_call_timeout_);
   }
 
