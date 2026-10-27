@@ -18,6 +18,7 @@
 #include <chrono>
 #include <cstddef>
 #include <memory>
+#include <mutex>
 #include <string>
 #include <thread>
 #include <unordered_map>
@@ -64,9 +65,17 @@ public:
 
   ~ActionServerManager()
   {
+    // Stop accepting goals before draining goal_execution_threads_ below.
     exec_.cancel();
     if (thread_.joinable()) {
       thread_.join();
+    }
+    // Join any still-sleeping goal executions before the node is destroyed.
+    std::lock_guard<std::mutex> lock(goal_execution_threads_mutex_);
+    for (auto & goal_execution_thread : goal_execution_threads_) {
+      if (goal_execution_thread.joinable()) {
+        goal_execution_thread.join();
+      }
     }
   }
 
@@ -103,7 +112,8 @@ public:
           {
             return this->action_execute(goal_handle, exec_goal_time);
           };
-        std::thread{execute_in_thread}.detach();
+        std::lock_guard<std::mutex> lock(goal_execution_threads_mutex_);
+        goal_execution_threads_.emplace_back(execute_in_thread);
       };
 
     auto server = rclcpp_action::create_server<ActionT>(
@@ -146,6 +156,8 @@ private:
   std::vector<typename rclcpp_action::ClientBase::SharedPtr> action_clients_;
   std::thread thread_;
   rclcpp::executors::SingleThreadedExecutor exec_;
+  std::vector<std::thread> goal_execution_threads_;
+  std::mutex goal_execution_threads_mutex_;
 
   template<typename ActionT>
   void action_execute(
