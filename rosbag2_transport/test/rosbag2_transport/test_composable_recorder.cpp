@@ -229,7 +229,7 @@ TEST_P(ComposableRecorderTests, recorder_can_defer_recording_until_record_is_cal
   size_t recording_started_count = 0;
   auto recorder = std::make_shared<MockComposableRecorder>(options, "deferred_recorder", false);
   recorder->set_on_start_recording_callback([&recording_started_count]() {
-    ++recording_started_count;
+      ++recording_started_count;
   });
 
   EXPECT_FALSE(fs::exists(root_bag_path_));
