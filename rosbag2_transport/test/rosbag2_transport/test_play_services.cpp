@@ -204,26 +204,40 @@ public:
 
 #define service_call_is_paused() is_paused(__PRETTY_FUNCTION__, __LINE__)
 
-  /// EXPECT to receive (or not receive) any messages for a period
-  void expect_messages(bool messages_should_arrive, bool reset_message_counter = true)
+  /// Forget any messages received so far
+  void reset_messages()
+  {
+    std::lock_guard<std::mutex> lock(got_msg_mutex_);
+    message_counter_ = 0;
+  }
+
+  /// Wait for a message to arrive since the last reset_messages()
+  bool wait_for_messages()
   {
     // Not too worried about the exact timing in this test, give a lot of leeway
-    const auto condition_clear_time = std::chrono::milliseconds(ms_between_msgs_ * 100);
     std::unique_lock<std::mutex> lock(got_msg_mutex_);
-    if (reset_message_counter) {
-      message_counter_ = 0;
+    return got_msg_.wait_for(
+      lock, std::chrono::milliseconds(ms_between_msgs_ * 100),
+      [this]() {return message_counter_ > 0;});
+  }
+
+  /// Wait until no message has arrived for a few message periods, which also drains any
+  /// message that was already in flight. Returns false if messages keep arriving.
+  bool wait_for_quiet()
+  {
+    const auto deadline =
+      std::chrono::steady_clock::now() + std::chrono::milliseconds(ms_between_msgs_ * 100);
+    std::unique_lock<std::mutex> lock(got_msg_mutex_);
+    while (std::chrono::steady_clock::now() < deadline) {
+      const auto seen = message_counter_;
+      if (!got_msg_.wait_for(
+          lock, std::chrono::milliseconds(ms_between_msgs_ * 10),
+          [this, seen]() {return message_counter_ != seen;}))
+      {
+        return true;
+      }
     }
-    if (!messages_should_arrive) {
-      EXPECT_EQ(
-        got_msg_.wait_for(
-          lock, condition_clear_time,
-          [this]() {return message_counter_ > 0;}), false);
-    } else {
-      EXPECT_EQ(
-        got_msg_.wait_for(
-          lock, condition_clear_time,
-          [this]() {return message_counter_ > 0;}), true);
-    }
+    return false;
   }
 
 private:
@@ -322,21 +336,22 @@ TEST_F(PlaySrvsTest, pause_resume)
     service_call_pause();
     ASSERT_TRUE(player_->is_paused());
   }
-  expect_messages(false);
+  EXPECT_TRUE(wait_for_quiet());
 
   // No matter how many times we call resume, it's resumed
   for (size_t i = 0; i < 3; i++) {
     service_call_resume();
     ASSERT_FALSE(player_->is_paused());
   }
-  expect_messages(true);
+  reset_messages();
+  EXPECT_TRUE(wait_for_messages());
 
   // Let's do pause again to make sure back-and-forth works
   for (size_t i = 0; i < 3; i++) {
     service_call_pause();
     ASSERT_TRUE(player_->is_paused());
   }
-  expect_messages(false);
+  EXPECT_TRUE(wait_for_quiet());
 
   // resume to make sure we exit
   for (size_t i = 0; i < 3; i++) {
@@ -350,19 +365,68 @@ TEST_F(PlaySrvsTest, toggle_paused)
   start_playback();
   service_call_toggle_paused();
   ASSERT_TRUE(player_->is_paused());
-  expect_messages(false);
+  EXPECT_TRUE(wait_for_quiet());
 
   service_call_toggle_paused();
   ASSERT_FALSE(player_->is_paused());
-  expect_messages(true);
+  reset_messages();
+  EXPECT_TRUE(wait_for_messages());
 
   service_call_toggle_paused();
   ASSERT_TRUE(player_->is_paused());
-  expect_messages(false);
+  EXPECT_TRUE(wait_for_quiet());
 
   service_call_toggle_paused();
   ASSERT_FALSE(player_->is_paused());
-  expect_messages(true);
+  reset_messages();
+  EXPECT_TRUE(wait_for_messages());
+}
+
+TEST_F(PlaySrvsTest, toggle_paused_message_already_in_flight)
+{
+  // A successful toggle_paused() response only guarantees the player's internal "paused" flag
+  // flipped - it says nothing about a message already in flight through the publish pipeline
+  // when the request was serviced. Hold one message "in flight" (inside the pre-publish
+  // callback) until after toggle_paused() is acknowledged, so it's guaranteed to land just
+  // after the player reports paused - reproducing the race deterministically instead of
+  // depending on timing or system load.
+  std::mutex release_mutex;
+  std::condition_variable release_cv;
+  bool message_in_flight = false;
+  bool release_message = false;
+
+  auto hold_first_message =
+    [&](std::shared_ptr<rosbag2_storage::SerializedBagMessage>/* msg */) {
+      std::unique_lock<std::mutex> lk(release_mutex);
+      message_in_flight = true;
+      release_cv.notify_one();
+      release_cv.wait(lk, [&] {return release_message;});
+    };
+  auto pre_callback_handle = player_->add_on_play_message_pre_callback(hold_first_message);
+  ASSERT_NE(pre_callback_handle, rosbag2_transport::Player::invalid_callback_handle);
+
+  start_playback();
+
+  // Wait until the first message is held "in flight" inside the callback above.
+  {
+    std::unique_lock<std::mutex> lk(release_mutex);
+    ASSERT_TRUE(release_cv.wait_for(lk, 2s, [&] {return message_in_flight;}));
+  }
+
+  // Pause while that message is still held - this is the race window. A successful response
+  // here only means the "paused" flag flipped; the held message hasn't published yet.
+  service_call_toggle_paused();
+  ASSERT_TRUE(player_->is_paused());
+
+  // Let the held message through. It was already in flight when we paused, so it must still
+  // land - but nothing published after it should.
+  {
+    std::lock_guard<std::mutex> lk(release_mutex);
+    release_message = true;
+  }
+  release_cv.notify_one();
+
+  EXPECT_TRUE(wait_for_quiet());
 }
 
 TEST_F(PlaySrvsTest, is_paused)
@@ -370,19 +434,21 @@ TEST_F(PlaySrvsTest, is_paused)
   start_playback();
   player_->toggle_paused();
   ASSERT_TRUE(service_call_is_paused());
-  expect_messages(false);
+  EXPECT_TRUE(wait_for_quiet());
 
   player_->toggle_paused();
   ASSERT_FALSE(service_call_is_paused());
-  expect_messages(true);
+  reset_messages();
+  EXPECT_TRUE(wait_for_messages());
 
   player_->toggle_paused();
   ASSERT_TRUE(service_call_is_paused());
-  expect_messages(false);
+  EXPECT_TRUE(wait_for_quiet());
 
   player_->toggle_paused();
   ASSERT_FALSE(service_call_is_paused());
-  expect_messages(true);
+  reset_messages();
+  EXPECT_TRUE(wait_for_messages());
 }
 
 TEST_F(PlaySrvsTest, set_rate_good_values)
@@ -425,30 +491,25 @@ TEST_F(PlaySrvsTest, play_next) {
   PlayNext::Response::SharedPtr play_next_response;
   // Check that we will be able to play all messages via play_next
   for (size_t i = 0; i < num_msgs_to_publish_; i++) {
-    {
-      std::lock_guard<std::mutex> lk(got_msg_mutex_);
-      message_counter_ = 0;
-    }
+    reset_messages();
     play_next_response = service_call_play_next();
     ASSERT_TRUE(play_next_response->success);
-    expect_messages(true, false);
+    EXPECT_TRUE(wait_for_messages());
   }
 
   // Check that when no more messages to play, play_next will return false
-  {
-    std::lock_guard<std::mutex> lk(got_msg_mutex_);
-    message_counter_ = 0;
-  }
+  reset_messages();
   play_next_response = service_call_play_next();
   ASSERT_FALSE(play_next_response->success);
-  expect_messages(false, false);
+  EXPECT_TRUE(wait_for_quiet());
 
   // Check that play_next will return false when player not in pause mode.
   start_playback();
   ASSERT_FALSE(player_->is_paused());
   play_next_response = service_call_play_next();
   ASSERT_FALSE(play_next_response->success);
-  expect_messages(true);
+  reset_messages();
+  EXPECT_TRUE(wait_for_messages());
 }
 
 TEST_F(PlaySrvsTest, stop_in_pause) {
@@ -459,7 +520,7 @@ TEST_F(PlaySrvsTest, stop_in_pause) {
   ASSERT_EQ(stop_response->return_code, 0);
   // playback shall successfully finish after "Stop" without rclcpp::shutdown()
   player_->wait_for_playback_to_finish();
-  expect_messages(false);
+  EXPECT_TRUE(wait_for_quiet());
 }
 
 TEST_F(PlaySrvsTest, stop_in_active_play) {
