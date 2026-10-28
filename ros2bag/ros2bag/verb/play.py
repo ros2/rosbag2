@@ -344,6 +344,10 @@ class PlayVerb(VerbExtension):
 
         # Set up signal handling for graceful termination
         signal.signal(signal.SIGTERM, signal_handler)
+        if hasattr(signal, 'SIGBREAK'):
+            # Windows: Ctrl-Break is the only console event another process can
+            # address to us; treat it like SIGTERM.
+            signal.signal(signal.SIGBREAK, signal_handler)
 
         player = Player(storage_options, play_options, args.log_level)
 
@@ -364,4 +368,6 @@ class PlayVerb(VerbExtension):
             player.stop()
             player.stop_spin()
             signal.signal(signal.SIGTERM, signal.SIG_DFL)
+            if hasattr(signal, 'SIGBREAK'):
+                signal.signal(signal.SIGBREAK, signal.SIG_DFL)
             termination_requested.clear()

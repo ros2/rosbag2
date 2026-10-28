@@ -23,6 +23,7 @@
 #include <chrono>
 #include <csignal>
 #include <cstdlib>
+#include <iostream>
 #include <string>
 #include <thread>
 
@@ -35,22 +36,82 @@ struct Process
 };
 using ProcessHandle = Process;
 
-PROCESS_INFORMATION create_process(TCHAR * command, const char * path = nullptr)
+namespace
+{
+std::string last_error_string(DWORD error = GetLastError())
+{
+  char * buffer = nullptr;
+  DWORD length = FormatMessageA(
+    FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
+    nullptr, error, 0, reinterpret_cast<LPSTR>(&buffer), 0, nullptr);
+  std::string result = "error " + std::to_string(error);
+  if (length != 0 && buffer != nullptr) {
+    result += ": ";
+    result.append(buffer, length);
+    LocalFree(buffer);
+  }
+  while (!result.empty() && (result.back() == '\n' || result.back() == '\r')) {
+    result.pop_back();
+  }
+  return result;
+}
+
+BOOL WINAPI ignore_console_ctrl_events(DWORD)
+{
+  return TRUE;
+}
+
+void make_inheritable(HANDLE handle)
+{
+  if (handle != nullptr && handle != INVALID_HANDLE_VALUE) {
+    SetHandleInformation(handle, HANDLE_FLAG_INHERIT, HANDLE_FLAG_INHERIT);
+  }
+}
+}  // namespace
+
+/// Create a process running `command`.
+/**
+ * With `own_console` the child is created suspended, with its own hidden console
+ * and its own process group, so that stop_execution() can deliver a console
+ * control event to it.  The caller must resume its main thread.  The child
+ * still inherits our standard handles, so its output ends up in the test log.
+ *
+ * The console the CI jobs run under does not support GenerateConsoleCtrlEvent at
+ * all ("Incorrect function"), see ros2/rosbag2#1342.  A console created for the
+ * child does, which is why the child gets one of its own.
+ */
+PROCESS_INFORMATION create_process(
+  TCHAR * command, const char * path = nullptr, bool own_console = false)
 {
   STARTUPINFO start_up_info{};
+  start_up_info.cb = sizeof(start_up_info);
   PROCESS_INFORMATION process_info{};
+  DWORD creation_flags = 0;
+  BOOL inherit_handles = FALSE;
+  if (own_console) {
+    creation_flags = CREATE_NO_WINDOW | CREATE_NEW_PROCESS_GROUP | CREATE_SUSPENDED;
+    start_up_info.dwFlags = STARTF_USESTDHANDLES;
+    start_up_info.hStdInput = GetStdHandle(STD_INPUT_HANDLE);
+    start_up_info.hStdOutput = GetStdHandle(STD_OUTPUT_HANDLE);
+    start_up_info.hStdError = GetStdHandle(STD_ERROR_HANDLE);
+    make_inheritable(start_up_info.hStdInput);
+    make_inheritable(start_up_info.hStdOutput);
+    make_inheritable(start_up_info.hStdError);
+    inherit_handles = TRUE;
+  }
 
-  CreateProcess(
+  BOOL created = CreateProcess(
     nullptr,
     command,
     nullptr,
     nullptr,
-    false,
-    0,
+    inherit_handles,
+    creation_flags,
     nullptr,
     path,
     &start_up_info,
     &process_info);
+  EXPECT_TRUE(created) << "CreateProcess(" << command << ") failed: " << last_error_string();
 
   return process_info;
 }
@@ -73,8 +134,8 @@ int execute_and_wait_until_completion(const std::string & command, const std::st
   const_char_to_tchar(command.c_str(), command_char);
 
   auto process = create_process(command_char, path.c_str());
-  DWORD exit_code = 259;  // 259 is the code one gets if the process is still active.
-  while (exit_code == 259) {
+  DWORD exit_code = STILL_ACTIVE;
+  while (exit_code == STILL_ACTIVE) {
     EXPECT_TRUE(GetExitCodeProcess(process.hProcess, &exit_code));
     std::this_thread::sleep_for(std::chrono::milliseconds(10));
   }
@@ -94,9 +155,13 @@ ProcessHandle start_execution(const std::string & command)
   TCHAR * command_char = new TCHAR[strlen(command.c_str()) + 1];
   const_char_to_tchar(command.c_str(), command_char);
 
-  auto process_info = create_process(command_char);
+  // Created suspended so that the child cannot spawn its own children (e.g. the
+  // ros2 launcher starting python) before it is in the job.
+  auto process_info = create_process(command_char, nullptr, true);
 
-  AssignProcessToJobObject(h_job, process_info.hProcess);
+  EXPECT_TRUE(AssignProcessToJobObject(h_job, process_info.hProcess)) <<
+    "AssignProcessToJobObject failed: " << last_error_string();
+  ResumeThread(process_info.hThread);
   Process process;
   process.process_info = process_info;
   process.job_handle = h_job;
@@ -117,38 +182,53 @@ bool wait_until_completion(
   DWORD exit_code = 0;
   std::chrono::steady_clock::time_point const start = std::chrono::steady_clock::now();
   EXPECT_TRUE(GetExitCodeProcess(handle.process_info.hProcess, &exit_code));
-  // 259 indicates that the process is still active
-  while (exit_code == 259 && std::chrono::steady_clock::now() - start < timeout) {
+  while (exit_code == STILL_ACTIVE && std::chrono::steady_clock::now() - start < timeout) {
     std::this_thread::sleep_for(std::chrono::milliseconds(10));
     EXPECT_TRUE(GetExitCodeProcess(handle.process_info.hProcess, &exit_code));
   }
-  return exit_code != 259;
+  EXPECT_NE(exit_code, STILL_ACTIVE) << "Testing process " <<
+    handle.process_info.dwProcessId << " hangout.\n";
+  if (exit_code != STILL_ACTIVE) {
+    EXPECT_EQ(exit_code, 0u) << "exit code = " << exit_code;
+  }
+  return exit_code != STILL_ACTIVE;
 }
 
-/// @brief Force to stop process with signal if it's currently running
+/// @brief Stop a process started with start_execution() if it is still running
 /// @param handle Process handle returned from start_execution(command)
-/// @param signum Not uses for Windows version
+/// @param signum Accepted for parity with the Unix version.  Windows has no SIGINT or
+/// SIGTERM delivery between processes; both are sent as a CTRL_BREAK_EVENT, which the
+/// child sees as SIGBREAK.
 /// @param timeout Timeout in fraction of seconds
 void stop_execution(
   const ProcessHandle & handle,
   int signum = SIGINT,
   std::chrono::duration<double> timeout = std::chrono::seconds(10))
 {
-  // Match the Unix version by allowing for int signum argument - however Windows does not have
-  // Linux signals in the same way, so there isn't a 1:1 mapping to dispatch e.g. SIGTERM
-  DWORD exit_code;
+  (void)signum;
+  DWORD exit_code = STILL_ACTIVE;
   EXPECT_TRUE(GetExitCodeProcess(handle.process_info.hProcess, &exit_code));
-  // 259 indicates that the process is still active: we want to make sure that the process is
-  // still running properly before killing it.
-  if (exit_code == 259) {
-    EXPECT_TRUE(GenerateConsoleCtrlEvent(CTRL_C_EVENT, handle.process_info.dwThreadId)) <<
-      "GetLastError() = " << GetLastError();
+  if (exit_code == STILL_ACTIVE) {
+    // The child has its own console (see create_process).  Join it to deliver the
+    // event to the child's process group, which does not include this process.
+    // CTRL_BREAK_EVENT is the only event that can be addressed to a group other than
+    // our own; CTRL_C_EVENT is disabled in a group created with CREATE_NEW_PROCESS_GROUP.
+    SetConsoleCtrlHandler(ignore_console_ctrl_events, TRUE);
+    FreeConsole();
+    bool attached = AttachConsole(handle.process_info.dwProcessId);
+    EXPECT_TRUE(attached) << "AttachConsole failed: " << last_error_string();
+    if (attached) {
+      EXPECT_TRUE(GenerateConsoleCtrlEvent(CTRL_BREAK_EVENT, handle.process_info.dwProcessId)) <<
+        "GenerateConsoleCtrlEvent failed: " << last_error_string();
+    }
     bool process_finished = wait_until_completion(handle, timeout);
+    FreeConsole();
+    AttachConsole(ATTACH_PARENT_PROCESS);
+    SetConsoleCtrlHandler(ignore_console_ctrl_events, FALSE);
     if (!process_finished) {
-      std::cerr << "Testing process " << handle.process_info.hProcess <<
+      std::cerr << "Testing process " << handle.process_info.dwProcessId <<
         " hangout. Killing it with TerminateProcess(..) \n";
       EXPECT_TRUE(TerminateProcess(handle.process_info.hProcess, 2));
-      EXPECT_TRUE(process_finished);
     }
   }
   close_process_handles(handle.process_info);

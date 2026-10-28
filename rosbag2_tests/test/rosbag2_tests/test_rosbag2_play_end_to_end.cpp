@@ -357,7 +357,6 @@ TEST_P(PlayEndToEndTestFixture, play_filters_by_topic) {
   }
 }
 
-#ifndef _WIN32
 TEST_P(PlayEndToEndTestFixture, play_end_to_end_exits_gracefully_on_sigint) {
   sub_->add_subscription<test_msgs::msg::BasicTypes>("/test_topic", 3, sub_qos_);
   sub_->add_subscription<test_msgs::msg::Arrays>("/array_topic", 2, sub_qos_);
@@ -401,7 +400,6 @@ TEST_P(PlayEndToEndTestFixture, play_end_to_end_exits_gracefully_on_sigterm) {
   stop_execution(process_id, SIGTERM);
   cleanup_process_handle.cancel();
 }
-#endif  // #ifndef _WIN32
 
 INSTANTIATE_TEST_SUITE_P(
   TestPlayEndToEnd,

@@ -47,11 +47,6 @@ if(BUILD_TESTING)
       rosbag2_test_common::rosbag2_test_common
       test_msgs::test_msgs
     )
-    if(WIN32)
-      # The Windows process helpers cannot deliver Ctrl-C to the recorder,
-      # so it is killed and never writes metadata.  See ros2/rosbag2#1326.
-      ament_add_test_label(test_rosbag2_record_end_to_end xfail)
-    endif()
   endif()
 
   ament_add_ros_isolated_gmock(test_rosbag2_play_end_to_end
