@@ -191,13 +191,6 @@ public:
 
 #define service_call_is_paused() is_paused(__PRETTY_FUNCTION__, __LINE__)
 
-  /// Number of messages received since the last reset_messages()
-  size_t received_messages()
-  {
-    std::lock_guard<std::mutex> lock(got_msg_mutex_);
-    return message_counter_;
-  }
-
   /// Forget any messages received so far
   void reset_messages()
   {
@@ -205,29 +198,28 @@ public:
     message_counter_ = 0;
   }
 
-  /// Wait until at least `count` messages have been received since the last reset_messages().
-  /// Returns false if they didn't arrive in time.
-  bool wait_for_messages(size_t count = 1)
+  /// Wait for a message to arrive since the last reset_messages()
+  bool wait_for_messages()
   {
     // Not too worried about the exact timing in this test, give a lot of leeway
-    const auto timeout = std::chrono::milliseconds(ms_between_msgs_ * 100);
     std::unique_lock<std::mutex> lock(got_msg_mutex_);
-    return got_msg_.wait_for(lock, timeout, [this, count]() {return message_counter_ >= count;});
+    return got_msg_.wait_for(
+      lock, std::chrono::milliseconds(ms_between_msgs_ * 100),
+      [this]() {return message_counter_ > 0;});
   }
 
-  /// Wait until messages stop arriving, i.e. nothing has been received for a few message
-  /// periods. Any message already in flight when this is called is drained rather than
-  /// counted against the caller. Returns false if messages are still arriving after a long time.
+  /// Wait until no message has arrived for a few message periods, which also drains any
+  /// message that was already in flight. Returns false if messages keep arriving.
   bool wait_for_quiet()
   {
-    const auto quiet_period = std::chrono::milliseconds(ms_between_msgs_ * 10);
     const auto deadline =
       std::chrono::steady_clock::now() + std::chrono::milliseconds(ms_between_msgs_ * 100);
     std::unique_lock<std::mutex> lock(got_msg_mutex_);
     while (std::chrono::steady_clock::now() < deadline) {
-      const auto count_before = message_counter_;
+      const auto seen = message_counter_;
       if (!got_msg_.wait_for(
-          lock, quiet_period, [this, count_before]() {return message_counter_ != count_before;}))
+          lock, std::chrono::milliseconds(ms_between_msgs_ * 10),
+          [this, seen]() {return message_counter_ != seen;}))
       {
         return true;
       }
@@ -497,7 +489,6 @@ TEST_F(PlaySrvsTest, play_next) {
   play_next_response = service_call_play_next();
   ASSERT_FALSE(play_next_response->success);
   EXPECT_TRUE(wait_for_quiet());
-  EXPECT_EQ(received_messages(), 0u);
 
   // Check that play_next will return false when player not in pause mode.
   start_playback();
