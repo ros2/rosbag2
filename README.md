@@ -829,6 +829,19 @@ player:
 
 For a full list of available parameters, you can refer to [`player`](rosbag2_transport/test/resources/player_node_params.yaml) and [`recorder`](rosbag2_transport/test/resources/recorder_node_params.yaml) configurations from the `test` folder of `rosbag2_transport`.
 
+The recorder constructors taking only node options, or a node name and node options, start recording automatically.
+C++ applications that need to finish initialization before recording can use the three-argument constructor:
+
+```cpp
+auto recorder = std::make_shared<rosbag2_transport::Recorder>(
+  "my_recorder", node_options, false);
+// Finish application setup, then choose the output URI and start recording.
+recorder->record("/path/to/destination/folder");
+```
+
+Storage and recording options are still initialized from node parameters.
+Recording can also be started later through the recorder's `~/record` service.
+
 ## Plugin implementation
 
 ### Storage format plugin architecture
