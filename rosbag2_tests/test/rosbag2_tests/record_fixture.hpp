@@ -20,8 +20,12 @@
 #include <algorithm>
 #include <chrono>
 #include <cstddef>
+#include <cstdint>
 #include <filesystem>
+#include <functional>
+#include <iomanip>
 #include <memory>
+#include <sstream>
 #include <string>
 #include <vector>
 
@@ -53,7 +57,8 @@ public:
     // Clean up potentially leftover bag files.
     // There may be leftovers if the system reallocates a temp directory
     // used by a previous test execution and the test did not have a clean exit.
-    std::filesystem::remove_all(root_bag_path_);
+    std::error_code ec;
+    std::filesystem::remove_all(root_bag_path_, ec);
   }
 
   static void SetUpTestCase()
@@ -63,7 +68,12 @@ public:
 
   void TearDown() override
   {
-    std::filesystem::remove_all(root_bag_path_);
+    // Do not throw out of TearDown: an exception here is followed by the fixture
+    // destructor, and the two together have taken down the whole test binary.
+    std::error_code ec;
+    std::filesystem::remove_all(root_bag_path_, ec);
+    EXPECT_FALSE(ec) << "Failed to remove " << root_bag_path_.generic_string() << ": " <<
+      ec.message();
   }
 
   static void TearDownTestCase()
@@ -83,6 +93,17 @@ public:
     std::string test_name = test_info->name();
     // Replace any slashes in the test name, since it is used in paths
     std::replace(test_name.begin(), test_name.end(), '/', '_');
+    // The recorder names each file "<split>_<bag name>_<timestamp>.<ext>" inside the
+    // bag directory, so the test name occurs twice in a bag file's path.  With the
+    // longest test names that exceeds MAX_PATH (260) on Windows, where the recorder
+    // then creates files the test process cannot see.  Keep the name short and unique.
+    constexpr size_t max_length = 32;
+    if (test_name.size() > max_length) {
+      std::stringstream hash;
+      hash << std::hex << std::setw(8) << std::setfill('0') <<
+        static_cast<uint32_t>(std::hash<std::string>{}(test_name));
+      test_name = test_name.substr(0, max_length) + "_" + hash.str();
+    }
     return test_name;
   }
 
