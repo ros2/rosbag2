@@ -152,6 +152,10 @@ public:
       [&topic_name](const auto & tm) {
         return topic_name == tm.name;
       });
+    if (topic_it == topics_and_types.end()) {
+      ADD_FAILURE() << "Topic " << topic_name << " not found in bag metadata";
+      return "";
+    }
     return topic_it->serialization_format;
   }
 

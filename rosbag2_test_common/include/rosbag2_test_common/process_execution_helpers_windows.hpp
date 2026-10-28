@@ -141,7 +141,8 @@ void stop_execution(
   // 259 indicates that the process is still active: we want to make sure that the process is
   // still running properly before killing it.
   if (exit_code == 259) {
-    EXPECT_TRUE(GenerateConsoleCtrlEvent(CTRL_C_EVENT, handle.process_info.dwThreadId));
+    EXPECT_TRUE(GenerateConsoleCtrlEvent(CTRL_C_EVENT, handle.process_info.dwThreadId)) <<
+      "GetLastError() = " << GetLastError();
     bool process_finished = wait_until_completion(handle, timeout);
     if (!process_finished) {
       std::cerr << "Testing process " << handle.process_info.hProcess <<
