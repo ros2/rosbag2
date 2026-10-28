@@ -127,6 +127,16 @@ public:
     ASSERT_TRUE(cli_set_rate_->wait_for_service(service_wait_timeout_));
     ASSERT_TRUE(cli_play_next_->wait_for_service(service_wait_timeout_));
     ASSERT_TRUE(cli_stop_->wait_for_service(service_wait_timeout_));
+
+    // Topic discovery is separate from service discovery. Wait for the player publisher and our
+    // subscription to match, or the first message (e.g. from play_next) is dropped.
+    ASSERT_TRUE(
+      wait_until_condition(
+        [this]() {
+          auto publishers = player_->get_list_of_publishers();
+          return topic_sub_->get_publisher_count() > 0 &&
+                 !publishers.empty() && publishers[0]->get_subscription_count() > 0;
+        }, service_wait_timeout_)) << "Player publisher and test subscription did not match";
   }
 
   void TearDown() override
@@ -145,10 +155,13 @@ public:
   {
     auto future = cli->async_send_request(request);
     EXPECT_TRUE(future.valid());
-    EXPECT_EQ(future.wait_for(service_call_timeout_), std::future_status::ready) <<
-      function_name << ", line : " << line_number;
-    // std::cout << function_name << ", line : " << line_number << std::endl;
     auto result = std::make_shared<typename Srv::Response>();
+    if (future.wait_for(service_call_timeout_) != std::future_status::ready) {
+      // future.get() after a timeout would block forever; fail and return a default response.
+      ADD_FAILURE() << "Service call timed out after " << service_call_timeout_.count() <<
+        "s in " << function_name << ", line : " << line_number;
+      return result;
+    }
     EXPECT_NO_THROW({result = future.get();});
     EXPECT_TRUE(result);
     return result;

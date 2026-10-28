@@ -638,14 +638,6 @@ if(BUILD_TESTING)
   endfunction()
   call_for_each_rmw_implementation(test_load_composable_components_for_rmw_implementation)
 
-  # Mark a few tests as xfail
-  if(TARGET test_play_services__rmw_cyclonedds_cpp)
-    ament_add_test_label(test_play_services__rmw_cyclonedds_cpp xfail)
-  endif()
-  if(TARGET test_play_services__rmw_fastrtps_cpp)
-    ament_add_test_label(test_play_services__rmw_fastrtps_cpp xfail)
-  endif()
-
   ament_add_gmock(test_record_options
     test/rosbag2_transport/test_record_options.cpp)
   target_link_libraries(test_record_options ament_cmake_ros_core::ament_ros_defaults ${PROJECT_NAME})

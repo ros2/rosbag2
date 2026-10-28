@@ -154,6 +154,9 @@ public:
   std::thread spin_thread_;
   std::shared_ptr<rclcpp::executors::SingleThreadedExecutor> exec_;
   const std::chrono::seconds service_call_timeout_ {10};
+  // Wait for all acks before exiting: the bag is only 0.15s long, so otherwise the player can
+  // exit before a lost sample is repaired.
+  const std::string play_paused_cmd_ = "ros2 bag play -p --wait-for-all-acked 5000 ";
 };
 
 TEST_P(PlayEndToEndTestFixture, play_end_to_end_test) {
@@ -161,7 +164,7 @@ TEST_P(PlayEndToEndTestFixture, play_end_to_end_test) {
   sub_->add_subscription<test_msgs::msg::BasicTypes>("/test_topic", 3, sub_qos_);
 
   // Start ros2 bag play in pause mode
-  auto process_id = start_execution("ros2 bag play -p " + bags_path_ + "/cdr_test");
+  auto process_id = start_execution(play_paused_cmd_ + bags_path_ + "/cdr_test");
   auto cleanup_process_handle = rcpputils::make_scope_exit(
     [process_id]() {
       stop_execution(process_id);
@@ -260,7 +263,7 @@ TEST_P(PlayEndToEndTestFixture, play_filters_by_topic) {
 
     // Start ros2 bag play in pause mode
     auto process_id =
-      start_execution("ros2 bag play -p " + bags_path_ + "/cdr_test --topics /test_topic");
+      start_execution(play_paused_cmd_ + bags_path_ + "/cdr_test --topics /test_topic");
     auto cleanup_process_handle = rcpputils::make_scope_exit(
       [process_id]() {
         stop_execution(process_id);
@@ -293,7 +296,7 @@ TEST_P(PlayEndToEndTestFixture, play_filters_by_topic) {
 
     // Start ros2 bag play in pause mode
     auto process_id = start_execution(
-      "ros2 bag play -p " + bags_path_ + "/cdr_test --topics /test_topic /array_topic");
+      play_paused_cmd_ + bags_path_ + "/cdr_test --topics /test_topic /array_topic");
     auto cleanup_process_handle = rcpputils::make_scope_exit(
       [process_id]() {
         stop_execution(process_id);
@@ -326,7 +329,7 @@ TEST_P(PlayEndToEndTestFixture, play_filters_by_topic) {
 
     // Start ros2 bag play in pause mode
     auto process_id = start_execution(
-      "ros2 bag play -p " + bags_path_ + "/cdr_test --topics /nonexistent_topic");
+      play_paused_cmd_ + bags_path_ + "/cdr_test --topics /nonexistent_topic");
     auto cleanup_process_handle = rcpputils::make_scope_exit(
       [process_id]() {
         stop_execution(process_id);

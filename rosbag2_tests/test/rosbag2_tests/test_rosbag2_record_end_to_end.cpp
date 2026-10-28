@@ -191,7 +191,8 @@ TEST_P(RecordFixture, record_end_to_end_test_with_static_topics_only) {
   unrecorded_message->string_value = "unrecorded_content";
 
   rosbag2_test_common::PublicationManager pub_manager;
-  pub_manager.setup_publisher("/test_topic1", message, expected_test_messages, qos);
+  auto publisher =
+    pub_manager.setup_publisher("/test_topic1", message, expected_test_messages, qos);
   pub_manager.setup_publisher("/unrecorded_topic", unrecorded_message, expected_test_messages, qos);
 
   // _SRC_RESOURCES_DIR_PATH defined in CMakeLists.txt
@@ -206,6 +207,11 @@ TEST_P(RecordFixture, record_end_to_end_test_with_static_topics_only) {
     });
 
   ASSERT_TRUE(pub_manager.wait_for_matched("/test_topic1")) << "Expected find rosbag subscription";
+  // With static topics the recorder subscribes before discovering us, and wait_for_matched() only
+  // shows that we have seen the recorder. Until the recorder has matched us too it drops our
+  // messages, so publish a probe and wait for its ack, which requires that match.
+  publisher->publish(*message);
+  ASSERT_TRUE(publisher->wait_for_all_acked(std::chrono::seconds(10)));
 
   wait_for_storage_file();
 
@@ -217,7 +223,8 @@ TEST_P(RecordFixture, record_end_to_end_test_with_static_topics_only) {
   finalize_metadata_kludge();
   wait_for_metadata();
   auto test_topic_messages = get_messages_for_topic<test_msgs::msg::Strings>("/test_topic1");
-  EXPECT_THAT(test_topic_messages, SizeIs(expected_test_messages));
+  // The probe may also have been recorded.
+  EXPECT_THAT(test_topic_messages, SizeIs(Ge(expected_test_messages)));
 
   for (const auto & received_message : test_topic_messages) {
     EXPECT_EQ(received_message->string_value, "test");
