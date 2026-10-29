@@ -71,7 +71,6 @@ std::shared_ptr<test_msgs::msg::Strings> create_string_message(
 }
 }  // namespace
 
-#ifndef _WIN32
 TEST_P(RecordFixture, record_end_to_end_test_with_zstd_file_compression) {
   constexpr const char topic_name[] = "/test_topic";
   const auto compression_format = "zstd";
@@ -132,7 +131,6 @@ TEST_P(RecordFixture, record_end_to_end_test_with_zstd_file_compression) {
     EXPECT_EQ(message->string_value, "test");
   }
 }
-#endif
 
 TEST_P(RecordFixture, record_end_to_end_test) {
   auto message = get_messages_strings()[0];
@@ -163,7 +161,6 @@ TEST_P(RecordFixture, record_end_to_end_test) {
   stop_execution(process_handle);
   cleanup_process_handle.cancel();
 
-  finalize_metadata_kludge();
   wait_for_metadata();
   auto test_topic_messages = get_messages_for_topic<test_msgs::msg::Strings>("/test_topic");
   EXPECT_THAT(test_topic_messages, SizeIs(Ge(expected_test_messages)));
@@ -220,7 +217,6 @@ TEST_P(RecordFixture, record_end_to_end_test_with_static_topics_only) {
   stop_execution(process_handle);
   cleanup_process_handle.cancel();
 
-  finalize_metadata_kludge();
   wait_for_metadata();
   auto test_topic_messages = get_messages_for_topic<test_msgs::msg::Strings>("/test_topic1");
   // The probe may also have been recorded.
@@ -263,7 +259,6 @@ TEST_P(RecordFixture, record_end_to_end_test_start_paused) {
   stop_execution(process_handle);
   cleanup_process_handle.cancel();
 
-  finalize_metadata_kludge();
   wait_for_metadata();
   auto test_topic_messages = get_messages_for_topic<test_msgs::msg::Strings>("/test_topic");
   EXPECT_THAT(test_topic_messages, IsEmpty());
@@ -287,10 +282,6 @@ TEST_P(RecordFixture, record_end_to_end_exits_gracefully_on_sigterm) {
   wait_for_metadata();
 }
 
-// TODO(zmichaels11): Fix and enable this test on Windows.
-// This tests depends on the ability to read the metadata file.
-// Stopping the process on Windows does a hard kill and the metadata file is not written.
-#ifndef _WIN32
 TEST_P(RecordFixture, record_end_to_end_with_splitting_metadata_contains_all_topics) {
   constexpr const int bagfile_split_size = 4 * 1024 * 1024;  // 4MB.
   constexpr const char first_topic_name[] = "/test_topic0";
@@ -345,7 +336,6 @@ TEST_P(RecordFixture, record_end_to_end_with_splitting_metadata_contains_all_top
   EXPECT_NE(topic_names.end(), topic_names.find(first_topic_name));
   EXPECT_NE(topic_names.end(), topic_names.find(second_topic_name));
 }
-#endif
 
 TEST_P(RecordFixture, record_end_to_end_with_splitting_bagsize_split_is_at_least_specified_size) {
   constexpr const char topic_name[] = "/test_topic";
@@ -383,7 +373,6 @@ TEST_P(RecordFixture, record_end_to_end_with_splitting_bagsize_split_is_at_least
   stop_execution(process_handle);
   cleanup_process_handle.cancel();
 
-  finalize_metadata_kludge(expected_splits);
   wait_for_metadata();
   rosbag2_storage::MetadataIo metadata_io;
   const auto metadata = metadata_io.read_metadata(root_bag_path_.generic_string());
@@ -435,7 +424,6 @@ TEST_P(RecordFixture, record_end_to_end_with_splitting_max_size_not_reached) {
   stop_execution(process_handle);
   cleanup_process_handle.cancel();
 
-  finalize_metadata_kludge();
   wait_for_metadata();
   rosbag2_storage::MetadataIo metadata_io;
   const auto metadata = metadata_io.read_metadata(root_bag_path_.generic_string());
@@ -500,7 +488,6 @@ TEST_P(RecordFixture, record_end_to_end_with_splitting_splits_bagfile) {
   cleanup_process_handle.cancel();
 
   wait_for_metadata();
-  finalize_metadata_kludge(expected_splits);
   rosbag2_storage::MetadataIo metadata_io;
   const auto metadata = metadata_io.read_metadata(root_bag_path_.generic_string());
 
@@ -546,7 +533,6 @@ TEST_P(RecordFixture, record_end_to_end_with_duration_splitting_splits_bagfile) 
   stop_execution(process_handle);
   cleanup_process_handle.cancel();
 
-  finalize_metadata_kludge();
   wait_for_metadata();
   rosbag2_storage::MetadataIo metadata_io;
   const auto metadata = metadata_io.read_metadata(root_bag_path_.generic_string());
@@ -593,7 +579,6 @@ TEST_P(RecordFixture, record_end_to_end_test_with_zstd_file_compression_compress
   stop_execution(process_handle);
   cleanup_process_handle.cancel();
 
-  finalize_metadata_kludge(expected_splits);
   wait_for_metadata();
   rosbag2_storage::MetadataIo metadata_io;
   const auto metadata = metadata_io.read_metadata(root_bag_path_.generic_string());
@@ -699,7 +684,6 @@ TEST_P(RecordFixture, record_end_to_end_test_with_cache) {
   stop_execution(process_handle);
   cleanup_process_handle.cancel();
 
-  finalize_metadata_kludge();
   wait_for_metadata();
   auto test_topic_messages =
     get_messages_for_topic<test_msgs::msg::Strings>(topic_name);
@@ -793,7 +777,6 @@ TEST_P(RecordFixture, record_with_max_cache_duration_only_e2e) {
   stop_execution(process_handle);
   cleanup.cancel();
 
-  finalize_metadata_kludge();
   wait_for_metadata();
 
   auto msgs = get_messages_for_topic<test_msgs::msg::Strings>(topic_name);
@@ -830,7 +813,6 @@ TEST_P(RecordFixture, record_with_max_cache_duration_and_size_e2e) {
   stop_execution(process_handle);
   cleanup.cancel();
 
-  finalize_metadata_kludge();
   wait_for_metadata();
 
   auto msgs = get_messages_for_topic<test_msgs::msg::Strings>(topic_name);

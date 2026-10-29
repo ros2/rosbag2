@@ -513,6 +513,10 @@ class RecordVerb(VerbExtension):
         recorder = Recorder(storage_options, record_options, args.log_level, args.node_name)
 
         signal.signal(signal.SIGTERM, signal_handler)
+        if hasattr(signal, 'SIGBREAK'):
+            # Windows: Ctrl-Break is the only console event another process can
+            # address to us; treat it like SIGTERM.
+            signal.signal(signal.SIGBREAK, signal_handler)
 
         try:
             # Start the recorder
@@ -526,6 +530,8 @@ class RecordVerb(VerbExtension):
             recorder.stop()
             recorder.stop_spin()
             signal.signal(signal.SIGTERM, signal.SIG_DFL)
+            if hasattr(signal, 'SIGBREAK'):
+                signal.signal(signal.SIGBREAK, signal.SIG_DFL)
             termination_requested.clear()
 
         # Remove newly created directory if it is empty

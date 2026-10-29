@@ -20,8 +20,12 @@
 #include <algorithm>
 #include <chrono>
 #include <cstddef>
+#include <cstdint>
 #include <filesystem>
+#include <functional>
+#include <iomanip>
 #include <memory>
+#include <sstream>
 #include <string>
 #include <vector>
 
@@ -53,7 +57,8 @@ public:
     // Clean up potentially leftover bag files.
     // There may be leftovers if the system reallocates a temp directory
     // used by a previous test execution and the test did not have a clean exit.
-    std::filesystem::remove_all(root_bag_path_);
+    std::error_code ec;
+    std::filesystem::remove_all(root_bag_path_, ec);
   }
 
   static void SetUpTestCase()
@@ -63,7 +68,12 @@ public:
 
   void TearDown() override
   {
-    std::filesystem::remove_all(root_bag_path_);
+    // Do not throw out of TearDown: an exception here is followed by the fixture
+    // destructor, and the two together have taken down the whole test binary.
+    std::error_code ec;
+    std::filesystem::remove_all(root_bag_path_, ec);
+    EXPECT_FALSE(ec) << "Failed to remove " << root_bag_path_.generic_string() << ": " <<
+      ec.message();
   }
 
   static void TearDownTestCase()
@@ -83,6 +93,17 @@ public:
     std::string test_name = test_info->name();
     // Replace any slashes in the test name, since it is used in paths
     std::replace(test_name.begin(), test_name.end(), '/', '_');
+    // The recorder names each file "<split>_<bag name>_<timestamp>.<ext>" inside the
+    // bag directory, so the test name occurs twice in a bag file's path.  With the
+    // longest test names that exceeds MAX_PATH (260) on Windows, where the recorder
+    // then creates files the test process cannot see.  Keep the name short and unique.
+    constexpr size_t max_length = 32;
+    if (test_name.size() > max_length) {
+      std::stringstream hash;
+      hash << std::hex << std::setw(8) << std::setfill('0') <<
+        static_cast<uint32_t>(std::hash<std::string>{}(test_name));
+      test_name = test_name.substr(0, max_length) + "_" + hash.str();
+    }
     return test_name;
   }
 
@@ -157,77 +178,6 @@ public:
       return "";
     }
     return topic_it->serialization_format;
-  }
-
-  void finalize_metadata_kludge(
-    int expected_splits = 0,
-    const std::string & compression_format = "",
-    const std::string & compression_mode = "")
-  {
-    // TODO(ros-tooling): Find out how to correctly send a Ctrl-C signal on Windows
-    // This is necessary as the process is killed hard on Windows and doesn't write a metadata file
-  #ifdef _WIN32
-    rosbag2_storage::BagMetadata metadata{};
-    metadata.storage_identifier = GetParam();
-
-    // For timestamped filename format, scan directory for actual files instead of guessing paths
-    if (std::filesystem::exists(root_bag_path_) && std::filesystem::is_directory(root_bag_path_)) {
-      for (const auto & entry : std::filesystem::directory_iterator(root_bag_path_)) {
-        if (entry.is_regular_file()) {
-          const auto & path = entry.path();
-          const auto extension = path.extension();
-          const auto & expected_ext =
-            rosbag2_test_common::kTestedStorageIDsToExtensions.at(GetParam());
-          // Include db3, mcap files and compressed files
-          if (extension == expected_ext ||
-            (!compression_format.empty() &&
-            path.string().find(compression_format) != std::string::npos))
-          {
-            metadata.relative_file_paths.push_back(path.filename().generic_string());
-
-            // Create file info
-            rosbag2_storage::FileInformation file_info;
-            file_info.path = path.filename().generic_string();
-            file_info.starting_time = std::chrono::time_point<std::chrono::high_resolution_clock>(
-              std::chrono::nanoseconds(0));
-            file_info.duration = std::chrono::nanoseconds(0);
-            file_info.message_count = 0;
-            metadata.files.push_back(file_info);
-          }
-        }
-      }
-    } else {
-      // Fallback to old logic if directory doesn't exist
-      for (int i = 0; i <= expected_splits; i++) {
-        try {
-          std::filesystem::path bag_file_path = load_metadata_and_get_bag_file_path(i);
-          if (!compression_format.empty()) {
-            bag_file_path = std::filesystem::path(bag_file_path.generic_string() + ".zstd");
-          }
-
-          if (std::filesystem::exists(bag_file_path)) {
-            metadata.relative_file_paths.push_back(bag_file_path.generic_string());
-          }
-        } catch (const std::runtime_error &) {
-          // Skip if file path cannot be determined
-          continue;
-        }
-      }
-    }
-    metadata.duration = std::chrono::nanoseconds(0);
-    metadata.starting_time =
-      std::chrono::time_point<std::chrono::high_resolution_clock>(std::chrono::nanoseconds(0));
-    metadata.message_count = 0;
-    metadata.compression_mode = compression_mode;
-    metadata.compression_format = compression_format;
-
-    rosbag2_storage::MetadataIo metadata_io;
-    metadata_io.write_metadata(root_bag_path_.generic_string(), metadata);
-  #else
-    (void)expected_splits;
-    (void)compression_format;
-    (void)compression_mode;
-  #endif
   }
 
   // relative path to the root of the bag file.

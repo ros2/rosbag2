@@ -45,7 +45,12 @@ public:
 
   ~TemporaryDirectoryFixture() override
   {
-    std::filesystem::remove_all(std::filesystem::path(temporary_dir_path_));
+    // Never throw from a destructor; report the leftovers instead.
+    std::error_code ec;
+    std::filesystem::remove_all(std::filesystem::path(temporary_dir_path_), ec);
+    if (ec) {
+      std::cerr << "Failed to remove " << temporary_dir_path_ << ": " << ec.message() << "\n";
+    }
   }
 
   std::string temporary_dir_path_;
