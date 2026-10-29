@@ -163,6 +163,16 @@ public:
     return test_name;
   }
 
+  rclcpp::NodeOptions recorder_node_options() const
+  {
+    return rclcpp::NodeOptions()
+           .use_global_arguments(false)
+           .append_parameter_override("storage.uri", root_bag_path_.generic_string())
+           .append_parameter_override("storage.storage_id", GetParam())
+           .append_parameter_override("record.disable_keyboard_controls", true)
+           .append_parameter_override("record.is_discovery_disabled", true);
+  }
+
   fs::path root_bag_path_;
 };
 
@@ -174,8 +184,9 @@ public:
 
   explicit MockComposableRecorder(
     const rclcpp::NodeOptions & node_options = rclcpp::NodeOptions(),
-    const std::string & node_name = "rosbag2_mock_composable_recorder")
-  : Recorder(node_name, node_options)
+    const std::string & node_name = "rosbag2_mock_composable_recorder",
+    bool start_recording = true)
+  : Recorder(node_name, node_options, start_recording)
   {
     // Declare demo attribute parameter for the underlying node with default value equal to false.
     // However, if node was created with option to override this parameter it will be settled up
@@ -200,6 +211,73 @@ public:
 };
 const char MockComposableRecorder::demo_attribute_name_[] = "demo_attribute";
 
+TEST_P(ComposableRecorderTests, recorder_can_defer_recording_until_record_is_called)
+{
+  const auto initial_uri = (root_bag_path_ / "initial_name").generic_string();
+  const auto recording_uri = (root_bag_path_ / "custom_name").generic_string();
+  auto options = rclcpp::NodeOptions().use_global_arguments(false);
+  options.parameter_overrides({
+    {"storage.uri", initial_uri},
+    {"storage.storage_id", GetParam()},
+    {"record.disable_keyboard_controls", true},
+    {"record.is_discovery_disabled", true},
+    {"record.topics", std::vector<std::string>{"topic"}},
+    {MockComposableRecorder::demo_attribute_name_, true}
+  });
+  options.start_parameter_event_publisher(true);
+
+  size_t recording_started_count = 0;
+  auto recorder = std::make_shared<MockComposableRecorder>(options, "deferred_recorder", false);
+  recorder->set_on_start_recording_callback([&recording_started_count]() {
+      ++recording_started_count;
+  });
+
+  EXPECT_FALSE(fs::exists(root_bag_path_));
+  EXPECT_FALSE(recorder->is_discovery_running());
+  EXPECT_TRUE(recorder->demo_attribute_value);
+  EXPECT_TRUE(recorder->get_node_options().start_parameter_event_publisher());
+  EXPECT_EQ(recorder->get_storage_options().uri, initial_uri);
+  EXPECT_EQ(recorder->get_storage_options().storage_id, GetParam());
+  EXPECT_THAT(recorder->get_record_options().topics, ElementsAre("/topic"));
+  EXPECT_EQ(recording_started_count, 0u);
+
+  recorder->record(recording_uri);
+
+  EXPECT_TRUE(fs::is_directory(recording_uri));
+  EXPECT_FALSE(fs::exists(initial_uri));
+  EXPECT_EQ(recording_started_count, 1u);
+  recorder->stop();
+
+  rosbag2_storage::MetadataIo metadata_io;
+  ASSERT_TRUE(metadata_io.metadata_file_exists(recording_uri));
+  EXPECT_EQ(metadata_io.read_metadata(recording_uri).storage_identifier, GetParam());
+}
+
+TEST_P(ComposableRecorderTests, recorder_node_options_constructor_starts_recording)
+{
+  auto recorder = std::make_shared<rosbag2_transport::Recorder>(recorder_node_options());
+
+  EXPECT_STREQ(recorder->get_name(), "rosbag2_recorder");
+  EXPECT_TRUE(fs::is_directory(root_bag_path_));
+  recorder->stop();
+
+  rosbag2_storage::MetadataIo metadata_io;
+  EXPECT_TRUE(metadata_io.metadata_file_exists(root_bag_path_.generic_string()));
+}
+
+TEST_P(ComposableRecorderTests, recorder_named_constructor_starts_recording)
+{
+  auto recorder = std::make_shared<rosbag2_transport::Recorder>(
+    "named_recorder", recorder_node_options());
+
+  EXPECT_STREQ(recorder->get_name(), "named_recorder");
+  EXPECT_TRUE(fs::is_directory(root_bag_path_));
+  recorder->stop();
+
+  rosbag2_storage::MetadataIo metadata_io;
+  EXPECT_TRUE(metadata_io.metadata_file_exists(root_bag_path_.generic_string()));
+}
+
 TEST_P(ComposableRecorderTests, recorder_inner_params_passed_as_append_override)
 {
   std::vector<rclcpp::Parameter> parameters;
@@ -214,6 +292,7 @@ TEST_P(ComposableRecorderTests, recorder_inner_params_passed_as_append_override)
   // parameter_overrides options
   ASSERT_TRUE(recorder->get_value_of_bool_parameter(recorder->demo_attribute_name_));
   ASSERT_TRUE(recorder->demo_attribute_value);
+  EXPECT_TRUE(fs::is_directory(root_bag_path_));
 }
 
 TEST_P(ComposableRecorderTests, recorder_can_parse_parameters_from_file) {
@@ -230,7 +309,8 @@ TEST_P(ComposableRecorderTests, recorder_can_parse_parameters_from_file) {
   opts.append_parameter_override("storage.uri", root_bag_path_.generic_string());
   opts.append_parameter_override("storage.storage_id", GetParam());
 
-  auto recorder = std::make_shared<MockComposableRecorder>(opts, "recorder_params_node");
+  auto recorder = std::make_shared<MockComposableRecorder>(opts, "recorder_params_node", false);
+  EXPECT_FALSE(fs::exists(root_bag_path_));
   auto record_options = recorder->get_record_options();
   auto storage_options = recorder->get_storage_options();
 

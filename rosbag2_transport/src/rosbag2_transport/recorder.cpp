@@ -2074,6 +2074,13 @@ Recorder::Recorder(const rclcpp::NodeOptions & node_options)
 Recorder::Recorder(
   const std::string & node_name,
   const rclcpp::NodeOptions & node_options)
+: Recorder(node_name, node_options, true)
+{}
+
+Recorder::Recorder(
+  const std::string & node_name,
+  const rclcpp::NodeOptions & node_options,
+  bool start_recording)
 : rclcpp::Node(node_name, node_options)
 {
   rosbag2_storage::StorageOptions storage_options = get_storage_options_from_node_params(*this);
@@ -2090,7 +2097,9 @@ Recorder::Recorder(
   pimpl_ = std::make_unique<RecorderImpl>(
     this, std::move(writer), keyboard_handler,
     storage_options, record_options);
-  pimpl_->record();
+  if (start_recording) {
+    pimpl_->record();
+  }
 }
 
 Recorder::Recorder(
