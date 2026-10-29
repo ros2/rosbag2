@@ -31,12 +31,18 @@
 #include "rosbag2_test_common/temporary_directory_fixture.hpp"
 #include "std_msgs/msg/string.hpp"
 
+#include <mcap/writer.hpp>
+
 #include <gmock/gmock.h>
 
+#include <array>
 #include <chrono>
+#include <cstddef>
 #include <cstdint>
+#include <cstring>
 #include <filesystem>
 #include <memory>
+#include <stdexcept>
 #include <string>
 #include <tuple>
 #include <utility>
@@ -101,6 +107,150 @@ bool operator==(const TopicInformation & lhs, const TopicInformation & rhs)
   return lhs.topic_metadata == rhs.topic_metadata && lhs.message_count == rhs.message_count;
 }
 }  // namespace rosbag2_storage
+
+namespace
+{
+using Payloads = std::array<std::vector<std::byte>, 2>;
+
+Payloads make_payloads()
+{
+  Payloads payloads;
+  for (size_t message_index = 0; message_index < payloads.size(); ++message_index) {
+    auto & payload = payloads[message_index];
+    payload.resize(256);
+    payload[0] = std::byte{0};
+    payload[1] = std::byte{1};
+    payload[2] = std::byte{0};
+    payload[3] = std::byte{0};
+    const uint32_t string_size = static_cast<uint32_t>(payload.size() - 8);
+    for (size_t i = 0; i < 4; ++i) {
+      payload[4 + i] = std::byte((string_size >> (i * 8)) & 0xff);
+    }
+    for (size_t i = 8; i + 1 < payload.size(); ++i) {
+      payload[i] = std::byte('A' + ((i * 17 + (message_index + 1) * 7) % 26));
+    }
+    payload.back() = std::byte{0};
+  }
+  return payloads;
+}
+
+void write_unindexed_mcap(const std::string & path, const Payloads & payloads)
+{
+  mcap::McapWriterOptions options("ros2");
+  options.noSummary = true;
+  options.noMessageIndex = true;
+  options.compression = mcap::Compression::None;
+  options.chunkSize = mcap::DefaultChunkSize;
+
+  mcap::McapWriter writer;
+  auto status = writer.open(path, options);
+  if (!status.ok()) {
+    throw std::runtime_error(status.message);
+  }
+
+  std::string metadata_yaml =
+    "version: 8\n"
+    "storage_identifier: mcap\n"
+    "duration: {nanoseconds: 0}\n"
+    "starting_time: {nanoseconds_since_epoch: 0}\n"
+    "message_count: 2\n"
+    "topics_with_message_count: []\n"
+    "compression_format: ''\n"
+    "compression_mode: ''\n"
+    "relative_file_paths: [fixture.mcap]\n"
+    "files: []\n"
+    "custom_data: {}\n"
+    "ros_distro: rolling\n";
+  // This size makes a shared FileStreamReader overwrite the prefetched second message.
+  constexpr size_t metadata_body_size = 494;
+  constexpr size_t metadata_field_overhead = 4 + 6 + 4 + 4 + 19 + 4 + 1;
+  if (metadata_yaml.size() + metadata_field_overhead + 1 > metadata_body_size) {
+    throw std::runtime_error("MCAP test metadata exceeds its target size");
+  }
+  metadata_yaml +=
+    "#" + std::string(metadata_body_size - metadata_field_overhead - metadata_yaml.size() - 1, 'X');
+  mcap::Metadata metadata;
+  metadata.name = "rosbag2";
+  metadata.metadata.emplace("serialized_metadata", metadata_yaml);
+  status = writer.write(metadata);
+  if (!status.ok()) {
+    throw std::runtime_error(status.message);
+  }
+
+  mcap::Schema schema;
+  schema.name = "std_msgs/msg/String";
+  schema.encoding = "ros2msg";
+  writer.addSchema(schema);
+  mcap::Channel channel;
+  channel.topic = "/fixture";
+  channel.messageEncoding = "cdr";
+  channel.schemaId = schema.id;
+  writer.addChannel(channel);
+
+  for (size_t i = 0; i < payloads.size(); ++i) {
+    mcap::Message message;
+    message.channelId = channel.id;
+    message.sequence = static_cast<uint32_t>(i + 1);
+    message.logTime = static_cast<uint64_t>(i + 1) * 1000000000ULL;
+    message.publishTime = message.logTime;
+    message.data = payloads[i].data();
+    message.dataSize = payloads[i].size();
+    status = writer.write(message);
+    if (!status.ok()) {
+      throw std::runtime_error(status.message);
+    }
+  }
+  writer.close();
+}
+
+void expect_payload(const std::shared_ptr<rosbag2_storage::SerializedBagMessage> & actual,
+                    const std::vector<std::byte> & expected)
+{
+  ASSERT_EQ(actual->serialized_data->buffer_length, expected.size());
+  EXPECT_EQ(std::memcmp(actual->serialized_data->buffer, expected.data(), expected.size()), 0);
+}
+}  // namespace
+
+TEST_F(McapStorageTestFixture, metadata_does_not_corrupt_prefetched_message)
+{
+  const auto path = (std::filesystem::path(temporary_dir_path_) / "fixture.mcap").generic_string();
+  const auto payloads = make_payloads();
+  write_unindexed_mcap(path, payloads);
+  ASSERT_LT(std::filesystem::file_size(path), 2048u);
+
+  rosbag2_storage::StorageFactory factory;
+  rosbag2_storage::StorageOptions options;
+  options.uri = path;
+  options.storage_id = "mcap";
+
+  auto before_metadata = factory.open_read_only(options);
+  ASSERT_NE(before_metadata, nullptr);
+  expect_payload(before_metadata->read_next(), payloads[0]);
+  expect_payload(before_metadata->read_next(), payloads[1]);
+
+  auto after_metadata = factory.open_read_only(options);
+  ASSERT_NE(after_metadata, nullptr);
+  EXPECT_EQ(after_metadata->get_metadata().message_count, 2u);
+  expect_payload(after_metadata->read_next(), payloads[0]);
+  expect_payload(after_metadata->read_next(), payloads[1]);
+}
+
+TEST_F(McapStorageTestFixture, metadata_does_not_corrupt_message_during_read)
+{
+  const auto path = (std::filesystem::path(temporary_dir_path_) / "fixture.mcap").generic_string();
+  const auto payloads = make_payloads();
+  write_unindexed_mcap(path, payloads);
+
+  rosbag2_storage::StorageFactory factory;
+  rosbag2_storage::StorageOptions options;
+  options.uri = path;
+  options.storage_id = "mcap";
+  auto reader = factory.open_read_only(options);
+  ASSERT_NE(reader, nullptr);
+  expect_payload(reader->read_next(), payloads[0]);
+  EXPECT_EQ(reader->get_metadata().message_count, 2u);
+  expect_payload(reader->read_next(), payloads[1]);
+}
 
 TEST_F(McapStorageTestFixture, can_store_and_read_metadata_correctly)
 {
