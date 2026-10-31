@@ -322,6 +322,22 @@ Operational behavior:
 - In snapshot mode, the file's start/end timestamps reflect the buffered messages at cache 
   buffer swap time.
 
+#### Querying cache insertion failures from C++
+
+During regular recording, C++ callers can use `rosbag2_cpp::Writer::get_cache_drop_statistics()`
+to obtain a copy of the cumulative per-topic insertion failures in the normal message cache.
+The result includes a status to distinguish an empty count from a disabled cache, an unsupported
+cache (including snapshot mode), a writer that has not opened a recording, or a busy writer.
+The normal sequential writer retains its final counts after close. Counts persist across splits,
+reset on a new open attempt, and match the cache's `log_dropped()` output. They do not include
+transport or storage write failures. Counts are 64-bit and report saturation at their maximum.
+Queries never wait for another Writer operation: retry if the result is `busy`, including when
+called from an event callback. See the
+[cache drop statistics design](docs/design/cache_drop_statistics_query.md) for the exact semantics.
+Custom writers and caches without a supported built-in implementation return an unsupported status.
+They can opt in through the independent `CacheDropStatisticsProvider` interface. The built-in
+compression writer currently returns `unsupported` through this API.
+
 #### Statistics about lost messages
 
 Rosbag2 provides the ability to monitor statistics about lost messages in the recorder and on the
