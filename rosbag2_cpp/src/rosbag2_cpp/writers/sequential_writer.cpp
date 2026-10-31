@@ -27,6 +27,7 @@
 #include <string>
 #include <sstream>
 #include <system_error>
+#include <typeinfo>
 #include <unordered_map>
 #include <utility>
 #include <vector>
@@ -49,6 +50,21 @@ namespace writers
 
 namespace
 {
+// Retains only final statistics after the normal cache and its buffers have been destroyed.
+class ClosedCacheStatistics : public cache::MessageCacheInterface
+{
+public:
+  explicit ClosedCacheStatistics(cache::CacheDropStatistics statistics)
+  : statistics_(std::move(statistics)) {}
+
+  bool push(std::shared_ptr<const rosbag2_storage::SerializedBagMessage>) override {return false;}
+  std::shared_ptr<cache::CacheBufferInterface> get_consumer_buffer() override {return {};}
+  void release_consumer_buffer() override {}
+  void swap_buffers() override {}
+
+  cache::CacheDropStatistics statistics_;
+};
+
 std::string strip_parent_path(const std::string & relative_path)
 {
   return fs::path(relative_path).filename().generic_string();
@@ -109,6 +125,9 @@ void SequentialWriter::open(
   // Note. close and open methods protected with mutex on upper rosbag2_cpp::writer level.
   if (is_open_) {
     return;  // The writer already opened
+  }
+  if (dynamic_cast<ClosedCacheStatistics *>(message_cache_.get())) {
+    message_cache_.reset();
   }
   if (storage_options.uri.empty()) {
     throw std::runtime_error("Can't open rosbag2_cpp::SequentialWriter. The input URI is empty");
@@ -209,7 +228,17 @@ void SequentialWriter::flush_cache_update_metadata_and_close_storage()
   if (use_cache_) {
     // destructor will flush message cache
     cache_consumer_.reset();
+    std::shared_ptr<cache::MessageCacheInterface> final_statistics;
+    if (typeid(*this) == typeid(SequentialWriter) && message_cache_ &&
+      typeid(*message_cache_) == typeid(cache::MessageCache))
+    {
+      auto statistics =
+        static_cast<const cache::MessageCache *>(message_cache_.get())->get_dropped_statistics();
+      statistics.is_final = true;
+      final_statistics = std::make_shared<ClosedCacheStatistics>(std::move(statistics));
+    }
     message_cache_.reset();
+    message_cache_ = std::move(final_statistics);
   }
   finalize_metadata();
   if (storage_) {
@@ -247,6 +276,30 @@ void SequentialWriter::close()
   }
 
   converter_.reset();
+}
+
+cache::CacheDropStatistics SequentialWriter::get_cache_drop_statistics() const
+{
+  if (!is_open_) {
+    if (auto final_statistics = dynamic_cast<const ClosedCacheStatistics *>(message_cache_.get())) {
+      return final_statistics->statistics_;
+    }
+    return {cache::CacheDropStatisticsStatus::writer_not_open, {}};
+  }
+  if (!use_cache_) {
+    return {cache::CacheDropStatisticsStatus::cache_disabled, {}};
+  }
+  if (auto provider =
+    dynamic_cast<const cache::CacheDropStatisticsProvider *>(message_cache_.get()))
+  {
+    return provider->get_cache_drop_statistics();
+  }
+  // A subclass can mutate the protected counters without the base cache's mutex.
+  // Such implementations must opt in and synchronize their own statistics.
+  if (message_cache_ && typeid(*message_cache_) == typeid(cache::MessageCache)) {
+    return static_cast<const cache::MessageCache *>(message_cache_.get())->get_dropped_statistics();
+  }
+  return {};
 }
 
 void SequentialWriter::create_topic(const rosbag2_storage::TopicMetadata & topic_with_type)

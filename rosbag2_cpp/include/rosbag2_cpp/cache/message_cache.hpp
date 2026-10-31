@@ -28,6 +28,7 @@
 #include "rcpputils/thread_safety_annotations.hpp"
 
 #include "rosbag2_cpp/cache/message_cache_buffer.hpp"
+#include "rosbag2_cpp/cache/cache_drop_statistics.hpp"
 #include "rosbag2_cpp/cache/message_cache_interface.hpp"
 #include "rosbag2_cpp/cache/cache_buffer_interface.hpp"
 #include "rosbag2_cpp/visibility_control.hpp"
@@ -111,6 +112,11 @@ public:
   /// Summarize dropped/remaining messages
   void log_dropped() override;
 
+  /// Return a thread-safe copy when all counter mutations go through MessageCache::push().
+  /// Subclasses that directly modify the protected counters need their own synchronization;
+  /// the inherited getter cannot synchronize with such modifications.
+  CacheDropStatistics get_dropped_statistics() const;
+
   /// Producer API: notify consumer to wake-up (primary buffer has data)
   void notify_data_ready() override;
 
@@ -125,7 +131,7 @@ protected:
 private:
   /// Double buffers
   std::shared_ptr<MessageCacheBuffer> producer_buffer_;
-  std::mutex producer_buffer_mutex_;
+  mutable std::mutex producer_buffer_mutex_;
   std::shared_ptr<MessageCacheBuffer> consumer_buffer_;
   std::mutex consumer_buffer_mutex_;
 

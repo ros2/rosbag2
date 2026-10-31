@@ -31,6 +31,7 @@
 #include "rosbag2_storage/serialized_bag_message.hpp"
 
 #include "rosbag2_cpp/cache/circular_message_cache.hpp"
+#include "rosbag2_cpp/cache/cache_drop_statistics.hpp"
 
 using namespace testing;  // NOLINT
 using namespace std::chrono_literals;
@@ -117,6 +118,16 @@ TEST_F(CircularMessageCacheTest, circular_message_cache_overwrites_old) {
 
   // Actual stored data size should be roughly the desired cache size
   EXPECT_THAT(cache_size_diff, Lt(allowed_diff));
+}
+
+TEST_F(CircularMessageCacheTest, dropped_statistics_are_unsupported_for_snapshot_cache) {
+  rosbag2_cpp::cache::CircularMessageCache cache(5);
+  rosbag2_cpp::cache::MessageCacheInterface * base = &cache;
+  EXPECT_EQ(dynamic_cast<rosbag2_cpp::cache::CacheDropStatisticsProvider *>(base), nullptr);
+  ASSERT_TRUE(cache.push(make_test_msg(0, "12345")));
+  ASSERT_TRUE(cache.push(make_test_msg(0, "x")));  // Evicts an older message.
+  ASSERT_FALSE(cache.push(make_test_msg(0, "123456")));  // Rejects an oversized message.
+  EXPECT_EQ(dynamic_cast<rosbag2_cpp::cache::CacheDropStatisticsProvider *>(base), nullptr);
 }
 
 TEST_F(CircularMessageCacheTest, circular_message_cache_ensure_empty) {
