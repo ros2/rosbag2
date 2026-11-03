@@ -2,6 +2,12 @@
 Changelog for package rosbag2_examples_cpp
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.35.1 (2026-11-03)
+-------------------
+* Include what you use (`#2498 <https://github.com/ros2/rosbag2/issues/2498>`_)
+* Use the SPDX identifier Apache-2.0 in license declarations (`#2508 <https://github.com/ros2/rosbag2/issues/2508>`_)
+* Contributors: Alejandro Hernández Cordero, Michael Carroll
+
 0.35.0 (2026-09-12)
 -------------------
 * Granular rclcpp/rclcpp.hpp (`#2483 <https://github.com/ros2/rosbag2/issues/2483>`_)

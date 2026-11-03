@@ -2,6 +2,14 @@
 Changelog for package ros2bag
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.35.1 (2026-11-03)
+-------------------
+* Stop the recorder and player gracefully on Windows in the end-to-end tests (`#2547 <https://github.com/ros2/rosbag2/issues/2547>`_)
+* Add output URI override to ros2 bag convert (`#2529 <https://github.com/ros2/rosbag2/issues/2529>`_)
+* Replace deprecated argparse.FileType with a path validator in ros2bag (`#2524 <https://github.com/ros2/rosbag2/issues/2524>`_)
+* Use the SPDX identifier Apache-2.0 in license declarations (`#2508 <https://github.com/ros2/rosbag2/issues/2508>`_)
+* Contributors: Chris Lalancette, Michael Carroll, TinyGeek, Tomoya Fujita
+
 0.35.0 (2026-09-12)
 -------------------
 

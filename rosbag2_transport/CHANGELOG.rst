@@ -2,6 +2,21 @@
 Changelog for package rosbag2_transport
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.35.1 (2026-11-03)
+-------------------
+* Add deferred-start Recorder constructor (`#2546 <https://github.com/ros2/rosbag2/issues/2546>`_)
+* Drain an in-flight message before asserting playback is paused (`#2543 <https://github.com/ros2/rosbag2/issues/2543>`_)
+* Remove the xfail labels and fix the races behind them. (`#2545 <https://github.com/ros2/rosbag2/issues/2545>`_)
+* Fix test_play crash: shutdown-before-teardown race in action tests (`#2544 <https://github.com/ros2/rosbag2/issues/2544>`_)
+* Fix Invoke deprecation (`#2522 <https://github.com/ros2/rosbag2/issues/2522>`_)
+* Include what you use (`#2498 <https://github.com/ros2/rosbag2/issues/2498>`_)
+* Remove reference to rmw_fastrtps_dynamic_cpp (`#2523 <https://github.com/ros2/rosbag2/issues/2523>`_)
+* Fix GCC 15 -Warray-bounds false positive in test_rewrite (`#2521 <https://github.com/ros2/rosbag2/issues/2521>`_)
+* Remove old-style ament_export_include_directories/libraries calls (`#2519 <https://github.com/ros2/rosbag2/issues/2519>`_)
+* Use the SPDX identifier Apache-2.0 in license declarations (`#2508 <https://github.com/ros2/rosbag2/issues/2508>`_)
+* Removed warning on rosbag2_transport tests (`#2499 <https://github.com/ros2/rosbag2/issues/2499>`_)
+* Contributors: Alejandro Hernández Cordero, Chris Lalancette, Jooyoung Lim, Michael Carroll, Miguel Company, TinyGeek, Tomoya Fujita, mosfet80
+
 0.35.0 (2026-09-12)
 -------------------
 * Support playing bags with topics in mixed serialization formats. (`#2476 <https://github.com/ros2/rosbag2/issues/2476>`_)
