@@ -2,6 +2,13 @@
 Changelog for package rosbag2_storage_mcap
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.35.1 (2026-11-03)
+-------------------
+* Update mcap_vendor to mcap 2.2.0. (`#2538 <https://github.com/ros2/rosbag2/issues/2538>`_)
+* Include what you use (`#2498 <https://github.com/ros2/rosbag2/issues/2498>`_)
+* Remove old-style ament_export_include_directories/libraries calls (`#2519 <https://github.com/ros2/rosbag2/issues/2519>`_)
+* Contributors: Alejandro Hernández Cordero, Chris Lalancette, Jooyoung Lim
+
 0.35.0 (2026-09-12)
 -------------------
 * Support playing bags with topics in mixed serialization formats. (`#2476 <https://github.com/ros2/rosbag2/issues/2476>`_)

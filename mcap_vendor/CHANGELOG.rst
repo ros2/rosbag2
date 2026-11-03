@@ -2,6 +2,13 @@
 Changelog for package mcap_vendor
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.35.1 (2026-11-03)
+-------------------
+* Update mcap_vendor to mcap 2.2.0. (`#2538 <https://github.com/ros2/rosbag2/issues/2538>`_)
+* Remove old-style ament_export_include_directories/libraries calls (`#2519 <https://github.com/ros2/rosbag2/issues/2519>`_)
+* Use the SPDX identifier Apache-2.0 in license declarations (`#2508 <https://github.com/ros2/rosbag2/issues/2508>`_)
+* Contributors: Chris Lalancette, Jooyoung Lim, Michael Carroll
+
 0.35.0 (2026-09-12)
 -------------------
 * use C++ 20 in default. (`#2447 <https://github.com/ros2/rosbag2/issues/2447>`_)

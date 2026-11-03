@@ -2,6 +2,16 @@
 Changelog for package rosbag2_test_common
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.35.1 (2026-11-03)
+-------------------
+* Stop the recorder and player gracefully on Windows in the end-to-end tests (`#2547 <https://github.com/ros2/rosbag2/issues/2547>`_)
+* Remove the xfail labels and fix the races behind them. (`#2545 <https://github.com/ros2/rosbag2/issues/2545>`_)
+* Fix test_play crash: shutdown-before-teardown race in action tests (`#2544 <https://github.com/ros2/rosbag2/issues/2544>`_)
+* Include what you use (`#2498 <https://github.com/ros2/rosbag2/issues/2498>`_)
+* Remove old-style ament_export_include_directories/libraries calls (`#2519 <https://github.com/ros2/rosbag2/issues/2519>`_)
+* Use the SPDX identifier Apache-2.0 in license declarations (`#2508 <https://github.com/ros2/rosbag2/issues/2508>`_)
+* Contributors: Alejandro Hernández Cordero, Chris Lalancette, Jooyoung Lim, Michael Carroll
+
 0.35.0 (2026-09-12)
 -------------------
 * Granular rclcpp/rclcpp.hpp (`#2483 <https://github.com/ros2/rosbag2/issues/2483>`_)

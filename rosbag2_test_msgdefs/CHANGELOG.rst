@@ -2,6 +2,11 @@
 Changelog for package rosbag2_test_msgdefs
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.35.1 (2026-11-03)
+-------------------
+* Remove ADD_LINTER_TESTS from generated-code lint on interface packages (`#2539 <https://github.com/ros2/rosbag2/issues/2539>`_)
+* Contributors: Michael Carroll
+
 0.35.0 (2026-09-12)
 -------------------
 

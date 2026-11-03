@@ -2,6 +2,15 @@
 Changelog for package rosbag2_cpp
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.35.1 (2026-11-03)
+-------------------
+* Fix Invoke deprecation (`#2522 <https://github.com/ros2/rosbag2/issues/2522>`_)
+* Include what you use (`#2498 <https://github.com/ros2/rosbag2/issues/2498>`_)
+* Account for cached messages size in bagfile split-by-size decision (`#2496 <https://github.com/ros2/rosbag2/issues/2496>`_)
+* Remove old-style ament_export_include_directories/libraries calls (`#2519 <https://github.com/ros2/rosbag2/issues/2519>`_)
+* Use the SPDX identifier Apache-2.0 in license declarations (`#2508 <https://github.com/ros2/rosbag2/issues/2508>`_)
+* Contributors: Alejandro Hernández Cordero, Jooyoung Lim, KR Ravindra, Michael Carroll, mosfet80
+
 0.35.0 (2026-09-12)
 -------------------
 * Support playing bags with topics in mixed serialization formats. (`#2476 <https://github.com/ros2/rosbag2/issues/2476>`_)

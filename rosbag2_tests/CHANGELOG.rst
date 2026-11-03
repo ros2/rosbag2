@@ -2,6 +2,15 @@
 Changelog for package rosbag2_tests
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.35.1 (2026-11-03)
+-------------------
+* Stop the recorder and player gracefully on Windows in the end-to-end tests (`#2547 <https://github.com/ros2/rosbag2/issues/2547>`_)
+* Remove the xfail labels and fix the races behind them. (`#2545 <https://github.com/ros2/rosbag2/issues/2545>`_)
+* Remove stale Windows xfail from test_rosbag2_play_end_to_end (`#2542 <https://github.com/ros2/rosbag2/issues/2542>`_)
+* Include what you use (`#2498 <https://github.com/ros2/rosbag2/issues/2498>`_)
+* Use the SPDX identifier Apache-2.0 in license declarations (`#2508 <https://github.com/ros2/rosbag2/issues/2508>`_)
+* Contributors: Alejandro Hernández Cordero, Chris Lalancette, Michael Carroll
+
 0.35.0 (2026-09-12)
 -------------------
 * Granular rclcpp/rclcpp.hpp (`#2483 <https://github.com/ros2/rosbag2/issues/2483>`_)

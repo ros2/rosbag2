@@ -2,6 +2,14 @@
 Changelog for package rosbag2_py
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.35.1 (2026-11-03)
+-------------------
+* Add output URI override to ros2 bag convert (`#2529 <https://github.com/ros2/rosbag2/issues/2529>`_)
+* Include what you use (`#2498 <https://github.com/ros2/rosbag2/issues/2498>`_)
+* Use the SPDX identifier Apache-2.0 in license declarations (`#2508 <https://github.com/ros2/rosbag2/issues/2508>`_)
+* Re-run stubgen (`#2501 <https://github.com/ros2/rosbag2/issues/2501>`_)
+* Contributors: Alejandro Hernández Cordero, Michael Carlstrom, Michael Carroll, TinyGeek
+
 0.35.0 (2026-09-12)
 -------------------
 * Granular rclcpp/rclcpp.hpp (`#2483 <https://github.com/ros2/rosbag2/issues/2483>`_)
