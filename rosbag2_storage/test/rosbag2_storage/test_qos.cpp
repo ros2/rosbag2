@@ -90,6 +90,22 @@ TEST(TestQoS, supports_version_4)
   EXPECT_EQ(actual_qos.durability, expected_qos.durability);
 }
 
+TEST(TestQoS, to_rclcpp_qos_vector_tolerates_unknown_format)
+{
+  // QoS profiles in a format unknown to this version (e.g. written by a newer rosbag2)
+  // must not throw, but fall back to an empty vector
+  const std::string serialized_profiles =
+    "- history: unknown\n"
+    "  depth: 0\n"
+    "  reliability: reliable\n"
+    "  durability: transient_local\n"
+    "  deadline: infinite\n";
+
+  std::vector<rclcpp::QoS> profiles;
+  ASSERT_NO_THROW(profiles = rosbag2_storage::to_rclcpp_qos_vector(serialized_profiles, 9));
+  EXPECT_TRUE(profiles.empty());
+}
+
 TEST(TestQoS, detect_new_qos_fields)
 {
   // By trying to construct a profile explicitly by fields, the build fails if policies are added

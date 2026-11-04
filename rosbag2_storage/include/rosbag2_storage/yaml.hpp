@@ -36,6 +36,7 @@
 #include "rclcpp/duration.hpp"
 #include "rclcpp/qos.hpp"
 #include "rosbag2_storage/bag_metadata.hpp"
+#include "rosbag2_storage/logging.hpp"
 #include "rosbag2_storage/qos.hpp"
 #include "rosbag2_storage/topic_metadata.hpp"
 
@@ -165,8 +166,16 @@ struct convert<rosbag2_storage::TopicMetadata>
     topic.type = node["type"].as<std::string>();
     topic.serialization_format = node["serialization_format"].as<std::string>();
     if (version >= 9) {
-      topic.offered_qos_profiles =
-        YAML::decode_for_version<std::vector<rclcpp::QoS>>(node["offered_qos_profiles"], version);
+      try {
+        topic.offered_qos_profiles = YAML::decode_for_version<std::vector<rclcpp::QoS>>(
+          node["offered_qos_profiles"], version);
+      } catch (const YAML::Exception & ex) {
+        // An unknown QoS format (e.g. written by a newer rosbag2) must not prevent reading the bag
+        ROSBAG2_STORAGE_LOG_WARN_STREAM(
+          "Could not parse the offered QoS profiles of topic '" << topic.name << "' (" <<
+            ex.what() << "). Falling back to the default QoS profile.");
+        topic.offered_qos_profiles.clear();
+      }
     } else if (version >= 4) {
       std::string qos_str = node["offered_qos_profiles"].as<std::string>();
       topic.offered_qos_profiles = rosbag2_storage::to_rclcpp_qos_vector(qos_str, version);
@@ -314,6 +323,13 @@ struct convert<rosbag2_storage::BagMetadata>
   static bool decode(const Node & node, rosbag2_storage::BagMetadata & metadata)
   {
     metadata.version = node["version"].as<int>();
+    const int latest_supported_version = rosbag2_storage::BagMetadata{}.version;
+    if (metadata.version > latest_supported_version) {
+      ROSBAG2_STORAGE_LOG_WARN_STREAM(
+        "Bag metadata version " << metadata.version << " is newer than the latest version "
+          "supported by this rosbag2 (" << latest_supported_version << "). The bag was probably "
+          "recorded with a newer ROS 2 distribution: unknown fields are ignored.");
+    }
     metadata.storage_identifier = node["storage_identifier"].as<std::string>();
     metadata.duration = node["duration"].as<std::chrono::nanoseconds>();
     metadata.starting_time = node["starting_time"]

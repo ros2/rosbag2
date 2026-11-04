@@ -16,6 +16,7 @@
 
 #include <chrono>
 #include <cstddef>
+#include <filesystem>
 #include <fstream>
 #include <memory>
 #include <string>
@@ -168,4 +169,62 @@ TEST_F(MetadataFixture, metadata_reads_v7_topic_type_hash)
     SizeIs(metadata.topics_with_message_count.size()));
   auto actual_first_topic = read_metadata.topics_with_message_count[0];
   EXPECT_THAT(actual_first_topic.topic_metadata.type_description_hash, Eq(type_description_hash));
+}
+
+TEST_F(MetadataFixture, metadata_reads_newer_version_with_unknown_qos_format)
+{
+  // A bag written by a newer rosbag2 may change the QoS format and add new fields.
+  // It must still be readable, falling back to empty offered_qos_profiles.
+  const std::string newer_metadata =
+    "rosbag2_bagfile_information:\n"
+    "  version: 1000\n"
+    "  storage_identifier: mcap\n"
+    "  duration:\n"
+    "    nanoseconds: 100\n"
+    "  starting_time:\n"
+    "    nanoseconds_since_epoch: 1000000\n"
+    "  message_count: 14\n"
+    "  topics_with_message_count:\n"
+    "    - topic_metadata:\n"
+    "        name: /latched\n"
+    "        type: std_msgs/msg/Int32\n"
+    "        serialization_format: cdr\n"
+    "        offered_qos_profiles:\n"
+    "          - history: unknown\n"
+    "            depth: 0\n"
+    "            reliability: reliable\n"
+    "            durability: transient_local\n"
+    "            deadline: infinite\n"
+    "        type_description_hash: RIHS01_b6578ded3c58c626cfe8d1a6fb6e04f706f97e9f03d2727c9ff4e7\n"
+    "        some_future_topic_field: 42\n"
+    "      message_count: 14\n"
+    "  compression_format: \"\"\n"
+    "  compression_mode: \"\"\n"
+    "  relative_file_paths:\n"
+    "    - bag_0.mcap\n"
+    "  files:\n"
+    "    - path: bag_0.mcap\n"
+    "      starting_time:\n"
+    "        nanoseconds_since_epoch: 1000000\n"
+    "      duration:\n"
+    "        nanoseconds: 100\n"
+    "      message_count: 14\n"
+    "  custom_data: ~\n"
+    "  ros_distro: future\n"
+    "  some_future_field: 42\n";
+  {
+    std::ofstream fout(
+      (std::filesystem::path(temporary_dir_path_) / MetadataIo::metadata_filename).string());
+    fout << newer_metadata;
+  }
+
+  BagMetadata read_metadata;
+  ASSERT_NO_THROW(read_metadata = metadata_io_->read_metadata(temporary_dir_path_));
+  EXPECT_THAT(read_metadata.version, Eq(1000));
+  EXPECT_THAT(read_metadata.ros_distro, Eq("future"));
+  ASSERT_THAT(read_metadata.topics_with_message_count, SizeIs(1u));
+  const auto & topic_info = read_metadata.topics_with_message_count[0];
+  EXPECT_THAT(topic_info.topic_metadata.name, Eq("/latched"));
+  EXPECT_THAT(topic_info.message_count, Eq(14u));
+  EXPECT_TRUE(topic_info.topic_metadata.offered_qos_profiles.empty());
 }
