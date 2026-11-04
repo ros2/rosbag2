@@ -173,7 +173,6 @@ public:
     ret |= rmw_topic_endpoint_info_set_endpoint_type(&info, RMW_ENDPOINT_PUBLISHER);
     ret |= rmw_topic_endpoint_info_set_qos_profile(&info, &qos.get_rmw_qos_profile());
     EXPECT_EQ(ret, RCL_RET_OK);
-    // TopicEndpointInfo copies the strings, so release the ones owned by the rmw struct.
     rclcpp::TopicEndpointInfo endpoint(info);
     EXPECT_EQ(rmw_topic_endpoint_info_fini(&info, &allocator), RMW_RET_OK);
     return endpoint;
