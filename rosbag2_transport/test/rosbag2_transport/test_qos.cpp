@@ -77,6 +77,38 @@ TEST(TestQoS, supports_version_4)
   EXPECT_EQ(actual_qos.durability, expected_qos.durability);
 }
 
+TEST(TestQoS, supports_version_9)
+{
+  // Newer ROS 2 distributions store the QoS policies by name instead of by integer value.
+  // Bags created by them look like this and must be able to be read
+  std::string serialized_profiles =
+    "- history: unknown\n"
+    "  depth: 0\n"
+    "  reliability: reliable\n"
+    "  durability: transient_local\n"
+    "  deadline:\n"
+    "    sec: 9223372036\n"
+    "    nsec: 854775807\n"
+    "  lifespan:\n"
+    "    sec: 9223372036\n"
+    "    nsec: 854775807\n"
+    "  liveliness: automatic\n"
+    "  liveliness_lease_duration:\n"
+    "    sec: 9223372036\n"
+    "    nsec: 854775807\n"
+    "  avoid_ros_namespace_conventions: false\n";
+
+  YAML::Node loaded_node = YAML::Load(serialized_profiles);
+  auto deserialized_profiles = loaded_node.as<std::vector<rosbag2_transport::Rosbag2QoS>>();
+  ASSERT_EQ(deserialized_profiles.size(), 1u);
+  auto actual_qos = deserialized_profiles[0].get_rmw_qos_profile();
+
+  EXPECT_EQ(actual_qos.history, RMW_QOS_POLICY_HISTORY_UNKNOWN);
+  EXPECT_EQ(actual_qos.reliability, RMW_QOS_POLICY_RELIABILITY_RELIABLE);
+  EXPECT_EQ(actual_qos.durability, RMW_QOS_POLICY_DURABILITY_TRANSIENT_LOCAL);
+  EXPECT_EQ(actual_qos.liveliness, RMW_QOS_POLICY_LIVELINESS_AUTOMATIC);
+}
+
 TEST(TestQoS, detect_new_qos_fields)
 {
   // By trying to construct a profile explicitly by fields, the build fails if policies are added

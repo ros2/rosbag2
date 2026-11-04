@@ -68,7 +68,14 @@ struct convert<rosbag2_storage::TopicMetadata>
     topic.type = node["type"].as<std::string>();
     topic.serialization_format = node["serialization_format"].as<std::string>();
     if (version >= 4) {
-      topic.offered_qos_profiles = node["offered_qos_profiles"].as<std::string>();
+      const auto & qos_node = node["offered_qos_profiles"];
+      if (qos_node.IsSequence()) {
+        // Metadata version >= 9 (newer ROS 2 distributions) stores QoS profiles as a
+        // YAML sequence instead of a YAML-encoded string: keep it in its string form.
+        topic.offered_qos_profiles = YAML::Dump(qos_node);
+      } else {
+        topic.offered_qos_profiles = qos_node.as<std::string>();
+      }
     } else {
       topic.offered_qos_profiles = "";
     }

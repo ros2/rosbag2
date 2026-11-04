@@ -16,6 +16,8 @@
 #include <vector>
 
 
+#include "rmw/qos_string_conversions.h"
+
 #include "rosbag2_transport/qos.hpp"
 #include "logging.hpp"
 
@@ -37,6 +39,18 @@ namespace
 static const rmw_time_t RMW_CYCLONEDDS_FOXY_INFINITE = rmw_time_from_nsec(0x7FFFFFFFFFFFFFFFll);
 static const rmw_time_t RMW_FASTRTPS_FOXY_INFINITE {0x7FFFFFFFll, 0xFFFFFFFFll};
 static const rmw_time_t RMW_CONNEXT_FOXY_INFINITE  {0x7FFFFFFFll, 0x7FFFFFFFll};
+
+/// Decode a QoS policy stored either as an integer (metadata version <= 8)
+/// or as its string name (metadata version >= 9, used by newer ROS 2 distributions).
+template<typename PolicyT>
+PolicyT decode_policy(const YAML::Node & node, PolicyT (* from_str)(const char *))
+{
+  int policy_int = 0;
+  if (YAML::convert<int>::decode(node, policy_int)) {
+    return static_cast<PolicyT>(policy_int);
+  }
+  return from_str(node.as<std::string>().c_str());
+}
 }  // namespace
 
 namespace YAML
@@ -82,10 +96,10 @@ Node convert<rosbag2_transport::Rosbag2QoS>::encode(const rosbag2_transport::Ros
 bool convert<rosbag2_transport::Rosbag2QoS>::decode(
   const Node & node, rosbag2_transport::Rosbag2QoS & qos)
 {
-  auto history = static_cast<rmw_qos_history_policy_t>(node["history"].as<int>());
-  auto reliability = static_cast<rmw_qos_reliability_policy_t>(node["reliability"].as<int>());
-  auto durability = static_cast<rmw_qos_durability_policy_t>(node["durability"].as<int>());
-  auto liveliness = static_cast<rmw_qos_liveliness_policy_t>(node["liveliness"].as<int>());
+  auto history = decode_policy(node["history"], rmw_qos_history_policy_from_str);
+  auto reliability = decode_policy(node["reliability"], rmw_qos_reliability_policy_from_str);
+  auto durability = decode_policy(node["durability"], rmw_qos_durability_policy_from_str);
+  auto liveliness = decode_policy(node["liveliness"], rmw_qos_liveliness_policy_from_str);
 
   qos
   .keep_last(node["depth"].as<int>())
