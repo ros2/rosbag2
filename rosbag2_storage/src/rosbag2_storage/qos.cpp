@@ -488,8 +488,16 @@ std::string serialize_rclcpp_qos_vector(const std::vector<rclcpp::QoS> & in, int
 std::vector<rclcpp::QoS> to_rclcpp_qos_vector(const std::string & serialized, int version)
 {
   if (serialized.empty()) {return {};}
-  auto node = YAML::Load(serialized);
-  return YAML::decode_for_version<std::vector<rclcpp::QoS>>(node, version);
+  try {
+    auto node = YAML::Load(serialized);
+    return YAML::decode_for_version<std::vector<rclcpp::QoS>>(node, version);
+  } catch (const YAML::Exception & ex) {
+    // An unknown QoS format (e.g. written by a newer rosbag2) must not prevent reading the bag
+    ROSBAG2_STORAGE_LOG_WARN_STREAM(
+      "Could not parse the offered QoS profiles recorded in the bag (" << ex.what() <<
+        "). Falling back to the default QoS profile.");
+    return {};
+  }
 }
 
 }  // namespace rosbag2_storage
