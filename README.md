@@ -246,6 +246,10 @@ The Rosbag2 recorder provides the following services for remote control, which c
   * Start recording. Optionally takes a `uri` argument to specify the output location. If the recorder is already recording, the request will be rejected.
 * `~/stop [rosbag2_interfaces/srv/Stop]`
   * Stop the recorder. This will finalize the current bag file and write metadata. Recording can be restarted with the `~/record` service.
+* `~/is_recording [rosbag2_interfaces/srv/IsRecording]`
+  * Returns whether the recorder is currently in a recording session (between `~/record` and `~/stop` calls).
+* `~/get_uri [rosbag2_interfaces/srv/GetUri]`
+  * Returns the current recording URI/path, or an empty string if the recorder is not currently recording.
 * `~/is_discovery_running [rosbag2_interfaces/srv/IsDiscoveryRunning]`
   * Returns whether topic discovery is currently running.
 * `~/start_discovery [rosbag2_interfaces/srv/StartDiscovery]`
