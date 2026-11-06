@@ -290,6 +290,8 @@ private:
 
   std::unique_ptr<std::ifstream> input_;
   std::unique_ptr<mcap::FileStreamReader> data_source_;
+  std::unique_ptr<std::ifstream> metadata_input_;
+  std::unique_ptr<mcap::FileStreamReader> metadata_data_source_;
   std::unique_ptr<mcap::McapReader> mcap_reader_;
   std::unique_ptr<mcap::LinearMessageView> linear_view_;
   std::unique_ptr<mcap::LinearMessageView::Iterator> linear_iterator_;
@@ -377,6 +379,15 @@ void MCAPStorage::open_impl(const std::string & uri, const std::string & preset_
         throw std::runtime_error(status.message);
       }
       last_read_time_point_ = 0;
+      ensure_summary_read();
+      const auto & metadata_indexes = mcap_reader_->metadataIndexes();
+      if (metadata_indexes.find("rosbag2") != metadata_indexes.end()) {
+        metadata_input_ = std::make_unique<std::ifstream>(relative_path_, std::ios::binary);
+        if (!metadata_input_->is_open()) {
+          throw std::runtime_error("Failed to open MCAP file for metadata: " + relative_path_);
+        }
+        metadata_data_source_ = std::make_unique<mcap::FileStreamReader>(*metadata_input_);
+      }
       reset_iterator();
       break;
     }
@@ -418,11 +429,14 @@ void MCAPStorage::read_metadata()
   ensure_summary_read();
   const auto & mcap_metadatas = mcap_reader_->metadataIndexes();
   auto range = mcap_metadatas.equal_range("rosbag2");
+  if (range.first != range.second && !metadata_data_source_) {
+    throw std::runtime_error("MCAP metadata source is not initialized");
+  }
   mcap::Status status{};
   mcap::Record mcap_record{};
   mcap::Metadata mcap_metadata{};
   for (auto i = range.first; i != range.second; ++i) {
-    status = mcap::McapReader::ReadRecord(*data_source_, i->second.offset, &mcap_record);
+    status = mcap::McapReader::ReadRecord(*metadata_data_source_, i->second.offset, &mcap_record);
     if (!status.ok()) {
       OnProblem(status);
       continue;
