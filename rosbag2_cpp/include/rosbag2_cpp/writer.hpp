@@ -29,6 +29,7 @@
 #include "rcutils/time.h"
 
 #include "rosbag2_cpp/bag_events.hpp"
+#include "rosbag2_cpp/cache/cache_drop_statistics.hpp"
 #include "rosbag2_cpp/converter_options.hpp"
 #include "rosbag2_cpp/visibility_control.hpp"
 #include "rosbag2_cpp/writers/sequential_writer.hpp"
@@ -96,6 +97,15 @@ public:
    * \brief Close the current bag file and write metadata.yaml file
    */
   void close();
+
+  /**
+   * Return a point-in-time copy of cumulative per-topic cache insertion failures.
+   * This is safe to call concurrently with Writer operations and from event callbacks.
+   * It returns busy instead of waiting if another operation holds the Writer lock or if
+   * called reentrantly; callers may retry later. The status distinguishes unavailable
+   * statistics from a zero count. A final snapshot may be available after close().
+   */
+  cache::CacheDropStatistics get_cache_drop_statistics() const;
 
   /**
    * \brief Create a new topic in the underlying storage.
@@ -267,7 +277,7 @@ public:
   [[nodiscard]] bool has_callback_for_event(bag_events::BagEvent event) const;
 
 private:
-  std::mutex writer_mutex_;
+  mutable std::mutex writer_mutex_;
   std::unique_ptr<rosbag2_cpp::writer_interfaces::BaseWriterInterface> writer_impl_;
 };
 

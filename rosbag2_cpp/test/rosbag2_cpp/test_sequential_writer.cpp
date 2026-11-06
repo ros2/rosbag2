@@ -17,6 +17,7 @@
 #include <atomic>
 #include <chrono>
 #include <cstdint>
+#include <cstdlib>
 #include <ctime>
 #include <filesystem>
 #include <iomanip>
@@ -65,7 +66,8 @@ using namespace testing;  // NOLINT
 using rosbag2_test_common::ParametrizedTemporaryDirectoryFixture;
 namespace fs = std::filesystem;
 
-class SequentialWriterForTest : public rosbag2_cpp::writers::SequentialWriter
+class SequentialWriterForTest : public rosbag2_cpp::writers::SequentialWriter,
+  public rosbag2_cpp::cache::CacheDropStatisticsProvider
 {
 public:
   SequentialWriterForTest(
@@ -75,6 +77,11 @@ public:
   :rosbag2_cpp::writers::SequentialWriter(
       std::move(storage_factory), std::move(converter_factory), std::move(metadata_io)) {}
 
+  rosbag2_cpp::cache::CacheDropStatistics get_cache_drop_statistics() const override
+  {
+    return rosbag2_cpp::writers::SequentialWriter::get_cache_drop_statistics();
+  }
+
   /// \brief Sets the message cache and cache consumer.
   /// \note Needs to be called after the SequentialWriterForTest::open(..) method call.
   void set_message_cache_and_cache_consumer(
@@ -83,6 +90,119 @@ public:
   {
     message_cache_ = std::move(message_cache);
     cache_consumer_ = std::move(cache_consumer);
+  }
+
+  void set_message_cache_for_query(
+    std::shared_ptr<rosbag2_cpp::cache::MessageCacheInterface> message_cache)
+  {
+    message_cache_ = std::move(message_cache);
+  }
+};
+
+// Represents an existing writer implementation compiled without the new capability.
+class LegacyWriterForTest : public rosbag2_cpp::writer_interfaces::BaseWriterInterface
+{
+public:
+  void open(const rosbag2_storage::StorageOptions &, const rosbag2_cpp::ConverterOptions &) override
+  {
+  }
+  void close() override {closed = true;}
+  void create_topic(const rosbag2_storage::TopicMetadata &) override {}
+  void create_topic(
+    const rosbag2_storage::TopicMetadata &, const rosbag2_storage::MessageDefinition &) override {}
+  void create_transient_local_topic(const rosbag2_storage::TopicMetadata &, size_t) override {}
+  void create_transient_local_topic(
+    const rosbag2_storage::TopicMetadata &, size_t,
+    const rosbag2_storage::MessageDefinition &) override {}
+  void remove_topic(const rosbag2_storage::TopicMetadata &) override {}
+  void write(std::shared_ptr<const rosbag2_storage::SerializedBagMessage>) override {++written;}
+  bool take_snapshot() override {return false;}
+  void split_bagfile() override {}
+  void add_event_callbacks(const rosbag2_cpp::bag_events::WriterEventCallbacks &) override {}
+  bool has_callback_for_event(rosbag2_cpp::bag_events::BagEvent) const override {return false;}
+  size_t written = 0;
+  bool closed = false;
+};
+
+class StatsWriterForTest : public LegacyWriterForTest,
+  public rosbag2_cpp::cache::CacheDropStatisticsProvider
+{
+public:
+  rosbag2_cpp::cache::CacheDropStatistics get_cache_drop_statistics() const override
+  {
+    return {rosbag2_cpp::cache::CacheDropStatisticsStatus::available, {{"custom", 7}}};
+  }
+};
+
+class IndependentSequentialWriterForTest : public rosbag2_cpp::writers::SequentialWriter
+{
+public:
+  void open(const rosbag2_storage::StorageOptions &, const rosbag2_cpp::ConverterOptions &) override
+  {
+    active = true;
+  }
+  void close() override {active = false;}
+  bool active = false;
+};
+
+class CallbackWriterForTest : public LegacyWriterForTest
+{
+public:
+  void add_event_callbacks(const rosbag2_cpp::bag_events::WriterEventCallbacks & value) override
+  {
+    callback = value.messages_lost_callback;
+  }
+  void write(std::shared_ptr<const rosbag2_storage::SerializedBagMessage>) override
+  {
+    callback({{"topic", 1}});
+  }
+  rosbag2_cpp::bag_events::MessagesLostCallback callback;
+};
+
+class CallbackOnCloseWriterForTest : public CallbackWriterForTest
+{
+public:
+  void close() override
+  {
+    std::thread worker([this]() {callback({{"topic", 1}});});
+    worker.join();
+  }
+};
+
+class LegacyCacheForTest : public rosbag2_cpp::cache::MessageCacheInterface
+{
+public:
+  bool push(std::shared_ptr<const rosbag2_storage::SerializedBagMessage>) override {return true;}
+  std::shared_ptr<rosbag2_cpp::cache::CacheBufferInterface> get_consumer_buffer() override
+  {return {};}
+  void release_consumer_buffer() override {}
+  void swap_buffers() override {}
+};
+
+class StatsCacheForTest : public LegacyCacheForTest,
+  public rosbag2_cpp::cache::CacheDropStatisticsProvider
+{
+public:
+  rosbag2_cpp::cache::CacheDropStatistics get_cache_drop_statistics() const override
+  {
+    return {rosbag2_cpp::cache::CacheDropStatisticsStatus::available, {{"custom_cache", 11}}};
+  }
+};
+
+class DerivedMessageCacheForTest : public rosbag2_cpp::cache::MessageCache
+{
+public:
+  DerivedMessageCacheForTest()
+  : rosbag2_cpp::cache::MessageCache(100) {}
+};
+
+class StatsDerivedMessageCacheForTest : public DerivedMessageCacheForTest,
+  public rosbag2_cpp::cache::CacheDropStatisticsProvider
+{
+public:
+  rosbag2_cpp::cache::CacheDropStatistics get_cache_drop_statistics() const override
+  {
+    return {rosbag2_cpp::cache::CacheDropStatisticsStatus::available, {{"derived_cache", 3}}};
   }
 };
 
@@ -739,6 +859,274 @@ TEST_F(
 
   sequential_writer->close();
   EXPECT_EQ(fake_metadata_.relative_file_paths.size(), 2u);
+}
+
+TEST(WriterCompatibilityTest, existing_and_opt_in_writer_implementations) {
+  using Status = rosbag2_cpp::cache::CacheDropStatisticsStatus;
+  auto legacy = std::make_unique<LegacyWriterForTest>();
+  auto * legacy_ptr = legacy.get();
+  rosbag2_cpp::Writer legacy_writer(std::move(legacy));
+  legacy_writer.write(std::make_shared<rosbag2_storage::SerializedBagMessage>());
+  EXPECT_EQ(legacy_writer.get_cache_drop_statistics().status, Status::unsupported);
+  EXPECT_EQ(legacy_ptr->written, 1u);
+  legacy_writer.close();
+  EXPECT_TRUE(legacy_ptr->closed);
+
+  rosbag2_cpp::Writer custom_writer(std::make_unique<StatsWriterForTest>());
+  auto stats = custom_writer.get_cache_drop_statistics();
+  EXPECT_EQ(stats.status, Status::available);
+  EXPECT_EQ(stats.dropped_per_topic.at("custom"), 7u);
+
+  auto independent = std::make_unique<IndependentSequentialWriterForTest>();
+  auto * independent_ptr = independent.get();
+  rosbag2_cpp::Writer independent_writer(std::move(independent));
+  independent_writer.open(rosbag2_storage::StorageOptions{}, rosbag2_cpp::ConverterOptions{});
+  ASSERT_TRUE(independent_ptr->active);
+  EXPECT_EQ(independent_writer.get_cache_drop_statistics().status, Status::unsupported);
+  independent_writer.close();
+}
+
+#if GTEST_HAS_DEATH_TEST
+TEST(WriterCompatibilityTest, querying_from_synchronous_callback_does_not_deadlock) {
+  EXPECT_EXIT(
+  {
+    std::thread([]() {
+      std::this_thread::sleep_for(std::chrono::seconds(2));
+      std::_Exit(2);
+        }).detach();
+    rosbag2_cpp::Writer writer(std::make_unique<CallbackWriterForTest>());
+    rosbag2_cpp::bag_events::WriterEventCallbacks callbacks;
+    bool got_busy = false;
+    callbacks.messages_lost_callback = [&](const auto &) {
+      got_busy = writer.get_cache_drop_statistics().status ==
+      rosbag2_cpp::cache::CacheDropStatisticsStatus::busy;
+    };
+    writer.add_event_callbacks(callbacks);
+    writer.write(std::make_shared<rosbag2_storage::SerializedBagMessage>());
+    std::_Exit(got_busy ? 0 : 3);
+    }, ::testing::ExitedWithCode(0), "");
+}
+
+TEST(WriterCompatibilityTest, querying_from_callback_during_close_does_not_deadlock) {
+  EXPECT_EXIT(
+  {
+    std::thread([]() {
+      std::this_thread::sleep_for(std::chrono::seconds(2));
+      std::_Exit(2);
+        }).detach();
+    rosbag2_cpp::Writer writer(std::make_unique<CallbackOnCloseWriterForTest>());
+    rosbag2_cpp::bag_events::WriterEventCallbacks callbacks;
+    bool got_busy = false;
+    callbacks.messages_lost_callback = [&](const auto &) {
+      got_busy = writer.get_cache_drop_statistics().status ==
+      rosbag2_cpp::cache::CacheDropStatisticsStatus::busy;
+    };
+    writer.add_event_callbacks(callbacks);
+    writer.close();
+    std::_Exit(got_busy ? 0 : 3);
+    }, ::testing::ExitedWithCode(0), "");
+}
+
+TEST(WriterCompatibilityTest, querying_an_outer_writer_from_a_nested_callback_is_busy) {
+  EXPECT_EXIT(
+  {
+    std::thread([]() {
+      std::this_thread::sleep_for(std::chrono::seconds(2));
+      std::_Exit(2);
+        }).detach();
+    rosbag2_cpp::Writer first(std::make_unique<CallbackWriterForTest>());
+    rosbag2_cpp::Writer second(std::make_unique<CallbackWriterForTest>());
+    rosbag2_cpp::bag_events::WriterEventCallbacks first_callbacks;
+    rosbag2_cpp::bag_events::WriterEventCallbacks second_callbacks;
+    bool got_busy = false;
+    first_callbacks.messages_lost_callback = [&](const auto &) {
+      second.write(std::make_shared<rosbag2_storage::SerializedBagMessage>());
+    };
+    second_callbacks.messages_lost_callback = [&](const auto &) {
+      got_busy = first.get_cache_drop_statistics().status ==
+      rosbag2_cpp::cache::CacheDropStatisticsStatus::busy;
+    };
+    first.add_event_callbacks(first_callbacks);
+    second.add_event_callbacks(second_callbacks);
+    first.write(std::make_shared<rosbag2_storage::SerializedBagMessage>());
+    std::_Exit(got_busy ? 0 : 3);
+    }, ::testing::ExitedWithCode(0), "");
+}
+#endif
+
+TEST_F(SequentialWriterTest, final_cache_statistics_remain_available_after_close) {
+  auto impl = std::make_unique<rosbag2_cpp::writers::SequentialWriter>(
+    std::move(storage_factory_), converter_factory_, std::move(metadata_io_));
+  rosbag2_cpp::Writer writer(std::move(impl));
+  storage_options_.max_cache_size = 100;
+  writer.open(storage_options_, {"rmw_format", "rmw_format"});
+  writer.create_topic({0u, "topic", "test_msgs/BasicTypes", "", {}, ""});
+  auto msg = std::make_shared<rosbag2_storage::SerializedBagMessage>();
+  msg->topic_name = "topic";
+  msg->serialized_data = nullptr;
+  writer.write(msg);
+  auto before = writer.get_cache_drop_statistics();
+  ASSERT_EQ(before.dropped_per_topic.at("topic"), 1u);
+  writer.close();
+  auto final = writer.get_cache_drop_statistics();
+  EXPECT_TRUE(final.is_final);
+  EXPECT_EQ(final.status, rosbag2_cpp::cache::CacheDropStatisticsStatus::available);
+  EXPECT_EQ(final.dropped_per_topic, before.dropped_per_topic);
+  storage_options_.uri = (tmp_dir_ / "next_session").string();
+  writer.open(storage_options_, {"rmw_format", "rmw_format"});
+  auto next = writer.get_cache_drop_statistics();
+  EXPECT_FALSE(next.is_final);
+  EXPECT_TRUE(next.dropped_per_topic.empty());
+  writer.close();
+}
+
+TEST_F(SequentialWriterTest, cache_drop_statistics_allow_custom_cache_implementations) {
+  using Status = rosbag2_cpp::cache::CacheDropStatisticsStatus;
+  auto impl = std::make_unique<SequentialWriterForTest>(
+    std::move(storage_factory_), converter_factory_, std::move(metadata_io_));
+  auto * impl_ptr = impl.get();
+  rosbag2_cpp::Writer writer(std::move(impl));
+  storage_options_.max_cache_size = 100;
+  writer.open(storage_options_, {"rmw_format", "rmw_format"});
+  impl_ptr->set_message_cache_for_query(std::make_shared<LegacyCacheForTest>());
+  EXPECT_EQ(writer.get_cache_drop_statistics().status, Status::unsupported);
+  impl_ptr->set_message_cache_for_query(std::make_shared<DerivedMessageCacheForTest>());
+  EXPECT_EQ(writer.get_cache_drop_statistics().status, Status::unsupported);
+  impl_ptr->set_message_cache_for_query(std::make_shared<StatsDerivedMessageCacheForTest>());
+  EXPECT_EQ(writer.get_cache_drop_statistics().dropped_per_topic.at("derived_cache"), 3u);
+  impl_ptr->set_message_cache_for_query(std::make_shared<StatsCacheForTest>());
+  auto stats = writer.get_cache_drop_statistics();
+  EXPECT_EQ(stats.status, Status::available);
+  EXPECT_EQ(stats.dropped_per_topic.at("custom_cache"), 11u);
+  writer.close();
+}
+
+TEST_F(SequentialWriterTest, cache_drop_statistics_report_writer_and_cache_states) {
+  using Status = rosbag2_cpp::cache::CacheDropStatisticsStatus;
+  auto sequential_writer = std::make_unique<SequentialWriterForTest>(
+    std::move(storage_factory_), converter_factory_, std::move(metadata_io_));
+  auto * impl = sequential_writer.get();
+  rosbag2_cpp::Writer writer(std::move(sequential_writer));
+  EXPECT_EQ(writer.get_cache_drop_statistics().status, Status::writer_not_open);
+
+  storage_options_.max_cache_size = 0;
+  storage_options_.max_cache_duration = 0;
+  writer.open(storage_options_, {"rmw_format", "rmw_format"});
+  EXPECT_EQ(writer.get_cache_drop_statistics().status, Status::cache_disabled);
+  writer.close();
+  EXPECT_EQ(writer.get_cache_drop_statistics().status, Status::writer_not_open);
+
+  storage_options_.uri = (tmp_dir_ / "snapshot_bag").string();
+  storage_options_.max_cache_size = 100;
+  storage_options_.snapshot_mode = true;
+  writer.open(storage_options_, {"rmw_format", "rmw_format"});
+  EXPECT_EQ(writer.get_cache_drop_statistics().status, Status::unsupported);
+  writer.create_topic({0u, "snapshot_topic", "test_msgs/BasicTypes", "", {}, ""});
+  auto oversized = std::make_shared<rosbag2_storage::SerializedBagMessage>();
+  oversized->topic_name = "snapshot_topic";
+  std::string data(101, 'x');
+  oversized->serialized_data = rosbag2_storage::make_serialized_message(data.c_str(), data.size());
+  writer.write(oversized);
+  EXPECT_EQ(writer.get_cache_drop_statistics().status, Status::unsupported);
+  writer.close();
+
+  storage_options_.uri = (tmp_dir_ / "time_bag").string();
+  storage_options_.snapshot_mode = false;
+  storage_options_.max_cache_size = 0;
+  storage_options_.max_cache_duration = 1;
+  writer.open(storage_options_, {"rmw_format", "rmw_format"});
+  EXPECT_EQ(writer.get_cache_drop_statistics().status, Status::available);
+  EXPECT_TRUE(writer.get_cache_drop_statistics().dropped_per_topic.empty());
+
+  auto cache = std::make_shared<rosbag2_cpp::cache::MessageCache>(1);
+  auto cache_consumer = std::make_unique<rosbag2_cpp::cache::CacheConsumer>(
+    cache, [](const auto &) {});
+  cache_consumer->stop();
+  impl->set_message_cache_and_cache_consumer(cache, std::move(cache_consumer));
+  auto msg = std::make_shared<rosbag2_storage::SerializedBagMessage>();
+  msg->topic_name = "topic";
+  msg->serialized_data = rosbag2_storage::make_serialized_message("x", 1);
+  writer.create_topic({0u, "topic", "test_msgs/BasicTypes", "", {}, ""});
+  writer.write(msg);
+  writer.write(msg);
+  EXPECT_EQ(writer.get_cache_drop_statistics().dropped_per_topic.at("topic"), 1u);
+  writer.split_bagfile();
+  EXPECT_EQ(writer.get_cache_drop_statistics().dropped_per_topic.at("topic"), 1u);
+  writer.close();
+  EXPECT_EQ(writer.get_cache_drop_statistics().status, Status::writer_not_open);
+  storage_options_.uri = (tmp_dir_ / "new_session").string();
+  writer.open(storage_options_, {"rmw_format", "rmw_format"});
+  EXPECT_EQ(writer.get_cache_drop_statistics().status, Status::available);
+  EXPECT_TRUE(writer.get_cache_drop_statistics().dropped_per_topic.empty());
+  writer.close();
+}
+
+TEST_F(SequentialWriterTest, cache_drop_statistics_are_safe_during_writer_operations) {
+  auto sequential_writer = std::make_unique<SequentialWriterForTest>(
+    std::move(storage_factory_), converter_factory_, std::move(metadata_io_));
+  auto * impl = sequential_writer.get();
+  rosbag2_cpp::Writer writer(std::move(sequential_writer));
+  storage_options_.max_cache_size = 1;
+  writer.open(storage_options_, {"rmw_format", "rmw_format"});
+  auto cache = std::make_shared<rosbag2_cpp::cache::MessageCache>(1);
+  auto consumer = std::make_unique<rosbag2_cpp::cache::CacheConsumer>(cache, [](const auto &) {});
+  consumer->stop();
+  impl->set_message_cache_and_cache_consumer(cache, std::move(consumer));
+  writer.create_topic({0u, "topic", "test_msgs/BasicTypes", "", {}, ""});
+  auto msg = std::make_shared<rosbag2_storage::SerializedBagMessage>();
+  msg->topic_name = "topic";
+  msg->serialized_data = rosbag2_storage::make_serialized_message("x", 1);
+  writer.write(msg);
+
+  constexpr uint32_t iterations = 1000;
+  std::atomic<bool> done{false};
+  std::atomic<bool> first_drop{false};
+  std::atomic<bool> first_read{false};
+  std::thread producer([&]() {
+      for (uint32_t i = 0; i < iterations; ++i) {
+        writer.write(msg);
+        if (i == 0) {
+          first_drop = true;
+          while (!first_read) {std::this_thread::yield();}
+        }
+      }
+      done = true;
+    });
+  while (!first_drop) {std::this_thread::yield();}
+  uint64_t previous = 0;
+  size_t reads = 0;
+  while (!done) {
+    auto stats = writer.get_cache_drop_statistics();
+    if (stats.status == rosbag2_cpp::cache::CacheDropStatisticsStatus::busy) {
+      continue;
+    }
+    ++reads;
+    auto found = stats.dropped_per_topic.find("topic");
+    if (found != stats.dropped_per_topic.end()) {
+      EXPECT_GE(found->second, previous);
+      previous = found->second;
+    }
+    first_read = true;
+  }
+  producer.join();
+  EXPECT_GT(reads, 0u);
+  EXPECT_EQ(writer.get_cache_drop_statistics().dropped_per_topic.at("topic"), iterations);
+  std::atomic<bool> reader_ready{false};
+  std::atomic<bool> close_finished{false};
+  rosbag2_cpp::cache::CacheDropStatisticsStatus final_status{};
+  std::thread reader([&]() {
+      reader_ready = true;
+      while (!close_finished) {
+        (void)writer.get_cache_drop_statistics();
+        std::this_thread::yield();
+      }
+      final_status = writer.get_cache_drop_statistics().status;
+    });
+  while (!reader_ready) {std::this_thread::yield();}
+  writer.close();
+  close_finished = true;
+  reader.join();
+  EXPECT_EQ(final_status, rosbag2_cpp::cache::CacheDropStatisticsStatus::writer_not_open);
 }
 
 TEST_F(SequentialWriterTest, do_not_use_cache_if_cache_size_is_zero) {

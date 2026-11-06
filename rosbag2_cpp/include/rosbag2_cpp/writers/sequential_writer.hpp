@@ -29,6 +29,7 @@
 #include "rcutils/time.h"
 #include "rosbag2_cpp/bag_events.hpp"
 #include "rosbag2_cpp/cache/cache_consumer.hpp"
+#include "rosbag2_cpp/cache/cache_drop_statistics.hpp"
 #include "rosbag2_cpp/cache/circular_message_cache.hpp"
 #include "rosbag2_cpp/cache/message_cache.hpp"
 #include "rosbag2_cpp/cache/message_cache_interface.hpp"
@@ -99,6 +100,9 @@ public:
     const ConverterOptions & converter_options) override;
 
   void close() override;
+
+  /// The caller must serialize this call with open() and close(), as for other writer operations.
+  cache::CacheDropStatistics get_cache_drop_statistics() const;
 
   /**
    * \brief Create a new topic in the underlying storage.
