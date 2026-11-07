@@ -208,6 +208,16 @@ if(BUILD_TESTING)
     target_link_libraries(test_message_cache ament_cmake_ros_core::ament_ros_defaults ${PROJECT_NAME})
   endif()
 
+  ament_add_gmock(test_message_cache_circular_buffer_out_of_order
+    test/rosbag2_cpp/test_message_cache_circular_buffer_out_of_order.cpp)
+  if(TARGET test_message_cache_circular_buffer_out_of_order)
+    target_link_libraries(test_message_cache_circular_buffer_out_of_order
+      ament_cmake_ros_core::ament_ros_defaults
+      ${PROJECT_NAME}
+      rosbag2_storage::rosbag2_storage
+    )
+  endif()
+
   ament_add_gmock(test_circular_message_cache
     test/rosbag2_cpp/test_circular_message_cache.cpp)
   if(TARGET test_circular_message_cache)
