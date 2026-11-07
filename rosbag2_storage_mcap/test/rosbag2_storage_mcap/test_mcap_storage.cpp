@@ -37,6 +37,7 @@
 #include <cstdint>
 #include <filesystem>
 #include <memory>
+#include <stdexcept>
 #include <string>
 #include <tuple>
 #include <utility>
@@ -176,6 +177,30 @@ TEST_F(McapStorageTestFixture, can_store_and_read_metadata_correctly)
   EXPECT_THAT(metadata.custom_data,
               UnorderedElementsAreArray({std::pair<std::string, std::string>("key1", "value1")}));
 }
+
+#ifdef ROSBAG2_STORAGE_MCAP_HAS_UPDATE_METADATA
+TEST_F(McapStorageTestFixture, update_metadata_rejects_message_compression_mode)
+{
+  rosbag2_storage::StorageFactory factory;
+  rosbag2_storage::StorageOptions options;
+  options.uri = (std::filesystem::path(temporary_dir_path_) / "bag").generic_string();
+  options.storage_id = "mcap";
+  auto writer = factory.open_read_write(options);
+  ASSERT_NE(writer, nullptr);
+
+  auto metadata = writer->get_metadata();
+  metadata.compression_mode = "NONE";
+  EXPECT_NO_THROW(writer->update_metadata(metadata));
+
+  // Matches rosbag2_compression::compression_mode_to_string(CompressionMode::MESSAGE)
+  metadata.compression_mode = "MESSAGE";
+  auto update_metadata = [&]() {
+    writer->update_metadata(metadata);
+  };
+  EXPECT_THAT(update_metadata,
+              ThrowsMessage<std::runtime_error>(HasSubstr("does not support message compression")));
+}
+#endif  // #ifdef ROSBAG2_STORAGE_MCAP_HAS_UPDATE_METADATA
 
 TEST_F(TemporaryDirectoryFixture, can_write_and_read_basic_mcap_file)
 {
