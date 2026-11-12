@@ -100,6 +100,7 @@ class Player:
     def wait_for_playback_to_start_exclusively(self, timeout: typing.SupportsFloat = ...) -> bool: ...
 
 class RecordOptions:
+    acceptable_buffer_backends: str
     actions: list[str]
     all_actions: bool
     all_services: bool

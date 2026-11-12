@@ -29,6 +29,7 @@
 #include <mutex>
 #include <optional>
 #include <regex>
+#include <sstream>
 #include <stdexcept>
 #include <string>
 #include <type_traits>
@@ -65,10 +66,12 @@
 #include "logging.hpp"
 #include "rosbag2_storage/serialized_bag_message.hpp"
 #include "rosbag2_transport/config_options_from_node_params.hpp"
+#include "./buffer_aware_subscription.hpp"
 #include "rosbag2_transport/reader_writer_factory.hpp"
 #include "rosbag2_transport/delayed_action_task_runner.hpp"
 #include "rosbag2_transport/recorder_event_notifier.hpp"
 #include "rosbag2_transport/topic_filter.hpp"
+#include "rosidl_buffer_backend_registry/buffer_backend_registry.hpp"
 #include "yaml-cpp/yaml.h"
 
 namespace rosbag2_transport
@@ -390,7 +393,7 @@ private:
 
   void subscribe_topic(const rosbag2_storage::TopicMetadata & topic);
 
-  std::shared_ptr<rclcpp::GenericSubscription> create_subscription(
+  std::shared_ptr<rclcpp::SubscriptionBase> create_subscription(
     const std::string & topic_name, const std::string & topic_type, const rclcpp::QoS & qos);
 
   /**
@@ -550,6 +553,54 @@ private:
   static constexpr int32_t kServiceReturnCodeError = 1;
 };  // class RecorderImpl
 
+namespace
+{
+/// Throw if acceptable_buffer_backends names a backend that is not installed. "cpu", "any" and
+/// an empty string are always valid. Failing here, in the constructor, makes a misspelled backend
+/// an immediate error instead of a recorder that runs but subscribes to nothing.
+void validate_acceptable_buffer_backends(const std::string & acceptable_buffer_backends)
+{
+  std::vector<std::string> requested;
+  std::stringstream stream(acceptable_buffer_backends);
+  for (std::string name; std::getline(stream, name, ',');) {
+    const auto first = name.find_first_not_of(" \t");
+    const auto last = name.find_last_not_of(" \t");
+    if (first == std::string::npos) {
+      continue;
+    }
+    name = name.substr(first, last - first + 1);
+    if (name != "cpu" && name != "any") {
+      requested.push_back(name);
+    }
+  }
+  if (requested.empty()) {
+    return;
+  }
+
+  // Backends are identified by their backend type name (for example "cuda"), which is what the
+  // RMW matches against, not by their plugin class name.
+  rosidl_buffer_backend_registry::BufferBackendRegistry registry;
+  std::vector<std::string> installed{"cpu"};
+  for (const auto & class_name : registry.get_backend_names()) {
+    auto backend = registry.create_backend_instance(class_name);
+    if (backend) {
+      installed.push_back(backend->get_backend_type());
+    }
+  }
+  for (const auto & name : requested) {
+    if (std::find(installed.begin(), installed.end(), name) == installed.end()) {
+      std::string available;
+      for (const auto & installed_name : installed) {
+        available += (available.empty() ? "" : ", ") + installed_name;
+      }
+      throw std::invalid_argument(
+              "Buffer backend '" + name + "' specified in acceptable_buffer_backends is not "
+              "installed. Available backends: " + available + ", or 'any'.");
+    }
+  }
+}
+}  // namespace
+
 RecorderImpl::RecorderImpl(
   rclcpp::Node * owner,
   std::shared_ptr<rosbag2_cpp::Writer> writer,
@@ -573,6 +624,7 @@ RecorderImpl::RecorderImpl(
             "use_sim_time and is_discovery_disabled both set, but are incompatible settings. "
             "The /clock topic needs to be discovered to record with sim time.");
   }
+  validate_acceptable_buffer_backends(record_options_.acceptable_buffer_backends);
   if (!record_options_.disable_keyboard_controls) {
     std::string key_str = enum_key_code_to_str(Recorder::kPauseResumeToggleKey);
     toggle_paused_key_callback_handle_ =
@@ -1820,7 +1872,7 @@ void RecorderImpl::subscribe_topic(const rosbag2_storage::TopicMetadata & topic)
   }
 }
 
-std::shared_ptr<rclcpp::GenericSubscription>
+std::shared_ptr<rclcpp::SubscriptionBase>
 RecorderImpl::create_subscription(
   const std::string & topic_name, const std::string & topic_type, const rclcpp::QoS & qos)
 {
@@ -1867,8 +1919,21 @@ RecorderImpl::create_subscription(
       }
     };
 
-  return node->create_generic_subscription(
-    topic_name, topic_type, qos, subscription_callback, sub_options);
+  const auto & backends = record_options_.acceptable_buffer_backends;
+  if (backends.empty() || backends == "cpu") {
+    return node->create_generic_subscription(
+      topic_name, topic_type, qos, subscription_callback, sub_options);
+  }
+
+  // A non-CPU buffer backend is accepted: receive the backend buffer through the typed path and
+  // serialize it here, instead of making each publisher convert it to CPU memory in publish().
+  // (A generic subscription cannot be used: serialized takes of backend messages are rejected.)
+  sub_options.acceptable_buffer_backends = backends;
+  auto subscription = std::make_shared<BufferAwareSubscription>(
+    node->get_node_base_interface().get(), topic_name, topic_type, qos, sub_options,
+    subscription_callback);
+  node->get_node_topics_interface()->add_subscription(subscription, sub_options.callback_group);
+  return subscription;
 }
 
 std::vector<rclcpp::QoS> RecorderImpl::offered_qos_profiles_for_topic(

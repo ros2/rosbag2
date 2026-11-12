@@ -29,6 +29,7 @@ find_package(rosbag2_compression REQUIRED)
 find_package(rosbag2_cpp REQUIRED)
 find_package(rosbag2_interfaces REQUIRED)
 find_package(rosbag2_storage REQUIRED)
+find_package(rosidl_buffer_backend_registry REQUIRED)
 find_package(rmw_implementation_cmake REQUIRED)
 
 add_library(${PROJECT_NAME} SHARED
@@ -65,6 +66,7 @@ target_link_libraries(${PROJECT_NAME} PRIVATE
   rcutils::rcutils
   rmw::rmw
   rosbag2_compression::rosbag2_compression
+  rosidl_buffer_backend_registry::rosidl_buffer_backend_registry
 )
 
 rclcpp_components_register_node(
@@ -518,6 +520,24 @@ if(BUILD_TESTING)
     )
   endfunction()
   call_for_each_rmw_implementation(test_record_all_no_discovery_for_rmw_implementation)
+
+  ament_add_gmock_executable(test_record_buffer_aware test/rosbag2_transport/test_record_buffer_aware.cpp)
+  target_link_libraries(test_record_buffer_aware
+    ament_cmake_ros_core::ament_ros_defaults
+    rosbag2_transport
+    test_msgs::test_msgs
+    rosbag2_test_common::rosbag2_test_common
+  )
+  function(test_record_buffer_aware_for_rmw_implementation)
+    set(rmw_implementation_env_var RMW_IMPLEMENTATION=${rmw_implementation})
+    append_evars_if_rmw_zenoh(rmw_implementation_env_var ${rmw_implementation})
+
+    ament_add_ros_isolated_gmock_test(test_record_buffer_aware
+      TEST_NAME test_record_buffer_aware${target_suffix}
+      ENV ${rmw_implementation_env_var}
+    )
+  endfunction()
+  call_for_each_rmw_implementation(test_record_buffer_aware_for_rmw_implementation)
 
   ament_add_gmock_executable(test_record_all_use_sim_time test/rosbag2_transport/test_record_all_use_sim_time.cpp)
   target_link_libraries(test_record_all_use_sim_time

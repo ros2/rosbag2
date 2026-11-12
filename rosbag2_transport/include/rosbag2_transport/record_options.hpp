@@ -104,6 +104,14 @@ public:
   /// repeat_transient_local_messages. 0 disables the feature.
   uint32_t repeat_all_transient_local_depth = 0;
 
+  /// \brief Comma-separated list of rosidl::Buffer backend names (for example "cuda") that the
+  /// recorder accepts when subscribing, or "any" to accept all installed backends. "cpu" or an
+  /// empty string keeps the default behavior: publishers convert backend buffers to CPU memory
+  /// inside their publish call. When a non-CPU backend is accepted, the recorder receives the
+  /// backend buffer itself and performs the conversion to CPU memory and serialization on its own
+  /// thread, which removes that cost from the publisher. The bag content is the same.
+  std::string acceptable_buffer_backends = "cpu";
+
   /// Note: Please don't forget to update the YAML serialization and deserialization logic in
   /// `record_options.cpp` and the test case `test_yaml_serialization_deserialization`
   /// in `test_record_options.cpp` when updating the fields in RecordOptions.

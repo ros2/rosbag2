@@ -1061,6 +1061,7 @@ PYBIND11_MODULE(_transport, m) {
   .def_readwrite("repeat_transient_local_messages", &RecordOptions::repeat_transient_local_messages)
   .def_readwrite("repeat_all_transient_local_depth",
                  &RecordOptions::repeat_all_transient_local_depth)
+  .def_readwrite("acceptable_buffer_backends", &RecordOptions::acceptable_buffer_backends)
   ;
 
   py::class_<rosbag2_py::Player>(m, "Player")

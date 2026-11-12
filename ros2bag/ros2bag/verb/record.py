@@ -237,6 +237,13 @@ def add_recorder_arguments(parser: ArgumentParser) -> None:
         help='Use simulation time for message timestamps by subscribing to the /clock topic. '
              'Until first /clock message is received, no messages will be written to bag.')
     parser.add_argument(
+        '--acceptable-buffer-backends', type=str, default='cpu',
+        help='Comma-separated rosidl::Buffer backends the recorder accepts (for example '
+             "'cuda'), or 'any' for all installed backends. With the default 'cpu', publishers "
+             'convert backend buffers to CPU memory inside their publish call. When a backend is '
+             'accepted, the recorder receives the backend buffer and converts and serializes it '
+             'on its own thread. The bag content is the same. Default is %(default)s.')
+    parser.add_argument(
         '--node-name', type=str, default='rosbag2_recorder',
         help='Specify the recorder node name. Default is %(default)s.')
     parser.add_argument(
@@ -509,8 +516,13 @@ class RecordVerb(VerbExtension):
         record_options.statistics_max_publishing_rate = args.stats_max_publishing_rate
         record_options.repeat_transient_local_messages = args.repeat_transient_local_messages
         record_options.repeat_all_transient_local_depth = args.repeat_all_transient_local
+        record_options.acceptable_buffer_backends = args.acceptable_buffer_backends
 
-        recorder = Recorder(storage_options, record_options, args.log_level, args.node_name)
+        try:
+            recorder = Recorder(storage_options, record_options, args.log_level, args.node_name)
+        except ValueError as exc:
+            # Invalid option values, for example an unknown --acceptable-buffer-backends name.
+            return print_error(str(exc))
 
         signal.signal(signal.SIGTERM, signal_handler)
         if hasattr(signal, 'SIGBREAK'):

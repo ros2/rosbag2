@@ -24,6 +24,7 @@
   <depend>rosbag2_cpp</depend>
   <depend>rosbag2_interfaces</depend>
   <depend>rosbag2_storage</depend>
+  <depend>rosidl_buffer_backend_registry</depend>
   <depend>keyboard_handler</depend>
 
   <test_depend>ament_cmake_gmock</test_depend>
