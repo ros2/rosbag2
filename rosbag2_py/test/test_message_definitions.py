@@ -67,9 +67,6 @@ def test_local_message_definition_source_can_find_srv_deps_in_idl():
         'rosbag2_test_msgdefs/BasicIdl resp\n'
         '\n'
         '================================================================================\n'
-        'MSG: rosbag2_test_msgdefs/BasicIdl\n'
-        '\n'
-        '================================================================================\n'
         'IDL: rosbag2_test_msgdefs/BasicIdl\n'
         'module rosbag2_test_msgdefs {\n'
         '  module msg {\n'
@@ -78,6 +75,23 @@ def test_local_message_definition_source_can_find_srv_deps_in_idl():
         '    };\n'
         '  };\n'
         '};\n'
+    )
+
+
+def test_local_message_definition_source_can_find_srv_event_deps():
+    source = LocalMessageDefinitionSource()
+    result = source.get_full_text_ext(
+        'rosbag2_test_msgdefs/srv/ComplexSrvMsg_Event', '/complex_srv/_service_event')
+    assert result.encoding == 'ros2msg'
+    assert result.topic_type == 'rosbag2_test_msgdefs/srv/ComplexSrvMsg_Event'
+    assert result.encoded_message_definition.startswith(
+        'service_msgs/msg/ServiceEventInfo info\n'
+        'rosbag2_test_msgdefs/srv/ComplexSrvMsg_Request[<=1] request\n'
+        'rosbag2_test_msgdefs/srv/ComplexSrvMsg_Response[<=1] response\n'
+        '\n'
+        '================================================================================\n'
+        'MSG: rosbag2_test_msgdefs/srv/ComplexSrvMsg_Request\n'
+        'rosbag2_test_msgdefs/BasicMsg req\n'
     )
 
 
