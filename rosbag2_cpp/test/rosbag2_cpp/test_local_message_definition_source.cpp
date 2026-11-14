@@ -283,6 +283,54 @@ TEST(test_local_message_definition_source, can_find_srv_request_and_response_def
   EXPECT_EQ(result.encoded_message_definition, "string resp\n");
 }
 
+TEST(test_local_message_definition_source, can_find_generated_type_definitions_in_idl)
+{
+  // Types generated from .srv and .action files with IDL-only dependencies are resolved by a
+  // definition including the IDL file in which their structure is defined.
+  const std::vector<std::pair<std::string, std::string>> types_and_included_types{
+    {"rosbag2_test_msgdefs/srv/ComplexSrvIdl_Request", "rosbag2_test_msgdefs/srv/ComplexSrvIdl"},
+    {"rosbag2_test_msgdefs/srv/ComplexSrvIdl_Response", "rosbag2_test_msgdefs/srv/ComplexSrvIdl"},
+    {"rosbag2_test_msgdefs/action/ComplexActionIdl_Goal",
+      "rosbag2_test_msgdefs/action/ComplexActionIdl"},
+    {"rosbag2_test_msgdefs/action/ComplexActionIdl_Result",
+      "rosbag2_test_msgdefs/action/ComplexActionIdl"},
+    {"rosbag2_test_msgdefs/action/ComplexActionIdl_Feedback",
+      "rosbag2_test_msgdefs/action/ComplexActionIdl"},
+    {"rosbag2_test_msgdefs/action/ComplexActionIdl_SendGoal_Request",
+      "rosbag2_test_msgdefs/action/ComplexActionIdl_SendGoal"},
+    {"rosbag2_test_msgdefs/action/ComplexActionIdl_GetResult_Response",
+      "rosbag2_test_msgdefs/action/ComplexActionIdl_GetResult"},
+  };
+  for (const auto & [type, included_type] : types_and_included_types) {
+    SCOPED_TRACE(type);
+    LocalMessageDefinitionSource source;
+    auto result = source.get_full_text_ext(type, "");
+    EXPECT_EQ(result.encoding, "ros2idl");
+    EXPECT_EQ(result.topic_type, type);
+    const auto headers = section_headers(result.encoded_message_definition);
+    ASSERT_GE(headers.size(), 2u);
+    EXPECT_EQ(headers[0], "IDL: " + type);
+    EXPECT_EQ(headers[1], "IDL: " + included_type);
+    EXPECT_EQ(
+      section_body(result.encoded_message_definition, "IDL: " + type),
+      "#include \"" + included_type + ".idl\"\n");
+    EXPECT_THAT(headers, ::testing::Contains("IDL: rosbag2_test_msgdefs/msg/BasicIdl"));
+  }
+
+  // Action-internal types without IDL-only dependencies are still resolved as complete .msg
+  // definitions.
+  for (const std::string type : {
+    "rosbag2_test_msgdefs/action/ComplexActionIdl_SendGoal_Response",
+    "rosbag2_test_msgdefs/action/ComplexActionIdl_GetResult_Request"})
+  {
+    SCOPED_TRACE(type);
+    LocalMessageDefinitionSource source;
+    auto result = source.get_full_text_ext(type, "");
+    EXPECT_EQ(result.encoding, "ros2msg");
+    EXPECT_EQ(result.topic_type, type);
+  }
+}
+
 TEST(test_local_message_definition_source, can_find_srv_deps_in_msg)
 {
   // Plain service type: the content of the .srv file followed by its dependencies

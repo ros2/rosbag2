@@ -23,6 +23,7 @@
 #include <sstream>
 #include <stdexcept>
 #include <string>
+#include <unordered_map>
 #include <unordered_set>
 #include <utility>
 #include <vector>
@@ -567,10 +568,24 @@ LocalMessageDefinitionSource::synthesize_message_spec(
     // Request, response, goal, result and feedback structures of .srv and .action files are
     // defined in the IDL files generated from them by rosidl_adapter, e.g. "pkg/srv/Foo.idl"
     // and "pkg/action/Bar.idl". Only the structures which rosidl generates on the fly need to be
-    // synthesized.
+    // synthesized. Types whose structure is defined in another (generated or synthesized) IDL
+    // file are resolved by a definition which only includes that file.
+    // Map from the suffix of such a type to the suffix of the type naming that IDL file.
+    static const std::unordered_map<std::string, std::string> containing_idl_suffixes{
+      {REQUEST_SUFFIX, ""},
+      {RESPONSE_SUFFIX, ""},
+      {GOAL_SUFFIX, ""},
+      {RESULT_SUFFIX, ""},
+      {FEEDBACK_SUFFIX, ""},
+      {std::string(SEND_GOAL_SUFFIX) + REQUEST_SUFFIX, SEND_GOAL_SUFFIX},
+      {std::string(SEND_GOAL_SUFFIX) + RESPONSE_SUFFIX, SEND_GOAL_SUFFIX},
+      {std::string(GET_RESULT_SUFFIX) + REQUEST_SUFFIX, GET_RESULT_SUFFIX},
+      {std::string(GET_RESULT_SUFFIX) + RESPONSE_SUFFIX, GET_RESULT_SUFFIX}};
     const std::string namespace_path = type.substr(0, type.rfind('/'));
     const std::string interface_name = interface_type.substr(interface_type.rfind('/') + 1);
-    if (!is_action) {
+    if (auto it = containing_idl_suffixes.find(suffix); it != containing_idl_suffixes.end()) {
+      text = "#include \"" + interface_type + it->second + ".idl\"\n";
+    } else if (!is_action) {
       if (suffix == EVENT_SUFFIX) {
         text = service_event_idl_text(interface_type);
       }
