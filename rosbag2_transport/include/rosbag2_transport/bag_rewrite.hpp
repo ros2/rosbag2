@@ -32,6 +32,7 @@ namespace rosbag2_transport
 /// - filter (input bag(s) - output bag(s) accept different topics)
 /// - compress
 /// - serialization format conversion
+/// - message range selection per topic
 ///
 /// Note: If a serialization format is not specified for an output bag's RecordOptions,
 /// any topic going into it will use the serialization format of the last input with that topic.
