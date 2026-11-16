@@ -111,6 +111,11 @@ public:
     topics_ = std::move(topics);
   }
 
+  void set_metadata(const rosbag2_storage::BagMetadata & metadata)
+  {
+    metadata_ = metadata;
+  }
+
   size_t max_messages_per_file() const
   {
     return max_messages_per_file_;
