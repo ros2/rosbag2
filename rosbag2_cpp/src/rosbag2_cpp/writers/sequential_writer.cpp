@@ -480,6 +480,11 @@ void SequentialWriter::split_bagfile(const std::string & new_uri)
   if (new_uri.empty()) {
     throw std::runtime_error("Can't split the bag file to a new URI. The new URI is empty");
   }
+  // Closing the bag would drop the snapshot buffer, unlike a split to the next file.
+  if (storage_options_.snapshot_mode) {
+    throw std::runtime_error(
+            "Splitting the bag file to a new URI is not supported in snapshot mode");
+  }
   // Validate new_uri before closing the current bag. If open() failed below, the current bag
   // would already be closed and there would be nothing left to record into.
   if (fs::exists(fs::path(new_uri))) {
@@ -487,15 +492,21 @@ void SequentialWriter::split_bagfile(const std::string & new_uri)
     error << "Path already exists (" << new_uri << "), can't overwrite existing bag";
     throw std::runtime_error{error.str()};
   }
-  // Throws if the directory can't be created (no permission, read-only file system).
+  // Fails if the directory can't be created (no permission, read-only file system).
   // Removed right away because open() refuses to reuse an existing directory.
-  fs::create_directories(fs::path(new_uri));
+  if (!fs::create_directories(fs::path(new_uri))) {
+    std::stringstream error;
+    error << "Failed to create bag directory (" << new_uri << ").";
+    throw std::runtime_error{error.str()};
+  }
   fs::remove(fs::path(new_uri));
 
+  close_impl(false);  // The WRITE_SPLIT event is emitted below, with the newly opened file
+
+  // Copied only after close_impl(): until it has joined them, the compressor threads of a derived
+  // writer may still roll storage_options_ over to the next file.
   auto new_storage_options = storage_options_;
   new_storage_options.uri = new_uri;
-
-  close_impl(false);  // The WRITE_SPLIT event is emitted below, with the newly opened file
 
   // Read after closing: a derived writer may rename the last file while closing it, and
   // base_folder_ still points to the closed bag until open() below.
@@ -508,9 +519,7 @@ void SequentialWriter::split_bagfile(const std::string & new_uri)
   open(new_storage_options, converter_options_);
 
   // Same as split_bagfile(): make transient-local topics appear in the new bag as well.
-  if (!storage_options_.snapshot_mode) {
-    write_transient_local_messages(last_recv_timestamp_, last_sent_timestamp_);
-  }
+  write_transient_local_messages(last_recv_timestamp_, last_sent_timestamp_);
 
   execute_bag_split_callbacks(closed_file, storage_->get_relative_file_path());
 }

@@ -17,7 +17,7 @@ string tracking_topic_name
 
 # Directory to record the new bag into, instead of rolling over to the next file in the current
 # bag directory. The directory must not exist yet. The new bag gets its own metadata.yaml and its
-# file counter restarts at 0.
+# file counter restarts at 0. Not supported in snapshot mode.
 # If empty, the recorder rolls over to the next file in the current bag directory as usual.
 string output_uri
 ---

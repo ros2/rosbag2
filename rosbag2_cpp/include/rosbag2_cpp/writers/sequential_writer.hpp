@@ -168,7 +168,8 @@ public:
 
   /**
    * \brief Finalizes the current bag and opens a new one in the new_uri directory.
-   * \throws std::runtime_error if new_uri can't be used. The current bag keeps recording.
+   * \throws std::runtime_error if new_uri already exists or can't be created, or in snapshot
+   * mode. The current bag keeps recording in these cases.
    */
   void split_bagfile(const std::string & new_uri) override;
 

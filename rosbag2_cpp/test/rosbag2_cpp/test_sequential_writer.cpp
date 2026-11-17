@@ -574,6 +574,26 @@ TEST_F(SequentialWriterTest, split_bagfile_to_new_uri_throws_on_empty_uri)
   EXPECT_NO_THROW(writer_->close());
 }
 
+TEST_F(SequentialWriterTest, split_bagfile_to_new_uri_throws_in_snapshot_mode)
+{
+  storage_options_.max_cache_size = 700;
+  storage_options_.snapshot_mode = true;
+
+  auto sequential_writer = std::make_unique<rosbag2_cpp::writers::SequentialWriter>(
+    std::move(storage_factory_), converter_factory_, std::move(metadata_io_));
+  writer_ = std::make_unique<rosbag2_cpp::Writer>(std::move(sequential_writer));
+
+  std::string rmw_format = "rmw_format";
+  writer_->open(storage_options_, {rmw_format, rmw_format});
+  const auto original_storage_uri = fake_storage_uri_;
+
+  const auto new_uri = (tmp_dir_ / "new_bag").string();
+  EXPECT_THROW(writer_->split_bagfile(new_uri), std::runtime_error);
+  EXPECT_FALSE(fs::exists(new_uri));
+  EXPECT_EQ(fake_storage_uri_, original_storage_uri);
+  EXPECT_NO_THROW(writer_->close());
+}
+
 TEST_F(SequentialWriterTest, open_throws_error_if_converter_plugin_does_not_exist) {
   auto sequential_writer = std::make_unique<rosbag2_cpp::writers::SequentialWriter>(
     std::move(storage_factory_), converter_factory_, std::move(metadata_io_));

@@ -494,6 +494,10 @@ private:
                                           SplitBagFileCallbackResponse & response);
   // *INDENT-ON*
 
+  /// \brief Check output_uri of a SplitBagfile request before splitting or scheduling a split.
+  /// \return An error message, or an empty string if output_uri can be used.
+  std::string get_split_output_uri_error(const std::string & output_uri) const;
+
   /// \brief Attempt an immediate split of the bag file.
   void attempt_immediate_bag_split(
     const std::string & output_uri,
@@ -841,6 +845,8 @@ bool RecorderImpl::split_bagfile(const std::string & output_uri)
     RCLCPP_INFO(node->get_logger(), "Splitting bag file to new output URI: '%s'.",
                 output_uri.c_str());
     writer_->split_bagfile(output_uri);
+    // Keep the recorder's options pointing at the bag being recorded, e.g. for a later ~/record.
+    storage_options_.uri = output_uri;
   }
   return true;
 }
@@ -888,6 +894,14 @@ void RecorderImpl::create_control_services()
         set_service_error(response,
                           "Invalid split_mode for SplitBagfile request.",
                           to_underlying_type(SplitBagFileReturnCode::InvalidSplitMode));
+        return;
+      }
+      const auto output_uri_error = get_split_output_uri_error(request->output_uri);
+      if (!output_uri_error.empty()) {
+        RCLCPP_ERROR(node->get_logger(), "Invalid output_uri for SplitBagfile request: %s",
+                     output_uri_error.c_str());
+        set_service_error(response, output_uri_error,
+                          to_underlying_type(SplitBagFileReturnCode::SplitFailed));
         return;
       }
       if (split_mode.value() == SplitMode::NodeTime) {
@@ -1265,6 +1279,20 @@ void RecorderImpl::handle_timestamp_resume_request(
                use_receive_timestamp_for_resume ? "true" : "false",
                last_pub_timestamp, last_recv_timestamp, resume_req_ns);
   set_service_success(response);
+}
+
+std::string RecorderImpl::get_split_output_uri_error(const std::string & output_uri) const
+{
+  if (output_uri.empty()) {
+    return "";
+  }
+  if (storage_options_.snapshot_mode) {
+    return "output_uri is not supported in snapshot mode.";
+  }
+  if (std::filesystem::exists(output_uri)) {
+    return "output_uri already exists: '" + output_uri + "'.";
+  }
+  return "";
 }
 
 void RecorderImpl::attempt_immediate_bag_split(
