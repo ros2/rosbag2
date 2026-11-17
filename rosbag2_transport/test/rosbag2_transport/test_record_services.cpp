@@ -542,18 +542,22 @@ TEST_F(RecordSrvsTest, split_bagfile_reports_error_when_output_uri_is_rejected)
   EXPECT_FALSE(response->error_string.empty());
 }
 
-TEST_F(RecordSrvsTest, record_after_split_to_output_uri_restarts_in_output_uri)
+TEST_F(RecordSrvsTest, record_after_split_to_output_uri_restarts_next_to_output_uri)
 {
   auto & writer = recorder_->get_writer_handle();
   auto & mock_writer = dynamic_cast<MockSequentialWriter &>(writer.get_implementation_handle());
 
-  const std::string output_uri = "split_then_restart_bag_dir";
+  const auto output_dir = std::filesystem::temp_directory_path() / "split_then_restart_bag_dir";
+  std::filesystem::remove_all(output_dir);
+  const std::string output_uri = output_dir.generic_string();
   auto split_request = std::make_shared<SplitBagfile::Request>();
   split_request->output_uri = output_uri;
   auto split_response = std::make_shared<SplitBagfile::Response>();
   ASSERT_TRUE(
     successful_service_request<SplitBagfile>(cli_split_bagfile_, split_request, split_response));
   ASSERT_EQ(SplitBagfile::Response::RETURN_CODE_SUCCESS, split_response->return_code);
+  // The mock writer doesn't create directories. The real one has created output_uri by now.
+  ASSERT_TRUE(std::filesystem::create_directories(output_dir));
 
   auto stop_response = std::make_shared<Stop::Response>();
   ASSERT_TRUE(successful_service_request<Stop>(cli_stop_, stop_response));
@@ -563,8 +567,22 @@ TEST_F(RecordSrvsTest, record_after_split_to_output_uri_restarts_in_output_uri)
   ASSERT_TRUE(successful_service_request<Record>(cli_record_, record_request, record_response));
   EXPECT_EQ(0, record_response->return_code);
 
-  // Without a uri, recording restarts in the directory of the last split, not the original one
-  EXPECT_EQ(mock_writer.get_storage_options().uri, output_uri);
+  // Without a uri, recording restarts next to the bag of the last split, not the original one
+  EXPECT_EQ(mock_writer.get_storage_options().uri, output_uri + "(1)");
+  std::filesystem::remove_all(output_dir);
+}
+
+TEST_F(RecordSrvsTest, split_bagfile_reports_error_when_output_uri_cannot_be_checked)
+{
+  // A file name longer than NAME_MAX makes the existence check itself fail
+  auto request = std::make_shared<SplitBagfile::Request>();
+  request->output_uri = std::string(300, 'a');
+  auto response = std::make_shared<SplitBagfile::Response>();
+  ASSERT_TRUE(successful_service_request<SplitBagfile>(cli_split_bagfile_, request, response));
+#ifndef _WIN32  // Windows reports such a name as not found rather than as an error
+  EXPECT_EQ(SplitBagfile::Response::RETURN_CODE_SPLIT_FAILED, response->return_code);
+  EXPECT_FALSE(response->error_string.empty());
+#endif
 }
 
 TEST_F(RecordSrvsTest, split_bagfile_rejects_existing_output_uri_before_scheduling)

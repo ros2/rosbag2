@@ -31,6 +31,7 @@
 #include <regex>
 #include <stdexcept>
 #include <string>
+#include <system_error>
 #include <type_traits>
 #include <unordered_map>
 #include <unordered_set>
@@ -1289,8 +1290,14 @@ std::string RecorderImpl::get_split_output_uri_error(const std::string & output_
   if (storage_options_.snapshot_mode) {
     return "output_uri is not supported in snapshot mode.";
   }
-  if (std::filesystem::exists(output_uri)) {
+  // The error_code overload doesn't throw when the path can't be checked (no permission,
+  // name too long), which would otherwise escape this service callback.
+  std::error_code error;
+  if (std::filesystem::exists(output_uri, error)) {
     return "output_uri already exists: '" + output_uri + "'.";
+  }
+  if (error) {
+    return "Can't check output_uri '" + output_uri + "': " + error.message();
   }
   return "";
 }
