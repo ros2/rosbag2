@@ -158,6 +158,45 @@ $ ros2 bag record -a --repeat-all-transient-local --repeat-transient-local /map=
 listed in `--repeat-transient-local`, the QoS override takes precedence. Ensure the override
 includes `transient_local` durability to receive latched messages.
 
+#### Recording topics that use `rosidl::Buffer` backends (for example CUDA)
+
+Messages with `rosidl::Buffer` fields can keep their payload in accelerator memory (for example on a
+GPU) and send only a small descriptor to subscribers that accept the backend. By default the
+recorder accepts only `cpu`, so every publisher converts its buffers to CPU memory inside its
+`publish()` call. That conversion is paid by the publisher on every message.
+
+The `--acceptable-buffer-backends` option lets the recorder accept backend buffers instead. The
+recorder then copies the data to CPU memory and serializes it on its own thread, and the publisher no
+longer pays for the conversion. The bag content and format are the same as with `cpu`.
+
+Format: `--acceptable-buffer-backends <backend>[,<backend>...]`, or `any` for every installed backend.
+An unknown backend name fails at startup and lists the installed backends.
+
+```bash
+# Accept CUDA buffers on every topic whose message type has a rosidl::Buffer field
+$ ros2 bag record -a --acceptable-buffer-backends cuda
+
+# Accept CUDA buffers only on /camera/image; all other topics keep the generic subscription
+$ ros2 bag record -a --acceptable-buffer-backends cuda --buffer-aware-topics /camera/image
+```
+
+Topics whose message type has no `rosidl::Buffer` field always use the generic subscription. Without
+`--buffer-aware-topics`, every other topic uses the buffer-aware subscription, which costs more per
+message than the generic one, so list only the topics that actually publish through a backend.
+`--buffer-aware-topics` requires a backend other than `cpu`.
+
+Both options also work via node parameters as `record.acceptable_buffer_backends` (string) and
+`record.buffer_aware_topics` (list of strings).
+
+Limitations:
+
+* The recorder cannot detect which backend a publisher uses, so the topic list is manual.
+* The conversion runs on the recorder's executor thread. Under heavy load (for example several 4K
+  streams at 30 Hz) the recorder can fall behind.
+* Backends may recycle a buffer shortly after publishing it. A message whose backend buffer is
+  already gone when the recorder receives it is dropped, counted as a lost message and reported with
+  a throttled warning, instead of writing an empty payload into the bag.
+
 #### Recording with compression
 
 By default Rosbag2 does not record with compression enabled. However, compression can be specified using the following CLI options.

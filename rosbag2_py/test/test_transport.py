@@ -66,6 +66,39 @@ def test_options_qos_conversion():
     assert record_options.topic_qos_profile_overrides == simple_overrides
 
 
+def test_record_options_buffer_backend_fields():
+    record_options = rosbag2_py.RecordOptions()
+    assert record_options.acceptable_buffer_backends == 'cpu'
+    assert record_options.buffer_aware_topics == []
+
+    record_options.acceptable_buffer_backends = 'cuda'
+    record_options.buffer_aware_topics = ['/image1', '/image2']
+    assert record_options.acceptable_buffer_backends == 'cuda'
+    assert record_options.buffer_aware_topics == ['/image1', '/image2']
+
+
+@pytest.mark.parametrize('storage_id', TESTED_STORAGE_IDS)
+def test_recorder_unknown_buffer_backend_fails_fast(tmp_path, storage_id):
+    bag_path = tmp_path / 'test_recorder_unknown_buffer_backend'
+    storage_options, converter_options = get_rosbag_options(str(bag_path), storage_id)
+    record_options = rosbag2_py.RecordOptions()
+    record_options.acceptable_buffer_backends = 'no_such_backend'
+
+    with pytest.raises(ValueError, match='not installed'):
+        rosbag2_py.Recorder(storage_options, record_options)
+
+
+@pytest.mark.parametrize('storage_id', TESTED_STORAGE_IDS)
+def test_recorder_buffer_aware_topics_require_backend(tmp_path, storage_id):
+    bag_path = tmp_path / 'test_recorder_buffer_aware_topics_require_backend'
+    storage_options, converter_options = get_rosbag_options(str(bag_path), storage_id)
+    record_options = rosbag2_py.RecordOptions()
+    record_options.buffer_aware_topics = ['/image1']
+
+    with pytest.raises(ValueError):
+        rosbag2_py.Recorder(storage_options, record_options)
+
+
 @pytest.mark.parametrize('storage_id', TESTED_STORAGE_IDS)
 def test_player_log_level(storage_id):
     bag_path = str(RESOURCES_PATH / storage_id / 'talker')

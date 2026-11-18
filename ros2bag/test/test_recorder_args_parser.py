@@ -447,3 +447,44 @@ def test_recorder_stats_max_publishing_rate_argument_invalid(test_arguments_pars
     expected_output = 'stats_max_publishing_rate must be between 0 and 1000.'
     matches = expected_output in error_str
     assert matches, ERROR_STRING_MSG.format(expected_output, error_str)
+
+
+def test_recorder_acceptable_buffer_backends_default(test_arguments_parser):
+    """Test recorder --acceptable-buffer-backends defaults to cpu."""
+    output_path = RESOURCES_PATH / 'ros2bag_tmp_file'
+    args = test_arguments_parser.parse_args(
+        ['--all-topics', '--output', output_path.as_posix()]
+    )
+    assert 'cpu' == args.acceptable_buffer_backends
+    assert args.buffer_aware_topics is None
+
+    uri = args.output or datetime.datetime.now().strftime('rosbag2_%Y_%m_%d-%H_%M_%S')
+    assert validate_parsed_arguments(args, uri) is None
+
+
+def test_recorder_buffer_aware_topics_argument(test_arguments_parser):
+    """Test recorder --acceptable-buffer-backends and --buffer-aware-topics parsing."""
+    output_path = RESOURCES_PATH / 'ros2bag_tmp_file'
+    args = test_arguments_parser.parse_args(
+        ['--all-topics', '--acceptable-buffer-backends', 'cuda',
+         '--buffer-aware-topics', '/image1', '/image2', '--output', output_path.as_posix()]
+    )
+    assert 'cuda' == args.acceptable_buffer_backends
+    assert ['/image1', '/image2'] == args.buffer_aware_topics
+
+    uri = args.output or datetime.datetime.now().strftime('rosbag2_%Y_%m_%d-%H_%M_%S')
+    assert validate_parsed_arguments(args, uri) is None
+
+
+def test_recorder_buffer_aware_topics_requires_backend(test_arguments_parser):
+    """Test --buffer-aware-topics without a non-cpu backend fails validation."""
+    output_path = RESOURCES_PATH / 'ros2bag_tmp_file'
+    args = test_arguments_parser.parse_args(
+        ['--all-topics', '--buffer-aware-topics', '/image1', '--output', output_path.as_posix()]
+    )
+
+    uri = args.output or datetime.datetime.now().strftime('rosbag2_%Y_%m_%d-%H_%M_%S')
+    error_str = validate_parsed_arguments(args, uri)
+    assert error_str is not None
+    expected_output = '--buffer-aware-topics requires --acceptable-buffer-backends'
+    assert expected_output in error_str, ERROR_STRING_MSG.format(expected_output, error_str)
