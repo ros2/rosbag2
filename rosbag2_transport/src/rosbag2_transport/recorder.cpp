@@ -19,6 +19,7 @@
 #include <chrono>
 #include <cstddef>
 #include <cstring>
+#include <deque>
 #include <exception>
 #include <filesystem>
 #include <functional>
@@ -390,8 +391,24 @@ private:
 
   void subscribe_topic(const rosbag2_storage::TopicMetadata & topic);
 
+  /// \param repeat_transient_local_depth Depth of the repeat-transient-local cache for this topic,
+  /// or std::nullopt if the topic's messages are not repeated.
   std::shared_ptr<rclcpp::GenericSubscription> create_subscription(
-    const std::string & topic_name, const std::string & topic_type, const rclcpp::QoS & qos);
+    const std::string & topic_name, const std::string & topic_type, const rclcpp::QoS & qos,
+    std::optional<size_t> repeat_transient_local_depth = std::nullopt);
+
+  /// \brief Keep a repeat-transient-local message received while paused, so it can be written on
+  /// resume. Transient-local messages are typically delivered only once, on subscription, which
+  /// would otherwise be lost if the recorder starts paused.
+  /// \return true if the recorder is paused and the message was kept, false if not paused.
+  bool keep_transient_local_message_while_paused(
+    const std::string & topic_name, const std::string & topic_type,
+    std::shared_ptr<const rclcpp::SerializedMessage> message,
+    rcutils_time_point_value_t send_timestamp, size_t depth);
+
+  /// \brief Write the repeat-transient-local messages kept while paused.
+  /// Must be called with paused_transient_local_mutex_ held, right after leaving the pause state.
+  void write_transient_local_messages_kept_while_paused();
 
   /**
    * Find the QoS profile that should be used for subscribing.
@@ -514,6 +531,19 @@ private:
   mutable std::mutex subscriptions_mutex_;
   std::atomic<bool> discovery_running_ = false;
   std::atomic_uchar paused_ = 0;
+
+  struct PausedTransientLocalMessage
+  {
+    std::shared_ptr<const rclcpp::SerializedMessage> message;
+    std::string topic_type;
+    rcutils_time_point_value_t send_timestamp;
+  };
+  /// \brief Protects paused_transient_local_messages_ and leaving the pause state, so that no
+  /// message is kept after its topic's messages were written on resume.
+  std::mutex paused_transient_local_mutex_;
+  /// \brief Latest repeat-transient-local messages per topic, received while paused.
+  std::unordered_map<std::string, std::deque<PausedTransientLocalMessage>>
+  paused_transient_local_messages_;
   std::atomic<bool> in_recording_ = false;
   std::shared_ptr<KeyboardHandler> keyboard_handler_;
   KeyboardHandler::callback_handle_t toggle_paused_key_callback_handle_ =
@@ -682,6 +712,10 @@ void RecorderImpl::stop()
   {  // Clear pending resume request if any
     std::lock_guard<std::mutex> lock(pending_resume_request_mutex_);
     pending_resume_request_.reset();
+  }
+  {  // Drop transient-local messages kept while paused, they belong to the stopped recording
+    std::lock_guard<std::mutex> lock(paused_transient_local_mutex_);
+    paused_transient_local_messages_.clear();
   }
 
   last_seen_timestamps_.reset();  // Clear last seen timestamps
@@ -1455,20 +1489,62 @@ void RecorderImpl::pause()
 
 void RecorderImpl::resume()
 {
+  std::lock_guard<std::mutex> lock(paused_transient_local_mutex_);
   if (paused_.exchange(false)) {
-    RCLCPP_DEBUG(node->get_logger(), "Already in the recording.");
-  } else {
     RCLCPP_INFO_STREAM(node->get_logger(), "Resuming recording.");
+    write_transient_local_messages_kept_while_paused();
+  } else {
+    RCLCPP_DEBUG(node->get_logger(), "Already in the recording.");
   }
 }
 
 void RecorderImpl::toggle_paused()
 {
+  std::lock_guard<std::mutex> lock(paused_transient_local_mutex_);
   if (atomic_fetch_xor(&paused_, 1)) {
     RCLCPP_INFO_STREAM(node->get_logger(), "Resuming recording.");
+    write_transient_local_messages_kept_while_paused();
   } else {
     RCLCPP_INFO_STREAM(node->get_logger(), "Pausing recording.");
   }
+}
+
+bool RecorderImpl::keep_transient_local_message_while_paused(
+  const std::string & topic_name, const std::string & topic_type,
+  std::shared_ptr<const rclcpp::SerializedMessage> message,
+  rcutils_time_point_value_t send_timestamp, size_t depth)
+{
+  if (!paused_.load()) {
+    return false;
+  }
+  std::lock_guard<std::mutex> lock(paused_transient_local_mutex_);
+  // Re-check under the lock: resume() may have written the kept messages in the meantime.
+  if (!paused_.load()) {
+    return false;
+  }
+  auto & kept_messages = paused_transient_local_messages_[topic_name];
+  kept_messages.push_back({std::move(message), topic_type, send_timestamp});
+  while (kept_messages.size() > depth) {
+    kept_messages.pop_front();
+  }
+  return true;
+}
+
+void RecorderImpl::write_transient_local_messages_kept_while_paused()
+{
+  if (paused_transient_local_messages_.empty()) {
+    return;
+  }
+  // Stamp them with the resume time, as the writer does when it repeats them on a split,
+  // so that the bag does not start before the recording was resumed.
+  const rcutils_time_point_value_t recv_timestamp = node->now().nanoseconds();
+  for (auto & [topic_name, kept_messages] : paused_transient_local_messages_) {
+    for (auto & kept : kept_messages) {
+      writer_->write(
+        std::move(kept.message), topic_name, kept.topic_type, recv_timestamp, kept.send_timestamp);
+    }
+  }
+  paused_transient_local_messages_.clear();
 }
 
 bool RecorderImpl::is_paused()
@@ -1792,16 +1868,17 @@ void RecorderImpl::subscribe_topic(const rosbag2_storage::TopicMetadata & topic)
 
   rosbag2_storage::Rosbag2QoS subscription_qos{subscription_qos_for_topic(topic.name)};
 
-  auto subscription = create_subscription(topic.name, topic.type, subscription_qos);
+  std::optional<size_t> repeat_tl_depth =
+    record_options_.repeat_transient_local_messages.count(topic.name) > 0 ?
+    std::make_optional(record_options_.repeat_transient_local_messages.at(topic.name)) :
+    std::nullopt;
+  auto subscription =
+    create_subscription(topic.name, topic.type, subscription_qos, repeat_tl_depth);
   if (subscription) {
     {
       std::lock_guard<std::mutex> subscriptions_lock(subscriptions_mutex_);
       subscriptions_.insert({topic.name, subscription});
     }
-    std::optional<size_t> repeat_tl_depth =
-      record_options_.repeat_transient_local_messages.count(topic.name) > 0 ?
-      std::make_optional(record_options_.repeat_transient_local_messages.at(topic.name)) :
-      std::nullopt;
     if (node->get_logger().get_effective_level() == rclcpp::Logger::Level::Debug) {
       RCLCPP_DEBUG_STREAM(node->get_logger(),
         "Subscribed to topic '" << topic.name << "'" <<
@@ -1822,7 +1899,8 @@ void RecorderImpl::subscribe_topic(const rosbag2_storage::TopicMetadata & topic)
 
 std::shared_ptr<rclcpp::GenericSubscription>
 RecorderImpl::create_subscription(
-  const std::string & topic_name, const std::string & topic_type, const rclcpp::QoS & qos)
+  const std::string & topic_name, const std::string & topic_type, const rclcpp::QoS & qos,
+  std::optional<size_t> repeat_transient_local_depth)
 {
   rclcpp::SubscriptionOptions sub_options;
   sub_options.event_callbacks.message_lost_callback =
@@ -1831,8 +1909,8 @@ RecorderImpl::create_subscription(
     };
 
   auto subscription_callback =
-    [this, topic_name, topic_type](std::shared_ptr<const rclcpp::SerializedMessage> message,
-    const rclcpp::MessageInfo & mi)
+    [this, topic_name, topic_type, repeat_transient_local_depth](
+    std::shared_ptr<const rclcpp::SerializedMessage> message, const rclcpp::MessageInfo & mi)
     {
       rcutils_time_point_value_t recv_timestamp{0};
       rcutils_time_point_value_t send_timestamp{0};
@@ -1860,6 +1938,12 @@ RecorderImpl::create_subscription(
       last_seen_timestamps_.update(topic_name, send_timestamp, recv_timestamp);
       handle_pending_resume_request(topic_name, send_timestamp, recv_timestamp);
 
+      if (repeat_transient_local_depth.has_value() &&
+        keep_transient_local_message_while_paused(
+          topic_name, topic_type, message, send_timestamp, repeat_transient_local_depth.value()))
+      {
+        return;
+      }
       if (!paused_.load()) {
         writer_->write(std::move(message), topic_name, topic_type, recv_timestamp, send_timestamp);
         // Handle pending bag split request if it is existing
