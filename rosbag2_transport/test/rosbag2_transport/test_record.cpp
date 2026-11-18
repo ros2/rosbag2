@@ -31,6 +31,7 @@
 
 #include "mock_recorder.hpp"
 #include "mock_sequential_writer.hpp"
+#include "rclcpp/clock.hpp"
 #include "rclcpp/event_handler.hpp"
 #include "rclcpp/node.hpp"
 #include "rclcpp/qos.hpp"
@@ -480,6 +481,106 @@ TEST_F(RecordIntegrationTestFixture, repeat_transient_local_topics_register_requ
     },
     std::chrono::seconds(5));
   EXPECT_TRUE(ret) << "failed to register transient local repeat depth for topic";
+}
+
+TEST_F(RecordIntegrationTestFixture, repeat_transient_local_kept_while_paused)
+{
+  auto string_message = get_messages_strings()[1];
+  std::string topic = "/latched_chatter";
+
+  // Latched messages are delivered once, on subscription, while the recorder is still paused.
+  size_t num_latched_messages = 3;
+  rosbag2_test_common::PublicationManager pub_manager;
+  pub_manager.setup_publisher(
+    topic, string_message, num_latched_messages,
+    rclcpp::QoS(num_latched_messages).transient_local());
+  pub_manager.run_publishers();
+
+  rosbag2_transport::RecordOptions record_options;
+  record_options.topics = {topic};
+  record_options.rmw_serialization_format = "rmw_format";
+  record_options.topic_polling_interval = 100ms;
+  record_options.start_paused = true;
+  const size_t repeat_depth = 2;
+  record_options.repeat_transient_local_messages[topic] = repeat_depth;
+
+  auto recorder = std::make_shared<rosbag2_transport::Recorder>(
+    std::move(writer_), storage_options_, record_options);
+  recorder->record();
+
+  start_async_spin(recorder);
+  auto cleanup_process_handle = rcpputils::make_scope_exit([&]() {stop_spinning();});
+
+  ASSERT_TRUE(pub_manager.wait_for_matched(topic.c_str()));
+
+  auto & writer = recorder->get_writer_handle();
+  MockSequentialWriter & mock_writer =
+    static_cast<MockSequentialWriter &>(writer.get_implementation_handle());
+
+  // Nothing is written while paused.
+  EXPECT_FALSE(
+    rosbag2_test_common::wait_until_condition(
+      [&mock_writer]() {return mock_writer.get_number_of_recorded_messages() > 0;},
+      std::chrono::seconds(1)));
+
+  const auto resume_time = rclcpp::Clock().now().nanoseconds();
+  recorder->resume();
+
+  // On resume, the latest repeat_depth latched messages are written, stamped with the resume time.
+  auto ret = rosbag2_test_common::wait_until_condition(
+    [&mock_writer, repeat_depth]() {
+      return mock_writer.get_number_of_recorded_messages() >= repeat_depth;
+    },
+    std::chrono::seconds(5));
+  EXPECT_TRUE(ret) << "transient-local messages received while paused were not written on resume";
+  auto recorded_messages = mock_writer.get_messages();
+  EXPECT_THAT(recorded_messages, SizeIs(repeat_depth));
+  for (const auto & message : recorded_messages) {
+    EXPECT_EQ(message->topic_name, topic);
+    EXPECT_GE(message->recv_timestamp, resume_time);
+  }
+}
+
+TEST_F(RecordIntegrationTestFixture, transient_local_without_repeat_dropped_while_paused)
+{
+  auto string_message = get_messages_strings()[1];
+  std::string topic = "/latched_chatter";
+
+  rosbag2_test_common::PublicationManager pub_manager;
+  pub_manager.setup_publisher(topic, string_message, 1, rclcpp::QoS(1).transient_local());
+  pub_manager.run_publishers();
+
+  rosbag2_transport::RecordOptions record_options;
+  record_options.topics = {topic};
+  record_options.rmw_serialization_format = "rmw_format";
+  record_options.topic_polling_interval = 100ms;
+  record_options.start_paused = true;
+
+  auto recorder = std::make_shared<rosbag2_transport::Recorder>(
+    std::move(writer_), storage_options_, record_options);
+  recorder->record();
+
+  start_async_spin(recorder);
+  auto cleanup_process_handle = rcpputils::make_scope_exit([&]() {stop_spinning();});
+
+  ASSERT_TRUE(pub_manager.wait_for_matched(topic.c_str()));
+
+  auto & writer = recorder->get_writer_handle();
+  MockSequentialWriter & mock_writer =
+    static_cast<MockSequentialWriter &>(writer.get_implementation_handle());
+
+  // Give the latched message time to arrive while paused, then resume.
+  EXPECT_FALSE(
+    rosbag2_test_common::wait_until_condition(
+      [&mock_writer]() {return mock_writer.get_number_of_recorded_messages() > 0;},
+      std::chrono::seconds(1)));
+  recorder->resume();
+
+  // Without repeat-transient-local the paused recorder keeps nothing.
+  EXPECT_FALSE(
+    rosbag2_test_common::wait_until_condition(
+      [&mock_writer]() {return mock_writer.get_number_of_recorded_messages() > 0;},
+      std::chrono::seconds(1)));
 }
 
 TEST_F(RecordIntegrationTestFixture, repeat_all_transient_local_auto_detects_mixed_durability)
