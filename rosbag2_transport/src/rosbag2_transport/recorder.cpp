@@ -569,7 +569,7 @@ void validate_acceptable_buffer_backends(const std::string & acceptable_buffer_b
 {
   std::vector<std::string> requested;
   std::stringstream stream(acceptable_buffer_backends);
-  for (std::string name; std::getline(stream, name, ',');) {
+  for (std::string name; std::getline(stream, name, ','); ) {
     const auto first = name.find_first_not_of(" \t");
     const auto last = name.find_last_not_of(" \t");
     if (first == std::string::npos) {
@@ -1916,7 +1916,7 @@ bool RecorderImpl::should_use_buffer_aware_subscription(
           node->get_logger(),
           "Topic '" << topic_name << "' was selected as buffer-aware, but its type '" <<
             topic_type << "' has no rosidl::Buffer field. Recording it with a generic "
-          "subscription.");
+            "subscription.");
       }
       return false;
     }
@@ -1988,7 +1988,14 @@ RecorderImpl::create_subscription(
   sub_options.acceptable_buffer_backends = record_options_.acceptable_buffer_backends;
   auto subscription = std::make_shared<BufferAwareSubscription>(
     node->get_node_base_interface().get(), topic_name, topic_type, qos, sub_options,
-    subscription_callback);
+    subscription_callback,
+    [this, topic_name](uint64_t total_dropped) {
+      // Count a dropped stale message as lost, so it appears in the lost-message statistics.
+      rclcpp::QOSMessageLostInfo lost_info{};
+      lost_info.total_count = static_cast<int32_t>(total_dropped);
+      lost_info.total_count_change = 1;
+      on_messages_lost_in_transport(topic_name, lost_info);
+    });
   node->get_node_topics_interface()->add_subscription(subscription, sub_options.callback_group);
   return subscription;
 }

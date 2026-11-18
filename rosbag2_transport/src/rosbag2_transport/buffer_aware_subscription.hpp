@@ -15,11 +15,14 @@
 #ifndef ROSBAG2_TRANSPORT__BUFFER_AWARE_SUBSCRIPTION_HPP_
 #define ROSBAG2_TRANSPORT__BUFFER_AWARE_SUBSCRIPTION_HPP_
 
+#include <atomic>
+#include <cstdint>
 #include <functional>
 #include <memory>
 #include <string>
 #include <utility>
 
+#include "rclcpp/clock.hpp"
 #include "rclcpp/exceptions.hpp"
 #include "rclcpp/logging.hpp"
 #include "rclcpp/serialized_message.hpp"
@@ -29,6 +32,7 @@
 #include "rcpputils/shared_library.hpp"
 #include "rmw/error_handling.h"
 #include "rmw/rmw.h"
+#include "rosidl_buffer/buffer.hpp"
 #include "rosbag2_cpp/types/introspection_message.hpp"
 #include "rosidl_runtime_c/message_type_support_struct.h"
 #include "rosidl_typesupport_introspection_cpp/field_types.hpp"
@@ -62,6 +66,58 @@ inline bool message_type_has_buffer_field(const rosidl_message_type_support_t * 
   return false;
 }
 
+/// True if a member is a nested message whose introspection members are available.
+inline bool is_nested_message(
+  const rosidl_typesupport_introspection_cpp::MessageMember & member)
+{
+  return member.type_id_ == rosidl_typesupport_introspection_cpp::ROS_TYPE_MESSAGE &&
+         member.members_ && member.members_->data;
+}
+
+/// True if a received message holds a non-CPU rosidl::Buffer with no elements, at any depth.
+///
+/// A buffer backend can lose the payload of a message that a subscriber is too slow to import:
+/// the CUDA backend, for example, recycles a block 100 ms after publishing, and a subscriber that
+/// imports it later gets an empty buffer but the message is still delivered. A non-CPU buffer
+/// of size zero never occurs for a payload that arrived intact, whereas an empty CPU buffer is a
+/// legitimate empty array, so only non-CPU buffers count. Takes the message and the introspection
+/// members of its type.
+inline bool message_has_stale_buffer(
+  const void * message,
+  const rosidl_typesupport_introspection_cpp::MessageMembers * members)
+{
+  namespace introspection = rosidl_typesupport_introspection_cpp;
+  if (!message || !members) {
+    return false;
+  }
+  for (uint32_t i = 0; i < members->member_count_; ++i) {
+    const introspection::MessageMember & member = members->members_[i];
+    const void * field = static_cast<const uint8_t *>(message) + member.offset_;
+    if (member.is_rosidl_buffer_) {
+      const auto * buffer = static_cast<const rosidl::Buffer<uint8_t> *>(field);
+      if (buffer->size() == 0 && buffer->get_backend_type() != "cpu") {
+        return true;
+      }
+    } else if (is_nested_message(member)) {
+      const auto * nested = static_cast<const introspection::MessageMembers *>(
+        member.members_->data);
+      if (!member.is_array_) {
+        if (message_has_stale_buffer(field, nested)) {
+          return true;
+        }
+      } else if (member.size_function && member.get_const_function) {
+        const size_t count = member.size_function(field);
+        for (size_t j = 0; j < count; ++j) {
+          if (message_has_stale_buffer(member.get_const_function(field, j), nested)) {
+            return true;
+          }
+        }
+      }
+    }
+  }
+  return false;
+}
+
 /// A subscription that takes messages through the typed (deserialized) path, so that messages
 /// delivered through a non-CPU buffer backend (for example CUDA) are received as live backend
 /// buffers, and then serializes each message itself.
@@ -76,6 +132,8 @@ class BufferAwareSubscription : public rclcpp::SubscriptionBase
 public:
   using Callback = std::function<void (
         std::shared_ptr<const rclcpp::SerializedMessage>, const rclcpp::MessageInfo &)>;
+  /// Called with the running total each time a message is dropped because a buffer was stale.
+  using StaleMessageCallback = std::function<void (uint64_t)>;
 
   BufferAwareSubscription(
     rclcpp::node_interfaces::NodeBaseInterface * node_base,
@@ -83,10 +141,18 @@ public:
     const std::string & topic_type,
     const rclcpp::QoS & qos,
     const rclcpp::SubscriptionOptions & options,
-    Callback callback)
+    Callback callback,
+    StaleMessageCallback on_stale_message = nullptr)
   : BufferAwareSubscription(
-      node_base, load_type_supports(topic_type), topic_name, qos, options, std::move(callback))
+      node_base, load_type_supports(topic_type), topic_name, qos, options, std::move(callback),
+      std::move(on_stale_message))
   {}
+
+  /// Number of messages dropped because a backend buffer arrived empty (stale).
+  uint64_t stale_messages_dropped() const
+  {
+    return stale_messages_dropped_.load();
+  }
 
   ~BufferAwareSubscription() override = default;
 
@@ -108,6 +174,24 @@ public:
   void handle_message(
     std::shared_ptr<void> & message, const rclcpp::MessageInfo & message_info) override
   {
+    // Never record a message whose backend buffer arrived empty: it would be written as a valid
+    // message with its payload silently missing. Drop it and report it as lost instead.
+    const auto * members =
+      static_cast<const rosidl_typesupport_introspection_cpp::MessageMembers *>(
+      type_supports_->introspection_ts->data);
+    if (message_has_stale_buffer(message.get(), members)) {
+      const uint64_t total = ++stale_messages_dropped_;
+      RCLCPP_WARN_THROTTLE(
+        rclcpp::get_logger("rosbag2_transport"), warn_clock_, 5000,
+        "Dropped messages on topic '%s' whose buffer backend payload arrived empty because the "
+        "recorder was too slow to import it (%lu dropped so far). Reduce the load on the "
+        "recorder or the number of buffer-aware topics.",
+        get_topic_name(), static_cast<unsigned long>(total));  // NOLINT(runtime/int)
+      if (on_stale_message_) {
+        on_stale_message_(total);
+      }
+      return;
+    }
     auto serialized = std::make_shared<rclcpp::SerializedMessage>(0);
     const rmw_ret_t ret = rmw_serialize(
       message.get(), type_supports_->rmw_ts, &serialized->get_rcl_serialized_message());
@@ -209,7 +293,8 @@ private:
     const std::string & topic_name,
     const rclcpp::QoS & qos,
     const rclcpp::SubscriptionOptions & options,
-    Callback callback)
+    Callback callback,
+    StaleMessageCallback on_stale_message)
   : rclcpp::SubscriptionBase(
       node_base,
       *type_supports->rmw_ts,
@@ -219,11 +304,15 @@ private:
       options.use_default_callbacks,
       rclcpp::DeliveredMessageKind::ROS_MESSAGE),
     type_supports_(std::move(type_supports)),
-    callback_(std::move(callback))
+    callback_(std::move(callback)),
+    on_stale_message_(std::move(on_stale_message))
   {}
 
   std::shared_ptr<TypeSupports> type_supports_;
   Callback callback_;
+  StaleMessageCallback on_stale_message_;
+  std::atomic<uint64_t> stale_messages_dropped_{0};
+  rclcpp::Clock warn_clock_{RCL_STEADY_TIME};
 };
 
 }  // namespace rosbag2_transport

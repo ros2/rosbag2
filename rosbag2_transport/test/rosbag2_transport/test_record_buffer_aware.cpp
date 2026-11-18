@@ -296,3 +296,95 @@ TEST_F(RecordIntegrationTestFixture, buffer_aware_topics_without_a_backend_fails
       std::move(writer_), storage_options_, record_options),
     std::invalid_argument);
 }
+
+namespace
+{
+/// A minimal non-CPU buffer implementation, to reproduce what a buffer backend delivers when the
+/// payload of a message could not be imported in time: a non-CPU buffer with no elements.
+class FakeBackendBufferImpl : public rosidl::BufferImplBase<uint8_t>
+{
+public:
+  explicit FakeBackendBufferImpl(size_t size)
+  : size_(size) {}
+  std::string get_backend_type() const override {return "fake";}
+  size_t size() const override {return size_;}
+  std::unique_ptr<rosidl::BufferImplBase<uint8_t>> to_cpu() const override
+  {
+    return std::make_unique<rosidl::CpuBufferImpl<uint8_t>>();
+  }
+  std::unique_ptr<rosidl::BufferImplBase<uint8_t>> clone() const override
+  {
+    return std::make_unique<FakeBackendBufferImpl>(size_);
+  }
+
+private:
+  size_t size_;
+};
+
+rosidl::Buffer<uint8_t> fake_backend_buffer(size_t size)
+{
+  return rosidl::Buffer<uint8_t>(std::make_unique<FakeBackendBufferImpl>(size));
+}
+}  // namespace
+
+TEST(stale_buffer_detection, only_an_empty_non_cpu_buffer_is_stale)
+{
+  using rosbag2_transport::message_has_stale_buffer;
+  const auto * members = static_cast<const rosidl_typesupport_introspection_cpp::MessageMembers *>(
+    introspection_type_support("test_msgs/msg/UnboundedSequences")->data);
+
+  test_msgs::msg::UnboundedSequences message;
+  // A default message has empty CPU buffers, which are legitimate empty arrays.
+  EXPECT_FALSE(message_has_stale_buffer(&message, members));
+
+  message.uint8_values = fake_backend_buffer(0);
+  EXPECT_TRUE(message_has_stale_buffer(&message, members));
+
+  message.uint8_values = fake_backend_buffer(5);
+  EXPECT_FALSE(message_has_stale_buffer(&message, members));
+
+  // A whole new CPU buffer replaces the backend one. Assigning a vector to a non-CPU buffer
+  // throws.
+  message.uint8_values = rosidl::Buffer<uint8_t>(std::vector<uint8_t>{1, 2, 3});
+  EXPECT_FALSE(message_has_stale_buffer(&message, members));
+
+  EXPECT_FALSE(message_has_stale_buffer(nullptr, members));
+  EXPECT_FALSE(message_has_stale_buffer(&message, nullptr));
+}
+
+// A message whose backend buffer arrived empty must be dropped and counted, never passed on.
+TEST_F(RecordIntegrationTestFixture, stale_backend_message_is_dropped_and_reported)
+{
+  auto node = std::make_shared<rclcpp::Node>("stale_buffer_test_node");
+  size_t delivered = 0;
+  uint64_t reported_total = 0;
+  size_t reported_calls = 0;
+  auto subscription = std::make_shared<rosbag2_transport::BufferAwareSubscription>(
+    node->get_node_base_interface().get(), "/stale_topic", "test_msgs/msg/UnboundedSequences",
+    rclcpp::QoS(10), rclcpp::SubscriptionOptions(),
+    [&](std::shared_ptr<const rclcpp::SerializedMessage>, const rclcpp::MessageInfo &) {
+      ++delivered;
+    },
+    [&](uint64_t total) {
+      reported_total = total;
+      ++reported_calls;
+    });
+  rclcpp::MessageInfo message_info;
+
+  auto stale = subscription->create_message();
+  static_cast<test_msgs::msg::UnboundedSequences *>(stale.get())->uint8_values =
+    fake_backend_buffer(0);
+  subscription->handle_message(stale, message_info);
+  EXPECT_EQ(0u, delivered);
+  EXPECT_EQ(1u, reported_calls);
+  EXPECT_EQ(1u, reported_total);
+  EXPECT_EQ(1u, subscription->stale_messages_dropped());
+
+  auto intact = subscription->create_message();
+  static_cast<test_msgs::msg::UnboundedSequences *>(intact.get())->uint8_values =
+    std::vector<uint8_t>{1, 2, 3};
+  subscription->handle_message(intact, message_info);
+  EXPECT_EQ(1u, delivered);
+  EXPECT_EQ(1u, reported_calls);
+  EXPECT_EQ(1u, subscription->stale_messages_dropped());
+}
