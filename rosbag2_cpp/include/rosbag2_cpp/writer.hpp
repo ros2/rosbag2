@@ -141,6 +141,14 @@ public:
   void split_bagfile();
 
   /**
+   * Close the current bag and open a new one in the new_uri directory, which must not exist yet.
+   * The new bag gets its own metadata.yaml and its file counter restarted at 0.
+   * \throws std::runtime_error if new_uri already exists or can't be created, or in snapshot
+   * mode. The current bag keeps recording in these cases.
+   */
+  void split_bagfile(const std::string & new_uri);
+
+  /**
    * \brief Removes a new topic in the underlying storage.
    * \details Expected to be used if creation of subscription fails and cleanup is needed.
    * \note If writer is not open, this will just remove the topic information locally.

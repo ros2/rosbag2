@@ -19,6 +19,7 @@
 #include <cstdint>
 #include <ctime>
 #include <filesystem>
+#include <fstream>
 #include <iomanip>
 #include <iostream>
 #include <memory>
@@ -487,6 +488,110 @@ TEST_F(SequentialWriterTest, sequantial_writer_call_metadata_update_on_bag_split
   EXPECT_EQ(v_intercepted_update_metadata_[2].files.size(), 2u);   // On opening second bag file
   EXPECT_EQ(v_intercepted_update_metadata_[3].files.size(), 2u);   // On writer destruction
   EXPECT_EQ(v_intercepted_update_metadata_[3].message_count, 2 * kNumMessagesToWrite);
+}
+
+TEST_F(SequentialWriterTest, split_bagfile_to_new_uri_starts_a_new_bag)
+{
+  const std::string test_topic_name = "test_topic";
+  const std::string test_topic_type = "test_msgs/BasicTypes";
+
+  auto sequential_writer = std::make_unique<rosbag2_cpp::writers::SequentialWriter>(
+    std::move(storage_factory_), converter_factory_, std::move(metadata_io_));
+  writer_ = std::make_unique<rosbag2_cpp::Writer>(std::move(sequential_writer));
+
+  std::string rmw_format = "rmw_format";
+  writer_->open(storage_options_, {rmw_format, rmw_format});
+  writer_->create_topic({0u, test_topic_name, test_topic_type, "", {}, ""});
+
+  std::vector<std::string> closed_files;
+  std::vector<std::string> opened_files;
+  rosbag2_cpp::bag_events::WriterEventCallbacks callbacks;
+  callbacks.write_split_callback = [&](rosbag2_cpp::bag_events::BagSplitInfo & info) {
+      closed_files.emplace_back(info.closed_file);
+      opened_files.emplace_back(info.opened_file);
+    };
+  writer_->add_event_callbacks(callbacks);
+
+  writer_->write(make_test_msg());
+
+  const auto new_uri = (tmp_dir_ / "new_bag").string();
+  writer_->split_bagfile(new_uri);
+
+  EXPECT_NO_THROW(writer_->write(make_test_msg()));
+  EXPECT_TRUE(fs::is_directory(new_uri));
+
+  EXPECT_EQ(fs::path(fake_storage_uri_).parent_path(), fs::path(new_uri));
+  EXPECT_TRUE(matches_filename_pattern(fake_storage_uri_, "new_bag", 0));
+
+  ASSERT_EQ(closed_files.size(), 1u);
+  EXPECT_EQ(fs::path(closed_files[0]).parent_path(), tmp_dir_ / bag_base_dir_);
+  EXPECT_TRUE(matches_filename_pattern(closed_files[0], bag_base_dir_, 0));
+  EXPECT_EQ(opened_files[0], fake_storage_uri_);
+
+  writer_->close();
+}
+
+TEST_F(SequentialWriterTest, split_bagfile_to_new_uri_leaves_writer_usable_when_it_fails)
+{
+  const std::string test_topic_name = "test_topic";
+  const std::string test_topic_type = "test_msgs/BasicTypes";
+
+  auto sequential_writer = std::make_unique<rosbag2_cpp::writers::SequentialWriter>(
+    std::move(storage_factory_), converter_factory_, std::move(metadata_io_));
+  writer_ = std::make_unique<rosbag2_cpp::Writer>(std::move(sequential_writer));
+
+  std::string rmw_format = "rmw_format";
+  writer_->open(storage_options_, {rmw_format, rmw_format});
+  writer_->create_topic({0u, test_topic_name, test_topic_type, "", {}, ""});
+
+  writer_->write(make_test_msg());
+  const auto original_storage_uri = fake_storage_uri_;
+
+  const auto occupied_dir = tmp_dir_ / "already_there";
+  ASSERT_TRUE(fs::create_directories(occupied_dir));
+  EXPECT_THROW(writer_->split_bagfile(occupied_dir.string()), std::runtime_error);
+
+  const auto occupied_file = tmp_dir_ / "a_regular_file";
+  std::ofstream(occupied_file.string()) << "not a bag";
+  EXPECT_THROW(writer_->split_bagfile(occupied_file.string()), std::runtime_error);
+
+  // The failed splits must leave the writer recording into the original bag
+  EXPECT_NO_THROW(writer_->write(make_test_msg()));
+  EXPECT_EQ(fake_storage_uri_, original_storage_uri);
+  EXPECT_NO_THROW(writer_->close());
+}
+
+TEST_F(SequentialWriterTest, split_bagfile_to_new_uri_throws_on_empty_uri)
+{
+  auto sequential_writer = std::make_unique<rosbag2_cpp::writers::SequentialWriter>(
+    std::move(storage_factory_), converter_factory_, std::move(metadata_io_));
+  writer_ = std::make_unique<rosbag2_cpp::Writer>(std::move(sequential_writer));
+
+  std::string rmw_format = "rmw_format";
+  writer_->open(storage_options_, {rmw_format, rmw_format});
+
+  EXPECT_THROW(writer_->split_bagfile(""), std::runtime_error);
+  EXPECT_NO_THROW(writer_->close());
+}
+
+TEST_F(SequentialWriterTest, split_bagfile_to_new_uri_throws_in_snapshot_mode)
+{
+  storage_options_.max_cache_size = 700;
+  storage_options_.snapshot_mode = true;
+
+  auto sequential_writer = std::make_unique<rosbag2_cpp::writers::SequentialWriter>(
+    std::move(storage_factory_), converter_factory_, std::move(metadata_io_));
+  writer_ = std::make_unique<rosbag2_cpp::Writer>(std::move(sequential_writer));
+
+  std::string rmw_format = "rmw_format";
+  writer_->open(storage_options_, {rmw_format, rmw_format});
+  const auto original_storage_uri = fake_storage_uri_;
+
+  const auto new_uri = (tmp_dir_ / "new_bag").string();
+  EXPECT_THROW(writer_->split_bagfile(new_uri), std::runtime_error);
+  EXPECT_FALSE(fs::exists(new_uri));
+  EXPECT_EQ(fake_storage_uri_, original_storage_uri);
+  EXPECT_NO_THROW(writer_->close());
 }
 
 TEST_F(SequentialWriterTest, open_throws_error_if_converter_plugin_does_not_exist) {

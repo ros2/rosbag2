@@ -240,6 +240,10 @@ The Rosbag2 recorder provides the following services for remote control, which c
     - `split_time`: target time; unset or past times cause immediate split.
     - `split_mode`: one of `node_time`, `publish_time`, `receive_time`.
     - `tracking_topic_name`: optional topic for timestamp-based evaluation.
+    - `output_uri`: optional directory for the new bag. It must not exist yet. The current bag is
+      finalized and recording continues in a new bag there, with its file index back at 0.
+      Not supported in snapshot mode.
+      If empty, the recorder rolls over to the next file in the current bag directory.
 * `~/snapshot [rosbag2_interfaces/srv/Snapshot]`
   * enabled if `--snapshot-mode` is specified. Takes no arguments, triggers a snapshot.
 * `~/record [rosbag2_interfaces/srv/Record]`
