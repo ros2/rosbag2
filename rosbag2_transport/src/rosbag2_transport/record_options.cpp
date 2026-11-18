@@ -40,7 +40,8 @@ Node convert<rosbag2_transport::RecordOptions>::encode(
     include_hidden_topics, include_unpublished_topics, ignore_leaf_topics,
     start_paused, use_sim_time, static_topics_uri, disable_keyboard_controls,
     statistics_max_publishing_rate, repeat_transient_local_messages,
-    repeat_all_transient_local_depth, acceptable_buffer_backends] = record_options;
+    repeat_all_transient_local_depth, acceptable_buffer_backends,
+    buffer_aware_topics] = record_options;
   Node node;
   node["all_topics"] = all_topics;
   node["all_services"] = all_services;
@@ -79,6 +80,7 @@ Node convert<rosbag2_transport::RecordOptions>::encode(
   node["repeat_transient_local_messages"] = repeat_transient_local_messages;
   node["repeat_all_transient_local_depth"] = repeat_all_transient_local_depth;
   node["acceptable_buffer_backends"] = acceptable_buffer_backends;
+  node["buffer_aware_topics"] = buffer_aware_topics;
   return node;
 }
 
@@ -99,7 +101,8 @@ bool convert<rosbag2_transport::RecordOptions>::decode(
     include_hidden_topics, include_unpublished_topics, ignore_leaf_topics,
     start_paused, use_sim_time, static_topics_uri, disable_keyboard_controls,
     statistics_max_publishing_rate, repeat_transient_local_messages,
-    repeat_all_transient_local_depth, acceptable_buffer_backends] = record_options;
+    repeat_all_transient_local_depth, acceptable_buffer_backends,
+    buffer_aware_topics] = record_options;
 
   optional_assign<bool>(node, "all_topics", all_topics);
   optional_assign<bool>(node, "all_services", all_services);
@@ -162,6 +165,7 @@ bool convert<rosbag2_transport::RecordOptions>::decode(
   optional_assign<uint32_t>(node, "repeat_all_transient_local_depth",
     repeat_all_transient_local_depth);
   optional_assign<std::string>(node, "acceptable_buffer_backends", acceptable_buffer_backends);
+  optional_assign<std::vector<std::string>>(node, "buffer_aware_topics", buffer_aware_topics);
   return true;
 }
 

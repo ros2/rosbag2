@@ -112,6 +112,12 @@ public:
   /// thread, which removes that cost from the publisher. The bag content is the same.
   std::string acceptable_buffer_backends = "cpu";
 
+  /// \brief Topics that are recorded through the buffer-aware subscription when
+  /// acceptable_buffer_backends names a non-CPU backend. All other topics keep the generic
+  /// subscription and its lower per-message cost. Empty means every topic is buffer-aware. Names
+  /// are expanded like other topic names. Requires acceptable_buffer_backends other than "cpu".
+  std::vector<std::string> buffer_aware_topics{};
+
   /// Note: Please don't forget to update the YAML serialization and deserialization logic in
   /// `record_options.cpp` and the test case `test_yaml_serialization_deserialization`
   /// in `test_record_options.cpp` when updating the fields in RecordOptions.

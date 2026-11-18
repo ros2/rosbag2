@@ -105,6 +105,7 @@ class RecordOptions:
     all_actions: bool
     all_services: bool
     all_topics: bool
+    buffer_aware_topics: list[str]
     compression_format: str
     compression_mode: str
     compression_queue_size: int

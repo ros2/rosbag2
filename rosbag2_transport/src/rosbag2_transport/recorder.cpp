@@ -396,6 +396,11 @@ private:
   std::shared_ptr<rclcpp::SubscriptionBase> create_subscription(
     const std::string & topic_name, const std::string & topic_type, const rclcpp::QoS & qos);
 
+  /// Whether a topic is recorded through BufferAwareSubscription: a non-CPU backend is accepted,
+  /// the topic is selected (or no topics were selected), and its type can carry a Buffer.
+  bool should_use_buffer_aware_subscription(
+    const std::string & topic_name, const std::string & topic_type) const;
+
   /**
    * Find the QoS profile that should be used for subscribing.
    *
@@ -515,6 +520,8 @@ private:
   std::mutex start_stop_transition_mutex_;
   std::mutex discovery_mutex_;
   mutable std::mutex subscriptions_mutex_;
+  /// Fully qualified names from record_options_.buffer_aware_topics.
+  std::unordered_set<std::string> buffer_aware_topics_;
   std::atomic<bool> discovery_running_ = false;
   std::atomic_uchar paused_ = 0;
   std::atomic<bool> in_recording_ = false;
@@ -625,6 +632,19 @@ RecorderImpl::RecorderImpl(
             "The /clock topic needs to be discovered to record with sim time.");
   }
   validate_acceptable_buffer_backends(record_options_.acceptable_buffer_backends);
+  if (!record_options_.buffer_aware_topics.empty()) {
+    const auto & backends = record_options_.acceptable_buffer_backends;
+    if (backends.empty() || backends == "cpu") {
+      throw std::invalid_argument(
+              "buffer_aware_topics requires acceptable_buffer_backends to name a backend other "
+              "than 'cpu'.");
+    }
+    for (const auto & topic : record_options_.buffer_aware_topics) {
+      buffer_aware_topics_.insert(
+        rclcpp::expand_topic_or_service_name(
+          topic, node->get_name(), node->get_namespace(), false));
+    }
+  }
   if (!record_options_.disable_keyboard_controls) {
     std::string key_str = enum_key_code_to_str(Recorder::kPauseResumeToggleKey);
     toggle_paused_key_callback_handle_ =
@@ -1872,6 +1892,44 @@ void RecorderImpl::subscribe_topic(const rosbag2_storage::TopicMetadata & topic)
   }
 }
 
+bool RecorderImpl::should_use_buffer_aware_subscription(
+  const std::string & topic_name, const std::string & topic_type) const
+{
+  const auto & backends = record_options_.acceptable_buffer_backends;
+  if (backends.empty() || backends == "cpu") {
+    return false;
+  }
+  const bool explicitly_selected = buffer_aware_topics_.count(topic_name) > 0;
+  if (!buffer_aware_topics_.empty() && !explicitly_selected) {
+    return false;
+  }
+  // A type without a rosidl::Buffer field cannot carry a backend payload, so the generic
+  // subscription is equivalent and avoids deserializing and re-serializing every message.
+  try {
+    auto library = rclcpp::get_typesupport_library(
+      topic_type, "rosidl_typesupport_introspection_cpp");
+    const auto * introspection_ts = rclcpp::get_message_typesupport_handle(
+      topic_type, "rosidl_typesupport_introspection_cpp", *library);
+    if (!message_type_has_buffer_field(introspection_ts)) {
+      if (explicitly_selected) {
+        RCLCPP_WARN_STREAM(
+          node->get_logger(),
+          "Topic '" << topic_name << "' was selected as buffer-aware, but its type '" <<
+            topic_type << "' has no rosidl::Buffer field. Recording it with a generic "
+          "subscription.");
+      }
+      return false;
+    }
+  } catch (const std::exception & e) {
+    RCLCPP_WARN_STREAM(
+      node->get_logger(),
+      "Could not inspect type '" << topic_type << "' of topic '" << topic_name <<
+        "' for buffer fields (" << e.what() << "). Recording it with a generic subscription.");
+    return false;
+  }
+  return true;
+}
+
 std::shared_ptr<rclcpp::SubscriptionBase>
 RecorderImpl::create_subscription(
   const std::string & topic_name, const std::string & topic_type, const rclcpp::QoS & qos)
@@ -1919,8 +1977,7 @@ RecorderImpl::create_subscription(
       }
     };
 
-  const auto & backends = record_options_.acceptable_buffer_backends;
-  if (backends.empty() || backends == "cpu") {
+  if (!should_use_buffer_aware_subscription(topic_name, topic_type)) {
     return node->create_generic_subscription(
       topic_name, topic_type, qos, subscription_callback, sub_options);
   }
@@ -1928,7 +1985,7 @@ RecorderImpl::create_subscription(
   // A non-CPU buffer backend is accepted: receive the backend buffer through the typed path and
   // serialize it here, instead of making each publisher convert it to CPU memory in publish().
   // (A generic subscription cannot be used: serialized takes of backend messages are rejected.)
-  sub_options.acceptable_buffer_backends = backends;
+  sub_options.acceptable_buffer_backends = record_options_.acceptable_buffer_backends;
   auto subscription = std::make_shared<BufferAwareSubscription>(
     node->get_node_base_interface().get(), topic_name, topic_type, qos, sub_options,
     subscription_callback);

@@ -31,9 +31,36 @@
 #include "rmw/rmw.h"
 #include "rosbag2_cpp/types/introspection_message.hpp"
 #include "rosidl_runtime_c/message_type_support_struct.h"
+#include "rosidl_typesupport_introspection_cpp/field_types.hpp"
+#include "rosidl_typesupport_introspection_cpp/message_introspection.hpp"
 
 namespace rosbag2_transport
 {
+
+/// True if a message type has a rosidl::Buffer field, directly or in a nested message. Only such
+/// types can carry a buffer backend payload; for every other type a generic subscription is
+/// equivalent and cheaper. Takes the introspection type support of the message.
+inline bool message_type_has_buffer_field(const rosidl_message_type_support_t * introspection_ts)
+{
+  namespace introspection = rosidl_typesupport_introspection_cpp;
+  if (!introspection_ts || !introspection_ts->data) {
+    return false;
+  }
+  const auto * members = static_cast<const introspection::MessageMembers *>(
+    introspection_ts->data);
+  for (uint32_t i = 0; i < members->member_count_; ++i) {
+    const introspection::MessageMember & member = members->members_[i];
+    if (member.is_rosidl_buffer_) {
+      return true;
+    }
+    if (member.type_id_ == introspection::ROS_TYPE_MESSAGE &&
+      message_type_has_buffer_field(member.members_))
+    {
+      return true;
+    }
+  }
+  return false;
+}
 
 /// A subscription that takes messages through the typed (deserialized) path, so that messages
 /// delivered through a non-CPU buffer backend (for example CUDA) are received as live backend

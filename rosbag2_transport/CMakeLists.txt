@@ -522,6 +522,7 @@ if(BUILD_TESTING)
   call_for_each_rmw_implementation(test_record_all_no_discovery_for_rmw_implementation)
 
   ament_add_gmock_executable(test_record_buffer_aware test/rosbag2_transport/test_record_buffer_aware.cpp)
+  target_include_directories(test_record_buffer_aware PRIVATE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src/rosbag2_transport>)
   target_link_libraries(test_record_buffer_aware
     ament_cmake_ros_core::ament_ros_defaults
     rosbag2_transport

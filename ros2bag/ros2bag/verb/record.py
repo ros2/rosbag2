@@ -244,6 +244,12 @@ def add_recorder_arguments(parser: ArgumentParser) -> None:
              'accepted, the recorder receives the backend buffer and converts and serializes it '
              'on its own thread. The bag content is the same. Default is %(default)s.')
     parser.add_argument(
+        '--buffer-aware-topics', type=str, metavar='Topic', nargs='+',
+        help='Space-delimited list of topics recorded through the buffer-aware subscription '
+             'when --acceptable-buffer-backends names a non-cpu backend. All other topics keep '
+             'the generic subscription and its lower per-message cost. By default every topic '
+             'whose message type has a rosidl::Buffer field is buffer-aware.')
+    parser.add_argument(
         '--node-name', type=str, default='rosbag2_recorder',
         help='Specify the recorder node name. Default is %(default)s.')
     parser.add_argument(
@@ -339,6 +345,10 @@ def validate_parsed_arguments(args, uri) -> str:
              args.all_actions or args.regex):
         return print_error('--exclude-regex argument requires either --all, '
                            '--all-topics, --topic-types, --all-services, --all-actions or --regex')
+
+    if args.buffer_aware_topics and args.acceptable_buffer_backends.strip() in ('', 'cpu'):
+        return print_error('--buffer-aware-topics requires --acceptable-buffer-backends to name '
+                           "a backend other than 'cpu'")
 
     if args.exclude_topics and not \
             (args.all or args.all_topics or args.topic_types or args.regex):
@@ -517,6 +527,8 @@ class RecordVerb(VerbExtension):
         record_options.repeat_transient_local_messages = args.repeat_transient_local_messages
         record_options.repeat_all_transient_local_depth = args.repeat_all_transient_local
         record_options.acceptable_buffer_backends = args.acceptable_buffer_backends
+        record_options.buffer_aware_topics = \
+            args.buffer_aware_topics if args.buffer_aware_topics else []
 
         try:
             recorder = Recorder(storage_options, record_options, args.log_level, args.node_name)
