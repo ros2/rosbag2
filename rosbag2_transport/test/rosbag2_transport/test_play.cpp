@@ -878,34 +878,29 @@ TEST_F(RosBag2PlayTestFixture, high_freq_topics_does_not_starve_in_multibag_play
     EXPECT_EQ(published_msgs_per_topic[topic_name].size(), num_msgs)
             << "Unexpected number of messages for topic " << topic_name;
   }
-  // Verify the time intervals between published messages per topic
-  // Allow for a tolerance of high_freq_topic_period_ms / 2 = 10 ms
-  const rcutils_duration_value_t tolerance_ms = high_freq_topic_period_ms / 2;  // 10 ms;
+  // The player schedules against absolute time, so a late wakeup is followed by a short gap.
+  // Check each message against its expected offset from the topic's first message instead of
+  // checking consecutive gaps. Starvation would delay messages by many periods.
+  // Tolerance covers two coarse timer ticks (~15.6 ms each on Windows).
+  const rcutils_duration_value_t tolerance_ms = 32;
   for (const auto & [topic_name, published_msgs] : published_msgs_per_topic) {
+    rcutils_duration_value_t period_ms = 0;
     if (topic_name == high_freq_topic1_name) {
-      // High frequency topic, expect messages to be published at intervals of about
-      // high_freq_topic_period_ms
-      for (size_t i = 1; i < published_msgs.size(); i++) {
-        auto time_diff = std::chrono::duration_cast<std::chrono::milliseconds>(
-          published_msgs[i].first - published_msgs[i - 1].first).count();
-        EXPECT_THAT(time_diff,
-                    AllOf(Ge(high_freq_topic_period_ms - tolerance_ms),
-                          Le(high_freq_topic_period_ms + tolerance_ms))
-        ) << "msg_number=" << i << ", time_diff=" << time_diff;
-      }
+      period_ms = high_freq_topic_period_ms;
     } else if (topic_name == low_freq_topic1_name || topic_name == low_freq_topic2_name) {
-      // Low frequency topics, expect messages to be published at intervals of about
-      // low_freq_topic_period_ms
-      for (size_t i = 1; i < published_msgs.size(); i++) {
-        auto time_diff = std::chrono::duration_cast<std::chrono::milliseconds>(
-          published_msgs[i].first - published_msgs[i - 1].first).count();
-        EXPECT_THAT(time_diff,
-                    AllOf(Ge(low_freq_topic_period_ms - tolerance_ms),
-                          Le(low_freq_topic_period_ms + tolerance_ms))
-        ) << "msg_number=" << i << ", time_diff=" << time_diff;
-      }
+      period_ms = low_freq_topic_period_ms;
     } else {
       FAIL() << "Unexpected topic name: " << topic_name;
+    }
+    for (size_t i = 1; i < published_msgs.size(); i++) {
+      auto offset_ms = std::chrono::duration_cast<std::chrono::milliseconds>(
+        published_msgs[i].first - published_msgs[0].first).count();
+      EXPECT_THAT(
+        offset_ms,
+        AllOf(
+          Ge(static_cast<int64_t>(i) * period_ms - tolerance_ms),
+          Le(static_cast<int64_t>(i) * period_ms + tolerance_ms))
+      ) << "topic=" << topic_name << ", msg_number=" << i << ", offset_ms=" << offset_ms;
     }
   }
 }
