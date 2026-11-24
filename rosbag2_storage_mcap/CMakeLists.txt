@@ -97,6 +97,7 @@ if(BUILD_TESTING)
   ament_add_gmock(test_mcap_storage test/rosbag2_storage_mcap/test_mcap_storage.cpp)
   target_link_libraries(test_mcap_storage
     ament_cmake_ros_core::ament_ros_defaults
+    mcap_vendor::mcap
     ${PROJECT_NAME}
     rosbag2_storage::rosbag2_storage
     rosbag2_test_common::rosbag2_test_common
