@@ -20,6 +20,8 @@
 
 using rosbag2_cpp::LocalMessageDefinitionSource;
 using rosbag2_cpp::parse_definition_dependencies;
+using ::testing::HasSubstr;
+using ::testing::Not;
 using ::testing::UnorderedElementsAre;
 
 TEST(test_local_message_definition_source, can_find_idl_includes)
@@ -86,6 +88,33 @@ TEST(test_local_message_definition_source, can_find_msg_deps)
     "================================================================================\n"
     "MSG: rosbag2_test_msgdefs/BasicMsg\n"
     "float32 c\n");
+}
+
+TEST(test_local_message_definition_source, wstring_is_not_a_dependency)
+{
+  // wstring is a primitive type
+  std::set<std::string> dependencies = parse_definition_dependencies(
+    LocalMessageDefinitionSource::Format::MSG,
+    "wstring a\n"
+    "wstring[3] b\n"
+    "wstring[<=3] c\n"
+    "wstring[] d\n"
+    "rosbag2_test_msgdefs/BasicMsg e\n",
+    "rosbag2_test_msgdefs", "");
+  EXPECT_THAT(dependencies, UnorderedElementsAre("rosbag2_test_msgdefs/BasicMsg"));
+}
+
+TEST(test_local_message_definition_source, can_find_msg_with_wstring_fields)
+{
+  // A message with wstring fields has no dependencies and is resolved in .msg format
+  LocalMessageDefinitionSource source;
+  auto result = source.get_full_text_ext("test_msgs/msg/WStrings", "/wstrings_topic");
+  EXPECT_EQ(result.encoding, "ros2msg");
+  EXPECT_THAT(result.encoded_message_definition, HasSubstr("wstring wstring_value\n"));
+  EXPECT_THAT(result.encoded_message_definition,
+    HasSubstr("wstring[] unbounded_sequence_of_wstrings"));
+  EXPECT_THAT(result.encoded_message_definition, Not(HasSubstr("MSG: ")));
+  EXPECT_THAT(result.encoded_message_definition, Not(HasSubstr("IDL: ")));
 }
 
 TEST(test_local_message_definition_source, can_find_msg_definition_in_nested_subfolder)
