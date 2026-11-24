@@ -89,7 +89,7 @@ static const std::regex IDL_FIELD_TYPE_REGEX{
 
 static const std::unordered_set<std::string> PRIMITIVE_TYPES{
   "bool", "byte", "char", "float32", "float64", "int8", "uint8",
-  "int16", "uint16", "int32", "uint32", "int64", "uint64", "string"};
+  "int16", "uint16", "int32", "uint32", "int64", "uint64", "string", "wstring"};
 
 static std::set<std::string> parse_msg_dependencies(
   const std::string & text,
