@@ -20,6 +20,7 @@
 #include <memory>
 #include <stdexcept>
 #include <string>
+#include <typeinfo>
 #include <utility>
 
 #include "rclcpp/logging.hpp"
@@ -40,6 +41,33 @@
 namespace rosbag2_cpp
 {
 
+namespace
+{
+// Avoid calling try_lock on a mutex already owned by this thread, including nested calls.
+class WriterOperationScope
+{
+public:
+  explicit WriterOperationScope(const Writer * writer)
+  : writer_(writer), previous_(current_) {current_ = this;}
+
+  ~WriterOperationScope() {current_ = previous_;}
+
+  static bool contains(const Writer * writer)
+  {
+    for (auto * scope = current_; scope; scope = scope->previous_) {
+      if (scope->writer_ == writer) {return true;}
+    }
+    return false;
+  }
+
+private:
+  const Writer * writer_;
+  WriterOperationScope * previous_;
+  static thread_local WriterOperationScope * current_;
+};
+
+thread_local WriterOperationScope * WriterOperationScope::current_ = nullptr;
+}  // namespace
 
 Writer::Writer(std::unique_ptr<rosbag2_cpp::writer_interfaces::BaseWriterInterface> writer_impl)
 : writer_impl_(std::move(writer_impl))
@@ -64,18 +92,43 @@ void Writer::open(
   const ConverterOptions & converter_options)
 {
   std::lock_guard<std::mutex> writer_lock(writer_mutex_);
+  WriterOperationScope scope(this);
   writer_impl_->open(storage_options, converter_options);
 }
 
 void Writer::close()
 {
   std::lock_guard<std::mutex> writer_lock(writer_mutex_);
+  WriterOperationScope scope(this);
   writer_impl_->close();
+}
+
+cache::CacheDropStatistics Writer::get_cache_drop_statistics() const
+{
+  if (WriterOperationScope::contains(this)) {
+    return {cache::CacheDropStatisticsStatus::busy, {}};
+  }
+  std::unique_lock<std::mutex> writer_lock(writer_mutex_, std::try_to_lock);
+  if (!writer_lock.owns_lock()) {
+    return {cache::CacheDropStatisticsStatus::busy, {}};
+  }
+  WriterOperationScope scope(this);
+  if (auto provider =
+    dynamic_cast<const cache::CacheDropStatisticsProvider *>(writer_impl_.get()))
+  {
+    return provider->get_cache_drop_statistics();
+  }
+  if (writer_impl_ && typeid(*writer_impl_) == typeid(writers::SequentialWriter)) {
+    return static_cast<const writers::SequentialWriter *>(writer_impl_.get())->
+           get_cache_drop_statistics();
+  }
+  return {};
 }
 
 void Writer::create_topic(const rosbag2_storage::TopicMetadata & topic_with_type)
 {
   std::lock_guard<std::mutex> writer_lock(writer_mutex_);
+  WriterOperationScope scope(this);
   writer_impl_->create_topic(topic_with_type);
 }
 
@@ -84,6 +137,7 @@ void Writer::create_topic(
   const rosbag2_storage::MessageDefinition & message_definition)
 {
   std::lock_guard<std::mutex> writer_lock(writer_mutex_);
+  WriterOperationScope scope(this);
   writer_impl_->create_topic(topic_with_type, message_definition);
 }
 
@@ -92,6 +146,7 @@ void Writer::create_transient_local_topic(
   size_t num_last_messages)
 {
   std::lock_guard<std::mutex> writer_lock(writer_mutex_);
+  WriterOperationScope scope(this);
   writer_impl_->create_transient_local_topic(topic_with_type, num_last_messages);
 }
 
@@ -101,6 +156,7 @@ void Writer::create_transient_local_topic(
   const rosbag2_storage::MessageDefinition & message_definition)
 {
   std::lock_guard<std::mutex> writer_lock(writer_mutex_);
+  WriterOperationScope scope(this);
   writer_impl_->create_transient_local_topic(
     topic_with_type, num_last_messages, message_definition);
 }
@@ -108,24 +164,28 @@ void Writer::create_transient_local_topic(
 void Writer::remove_topic(const rosbag2_storage::TopicMetadata & topic_with_type)
 {
   std::lock_guard<std::mutex> writer_lock(writer_mutex_);
+  WriterOperationScope scope(this);
   writer_impl_->remove_topic(topic_with_type);
 }
 
 bool Writer::take_snapshot()
 {
   std::lock_guard<std::mutex> writer_lock(writer_mutex_);
+  WriterOperationScope scope(this);
   return writer_impl_->take_snapshot();
 }
 
 void Writer::split_bagfile()
 {
   std::lock_guard<std::mutex> writer_lock(writer_mutex_);
+  WriterOperationScope scope(this);
   return writer_impl_->split_bagfile();
 }
 
 void Writer::write(std::shared_ptr<const rosbag2_storage::SerializedBagMessage> message)
 {
   std::lock_guard<std::mutex> writer_lock(writer_mutex_);
+  WriterOperationScope scope(this);
   writer_impl_->write(message);
 }
 

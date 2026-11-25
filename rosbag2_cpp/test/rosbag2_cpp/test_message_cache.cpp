@@ -14,11 +14,15 @@
 
 #include <gmock/gmock.h>
 
+#include <atomic>
 #include <chrono>
+#include <cstdarg>
 #include <cstddef>
 #include <cstdint>
+#include <cstdio>
 #include <numeric>
 #include <memory>
+#include <limits>
 #include <stdexcept>
 #include <string>
 #include <unordered_map>
@@ -27,6 +31,7 @@
 #include <thread>
 
 #include "rcutils/time.h"
+#include "rcutils/logging.h"
 #include "rosbag2_cpp/cache/message_cache.hpp"
 #include "rosbag2_cpp/cache/message_cache_buffer.hpp"
 #include "rosbag2_storage/ros_helper.hpp"
@@ -40,6 +45,21 @@ using namespace std::chrono_literals;
 
 namespace
 {
+std::string * captured_cache_log = nullptr;
+
+void capture_cache_log(
+  const rcutils_log_location_t *, int, const char *, rcutils_time_point_value_t,
+  const char * format, va_list * args)
+{
+  char text[1024];
+  std::vsnprintf(text, sizeof(text), format, *args);
+  if (captured_cache_log &&
+    std::string(text).find("Cache buffers lost messages per topic:") != std::string::npos)
+  {
+    *captured_cache_log = text;
+  }
+}
+
 // Helper to construct a test message with given timestamp and content.
 std::shared_ptr<rosbag2_storage::SerializedBagMessage> make_test_msg(
   const rcutils_time_point_value_t timestamp_ns = 0,
@@ -78,6 +98,18 @@ public:
   virtual ~MessageCacheTest() = default;
 
   const uint64_t cache_size_ {1 * 1000};  // ~1 Kb cache
+};
+
+class SeededMessageCache : public rosbag2_cpp::cache::MessageCache
+{
+public:
+  SeededMessageCache()
+  : MessageCache(1) {}
+
+  void seed(const std::string & topic, uint32_t count)
+  {
+    messages_dropped_per_topic_[topic] = count;
+  }
 };
 
 TEST_F(MessageCacheTest, message_cache_writes_full_producer_buffer) {
@@ -124,12 +156,112 @@ TEST_F(MessageCacheTest, message_cache_rejects_null_message) {
   bool result = true;
   ASSERT_NO_THROW(result = message_cache->push(nullptr));
   EXPECT_FALSE(result);
+  EXPECT_TRUE(message_cache->get_dropped_statistics().dropped_per_topic.empty());
 
   // Test message with null serialized data
   auto msg = make_test_msg();
   msg->serialized_data = nullptr;
   ASSERT_NO_THROW(result = message_cache->push(msg));
   EXPECT_FALSE(result);
+  EXPECT_EQ(message_cache->get_dropped_statistics().dropped_per_topic.at(msg->topic_name), 1u);
+}
+
+TEST_F(MessageCacheTest, dropped_statistics_are_per_topic_and_copied) {
+  rosbag2_cpp::cache::MessageCache cache(5);
+  auto first = make_test_msg(0, "12345");
+  auto topic_a = make_test_msg(0, "abc");
+  auto topic_b = make_test_msg(0, "abc");
+  topic_a->topic_name = "a";
+  topic_b->topic_name = "b";
+
+  ASSERT_TRUE(cache.push(first));
+  ASSERT_FALSE(cache.push(topic_a));
+  ASSERT_FALSE(cache.push(topic_a));
+  ASSERT_FALSE(cache.push(topic_b));
+  auto stats = cache.get_dropped_statistics();
+  EXPECT_EQ(stats.status, rosbag2_cpp::cache::CacheDropStatisticsStatus::available);
+  EXPECT_EQ(stats.dropped_per_topic.at("a"), 2u);
+  EXPECT_EQ(stats.dropped_per_topic.at("b"), 1u);
+  std::string log;
+  captured_cache_log = &log;
+  auto old_handler = rcutils_logging_get_output_handler();
+  rcutils_logging_set_output_handler(capture_cache_log);
+  cache.log_dropped();
+  rcutils_logging_set_output_handler(old_handler);
+  captured_cache_log = nullptr;
+  EXPECT_NE(log.find("\n\ta: 2"), std::string::npos);
+  EXPECT_NE(log.find("\n\tb: 1"), std::string::npos);
+  EXPECT_NE(log.find("\nTotal lost: 3"), std::string::npos);
+  stats.dropped_per_topic["a"] = 99;
+  EXPECT_EQ(cache.get_dropped_statistics().dropped_per_topic.at("a"), 2u);
+
+  cache.swap_buffers();
+  EXPECT_TRUE(cache.push(topic_a));
+  EXPECT_EQ(cache.get_dropped_statistics().dropped_per_topic.at("a"), 2u);
+}
+
+TEST_F(MessageCacheTest, dropped_statistics_are_safe_during_concurrent_pushes) {
+  rosbag2_cpp::cache::MessageCache cache(1);
+  auto first = make_test_msg(0, "x");
+  auto msg = make_test_msg(0, "y");
+  msg->topic_name = "concurrent";
+  ASSERT_TRUE(cache.push(first));
+  constexpr uint32_t iterations = 10000;
+  std::atomic<bool> done{false};
+  std::atomic<bool> first_drop{false};
+  std::atomic<bool> first_read{false};
+  std::thread producer([&]() {
+      for (uint32_t i = 0; i < iterations; ++i) {
+        cache.push(msg);
+        if (i == 0) {
+          first_drop = true;
+          while (!first_read) {std::this_thread::yield();}
+        }
+      }
+      done = true;
+    });
+  while (!first_drop) {std::this_thread::yield();}
+  uint64_t previous = 0;
+  size_t reads = 0;
+  while (!done) {
+    auto stats = cache.get_dropped_statistics();
+    ++reads;
+    auto found = stats.dropped_per_topic.find("concurrent");
+    if (found != stats.dropped_per_topic.end()) {
+      EXPECT_GE(found->second, previous);
+      previous = found->second;
+    }
+    first_read = true;
+  }
+  producer.join();
+  EXPECT_GT(reads, 0u);
+  EXPECT_EQ(cache.get_dropped_statistics().dropped_per_topic.at("concurrent"), iterations);
+}
+
+TEST_F(MessageCacheTest, dropped_statistics_continue_past_uint32_limit) {
+  SeededMessageCache cache;
+  auto msg = make_test_msg(0, "x");
+  msg->topic_name = "topic";
+  ASSERT_TRUE(cache.push(msg));
+  cache.seed("topic", std::numeric_limits<uint32_t>::max() - 1u);
+  ASSERT_FALSE(cache.push(msg));
+  EXPECT_EQ(cache.get_dropped_statistics().dropped_per_topic.at("topic"), 4294967295ull);
+  ASSERT_FALSE(cache.push(msg));
+  auto stats = cache.get_dropped_statistics();
+  EXPECT_EQ(stats.status, rosbag2_cpp::cache::CacheDropStatisticsStatus::available);
+  EXPECT_EQ(stats.dropped_per_topic.at("topic"), 4294967296ull);
+  cache.swap_buffers();
+  ASSERT_TRUE(cache.push(msg));
+  ASSERT_FALSE(cache.push(msg));
+  EXPECT_EQ(cache.get_dropped_statistics().dropped_per_topic.at("topic"), 4294967297ull);
+  std::string log;
+  captured_cache_log = &log;
+  auto old_handler = rcutils_logging_get_output_handler();
+  rcutils_logging_set_output_handler(capture_cache_log);
+  cache.log_dropped();
+  rcutils_logging_set_output_handler(old_handler);
+  captured_cache_log = nullptr;
+  EXPECT_NE(log.find("\n\ttopic: 4294967297"), std::string::npos);
 }
 
 TEST_F(MessageCacheTest, constructor_throws_if_both_limits_are_zero) {
