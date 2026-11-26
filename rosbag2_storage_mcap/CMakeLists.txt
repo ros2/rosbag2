@@ -42,28 +42,6 @@ target_link_libraries(${PROJECT_NAME} PRIVATE
   rosbag2_storage::rosbag2_storage
 )
 
-set(MCAP_COMPILE_DEFS)
-# COMPATIBILITY(foxy) - 0.3.x is the Foxy release
-if(${rosbag2_storage_VERSION} VERSION_GREATER_EQUAL 0.4.0)
-  list(APPEND MCAP_COMPILE_DEFS ROSBAG2_STORAGE_MCAP_HAS_STORAGE_OPTIONS)
-  list(APPEND MCAP_COMPILE_DEFS ROSBAG2_STORAGE_MCAP_WRITER_CREATES_DIRECTORY)
-endif()
-# COMPATIBILITY(galactic) - 0.9.x is the Galactic release
-if(${rosbag2_storage_VERSION} VERSION_GREATER_EQUAL 0.10.0)
-  list(APPEND MCAP_COMPILE_DEFS ROSBAG2_STORAGE_MCAP_OVERRIDE_SEEK_METHOD)
-endif()
-# COMPATIBILITY(foxy, galactic) - 0.15.x is the Humble release
-if(${rosbag2_storage_VERSION} VERSION_GREATER_EQUAL 0.15.0)
-  list(APPEND MCAP_COMPILE_DEFS ROSBAG2_STORAGE_MCAP_HAS_YAML_HPP)
-endif()
-# COMPATIBILITY(foxy, galactic, humble, rolling:0.17.x, rolling:0.18.x)
-if(${rosbag2_storage_VERSION} VERSION_GREATER_EQUAL 0.18.0)
-  list(APPEND MCAP_COMPILE_DEFS ROSBAG2_STORAGE_MCAP_HAS_SET_READ_ORDER)
-  list(APPEND MCAP_COMPILE_DEFS ROSBAG2_STORAGE_MCAP_HAS_UPDATE_METADATA)
-endif()
-
-target_compile_definitions(${PROJECT_NAME} PRIVATE ${MCAP_COMPILE_DEFS})
-
 # Causes the visibility macros to use dllexport rather than dllimport,
 # which is appropriate when building the dll but not consuming it.
 target_compile_definitions(${PROJECT_NAME} PRIVATE "ROSBAG2_STORAGE_MCAP_BUILDING_LIBRARY")
@@ -102,7 +80,6 @@ if(BUILD_TESTING)
     rosbag2_test_common::rosbag2_test_common
     std_msgs::std_msgs
   )
-  target_compile_definitions(test_mcap_storage PRIVATE ${MCAP_COMPILE_DEFS})
 
   ament_add_gmock(test_mcap_topic_filter test/rosbag2_storage_mcap/test_mcap_topic_filter.cpp)
   target_link_libraries(test_mcap_topic_filter
@@ -112,7 +89,6 @@ if(BUILD_TESTING)
     rosbag2_test_common::rosbag2_test_common
     std_msgs::std_msgs
   )
-  target_compile_definitions(test_mcap_topic_filter PRIVATE ${MCAP_COMPILE_DEFS})
 
 endif()
 

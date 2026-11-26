@@ -103,16 +103,6 @@ struct McapWriterOptions : mcap::McapWriterOptions
 
 namespace YAML
 {
-#ifndef ROSBAG2_STORAGE_MCAP_HAS_YAML_HPP
-template <typename T>
-void optional_assign(const Node & node, std::string field, T & assign_to)
-{
-  if (node[field]) {
-    assign_to = node[field].as<T>();
-  }
-}
-#endif
-
 DECLARE_YAML_VALUE_MAP(mcap::Compression, std::string,
                        {{mcap::Compression::None, "None"},
                         {mcap::Compression::Lz4, "Lz4"},
@@ -178,17 +168,9 @@ public:
   ~MCAPStorage() override;
 
   /** BaseIOInterface **/
-#ifdef ROSBAG2_STORAGE_MCAP_HAS_STORAGE_OPTIONS
   void open(const rosbag2_storage::StorageOptions & storage_options,
             rosbag2_storage::storage_interfaces::IOFlag io_flag =
               rosbag2_storage::storage_interfaces::IOFlag::READ_WRITE) override;
-  void open(const std::string & uri, rosbag2_storage::storage_interfaces::IOFlag io_flag =
-                                       rosbag2_storage::storage_interfaces::IOFlag::READ_WRITE);
-#else
-  void open(const std::string & uri,
-            rosbag2_storage::storage_interfaces::IOFlag io_flag =
-              rosbag2_storage::storage_interfaces::IOFlag::READ_WRITE) override;
-#endif
 
   /** BaseInfoInterface **/
   rosbag2_storage::BagMetadata get_metadata() override;
@@ -197,9 +179,7 @@ public:
   std::string get_storage_identifier() const override;
 
   /** BaseReadInterface **/
-#ifdef ROSBAG2_STORAGE_MCAP_HAS_SET_READ_ORDER
   bool set_read_order(const rosbag2_storage::ReadOrder &) override;
-#endif
   bool has_next() override;
   std::shared_ptr<rosbag2_storage::SerializedBagMessage> read_next() override;
   std::vector<rosbag2_storage::TopicMetadata> get_all_topics_and_types() override;
@@ -209,11 +189,7 @@ public:
   /** ReadOnlyInterface **/
   void set_filter(const rosbag2_storage::StorageFilter & storage_filter) override;
   void reset_filter() override;
-#ifdef ROSBAG2_STORAGE_MCAP_OVERRIDE_SEEK_METHOD
   void seek(const rcutils_time_point_value_t & time_stamp) override;
-#else
-  void seek(const rcutils_time_point_value_t & timestamp);
-#endif
 
   /** ReadWriteInterface **/
   uint64_t get_minimum_split_file_size() const override;
@@ -228,9 +204,7 @@ public:
   void create_topic(const rosbag2_storage::TopicMetadata & topic,
                     const rosbag2_storage::MessageDefinition & message_definition) override;
   void remove_topic(const rosbag2_storage::TopicMetadata & topic) override;
-#ifdef ROSBAG2_STORAGE_MCAP_HAS_UPDATE_METADATA
   void update_metadata(const rosbag2_storage::BagMetadata &) override;
-#endif
 
 private:
   void read_metadata();
@@ -322,18 +296,11 @@ MCAPStorage::~MCAPStorage()
 }
 
 /** BaseIOInterface **/
-#ifdef ROSBAG2_STORAGE_MCAP_HAS_STORAGE_OPTIONS
 void MCAPStorage::open(const rosbag2_storage::StorageOptions & storage_options,
                        rosbag2_storage::storage_interfaces::IOFlag io_flag)
 {
   open_impl(storage_options.uri, storage_options.storage_preset_profile, io_flag,
             storage_options.storage_config_uri);
-}
-#endif
-
-void MCAPStorage::open(const std::string & uri, rosbag2_storage::storage_interfaces::IOFlag io_flag)
-{
-  open_impl(uri, "", io_flag, "");
 }
 
 static void SetOptionsForPreset(const std::string & preset_profile, McapWriterOptions & options)
@@ -745,7 +712,6 @@ bool MCAPStorage::message_indexes_present()
   return false;
 }
 
-#ifdef ROSBAG2_STORAGE_MCAP_HAS_SET_READ_ORDER
 bool MCAPStorage::set_read_order(const rosbag2_storage::ReadOrder & read_order)
 {
   if (!has_read_summary_) {
@@ -780,7 +746,6 @@ bool MCAPStorage::set_read_order(const rosbag2_storage::ReadOrder & read_order)
   reset_iterator();
   return true;
 }
-#endif
 
 bool MCAPStorage::has_next()
 {
@@ -1008,7 +973,6 @@ void MCAPStorage::remove_topic(const rosbag2_storage::TopicMetadata & topic)
   }
 }
 
-#ifdef ROSBAG2_STORAGE_MCAP_HAS_UPDATE_METADATA
 void MCAPStorage::update_metadata(const rosbag2_storage::BagMetadata & bag_metadata)
 {
   if (bag_metadata.compression_mode == "message") {
@@ -1027,7 +991,6 @@ void MCAPStorage::update_metadata(const rosbag2_storage::BagMetadata & bag_metad
     OnProblem(status);
   }
 }
-#endif
 
 }  // namespace rosbag2_storage_plugins
 
