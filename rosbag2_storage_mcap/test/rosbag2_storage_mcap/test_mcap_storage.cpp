@@ -24,10 +24,8 @@
 #include "rosbag2_storage/message_definition.hpp"
 #include "rosbag2_storage/serialized_bag_message.hpp"
 #include "rosbag2_storage/storage_factory.hpp"
+#include "rosbag2_storage/storage_options.hpp"
 #include "rosbag2_storage/topic_metadata.hpp"
-#ifdef ROSBAG2_STORAGE_MCAP_HAS_STORAGE_OPTIONS
-  #include "rosbag2_storage/storage_options.hpp"
-#endif
 #include "rosbag2_test_common/temporary_directory_fixture.hpp"
 #include "std_msgs/msg/string.hpp"
 
@@ -188,8 +186,6 @@ TEST_F(TemporaryDirectoryFixture, can_write_and_read_basic_mcap_file)
   const std::string storage_id = "mcap";
   const rosbag2_storage::MessageDefinition definition = {"std_msgs/msg/String", "ros2msg",
                                                          "string data", ""};
-  // COMPATIBILITY(foxy)
-  // using verbose APIs for Foxy compatibility which did not yet provide plain-message API
   rclcpp::Serialization<std_msgs::msg::String> serialization;
   rosbag2_storage::StorageFactory factory;
 
@@ -204,14 +200,10 @@ TEST_F(TemporaryDirectoryFixture, can_write_and_read_basic_mcap_file)
     std_msgs::msg::String msg;
     msg.data = message_data;
 
-#ifdef ROSBAG2_STORAGE_MCAP_HAS_STORAGE_OPTIONS
     rosbag2_storage::StorageOptions options;
     options.uri = uri.generic_string();
     options.storage_id = storage_id;
     auto writer = factory.open_read_write(options);
-#else
-    auto writer = factory.open_read_write(uri.generic_string(), storage_id);
-#endif
     writer->create_topic(topic_metadata, definition);
 
     auto serialized_msg = std::make_shared<rclcpp::SerializedMessage>();
@@ -231,14 +223,10 @@ TEST_F(TemporaryDirectoryFixture, can_write_and_read_basic_mcap_file)
   }
   EXPECT_TRUE(std::filesystem::is_regular_file(expected_bag));
   {
-#ifdef ROSBAG2_STORAGE_MCAP_HAS_STORAGE_OPTIONS
     rosbag2_storage::StorageOptions options;
     options.uri = expected_bag.generic_string();
     options.storage_id = storage_id;
     auto reader = factory.open_read_only(options);
-#else
-    auto reader = factory.open_read_only(expected_bag.generic_string(), storage_id);
-#endif
     auto topics_and_types = reader->get_all_topics_and_types();
 
     EXPECT_THAT(topics_and_types,
@@ -271,8 +259,6 @@ TEST_F(TemporaryDirectoryFixture, can_write_and_read_basic_mcap_file)
   }
 }
 
-#ifdef ROSBAG2_STORAGE_MCAP_HAS_STORAGE_OPTIONS
-// This test disabled on Foxy since StorageOptions doesn't have storage_config_uri field on it
 TEST_F(TemporaryDirectoryFixture, can_write_mcap_with_zstd_configured_from_yaml)
 {
   auto uri = std::filesystem::path(temporary_dir_path_) / "bag";
@@ -342,5 +328,3 @@ TEST_F(TemporaryDirectoryFixture, can_write_mcap_with_zstd_configured_from_yaml)
     EXPECT_THAT(definitions, ElementsAreArray({definition}));
   }
 }
-
-#endif  // #ifdef ROSBAG2_STORAGE_MCAP_HAS_STORAGE_OPTIONS
