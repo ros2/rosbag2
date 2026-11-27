@@ -37,7 +37,7 @@ def read_messages(input_bag: str):
     type_map = {topic_types[i].name: topic_types[i].type for i in range(len(topic_types))}
 
     while reader.has_next():
-        topic, data, timestamp = reader.read_next()
+        topic, data, timestamp, _ = reader.read_next_ext()
         msg_type = get_message(type_map[topic])
         msg = deserialize_message(data, msg_type)
         yield topic, msg, timestamp

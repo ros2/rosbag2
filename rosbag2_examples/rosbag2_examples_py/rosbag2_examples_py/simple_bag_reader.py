@@ -36,7 +36,7 @@ class SimpleBagReader(Node):
 
     def timer_callback(self):
         while self.reader.has_next():
-            msg = self.reader.read_next()
+            msg = self.reader.read_next_ext()
             if msg[0] != 'chatter':
                 continue
             self.publisher.publish(msg[1])
