@@ -24,6 +24,10 @@
   <depend>rosbag2_cpp</depend>
   <depend>rosbag2_interfaces</depend>
   <depend>rosbag2_storage</depend>
+  <depend>rosidl_buffer</depend>
+  <depend>rosidl_buffer_backend_registry</depend>
+  <depend>rosidl_runtime_c</depend>
+  <depend>rosidl_typesupport_introspection_cpp</depend>
   <depend>keyboard_handler</depend>
 
   <test_depend>ament_cmake_gmock</test_depend>
@@ -35,6 +39,7 @@
   <test_depend>rosbag2_compression_zstd</test_depend>
   <test_depend>rosbag2_test_common</test_depend>
   <test_depend>rosbag2_storage_default_plugins</test_depend>
+  <test_depend>sensor_msgs</test_depend>
   <test_depend>test_msgs</test_depend>
 
   <export>

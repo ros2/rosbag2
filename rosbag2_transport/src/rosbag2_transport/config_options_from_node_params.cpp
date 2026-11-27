@@ -407,6 +407,12 @@ RecordOptions get_record_options_from_node_params(rclcpp::Node & node)
   record_options.disable_keyboard_controls =
     node.declare_parameter<bool>("record.disable_keyboard_controls", false);
 
+  record_options.acceptable_buffer_backends =
+    node.declare_parameter<std::string>("record.acceptable_buffer_backends", "cpu");
+
+  record_options.buffer_aware_topics = node.declare_parameter<std::vector<std::string>>(
+    "record.buffer_aware_topics", std::vector<std::string>());
+
   auto repeat_transient_local = node.declare_parameter<std::vector<std::string>>(
     "record.repeat_transient_local", std::vector<std::string>());
   for (const auto & entry : repeat_transient_local) {

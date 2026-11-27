@@ -64,6 +64,8 @@ TEST(record_options, test_yaml_serialization_deserialization)
   original.statistics_max_publishing_rate = 5.0f;
   original.repeat_transient_local_messages = {{"/map", 1}, {"/tf_static", 5}};
   original.repeat_all_transient_local_depth = 3;
+  original.acceptable_buffer_backends = "cuda,demo";
+  original.buffer_aware_topics = {"/camera/image", "/lidar/points"};
 
   auto node = YAML::convert<rosbag2_transport::RecordOptions>::encode(original);
 
@@ -107,6 +109,8 @@ TEST(record_options, test_yaml_serialization_deserialization)
   CHECK(disable_keyboard_controls);
   CHECK(repeat_transient_local_messages);
   CHECK(repeat_all_transient_local_depth);
+  CHECK(acceptable_buffer_backends);
+  CHECK(buffer_aware_topics);
   #undef CHECK
   ASSERT_FLOAT_EQ(original.statistics_max_publishing_rate,
                   reconstructed.statistics_max_publishing_rate);

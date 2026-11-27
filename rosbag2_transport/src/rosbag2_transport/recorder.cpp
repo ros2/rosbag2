@@ -29,6 +29,7 @@
 #include <mutex>
 #include <optional>
 #include <regex>
+#include <sstream>
 #include <stdexcept>
 #include <string>
 #include <type_traits>
@@ -48,6 +49,8 @@
 #include "rclcpp/subscription_options.hpp"
 #include "rclcpp/time.hpp"
 #include "rclcpp/utilities.hpp"
+#include "rcpputils/join.hpp"
+#include "rcpputils/split.hpp"
 #include "rcutils/allocator.h"
 #include "rclcpp/clock.hpp"
 #include "rclcpp/event.hpp"
@@ -65,10 +68,12 @@
 #include "logging.hpp"
 #include "rosbag2_storage/serialized_bag_message.hpp"
 #include "rosbag2_transport/config_options_from_node_params.hpp"
+#include "./buffer_aware_subscription.hpp"
 #include "rosbag2_transport/reader_writer_factory.hpp"
 #include "rosbag2_transport/delayed_action_task_runner.hpp"
 #include "rosbag2_transport/recorder_event_notifier.hpp"
 #include "rosbag2_transport/topic_filter.hpp"
+#include "rosidl_buffer_backend_registry/buffer_backend_registry.hpp"
 #include "yaml-cpp/yaml.h"
 
 namespace rosbag2_transport
@@ -390,8 +395,13 @@ private:
 
   void subscribe_topic(const rosbag2_storage::TopicMetadata & topic);
 
-  std::shared_ptr<rclcpp::GenericSubscription> create_subscription(
+  std::shared_ptr<rclcpp::SubscriptionBase> create_subscription(
     const std::string & topic_name, const std::string & topic_type, const rclcpp::QoS & qos);
+
+  /// Whether a topic is recorded through BufferAwareSubscription: a non-CPU backend is accepted,
+  /// the topic is selected (or no topics were selected), and its type can carry a Buffer.
+  bool should_use_buffer_aware_subscription(
+    const std::string & topic_name, const std::string & topic_type) const;
 
   /**
    * Find the QoS profile that should be used for subscribing.
@@ -512,6 +522,8 @@ private:
   std::mutex start_stop_transition_mutex_;
   std::mutex discovery_mutex_;
   mutable std::mutex subscriptions_mutex_;
+  /// Fully qualified names from record_options_.buffer_aware_topics.
+  std::unordered_set<std::string> buffer_aware_topics_;
   std::atomic<bool> discovery_running_ = false;
   std::atomic_uchar paused_ = 0;
   std::atomic<bool> in_recording_ = false;
@@ -550,6 +562,60 @@ private:
   static constexpr int32_t kServiceReturnCodeError = 1;
 };  // class RecorderImpl
 
+namespace
+{
+/// Bring acceptable_buffer_backends into one canonical form, reading it the way the RMW does:
+/// names are comma separated and trimmed, empty entries and duplicates are ignored, "any" wins
+/// over all other names, and "cpu" is always acceptable. Returns "cpu", "any", or a comma separated
+/// list of non-CPU backend names.
+std::string normalize_acceptable_buffer_backends(const std::string & acceptable_buffer_backends)
+{
+  std::vector<std::string> names;
+  for (auto name : rcpputils::split(acceptable_buffer_backends, ',', true)) {
+    const auto first = name.find_first_not_of(" \t");
+    if (first == std::string::npos) {
+      continue;
+    }
+    name = name.substr(first, name.find_last_not_of(" \t") - first + 1);
+    if (name == "any") {
+      return name;
+    }
+    if (name != "cpu" && std::find(names.begin(), names.end(), name) == names.end()) {
+      names.push_back(name);
+    }
+  }
+  return names.empty() ? "cpu" : rcpputils::join(names, ",");
+}
+
+/// Throw if the normalized acceptable_buffer_backends names a backend that is not installed.
+/// Failing here, in the constructor, makes a misspelled backend an immediate error instead of a
+/// recorder that runs but subscribes to nothing.
+void validate_acceptable_buffer_backends(const std::string & acceptable_buffer_backends)
+{
+  if (acceptable_buffer_backends == "cpu" || acceptable_buffer_backends == "any") {
+    return;
+  }
+
+  // Backends are identified by their backend type name (for example "cuda"), which is what the
+  // RMW matches against, not by their plugin class name.
+  rosidl_buffer_backend_registry::BufferBackendRegistry registry;
+  std::vector<std::string> installed{"cpu"};
+  for (const auto & class_name : registry.get_backend_names()) {
+    auto backend = registry.create_backend_instance(class_name);
+    if (backend) {
+      installed.push_back(backend->get_backend_type());
+    }
+  }
+  for (const auto & name : rcpputils::split(acceptable_buffer_backends, ',', true)) {
+    if (std::find(installed.begin(), installed.end(), name) == installed.end()) {
+      throw std::invalid_argument(
+              "Buffer backend '" + name + "' specified in acceptable_buffer_backends is not "
+              "installed. Available backends: " + rcpputils::join(installed, ", ") + ", or 'any'.");
+    }
+  }
+}
+}  // namespace
+
 RecorderImpl::RecorderImpl(
   rclcpp::Node * owner,
   std::shared_ptr<rosbag2_cpp::Writer> writer,
@@ -572,6 +638,22 @@ RecorderImpl::RecorderImpl(
     throw std::runtime_error(
             "use_sim_time and is_discovery_disabled both set, but are incompatible settings. "
             "The /clock topic needs to be discovered to record with sim time.");
+  }
+  // Every later use of the backend string relies on this normalized form.
+  record_options_.acceptable_buffer_backends =
+    normalize_acceptable_buffer_backends(record_options_.acceptable_buffer_backends);
+  validate_acceptable_buffer_backends(record_options_.acceptable_buffer_backends);
+  if (!record_options_.buffer_aware_topics.empty()) {
+    if (record_options_.acceptable_buffer_backends == "cpu") {
+      throw std::invalid_argument(
+              "buffer_aware_topics requires acceptable_buffer_backends to name a backend other "
+              "than 'cpu'.");
+    }
+    for (const auto & topic : record_options_.buffer_aware_topics) {
+      buffer_aware_topics_.insert(
+        rclcpp::expand_topic_or_service_name(
+          topic, node->get_name(), node->get_namespace(), false));
+    }
   }
   if (!record_options_.disable_keyboard_controls) {
     std::string key_str = enum_key_code_to_str(Recorder::kPauseResumeToggleKey);
@@ -1820,7 +1902,44 @@ void RecorderImpl::subscribe_topic(const rosbag2_storage::TopicMetadata & topic)
   }
 }
 
-std::shared_ptr<rclcpp::GenericSubscription>
+bool RecorderImpl::should_use_buffer_aware_subscription(
+  const std::string & topic_name, const std::string & topic_type) const
+{
+  if (record_options_.acceptable_buffer_backends == "cpu") {
+    return false;
+  }
+  const bool explicitly_selected = buffer_aware_topics_.count(topic_name) > 0;
+  if (!buffer_aware_topics_.empty() && !explicitly_selected) {
+    return false;
+  }
+  // A type without a rosidl::Buffer field cannot carry a backend payload, so the generic
+  // subscription is equivalent and avoids deserializing and re-serializing every message.
+  try {
+    auto library = rclcpp::get_typesupport_library(
+      topic_type, "rosidl_typesupport_introspection_cpp");
+    const auto * introspection_ts = rclcpp::get_message_typesupport_handle(
+      topic_type, "rosidl_typesupport_introspection_cpp", *library);
+    if (!message_type_has_buffer_field(introspection_ts)) {
+      if (explicitly_selected) {
+        RCLCPP_WARN_STREAM(
+          node->get_logger(),
+          "Topic '" << topic_name << "' was selected as buffer-aware, but its type '" <<
+            topic_type << "' has no rosidl::Buffer field. Recording it with a generic "
+            "subscription.");
+      }
+      return false;
+    }
+  } catch (const std::exception & e) {
+    RCLCPP_WARN_STREAM(
+      node->get_logger(),
+      "Could not inspect type '" << topic_type << "' of topic '" << topic_name <<
+        "' for buffer fields (" << e.what() << "). Recording it with a generic subscription.");
+    return false;
+  }
+  return true;
+}
+
+std::shared_ptr<rclcpp::SubscriptionBase>
 RecorderImpl::create_subscription(
   const std::string & topic_name, const std::string & topic_type, const rclcpp::QoS & qos)
 {
@@ -1867,8 +1986,27 @@ RecorderImpl::create_subscription(
       }
     };
 
-  return node->create_generic_subscription(
-    topic_name, topic_type, qos, subscription_callback, sub_options);
+  if (!should_use_buffer_aware_subscription(topic_name, topic_type)) {
+    return node->create_generic_subscription(
+      topic_name, topic_type, qos, subscription_callback, sub_options);
+  }
+
+  // A non-CPU buffer backend is accepted: receive the backend buffer through the typed path and
+  // serialize it here, instead of making each publisher convert it to CPU memory in publish().
+  // (A generic subscription cannot be used: serialized takes of backend messages are rejected.)
+  sub_options.acceptable_buffer_backends = record_options_.acceptable_buffer_backends;
+  auto subscription = std::make_shared<BufferAwareSubscription>(
+    node->get_node_base_interface().get(), topic_name, topic_type, qos, sub_options,
+    subscription_callback,
+    [this, topic_name](uint64_t total_dropped) {
+      // Count a dropped stale message as lost, so it appears in the lost-message statistics.
+      rclcpp::QOSMessageLostInfo lost_info{};
+      lost_info.total_count = static_cast<int32_t>(total_dropped);
+      lost_info.total_count_change = 1;
+      on_messages_lost_in_transport(topic_name, lost_info);
+    });
+  node->get_node_topics_interface()->add_subscription(subscription, sub_options.callback_group);
+  return subscription;
 }
 
 std::vector<rclcpp::QoS> RecorderImpl::offered_qos_profiles_for_topic(
