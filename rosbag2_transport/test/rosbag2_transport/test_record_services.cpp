@@ -186,10 +186,15 @@ public:
           },
           std::chrono::seconds(10)));
       current_sim_time_ = rclcpp::Time(1, 0, RCL_ROS_TIME);
-      publish_clock(current_sim_time_);
+      // The /clock subscription uses best-effort ClockQoS, so a single sample can be dropped
+      // if the subscriber hasn't discovered the publisher yet, even though the publisher already
+      // reports a match. Keep republishing until the recorder's clock has started.
       ASSERT_TRUE(
         rosbag2_test_common::wait_until_condition(
-          [this]() {return recorder_->get_clock()->started();},
+          [this]() {
+            publish_clock(current_sim_time_);
+            return recorder_->get_clock()->started();
+          },
           std::chrono::seconds(10)));
       EXPECT_EQ(recorder_->get_clock()->get_clock_type(), RCL_ROS_TIME);
       ASSERT_TRUE(recorder_->get_clock()->ros_time_is_active());
