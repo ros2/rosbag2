@@ -29,7 +29,10 @@ find_package(rosbag2_compression REQUIRED)
 find_package(rosbag2_cpp REQUIRED)
 find_package(rosbag2_interfaces REQUIRED)
 find_package(rosbag2_storage REQUIRED)
+find_package(rosidl_buffer REQUIRED)
 find_package(rosidl_buffer_backend_registry REQUIRED)
+find_package(rosidl_runtime_c REQUIRED)
+find_package(rosidl_typesupport_introspection_cpp REQUIRED)
 find_package(rmw_implementation_cmake REQUIRED)
 
 add_library(${PROJECT_NAME} SHARED
@@ -66,7 +69,10 @@ target_link_libraries(${PROJECT_NAME} PRIVATE
   rcutils::rcutils
   rmw::rmw
   rosbag2_compression::rosbag2_compression
+  rosidl_buffer::rosidl_buffer
   rosidl_buffer_backend_registry::rosidl_buffer_backend_registry
+  rosidl_runtime_c::rosidl_runtime_c
+  rosidl_typesupport_introspection_cpp::rosidl_typesupport_introspection_cpp
 )
 
 rclcpp_components_register_node(
@@ -526,6 +532,9 @@ if(BUILD_TESTING)
   target_link_libraries(test_record_buffer_aware
     ament_cmake_ros_core::ament_ros_defaults
     rosbag2_transport
+    rosidl_buffer::rosidl_buffer
+    rosidl_runtime_c::rosidl_runtime_c
+    rosidl_typesupport_introspection_cpp::rosidl_typesupport_introspection_cpp
     test_msgs::test_msgs
     rosbag2_test_common::rosbag2_test_common
   )

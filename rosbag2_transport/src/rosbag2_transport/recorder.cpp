@@ -49,6 +49,8 @@
 #include "rclcpp/subscription_options.hpp"
 #include "rclcpp/time.hpp"
 #include "rclcpp/utilities.hpp"
+#include "rcpputils/join.hpp"
+#include "rcpputils/split.hpp"
 #include "rcutils/allocator.h"
 #include "rclcpp/clock.hpp"
 #include "rclcpp/event.hpp"
@@ -562,25 +564,35 @@ private:
 
 namespace
 {
-/// Throw if acceptable_buffer_backends names a backend that is not installed. "cpu", "any" and
-/// an empty string are always valid. Failing here, in the constructor, makes a misspelled backend
-/// an immediate error instead of a recorder that runs but subscribes to nothing.
-void validate_acceptable_buffer_backends(const std::string & acceptable_buffer_backends)
+/// Bring acceptable_buffer_backends into one canonical form, reading it the way the RMW does:
+/// names are comma separated and trimmed, empty entries and duplicates are ignored, "any" wins
+/// over all other names, and "cpu" is always acceptable. Returns "cpu", "any", or a comma separated
+/// list of non-CPU backend names.
+std::string normalize_acceptable_buffer_backends(const std::string & acceptable_buffer_backends)
 {
-  std::vector<std::string> requested;
-  std::stringstream stream(acceptable_buffer_backends);
-  for (std::string name; std::getline(stream, name, ','); ) {
+  std::vector<std::string> names;
+  for (auto name : rcpputils::split(acceptable_buffer_backends, ',', true)) {
     const auto first = name.find_first_not_of(" \t");
-    const auto last = name.find_last_not_of(" \t");
     if (first == std::string::npos) {
       continue;
     }
-    name = name.substr(first, last - first + 1);
-    if (name != "cpu" && name != "any") {
-      requested.push_back(name);
+    name = name.substr(first, name.find_last_not_of(" \t") - first + 1);
+    if (name == "any") {
+      return name;
+    }
+    if (name != "cpu" && std::find(names.begin(), names.end(), name) == names.end()) {
+      names.push_back(name);
     }
   }
-  if (requested.empty()) {
+  return names.empty() ? "cpu" : rcpputils::join(names, ",");
+}
+
+/// Throw if the normalized acceptable_buffer_backends names a backend that is not installed.
+/// Failing here, in the constructor, makes a misspelled backend an immediate error instead of a
+/// recorder that runs but subscribes to nothing.
+void validate_acceptable_buffer_backends(const std::string & acceptable_buffer_backends)
+{
+  if (acceptable_buffer_backends == "cpu" || acceptable_buffer_backends == "any") {
     return;
   }
 
@@ -594,15 +606,11 @@ void validate_acceptable_buffer_backends(const std::string & acceptable_buffer_b
       installed.push_back(backend->get_backend_type());
     }
   }
-  for (const auto & name : requested) {
+  for (const auto & name : rcpputils::split(acceptable_buffer_backends, ',', true)) {
     if (std::find(installed.begin(), installed.end(), name) == installed.end()) {
-      std::string available;
-      for (const auto & installed_name : installed) {
-        available += (available.empty() ? "" : ", ") + installed_name;
-      }
       throw std::invalid_argument(
               "Buffer backend '" + name + "' specified in acceptable_buffer_backends is not "
-              "installed. Available backends: " + available + ", or 'any'.");
+              "installed. Available backends: " + rcpputils::join(installed, ", ") + ", or 'any'.");
     }
   }
 }
@@ -631,10 +639,12 @@ RecorderImpl::RecorderImpl(
             "use_sim_time and is_discovery_disabled both set, but are incompatible settings. "
             "The /clock topic needs to be discovered to record with sim time.");
   }
+  // Every later use of the backend string relies on this normalized form.
+  record_options_.acceptable_buffer_backends =
+    normalize_acceptable_buffer_backends(record_options_.acceptable_buffer_backends);
   validate_acceptable_buffer_backends(record_options_.acceptable_buffer_backends);
   if (!record_options_.buffer_aware_topics.empty()) {
-    const auto & backends = record_options_.acceptable_buffer_backends;
-    if (backends.empty() || backends == "cpu") {
+    if (record_options_.acceptable_buffer_backends == "cpu") {
       throw std::invalid_argument(
               "buffer_aware_topics requires acceptable_buffer_backends to name a backend other "
               "than 'cpu'.");
@@ -1895,8 +1905,7 @@ void RecorderImpl::subscribe_topic(const rosbag2_storage::TopicMetadata & topic)
 bool RecorderImpl::should_use_buffer_aware_subscription(
   const std::string & topic_name, const std::string & topic_type) const
 {
-  const auto & backends = record_options_.acceptable_buffer_backends;
-  if (backends.empty() || backends == "cpu") {
+  if (record_options_.acceptable_buffer_backends == "cpu") {
     return false;
   }
   const bool explicitly_selected = buffer_aware_topics_.count(topic_name) > 0;

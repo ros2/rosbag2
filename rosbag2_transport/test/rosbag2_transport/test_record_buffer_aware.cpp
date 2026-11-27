@@ -26,10 +26,12 @@
 
 #include "mock_sequential_writer.hpp"
 #include "rclcpp/generic_subscription.hpp"
+#include "rclcpp/node.hpp"
 #include "rclcpp/serialization.hpp"
 #include "rclcpp/serialized_message.hpp"
 #include "rclcpp/typesupport_helpers.hpp"
 #include "rcpputils/scope_exit.hpp"
+#include "rosbag2_cpp/writer.hpp"
 #include "rosbag2_storage/serialized_bag_message.hpp"
 #include "rosbag2_test_common/publication_manager.hpp"
 #include "rosbag2_test_common/wait_for.hpp"
@@ -184,6 +186,76 @@ TEST_F(RecordIntegrationTestFixture, unknown_buffer_backend_name_fails_fast)
   } catch (const std::invalid_argument & e) {
     EXPECT_THAT(std::string(e.what()), HasSubstr("no_such_backend"));
     EXPECT_THAT(std::string(e.what()), HasSubstr("Available backends"));
+  }
+}
+
+// Spellings that only name "cpu" must behave exactly like "cpu": no buffer-aware subscription,
+// and buffer_aware_topics is rejected.
+TEST_F(RecordIntegrationTestFixture, cpu_only_backend_spellings_are_treated_as_cpu)
+{
+  const std::string topic = "/sequence_topic";
+  auto publisher_node = std::make_shared<rclcpp::Node>("cpu_spellings_publisher_node");
+  auto publisher =
+    publisher_node->create_publisher<test_msgs::msg::UnboundedSequences>(topic, 10);
+
+  for (const std::string backends : {"", " ", "cpu ", " cpu", "cpu,cpu", " , cpu,"}) {
+    SCOPED_TRACE("acceptable_buffer_backends: '" + backends + "'");
+    rosbag2_transport::RecordOptions record_options;
+    record_options.topics = {topic};
+    record_options.rmw_serialization_format = "rmw_format";
+    record_options.acceptable_buffer_backends = backends;
+
+    auto options_with_topics = record_options;
+    options_with_topics.buffer_aware_topics = {topic};
+    EXPECT_THROW(
+      std::make_shared<rosbag2_transport::Recorder>(
+        std::make_shared<rosbag2_cpp::Writer>(std::make_unique<MockSequentialWriter>()),
+        storage_options_, options_with_topics),
+      std::invalid_argument);
+
+    auto recorder = std::make_shared<rosbag2_transport::Recorder>(
+      std::make_shared<rosbag2_cpp::Writer>(std::make_unique<MockSequentialWriter>()),
+      storage_options_, record_options);
+    ASSERT_TRUE(rosbag2_test_common::wait_until_condition(
+        [&]() {return recorder->count_publishers(topic) > 0;}, std::chrono::seconds(5)));
+    recorder->record();
+    recorder->stop_discovery();
+    const auto & subscriptions = recorder->subscriptions();
+    ASSERT_EQ(1u, subscriptions.count(topic));
+    EXPECT_NE(nullptr, dynamic_cast<rclcpp::GenericSubscription *>(
+        subscriptions.at(topic).get()));
+    recorder->stop();
+  }
+}
+
+// "any" wins over every other name, as it does in the RMW, whatever the spelling around it.
+TEST_F(RecordIntegrationTestFixture, any_buffer_backend_takes_precedence)
+{
+  const std::string topic = "/sequence_topic";
+  auto publisher_node = std::make_shared<rclcpp::Node>("any_precedence_publisher_node");
+  auto publisher =
+    publisher_node->create_publisher<test_msgs::msg::UnboundedSequences>(topic, 10);
+
+  for (const std::string backends : {" any ", "cpu, any,cpu", "any,no_such_backend"}) {
+    SCOPED_TRACE("acceptable_buffer_backends: '" + backends + "'");
+    rosbag2_transport::RecordOptions record_options;
+    record_options.topics = {topic};
+    record_options.rmw_serialization_format = "rmw_format";
+    record_options.acceptable_buffer_backends = backends;
+    record_options.buffer_aware_topics = {topic};
+
+    auto recorder = std::make_shared<rosbag2_transport::Recorder>(
+      std::make_shared<rosbag2_cpp::Writer>(std::make_unique<MockSequentialWriter>()),
+      storage_options_, record_options);
+    ASSERT_TRUE(rosbag2_test_common::wait_until_condition(
+        [&]() {return recorder->count_publishers(topic) > 0;}, std::chrono::seconds(5)));
+    recorder->record();
+    recorder->stop_discovery();
+    const auto & subscriptions = recorder->subscriptions();
+    ASSERT_EQ(1u, subscriptions.count(topic));
+    EXPECT_EQ(nullptr, dynamic_cast<rclcpp::GenericSubscription *>(
+        subscriptions.at(topic).get()));
+    recorder->stop();
   }
 }
 

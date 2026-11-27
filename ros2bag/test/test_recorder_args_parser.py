@@ -488,3 +488,19 @@ def test_recorder_buffer_aware_topics_requires_backend(test_arguments_parser):
     assert error_str is not None
     expected_output = '--buffer-aware-topics requires --acceptable-buffer-backends'
     assert expected_output in error_str, ERROR_STRING_MSG.format(expected_output, error_str)
+
+
+@pytest.mark.parametrize('backends', ['', ' ', 'cpu ', 'cpu,cpu', ' , cpu,'])
+def test_recorder_buffer_aware_topics_rejects_cpu_only_spellings(test_arguments_parser, backends):
+    """Test every spelling of a cpu-only backend list is rejected with --buffer-aware-topics."""
+    output_path = RESOURCES_PATH / 'ros2bag_tmp_file'
+    args = test_arguments_parser.parse_args(
+        ['--all-topics', '--acceptable-buffer-backends', backends,
+         '--buffer-aware-topics', '/image1', '--output', output_path.as_posix()]
+    )
+
+    uri = args.output or datetime.datetime.now().strftime('rosbag2_%Y_%m_%d-%H_%M_%S')
+    error_str = validate_parsed_arguments(args, uri)
+    assert error_str is not None
+    expected_output = '--buffer-aware-topics requires --acceptable-buffer-backends'
+    assert expected_output in error_str, ERROR_STRING_MSG.format(expected_output, error_str)

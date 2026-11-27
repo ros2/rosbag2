@@ -346,7 +346,8 @@ def validate_parsed_arguments(args, uri) -> str:
         return print_error('--exclude-regex argument requires either --all, '
                            '--all-topics, --topic-types, --all-services, --all-actions or --regex')
 
-    if args.buffer_aware_topics and args.acceptable_buffer_backends.strip() in ('', 'cpu'):
+    requested_backends = {name.strip() for name in args.acceptable_buffer_backends.split(',')}
+    if args.buffer_aware_topics and requested_backends <= {'', 'cpu'}:
         return print_error('--buffer-aware-topics requires --acceptable-buffer-backends to name '
                            "a backend other than 'cpu'")
 
