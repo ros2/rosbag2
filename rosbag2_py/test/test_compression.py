@@ -28,7 +28,6 @@ from rosbag2_py import (
     SequentialCompressionWriter,
     TopicMetadata,
 )
-from rosbag2_test_common import TESTED_STORAGE_IDS
 from rosidl_runtime_py.utilities import get_message
 
 from std_msgs.msg import String
@@ -62,7 +61,28 @@ def test_compression_options():
     assert compression_options.compression_threads == 8
 
 
-@pytest.mark.parametrize('storage_id', TESTED_STORAGE_IDS)
+def test_sequential_message_compression_rejected_by_mcap(tmp_path):
+    """Checks that MCAP rejects message compression, which it does not support."""
+    bag_path = os.path.join(tmp_path, 'tmp_sequential_compressed_write_test')
+
+    storage_options, converter_options = get_rosbag_options(
+        path=bag_path,
+        storage_id='mcap')
+
+    compression_options = CompressionOptions(
+        compression_format='zstd',
+        compression_mode=CompressionMode.MESSAGE,
+        compression_queue_size=0,
+        compression_threads=1)
+
+    writer = SequentialCompressionWriter(compression_options)
+    with pytest.raises(RuntimeError,
+                       match='MCAP storage plugin does not support message compression'):
+        writer.open(storage_options, converter_options)
+
+
+# MCAP does not support message compression, see the test above
+@pytest.mark.parametrize('storage_id', ['sqlite3'])
 def test_sequential_compression(tmp_path, storage_id):
     """Checks that we can do a compressed write and read."""
     bag_path = os.path.join(tmp_path, 'tmp_sequential_compressed_write_test')
@@ -117,11 +137,6 @@ def test_sequential_compression(tmp_path, storage_id):
         assert isinstance(msg_deserialized, String)
         assert msg_deserialized.data == f'Hello, world! {msg_counter}'
         assert recv_ts == msg_counter * 100
-
-        # NOTE: Different behaviours when writing in mcap and sqlite3 for the send timestamp
-        if 'sqlite3' == storage_id:
-            assert send_ts == 0
-        elif 'mcap' == storage_id:
-            assert send_ts == msg_counter * 100
+        assert send_ts == 0
 
         msg_counter += 1

@@ -975,7 +975,7 @@ void MCAPStorage::remove_topic(const rosbag2_storage::TopicMetadata & topic)
 
 void MCAPStorage::update_metadata(const rosbag2_storage::BagMetadata & bag_metadata)
 {
-  if (bag_metadata.compression_mode == "message") {
+  if (bag_metadata.compression_mode == "MESSAGE") {
     throw std::runtime_error(
       "MCAP storage plugin does not support message compression, "
       "consider using chunk compression by setting `compression: 'Zstd'` in storage config");
