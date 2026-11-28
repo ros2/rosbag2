@@ -17,6 +17,7 @@
 #include <algorithm>
 #include <atomic>
 #include <chrono>
+#include <filesystem>
 #include <iostream>
 #include <memory>
 #include <ostream>
@@ -472,6 +473,224 @@ TEST_F(RecordSrvsTest, split_bagfile_with_default_parameters)
   ASSERT_TRUE(split_called.load());
   EXPECT_EQ(closed_file, "BagFile0");
   EXPECT_EQ(opened_file, "BagFile1");
+}
+
+TEST_F(RecordSrvsTest, split_bagfile_with_output_uri)
+{
+  rosbag2_test_common::PublicationManager pub_manager;
+  auto string_message = get_messages_strings()[1];
+  pub_manager.setup_publisher(test_topic_, string_message, 1);
+  ASSERT_TRUE(pub_manager.wait_for_matched(test_topic_.c_str()));
+  pub_manager.run_publishers();
+
+  auto & writer = recorder_->get_writer_handle();
+  auto & mock_writer = dynamic_cast<MockSequentialWriter &>(writer.get_implementation_handle());
+  std::atomic<bool> split_called{false};
+  std::string closed_file, opened_file;
+  rosbag2_cpp::bag_events::WriterEventCallbacks callbacks;
+  callbacks.write_split_callback =
+    [&split_called, &closed_file, &opened_file](rosbag2_cpp::bag_events::BagSplitInfo & info) {
+      closed_file = info.closed_file;
+      opened_file = info.opened_file;
+      split_called.store(true);
+    };
+  mock_writer.add_event_callbacks(callbacks);
+
+  ASSERT_TRUE(
+    rosbag2_test_common::wait_until_condition(
+      [&mock_writer]() {return mock_writer.get_number_of_recorded_messages() > 0;},
+      std::chrono::seconds(10))
+  ) << "Failed to capture message in time";
+
+  const std::string output_uri = "new_bag_dir";
+  auto request = std::make_shared<SplitBagfile::Request>();
+  request->output_uri = output_uri;
+  auto response = std::make_shared<SplitBagfile::Response>();
+  ASSERT_TRUE(successful_service_request<SplitBagfile>(cli_split_bagfile_, request, response));
+  EXPECT_EQ(SplitBagfile::Response::RETURN_CODE_SUCCESS, response->return_code);
+  EXPECT_TRUE(response->error_string.empty());
+
+  ASSERT_TRUE(split_called.load());
+  EXPECT_EQ(mock_writer.get_split_uri(), output_uri);
+  EXPECT_EQ(closed_file, "BagFile0");
+  EXPECT_EQ(opened_file, output_uri + "/BagFile0");
+}
+
+TEST_F(RecordSrvsTest, split_bagfile_reports_error_when_output_uri_is_rejected)
+{
+  rosbag2_test_common::PublicationManager pub_manager;
+  auto string_message = get_messages_strings()[1];
+  pub_manager.setup_publisher(test_topic_, string_message, 1);
+  ASSERT_TRUE(pub_manager.wait_for_matched(test_topic_.c_str()));
+  pub_manager.run_publishers();
+
+  auto & writer = recorder_->get_writer_handle();
+  auto & mock_writer = dynamic_cast<MockSequentialWriter &>(writer.get_implementation_handle());
+  mock_writer.set_throw_on_split_to_new_uri(true);
+
+  ASSERT_TRUE(
+    rosbag2_test_common::wait_until_condition(
+      [&mock_writer]() {return mock_writer.get_number_of_recorded_messages() > 0;},
+      std::chrono::seconds(10))
+  ) << "Failed to capture message in time";
+
+  auto request = std::make_shared<SplitBagfile::Request>();
+  request->output_uri = "rejected_bag_dir";
+  auto response = std::make_shared<SplitBagfile::Response>();
+  ASSERT_TRUE(successful_service_request<SplitBagfile>(cli_split_bagfile_, request, response));
+  EXPECT_EQ(SplitBagfile::Response::RETURN_CODE_SPLIT_FAILED, response->return_code);
+  EXPECT_FALSE(response->error_string.empty());
+}
+
+TEST_F(RecordSrvsTest, record_after_split_to_output_uri_restarts_next_to_output_uri)
+{
+  auto & writer = recorder_->get_writer_handle();
+  auto & mock_writer = dynamic_cast<MockSequentialWriter &>(writer.get_implementation_handle());
+
+  const auto output_dir = std::filesystem::temp_directory_path() / "split_then_restart_bag_dir";
+  std::filesystem::remove_all(output_dir);
+  const std::string output_uri = output_dir.generic_string();
+  auto split_request = std::make_shared<SplitBagfile::Request>();
+  split_request->output_uri = output_uri;
+  auto split_response = std::make_shared<SplitBagfile::Response>();
+  ASSERT_TRUE(
+    successful_service_request<SplitBagfile>(cli_split_bagfile_, split_request, split_response));
+  ASSERT_EQ(SplitBagfile::Response::RETURN_CODE_SUCCESS, split_response->return_code);
+  // The mock writer doesn't create directories. The real one has created output_uri by now.
+  ASSERT_TRUE(std::filesystem::create_directories(output_dir));
+
+  auto stop_response = std::make_shared<Stop::Response>();
+  ASSERT_TRUE(successful_service_request<Stop>(cli_stop_, stop_response));
+
+  auto record_request = std::make_shared<Record::Request>();
+  auto record_response = std::make_shared<Record::Response>();
+  ASSERT_TRUE(successful_service_request<Record>(cli_record_, record_request, record_response));
+  EXPECT_EQ(0, record_response->return_code);
+
+  // Without a uri, recording restarts next to the bag of the last split, not the original one
+  EXPECT_EQ(mock_writer.get_storage_options().uri, output_uri + "(1)");
+  std::filesystem::remove_all(output_dir);
+}
+
+TEST_F(RecordSrvsTest, split_bagfile_reports_error_when_output_uri_cannot_be_checked)
+{
+  // A file name longer than NAME_MAX makes the existence check itself fail
+  auto request = std::make_shared<SplitBagfile::Request>();
+  request->output_uri = std::string(300, 'a');
+  auto response = std::make_shared<SplitBagfile::Response>();
+  ASSERT_TRUE(successful_service_request<SplitBagfile>(cli_split_bagfile_, request, response));
+#ifndef _WIN32  // Windows reports such a name as not found rather than as an error
+  EXPECT_EQ(SplitBagfile::Response::RETURN_CODE_SPLIT_FAILED, response->return_code);
+  EXPECT_FALSE(response->error_string.empty());
+#endif
+}
+
+TEST_F(RecordSrvsTest, split_bagfile_rejects_existing_output_uri_before_scheduling)
+{
+  auto & writer = recorder_->get_writer_handle();
+  auto & mock_writer = dynamic_cast<MockSequentialWriter &>(writer.get_implementation_handle());
+
+  auto request = std::make_shared<SplitBagfile::Request>();
+  request->split_time = recorder_->now() + rclcpp::Duration(std::chrono::seconds(60));
+  request->split_mode = SplitBagfile::Request::SPLIT_MODE_NODE_TIME;
+  request->output_uri = std::filesystem::temp_directory_path().generic_string();
+  auto response = std::make_shared<SplitBagfile::Response>();
+  ASSERT_TRUE(successful_service_request<SplitBagfile>(cli_split_bagfile_, request, response));
+  EXPECT_EQ(SplitBagfile::Response::RETURN_CODE_SPLIT_FAILED, response->return_code);
+  EXPECT_FALSE(response->error_string.empty());
+  EXPECT_TRUE(mock_writer.get_split_uri().empty());
+}
+
+TEST_F(RecordSrvsSnapshotTest, split_bagfile_rejects_output_uri_in_snapshot_mode)
+{
+  auto request = std::make_shared<SplitBagfile::Request>();
+  request->output_uri = "snapshot_bag_dir";
+  auto response = std::make_shared<SplitBagfile::Response>();
+  ASSERT_TRUE(successful_service_request<SplitBagfile>(cli_split_bagfile_, request, response));
+  EXPECT_EQ(SplitBagfile::Response::RETURN_CODE_SPLIT_FAILED, response->return_code);
+  EXPECT_FALSE(response->error_string.empty());
+}
+
+TEST_F(RecordSrvsSimTimeTest, split_bagfile_by_node_time_scheduled_with_output_uri)
+{
+  auto & writer = recorder_->get_writer_handle();
+  auto & mock_writer = dynamic_cast<MockSequentialWriter &>(writer.get_implementation_handle());
+  std::atomic<bool> split_called{false};
+  rosbag2_cpp::bag_events::WriterEventCallbacks callbacks;
+  callbacks.write_split_callback =
+    [&split_called](rosbag2_cpp::bag_events::BagSplitInfo & /*info*/) {
+      split_called.store(true);
+    };
+  mock_writer.add_event_callbacks(callbacks);
+
+  const std::string output_uri = "node_time_scheduled_bag_dir";
+  auto request = std::make_shared<SplitBagfile::Request>();
+  auto target_split_time = current_sim_time_ + rclcpp::Duration(std::chrono::milliseconds(200));
+  request->split_time = target_split_time;
+  request->split_mode = SplitBagfile::Request::SPLIT_MODE_NODE_TIME;
+  request->output_uri = output_uri;
+  auto response = std::make_shared<SplitBagfile::Response>();
+  ASSERT_TRUE(successful_service_request<SplitBagfile>(cli_split_bagfile_, request, response));
+  EXPECT_EQ(SplitBagfile::Response::RETURN_CODE_SUCCESS, response->return_code);
+  EXPECT_FALSE(split_called.load());
+
+  publish_clock(target_split_time);
+  ASSERT_TRUE(
+    rosbag2_test_common::wait_until_condition(
+      [&split_called]() {return split_called.load();},
+      std::chrono::seconds(10))
+  ) << "Timed out waiting for scheduled split to occur.";
+  EXPECT_EQ(mock_writer.get_split_uri(), output_uri);
+}
+
+TEST_F(RecordSrvsSimTimeTest, split_bagfile_by_receive_time_scheduled_with_output_uri)
+{
+  auto string_message = get_messages_strings()[1];
+  auto tracked_pub =
+    client_node_->create_publisher<test_msgs::msg::Strings>(test_topic_,
+                                                            Rosbag2QoS::UnitTestQoS());
+  ASSERT_TRUE(
+    rosbag2_test_common::wait_until_condition(
+      [&tracked_pub]() {return tracked_pub->get_subscription_count() > 0;},
+      std::chrono::seconds(10))
+  );
+
+  auto & writer = recorder_->get_writer_handle();
+  auto & mock_writer = dynamic_cast<MockSequentialWriter &>(writer.get_implementation_handle());
+  std::atomic<bool> split_called{false};
+  rosbag2_cpp::bag_events::WriterEventCallbacks callbacks;
+  callbacks.write_split_callback =
+    [&split_called](rosbag2_cpp::bag_events::BagSplitInfo & /*info*/) {
+      split_called.store(true);
+    };
+  mock_writer.add_event_callbacks(callbacks);
+
+  const std::string output_uri = "receive_time_scheduled_bag_dir";
+  auto split_time = current_sim_time_ + rclcpp::Duration(std::chrono::milliseconds(200));
+  auto request = std::make_shared<SplitBagfile::Request>();
+  request->split_time = split_time;
+  request->split_mode = SplitBagfile::Request::SPLIT_MODE_RECEIVE_TIME;
+  request->tracking_topic_name = test_topic_;
+  request->output_uri = output_uri;
+  auto response = std::make_shared<SplitBagfile::Response>();
+  ASSERT_TRUE(successful_service_request<SplitBagfile>(cli_split_bagfile_, request, response));
+  EXPECT_EQ(SplitBagfile::Response::RETURN_CODE_SUCCESS, response->return_code);
+  EXPECT_FALSE(split_called.load());
+
+  publish_clock(split_time + rclcpp::Duration(std::chrono::milliseconds(10)));
+  ASSERT_TRUE(
+    rosbag2_test_common::wait_until_condition(
+      [this]() {return recorder_->now() >= current_sim_time_;},
+      std::chrono::seconds(10))
+  ) << "Recorder node failed to advance to the current sim time";
+
+  tracked_pub->publish(*string_message);
+  ASSERT_TRUE(
+    rosbag2_test_common::wait_until_condition(
+      [&split_called]() {return split_called.load();},
+      std::chrono::seconds(10))
+  ) << "Timed out waiting for receive-time split to occur.";
+  EXPECT_EQ(mock_writer.get_split_uri(), output_uri);
 }
 
 TEST_F(RecordSrvsSimTimeTest, split_bagfile_by_receive_time_scheduled)
