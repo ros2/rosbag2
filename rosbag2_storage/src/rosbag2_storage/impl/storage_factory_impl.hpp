@@ -50,6 +50,18 @@ get_class_loader()
   return std::make_shared<pluginlib::ClassLoader<InterfaceT>>("rosbag2_storage", lookup_name);
 }
 
+/// Owns a plugin instance together with the class loader that created it.
+/**
+ * Members are destroyed in reverse order, so the instance is always destroyed
+ * before the class loader (and with it, possibly the plugin library) goes away.
+ */
+template<typename InterfaceT>
+struct ManagedPlugin
+{
+  std::shared_ptr<pluginlib::ClassLoader<InterfaceT>> class_loader;
+  pluginlib::UniquePtr<InterfaceT> instance;
+};
+
 template<typename InterfaceT>
 std::shared_ptr<InterfaceT>
 try_load_plugin(
@@ -58,8 +70,9 @@ try_load_plugin(
 {
   std::shared_ptr<InterfaceT> instance;
   try {
-    auto unmanaged_instance = class_loader->createUnmanagedInstance(plugin_name);
-    instance = std::shared_ptr<InterfaceT>(unmanaged_instance);
+    auto plugin = std::make_shared<ManagedPlugin<InterfaceT>>(
+      ManagedPlugin<InterfaceT>{class_loader, class_loader->createUniqueInstance(plugin_name)});
+    instance = std::shared_ptr<InterfaceT>(plugin, plugin->instance.get());
   } catch (const std::runtime_error & ex) {
     ROSBAG2_STORAGE_LOG_ERROR_STREAM(
       "Unable to load plugin '" << plugin_name << "': " << ex.what());
